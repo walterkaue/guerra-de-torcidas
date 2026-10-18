@@ -1,0 +1,96 @@
+// Card de resultado 1080×1350 (bom para WhatsApp e stories), gerado no próprio celular.
+
+import { corDeTexto, type Time } from '../dados/times';
+
+export interface DadosCard {
+  time: Time;
+  apelido: string;
+  golsJogador: number;
+  golsMaquina: number;
+  pontos: number;
+  frase: string;
+  link: string;
+}
+
+const L = 1080;
+const A = 1350;
+const FONTE = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+
+function quebrarTexto(c: CanvasRenderingContext2D, texto: string, largura: number): string[] {
+  const palavras = texto.split(' ');
+  const linhas: string[] = [];
+  let atual = '';
+  for (const p of palavras) {
+    const teste = atual ? `${atual} ${p}` : p;
+    if (c.measureText(teste).width > largura && atual) {
+      linhas.push(atual);
+      atual = p;
+    } else atual = teste;
+  }
+  if (atual) linhas.push(atual);
+  return linhas;
+}
+
+export function desenharCard(d: DadosCard): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = L;
+  canvas.height = A;
+  const c = canvas.getContext('2d')!;
+  const [c1, c2] = d.time.cores;
+  const txt = corDeTexto(c1);
+
+  // Fundo em listras diagonais com as cores do time.
+  c.fillStyle = c1;
+  c.fillRect(0, 0, L, A);
+  c.save();
+  c.globalAlpha = 0.18;
+  c.fillStyle = c2;
+  c.rotate(-0.35);
+  for (let x = -A; x < L * 2; x += 180) c.fillRect(x, -200, 70, A * 2);
+  c.restore();
+
+  // Faixa escura para o placar.
+  c.fillStyle = 'rgba(0,0,0,0.55)';
+  c.beginPath();
+  c.roundRect(70, 330, L - 140, 420, 40);
+  c.fill();
+
+  c.textAlign = 'center';
+  c.fillStyle = txt;
+  c.font = `800 44px ${FONTE}`;
+  c.fillText('GUERRA DE TORCIDAS · BATE CONTRA MIM', L / 2, 130);
+
+  c.font = `900 78px ${FONTE}`;
+  c.fillText(d.time.nome.toUpperCase(), L / 2, 250);
+
+  c.fillStyle = '#ffffff';
+  c.font = `900 230px ${FONTE}`;
+  c.fillText(`${d.golsJogador} x ${d.golsMaquina}`, L / 2, 600);
+  c.font = `700 40px ${FONTE}`;
+  c.globalAlpha = 0.8;
+  c.fillText('VOCÊ          MÁQUINA', L / 2, 690);
+  c.globalAlpha = 1;
+
+  c.fillStyle = txt;
+  c.font = `900 64px ${FONTE}`;
+  const destaque = quebrarTexto(c, `${d.apelido} fez ${d.pontos} pontos pro ${d.time.nome}`, L - 160);
+  destaque.slice(0, 2).forEach((l, i) => c.fillText(l, L / 2, 860 + i * 76));
+
+  c.font = `italic 600 46px ${FONTE}`;
+  const frase = quebrarTexto(c, `“${d.frase}”`, L - 180);
+  const yFrase = 860 + Math.min(destaque.length, 2) * 76 + 50;
+  frase.slice(0, 3).forEach((l, i) => c.fillText(l, L / 2, yFrase + i * 58));
+
+  // Rodapé com o link.
+  c.fillStyle = '#ffd23f';
+  c.beginPath();
+  c.roundRect(110, A - 190, L - 220, 110, 55);
+  c.fill();
+  c.fillStyle = '#111111';
+  c.font = `900 44px ${FONTE}`;
+  c.fillText('Duvido você me vencer →', L / 2, A - 140);
+  c.font = `700 32px ${FONTE}`;
+  c.fillText(d.link, L / 2, A - 98);
+
+  return canvas;
+}

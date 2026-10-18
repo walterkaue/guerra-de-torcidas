@@ -1,4 +1,6 @@
-// Tela inicial. Por enquanto só apresenta o jogo; o minigame entra na etapa 2.
+import { esc, irPara, type Rota } from '../app';
+import { corDeTexto, timePorId } from '../dados/times';
+import { prefs } from '../estado';
 
 const FRASES = [
   'Joga 30 segundos e bota sua torcida na frente do rival.',
@@ -6,8 +8,18 @@ const FRASES = [
   'O rival tá na frente? Vai deixar?',
 ];
 
-export function renderHome(root: HTMLElement): void {
+export function telaInicio(root: HTMLElement, _rota: Rota): void {
   const frase = FRASES[Math.floor(Math.random() * FRASES.length)];
+  const time = timePorId(prefs.get().time);
+
+  const blocoTime = time
+    ? `<button class="time-atual" type="button" data-acao="trocar"
+         style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
+         <span class="faixa"></span>
+         <span>Você joga pelo <strong>${esc(time.nome)}</strong></span>
+         <small>trocar</small>
+       </button>`
+    : '';
 
   root.innerHTML = `
     <main class="inicio">
@@ -22,8 +34,8 @@ export function renderHome(root: HTMLElement): void {
 
       <section class="placar" aria-label="Exemplo de placar">
         <div class="linha">
-          <span class="pos">1º</span><span class="faixa" style="--c1:#c8102e;--c2:#111"></span>
-          <span class="nome">Sua torcida</span><span class="pts">?</span>
+          <span class="pos">1º</span><span class="faixa" style="--c1:${time?.cores[0] ?? '#c8102e'};--c2:${time?.cores[1] ?? '#111'}"></span>
+          <span class="nome">${time ? esc(time.nome) : 'Sua torcida'}</span><span class="pts">?</span>
         </div>
         <div class="linha">
           <span class="pos">2º</span><span class="faixa" style="--c1:#fff;--c2:#111"></span>
@@ -32,12 +44,20 @@ export function renderHome(root: HTMLElement): void {
       </section>
 
       <section class="acoes">
-        <button class="botao" type="button" disabled>
+        ${blocoTime}
+        <button class="botao" type="button" data-acao="jogar">
           Bate Contra Mim
-          <small>pênaltis · em breve</small>
+          <small>5 cobranças · 5 defesas</small>
         </button>
-        <p class="nota">Sem cadastro. Abre e joga.</p>
+        <p class="nota">Sem cadastro. Abre e joga. Ranking da torcida chega em breve.</p>
       </section>
     </main>
   `;
+
+  root.querySelector('[data-acao="jogar"]')?.addEventListener('click', () => {
+    irPara(time ? { tela: 'partida' } : { tela: 'times', depois: 'partida' });
+  });
+  root.querySelector('[data-acao="trocar"]')?.addEventListener('click', () => {
+    irPara({ tela: 'times', depois: 'inicio' });
+  });
 }

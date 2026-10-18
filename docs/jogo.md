@@ -78,6 +78,22 @@ Minigames de futebol de 30 segundos em que **cada ponto que você faz vai para o
 - O servidor recalcula o resultado com a mesma física determinística e é ele que grava os pontos.
 - Limite de partidas por minuto por jogador.
 
+### Regras de implementação (etapa 2, 18/10/2026)
+- **Ordem:** alterna cobrança e defesa (C, D, C, D…), 5 de cada. Sem cobranças alternadas extras: empate termina empatado e não dá bônus de vitória.
+- **Gesto de cobrança** (inteiros, é o que vai para o servidor): `dir` −100..100, `forca` 0..100, `efeito` −100..100.
+  - Direção: a linha do arraste prolongada até o gol define o canto.
+  - Força: arrastar da bola até o meio do gol ≈ 70 (meia altura). Abaixo de 32 a bola sai rasteira e fraca (o goleiro pega se acertar o lado). Acima de ~90 vai no travessão ou por cima.
+  - Efeito: o quanto o último terço do arraste dobra; desloca a bola até 0,3 de meia-largura do gol.
+  - **Cavadinha:** arraste curtinho (força 8–24) e reto (|dir| ≤ 30). Entra, a não ser que o goleiro fique no meio.
+  - **Ângulo:** bola com |x| > 0,78 e altura > 0,72. Mesmo com o goleiro no canto certo, ele só pega 35% das vezes.
+- **Goleiro da máquina:** lê o chute com chance de 12% (segunda) a 36% (domingo), mais 40% em bola fraca. Quando não lê, pula numa zona sorteada.
+- **Defesa:** a máquina sorteia 1 das 6 zonas. A dica (pé de apoio) aponta a coluna certa em 85% das vezes na segunda e 50% no domingo. Acertar a zona = defesa; acertar a coluna com a altura errada = 40% de chance. A máquina erra (manda pra fora) 8% das cobranças, e isso não conta como defesa.
+- **Dificuldade:** vai de 0 (segunda) a 1 (domingo), pelo horário de Brasília. O tempo para reagir na defesa cai de 1,9 s para 1,2 s depois da corrida.
+- **Determinismo:** cada cobrança e cada defesa usa um sorteio próprio, derivado de (semente, tipo, índice). Por isso a defesa não depende das cobranças, e o plano do batedor pode ser calculado antes. O motor fica em `src/jogo/penaltis.ts`, sem DOM, relógio, `Math.random` nem trigonometria.
+
+### Times oficiais usados (Série A 2026, a confirmar)
+Athletico-PR, Atlético-MG, Bahia, Botafogo, Bragantino, Chapecoense, Corinthians, Coritiba, Cruzeiro, Flamengo, Fluminense, Grêmio, Internacional, Mirassol, Palmeiras, Remo, Santos, São Paulo, Vasco, Vitória e "Outro time". Só nome e cores (`src/dados/times.ts`).
+
 ### Card de resultado
 - Imagem gerada no próprio celular: placar, cores do time, frase do narrador, "Fulano fez 47 pontos pro [time]" e o link do desafio.
 - Botões: WhatsApp, stories (via compartilhamento nativo), copiar link.
