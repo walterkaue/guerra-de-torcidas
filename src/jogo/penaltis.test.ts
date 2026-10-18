@@ -3,12 +3,17 @@ import { criarAleatorio, misturar } from './aleatorio';
 import {
   COBRANCAS,
   PONTOS,
+  RODADAS_EXTRAS_MAX,
+  RODADAS_MAX,
+  type ResultadoCobranca,
+  type ResultadoDefesa,
   type GestoCobranca,
   type Gestos,
   dificuldadePorDia,
   normalizarCobranca,
   normalizarDefesa,
   planejarDefesa,
+  precisaDeOutraRodada,
   resolverCobranca,
   resolverDefesa,
   simularPartida,
@@ -16,13 +21,19 @@ import {
   zonaDoPonto,
 } from './penaltis';
 
-function gestosAleatorios(semente: number): Gestos {
-  const r = criarAleatorio(semente);
+/** Joga uma partida com gestos aleatórios seguindo a regra (inclui morte súbita quando empata). */
+function gestosAleatorios(semente: number, sementeGestos: number, dificuldade = 0.5): Gestos {
+  const r = criarAleatorio(sementeGestos);
   const cobrancas: GestoCobranca[] = [];
   const defesas: number[] = [];
-  for (let i = 0; i < COBRANCAS; i++) {
+  const rc: ResultadoCobranca[] = [];
+  const rd: ResultadoDefesa[] = [];
+  while (precisaDeOutraRodada(rc, rd)) {
+    const i = cobrancas.length;
     cobrancas.push({ dir: r() * 200 - 100, forca: r() * 100, efeito: r() * 200 - 100 });
     defesas.push(Math.floor(r() * 7) - 1);
+    rc.push(resolverCobranca(semente, i, cobrancas[i], dificuldade));
+    rd.push(resolverDefesa(semente, i, defesas[i], dificuldade));
   }
   return { cobrancas, defesas };
 }
@@ -57,21 +68,23 @@ describe('determinismo da partida', () => {
   it('mesma semente + mesmos gestos = mesmo resultado', () => {
     for (let s = 1; s <= 200; s++) {
       const semente = misturar(s);
-      const gestos = gestosAleatorios(s);
+      const gestos = gestosAleatorios(semente, s);
       expect(simularPartida(semente, gestos, 0.5)).toEqual(simularPartida(semente, gestos, 0.5));
     }
   });
 
   it('a defesa não depende das cobranças (o plano pode ser mostrado antes)', () => {
-    const semente = 999;
-    const a = gestosAleatorios(1);
-    const b = { ...gestosAleatorios(2), defesas: a.defesas };
-    expect(simularPartida(semente, a, 0.3).defesas).toEqual(simularPartida(semente, b, 0.3).defesas);
+    for (let i = 0; i < RODADAS_MAX; i++) {
+      for (const zona of [-1, 0, 3, 5]) {
+        expect(resolverDefesa(999, i, zona, 0.3)).toEqual(resolverDefesa(999, i, zona, 0.3));
+        expect(planejarDefesa(999, i, 0.3)).toEqual(planejarDefesa(999, i, 0.3));
+      }
+    }
   });
 
   it('cobrança jogada ao vivo bate com a simulação completa', () => {
     const semente = 2024;
-    const gestos = gestosAleatorios(5);
+    const gestos = gestosAleatorios(semente, 5, 0.4);
     const aoVivo = totalizar(
       gestos.cobrancas.map((g, i) => resolverCobranca(semente, i, g, 0.4)),
       gestos.defesas.map((z, i) => resolverDefesa(semente, i, z, 0.4)),
@@ -81,6 +94,48 @@ describe('determinismo da partida', () => {
 
   it('recusa partida com número errado de gestos', () => {
     expect(() => simularPartida(1, { cobrancas: [], defesas: [] }, 0)).toThrow();
+    const g = gestosAleatorios(1, 1);
+    expect(() => simularPartida(1, { cobrancas: g.cobrancas, defesas: g.defesas.slice(1) }, 0.5)).toThrow();
+  });
+});
+
+describe('morte súbita', () => {
+  it('só acontece quando empata nas 5, e para assim que alguém desempata', () => {
+    let comExtras = 0;
+    for (let s = 1; s <= 500; s++) {
+      const semente = misturar(s, 7);
+      const r = simularPartida(semente, gestosAleatorios(semente, s), 0.5);
+      if (r.rodadasExtras > 0) {
+        comExtras++;
+        const golsJ5 = r.cobrancas.slice(0, 5).filter((c) => c.desfecho === 'gol').length;
+        const golsM5 = r.defesas.slice(0, 5).filter((d) => d.desfecho === 'gol').length;
+        expect(golsJ5).toBe(golsM5);
+      }
+      expect(r.rodadasExtras).toBeLessThanOrEqual(RODADAS_EXTRAS_MAX);
+      if (r.rodadasExtras > 0 && r.rodadasExtras < RODADAS_EXTRAS_MAX) expect(r.empate).toBe(false);
+    }
+    expect(comExtras).toBeGreaterThan(0);
+  });
+
+  it('recusa rodada extra sem empate e falta de rodada com empate', () => {
+    for (let s = 1; s <= 300; s++) {
+      const semente = misturar(s, 9);
+      const g = gestosAleatorios(semente, s);
+      const mais = { cobrancas: [...g.cobrancas, g.cobrancas[0]], defesas: [...g.defesas, 0] };
+      if (g.cobrancas.length < RODADAS_MAX) expect(() => simularPartida(semente, mais, 0.5)).toThrow();
+      if (g.cobrancas.length > COBRANCAS) {
+        const menos = { cobrancas: g.cobrancas.slice(0, -1), defesas: g.defesas.slice(0, -1) };
+        expect(() => simularPartida(semente, menos, 0.5)).toThrow();
+      }
+    }
+  });
+
+  it('empate só sobra depois de todas as rodadas extras', () => {
+    for (let s = 1; s <= 800; s++) {
+      const semente = misturar(s, 11);
+      const r = simularPartida(semente, gestosAleatorios(semente, s), 0.5);
+      if (r.empate) expect(r.rodadasExtras).toBe(RODADAS_EXTRAS_MAX);
+    }
   });
 });
 
@@ -177,7 +232,7 @@ describe('defesa', () => {
 
 describe('pontuação', () => {
   const gol = (extra: Partial<ReturnType<typeof resolverCobranca>> = {}) => ({
-    desfecho: 'gol' as const, x: 0, y: 0.3, zonaBola: 1, zonaGoleiro: 0, angulo: false, cavadinha: false, fraca: false,
+    desfecho: 'gol' as const, x: 0, y: 0.3, zonaBola: 1, zonaGoleiro: 0, angulo: false, raspouTrave: false, cavadinha: false, fraca: false,
     pontos: 10, ...extra,
   });
   const defendida = () => ({ ...gol(), desfecho: 'defesa' as const, pontos: 0 });
@@ -199,6 +254,18 @@ describe('pontuação', () => {
     expect(r.golsJogador).toBe(2);
     expect(r.golsMaquina).toBe(3);
     expect(r.pontos.total).toBe(55);
+  });
+
+  it('morte súbita: gols e defesas extras contam, mas o 5 de 5 olha só as 5 primeiras', () => {
+    const r = totalizar(
+      [defendida(), gol(), gol(), gol(), gol(), gol()],
+      [defesa(), defesa(), defesa(), defesa(), sofrido(), defesa()],
+    );
+    expect(r.rodadasExtras).toBe(1);
+    expect(r.venceu).toBe(true);
+    expect(r.cincoCobrancas).toBe(false);
+    expect(r.cincoDefesas).toBe(false);
+    expect(r.pontos).toMatchObject({ gols: 50, defesas: 50, vitoria: 20, cincoDeCinco: 0 });
   });
 
   it('empate não dá bônus de vitória', () => {

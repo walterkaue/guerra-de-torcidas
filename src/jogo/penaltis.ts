@@ -4,7 +4,11 @@
 
 import { criarAleatorio, inteiro, misturar } from './aleatorio';
 
+/** Cobranças (e defesas) do tempo normal. */
 export const COBRANCAS = 5;
+/** Rodadas de morte súbita (1 cobrança + 1 defesa) se empatar; depois disso fica empate. */
+export const RODADAS_EXTRAS_MAX = 5;
+export const RODADAS_MAX = COBRANCAS + RODADAS_EXTRAS_MAX;
 
 /**
  * Gesto de cobrança, já quantizado em inteiros (é isso que vai para o servidor).
@@ -45,6 +49,8 @@ export interface ResultadoCobranca {
   zonaBola: number;
   zonaGoleiro: number;
   angulo: boolean;
+  /** Gol que entrou raspando a trave ou o travessão (só muda a narração). */
+  raspouTrave: boolean;
   cavadinha: boolean;
   /** Bola fraca, rolando. */
   fraca: boolean;
@@ -84,6 +90,11 @@ export interface ResultadoPartida {
   defesas: ResultadoDefesa[];
   golsJogador: number;
   golsMaquina: number;
+  /** Rodadas de morte súbita jogadas (0 a RODADAS_EXTRAS_MAX). */
+  rodadasExtras: number;
+  /** 5 de 5 nas cinco primeiras cobranças / defesas (a morte súbita não conta). */
+  cincoCobrancas: boolean;
+  cincoDefesas: boolean;
   venceu: boolean;
   empate: boolean;
   pontos: Pontuacao;
@@ -170,7 +181,7 @@ export function resolverCobranca(
   // Contra a cavadinha, o goleiro que lê fica parado no meio.
   if (cavadinha && leitura < chanceLer) zonaGoleiro = 1;
 
-  const base: Omit<ResultadoCobranca, 'desfecho' | 'pontos' | 'angulo'> = {
+  const base: Omit<ResultadoCobranca, 'desfecho' | 'pontos' | 'angulo' | 'raspouTrave'> = {
     x,
     y,
     zonaBola,
@@ -180,8 +191,9 @@ export function resolverCobranca(
   };
 
   const naTrave = (Math.abs(x) > 1 && Math.abs(x) <= 1.06 && y <= 1) || (y > 1 && y <= 1.05 && Math.abs(x) <= 1);
-  if (naTrave) return { ...base, desfecho: 'trave', angulo: false, pontos: 0 };
-  if (Math.abs(x) > 1 || y > 1) return { ...base, desfecho: 'fora', angulo: false, pontos: 0 };
+  if (naTrave) return { ...base, desfecho: 'trave', angulo: false, raspouTrave: false, pontos: 0 };
+  if (Math.abs(x) > 1 || y > 1) return { ...base, desfecho: 'fora', angulo: false, raspouTrave: false, pontos: 0 };
+  const raspouTrave = Math.abs(x) > 0.95 || y > 0.95;
 
   const angulo = !cavadinha && Math.abs(x) > 0.78 && y > 0.72;
 
@@ -199,10 +211,10 @@ export function resolverCobranca(
     defendeu = false;
   }
 
-  if (defendeu) return { ...base, desfecho: 'defesa', angulo, pontos: 0 };
+  if (defendeu) return { ...base, desfecho: 'defesa', angulo, raspouTrave: false, pontos: 0 };
 
   const pontos = PONTOS.gol + (angulo ? PONTOS.angulo : 0) + (cavadinha ? PONTOS.cavadinha : 0);
-  return { ...base, desfecho: 'gol', angulo, pontos };
+  return { ...base, desfecho: 'gol', angulo, raspouTrave, pontos };
 }
 
 /** O que a máquina vai fazer na cobrança i (mostrado ao jogador só como "dica"). */
@@ -241,23 +253,50 @@ export function resolverDefesa(
     : { desfecho: 'gol', alvo: plano.alvo, zonaGoleiro, pontos: 0 };
 }
 
+const contarGols = (c: readonly ResultadoCobranca[]) => c.filter((r) => r.desfecho === 'gol').length;
+const contarSofridos = (d: readonly ResultadoDefesa[]) => d.filter((r) => r.desfecho === 'gol').length;
+
+/**
+ * Depois de `defesas.length` rodadas completas (cobrança + defesa), precisa de mais uma?
+ * Sempre nas 5 primeiras; depois, só se estiver empatado e ainda houver morte súbita.
+ */
+export function precisaDeOutraRodada(
+  cobrancas: readonly ResultadoCobranca[],
+  defesas: readonly ResultadoDefesa[],
+): boolean {
+  const n = defesas.length;
+  if (n < COBRANCAS) return true;
+  if (n >= RODADAS_MAX) return false;
+  return contarGols(cobrancas.slice(0, n)) === contarSofridos(defesas);
+}
+
 /** Recalcula a partida inteira. É esta função que o servidor vai rodar. */
 export function simularPartida(semente: number, gestos: Gestos, dificuldade: number): ResultadoPartida {
-  if (gestos.cobrancas.length !== COBRANCAS || gestos.defesas.length !== COBRANCAS) {
-    throw new Error(`A partida precisa de ${COBRANCAS} cobranças e ${COBRANCAS} defesas.`);
+  const n = gestos.cobrancas.length;
+  if (n !== gestos.defesas.length || n < COBRANCAS || n > RODADAS_MAX) {
+    throw new Error(`A partida precisa de ${COBRANCAS} a ${RODADAS_MAX} cobranças, e o mesmo número de defesas.`);
   }
   const d = limitar(dificuldade, 0, 1);
-  const cobrancas = gestos.cobrancas.map((g, i) => resolverCobranca(semente, i, g, d));
-  const defesas = gestos.defesas.map((z, i) => resolverDefesa(semente, i, z, d));
+  const cobrancas: ResultadoCobranca[] = [];
+  const defesas: ResultadoDefesa[] = [];
+  for (let i = 0; i < n; i++) {
+    // Rodada a mais do que a regra permite (ex.: morte súbita depois de desempatar) é recusada.
+    if (!precisaDeOutraRodada(cobrancas, defesas)) throw new Error(`Rodada ${i + 1} não deveria existir.`);
+    cobrancas.push(resolverCobranca(semente, i, gestos.cobrancas[i], d));
+    defesas.push(resolverDefesa(semente, i, gestos.defesas[i], d));
+  }
+  if (precisaDeOutraRodada(cobrancas, defesas)) throw new Error('Faltam rodadas de morte súbita.');
   return totalizar(cobrancas, defesas);
 }
 
 export function totalizar(cobrancas: ResultadoCobranca[], defesas: ResultadoDefesa[]): ResultadoPartida {
-  const golsJogador = cobrancas.filter((c) => c.desfecho === 'gol').length;
-  const golsMaquina = defesas.filter((d) => d.desfecho === 'gol').length;
+  const golsJogador = contarGols(cobrancas);
+  const golsMaquina = contarSofridos(defesas);
   const nDefesas = defesas.filter((d) => d.desfecho === 'defesa').length;
   const venceu = golsJogador > golsMaquina;
   const empate = golsJogador === golsMaquina;
+  const cincoCobrancas = contarGols(cobrancas.slice(0, COBRANCAS)) === COBRANCAS;
+  const cincoDefesas = defesas.slice(0, COBRANCAS).filter((d) => d.desfecho === 'defesa').length === COBRANCAS;
 
   const pontos: Pontuacao = {
     gols: golsJogador * PONTOS.gol,
@@ -265,12 +304,22 @@ export function totalizar(cobrancas: ResultadoCobranca[], defesas: ResultadoDefe
     cavadinhas: cobrancas.filter((c) => c.desfecho === 'gol' && c.cavadinha).length * PONTOS.cavadinha,
     defesas: nDefesas * PONTOS.defesa,
     vitoria: venceu ? PONTOS.vitoria : 0,
-    cincoDeCinco:
-      (golsJogador === COBRANCAS ? PONTOS.cincoDeCinco : 0) + (nDefesas === COBRANCAS ? PONTOS.cincoDeCinco : 0),
+    cincoDeCinco: (cincoCobrancas ? PONTOS.cincoDeCinco : 0) + (cincoDefesas ? PONTOS.cincoDeCinco : 0),
     total: 0,
   };
   pontos.total =
     pontos.gols + pontos.angulos + pontos.cavadinhas + pontos.defesas + pontos.vitoria + pontos.cincoDeCinco;
 
-  return { cobrancas, defesas, golsJogador, golsMaquina, venceu, empate, pontos };
+  return {
+    cobrancas,
+    defesas,
+    golsJogador,
+    golsMaquina,
+    rodadasExtras: Math.max(0, defesas.length - COBRANCAS),
+    cincoCobrancas,
+    cincoDefesas,
+    venceu,
+    empate,
+    pontos,
+  };
 }

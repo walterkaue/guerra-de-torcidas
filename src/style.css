@@ -420,12 +420,12 @@ body {
   color: var(--texto-suave);
 }
 
+/* Frases de até 75 caracteres cabem em 2 linhas a 390 px. A caixa alta já vem no texto. */
 .narrador {
   top: 38%;
-  font-size: 22px;
+  font-size: 19px;
   font-weight: 900;
-  text-transform: uppercase;
-  line-height: 1.15;
+  line-height: 1.2;
   text-shadow: 0 2px 0 #000, 0 0 12px rgba(0, 0, 0, 0.6);
   opacity: 0;
 }
@@ -450,7 +450,15 @@ body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
+.frase-final {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+
 .pontos h2 {
+  margin-top: 6px;
   font-size: 22px;
   font-weight: 900;
   margin-bottom: 8px;

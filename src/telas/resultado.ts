@@ -1,7 +1,9 @@
 import { esc, irPara, type DadosResultado, type Rota } from '../app';
-import { corDeTexto, timePorId, TIMES } from '../dados/times';
+import { corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
 import { prefs } from '../estado';
 import { desenharCard } from '../jogo/card';
+import { escolherFrase } from '../narrador/escolher';
+import { contextoDoTime } from '../narrador/sessao';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 
@@ -9,13 +11,19 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   if (rota.tela !== 'resultado') return;
   const d: DadosResultado = rota.dados;
   const time = timePorId(d.timeId) ?? TIMES[TIMES.length - 1];
-  const apelido = prefs.get().apelido || 'Um torcedor';
+  const apelidoSalvo = prefs.get().apelido;
+  const apelido = apelidoSalvo || 'Um torcedor';
   const { resultado: r } = d;
   const p = r.pontos;
 
   // Etapa 3: este link vira o desafio "duvido você me vencer" com as cobranças gravadas.
   const link = `${SITE}/?time=${time.id}`;
-  const textoShare = `${apelido} fez ${p.total} pontos pro ${time.nome} no Bate Contra Mim (${r.golsJogador} x ${r.golsMaquina}). Duvido você me vencer! ${link}`;
+  const paraTime = proTime(time);
+  // Texto do convite vem do banco do narrador (desafio_convite), sorteado com o gerador do narrador.
+  const convite =
+    escolherFrase('desafio_convite', { ...contextoDoTime(time, apelidoSalvo), pontos: p.total }, Math.random)?.texto ??
+    'Duvido você me vencer!';
+  const textoShare = `${convite} ${link}`;
 
   const linhas: [string, number][] = [
     ['Gols', p.gols],
@@ -31,7 +39,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
       <img class="card" alt="Card do resultado" />
 
       <section class="pontos">
-        <h2>${p.total} pontos pro ${esc(time.nome)}</h2>
+        ${d.frasesFinais.map((t) => `<p class="frase-final">${esc(t)}</p>`).join('')}
+        <h2>${p.total} pontos${paraTime ? ` ${esc(paraTime)}` : ''}</h2>
         <ul>
           ${linhas
             .filter(([, v]) => v > 0)
@@ -59,10 +68,11 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   const canvas = desenharCard({
     time,
     apelido,
+    paraTime,
     golsJogador: r.golsJogador,
     golsMaquina: r.golsMaquina,
     pontos: p.total,
-    frase: d.fraseFinal,
+    frase: d.frasesFinais[0] ?? '',
     link: link.replace('https://', ''),
   });
   const img = root.querySelector<HTMLImageElement>('.card')!;

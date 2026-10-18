@@ -79,6 +79,27 @@ Minigames de futebol de 30 segundos em que **cada ponto que você faz vai para o
 - O servidor recalcula o resultado com a mesma física determinística e é ele que grava os pontos.
 - Limite de partidas por minuto por jogador.
 
+### Fim da disputa (decidido em 18/10/2026)
+- Sempre se jogam as 5 cobranças e as 5 defesas, alternadas (C, D, C, D…).
+- **Empatou nas 5: morte súbita.** Segue 1 cobrança + 1 defesa por rodada até alguém ficar na frente ao fim da rodada, com no máximo **5 rodadas extras**. Se ainda empatar, a partida termina empatada (sem bônus de vitória).
+- Gols e defesas da morte súbita contam pontos normalmente. O **5 de 5** só olha as 5 primeiras cobranças e defesas.
+- O servidor recusa partida com rodada a mais (morte súbita depois de desempatar) ou a menos (empate com morte súbita sobrando).
+
+### Regras de implementação
+- **Gesto de cobrança** (inteiros, é o que vai para o servidor): `dir` −100..100, `forca` 0..100, `efeito` −100..100.
+  - Direção: a linha do arraste prolongada até o gol define o canto.
+  - Força: arrastar da bola até o meio do gol ≈ 70 (meia altura). Abaixo de 32, a bola sai rasteira e fraca (o goleiro pega se acertar o lado). Acima de ~90, vai no travessão ou por cima.
+  - Efeito: o quanto o último terço do arraste dobra. Desloca a bola até 0,3 de meia-largura do gol.
+  - **Cavadinha:** arraste curtinho (força 8–24) e reto (|dir| ≤ 30). Entra, a não ser que o goleiro fique no meio.
+  - **Ângulo:** bola com |x| > 0,78 e altura > 0,72. Mesmo com o goleiro no canto certo, ele só pega 35% das vezes.
+  - **Trave e gol** (só para a narração): gol com |x| > 0,95 ou altura > 0,95.
+- **Goleiro da máquina:** lê o chute com chance de 12% (segunda) a 36% (domingo), mais 40% se a bola for fraca. Quando não lê, pula numa zona sorteada.
+- **Defesa:** a máquina sorteia 1 das 6 zonas. A dica (pé de apoio) aponta a coluna certa em 85% das vezes na segunda e em 50% no domingo. Acertar a zona = defesa. Acertar a coluna com a altura errada = 40% de chance. A máquina manda pra fora 8% das cobranças, e isso não conta como defesa.
+- **Dificuldade:** de 0 (segunda) a 1 (domingo), pelo horário de Brasília. O tempo para reagir na defesa cai de 1,9 s para 1,2 s depois da corrida.
+- **Determinismo:** cada cobrança e cada defesa usa um sorteio próprio, derivado de (semente, tipo, índice). O motor fica em `src/jogo/penaltis.ts`, sem DOM, relógio, `Math.random` nem trigonometria. O narrador sorteia com o próprio gerador e nunca toca na semente.
+- **Apelido:** até 16 caracteres, para toda frase do narrador caber em 75.
+- **Times oficiais:** nome, 2 cores, artigo e rival em `src/dados/times.ts`.
+
 ### Card de resultado
 - Imagem gerada no próprio celular: placar, cores do time, frase do narrador, "Fulano fez 47 pontos pro [time]" e o link do desafio.
 - Botões: WhatsApp, stories (via compartilhamento nativo), copiar link.

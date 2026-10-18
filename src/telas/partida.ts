@@ -5,14 +5,17 @@ import { irPara, type Rota } from '../app';
 import { corDeTexto, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { sementeNova } from '../jogo/aleatorio';
-import { narrarCobranca, narrarDefesa, narrarFinal } from '../jogo/narrador';
+import { eventoDaCobranca, eventoDaDefesa, eventosDoFim } from '../narrador/lance';
+import { criarNarrador } from '../narrador/sessao';
 import {
   COBRANCAS,
+  RODADAS_EXTRAS_MAX,
   coluna,
   dificuldadePorDia,
   linha,
   normalizarCobranca,
   planejarDefesa,
+  precisaDeOutraRodada,
   resolverCobranca,
   resolverDefesa,
   totalizar,
@@ -50,6 +53,7 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
   const time: Time = timePorId(prefs.get().time) ?? TIMES[TIMES.length - 1];
   const semente = sementeNova();
   const dificuldade = dificuldadePorDia(diaEmBrasilia());
+  const narrador = criarNarrador(time, prefs.get().apelido);
 
   root.innerHTML = `
     <main class="partida" style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
@@ -78,7 +82,7 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
   const defesas: ResultadoDefesa[] = [];
   const gestosCobranca: GestoCobranca[] = [];
   const gestosDefesa: number[] = [];
-  let rodada = 0; // 0..4
+  let rodada = 0; // 0..4 no tempo normal, 5..9 na morte súbita
   let fase: Fase = { tipo: 'mirar' };
   let rastro: { x: number; y: number }[] = [];
   let acabou = false;
@@ -117,7 +121,7 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
     root.querySelector('[data-gols="jogador"]')!.textContent = String(golsJ);
     root.querySelector('[data-gols="maquina"]')!.textContent = String(golsM);
     const bolinhas = (lista: { desfecho: string }[], marcou: (d: string) => boolean) =>
-      Array.from({ length: COBRANCAS }, (_, i) => {
+      Array.from({ length: Math.max(COBRANCAS, lista.length) }, (_, i) => {
         const r = lista[i];
         const cls = r ? (marcou(r.desfecho) ? 'b-gol' : 'b-erro') : '';
         return `<i class="${cls}"></i>`;
@@ -127,7 +131,8 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
     elMudo.textContent = prefs.get().mudo ? '🔇' : '🔊';
   }
 
-  function narrar(texto: string): void {
+  function narrar(texto: string | null): void {
+    if (!texto) return;
     elNarrador.textContent = texto;
     elNarrador.classList.remove('pulso');
     void elNarrador.offsetWidth;
@@ -139,20 +144,44 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
   }
 
   // ---------- fluxo ----------
+  const golsJogador = () => cobrancas.filter((r) => r.desfecho === 'gol').length;
+  const golsMaquina = () => defesas.filter((r) => r.desfecho === 'gol').length;
+
+  /** Última cobrança do tempo normal com a disputa em aberto (na morte súbita só a defesa). */
+  function cobrancaDecisiva(): boolean {
+    if (rodada !== COBRANCAS - 1) return false;
+    const j = golsJogador();
+    const m = golsMaquina();
+    return !(j + 1 < m || j > m + 1);
+  }
+
+  /** Defesa que pode decidir: depois dela, ou acaba, ou empata. */
+  function defesaDecisiva(): boolean {
+    if (rodada < COBRANCAS - 1) return false;
+    const dif = golsJogador() - golsMaquina();
+    return dif === 0 || dif === 1;
+  }
+
   function comecarCobranca(): void {
     fase = { tipo: 'mirar' };
     rastro = [];
+    const extra = rodada - COBRANCAS + 1;
     instruir(
       rodada === 0
         ? 'Arraste da bola pro gol. Mais longo = mais forte. Curve no fim para dar efeito.'
-        : `Cobrança ${rodada + 1} de ${COBRANCAS}. Arraste para chutar.`,
+        : extra > 0
+          ? `${extra === 1 ? 'Empatou! ' : ''}Morte súbita: rodada extra ${extra} de ${RODADAS_EXTRAS_MAX}.`
+          : `Cobrança ${rodada + 1} de ${COBRANCAS}. Arraste para chutar.`,
     );
+    if (rodada === 0) narrar(narrador.falar('abertura'));
+    else if (cobrancaDecisiva()) narrar(narrador.falar('decisiva'));
   }
 
   function comecarDefesa(): void {
     const plano = planejarDefesa(semente, rodada, dificuldade);
     fase = { tipo: 'corrida', inicio: performance.now(), plano, zona: null, pulouEm: null };
     instruir('Agora você é o goleiro! Olhe o pé de apoio e toque onde pular.');
+    if (defesaDecisiva()) narrar(narrador.falar('decisiva'));
   }
 
   function depoisDe(ms: number, fn: () => void): void {
@@ -171,7 +200,7 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
   function fimDoChute(r: ResultadoCobranca): void {
     cobrancas.push(r);
     atualizarHud();
-    narrar(narrarCobranca(r, time.nome));
+    narrar(narrador.falar(eventoDaCobranca(r)));
     somTorcida(r.desfecho === 'gol' ? 'festa' : 'uuuh');
     depoisDe(1500, comecarDefesa);
   }
@@ -186,10 +215,13 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
   function fimDaDefesa(r: ResultadoDefesa): void {
     defesas.push(r);
     atualizarHud();
-    narrar(narrarDefesa(r, time.nome));
+    const evento = eventoDaDefesa(r);
+    if (evento) narrar(narrador.falar(evento));
+    // O banco ainda não tem frases para o batedor da máquina errar: fica só o aviso.
+    else instruir('O batedor isolou! Nem precisou pular.');
     somTorcida(r.desfecho === 'defesa' ? 'festa' : 'uuuh');
     rodada++;
-    if (rodada < COBRANCAS) depoisDe(1500, comecarCobranca);
+    if (precisaDeOutraRodada(cobrancas, defesas)) depoisDe(1500, comecarCobranca);
     else depoisDe(1600, encerrar);
   }
 
@@ -205,7 +237,11 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
         dificuldade,
         gestos: { cobrancas: gestosCobranca, defesas: gestosDefesa },
         resultado,
-        fraseFinal: narrarFinal(resultado, time.nome),
+        frasesFinais: eventosDoFim(resultado)
+          .map((ev) =>
+            narrador.falar(ev, { placar: `${resultado.golsJogador} x ${resultado.golsMaquina}`, pontos: resultado.pontos.total }),
+          )
+          .filter((f): f is string => !!f),
       },
     });
   }

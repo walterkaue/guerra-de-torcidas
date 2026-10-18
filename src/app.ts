@@ -8,7 +8,8 @@ export interface DadosResultado {
   dificuldade: number;
   gestos: Gestos;
   resultado: ResultadoPartida;
-  fraseFinal: string;
+  /** Até 2 frases do narrador para a tela final (5 de 5, depois o resultado). */
+  frasesFinais: string[];
 }
 
 export type Rota =

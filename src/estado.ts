@@ -3,6 +3,9 @@
 
 const CHAVE = 'gdt:prefs';
 
+/** Tamanho máximo do apelido: com 16, toda frase do narrador cabe em 75 caracteres. */
+export const APELIDO_MAX = 16;
+
 interface Prefs {
   time?: string;
   apelido?: string;

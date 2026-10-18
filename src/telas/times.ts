@@ -1,6 +1,6 @@
 import { esc, irPara, type Rota } from '../app';
 import { TIMES, corDeTexto } from '../dados/times';
-import { prefs } from '../estado';
+import { APELIDO_MAX, prefs } from '../estado';
 
 export function telaTimes(root: HTMLElement, rota: Rota): void {
   const depois = rota.tela === 'times' ? (rota.depois ?? 'partida') : 'partida';
@@ -18,7 +18,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
           (t) => `
           <button type="button" role="radio" class="cartao-time" data-id="${t.id}"
             aria-checked="${t.id === atual.time}"
-            style="--c1:${t.cores[0]};--c2:${t.cores[1]};--c3:${t.cores[2] ?? t.cores[1]};--txt:${corDeTexto(t.cores[0])}">
+            style="--c1:${t.cores[0]};--c2:${t.cores[1]};--c3:${t.cores[1]};--txt:${corDeTexto(t.cores[0])}">
             <span class="listras"></span>
             <span class="nome-time">${esc(t.nome)}</span>
           </button>`,
@@ -27,7 +27,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
 
       <label class="campo">
         <span>Seu apelido no card <small>(opcional)</small></span>
-        <input type="text" maxlength="20" autocomplete="off" placeholder="Ex.: Zé da Geral"
+        <input type="text" maxlength="${APELIDO_MAX}" autocomplete="off" placeholder="Ex.: Zé da Geral"
           value="${esc(atual.apelido ?? '')}" />
       </label>
 
@@ -51,7 +51,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
 
   confirmar.addEventListener('click', () => {
     if (!escolhido) return;
-    prefs.set({ time: escolhido, apelido: input.value.trim().slice(0, 20) || undefined });
+    prefs.set({ time: escolhido, apelido: input.value.trim().slice(0, APELIDO_MAX) || undefined });
     irPara(depois === 'partida' ? { tela: 'partida' } : { tela: 'inicio' });
   });
 

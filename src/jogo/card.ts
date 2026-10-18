@@ -5,6 +5,8 @@ import { corDeTexto, type Time } from '../dados/times';
 export interface DadosCard {
   time: Time;
   apelido: string;
+  /** "pro Flamengo" / "pra Chapecoense"; null para "Outro time". */
+  paraTime: string | null;
   golsJogador: number;
   golsMaquina: number;
   pontos: number;
@@ -73,7 +75,7 @@ export function desenharCard(d: DadosCard): HTMLCanvasElement {
 
   c.fillStyle = txt;
   c.font = `900 64px ${FONTE}`;
-  const destaque = quebrarTexto(c, `${d.apelido} fez ${d.pontos} pontos pro ${d.time.nome}`, L - 160);
+  const destaque = quebrarTexto(c, `${d.apelido} fez ${d.pontos} pontos${d.paraTime ? ` ${d.paraTime}` : ''}`, L - 160);
   destaque.slice(0, 2).forEach((l, i) => c.fillText(l, L / 2, 860 + i * 76));
 
   c.font = `italic 600 46px ${FONTE}`;

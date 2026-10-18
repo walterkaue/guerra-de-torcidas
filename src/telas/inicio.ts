@@ -1,5 +1,5 @@
 import { esc, irPara, type Rota } from '../app';
-import { corDeTexto, timePorId } from '../dados/times';
+import { ID_OUTRO, corDeTexto, timePorId } from '../dados/times';
 import { prefs } from '../estado';
 
 const FRASES = [
@@ -16,7 +16,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): void {
     ? `<button class="time-atual" type="button" data-acao="trocar"
          style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
          <span class="faixa"></span>
-         <span>Você joga pelo <strong>${esc(time.nome)}</strong></span>
+         <span>${time.id === ID_OUTRO ? 'Você joga pelo' : `Você joga ${time.artigo === 'a' ? 'pela' : 'pelo'}`} <strong>${esc(time.id === ID_OUTRO ? 'seu time' : time.nome)}</strong></span>
          <small>trocar</small>
        </button>`
     : '';
