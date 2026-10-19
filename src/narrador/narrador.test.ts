@@ -3,13 +3,21 @@ import { describe, expect, it } from 'vitest';
 import { ID_OUTRO, TIMES, rivalDe } from '../dados/times';
 import { APELIDO_MAX } from '../estado';
 import { criarAleatorio } from '../jogo/aleatorio';
-import { escolherFrase, preencher, variaveisDa, VARIAVEIS, type ContextoNarrador, type TimeNarrado } from './escolher';
+import {
+  MAX_CARACTERES,
+  escolherFrase,
+  preencher,
+  temLimite,
+  variaveisDa,
+  VARIAVEIS,
+  type ContextoNarrador,
+  type TimeNarrado,
+} from './escolher';
 import { FRASES, type EventoNarrador, type Frase } from './frases';
 import { eventoDaCobranca } from './lance';
 import type { ResultadoCobranca } from '../jogo/penaltis';
 
 const TODAS = Object.entries(FRASES) as [EventoNarrador, readonly Frase[]][];
-const MAX_CARACTERES = 75;
 
 /** Mesmo parser do scripts/gerar-frases.mjs: garante que frases.ts está em dia com o .md. */
 function lerBanco(texto: string): Record<string, Frase[]> {
@@ -41,18 +49,32 @@ const maisLongo = porTamanho[0];
 // "da"/"pra"/"na" têm o mesmo tamanho de "do"/"pro"/"no".
 const longo: TimeNarrado = { nome: maisLongo.nome, artigo: 'o' };
 const rivalLongo: TimeNarrado = { nome: porTamanho[1].nome, artigo: 'o' };
+// Apelido de tamanho típico. Com o máximo (20), "A torcida {do_time} grita: {apelido}! {apelido}!"
+// e uma de desafio passam de 75: o escolherFrase pula essas (teste mais abaixo).
+const apelidoTipico = 'W'.repeat(12);
 const apelidoMax = 'W'.repeat(APELIDO_MAX);
 const CONTEXTO_LONGO: ContextoNarrador = {
   time: longo,
   rival: rivalLongo,
-  apelido: apelidoMax,
-  desafiante: apelidoMax,
+  apelido: apelidoTipico,
+  desafiante: apelidoTipico,
   placar: '10 x 10',
   pontos: 225,
   dif: '1.000 pontos',
   horas: '23 horas',
   posicao: '20º',
+  numero: 5,
 };
+
+// Pedido do Kauê: lance, fim de partida, desempate e desafio cabem em 75 caracteres.
+// Ranking e cidade ficam de fora (aparecem em blocos maiores da tela inicial e do ranking).
+const LIMITADOS: EventoNarrador[] = [
+  'abertura', 'gol', 'gol_angulo', 'cavadinha', 'cavadinha_falhou', 'trave_gol', 'trave',
+  'fora_cima', 'fora_lado', 'goleiro_pegou', 'defesa', 'sofreu_gol', 'decisiva',
+  'morte_subita', 'par_ou_impar_escolha', 'par_ou_impar_ganhou', 'par_ou_impar_perdeu',
+  'vitoria', 'derrota', 'cinco_cobrancas', 'cinco_defesas',
+  'desafio_convite', 'desafio_vitoria', 'desafio_derrota',
+];
 
 describe('banco de frases', () => {
   it('frases.ts está em dia com docs/narrador.md (rode npm run frases)', () => {
@@ -68,14 +90,32 @@ describe('banco de frases', () => {
     expect(desconhecidas).toEqual([]);
   });
 
-  it(`nenhuma frase passa de ${MAX_CARACTERES} caracteres com o time mais longo (${maisLongo.nome}) e apelido de ${APELIDO_MAX}`, () => {
-    const longas = TODAS.flatMap(([ev, l]) =>
+  it(`lance, fim, desempate e desafio: até ${MAX_CARACTERES} caracteres com ${maisLongo.nome} e apelido de 12`, () => {
+    const longas = TODAS.filter(([ev]) => LIMITADOS.includes(ev)).flatMap(([ev, l]) =>
       l
         .map((f) => preencher(f.t, CONTEXTO_LONGO)!)
         .filter((t) => t.length > MAX_CARACTERES)
         .map((t) => `${ev} (${t.length}): ${t}`),
     );
     expect(longas).toEqual([]);
+  });
+
+  it(`com apelido de ${APELIDO_MAX}, nenhuma frase acima de ${MAX_CARACTERES} chega à tela`, () => {
+    const rng = criarAleatorio(77);
+    const ctx = { ...CONTEXTO_LONGO, apelido: apelidoMax, desafiante: apelidoMax };
+    for (const ev of LIMITADOS) {
+      expect(temLimite(ev), ev).toBe(true);
+      for (let i = 0; i < 200; i++) {
+        const f = escolherFrase(ev, ctx, rng);
+        expect(f, ev).not.toBeNull();
+        expect(f!.texto.length, f!.texto).toBeLessThanOrEqual(MAX_CARACTERES);
+      }
+    }
+  });
+
+  it('toda situação da lista de limitados existe no banco', () => {
+    for (const ev of LIMITADOS) expect(FRASES[ev], ev).toBeDefined();
+    expect(FRASES).not.toHaveProperty('empate');
   });
 
   it('nenhuma frase escreve nome de clube direto (só variáveis)', () => {

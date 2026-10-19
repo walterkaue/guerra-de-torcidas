@@ -483,3 +483,93 @@ body {
   flex-direction: column;
   gap: 12px;
 }
+
+/* ---------- par ou ímpar ---------- */
+.par-ou-impar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(6, 30, 16, 0.94);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+.par-ou-impar h2 {
+  font-size: 26px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--amarelo);
+}
+
+.poi-paridade {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.poi-numeros {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.poi-paridade button,
+.poi-numeros button {
+  min-height: 56px;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cal);
+  font: inherit;
+  font-size: 22px;
+  font-weight: 900;
+  touch-action: manipulation;
+}
+
+.poi-paridade button {
+  font-size: 20px;
+  text-transform: uppercase;
+}
+
+.poi-paridade button[aria-checked='true'],
+.poi-numeros button[aria-checked='true'] {
+  border-color: var(--amarelo);
+  background: var(--amarelo);
+  color: #1a1a1a;
+}
+
+.poi-rotulo {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.poi-status {
+  min-height: 24px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.par-ou-impar.pensando .poi-status {
+  animation: pensando 1s ease-in-out infinite;
+}
+
+@keyframes pensando {
+  50% { opacity: 0.4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .par-ou-impar.pensando .poi-status,
+  .narrador.pulso {
+    animation: none;
+    opacity: 1;
+  }
+}

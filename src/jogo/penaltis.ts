@@ -6,8 +6,8 @@ import { criarAleatorio, inteiro, misturar } from './aleatorio';
 
 /** Cobranças (e defesas) do tempo normal. */
 export const COBRANCAS = 5;
-/** Rodadas de morte súbita (1 cobrança + 1 defesa) se empatar; depois disso fica empate. */
-export const RODADAS_EXTRAS_MAX = 5;
+/** Rodadas de morte súbita (1 cobrança + 1 defesa) se empatar; depois, par ou ímpar. */
+export const RODADAS_EXTRAS_MAX = 3;
 export const RODADAS_MAX = COBRANCAS + RODADAS_EXTRAS_MAX;
 
 /**
@@ -25,10 +25,29 @@ export interface GestoCobranca {
 /** Zona escolhida na defesa: 0..5 (linha*3 + coluna) ou -1 se não pulou. */
 export type GestoDefesa = number;
 
+export type Paridade = 'par' | 'impar';
+
+/** Escolha do jogador no par ou ímpar: paridade e um número de 0 a 5. */
+export interface EscolhaParOuImpar {
+  escolha: Paridade;
+  numero: number;
+}
+
 export interface Gestos {
   cobrancas: GestoCobranca[];
   defesas: GestoDefesa[];
+  /** Só existe se a morte súbita terminar empatada. */
+  parOuImpar?: EscolhaParOuImpar;
 }
+
+export interface ResultadoParOuImpar extends EscolhaParOuImpar {
+  /** Número do narrador (0 a 5). Vem do servidor, gerado com um segredo, depois da escolha. */
+  numeroNarrador: number;
+  soma: number;
+  ganhou: boolean;
+}
+
+export type Decisao = 'tempo_normal' | 'morte_subita' | 'par_ou_impar';
 
 /**
  * Zonas do gol vistas de trás do batedor:
@@ -95,8 +114,10 @@ export interface ResultadoPartida {
   /** 5 de 5 nas cinco primeiras cobranças / defesas (a morte súbita não conta). */
   cincoCobrancas: boolean;
   cincoDefesas: boolean;
+  /** Toda disputa termina com vencedor: não existe empate. */
   venceu: boolean;
-  empate: boolean;
+  decisao: Decisao;
+  parOuImpar?: ResultadoParOuImpar;
   pontos: Pontuacao;
 }
 
@@ -270,8 +291,34 @@ export function precisaDeOutraRodada(
   return contarGols(cobrancas.slice(0, n)) === contarSofridos(defesas);
 }
 
-/** Recalcula a partida inteira. É esta função que o servidor vai rodar. */
-export function simularPartida(semente: number, gestos: Gestos, dificuldade: number): ResultadoPartida {
+/** Depois de todas as rodadas, ainda empatado: decide no par ou ímpar. */
+export function precisaDeParOuImpar(
+  cobrancas: readonly ResultadoCobranca[],
+  defesas: readonly ResultadoDefesa[],
+): boolean {
+  return defesas.length >= RODADAS_MAX && contarGols(cobrancas) === contarSofridos(defesas);
+}
+
+const numeroValido = (n: number) => Number.isInteger(n) && n >= 0 && n <= 5;
+
+export function resolverParOuImpar(e: EscolhaParOuImpar, numeroNarrador: number): ResultadoParOuImpar {
+  if (e.escolha !== 'par' && e.escolha !== 'impar') throw new Error('Escolha par ou ímpar inválida.');
+  if (!numeroValido(e.numero) || !numeroValido(numeroNarrador)) throw new Error('Número fora de 0 a 5.');
+  const soma = e.numero + numeroNarrador;
+  const ganhou = (soma % 2 === 0) === (e.escolha === 'par');
+  return { escolha: e.escolha, numero: e.numero, numeroNarrador, soma, ganhou };
+}
+
+/**
+ * Recalcula a partida inteira. É esta função que o servidor vai rodar.
+ * `numeroNarrador` só é usado (e exigido) quando a disputa chega ao par ou ímpar.
+ */
+export function simularPartida(
+  semente: number,
+  gestos: Gestos,
+  dificuldade: number,
+  numeroNarrador?: number,
+): ResultadoPartida {
   const n = gestos.cobrancas.length;
   if (n !== gestos.defesas.length || n < COBRANCAS || n > RODADAS_MAX) {
     throw new Error(`A partida precisa de ${COBRANCAS} a ${RODADAS_MAX} cobranças, e o mesmo número de defesas.`);
@@ -286,15 +333,33 @@ export function simularPartida(semente: number, gestos: Gestos, dificuldade: num
     defesas.push(resolverDefesa(semente, i, gestos.defesas[i], d));
   }
   if (precisaDeOutraRodada(cobrancas, defesas)) throw new Error('Faltam rodadas de morte súbita.');
-  return totalizar(cobrancas, defesas);
+
+  let parOuImpar: ResultadoParOuImpar | undefined;
+  if (precisaDeParOuImpar(cobrancas, defesas)) {
+    if (!gestos.parOuImpar || numeroNarrador === undefined) throw new Error('Falta o par ou ímpar.');
+    parOuImpar = resolverParOuImpar(gestos.parOuImpar, numeroNarrador);
+  } else if (gestos.parOuImpar) {
+    throw new Error('Par ou ímpar sem empate.');
+  }
+  return totalizar(cobrancas, defesas, parOuImpar);
 }
 
-export function totalizar(cobrancas: ResultadoCobranca[], defesas: ResultadoDefesa[]): ResultadoPartida {
+export function totalizar(
+  cobrancas: ResultadoCobranca[],
+  defesas: ResultadoDefesa[],
+  parOuImpar?: ResultadoParOuImpar,
+): ResultadoPartida {
   const golsJogador = contarGols(cobrancas);
   const golsMaquina = contarSofridos(defesas);
   const nDefesas = defesas.filter((d) => d.desfecho === 'defesa').length;
-  const venceu = golsJogador > golsMaquina;
-  const empate = golsJogador === golsMaquina;
+  const empatado = golsJogador === golsMaquina;
+  if (empatado && !parOuImpar) throw new Error('Disputa empatada precisa do par ou ímpar.');
+  const venceu = empatado ? parOuImpar!.ganhou : golsJogador > golsMaquina;
+  const decisao: Decisao = empatado
+    ? 'par_ou_impar'
+    : defesas.length > COBRANCAS
+      ? 'morte_subita'
+      : 'tempo_normal';
   const cincoCobrancas = contarGols(cobrancas.slice(0, COBRANCAS)) === COBRANCAS;
   const cincoDefesas = defesas.slice(0, COBRANCAS).filter((d) => d.desfecho === 'defesa').length === COBRANCAS;
 
@@ -319,7 +384,8 @@ export function totalizar(cobrancas: ResultadoCobranca[], defesas: ResultadoDefe
     cincoCobrancas,
     cincoDefesas,
     venceu,
-    empate,
+    decisao,
+    parOuImpar,
     pontos,
   };
 }

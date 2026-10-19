@@ -16,14 +16,20 @@ import {
   normalizarCobranca,
   planejarDefesa,
   precisaDeOutraRodada,
+  precisaDeParOuImpar,
+  resolverParOuImpar,
   resolverCobranca,
   resolverDefesa,
   totalizar,
+  type EscolhaParOuImpar,
   type GestoCobranca,
+  type Paridade,
+  type ResultadoParOuImpar,
   type PlanoDefesa,
   type ResultadoCobranca,
   type ResultadoDefesa,
 } from '../jogo/penaltis';
+import { pedirNumeroDoNarrador } from '../jogo/numeroNarrador';
 import { destravarSom, somApito, somChute, somTorcida } from '../jogo/som';
 
 type Fase =
@@ -31,7 +37,8 @@ type Fase =
   | { tipo: 'chute'; inicio: number; r: ResultadoCobranca; gesto: GestoCobranca }
   | { tipo: 'corrida'; inicio: number; plano: PlanoDefesa; zona: number | null; pulouEm: number | null }
   | { tipo: 'chuteMaquina'; inicio: number; r: ResultadoDefesa; pulouEm: number }
-  | { tipo: 'pausa'; ate: number; depois: () => void };
+  | { tipo: 'pausa'; ate: number; depois: () => void }
+  | { tipo: 'parOuImpar' };
 
 /** Dia da semana no horário de Brasília (a temporada zera na segunda, 00h BRT). */
 function diaEmBrasilia(): number {
@@ -174,13 +181,14 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
           : `Cobrança ${rodada + 1} de ${COBRANCAS}. Arraste para chutar.`,
     );
     if (rodada === 0) narrar(narrador.falar('abertura'));
+    else if (rodada === COBRANCAS) narrar(narrador.falar('morte_subita', { placar: placarAtual() }));
     else if (cobrancaDecisiva()) narrar(narrador.falar('decisiva'));
   }
 
   function comecarDefesa(): void {
     const plano = planejarDefesa(semente, rodada, dificuldade);
     fase = { tipo: 'corrida', inicio: performance.now(), plano, zona: null, pulouEm: null };
-    instruir('Agora você é o goleiro! Olhe o pé de apoio e toque onde pular.');
+    instruir('Sua vez de defender! Olhe o pé de apoio e toque onde pular.');
     if (defesaDecisiva()) narrar(narrador.falar('decisiva'));
   }
 
@@ -222,12 +230,74 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
     somTorcida(r.desfecho === 'defesa' ? 'festa' : 'uuuh');
     rodada++;
     if (precisaDeOutraRodada(cobrancas, defesas)) depoisDe(1500, comecarCobranca);
-    else depoisDe(1600, encerrar);
+    else if (precisaDeParOuImpar(cobrancas, defesas)) depoisDe(1600, abrirParOuImpar);
+    else depoisDe(1600, () => encerrar());
   }
 
-  function encerrar(): void {
+  const placarAtual = () => `${golsJogador()} x ${golsMaquina()}`;
+
+  /** Morte súbita terminou empatada: par ou ímpar contra o narrador. */
+  function abrirParOuImpar(): void {
+    fase = { tipo: 'parOuImpar' };
+    instruir('');
+    const painel = document.createElement('section');
+    painel.className = 'par-ou-impar';
+    painel.innerHTML = `
+      <h2>Par ou ímpar</h2>
+      <div class="poi-paridade" role="radiogroup" aria-label="Par ou ímpar">
+        <button type="button" role="radio" aria-checked="false" data-paridade="par">Par</button>
+        <button type="button" role="radio" aria-checked="false" data-paridade="impar">Ímpar</button>
+      </div>
+      <p class="poi-rotulo">Seu número</p>
+      <div class="poi-numeros" role="radiogroup" aria-label="Seu número">
+        ${[0, 1, 2, 3, 4, 5].map((n) => `<button type="button" role="radio" aria-checked="false" data-numero="${n}">${n}</button>`).join('')}
+      </div>
+      <button type="button" class="botao" data-acao="mostrar" disabled>Mostra, narrador!</button>
+      <p class="poi-status" aria-live="polite"></p>`;
+    root.querySelector('.partida')!.append(painel);
+    narrar(narrador.falar('par_ou_impar_escolha'));
+
+    let paridade: Paridade | null = null;
+    let numero: number | null = null;
+    const botao = painel.querySelector<HTMLButtonElement>('[data-acao="mostrar"]')!;
+    const status = painel.querySelector<HTMLElement>('.poi-status')!;
+    const marcar = (sel: string, alvo: Element) =>
+      painel.querySelectorAll(sel).forEach((b) => b.setAttribute('aria-checked', String(b === alvo)));
+
+    painel.querySelectorAll<HTMLButtonElement>('[data-paridade]').forEach((b) =>
+      b.addEventListener('click', () => {
+        paridade = b.dataset.paridade as Paridade;
+        marcar('[data-paridade]', b);
+        botao.disabled = numero === null;
+      }),
+    );
+    painel.querySelectorAll<HTMLButtonElement>('[data-numero]').forEach((b) =>
+      b.addEventListener('click', () => {
+        numero = Number(b.dataset.numero);
+        marcar('[data-numero]', b);
+        botao.disabled = paridade === null;
+      }),
+    );
+
+    botao.addEventListener('click', async () => {
+      if (paridade === null || numero === null) return;
+      const escolha: EscolhaParOuImpar = { escolha: paridade, numero };
+      painel.querySelectorAll('button').forEach((b) => (b.disabled = true));
+      status.textContent = 'O narrador tá pensando…';
+      painel.classList.add('pensando');
+      const numeroNarrador = await pedirNumeroDoNarrador(escolha);
+      if (acabou) return;
+      const r = resolverParOuImpar(escolha, numeroNarrador);
+      painel.classList.remove('pensando');
+      status.innerHTML = `Narrador: <strong>${numeroNarrador}</strong> · soma <strong>${r.soma}</strong>, ${r.soma % 2 === 0 ? 'par' : 'ímpar'}`;
+      somTorcida(r.ganhou ? 'festa' : 'uuuh');
+      setTimeout(() => encerrar(escolha, r), 1800);
+    });
+  }
+
+  function encerrar(escolha?: EscolhaParOuImpar, parOuImpar?: ResultadoParOuImpar): void {
     acabou = true;
-    const resultado = totalizar(cobrancas, defesas);
+    const resultado = totalizar(cobrancas, defesas, parOuImpar);
     somApito(true);
     irPara({
       tela: 'resultado',
@@ -235,11 +305,16 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
         timeId: time.id,
         semente,
         dificuldade,
-        gestos: { cobrancas: gestosCobranca, defesas: gestosDefesa },
+        gestos: { cobrancas: gestosCobranca, defesas: gestosDefesa, parOuImpar: escolha },
+        numeroNarrador: parOuImpar?.numeroNarrador,
         resultado,
         frasesFinais: eventosDoFim(resultado)
           .map((ev) =>
-            narrador.falar(ev, { placar: `${resultado.golsJogador} x ${resultado.golsMaquina}`, pontos: resultado.pontos.total }),
+            narrador.falar(ev, {
+              placar: `${resultado.golsJogador} x ${resultado.golsMaquina}`,
+              pontos: resultado.pontos.total,
+              numero: parOuImpar?.numeroNarrador,
+            }),
           )
           .filter((f): f is string => !!f),
       },
@@ -644,13 +719,18 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
         }
         break;
       }
+      case 'parOuImpar': {
+        desenharGoleiro(corJogador[0], corJogador[1], null, 0);
+        desenharBola(g.bolaX, g.bolaY);
+        break;
+      }
     }
     raf = proximoQuadro(quadro);
   }
 
   // ---------- ligações ----------
   if (import.meta.env.DEV) {
-    (window as unknown as Record<string, unknown>).__partida = { semente, dificuldade, cobrancas, defesas, gestosCobranca, gestosDefesa, fase: () => fase.tipo };
+    (window as unknown as Record<string, unknown>).__partida = { semente, dificuldade, cobrancas, defesas, gestosCobranca, gestosDefesa, fase: () => fase.tipo, abrirParOuImpar: () => abrirParOuImpar() };
   }
   medir();
   atualizarHud();

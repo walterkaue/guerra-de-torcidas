@@ -17,7 +17,7 @@ export const FRASES = {
     { t: "O goleiro tá dançando na linha. Mostra quem manda." },
     { t: "Bola na marca da cal. {o_time} pede passagem!" },
     { t: "Hoje não tem VAR pra te salvar. Capricha!" },
-    { t: "Atenção, torcida {do_time}: seu representante entrou em campo!" },
+    { t: "Atenção, torcida {do_time}: tem gente nossa em campo!" },
     { t: "O gandula já foi buscar a bola reserva. Precaução.", rara: true },
   ],
   gol: [
@@ -26,7 +26,7 @@ export const FRASES = {
     { t: "GOL! Deslocou o goleiro, que foi comprar pão do outro lado." },
     { t: "Entrouuu! Frio que nem picolé de limão!" },
     { t: "GOL! O goleiro só viu o vulto." },
-    { t: "É dele! Bateu com a calma de quem tá na fila do banco." },
+    { t: "É GOL! Bateu com a calma de quem tá na fila do banco." },
     { t: "GOOOL! Balançou a rede e o coração da torcida {do_time}!" },
     { t: "Lá dentro! O goleiro escolheu o canto errado com muita convicção." },
     { t: "GOL! Simples, seco, sem conversa." },
@@ -56,7 +56,7 @@ export const FRASES = {
   cavadinha: [
     { t: "É CAVADINHAAA! Que categoria, que deboche!" },
     { t: "CAVADINHA! O goleiro pulou e a bola passou de carona por cima!" },
-    { t: "Ele cavou! Ele CAVOU! Que coragem, que audácia!" },
+    { t: "CAVOU! CAVOU MESMO! Que coragem, que audácia!" },
     { t: "CAVADINHA! O goleiro já tava no chão quando a bola chegou, devagarinho." },
     { t: "De cavadinha! Isso não é cobrança, é exposição de arte!" },
     { t: "Cavadinha e entrou! O goleiro vai precisar de um abraço." },
@@ -146,7 +146,7 @@ export const FRASES = {
     { t: "Pegou! O batedor tá olhando pro céu procurando explicação." },
     { t: "DEFESA! Gol cancelado na fonte." },
     { t: "Paredão {do_time}! Mais 10 pra conta!" },
-    { t: "Pegou! O batedor vai pedir pra trocar de goleiro.", rara: true },
+    { t: "Pegou! O batedor vai pedir pra mudar de gol.", rara: true },
   ],
   sofreu_gol: [
     { t: "Gol do batedor! Você foi pra um lado e a bola pro outro." },
@@ -167,6 +167,34 @@ export const FRASES = {
     { t: "Se pegar, ganha. Se não pegar... nem quero pensar." },
     { t: "Silêncio total. Até o pipoqueiro parou." },
     { t: "Momento decisivo! Hora de virar lenda ou virar meme." },
+  ],
+  morte_subita: [
+    { t: "EMPATOU! Agora é morte súbita, quem errar primeiro chora!" },
+    { t: "Empate em {placar}! Morte súbita, coração na mão!" },
+    { t: "Tá igual! Agora é uma de cada, sem margem pra erro." },
+    { t: "Morte súbita! O pipoqueiro largou a pipoca pra assistir." },
+    { t: "Ninguém cedeu! Vai pra morte súbita!" },
+    { t: "Empatou! Até o placar pediu prorrogação de emoção.", rara: true },
+  ],
+  par_ou_impar_escolha: [
+    { t: "Nem a morte súbita resolveu! Vai no par ou ímpar!" },
+    { t: "Tá tudo igual! Escolhe: par ou ímpar?" },
+    { t: "O narrador tá pensando no número..." },
+    { t: "Decisão no par ou ímpar, do jeito que se decide na pelada!" },
+  ],
+  par_ou_impar_ganhou: [
+    { t: "Deu {numero} na mão do narrador. Ganhou no par ou ímpar!" },
+    { t: "PAR OU ÍMPAR É SEU! Isso que é estrela!" },
+    { t: "Ganhou no dedo! Pelada raiz decidida com classe." },
+    { t: "O narrador mostrou {numero}. Vitória no detalhe!" },
+    { t: "Ganhou no par ou ímpar! A sorte também torce {pro_time}.", rara: true },
+  ],
+  par_ou_impar_perdeu: [
+    { t: "O narrador mostrou {numero}. Perdeu no par ou ímpar!" },
+    { t: "Perdeu no dedo! Mas os pontos vão {pro_time} do mesmo jeito." },
+    { t: "Par ou ímpar não perdoa! Revanche tá a um toque." },
+    { t: "Foi no detalhe! Bora de novo que a sorte vira." },
+    { t: "O narrador ganhou no par ou ímpar e tá se achando.", rara: true },
   ],
   vitoria: [
     { t: "ACABOU! Vitória com sabor de domingo!" },
@@ -195,16 +223,8 @@ export const FRASES = {
     { t: "Fim! Ficou {placar}. Bora virar isso na próxima?" },
     { t: "Perdeu! O goleiro da máquina já tá pedindo aumento.", rara: true },
   ],
-  empate: [
-    { t: "Empate! Ninguém sai feliz, ninguém sai triste. Joga de novo!" },
-    { t: "Deu empate! Clássico de domingo de chuva." },
-    { t: "Empatou em {placar}! Tá parecendo final de campeonato." },
-    { t: "Empate! A resenha vai ficar dividida." },
-    { t: "Ninguém ganhou! O placar ficou em cima do muro." },
-    { t: "Empate! Até o placar ficou sem saber pra quem torcer.", rara: true },
-  ],
   cinco_cobrancas: [
-    { t: "5 DE 5! Artilheiro com carteirinha!" },
+    { t: "5 DE 5! Faro de gol com carteirinha!" },
     { t: "Cinco cobranças, cinco gols! Isso é carimbo!" },
     { t: "100% de aproveitamento! O goleiro vai pedir transferência." },
     { t: "5 de 5! Pode emoldurar esse placar." },
@@ -214,7 +234,7 @@ export const FRASES = {
   ],
   cinco_defesas: [
     { t: "5 DEFESAS! Fechou o gol com tijolo e cimento!" },
-    { t: "Cinco de cinco! Isso não é goleiro, é muralha!" },
+    { t: "Cinco de cinco! Isso não é defesa, é muralha!" },
     { t: "Ninguém passou! O gol tá trancado e a chave sumiu." },
     { t: "5 de 5 debaixo da trave! O batedor vai mudar de profissão." },
     { t: "Paredão completo! Mais 25 {pro_time}!" },
@@ -278,7 +298,7 @@ export const FRASES = {
     { t: "Faltam {horas} e {o_rival} tá encostando." },
     { t: "Últimas horas da semana! Cada pênalti vale ouro." },
     { t: "Domingo à noite, {dif} de diferença. Hora da verdade." },
-    { t: "A semana tá acabando e {o_time} precisa de mais um herói." },
+    { t: "A semana tá acabando e {o_time} precisa de mais uma lenda em campo." },
   ],
   mais_braba: [
     { t: "{o_time} pode não ser o maior, mas é torcida braba!" },
@@ -290,6 +310,27 @@ export const FRASES = {
     { t: "{o_time} é campeão da semana! Pode zoar até segunda!" },
     { t: "Acabou a semana: {o_time} no topo! {o_rival} vai ter que ouvir." },
     { t: "Campeão da semana! Segunda zera, mas o print é eterno." },
+  ],
+  cidade_atras: [
+    { t: "{cidade_rival} tá na frente. {cidade} vai deixar?" },
+    { t: "Faltam {dif} pra passar {cidade_rival}. Bora!" },
+    { t: "{cidade} tá em {posicao} no estado. Dá pra subir, e é hoje." },
+    { t: "{cidade_rival} já tá comemorando. Responde em campo!" },
+  ],
+  cidade_frente: [
+    { t: "{cidade} tá em {posicao} no estado! Segura essa posição." },
+    { t: "{cidade} na frente! {cidade_rival} tá olhando no retrovisor." },
+    { t: "{cidade} lidera o duelo com {cidade_rival}. Não relaxa!" },
+  ],
+  cidade_passou: [
+    { t: "SUBIU! {cidade} passou {cidade_rival} no estado!" },
+    { t: "Ultrapassagem! {cidade} agora tá em {posicao} no estado." },
+    { t: "{cidade} subiu de posição! Manda no grupo da cidade." },
+  ],
+  cidade_campea: [
+    { t: "{cidade} é campeã da semana no estado! Pode comemorar!" },
+    { t: "Semana fechada: {cidade} no topo do estado!" },
+    { t: "{cidade} campeã da semana! O print é eterno." },
   ],
 } satisfies Record<string, readonly Frase[]>;
 

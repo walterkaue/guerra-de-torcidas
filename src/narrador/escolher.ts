@@ -22,6 +22,12 @@ export interface ContextoNarrador {
   dif?: string;
   horas?: string;
   posicao?: string;
+  /** Cidade (fase 1.5): vai sempre sem preposição antes ("{cidade} tá em 3º"). */
+  cidade?: string;
+  cidadeRival?: string;
+  uf?: string;
+  /** Número do narrador no par ou ímpar. */
+  numero?: number;
   /** Frases (texto original) já usadas nesta partida: nunca repetem. */
   usadas?: ReadonlySet<string>;
   /** Últimas ~30 frases vistas neste aparelho: evitadas enquanto houver outra opção. */
@@ -36,10 +42,28 @@ export interface FraseEscolhida {
 
 export const PESO_RARA = 0.1;
 
+/** Até ~75 caracteres depois da troca, para caber em 2 linhas em 390 px. */
+export const MAX_CARACTERES = 75;
+
+/**
+ * Situações que aparecem no grito do narrador e no card: frase que passar do limite
+ * depois da troca (ex.: apelido de 20 letras repetido) é pulada, como variável faltando.
+ */
+const COM_LIMITE: ReadonlySet<EventoNarrador> = new Set<EventoNarrador>([
+  'abertura', 'gol', 'gol_angulo', 'cavadinha', 'cavadinha_falhou', 'trave_gol', 'trave',
+  'fora_cima', 'fora_lado', 'goleiro_pegou', 'defesa', 'sofreu_gol', 'decisiva',
+  'morte_subita', 'par_ou_impar_escolha', 'par_ou_impar_ganhou', 'par_ou_impar_perdeu',
+  'vitoria', 'derrota', 'cinco_cobrancas', 'cinco_defesas',
+  'desafio_convite', 'desafio_vitoria', 'desafio_derrota',
+]);
+
+export const temLimite = (ev: EventoNarrador) => COM_LIMITE.has(ev);
+
 export const VARIAVEIS = [
   'o_time', 'do_time', 'pro_time', 'no_time',
   'o_rival', 'do_rival', 'pro_rival', 'no_rival',
   'apelido', 'desafiante', 'placar', 'pontos', 'dif', 'horas', 'posicao',
+  'cidade', 'cidade_rival', 'uf', 'numero',
 ] as const;
 
 type Variavel = (typeof VARIAVEIS)[number];
@@ -69,6 +93,10 @@ function valores(ctx: ContextoNarrador): Partial<Record<Variavel, string>> {
   if (ctx.dif) v.dif = ctx.dif;
   if (ctx.horas) v.horas = ctx.horas;
   if (ctx.posicao) v.posicao = ctx.posicao;
+  if (ctx.cidade) v.cidade = ctx.cidade;
+  if (ctx.cidadeRival) v.cidade_rival = ctx.cidadeRival;
+  if (ctx.uf) v.uf = ctx.uf;
+  if (ctx.numero !== undefined) v.numero = String(ctx.numero);
   return v;
 }
 
@@ -114,7 +142,11 @@ export function escolherFrase(
   ctx: ContextoNarrador,
   rng: () => number,
 ): FraseEscolhida | null {
-  const validas = (FRASES[evento] as readonly Frase[]).filter((f) => preencher(f.t, ctx) !== null);
+  const limite = COM_LIMITE.has(evento);
+  const validas = (FRASES[evento] as readonly Frase[]).filter((f) => {
+    const t = preencher(f.t, ctx);
+    return t !== null && (!limite || t.length <= MAX_CARACTERES);
+  });
   if (!validas.length) return null;
 
   const usadas = ctx.usadas ?? new Set<string>();

@@ -157,6 +157,8 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
   - Efeito: o quanto o último terço do arraste dobra; desloca a bola até 0,3 de meia-largura do gol.
   - **Cavadinha:** arraste curtinho (força 8–24) e reto (|dir| ≤ 30). Entra, a não ser que o goleiro fique no meio.
   - **Ângulo:** bola com |x| > 0,78 e altura > 0,72. Mesmo com o goleiro no canto certo, ele só pega 35% das vezes.
+  - **Trave e gol** (só muda a narração): gol com |x| > 0,95 ou altura > 0,95.
+- **Narrador e tamanho:** frase de lance, fim, desempate ou desafio que passar de 75 caracteres depois da troca (ex.: apelido de 20 letras repetido) é pulada, como frase com variável faltando.
 - **Goleiro da máquina:** lê o chute com chance de 12% (segunda) a 36% (domingo), mais 40% em bola fraca. Quando não lê, pula numa zona sorteada.
 - **Defesa:** a máquina sorteia 1 das 6 zonas. A dica (pé de apoio) aponta a coluna certa em 85% das vezes na segunda e 50% no domingo. Acertar a zona = defesa; acertar a coluna com a altura errada = 40% de chance. A máquina erra (manda pra fora) 8% das cobranças, e isso não conta como defesa.
 - **Dificuldade:** vai de 0 (segunda) a 1 (domingo), pelo horário de Brasília. O tempo para reagir na defesa cai de 1,9 s para 1,2 s depois da corrida. Com servidor, a dificuldade é a do dia em que **o servidor** emitiu a semente, nunca a do relógio do celular.

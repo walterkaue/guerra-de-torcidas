@@ -12,7 +12,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   const d: DadosResultado = rota.dados;
   const time = timePorId(d.timeId) ?? TIMES[TIMES.length - 1];
   const apelidoSalvo = prefs.get().apelido;
-  const apelido = apelidoSalvo || 'Um torcedor';
+  // Sem apelido, o card fala em primeira pessoa ("Fiz 47 pontos…"), neutro de gênero.
+  const apelido = apelidoSalvo;
   const { resultado: r } = d;
   const p = r.pontos;
 

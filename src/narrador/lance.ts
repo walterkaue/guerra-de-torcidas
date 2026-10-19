@@ -25,11 +25,15 @@ export function eventoDaDefesa(r: ResultadoDefesa): EventoNarrador | null {
   return null;
 }
 
-/** Tela final: 5 de 5 primeiro, depois o resultado, no máximo 2 frases. */
+/**
+ * Tela final, no máximo 2 frases, nesta ordem: 5 de 5, resultado do par ou ímpar
+ * (antes da vitória ou derrota) e vitória ou derrota. Não existe empate.
+ */
 export function eventosDoFim(r: ResultadoPartida): EventoNarrador[] {
   const lista: EventoNarrador[] = [];
   if (r.cincoCobrancas) lista.push('cinco_cobrancas');
   if (r.cincoDefesas) lista.push('cinco_defesas');
-  lista.push(r.venceu ? 'vitoria' : r.empate ? 'empate' : 'derrota');
+  if (r.parOuImpar) lista.push(r.parOuImpar.ganhou ? 'par_ou_impar_ganhou' : 'par_ou_impar_perdeu');
+  lista.push(r.venceu ? 'vitoria' : 'derrota');
   return lista.slice(0, 2);
 }

@@ -12,7 +12,7 @@ export interface Time {
   artigo: Artigo;
   /**
    * Id do clássico. null = sem clássico na lista: o rival passa a ser o vizinho no
-   * ranking da semana (etapa 3, ver seção 7 do jogo.md).
+   * ranking geral da semana (seções 5 e 8 do jogo.md). Não precisa ser recíproco.
    */
   rival: string | null;
   uf?: string;
@@ -24,7 +24,7 @@ export const TIMES: Time[] = [
   { id: 'athletico-pr', nome: 'Athletico-PR', cores: ['#c8102e', '#111111'], artigo: 'o', rival: 'coritiba', uf: 'PR' },
   { id: 'atletico-mg', nome: 'Atlético-MG', cores: ['#111111', '#ffffff'], artigo: 'o', rival: 'cruzeiro', uf: 'MG' },
   { id: 'bahia', nome: 'Bahia', cores: ['#0050a0', '#d4002a'], artigo: 'o', rival: 'vitoria', uf: 'BA' },
-  { id: 'botafogo', nome: 'Botafogo', cores: ['#111111', '#ffffff'], artigo: 'o', rival: 'fluminense', uf: 'RJ' },
+  { id: 'botafogo', nome: 'Botafogo', cores: ['#111111', '#ffffff'], artigo: 'o', rival: 'flamengo', uf: 'RJ' },
   { id: 'bragantino', nome: 'Bragantino', cores: ['#ffffff', '#d4002a'], artigo: 'o', rival: null, uf: 'SP' },
   { id: 'chapecoense', nome: 'Chapecoense', cores: ['#00843d', '#ffffff'], artigo: 'a', rival: null, uf: 'SC' },
   { id: 'corinthians', nome: 'Corinthians', cores: ['#111111', '#ffffff'], artigo: 'o', rival: 'palmeiras', uf: 'SP' },
@@ -38,7 +38,7 @@ export const TIMES: Time[] = [
   { id: 'palmeiras', nome: 'Palmeiras', cores: ['#006437', '#ffffff'], artigo: 'o', rival: 'corinthians', uf: 'SP' },
   { id: 'remo', nome: 'Remo', cores: ['#0b2a5b', '#ffffff'], artigo: 'o', rival: null, uf: 'PA' },
   { id: 'santos', nome: 'Santos', cores: ['#ffffff', '#111111'], artigo: 'o', rival: 'corinthians', uf: 'SP' },
-  { id: 'sao-paulo', nome: 'São Paulo', cores: ['#ffffff', '#e30613'], artigo: 'o', rival: 'corinthians', uf: 'SP' },
+  { id: 'sao-paulo', nome: 'São Paulo', cores: ['#ffffff', '#e30613'], artigo: 'o', rival: 'palmeiras', uf: 'SP' },
   { id: 'vasco', nome: 'Vasco', cores: ['#111111', '#ffffff'], artigo: 'o', rival: 'flamengo', uf: 'RJ' },
   { id: 'vitoria', nome: 'Vitória', cores: ['#e30613', '#111111'], artigo: 'o', rival: 'bahia', uf: 'BA' },
   { id: ID_OUTRO, nome: 'Outro time', cores: ['#6b7280', '#f5f5f0'], artigo: 'o', rival: null },

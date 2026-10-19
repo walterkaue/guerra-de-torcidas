@@ -7,6 +7,8 @@ import {
   RODADAS_MAX,
   type ResultadoCobranca,
   type ResultadoDefesa,
+  precisaDeParOuImpar,
+  resolverParOuImpar,
   type GestoCobranca,
   type Gestos,
   dificuldadePorDia,
@@ -35,8 +37,13 @@ function gestosAleatorios(semente: number, sementeGestos: number, dificuldade = 
     rc.push(resolverCobranca(semente, i, cobrancas[i], dificuldade));
     rd.push(resolverDefesa(semente, i, defesas[i], dificuldade));
   }
-  return { cobrancas, defesas };
+  const g: Gestos = { cobrancas, defesas };
+  if (precisaDeParOuImpar(rc, rd)) g.parOuImpar = { escolha: r() < 0.5 ? 'par' : 'impar', numero: Math.floor(r() * 6) };
+  return g;
 }
+
+/** Número do narrador para os testes (no jogo ele vem do servidor). */
+const NUM = 3;
 
 describe('aleatório', () => {
   it('repete a sequência para a mesma semente', () => {
@@ -69,7 +76,7 @@ describe('determinismo da partida', () => {
     for (let s = 1; s <= 200; s++) {
       const semente = misturar(s);
       const gestos = gestosAleatorios(semente, s);
-      expect(simularPartida(semente, gestos, 0.5)).toEqual(simularPartida(semente, gestos, 0.5));
+      expect(simularPartida(semente, gestos, 0.5, NUM)).toEqual(simularPartida(semente, gestos, 0.5, NUM));
     }
   });
 
@@ -88,8 +95,9 @@ describe('determinismo da partida', () => {
     const aoVivo = totalizar(
       gestos.cobrancas.map((g, i) => resolverCobranca(semente, i, g, 0.4)),
       gestos.defesas.map((z, i) => resolverDefesa(semente, i, z, 0.4)),
+      gestos.parOuImpar && resolverParOuImpar(gestos.parOuImpar, NUM),
     );
-    expect(aoVivo).toEqual(simularPartida(semente, gestos, 0.4));
+    expect(aoVivo).toEqual(simularPartida(semente, gestos, 0.4, NUM));
   });
 
   it('recusa partida com número errado de gestos', () => {
@@ -99,43 +107,79 @@ describe('determinismo da partida', () => {
   });
 });
 
-describe('morte súbita', () => {
-  it('só acontece quando empata nas 5, e para assim que alguém desempata', () => {
+describe('desempate', () => {
+  const partidas = (n: number, sal: number) =>
+    Array.from({ length: n }, (_, k) => {
+      const semente = misturar(k + 1, sal);
+      const gestos = gestosAleatorios(semente, k + 1);
+      return { semente, gestos, r: simularPartida(semente, gestos, 0.5, NUM) };
+    });
+
+  it('morte súbita só depois de empate nas 5, e para assim que alguém desempata', () => {
     let comExtras = 0;
-    for (let s = 1; s <= 500; s++) {
-      const semente = misturar(s, 7);
-      const r = simularPartida(semente, gestosAleatorios(semente, s), 0.5);
+    for (const { r } of partidas(800, 7)) {
+      expect(r.rodadasExtras).toBeLessThanOrEqual(RODADAS_EXTRAS_MAX);
       if (r.rodadasExtras > 0) {
         comExtras++;
         const golsJ5 = r.cobrancas.slice(0, 5).filter((c) => c.desfecho === 'gol').length;
         const golsM5 = r.defesas.slice(0, 5).filter((d) => d.desfecho === 'gol').length;
         expect(golsJ5).toBe(golsM5);
       }
-      expect(r.rodadasExtras).toBeLessThanOrEqual(RODADAS_EXTRAS_MAX);
-      if (r.rodadasExtras > 0 && r.rodadasExtras < RODADAS_EXTRAS_MAX) expect(r.empate).toBe(false);
+      if (r.rodadasExtras > 0 && r.rodadasExtras < RODADAS_EXTRAS_MAX) expect(r.decisao).toBe('morte_subita');
     }
     expect(comExtras).toBeGreaterThan(0);
   });
 
-  it('recusa rodada extra sem empate e falta de rodada com empate', () => {
-    for (let s = 1; s <= 300; s++) {
-      const semente = misturar(s, 9);
-      const g = gestosAleatorios(semente, s);
+  it('toda partida termina com vencedor; par ou ímpar só depois das 3 rodadas extras', () => {
+    let noParOuImpar = 0;
+    for (const { r } of partidas(3000, 11)) {
+      expect(r).not.toHaveProperty('empate');
+      if (r.golsJogador === r.golsMaquina) {
+        noParOuImpar++;
+        expect(r.decisao).toBe('par_ou_impar');
+        expect(r.rodadasExtras).toBe(RODADAS_EXTRAS_MAX);
+        expect(r.venceu).toBe(r.parOuImpar!.ganhou);
+      } else {
+        expect(r.venceu).toBe(r.golsJogador > r.golsMaquina);
+        expect(r.parOuImpar).toBeUndefined();
+      }
+      expect(r.pontos.vitoria).toBe(r.venceu ? PONTOS.vitoria : 0);
+    }
+    expect(noParOuImpar).toBeGreaterThan(0);
+  });
+
+  it('determinismo também na morte súbita e no par ou ímpar', () => {
+    for (const { semente, gestos, r } of partidas(800, 13)) {
+      if (r.decisao === 'tempo_normal') continue;
+      expect(simularPartida(semente, gestos, 0.5, NUM)).toEqual(r);
+      expect(simularPartida(semente, structuredClone(gestos), 0.5, NUM)).toEqual(r);
+    }
+  });
+
+  it('recusa rodada a mais, rodada a menos e par ou ímpar fora de hora', () => {
+    for (const { semente, gestos: g } of partidas(400, 9)) {
       const mais = { cobrancas: [...g.cobrancas, g.cobrancas[0]], defesas: [...g.defesas, 0] };
-      if (g.cobrancas.length < RODADAS_MAX) expect(() => simularPartida(semente, mais, 0.5)).toThrow();
+      if (g.cobrancas.length < RODADAS_MAX) expect(() => simularPartida(semente, mais, 0.5, NUM)).toThrow();
       if (g.cobrancas.length > COBRANCAS) {
         const menos = { cobrancas: g.cobrancas.slice(0, -1), defesas: g.defesas.slice(0, -1) };
-        expect(() => simularPartida(semente, menos, 0.5)).toThrow();
+        expect(() => simularPartida(semente, menos, 0.5, NUM)).toThrow();
+      }
+      if (g.parOuImpar) {
+        expect(() => simularPartida(semente, { ...g, parOuImpar: undefined }, 0.5, NUM)).toThrow();
+        expect(() => simularPartida(semente, g, 0.5)).toThrow();
+      } else {
+        expect(() => simularPartida(semente, { ...g, parOuImpar: { escolha: 'par', numero: 1 } }, 0.5, NUM)).toThrow();
       }
     }
   });
 
-  it('empate só sobra depois de todas as rodadas extras', () => {
-    for (let s = 1; s <= 800; s++) {
-      const semente = misturar(s, 11);
-      const r = simularPartida(semente, gestosAleatorios(semente, s), 0.5);
-      if (r.empate) expect(r.rodadasExtras).toBe(RODADAS_EXTRAS_MAX);
-    }
+  it('par ou ímpar: a soma decide', () => {
+    expect(resolverParOuImpar({ escolha: 'par', numero: 2 }, 4)).toMatchObject({ soma: 6, ganhou: true });
+    expect(resolverParOuImpar({ escolha: 'par', numero: 2 }, 3)).toMatchObject({ soma: 5, ganhou: false });
+    expect(resolverParOuImpar({ escolha: 'impar', numero: 0 }, 5)).toMatchObject({ soma: 5, ganhou: true });
+    expect(() => resolverParOuImpar({ escolha: 'par', numero: 6 }, 1)).toThrow();
+    expect(() => resolverParOuImpar({ escolha: 'par', numero: 1 }, -1)).toThrow();
+    expect(() => resolverParOuImpar({ escolha: 'par', numero: 1.5 }, 1)).toThrow();
   });
 });
 
@@ -268,10 +312,16 @@ describe('pontuação', () => {
     expect(r.pontos).toMatchObject({ gols: 50, defesas: 50, vitoria: 20, cincoDeCinco: 0 });
   });
 
-  it('empate não dá bônus de vitória', () => {
-    const r = totalizar([gol(), defendida(), defendida(), defendida(), defendida()], [sofrido(), defesa(), defesa(), defesa(), defesa()]);
-    expect(r.empate).toBe(true);
-    expect(r.pontos.vitoria).toBe(0);
+  it('vitória no par ou ímpar vale o bônus; derrota no par ou ímpar não', () => {
+    const c = [gol(), ...Array.from({ length: 7 }, defendida)];
+    const d = [sofrido(), ...Array.from({ length: 7 }, defesa)].map((x, i) => (i < 5 ? x : { ...sofrido(), desfecho: 'fora' as const }));
+    const ganhou = totalizar(c, d, resolverParOuImpar({ escolha: 'par', numero: 1 }, 1));
+    expect(ganhou).toMatchObject({ venceu: true, decisao: 'par_ou_impar' });
+    expect(ganhou.pontos.vitoria).toBe(20);
+    const perdeu = totalizar(c, d, resolverParOuImpar({ escolha: 'impar', numero: 1 }, 1));
+    expect(perdeu.venceu).toBe(false);
+    expect(perdeu.pontos.vitoria).toBe(0);
+    expect(() => totalizar(c, d)).toThrow();
   });
 });
 
