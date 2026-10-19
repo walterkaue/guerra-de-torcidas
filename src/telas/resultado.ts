@@ -1,5 +1,5 @@
 // Resultado (docs/visual.md, "Resultado"): placar gigante, VITÓRIA/DERROTA, "+85 PRA [TIME]" contando,
-// bônus em etiquetas, efeito no ranking, desafio lado a lado, compartilhar e Revanche como ação principal.
+// bônus em etiquetas, efeito no ranking, desafio lado a lado, compartilhar e Mais uma/Revanche como ação principal.
 
 import { esc, irPara, type DadosResultado, type Rota } from '../app';
 import { ID_OUTRO, corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
@@ -75,6 +75,9 @@ const doTime = (id: string) => {
   const t = timePorId(id);
   return t ? `${t.artigo === 'a' ? 'da' : 'do'} ${t.nome}` : '';
 };
+
+/** "226 pontos de média" / "1 ponto de média" */
+const pontosDeMedia = (n: number) => `${n} ${n === 1 ? 'ponto' : 'pontos'} de média`;
 
 export function telaResultado(root: HTMLElement, rota: Rota): void {
   if (rota.tela !== 'resultado') return;
@@ -192,7 +195,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
 
       <div class="res-acoes">
         <button class="botao botao-sec" type="button" data-acao="inicio">Início</button>
-        <button class="botao" type="button" data-acao="revanche">Revanche</button>
+        <button class="botao" type="button" data-acao="revanche">${r.venceu ? 'Mais uma' : 'Revanche'}</button>
       </div>
     </main>
   `;
@@ -228,7 +231,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
           const segundo = linhas.find((l) => l.posicao_campeao === 2);
           barra.style.setProperty('--enche', '1');
           falta.textContent = segundo
-            ? `Na liderança, ${Math.round(meu.media30 - segundo.media30)} de média na frente ${doTime(segundo.time_id)}.`
+            ? `Na liderança, ${pontosDeMedia(Math.round(meu.media30 - segundo.media30))} na frente ${doTime(segundo.time_id)}.`
             : 'Na liderança!';
           return;
         }
@@ -236,7 +239,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
         const tAcima = acima && timePorId(acima.time_id);
         if (!acima || !tAcima) return;
         barra.style.setProperty('--enche', String(acima.media30 > 0 ? Math.min(1, meu.media30 / acima.media30) : 1));
-        falta.textContent = `Faltam ${Math.max(1, Math.ceil(acima.media30 - meu.media30))} de média pra passar ${tAcima.artigo} ${tAcima.nome} (${acima.posicao_campeao}º).`;
+        const n = Math.max(1, Math.ceil(acima.media30 - meu.media30));
+        falta.textContent = `${n === 1 ? 'Falta' : 'Faltam'} ${pontosDeMedia(n)} pra passar ${tAcima.artigo} ${tAcima.nome} (${acima.posicao_campeao}º).`;
       })
       .catch(() => {});
   } else if (!situacao) {

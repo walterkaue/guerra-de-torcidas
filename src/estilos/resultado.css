@@ -3,7 +3,8 @@
 .resultado {
   position: relative;
   gap: 14px;
-  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  /* Barra de baixo: ~81 px (botão de 60 + sombra + respiro). Sobra folga para o último item nunca ficar atrás dela. */
+  padding-bottom: calc(132px + env(safe-area-inset-bottom));
 }
 
 .confete {
@@ -28,6 +29,8 @@
   font-weight: 400;
   font-size: 64px;
   line-height: 1;
+  /* O acento do "VITÓRIA" na Anton passa da caixa da linha e cobria o "FIM DE JOGO". */
+  margin-top: 0.22em;
   text-transform: uppercase;
   color: var(--amarelo);
   letter-spacing: 0.01em;
@@ -212,11 +215,18 @@
 }
 
 .res-card summary {
-  min-height: 44px;
+  min-height: 48px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
   color: var(--texto-suave);
   cursor: pointer;
+}
+
+.res-card[open] summary {
+  margin-bottom: 10px;
 }
 
 .resultado .card {
