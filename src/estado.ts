@@ -10,6 +10,8 @@ interface Prefs {
   time?: string;
   apelido?: string;
   mudo?: boolean;
+  /** Marcou "não exibir novamente" no "Como jogar" antes da partida. */
+  semComoJogar?: boolean;
   /** "time|apelido" que o servidor já tem (para não regravar à toa). */
   sincronizado?: string;
 }

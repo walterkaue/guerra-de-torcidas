@@ -524,3 +524,32 @@ body {
   color: #ffb4a6;
   font-weight: 700;
 }
+
+/* ---------- partida: placar de TV, grito do narrador, como jogar ---------- */
+.ajuda { width: 44px; height: 44px; flex: none; border: 0; border-radius: 12px; background: rgba(0,0,0,0.3); color: var(--cal); font: 700 22px var(--fonte-rotulo); touch-action: manipulation; }
+.placar-jogo { transform: skewX(var(--inclinacao)); background: #0a0a0a; border-radius: 6px; padding: 4px 8px; box-shadow: inset 6px 0 0 var(--c1); }
+.placar-jogo > * { transform: skewX(8deg); }
+.placar-jogo .gols { color: var(--amarelo); display: flex; gap: 6px; align-items: baseline; }
+.placar-jogo .gols em { font-style: normal; font-size: 18px; opacity: 0.6; color: var(--cal); }
+.placar-jogo .sigla { font-family: var(--fonte-rotulo); text-transform: uppercase; color: var(--cal); }
+.bolinhas i { border: 1px solid rgba(255,255,255,0.5); }
+.bolinhas i.b-gol { background: var(--subiu); }
+.bolinhas i.b-erro { background: #000; }
+.bolinhas i.b-ouro { background: var(--amarelo); }
+.instrucao { top: calc(70px + env(safe-area-inset-top)); bottom: auto; justify-self: center; margin: 0 auto; width: fit-content; max-width: calc(100% - 32px); padding: 6px 12px; border-radius: 10px; background: rgba(0,0,0,0.72); color: var(--cal); }
+.aviso-partida { top: auto; bottom: calc(12px + env(safe-area-inset-bottom)); }
+.grito { position: absolute; left: 16px; right: 16px; top: 47%; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; opacity: 0; }
+.grito-frase { padding: 8px 14px; border: 3px solid #fff; border-radius: 6px; background: var(--c1); color: var(--txt); font-size: 19px; font-weight: 900; line-height: 1.2; text-align: center; transform: rotate(-2deg); box-shadow: 0 0 0 2px rgba(0,0,0,0.4), 0 5px 0 2px rgba(0,0,0,0.4); }
+.grito-sub { padding: 3px 10px; border-radius: 4px; background: rgba(0,0,0,0.8); color: var(--amarelo); font-size: 16px; }
+.grito.pulso { animation: narrar 1.6s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) { .grito.pulso { animation: none; opacity: 1; } }
+.como-jogar { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0.7); overflow-y: auto; }
+.cj-caixa { width: 100%; max-width: 420px; padding: 18px 16px; border-radius: 18px; background: #0b2a16; border: 2px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; gap: 12px; color: var(--cal); }
+.cj-faixa { align-self: flex-start; padding: 2px 12px; color: var(--txt); }
+.cj-titulo { font: 400 34px var(--fonte-placar); text-transform: uppercase; color: var(--amarelo); line-height: 1; }
+.cj-passos { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.cj-passos li { display: flex; gap: 10px; font-size: 15px; line-height: 1.35; }
+.cj-icone { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; background: rgba(255,255,255,0.1); font-size: 18px; }
+.cj-nota { font-size: 14px; color: var(--texto-suave); }
+.cj-check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 700; }
+.cj-check input { width: 24px; height: 24px; accent-color: var(--amarelo); }

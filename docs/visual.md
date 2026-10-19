@@ -47,6 +47,9 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 - **Rastro da bola** amarelo seguindo o arraste do dedo; "+15" subindo do ponto do gol.
 - Gol: tremida curta da tela (120 ms), rede balançando e vibração no Android (`navigator.vibrate`).
 - Cavadinha: câmera lenta de 0,5 s antes de entrar.
+- **Bonecos animados (19/10):** batedor e goleiro desenhados por esqueleto, com poses interpoladas a cada quadro: batedor com mãos na cintura e respiração, corrida com passadas, chute em 3 tempos (arma, bate, acompanha); goleiro balançando e quicando na linha, mergulho esticado com as luvas chegando na bola, abafa no chão. Bola com gomos girando e rastro de borrão. Referência de clima: a cobrança de pênalti dos jogos de futebol de 16 bits (câmera atrás do batedor, rede quadriculada, torcida cheia).
+- **Desempenho:** grama, linhas, rede e 3 quadros da torcida ficam pré-desenhados; a cada quadro só bonecos, bola, traves e efeitos são desenhados ao vivo (cerca de 0,6 ms por quadro no computador).
+- Contraste: texto sobre a cor do time usa sempre `corDeTexto` (escuro em time de cor clara, branco no resto).
 
 ### Resultado
 - Placar gigante, "VITÓRIA" ou "DERROTA", confete nas cores do time quando vence.
