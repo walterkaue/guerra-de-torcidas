@@ -26,8 +26,18 @@ export interface ContextoNarrador {
   cidade?: string;
   cidadeRival?: string;
   uf?: string;
-  /** Número do narrador no par ou ímpar. */
+  /** Número do narrador no par ou ímpar; no quiz, o número da pergunta. */
   numero?: number;
+  /** Crava a Rodada: "34ª". */
+  rodada?: string;
+  /** Crava a Rodada: jogos com algum ponto e jogos palpitados na rodada. */
+  acertos?: number;
+  jogos?: number;
+  /** Prova de Boleiro: pontos garantidos se parar agora. */
+  levar?: number;
+  /** Time do Dia: tentativas usadas e sequência de dias. */
+  tentativas?: number;
+  dias?: number;
   /** Frases (texto original) já usadas nesta partida: nunca repetem. */
   usadas?: ReadonlySet<string>;
   /** Últimas ~30 frases vistas neste aparelho: evitadas enquanto houver outra opção. */
@@ -40,6 +50,8 @@ export interface ContextoNarrador {
 export const ETIQUETAS = [
   'canto', 'meio', 'alto', 'baixo', 'fraca', 'goleiro_outro_lado', 'travessao',
   'pulou_outro_lado', 'mesma_coluna', 'nao_pulou', 'dica_honesta', 'cobranca', 'defesa',
+  // Crava a Rodada (seção 9).
+  'empate', 'contra',
 ] as const;
 
 export type Etiqueta = (typeof ETIQUETAS)[number];
@@ -77,6 +89,7 @@ export const VARIAVEIS = [
   'o_rival', 'do_rival', 'pro_rival', 'no_rival',
   'apelido', 'desafiante', 'placar', 'pontos', 'dif', 'horas', 'posicao',
   'cidade', 'cidade_rival', 'uf', 'numero',
+  'rodada', 'acertos', 'jogos', 'levar', 'tentativas', 'dias',
 ] as const;
 
 type Variavel = (typeof VARIAVEIS)[number];
@@ -110,6 +123,12 @@ function valores(ctx: ContextoNarrador): Partial<Record<Variavel, string>> {
   if (ctx.cidadeRival) v.cidade_rival = ctx.cidadeRival;
   if (ctx.uf) v.uf = ctx.uf;
   if (ctx.numero !== undefined) v.numero = String(ctx.numero);
+  if (ctx.rodada) v.rodada = ctx.rodada;
+  if (ctx.acertos !== undefined) v.acertos = String(ctx.acertos);
+  if (ctx.jogos !== undefined) v.jogos = String(ctx.jogos);
+  if (ctx.levar !== undefined) v.levar = String(ctx.levar);
+  if (ctx.tentativas !== undefined) v.tentativas = String(ctx.tentativas);
+  if (ctx.dias !== undefined) v.dias = String(ctx.dias);
   return v;
 }
 

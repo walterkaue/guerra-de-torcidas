@@ -106,6 +106,9 @@ const ETIQUETAS_POR_EVENTO: Partial<Record<EventoNarrador, Etiqueta[]>> = {
   goleiro_pegou: DA_COBRANCA,
   defesa: DA_DEFESA, sofreu_gol: DA_DEFESA, maquina_fora: DA_DEFESA,
   decisiva: ['cobranca', 'defesa'],
+  // Crava a Rodada (narrador.md, seção 9).
+  crava_exato: ['contra'], crava_saldo: ['empate', 'contra'], crava_vencedor: ['empate', 'contra'],
+  crava_errou: ['contra'],
 };
 const DE_LANCE = Object.keys(ETIQUETAS_POR_EVENTO) as EventoNarrador[];
 const fraseDe = (ev: EventoNarrador, id: string) => (FRASES[ev] as readonly Frase[]).find((f) => f.t === id)!;

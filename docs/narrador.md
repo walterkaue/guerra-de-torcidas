@@ -1,6 +1,8 @@
-# Banco do narrador — "Bate Contra Mim" (pênaltis)
+# Banco do narrador — pênaltis, palpites, quiz e Time do Dia
 
-> Versão 1.2 · 19/10/2026 · Fonte das frases do narrador e das provocações entre torcidas e cidades.
+> Versão 1.4 · 19/10/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Mudanças da 1.4: seções 10 (**Prova de Boleiro**) e 11 (**Time do Dia**).
+> Mudanças da 1.3: seção 9, frases do **Crava a Rodada**, com as variáveis `{rodada}`, `{acertos}` e `{jogos}` e as etiquetas `[empate]` e `[contra]`.
 > Frase nova entra aqui e passa pelo checklist de tom abaixo.
 > Mudanças da 1.1: frases neutras de gênero, desempate (morte súbita e par ou ímpar) no lugar do empate, provocação entre cidades.
 > Mudanças da 1.2: **etiquetas de lance** (a frase só sai quando combina com o que aconteceu: meio, canto, alto, baixo, chute fraco, lado do goleiro), frases novas para chute no meio e no alto, situação nova `maquina_fora` (batedor da máquina errou o gol) e `decisiva` separada entre cobrança e defesa.
@@ -433,3 +435,210 @@ Só posição no ranking. Ver o checklist da seção 1. Regra de preposição da
 - {cidade} é campeã da semana no estado! Pode comemorar!
 - Semana fechada: {cidade} no topo do estado!
 - {cidade} campeã da semana! O print é eterno.
+
+## 9. Crava a Rodada (palpites)
+
+Mesmo checklist da seção 1, com dois cuidados a mais:
+- **Nunca** as palavras proibidas da seção 7 do `jogo.md` (aposta, bet, odd, cotação, banca, bolão valendo, green, red), nem "valendo", "prêmio" ou "lucro".
+- A porcentagem da torcida nunca aparece como chance de acontecer: é "como a torcida cravou", e só depois do início do jogo.
+
+### Variáveis e etiquetas novas
+
+| Variável | Exemplo |
+|---|---|
+| `{rodada}` | 34ª |
+| `{acertos}` | jogos com algum ponto na rodada (ex.: 6) |
+| `{jogos}` | jogos palpitados na rodada (ex.: 9) |
+| `{placar}` | o placar cravado, com o mandante primeiro (ex.: 2 x 1) |
+
+| Etiqueta | Verdadeira quando |
+|---|---|
+| `[empate]` | o jogo terminou empatado |
+| `[contra]` | o palpite foi de derrota do próprio time de quem joga |
+
+- `crava_contra_time` sai no lugar de `crava_salvo` quando o palpite é contra o próprio time.
+- No resultado de cada jogo sai uma frase só: `crava_certeza_*` tem prioridade sobre as outras; frase com `[contra]` tem peso 2 quando a etiqueta vale.
+- `crava_rodada_fim` sai uma vez, quando o último jogo palpitado da rodada é confirmado.
+
+### `crava_abertura` — abre a tela da rodada
+- A {rodada} rodada tá aberta! Crava os placares e defende {o_time}.
+- Rodada nova, palpite novo. Quem crava, zoa!
+- Tá aberta a {rodada} rodada. Bora cravar!
+- Placar na cabeça, palpite na ponta do dedo. Crava aí!
+- ⭐ O pipoqueiro já cravou os dele. Só falta você.
+
+### `crava_salvo` — palpite salvo
+- Cravado! Agora é torcer.
+- Palpite guardado! Até o apito, ninguém vê.
+- Tá registrado. Se acertar, a resenha é sua.
+- Anotado no caderninho do narrador!
+
+### `crava_contra_time` — palpitou derrota do próprio time
+- Cravou derrota {do_time}? Coragem ou realismo?
+- Palpite contra o próprio time! O narrador viu, hein.
+- Torce de um lado, crava do outro. Que frieza!
+- ⭐ Cravou contra {o_time}. A torcida vai fingir que não viu.
+
+### `crava_certeza` — marcou o jogo da certeza
+- Jogo da certeza marcado! Se acertar, vale o dobro.
+- Certeza absoluta? Então é dobro!
+- Escolheu o jogo da certeza. Confiança de quem estudou a tabela.
+
+### `crava_fechou` — o jogo começou e o palpite trancou
+- Bola rolando, palpite trancado! Agora é com eles.
+- Fechou! Olha só como a torcida cravou esse.
+- Apito inicial: palpites lacrados.
+
+### `crava_lembrete` — tela inicial ou notificação antes da rodada
+- Faltam {horas} pro primeiro jogo da rodada. Já cravou?
+- Rodada começando e seu palpite tá em branco!
+- O jogo da certeza trava em {horas}. Escolhe o seu!
+
+### `crava_exato` — placar exato
+- CRAVOU! {placar} na mosca!
+- NA MOSCA! Placar exato, sem tirar nem pôr!
+- Placar exato! Isso é bola de cristal ou estudo?
+- CRAVOU O PLACAR! Pode mandar o print!
+- Acertou até a derrota {do_time}. Dói, mas pontua! [contra]
+- ⭐ {placar} exato! O narrador tá pensando em te contratar.
+
+### `crava_saldo` — vencedor e saldo certos (ou empate com outro placar)
+- Quase! Vencedor e saldo certinhos. Faltou só o placar.
+- Na trave do placar exato! Saldo no capricho.
+- Empate cravado! O placar foi outro, mas conta. [empate]
+- Palpite contra e acertou o saldo. Os pontos vão {pro_time} igual! [contra]
+
+### `crava_vencedor` — só o vencedor (ou só o empate)
+- Acertou quem ganhou! O placar fica pra próxima.
+- Vencedor certo! Faltou calibrar os gols.
+- Cravou o lado certo. Pontinhos na conta {do_time}.
+- Cravou empate e deu empate! Os gols é que não bateram. [empate]
+
+### `crava_errou`
+- Errou esse! O futebol não leu seu palpite.
+- Passou longe! Mas tem mais jogo na rodada.
+- Não deu! A bola é redonda, o palpite também.
+- Esse foi pra arquibancada! Bora no próximo.
+- Cravou contra e o time te desmentiu. Bom sinal, né? [contra]
+- ⭐ Errou com convicção. O narrador respeita.
+
+### `crava_certeza_acertou` — jogo da certeza com algum ponto
+- JOGO DA CERTEZA! Acertou e dobrou!
+- Certeza confirmada! Pontos em dobro {pro_time}!
+- Disse que era certeza, e era! Dobro na conta.
+
+### `crava_certeza_errou` — jogo da certeza sem ponto
+- Era certeza... virou dúvida. Rodada que vem tem outra!
+- A certeza tropeçou! Faz parte, bora na próxima.
+- Jogo da certeza não perdoa. Revanche na próxima rodada!
+
+### `crava_rodada_fim` — resumo da rodada
+- Rodada fechada: {acertos} de {jogos} com ponto. {pontos} {pro_time}!
+- Fim da {rodada} rodada! {pontos} pontos na conta {do_time}.
+- Rodada encerrada! Manda o card e vê quem cravou mais no grupo.
+- {acertos} de {jogos}! Na próxima rodada tem revanche.
+- ⭐ Fechou a rodada! O caderninho do narrador tá cheio de anotação.
+
+## 10. Prova de Boleiro (quiz)
+
+Cuidado extra: o narrador **nunca** fala da pessoa real da pergunta (nem elogio, nem zoeira) e nunca dá dica da resposta. Fala do degrau, do relógio e da decisão. Nada de "prêmio", "milhão" ou "valendo".
+
+| Variável | Exemplo |
+|---|---|
+| `{numero}` | número da pergunta (1 a 8) |
+| `{levar}` | pontos garantidos se parar agora |
+
+### `prova_abertura`
+- Prova de Boleiro! Oito perguntas, quinze segundos cada.
+- Hora de mostrar que entende de bola, não só de grito.
+- Caneta na mão... quer dizer, dedo na tela. Bora!
+- ⭐ O narrador estudou a semana toda. E você?
+
+### `prova_acertou`
+- CERTA! Sabe tudo de bola!
+- Na mosca! Próxima!
+- Acertou! Isso é estudo ou é paixão?
+- Resposta de quem não perde um jogo!
+- ⭐ Acertou tão rápido que o relógio nem esquentou.
+
+### `prova_decisao` — antes da pergunta 3 em diante
+- Leva {levar} pra casa ou arrisca a próxima?
+- Para agora com {levar} ou sobe mais um degrau?
+- A pergunta {numero} é mais braba. Encara?
+- Coragem tem limite? Decide aí!
+
+### `prova_parou`
+- Parou com {levar}! Sabedoria de quem sabe a hora de sair.
+- Garantiu {levar} {pro_time}. Jogo inteligente!
+- Pé no freio na hora certa. Pontos no bolso!
+
+### `prova_errou`
+- Errou! Leva metade, mas leva.
+- Não foi essa! Metade dos pontos vai {pro_time} mesmo assim.
+- Escorregou no degrau! Revanche tá a um toque.
+- ⭐ Errou com tanta certeza que até o narrador duvidou.
+
+### `prova_tempo`
+- O tempo acabou! O relógio não perdoa.
+- Quinze segundos voam, hein! Leva metade.
+- Pensou tanto que o apito soou!
+
+### `prova_ajuda`
+- Pediu ajuda! Sem vergonha nenhuma, é estratégia.
+- A arquibancada respondeu! Agora é com você.
+- Tirou duas! Ficou meio a meio.
+
+### `prova_perfeita` — 8 de 8
+- OITO DE OITO! Isso é doutorado em futebol!
+- Gabaritou! Pode emoldurar o card.
+- 8 de 8! A torcida {do_time} tem um professor em campo.
+- ⭐ Gabaritou! O narrador vai pedir aula particular.
+
+### `prova_fim`
+- Fim da prova: {pontos} {pro_time}!
+- Prova entregue! {pontos} pontos na conta {do_time}.
+- Fechou com {pontos}. Duvida de alguém no grupo?
+
+## 11. Time do Dia (desafio diário)
+
+Cuidado extra: o narrador nunca dá dica do clube secreto nem fala o nome dele antes do fim.
+
+| Variável | Exemplo |
+|---|---|
+| `{tentativas}` | tentativas usadas (1 a 6) |
+| `{dias}` | sequência de dias jogando |
+
+### `dia_abertura`
+- Tem um time escondido aí. Seis chutes pra achar!
+- Time do Dia no ar! Mesmo desafio pra todo mundo.
+- Hoje tem charada de clube. Bora chutar?
+
+### `dia_quase` — tentativa com 4 pistas ou mais em 🟩
+- Tá quente! Muito quente!
+- Encostou! Falta pouco.
+- O clube secreto tá suando frio.
+
+### `dia_longe` — tentativa sem nenhuma pista 🟩
+- Frio, frio! Tenta outra região.
+- Esse passou longe. Usa as pistas!
+- Chute pra arquibancada! Respira e lê a grade.
+
+### `dia_acertou_primeira`
+- DE PRIMEIRA! Isso é dom ou é sorte?
+- Acertou no primeiro chute! Inacreditável!
+- ⭐ De primeira! O narrador quer saber o segredo.
+
+### `dia_acertou`
+- ACERTOU! Achou o time em {tentativas} tentativas!
+- Na rede! {tentativas} chutes e achou.
+- Achou! Agora espera o grupo tentar.
+- Acertou no sufoco! Vale do mesmo jeito.
+
+### `dia_errou`
+- Não deu hoje! Amanhã tem outro time escondido.
+- Seis chutes e nada! O secreto se escondeu bem.
+- Hoje o time venceu. Revanche amanhã, 00h.
+
+### `dia_sequencia`
+- {dias} dias seguidos! Isso é torcida fiel.
+- Sequência de {dias} dias! Não para agora.
