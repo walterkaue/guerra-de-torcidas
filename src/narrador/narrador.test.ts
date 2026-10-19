@@ -4,18 +4,29 @@ import { ID_OUTRO, TIMES, rivalDe } from '../dados/times';
 import { APELIDO_MAX } from '../estado';
 import { criarAleatorio } from '../jogo/aleatorio';
 import {
+  ETIQUETAS,
   MAX_CARACTERES,
+  PESO_ETIQUETA,
+  PESO_RARA,
   escolherFrase,
   preencher,
   temLimite,
   variaveisDa,
   VARIAVEIS,
   type ContextoNarrador,
+  type Etiqueta,
   type TimeNarrado,
 } from './escolher';
 import { FRASES, type EventoNarrador, type Frase } from './frases';
-import { eventoDaCobranca } from './lance';
-import type { ResultadoCobranca } from '../jogo/penaltis';
+import { etiquetasDaCobranca, etiquetasDaDefesa, eventoDaCobranca, eventoDaDefesa } from './lance';
+import {
+  coluna,
+  planejarDefesa,
+  resolverCobranca,
+  resolverDefesa,
+  type ResultadoCobranca,
+  type ResultadoDefesa,
+} from '../jogo/penaltis';
 
 const TODAS = Object.entries(FRASES) as [EventoNarrador, readonly Frase[]][];
 
@@ -35,7 +46,16 @@ function lerBanco(texto: string): Record<string, Frase[]> {
       let t = linha.slice(2).trim();
       const rara = t.startsWith('⭐');
       if (rara) t = t.replace(/^⭐\s*/, '');
-      banco[atual].push(rara ? { t, rara: true } : { t });
+      const e: string[] = [];
+      let m: RegExpMatchArray | null;
+      while ((m = t.match(/\s*\[(\w+)\]$/))) {
+        e.unshift(m[1]);
+        t = t.slice(0, m.index).trim();
+      }
+      const f: Frase = { t };
+      if (rara) f.rara = true;
+      if (e.length) f.e = e;
+      banco[atual].push(f);
     }
   }
   return banco;
@@ -72,9 +92,23 @@ const LIMITADOS: EventoNarrador[] = [
   'abertura', 'gol', 'gol_angulo', 'cavadinha', 'cavadinha_falhou', 'trave_gol', 'trave',
   'fora_cima', 'fora_lado', 'goleiro_pegou', 'defesa', 'sofreu_gol', 'decisiva',
   'morte_subita', 'par_ou_impar_escolha', 'par_ou_impar_ganhou', 'par_ou_impar_perdeu',
-  'vitoria', 'derrota', 'cinco_cobrancas', 'cinco_defesas',
+  'maquina_fora', 'vitoria', 'derrota', 'cinco_cobrancas', 'cinco_defesas',
   'desafio_convite', 'desafio_vitoria', 'desafio_derrota',
 ];
+
+// Etiquetas que cada situação de lance pode receber (tabela "Etiquetas de lance" do narrador.md).
+const LUGAR: Etiqueta[] = ['canto', 'meio', 'alto', 'baixo'];
+const DA_COBRANCA: Etiqueta[] = [...LUGAR, 'fraca', 'goleiro_outro_lado', 'travessao'];
+const DA_DEFESA: Etiqueta[] = [...LUGAR, 'pulou_outro_lado', 'mesma_coluna', 'nao_pulou', 'dica_honesta'];
+const ETIQUETAS_POR_EVENTO: Partial<Record<EventoNarrador, Etiqueta[]>> = {
+  gol: DA_COBRANCA, gol_angulo: DA_COBRANCA, cavadinha: DA_COBRANCA, cavadinha_falhou: DA_COBRANCA,
+  trave_gol: DA_COBRANCA, trave: DA_COBRANCA, fora_cima: DA_COBRANCA, fora_lado: DA_COBRANCA,
+  goleiro_pegou: DA_COBRANCA,
+  defesa: DA_DEFESA, sofreu_gol: DA_DEFESA, maquina_fora: DA_DEFESA,
+  decisiva: ['cobranca', 'defesa'],
+};
+const DE_LANCE = Object.keys(ETIQUETAS_POR_EVENTO) as EventoNarrador[];
+const fraseDe = (ev: EventoNarrador, id: string) => (FRASES[ev] as readonly Frase[]).find((f) => f.t === id)!;
 
 describe('banco de frases', () => {
   it('frases.ts está em dia com docs/narrador.md (rode npm run frases)', () => {
@@ -111,6 +145,30 @@ describe('banco de frases', () => {
         expect(f!.texto.length, f!.texto).toBeLessThanOrEqual(MAX_CARACTERES);
       }
     }
+  });
+
+  it('toda etiqueta usada existe na tabela', () => {
+    const conhecidas = new Set<string>(ETIQUETAS);
+    const desconhecidas = TODAS.flatMap(([ev, l]) =>
+      l.flatMap((f) => (f.e ?? []).filter((e) => !conhecidas.has(e)).map((e) => `${ev}: [${e}] em "${f.t}"`)),
+    );
+    expect(desconhecidas).toEqual([]);
+  });
+
+  it('etiqueta só aparece em situação que pode receber ela', () => {
+    const erradas = TODAS.flatMap(([ev, l]) => {
+      const pode = new Set<string>(ETIQUETAS_POR_EVENTO[ev] ?? []);
+      return l.flatMap((f) => (f.e ?? []).filter((e) => !pode.has(e)).map((e) => `${ev}: [${e}] em "${f.t}"`));
+    });
+    expect(erradas).toEqual([]);
+  });
+
+  it('todo tipo de lance tem pelo menos uma frase sem etiqueta', () => {
+    for (const ev of DE_LANCE) expect((FRASES[ev] as readonly Frase[]).some((f) => !f.e), ev).toBe(true);
+  });
+
+  it('etiqueta nunca vai pra tela', () => {
+    expect(TODAS.flatMap(([, l]) => l.filter((f) => /[[\]]/.test(f.t)).map((f) => f.t))).toEqual([]);
   });
 
   it('toda situação da lista de limitados existe no banco', () => {
@@ -159,11 +217,13 @@ describe('troca de variáveis', () => {
 
 describe('escolherFrase', () => {
   const ctxFla: ContextoNarrador = { time: { nome: 'Flamengo', artigo: 'o' }, rival: { nome: 'Fluminense', artigo: 'o' } };
+  // Sem etiquetas no contexto, só as frases sem etiqueta podem sair.
+  const golSemEtiqueta = (FRASES.gol as readonly Frase[]).filter((f) => !f.e);
 
   it('não repete frase na mesma partida enquanto houver opção', () => {
     const rng = criarAleatorio(1);
     const usadas = new Set<string>();
-    const total = FRASES.gol.length;
+    const total = golSemEtiqueta.length;
     for (let i = 0; i < total; i++) {
       const f = escolherFrase('gol', { ...ctxFla, usadas }, rng)!;
       expect(usadas.has(f.id)).toBe(false);
@@ -182,8 +242,8 @@ describe('escolherFrase', () => {
 
   it('frase rara sai bem menos (peso 1/10)', () => {
     const rng = criarAleatorio(3);
-    const raras = new Set(FRASES.gol.filter((f) => f.rara).map((f) => f.t));
-    const comuns = FRASES.gol.length - raras.size;
+    const raras = new Set(golSemEtiqueta.filter((f) => f.rara).map((f) => f.t));
+    const comuns = golSemEtiqueta.length - raras.size;
     let nRaras = 0;
     const N = 20000;
     for (let i = 0; i < N; i++) if (raras.has(escolherFrase('gol', ctxFla, rng)!.id)) nRaras++;
@@ -215,10 +275,101 @@ describe('escolherFrase', () => {
   });
 });
 
+describe('etiquetas no sorteio', () => {
+  const ctx: ContextoNarrador = { time: { nome: 'Flamengo', artigo: 'o' } };
+
+  it('frase com etiqueta só sai se todas forem verdadeiras', () => {
+    const rng = criarAleatorio(11);
+    const etiquetas = new Set<Etiqueta>(['meio', 'baixo']);
+    for (const ev of DE_LANCE) {
+      for (let i = 0; i < 300; i++) {
+        const f = escolherFrase(ev, { ...ctx, etiquetas }, rng)!;
+        for (const e of fraseDe(ev, f.id).e ?? []) expect(etiquetas.has(e as Etiqueta), `${ev}: ${f.id}`).toBe(true);
+      }
+    }
+  });
+
+  it('sem etiqueta no lance, só saem frases sem etiqueta', () => {
+    const rng = criarAleatorio(12);
+    for (let i = 0; i < 300; i++) expect(fraseDe('gol', escolherFrase('gol', ctx, rng)!.id).e).toBeUndefined();
+  });
+
+  it(`frase com etiqueta que combina tem peso ${PESO_ETIQUETA}`, () => {
+    const rng = criarAleatorio(13);
+    const etiquetas = new Set<Etiqueta>(['fraca', 'baixo', 'canto', 'goleiro_outro_lado']);
+    const opcoes = (FRASES.goleiro_pegou as readonly Frase[]).filter(
+      (f) => !f.e || f.e.every((e) => etiquetas.has(e as Etiqueta)),
+    );
+    const peso = (f: Frase) => (f.rara ? PESO_RARA : 1) * (f.e ? PESO_ETIQUETA : 1);
+    const total = opcoes.reduce((a, f) => a + peso(f), 0);
+    const esperado = opcoes.filter((f) => f.e).reduce((a, f) => a + peso(f), 0) / total;
+    let comEtiqueta = 0;
+    const N = 20000;
+    for (let i = 0; i < N; i++) {
+      if (fraseDe('goleiro_pegou', escolherFrase('goleiro_pegou', { ...ctx, etiquetas }, rng)!.id).e) comEtiqueta++;
+    }
+    expect(comEtiqueta / N).toBeGreaterThan(esperado - 0.02);
+    expect(comEtiqueta / N).toBeLessThan(esperado + 0.02);
+  });
+
+  it('decisiva separa cobrança e defesa', () => {
+    const rng = criarAleatorio(14);
+    const de = (e: Etiqueta) => fraseDe('decisiva', escolherFrase('decisiva', { ...ctx, etiquetas: new Set([e]) }, rng)!.id);
+    for (let i = 0; i < 200; i++) {
+      expect(de('cobranca').e ?? ['cobranca']).toEqual(['cobranca']);
+      expect(de('defesa').e ?? ['defesa']).toEqual(['defesa']);
+    }
+  });
+});
+
+describe('etiquetas do lance', () => {
+  const c = (p: Partial<ResultadoCobranca>): ResultadoCobranca => ({
+    desfecho: 'gol', x: 0, y: 0.3, zonaBola: 1, zonaGoleiro: 0, angulo: false, raspouTrave: false,
+    cavadinha: false, fraca: false, goleiroLeu: false, pontos: 10, ...p,
+  });
+  const d = (p: Partial<ResultadoDefesa>): ResultadoDefesa => ({
+    desfecho: 'gol', alvo: 3, zonaGoleiro: 5, contraGravada: false, pontos: 0, ...p,
+  });
+  const ordenadas = (s: Set<Etiqueta>) => [...s].sort();
+
+  it('cobrança: lugar, força, goleiro e travessão', () => {
+    expect(ordenadas(etiquetasDaCobranca(c({})))).toEqual(['baixo', 'goleiro_outro_lado', 'meio']);
+    expect(ordenadas(etiquetasDaCobranca(c({ zonaBola: 5, zonaGoleiro: 2, fraca: true })))).toEqual(['alto', 'canto', 'fraca']);
+    expect(etiquetasDaCobranca(c({ desfecho: 'trave', y: 1.03, zonaBola: 4 })).has('travessao')).toBe(true);
+    expect(etiquetasDaCobranca(c({ desfecho: 'trave', x: 1.03, y: 0.5, zonaBola: 5 })).has('travessao')).toBe(false);
+  });
+
+  it('defesa: pulo, coluna e dica', () => {
+    expect(ordenadas(etiquetasDaDefesa(d({}), 0))).toEqual(['alto', 'canto', 'dica_honesta', 'pulou_outro_lado']);
+    expect(ordenadas(etiquetasDaDefesa(d({ zonaGoleiro: 0 }), 1))).toEqual(['alto', 'canto', 'mesma_coluna']);
+    expect(ordenadas(etiquetasDaDefesa(d({ alvo: 1, zonaGoleiro: -1 }), 1))).toEqual(['baixo', 'dica_honesta', 'meio', 'nao_pulou']);
+    expect(ordenadas(etiquetasDaDefesa(d({ desfecho: 'defesa', zonaGoleiro: 3 }), 2))).toEqual(['alto', 'canto']);
+  });
+
+  it('batedor da máquina errando vira maquina_fora', () => {
+    expect(eventoDaDefesa(d({ desfecho: 'fora' }))).toBe('maquina_fora');
+  });
+
+  it('em lances simulados, sempre sai uma frase', () => {
+    const rng = criarAleatorio(15);
+    const ctx: ContextoNarrador = { time: { nome: 'Flamengo', artigo: 'o' } };
+    for (let s = 1; s <= 400; s++) {
+      const gesto = { dir: ((s * 37) % 201) - 100, forca: (s * 13) % 101, efeito: ((s * 7) % 41) - 20 };
+      const r = resolverCobranca(s, 0, gesto, 0.5);
+      expect(escolherFrase(eventoDaCobranca(r), { ...ctx, etiquetas: etiquetasDaCobranca(r) }, rng)).not.toBeNull();
+      const dr = resolverDefesa(s, 0, (s % 7) - 1, 0.5);
+      const { dica } = planejarDefesa(s, 0, 0.5);
+      const e = etiquetasDaDefesa(dr, dica);
+      expect(e.has('dica_honesta')).toBe(coluna(dr.alvo) === dica);
+      expect(escolherFrase(eventoDaDefesa(dr), { ...ctx, etiquetas: e }, rng)).not.toBeNull();
+    }
+  });
+});
+
 describe('situação do lance', () => {
   const base: ResultadoCobranca = {
     desfecho: 'gol', x: 0.5, y: 0.5, zonaBola: 5, zonaGoleiro: 0, angulo: false, raspouTrave: false,
-    cavadinha: false, fraca: false, pontos: 10,
+    cavadinha: false, fraca: false, goleiroLeu: false, pontos: 10,
   };
 
   it('prioridade: cavadinha > trave e gol > ângulo > gol', () => {

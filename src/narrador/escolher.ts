@@ -32,7 +32,17 @@ export interface ContextoNarrador {
   usadas?: ReadonlySet<string>;
   /** Últimas ~30 frases vistas neste aparelho: evitadas enquanto houver outra opção. */
   recentes?: readonly string[];
+  /** O que é verdade no lance (ver lance.ts). Frase com etiqueta só sai se todas estiverem aqui. */
+  etiquetas?: ReadonlySet<Etiqueta>;
 }
+
+/** Etiquetas de lance da tabela do docs/narrador.md (seção 2). */
+export const ETIQUETAS = [
+  'canto', 'meio', 'alto', 'baixo', 'fraca', 'goleiro_outro_lado', 'travessao',
+  'pulou_outro_lado', 'mesma_coluna', 'nao_pulou', 'dica_honesta', 'cobranca', 'defesa',
+] as const;
+
+export type Etiqueta = (typeof ETIQUETAS)[number];
 
 export interface FraseEscolhida {
   /** Texto original do banco (chave para "usadas" e "recentes"). */
@@ -41,6 +51,9 @@ export interface FraseEscolhida {
 }
 
 export const PESO_RARA = 0.1;
+
+/** Frase com etiqueta que combina com o lance vale o dobro no sorteio. */
+export const PESO_ETIQUETA = 2;
 
 /** Até ~75 caracteres depois da troca, para caber em 2 linhas em 390 px. */
 export const MAX_CARACTERES = 75;
@@ -53,7 +66,7 @@ const COM_LIMITE: ReadonlySet<EventoNarrador> = new Set<EventoNarrador>([
   'abertura', 'gol', 'gol_angulo', 'cavadinha', 'cavadinha_falhou', 'trave_gol', 'trave',
   'fora_cima', 'fora_lado', 'goleiro_pegou', 'defesa', 'sofreu_gol', 'decisiva',
   'morte_subita', 'par_ou_impar_escolha', 'par_ou_impar_ganhou', 'par_ou_impar_perdeu',
-  'vitoria', 'derrota', 'cinco_cobrancas', 'cinco_defesas',
+  'maquina_fora', 'vitoria', 'derrota', 'cinco_cobrancas', 'cinco_defesas',
   'desafio_convite', 'desafio_vitoria', 'desafio_derrota',
 ]);
 
@@ -126,8 +139,14 @@ export function preencher(frase: string, ctx: ContextoNarrador): string | null {
 
 const maiuscula = (s: string) => s.charAt(0).toLocaleUpperCase('pt-BR') + s.slice(1);
 
+const pesoDa = (f: Frase) => (f.rara ? PESO_RARA : 1) * (f.e?.length ? PESO_ETIQUETA : 1);
+
+/** Frase sem etiqueta vale para qualquer lance; com etiqueta, só se todas forem verdadeiras. */
+export const combina = (f: Frase, etiquetas: ReadonlySet<string> = new Set()) =>
+  !f.e || f.e.every((e) => etiquetas.has(e));
+
 function sortearComPeso(lista: readonly Frase[], rng: () => number): Frase {
-  const pesos = lista.map((f) => (f.rara ? PESO_RARA : 1));
+  const pesos = lista.map(pesoDa);
   let alvo = rng() * pesos.reduce((a, b) => a + b, 0);
   for (let i = 0; i < lista.length; i++) {
     alvo -= pesos[i];
@@ -144,6 +163,7 @@ export function escolherFrase(
 ): FraseEscolhida | null {
   const limite = COM_LIMITE.has(evento);
   const validas = (FRASES[evento] as readonly Frase[]).filter((f) => {
+    if (!combina(f, ctx.etiquetas)) return false;
     const t = preencher(f.t, ctx);
     return t !== null && (!limite || t.length <= MAX_CARACTERES);
   });

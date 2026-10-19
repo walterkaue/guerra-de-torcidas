@@ -21,7 +21,17 @@ function lerBanco(texto) {
       let t = linha.slice(2).trim();
       const rara = t.startsWith('⭐');
       if (rara) t = t.replace(/^⭐\s*/, '');
-      banco[atual].push(rara ? { t, rara: true } : { t });
+      // Etiquetas de lance no fim: "GOL! ... [canto] [goleiro_outro_lado]".
+      const e = [];
+      let m;
+      while ((m = t.match(/\s*\[(\w+)\]$/))) {
+        e.unshift(m[1]);
+        t = t.slice(0, m.index).trim();
+      }
+      const f = { t };
+      if (rara) f.rara = true;
+      if (e.length) f.e = e;
+      banco[atual].push(f);
     }
   }
   return banco;
@@ -31,7 +41,10 @@ const banco = lerBanco(md);
 const corpo = Object.entries(banco)
   .map(([evento, frases]) => {
     const itens = frases
-      .map((f) => `    { t: ${JSON.stringify(f.t)}${f.rara ? ', rara: true' : ''} },`)
+      .map(
+        (f) =>
+          `    { t: ${JSON.stringify(f.t)}${f.rara ? ', rara: true' : ''}${f.e ? `, e: ${JSON.stringify(f.e)}` : ''} },`,
+      )
       .join('\n');
     return `  ${evento}: [\n${itens}\n  ],`;
   })
@@ -45,6 +58,8 @@ export interface Frase {
   t: string;
   /** Frase rara (⭐): sai com peso 1/10. */
   rara?: true;
+  /** Etiquetas de lance: a frase só sai se todas forem verdadeiras no lance (narrador.md, seção 2). */
+  e?: readonly string[];
 }
 
 export const FRASES = {

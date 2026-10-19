@@ -5,7 +5,7 @@ import { esc, irPara, type Rota } from '../app';
 import { corDeTexto, proTime, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { sementeNova } from '../jogo/aleatorio';
-import { eventoDaCobranca, eventoDaDefesa, eventosDoFim } from '../narrador/lance';
+import { etiquetasDaCobranca, etiquetasDaDefesa, eventoDaCobranca, eventoDaDefesa, eventosDoFim } from '../narrador/lance';
 import { criarNarrador } from '../narrador/sessao';
 import {
   COBRANCAS,
@@ -293,14 +293,14 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     );
     if (rodada === 0) narrar(narrador.falar('abertura'));
     else if (rodada === COBRANCAS) narrar(narrador.falar('morte_subita', { placar: placarAtual() }));
-    else if (cobrancaDecisiva()) narrar(narrador.falar('decisiva'));
+    else if (cobrancaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['cobranca']) }));
   }
 
   function comecarDefesa(): void {
     const plano = planejarDefesa(semente, rodada, dificuldade, desafio?.cobrancas[rodada]);
     fase = { tipo: 'corrida', inicio: relogio(), plano, zona: null, pulouEm: null };
     instruir('Sua vez de defender! Olhe o pé de apoio e toque onde pular.');
-    if (defesaDecisiva()) narrar(narrador.falar('decisiva'));
+    if (defesaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['defesa']) }));
   }
 
   function depoisDe(ms: number, fn: () => void): void {
@@ -342,7 +342,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   function fimDoChute(r: ResultadoCobranca): void {
     cobrancas.push(r);
     atualizarHud();
-    narrar(narrador.falar(eventoDaCobranca(r)), legendaDaCobranca(r));
+    narrar(narrador.falar(eventoDaCobranca(r), { etiquetas: etiquetasDaCobranca(r) }), legendaDaCobranca(r));
     if (r.desfecho === 'gol') comemorar(telaX(r.x), telaY(r.y), r.pontos, true);
     somTorcida(r.desfecho === 'gol' ? 'festa' : 'uuuh');
     depoisDe(1500, comecarDefesa);
@@ -359,11 +359,10 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   function fimDaDefesa(r: ResultadoDefesa): void {
     defesas.push(r);
     atualizarHud();
-    const evento = eventoDaDefesa(r);
+    const { dica } = planejarDefesa(semente, rodada, dificuldade, desafio?.cobrancas[rodada]);
     const legenda =
       r.desfecho === 'defesa' ? (r.pontos ? `Defesa · +${r.pontos}` : 'Defesa') : r.desfecho === 'gol' ? 'Gol do adversário' : 'Pra fora';
-    // O banco ainda não tem frases para o batedor da máquina errar: fica só a legenda.
-    narrar(evento ? narrador.falar(evento) : 'O batedor isolou! Nem precisou pular.', legenda);
+    narrar(narrador.falar(eventoDaDefesa(r), { etiquetas: etiquetasDaDefesa(r, dica) }), legenda);
     if (r.desfecho === 'defesa') {
       const z = centroZona(r.zonaGoleiro);
       comemorar(telaX(z.x), telaY(z.y), r.pontos, false);

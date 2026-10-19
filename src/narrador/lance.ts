@@ -1,7 +1,33 @@
 // Qual situação do narrador cada lance gera. Puro, sem sorteio.
 
-import type { ResultadoCobranca, ResultadoDefesa, ResultadoPartida } from '../jogo/penaltis';
+import { coluna, linha, type ResultadoCobranca, type ResultadoDefesa, type ResultadoPartida } from '../jogo/penaltis';
+import type { Etiqueta } from './escolher';
 import type { EventoNarrador } from './frases';
+
+/** Etiquetas de lugar da bola: coluna 0 e 2 são canto, 1 é meio; linha 0 baixo, 1 alto. */
+function lugar(zona: number): Etiqueta[] {
+  return [coluna(zona) === 1 ? 'meio' : 'canto', linha(zona) === 1 ? 'alto' : 'baixo'];
+}
+
+/** O que é verdade numa cobrança de quem joga (tabela "Etiquetas de lance" do narrador.md). */
+export function etiquetasDaCobranca(r: ResultadoCobranca): Set<Etiqueta> {
+  const e = new Set(lugar(r.zonaBola));
+  if (r.fraca) e.add('fraca');
+  if (coluna(r.zonaGoleiro) !== coluna(r.zonaBola)) e.add('goleiro_outro_lado');
+  // Trave com a bola acima da linha do travessão (no poste lateral, y fica abaixo de 1).
+  if (r.desfecho === 'trave' && r.y > 1) e.add('travessao');
+  return e;
+}
+
+/** O que é verdade numa defesa. `dica` é a coluna do pé de apoio (planejarDefesa). */
+export function etiquetasDaDefesa(r: ResultadoDefesa, dica: number): Set<Etiqueta> {
+  const e = new Set(lugar(r.alvo));
+  if (r.zonaGoleiro < 0) e.add('nao_pulou');
+  else if (coluna(r.zonaGoleiro) !== coluna(r.alvo)) e.add('pulou_outro_lado');
+  else if (r.zonaGoleiro !== r.alvo) e.add('mesma_coluna');
+  if (dica === coluna(r.alvo)) e.add('dica_honesta');
+  return e;
+}
 
 /** Prioridade num mesmo lance: cavadinha > trave e gol > ângulo > gol. */
 export function eventoDaCobranca(r: ResultadoCobranca): EventoNarrador {
@@ -18,11 +44,10 @@ export function eventoDaCobranca(r: ResultadoCobranca): EventoNarrador {
   }
 }
 
-/** O batedor da máquina errar ainda não tem situação no banco: devolve null. */
-export function eventoDaDefesa(r: ResultadoDefesa): EventoNarrador | null {
+export function eventoDaDefesa(r: ResultadoDefesa): EventoNarrador {
   if (r.desfecho === 'defesa') return 'defesa';
   if (r.desfecho === 'gol') return 'sofreu_gol';
-  return null;
+  return 'maquina_fora';
 }
 
 /**
