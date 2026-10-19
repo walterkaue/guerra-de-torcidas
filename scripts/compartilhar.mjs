@@ -3,7 +3,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
-export const ARQUIVOS = ['aleatorio.ts', 'penaltis.ts', 'deteccao.ts'];
+export const ARQUIVOS = ['aleatorio.ts', 'penaltis.ts', 'deteccao.ts', 'crava.ts', 'footballData.ts'];
 export const CABECALHO =
   '// CÓPIA GERADA de src/jogo por scripts/compartilhar.mjs. Não edite aqui: mude em src/jogo e rode `npm run compartilhar`.\n';
 
