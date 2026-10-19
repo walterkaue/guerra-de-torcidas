@@ -430,3 +430,7 @@ verify_jwt = false
 # Só administradores (a função confere na tabela administradores).
 [functions.confirmar-placar]
 verify_jwt = true
+
+# Prova de Boleiro (quiz): uma função com ações (nova, proxima, responder, ajuda).
+[functions.prova]
+verify_jwt = true
