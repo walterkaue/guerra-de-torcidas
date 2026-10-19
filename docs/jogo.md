@@ -1,7 +1,7 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 19/10/2026 (revisão de fechamento do pênaltis; gritos em áudio para o backlog; próximos minigames: quiz e desafio diário)
+> Última atualização: 19/10/2026 (nomes reais permitidos nos jogos de conhecimento; Crava a Rodada confirmado para 2026; fechamento do pênaltis)
 > Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
@@ -260,6 +260,17 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Zoeira de cidade:** só sobre posição no ranking. Nada de sotaque, origem, economia, "cidade pequena" ou estereótipo de quem mora lá.
 - **Notificações de semana:** "Faltam 6 horas e o [rival] tá encostando."
 - **Limite:** zoeira com o time e com a situação, nunca com raça, orientação, gênero, religião, origem, corpo, deficiência ou pessoa real (jogador, técnico, narrador). Nada de bordão de narrador real nem trecho de música.
+
+### Nomes reais (decidido em 19/10/2026)
+- **Pode:** citar nomes de jogadores, técnicos e outras pessoas reais do futebol em **perguntas e respostas factuais dos jogos de conhecimento** (quiz e desafios diários): gols, títulos, recordes, transferências, escalações históricas.
+- **Não pode:**
+  - imagem, foto, voz, caricatura ou boneco que imite pessoa real (os bonecos continuam fictícios);
+  - zoeira, apelido pejorativo ou opinião sobre a pessoa (a zoeira continua sendo com o time e a situação);
+  - vida pessoal, família, saúde, religião, política, polêmica, processo ou crime;
+  - atletas menores de idade (categorias de base);
+  - usar nome de pessoa real para divulgar o jogo (anúncio, post, card de convite).
+- Toda pergunta com nome real precisa de **fonte verificável** guardada junto com a pergunta.
+- Fantasy com jogadores reais (escalar time) continua fora (backlog, seção 7).
 - **Classificação livre:** sem palavrão, bebida, aposta ou violência em nenhum texto do jogo. Escolas entram na fase 2.
 - **Derrota zoa, mas aponta a saída:** revanche, desafio, "os pontos contam igual pro seu time".
 
@@ -277,9 +288,9 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 | Fase | Conteúdo |
 |---|---|
 | **1. MVP** ✅ pênaltis concluído em 19/10, em teste com amigos | Pênaltis com desempate, times oficiais com artigo e rival, ranking da semana (campeão pelos 30 melhores + Maior torcida), desafio por link, card de resultado com placar em emoji, direção visual nova |
-| **1.5 Logo depois do MVP** | Cidade como segunda camisa, Crava a Rodada (estreia nas últimas rodadas de 2026), Série A e Série B mensais, ranking de 52 semanas, Galeria, carreira, anti-trapaça completo antes de divulgar |
+| **1.5 Logo depois do MVP** | **Crava a Rodada: construir na semana de 26/10; estreia na 34ª rodada (2 a 6/11) ou, no máximo, na 35ª (18/11)**, cobrindo a reta final até a 38ª (2/12). Depois: cidade como segunda camisa, Série A e Série B mensais, ranking de 52 semanas, Galeria, carreira, anti-trapaça completo antes de divulgar |
 | **2. Comunidade** | Times criados, ligas e campeonatos combinados, moderação, Copa das Torcidas |
-| **3. Mais minigames** | **Próximos (decidido em 19/10): quiz de perguntas e desafio diário de adivinhar (estilo Wordle).** Depois: Embaixadinha (com chinelo, laranja e bola murcha) |
+| **3. Mais minigames** | **Próximos (decidido em 19/10): quiz de perguntas (com nomes reais em perguntas factuais) e desafio diário de adivinhar (estilo Wordle).** Desenho das regras em chat próprio; construção depois do Crava a Rodada. Depois: Embaixadinha (com chinelo, laranja e bola murcha) |
 | **4. Coleção e resenha** | Álbum de figurinhas com jogadores fictícios e trocas, Técnico por Um Jogo, Pelada de Rua |
 
 ## 11. Como saber se está funcionando
@@ -288,7 +299,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - **Volta no dia seguinte e em 7 dias.**
 - **Partidas por visita.**
 - **Desafios aceitos / desafios enviados.**
-- Enquanto não houver ferramenta de métricas, os números saem do próprio banco (partidas, desafios e torcedores), por um relatório simples: `npm run metricas` (só leitura; jogador = quem fechou ao menos 1 partida; "voltou em 7 dias" = jogou em algum dos 7 dias seguintes à estreia; "entrou por link" = a 1ª partida foi desafio de outra pessoa).
+- Enquanto não houver ferramenta de métricas, os números saem do próprio banco (partidas, desafios e torcedores), por um relatório simples.
 
 ## 12. Técnica (resumo)
 
