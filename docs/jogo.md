@@ -256,6 +256,16 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
   - Os dois levam o aviso fixo "Aqui é só resenha".
 - **Frases do narrador:** `docs/narrador.md`, seção 9 (versão 1.3).
 
+### Como está no servidor (19/10/2026)
+- **Jogos:** a função `sincronizar-jogos` lê a competição BSA da API v4 do football-data.org (1 chamada traz a temporada inteira) e guarda as rodadas 32 a 38 na tabela `jogos`. Os nomes da API viram os ids de `src/dados/times.ts` por `src/jogo/footballData.ts`; time sem par aparece em vermelho no `#admin`. Jogo adiado atualiza o horário e o palpite reabre até o novo início.
+- **Agendamento** (pg_cron no próprio Supabase): a cada 30 min em dia de jogo (e até 4 h depois de um jogo começar), e às 6h no resto. A função não pede login (o agendador não tem sessão), mas recusa nova chamada com menos de 2 minutos da anterior.
+- **Palpites e certeza:** cada pessoa lê e grava só os seus, e só antes do início (RLS pela hora do servidor). A certeza trava no início do 1º jogo da rodada (`rodadas.trava_certeza`; depois que passa, não muda mais).
+- **Pontos:** só na confirmação do placar pelo admin (função `confirmar-placar`), calculados pelo `src/jogo/crava.ts` para a rodada inteira. A tabela `crava_pontos` guarda só diferenças: confirmar de novo não grava nada, corrigir grava o ajuste. Os pontos entram na semana do jogo; se ela já foi confirmada (segunda 12h), na semana atual.
+- **Porcentagem da torcida:** função `crava_rodada`, só para jogo que já começou e com pelo menos 20 palpites (`config_crava.min_palpites_porcentagem`).
+- **Rankings do Crava:** `ranking_crava` (média dos 30 melhores palpiteiros por torcida, da rodada ou do Brasileirão) e `minha_posicao_crava` ("Sua posição: 37º de 412 na rodada"). Ninguém vê palpite nem nome de outra pessoa.
+- **Modo ensaio:** `config_crava.valendo_desde_rodada`. Com **99** (padrão), o Crava funciona inteiro, mas nenhuma rodada soma no ranking da semana. Para valer a partir da 34ª, troque para **34** no Table Editor (antes de 2/11); as rodadas 32 e 33 continuam fora.
+- **Admin:** página `#admin`, login com e-mail e senha criados no painel do Supabase (sem envio de e-mail), sessão separada da sessão de jogador. Só entra quem está na tabela `administradores`. Botões: Confirmar, Corrigir o placar, Anular e Sincronizar agora.
+
 ### Linha vermelha: nada que pareça aposta
 - **Aviso fixo** no topo da tela do minigame e no card: **"Aqui é só resenha: sem aposta, sem dinheiro, sem prêmio em dinheiro. Nunca."**
 - Palavras proibidas em todo o jogo: aposta, apostar, bet, odd, cotação, banca, bolão valendo, "green", "red" (gírias de aposta).
@@ -430,6 +440,9 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - Como a URL e a publishable key são públicas, ficam versionadas no repositório (o build do GitHub Pages precisa delas). Nada secreto entra no repositório.
 - **Antes de divulgar:** CAPTCHA (Cloudflare Turnstile) no login anônimo, limpeza periódica de usuários anônimos inativos, anti-trapaça completo (inclusive as cobranças do desafio, que hoje chegam ao celular antes da defesa), ranking que aguente muitos jogadores (hoje a semana inteira é recalculada a cada partida fechada; trocar por cálculo incremental ou de minuto em minuto) e decidir sobre o plano Pro (o Free pausa o projeto depois de 1 semana sem uso).
 - **Rotina contra a pausa do plano Free:** um agendamento no GitHub Actions faz uma consulta leve ao banco a cada 2 dias. Enquanto o projeto estiver no Free, isso evita a pausa por 7 dias sem uso. O GitHub desliga agendamentos de repositório público depois de 60 dias sem commit; se isso acontecer, o GitHub avisa por e-mail e basta reativar. Arquivo: `.github/workflows/manter-supabase.yml` (a cada 2 dias às 09h de Brasília e pelo botão "Run workflow"): lê 1 linha do ranking com a publishable key e falha se a resposta não for 200.
+- **Navegação** (19/10): barra com Jogar (Bate Contra Mim, Prova de Boleiro e Time do Dia; os dois últimos com selo "em breve" até ficarem prontos), Palpites (Crava a Rodada), Ranking (com a semana passada "provisória até segunda 12h") e Carreira (em breve).
+- **Teto diário entre minigames:** `partidas.minigame` (`penaltis` ou `prova`) e `partidas.amistoso`. As 5 melhores partidas do dia contam somando os minigames; partida de amistoso não ocupa vaga.
+- **Palavras proibidas:** `src/palavrasProibidas.test.ts` falha se alguma palavra da seção 7 aparecer no código do jogo (a única exceção é o aviso fixo).
 - **Zerar pré-temporada:** `npm run zerar-pre-temporada` apaga partidas, desafios e ranking (mantém times e torcedores). Mostra as contagens e só apaga depois de digitar ZERAR.
 - **Sessão de usuário apagado:** se o login anônimo salvo no aparelho não existir mais no servidor, o jogo sai e faz um login anônimo novo.
 - DNS: CNAME `torcida` no Hostgator, feito manualmente pelo Kauê.
