@@ -1,6 +1,7 @@
 # Guerra de Torcidas — instruções para o Claude Code
 
 Leia `docs/jogo.md` antes de qualquer tarefa. Ele é a fonte da verdade sobre regras, tom e escopo.
+Conforme a tarefa, leia também: `docs/rankings.md` (rankings e justiça), `docs/narrador.md` (frases e regras do narrador), `docs/visual.md` (direção visual). Se um deles discordar do `jogo.md`, vale o `jogo.md`.
 
 ## Limites do projeto (importante)
 
@@ -11,17 +12,20 @@ Leia `docs/jogo.md` antes de qualquer tarefa. Ele é a fonte da verdade sobre re
 
 ## Segredos
 
-- A URL do Supabase e a chave `anon` são públicas e podem ir no front-end.
-- A chave `service_role` **nunca** entra no repositório, em log ou em código do navegador. Só em variáveis de ambiente das funções do Supabase.
+- A URL do Supabase e a **publishable key** (`sb_publishable_…`) são públicas e podem ir no front-end.
+- A **secret key** (`sb_secret_…`) e a senha do banco **nunca** entram no repositório, em log ou em código do navegador. A secret key só existe como segredo das funções do Supabase.
+- Não use as chaves antigas `anon` e `service_role` (a Supabase está descontinuando até o fim de 2026).
+- Comandos que pedem login ou senha (`supabase login`, `supabase link`) quem roda é o Kauê no terminal. Diga o comando e espere.
 - Nada de `.env` com segredos no commit. Mantenha um `.env.example`.
 
 ## Produto
 
-- Interface em português do Brasil, tom de resenha e zoeira (ver seção 7 do `docs/jogo.md`).
+- Interface em português do Brasil, tom de resenha e zoeira (ver seção 8 do `docs/jogo.md`).
 - **Celular primeiro.** Teste sempre em 390×844. Toque, nunca hover. Nada de rolagem horizontal.
-- **Sem marcas de clubes:** nada de escudo, uniforme, mascote, hino ou foto de jogador real. Só nome e cores.
-- Zoeira só com o time e a situação. Nunca com raça, orientação, religião, origem, corpo ou pessoa real.
-- Nunca peça dados pessoais obrigatórios. Login anônimo por padrão.
+- **Sem marcas de clubes:** nada de escudo, uniforme oficial, mascote, hino ou foto de jogador real. Só nome, cores e artigo. Batedor e goleiro usam camiseta lisa nas cores do time.
+- Zoeira só com o time e a situação. Nunca com raça, orientação, gênero, religião, origem, corpo, deficiência ou pessoa real. Narrador neutro de gênero.
+- **Zero aposta:** nenhuma das palavras proibidas da seção 7 do `docs/jogo.md` em nenhum texto do jogo.
+- Nunca peça dados pessoais obrigatórios. Login anônimo por padrão. Apelido nunca aparece em ranking público no MVP.
 
 ## Técnica
 

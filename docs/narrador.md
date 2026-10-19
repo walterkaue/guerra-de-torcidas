@@ -1,15 +1,18 @@
 # Banco do narrador — "Bate Contra Mim" (pênaltis)
 
-> Versão 1 · 18/10/2026 · Fonte das frases do narrador e das provocações entre torcidas.
+> Versão 1.1 · 18/10/2026 · Fonte das frases do narrador e das provocações entre torcidas e cidades.
 > Frase nova entra aqui e passa pelo checklist de tom abaixo.
+> Mudanças da 1.1: frases neutras de gênero, desempate (morte súbita e par ou ímpar) no lugar do empate, provocação entre cidades.
 
 ## 1. Checklist de tom (vale para toda frase nova)
 
 - Zoa o **lance, a bola, a situação e o time**. Nunca a pessoa.
+- **Neutra de gênero:** fala do lance, não de quem joga. "Cavou!", não "Ele cavou!". Nada de "artilheiro", "herói", "representante" ou "goleiro" se referindo a quem está jogando.
 - Nada sobre raça, orientação, gênero, religião, origem, corpo, deficiência ou saúde.
 - Nada de pessoa real: jogador, técnico, narrador, comentarista. Nada de bordão famoso de narrador real nem trecho de música.
 - **Classificação livre:** sem palavrão, bebida, aposta ou violência. Escolas entram na fase 2.
 - Sem nome de clube escrito na frase: só as variáveis de time.
+- **Cidades:** só posição no ranking. Nada de sotaque, origem, economia, tamanho da cidade ou estereótipo de quem mora lá.
 - Derrota zoa, mas sempre aponta a saída (revanche, "os pontos contam igual").
 
 ## 2. Regras para o código
@@ -18,11 +21,13 @@
 - **Raras (⭐):** peso 1/10 em relação às outras. São a surpresa que vira print.
 - **Não usar a semente da partida** para sortear frases. O narrador tem seu próprio gerador aleatório, para não mexer no determinismo da física (cliente e servidor precisam dar o mesmo resultado).
 - **Prioridade num mesmo lance:** cavadinha > trave e gol > ângulo > gol. Só uma frase por lance.
-- **5 de 5** e **vitória/derrota/empate** saem na tela final, nessa ordem (até 2 frases).
+- **Tela final:** 5 de 5 e depois vitória ou derrota (até 2 frases). Não existe mais empate: toda disputa termina com vencedor (ver desempate no `jogo.md`).
+- **Desempate:** `morte_subita` sai quando a morte súbita começa; `par_ou_impar_escolha` enquanto o servidor responde; `par_ou_impar_ganhou` ou `par_ou_impar_perdeu` no resultado, antes da frase de vitória ou derrota.
 - **Tamanho:** até ~75 caracteres depois de trocar as variáveis, para caber em 2 linhas em 390 px. Grito em MAIÚSCULAS só no começo.
 - **Primeira letra** da frase final sempre maiúscula (para `{o_time}` no começo virar "O Flamengo").
-- **Variável faltando** (ex.: jogador sem rival, partida fora de desafio): pular a frase e sortear outra.
-- **"Outro time":** quem escolheu "Outro time" não recebe frases com variáveis de time ou rival.
+- **Variável faltando** (ex.: jogador sem rival, partida fora de desafio, jogador sem cidade): pular a frase e sortear outra.
+- **"Outro time":** quem escolheu "Outro time" não recebe frases com variáveis de time ou rival; recebe as de cidade.
+- **Cidade sem preposição:** `{cidade}` nunca vem depois de "de", "do", "da", "em", "no" ou "na" (cada cidade pede um artigo diferente). Escreva "{cidade} tá em 3º", nunca "a torcida de {cidade}".
 
 ### Variáveis
 
@@ -40,6 +45,10 @@
 | `{dif}` | 300 pontos · 1 ponto | |
 | `{horas}` | 6 horas · 1 hora | |
 | `{posicao}` | 3º | |
+| `{cidade}` | Caraguatatuba | |
+| `{cidade_rival}` | a cidade logo acima (ou abaixo) no ranking do estado | |
+| `{uf}` | SP | |
+| `{numero}` | número do narrador no par ou ímpar (0 a 5) | |
 
 (Os exemplos de time são inventados. Cada time precisa ter o artigo "o" ou "a" cadastrado.)
 
@@ -53,7 +62,7 @@
 - O goleiro tá dançando na linha. Mostra quem manda.
 - Bola na marca da cal. {o_time} pede passagem!
 - Hoje não tem VAR pra te salvar. Capricha!
-- Atenção, torcida {do_time}: seu representante entrou em campo!
+- Atenção, torcida {do_time}: tem gente nossa em campo!
 - ⭐ O gandula já foi buscar a bola reserva. Precaução.
 
 ### `gol` — gol comum
@@ -62,7 +71,7 @@
 - GOL! Deslocou o goleiro, que foi comprar pão do outro lado.
 - Entrouuu! Frio que nem picolé de limão!
 - GOL! O goleiro só viu o vulto.
-- É dele! Bateu com a calma de quem tá na fila do banco.
+- É GOL! Bateu com a calma de quem tá na fila do banco.
 - GOOOL! Balançou a rede e o coração da torcida {do_time}!
 - Lá dentro! O goleiro escolheu o canto errado com muita convicção.
 - GOL! Simples, seco, sem conversa.
@@ -92,7 +101,7 @@
 ### `cavadinha` — cavadinha que entra
 - É CAVADINHAAA! Que categoria, que deboche!
 - CAVADINHA! O goleiro pulou e a bola passou de carona por cima!
-- Ele cavou! Ele CAVOU! Que coragem, que audácia!
+- CAVOU! CAVOU MESMO! Que coragem, que audácia!
 - CAVADINHA! O goleiro já tava no chão quando a bola chegou, devagarinho.
 - De cavadinha! Isso não é cobrança, é exposição de arte!
 - Cavadinha e entrou! O goleiro vai precisar de um abraço.
@@ -182,7 +191,7 @@
 - Pegou! O batedor tá olhando pro céu procurando explicação.
 - DEFESA! Gol cancelado na fonte.
 - Paredão {do_time}! Mais 10 pra conta!
-- ⭐ Pegou! O batedor vai pedir pra trocar de goleiro.
+- ⭐ Pegou! O batedor vai pedir pra mudar de gol.
 
 ### `sofreu_gol` — você não defendeu
 - Gol do batedor! Você foi pra um lado e a bola pro outro.
@@ -204,7 +213,37 @@
 - Silêncio total. Até o pipoqueiro parou.
 - Momento decisivo! Hora de virar lenda ou virar meme.
 
-## 4. Frases de fim de partida
+## 4. Desempate
+
+### `morte_subita` — o placar empatou depois das 5 de cada lado
+- EMPATOU! Agora é morte súbita, quem errar primeiro chora!
+- Empate em {placar}! Morte súbita, coração na mão!
+- Tá igual! Agora é uma de cada, sem margem pra erro.
+- Morte súbita! O pipoqueiro largou a pipoca pra assistir.
+- Ninguém cedeu! Vai pra morte súbita!
+- ⭐ Empatou! Até o placar pediu prorrogação de emoção.
+
+### `par_ou_impar_escolha` — morte súbita terminou empatada; esperando o servidor
+- Nem a morte súbita resolveu! Vai no par ou ímpar!
+- Tá tudo igual! Escolhe: par ou ímpar?
+- O narrador tá pensando no número...
+- Decisão no par ou ímpar, do jeito que se decide na pelada!
+
+### `par_ou_impar_ganhou`
+- Deu {numero} na mão do narrador. Ganhou no par ou ímpar!
+- PAR OU ÍMPAR É SEU! Isso que é estrela!
+- Ganhou no dedo! Pelada raiz decidida com classe.
+- O narrador mostrou {numero}. Vitória no detalhe!
+- ⭐ Ganhou no par ou ímpar! A sorte também torce {pro_time}.
+
+### `par_ou_impar_perdeu`
+- O narrador mostrou {numero}. Perdeu no par ou ímpar!
+- Perdeu no dedo! Mas os pontos vão {pro_time} do mesmo jeito.
+- Par ou ímpar não perdoa! Revanche tá a um toque.
+- Foi no detalhe! Bora de novo que a sorte vira.
+- ⭐ O narrador ganhou no par ou ímpar e tá se achando.
+
+## 5. Frases de fim de partida
 
 ### `vitoria`
 - ACABOU! Vitória com sabor de domingo!
@@ -233,16 +272,8 @@
 - Fim! Ficou {placar}. Bora virar isso na próxima?
 - ⭐ Perdeu! O goleiro da máquina já tá pedindo aumento.
 
-### `empate` (regra do empate ainda a definir no jogo.md)
-- Empate! Ninguém sai feliz, ninguém sai triste. Joga de novo!
-- Deu empate! Clássico de domingo de chuva.
-- Empatou em {placar}! Tá parecendo final de campeonato.
-- Empate! A resenha vai ficar dividida.
-- Ninguém ganhou! O placar ficou em cima do muro.
-- ⭐ Empate! Até o placar ficou sem saber pra quem torcer.
-
 ### `cinco_cobrancas` — 5 de 5 nas cobranças
-- 5 DE 5! Artilheiro com carteirinha!
+- 5 DE 5! Faro de gol com carteirinha!
 - Cinco cobranças, cinco gols! Isso é carimbo!
 - 100% de aproveitamento! O goleiro vai pedir transferência.
 - 5 de 5! Pode emoldurar esse placar.
@@ -252,7 +283,7 @@
 
 ### `cinco_defesas` — 5 de 5 nas defesas
 - 5 DEFESAS! Fechou o gol com tijolo e cimento!
-- Cinco de cinco! Isso não é goleiro, é muralha!
+- Cinco de cinco! Isso não é defesa, é muralha!
 - Ninguém passou! O gol tá trancado e a chave sumiu.
 - 5 de 5 debaixo da trave! O batedor vai mudar de profissão.
 - Paredão completo! Mais 25 {pro_time}!
@@ -260,7 +291,7 @@
 - Cinco defesas! A torcida {do_time} já tá encomendando estátua.
 - ⭐ 5 de 5! O gol pediu folga porque não teve trabalho.
 
-## 5. Desafio por link
+## 6. Desafio por link
 
 ### `desafio_convite` — texto que acompanha o link
 - Duvido você me vencer! Fiz {pontos} {pro_time}.
@@ -283,9 +314,9 @@
 - {desafiante} levou essa. Vai deixar barato?
 - ⭐ {desafiante} venceu. Finge que foi o vento e manda a revanche.
 
-## 6. Provocação entre torcidas (ranking da semana)
+## 7. Provocação entre torcidas (ranking da semana)
 
-Sempre ao time, nunca à pessoa. O rival segue a regra da seção 7 do `jogo.md`.
+Sempre ao time, nunca à pessoa. O rival segue a regra da seção 8 do `jogo.md`.
 
 ### `rival_atras` — seu time atrás do rival
 - Sua torcida tá {dif} atrás {do_rival}. Vai deixar?
@@ -322,7 +353,7 @@ Sempre ao time, nunca à pessoa. O rival segue a regra da seção 7 do `jogo.md`
 - Faltam {horas} e {o_rival} tá encostando.
 - Últimas horas da semana! Cada pênalti vale ouro.
 - Domingo à noite, {dif} de diferença. Hora da verdade.
-- A semana tá acabando e {o_time} precisa de mais um herói.
+- A semana tá acabando e {o_time} precisa de mais uma lenda em campo.
 
 ### `mais_braba` — ranking "Torcida mais braba"
 - {o_time} pode não ser o maior, mas é torcida braba!
@@ -334,3 +365,28 @@ Sempre ao time, nunca à pessoa. O rival segue a regra da seção 7 do `jogo.md`
 - {o_time} é campeão da semana! Pode zoar até segunda!
 - Acabou a semana: {o_time} no topo! {o_rival} vai ter que ouvir.
 - Campeão da semana! Segunda zera, mas o print é eterno.
+
+## 8. Provocação entre cidades (ranking do estado)
+
+Só posição no ranking. Ver o checklist da seção 1. Regra de preposição da seção 2.
+
+### `cidade_atras` — sua cidade atrás da rival
+- {cidade_rival} tá na frente. {cidade} vai deixar?
+- Faltam {dif} pra passar {cidade_rival}. Bora!
+- {cidade} tá em {posicao} no estado. Dá pra subir, e é hoje.
+- {cidade_rival} já tá comemorando. Responde em campo!
+
+### `cidade_frente` — sua cidade na frente
+- {cidade} tá em {posicao} no estado! Segura essa posição.
+- {cidade} na frente! {cidade_rival} tá olhando no retrovisor.
+- {cidade} lidera o duelo com {cidade_rival}. Não relaxa!
+
+### `cidade_passou` — sua cidade acabou de subir
+- SUBIU! {cidade} passou {cidade_rival} no estado!
+- Ultrapassagem! {cidade} agora tá em {posicao} no estado.
+- {cidade} subiu de posição! Manda no grupo da cidade.
+
+### `cidade_campea` — campeã do estado na semana
+- {cidade} é campeã da semana no estado! Pode comemorar!
+- Semana fechada: {cidade} no topo do estado!
+- {cidade} campeã da semana! O print é eterno.
