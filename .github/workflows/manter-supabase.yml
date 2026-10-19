@@ -1,0 +1,37 @@
+name: Manter o Supabase acordado
+
+# O plano Free pausa o projeto depois de 7 dias sem uso (docs/jogo.md, seção 12).
+# Uma leitura leve a cada 2 dias evita a pausa. Usa só a URL e a publishable key, que são públicas
+# e já ficam em .env.production. Sem segredos.
+on:
+  schedule:
+    - cron: '0 12 */2 * *' # 09h de Brasília, a cada 2 dias
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .env.production
+          sparse-checkout-cone-mode: false
+      - name: Ler 1 linha do ranking
+        run: |
+          # Tira o \r de arquivos salvos no Windows antes de ler as variáveis.
+          tr -d '\r' < .env.production > env-limpo
+          set -a
+          . ./env-limpo
+          set +a
+          status=$(curl -sS -o resposta.json -w '%{http_code}' \
+            -H "apikey: ${VITE_SUPABASE_PUBLISHABLE_KEY}" \
+            "${VITE_SUPABASE_URL}/rest/v1/ranking_semana?select=semana&limit=1")
+          echo "Resposta HTTP: ${status}"
+          cat resposta.json; echo
+          if [ "${status}" != "200" ]; then
+            echo "::error::O Supabase respondeu ${status} (esperado 200). O projeto pode estar pausado."
+            exit 1
+          fi

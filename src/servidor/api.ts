@@ -3,6 +3,7 @@
 // Sem internet ou com o Supabase fora do ar, tudo aqui falha rápido e o jogo segue "sem valer pontos".
 
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
+import { prefs } from '../estado';
 import type { GestoCobranca, Gestos, ResultadoPartida } from '../jogo/penaltis.ts';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -33,14 +34,36 @@ async function supabase(): Promise<SupabaseClient> {
   return cliente;
 }
 
-/** Garante uma sessão (login anônimo na primeira vez; depois a sessão fica salva no aparelho). */
-export async function garantirSessao(): Promise<string> {
-  const sb = await supabase();
-  const { data } = await comTempoLimite(sb.auth.getSession());
-  if (data.session) return data.session.user.id;
-  const { data: novo, error } = await comTempoLimite(sb.auth.signInAnonymously());
-  if (error || !novo.user) throw new ErroServidor(error?.code ?? 'login_falhou');
-  return novo.user.id;
+let sessaoConferida: Promise<string> | null = null;
+
+/**
+ * Garante uma sessão (login anônimo na primeira vez; depois a sessão fica salva no aparelho).
+ * Uma vez por carregamento confere no servidor se o usuário ainda existe: se ele foi apagado
+ * (limpeza de testes, usuários anônimos inativos), sai e faz um login anônimo novo.
+ */
+export function garantirSessao(): Promise<string> {
+  sessaoConferida ??= (async () => {
+    const sb = await supabase();
+    const { data } = await comTempoLimite(sb.auth.getSession());
+    if (data.session) {
+      const { data: atual, error } = await comTempoLimite(sb.auth.getUser());
+      if (!error && atual.user) return atual.user.id;
+      // Sessão salva de um usuário que não existe mais: limpa e entra de novo.
+      if (error && error.status && error.status >= 400 && error.status < 500) {
+        await sb.auth.signOut({ scope: 'local' });
+        prefs.set({ sincronizado: undefined });
+      } else {
+        throw new ErroServidor('sem_conexao');
+      }
+    }
+    const { data: novo, error } = await comTempoLimite(sb.auth.signInAnonymously());
+    if (error || !novo.user) throw new ErroServidor(error?.code ?? 'login_falhou');
+    return novo.user.id;
+  })().catch((e) => {
+    sessaoConferida = null; // tenta de novo na próxima chamada (ex.: voltou a internet)
+    throw e;
+  });
+  return sessaoConferida;
 }
 
 /** Grava time e apelido no servidor (o filtro de palavras roda lá). */

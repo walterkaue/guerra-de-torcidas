@@ -11,7 +11,8 @@
     "frases": "node scripts/gerar-frases.mjs",
     "compartilhar": "node scripts/compartilhar.mjs",
     "deploy:funcoes": "node scripts/compartilhar.mjs && supabase functions deploy --use-api",
-    "fontes": "node scripts/fontes.mjs"
+    "fontes": "node scripts/fontes.mjs",
+    "zerar-pre-temporada": "node scripts/zerar-pre-temporada.mjs"
   },
   "devDependencies": {
     "@fontsource/anton": "^5.3.0",
