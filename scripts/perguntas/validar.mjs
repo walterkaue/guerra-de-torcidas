@@ -43,6 +43,8 @@ export const DOMINIOS_ACEITOS = [
   'gauchazh.clicrbs.com.br', 'otempo.com.br', 'em.com.br', 'correiobraziliense.com.br',
   'correio24horas.com.br', 'oliberal.com', 'diariodepernambuco.com.br', 'nsctotal.com.br',
   'gazetadopovo.com.br', 'bandeirantes.com.br', 'sportv.globo.com', 'bbc.com', 'reuters.com',
+  'jovempan.com.br', 'itatiaia.com.br', 'opovo.com.br', 'tribunapr.com.br', 'bahianoticias.com.br',
+  'bandab.com.br', 'superesportes.com.br', 'radioguaiba.com.br', 'gzh.com.br',
 ];
 
 /** Zero aposta (seção 7) e, no quiz, nada de "prêmio", "milhão" ou "valendo" (narrador, seção 10). */
@@ -150,7 +152,10 @@ export function validarPergunta(p) {
 
   if (p.pergunta.length < 10 || p.pergunta.length > MAX_PERGUNTA) erros.push(`pergunta com ${p.pergunta.length} caracteres (10 a ${MAX_PERGUNTA})`);
   if (!p.pergunta.endsWith('?')) erros.push('pergunta não termina com "?"');
-  if (!/\b(18|19|20)\d{2}\b/.test(p.pergunta)) erros.push('pergunta sem ano (fato fechado precisa de data)');
+  // Fato fechado tem data: o ano vem na pergunta ou é a própria resposta ("fundado em qual ano?").
+  if (!/\b(18|19|20)\d{2}\b/.test(p.pergunta) && !/^(18|19|20)\d{2}$/.test(p.certa)) {
+    erros.push('pergunta sem ano (fato fechado precisa de data)');
+  }
 
   const alts = [p.certa, p.errada1, p.errada2, p.errada3];
   alts.forEach((a, i) => {

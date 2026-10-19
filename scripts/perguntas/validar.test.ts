@@ -53,6 +53,9 @@ describe('regras de conteúdo', () => {
     expect(e.join(' ')).toMatch(/sem ano/);
     expect(e.join(' ')).toMatch(/não termina/);
     expect(validarPergunta({ ...boa, pergunta: `Em 2019, ${'x'.repeat(140)}?` }).join(' ')).toMatch(/caracteres/);
+    // Ano na resposta também é data.
+    const ano = { ...boa, pergunta: 'O Flamengo foi fundado em 17 de novembro de qual ano?', certa: '1895', errada1: '1902', errada2: '1911', errada3: '1889' };
+    expect(validarPergunta(ano)).toEqual([]);
   });
 
   it('fonte: domínio aceito; Wikipédia só como fonte2', () => {
