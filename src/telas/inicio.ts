@@ -218,6 +218,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     const total = meu.media30 + rival.media30;
     const fracao = total > 0 ? meu.media30 / total : 0.5;
     elCabo.style.setProperty('--cor-eu', time.cores[0]);
+    elCabo.style.setProperty('--txt-eu', corDeTexto(time.cores[0]));
     elCabo.style.setProperty('--cor-rival', tRival.cores[0] === time.cores[0] ? tRival.cores[1] : tRival.cores[0]);
     elCabo.style.setProperty('--fracao', String(Math.min(0.92, Math.max(0.08, fracao))));
     elCabo.querySelector('[data-cabo-eu]')!.textContent = time.nome;
