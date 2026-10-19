@@ -304,9 +304,11 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
 
     const trava = travaDaRodada();
     const falta = trava ? Date.parse(trava) - agora.getTime() : 0;
-    const chaveLembrete = falta > 0 ? `${rodada}:${tempoAte(falta)}` : '';
+    // Lembrete só nas últimas 24 h antes do 1º jogo ("Rodada começando…" não serve 4 dias antes).
+    const lembrar = falta > 0 && falta <= 24 * 3600_000;
+    const chaveLembrete = lembrar ? `${rodada}:${tempoAte(falta)}` : '';
     if (chaveLembrete !== lembreteVisto) {
-      const lembrete = falta > 0 ? falar('crava_lembrete', { horas: tempoAte(falta) }) : null;
+      const lembrete = lembrar ? falar('crava_lembrete', { horas: tempoAte(falta) }) : null;
       elLembrete.textContent = lembrete ?? '';
       elLembrete.hidden = !lembrete;
       lembreteVisto = chaveLembrete;
