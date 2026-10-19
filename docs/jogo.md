@@ -1,7 +1,7 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 19/10/2026 (bloco B no servidor: limites, detecção, par ou ímpar, desafio por pontos; Crava a Rodada sem Contra a maré; rotina contra a pausa do Supabase; "Como jogar" antes da partida)
+> Última atualização: 19/10/2026 (narrador 1.2 com etiquetas de lance, botão Mais uma/Revanche; antes: bloco B no servidor, Crava a Rodada sem Contra a maré, rotina contra a pausa do Supabase)
 > Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
@@ -208,6 +208,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 ### Card de resultado
 - Imagem gerada no próprio celular: placar, cores do time, frase do narrador, "Fulano fez 47 pontos {pro_time}" (com o artigo certo) e o link do desafio.
 - Botões: WhatsApp, stories (via compartilhamento nativo), placar em emoji, copiar link.
+- **Botão principal do resultado:** "MAIS UMA" depois de vitória e "REVANCHE" depois de derrota (decidido em 19/10). O que o botão faz não muda.
 
 ## 7. Minigame 2 — "Crava a Rodada" (palpites)
 
@@ -249,7 +250,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 ## 8. Tom e zoeira
 
 - **Narrador:** exagerado, rádio de domingo. Ex.: "É CAVADINHAAAA! Que categoria, que deboche!", "Pegou! O goleiro tava com o almoço pago!", "Isolou! Foi pra Marte, a bola tá orbitando!"
-- **Banco de frases:** `docs/narrador.md` (versão 1.1). Frase nova entra lá e passa pelo checklist de tom do próprio arquivo.
+- **Banco de frases:** `docs/narrador.md` (versão 1.2, com etiquetas para a frase combinar com o lance). Frase nova entra lá e passa pelo checklist de tom do próprio arquivo.
 - **Neutro de gênero:** o narrador fala do lance, não da pessoa ("Cavou!", não "Ele cavou!").
 - **Provocação ao rival** (só ao time, nunca à pessoa): "Sua torcida tá 300 pontos atrás do [rival]. Vai deixar?"
 - **Quem é o rival:** o clássico da tabela da seção 3. Sem clássico, o rival é o time logo acima no ranking da semana da sua divisão (ou logo abaixo, se for o líder); antes das divisões, no ranking geral (seção 5). Quem escolheu "Outro time" recebe só provocação de cidade.

@@ -1,8 +1,9 @@
 # Banco do narrador — "Bate Contra Mim" (pênaltis)
 
-> Versão 1.1 · 18/10/2026 · Fonte das frases do narrador e das provocações entre torcidas e cidades.
+> Versão 1.2 · 19/10/2026 · Fonte das frases do narrador e das provocações entre torcidas e cidades.
 > Frase nova entra aqui e passa pelo checklist de tom abaixo.
 > Mudanças da 1.1: frases neutras de gênero, desempate (morte súbita e par ou ímpar) no lugar do empate, provocação entre cidades.
+> Mudanças da 1.2: **etiquetas de lance** (a frase só sai quando combina com o que aconteceu: meio, canto, alto, baixo, chute fraco, lado do goleiro), frases novas para chute no meio e no alto, situação nova `maquina_fora` (batedor da máquina errou o gol) e `decisiva` separada entre cobrança e defesa.
 
 ## 1. Checklist de tom (vale para toda frase nova)
 
@@ -27,6 +28,7 @@
 - **Primeira letra** da frase final sempre maiúscula (para `{o_time}` no começo virar "O Flamengo").
 - **Variável faltando** (ex.: jogador sem rival, partida fora de desafio, jogador sem cidade): pular a frase e sortear outra.
 - **"Outro time":** quem escolheu "Outro time" não recebe frases com variáveis de time ou rival; recebe as de cidade.
+- **Etiquetas de lance (1.2):** uma frase pode terminar com etiquetas entre colchetes, por exemplo `[canto] [goleiro_outro_lado]`. Ela **só pode ser sorteada se todas as etiquetas forem verdadeiras** naquele lance. Frase sem etiqueta vale para qualquer lance. Entre as frases possíveis, as que têm etiqueta têm **peso 2** (combinam mais com o lance). As etiquetas nunca aparecem na tela.
 - **Cidade sem preposição:** `{cidade}` nunca vem depois de "de", "do", "da", "em", "no" ou "na" (cada cidade pede um artigo diferente). Escreva "{cidade} tá em 3º", nunca "a torcida de {cidade}".
 
 ### Variáveis
@@ -52,6 +54,25 @@
 
 (Os exemplos de time são inventados. Cada time precisa ter o artigo "o" ou "a" cadastrado.)
 
+### Etiquetas de lance
+
+Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto (mesmas zonas do `penaltis.ts`).
+
+| Etiqueta | Verdadeira quando | Usada em |
+|---|---|---|
+| `[canto]` | a bola foi na coluna 0 ou 2 | cobrança e defesa |
+| `[meio]` | a bola foi na coluna 1 | cobrança e defesa |
+| `[alto]` | a bola foi na linha de cima | cobrança e defesa |
+| `[baixo]` | a bola foi na linha de baixo | cobrança e defesa |
+| `[fraca]` | cobrança com força abaixo de 32 | cobrança |
+| `[goleiro_outro_lado]` | o goleiro da máquina ficou numa coluna diferente da bola | cobrança |
+| `[travessao]` | bateu no travessão (altura da trave, não no poste lateral) | trave |
+| `[pulou_outro_lado]` | quem joga pulou numa coluna diferente da bola | defesa |
+| `[mesma_coluna]` | quem joga acertou a coluna, mas errou a altura | defesa |
+| `[nao_pulou]` | quem joga não tocou em nenhuma zona a tempo | defesa |
+| `[dica_honesta]` | o pé de apoio apontava a coluna certa | defesa |
+| `[cobranca]` / `[defesa]` | o lance decisivo é uma cobrança / uma defesa | decisiva |
+
 ## 3. Frases do lance
 
 ### `abertura` — começo da partida
@@ -66,22 +87,26 @@
 - ⭐ O gandula já foi buscar a bola reserva. Precaução.
 
 ### `gol` — gol comum
-- GOOOL! Bola de um lado, goleiro do outro!
+- GOOOL! Bola de um lado, goleiro do outro! [canto] [goleiro_outro_lado]
 - É REDE! Mandou o goleiro buscar lá dentro!
-- GOL! Deslocou o goleiro, que foi comprar pão do outro lado.
+- GOL! Deslocou o goleiro, que foi comprar pão do outro lado. [goleiro_outro_lado]
 - Entrouuu! Frio que nem picolé de limão!
 - GOL! O goleiro só viu o vulto.
 - É GOL! Bateu com a calma de quem tá na fila do banco.
 - GOOOL! Balançou a rede e o coração da torcida {do_time}!
-- Lá dentro! O goleiro escolheu o canto errado com muita convicção.
+- Lá dentro! O goleiro escolheu o canto errado com muita convicção. [goleiro_outro_lado]
 - GOL! Simples, seco, sem conversa.
 - Estufou a rede! Pode mandar o print pro grupo!
 - GOL! O goleiro pulou pra foto, mas a bola não quis posar.
 - GOL! Mais dez pontinhos na conta {do_time}!
 - Pá, pum, rede! Próximo!
 - GOL! Bateu tão tranquilo que parecia treino de quarta.
-- Entrou rasteirinha, de mansinho, pedindo licença.
+- Entrou rasteirinha, de mansinho, pedindo licença. [baixo]
 - GOOOL! A torcida {do_time} solta o grito preso na garganta!
+- GOL! No meio, sem cerimônia, com o goleiro deitado no canto! [meio] [goleiro_outro_lado]
+- Bem no meio! Coragem de quem sabe o que faz. [meio]
+- GOL! Encheu o pé lá no alto, sem chance! [alto]
+- Rasteiro e no cantinho! Bola de sinuca! [canto] [baixo]
 - ⭐ GOL! O goleiro tá até agora procurando a bola no bolso.
 
 ### `gol_angulo` — gol no ângulo
@@ -131,7 +156,7 @@
 - TRAVE! Por um triz!
 - No poste! Faltou um tiquinho assim.
 - TRAVE! O goleiro já tá agradecendo ao poste.
-- Bateu no travessão! O barulho foi de dar dó.
+- Bateu no travessão! O barulho foi de dar dó. [travessao]
 - NA TRAVE! A rede ficou só na vontade.
 - ⭐ Trave! A trave tá jogando no time adversário hoje.
 
@@ -162,16 +187,19 @@
 
 ### `goleiro_pegou` — o goleiro da máquina defendeu sua cobrança
 - Pegou! O goleiro tava com o almoço pago!
-- DEFENDEU! Chutou fraquinho, entregou na mão.
-- Pegou! Bateu com a força de quem desliga despertador.
+- DEFENDEU! Chutou fraquinho, entregou na mão. [fraca]
+- Pegou! Bateu com a força de quem desliga despertador. [fraca]
 - O goleiro adivinhou! Leu o chute como quem lê manchete.
 - Defesaça! O goleiro acordou de bom humor hoje.
-- Pegou firme, encaixou no peito. Sem rebote, sem chance.
-- Bateu no meio, o goleiro só ficou parado e agradeceu.
-- Chute de massagem! O goleiro nem suou.
-- PEGOU! Foi no canto certo e ainda deu tchauzinho.
-- Rasteiro e fraco... o goleiro buscou com calma.
-- Faltou carinho na força, sobrou carinho pro goleiro.
+- Pegou firme, encaixou no peito. Sem rebote, sem chance. [meio]
+- Bateu no meio, o goleiro só ficou parado e agradeceu. [meio]
+- Chute de massagem! O goleiro nem suou. [fraca]
+- PEGOU! Foi no canto certo e ainda deu tchauzinho. [canto]
+- Rasteiro e fraco... o goleiro buscou com calma. [fraca] [baixo]
+- Faltou carinho na força, sobrou carinho pro goleiro. [fraca]
+- Pegou! Dessa vez o goleiro leu tudo.
+- Espalmou! Mão firme do goleiro da máquina.
+- Voou e pegou lá em cima! Que defesa do goleiro! [alto]
 - ⭐ Pegou! O goleiro já tá dando entrevista na beira do campo.
 
 ### `defesa` — você defendeu
@@ -179,39 +207,54 @@
 - DEFENDEU! Fechou o gol com cadeado!
 - É PAREDÃO! Aqui não passa nem pensamento!
 - Pegou! Leu o pé de apoio que nem professor pega cola.
-- Voou no canto! Defesa de capa de jornal!
+- Voou no canto! Defesa de capa de jornal! [canto]
 - Espalmou! O batedor vai ter pesadelo hoje.
 - A torcida {do_time} grita: {apelido}! {apelido}!
-- DEFESA! Adivinhou o canto antes do batedor saber.
-- Pegou com a ponta dos dedos! Que esticada!
+- DEFESA! Adivinhou o canto antes do batedor saber. [canto]
+- Pegou com a ponta dos dedos! Que esticada! [canto]
 - Defendeu e ainda olhou pro batedor com cara de "tenta de novo".
 - Fechou a porta! Hoje não tem gol.
 - Agarrou firme! Nem rebote deu.
-- Que pulo! Parecia que tinha mola no tênis.
+- Que pulo! Parecia que tinha mola no tênis. [alto]
 - Pegou! O batedor tá olhando pro céu procurando explicação.
 - DEFESA! Gol cancelado na fonte.
 - Paredão {do_time}! Mais 10 pra conta!
+- Ficou no meio e a bola veio no colo! Leitura perfeita! [meio]
 - ⭐ Pegou! O batedor vai pedir pra mudar de gol.
 
 ### `sofreu_gol` — você não defendeu
-- Gol do batedor! Você foi pra um lado e a bola pro outro.
-- Entrou! Pulou bonito... no canto errado.
-- Gol! O pé de apoio tava apontando, viu?
+- Gol do batedor! Você foi pra um lado e a bola pro outro. [pulou_outro_lado]
+- Entrou! Pulou bonito... no canto errado. [pulou_outro_lado]
+- Gol! O pé de apoio tava apontando, viu? [dica_honesta]
 - Não deu! Foi buscar no fundo da rede.
-- Entrou no cantinho. Ninguém pegava essa.
-- Gol! Escolheu o canto com convicção. Errado, mas com convicção.
-- Passou! Por um tiquinho você não chegava lá.
+- Entrou no cantinho. Ninguém pegava essa. [canto]
+- Gol! Escolheu o canto com convicção. Errado, mas com convicção. [pulou_outro_lado]
+- Passou! Por um tiquinho você não chegava lá. [mesma_coluna]
 - Gol! O batedor tá comemorando como se fosse final.
-- Entrou! Na próxima você lê o pé de apoio, combinado?
-- ⭐ Gol! Você pulou pra um canto que nem existe.
+- Entrou! Na próxima você lê o pé de apoio, combinado? [dica_honesta]
+- Entrou! Agora é devolver na próxima cobrança.
+- Nem deu tempo de pular! Fica de olho na corrida do batedor. [nao_pulou]
+- Gol! A bola passou antes do pulo. Fica esperto! [nao_pulou]
+- Entrou no meio, enquanto o pulo foi pro canto! [meio] [pulou_outro_lado]
+- ⭐ Gol! Você pulou pra um canto que nem existe. [pulou_outro_lado]
 
 ### `decisiva` — última cobrança ou defesa com a disputa em aberto
 - É agora! Essa vale a semana inteira {do_time}!
-- Última cobrança. Coração na boca, pé na bola.
+- Última cobrança. Coração na boca, pé na bola. [cobranca]
 - Tudo nessa! A torcida {do_time} tá roendo as unhas.
-- Se pegar, ganha. Se não pegar... nem quero pensar.
+- Se pegar, a torcida explode. Se não pegar... nem quero pensar. [defesa]
+- Bola na marca, coração na mão. Bate com fé! [cobranca]
+- Tudo depende dessa defesa. Olho no pé de apoio! [defesa]
 - Silêncio total. Até o pipoqueiro parou.
 - Momento decisivo! Hora de virar lenda ou virar meme.
+
+### `maquina_fora` — o batedor da máquina errou o gol (não conta como defesa)
+- Pra fora! O batedor sentiu a pressão da torcida {do_time}!
+- Isolou! O batedor deles tremeu na base!
+- Pra fora! Nem precisou pular, o batedor resolveu sozinho.
+- Chutou no estacionamento! A torcida {do_time} agradece.
+- Errou o gol! Pressão de arquibancada é outra coisa.
+- ⭐ O batedor errou o gol inteiro. Alguém confere a chuteira dele.
 
 ## 4. Desempate
 
