@@ -40,29 +40,47 @@ import {
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { destravarSom, somApito, somChute, somTorcida } from '../jogo/som';
 import {
+  DUR_AJEITAR,
   GOLEIRO,
-  desenharBatedor,
-  desenharGoleiro,
-  entre,
+  apontarPeDeApoio,
+  criarBoneco,
+  desenharBoneco,
+  maos,
+  misturar,
+  novaPose,
+  poseAjeitando,
   poseChute,
+  poseChuteMaquina,
+  poseComemora,
   poseCorrida,
+  poseEspera,
   poseGoleiroEsperando,
+  poseLamenta,
   poseParado,
+  sortearAparencia,
+  uniformesDaPartida,
+  type Boneco,
   type Pose,
-  type Uniforme,
 } from './bonecos';
 
 type Fase =
-  | { tipo: 'mirar' }
+  | { tipo: 'mirar'; inicio: number }
   | { tipo: 'chute'; inicio: number; r: ResultadoCobranca; gesto: GestoCobranca }
   | { tipo: 'corrida'; inicio: number; plano: PlanoDefesa; zona: number | null; pulouEm: number | null }
-  | { tipo: 'chuteMaquina'; inicio: number; r: ResultadoDefesa; pulouEm: number }
-  | { tipo: 'pausa'; ate: number; depois: () => void }
+  | { tipo: 'chuteMaquina'; inicio: number; r: ResultadoDefesa; pulouEm: number; dica: number }
+  | { tipo: 'pausa'; inicio: number; ate: number; depois: () => void }
   | { tipo: 'parOuImpar' }
   | { tipo: 'preparando' };
 
-/** A máquina joga de laranja e preto: nenhum time da lista usa essa dupla. */
-const UNIFORME_MAQUINA: Uniforme = { camisa: '#f97316', detalhe: '#1b1b1b' };
+/** Direção do pé de apoio (a dica) para cada coluna do gol, em radianos a partir da vertical. */
+const ANG_DICA = [-0.6, 0, 0.6];
+const TRACO_DA_DICA = [6, 6];
+const SEM_TRACO: number[] = [];
+/** Rastro do dedo: [largura, opacidade] do brilho e do traço. */
+const BRILHO_DO_RASTRO = [
+  [2.4, 0.25],
+  [1, 1],
+] as const;
 
 /** Dia da semana no horário de Brasília (a temporada zera na segunda, 00h BRT). */
 function diaEmBrasilia(): number {
@@ -172,11 +190,33 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   let rodada = 0; // 0..4 no tempo normal, 5..9 na morte súbita
   let fase: Fase = { tipo: 'preparando' };
   let rastro: { x: number; y: number }[] = [];
+  /** Se o chute saiu com o batedor ainda ajeitando a bola (1) ou já no lugar (0). Só desenho. */
+  let pertoNoChute = 0;
   let acabou = false;
 
-  const uniformeJogador: Uniforme = { camisa: time.cores[0], detalhe: time.cores[1] };
-  /** Quem bate contra você: a máquina ou, no desafio por link, a camiseta do time de quem desafiou. */
-  let uniformeBatedor: Uniforme = UNIFORME_MAQUINA;
+  // Quem entra em campo é sorteado a cada partida, com o sorteio do visual (nunca a semente):
+  // cada lado tem 5 batedores, um por cobrança (na morte súbita volta o primeiro), e um goleiro
+  // (docs/bonecos.md, seção 3).
+  // Uniforme 1 ou 2 também é sorteado; o adversário troca se as camisetas ficarem parecidas.
+  const uniformePreferido: 0 | 1 = Math.random() < 0.5 ? 0 : 1;
+  const sortearBatedores = () => Array.from({ length: COBRANCAS }, sortearAparencia);
+  const elenco = { jogador: sortearBatedores(), goleiroJogador: sortearAparencia(), maquina: sortearBatedores(), goleiroMaquina: sortearAparencia() };
+  let batedoresJogador: Boneco[] = [];
+  let goleiroJogador!: Boneco;
+  /** Quem bate contra você: a máquina ou, no desafio por link, o time de quem desafiou. */
+  let batedoresMaquina: Boneco[] = [];
+  let goleiroMaquina!: Boneco;
+  /** Veste todo mundo para enfrentar a máquina (null) ou o time de quem desafiou. */
+  function vestir(coresAdversario: readonly [string, string] | null): void {
+    const u = uniformesDaPartida(time.cores, coresAdversario, uniformePreferido);
+    batedoresJogador = elenco.jogador.map((a) => criarBoneco(a, u.jogador, false));
+    goleiroJogador = criarBoneco(elenco.goleiroJogador, u.goleiroJogador, true);
+    batedoresMaquina = elenco.maquina.map((a) => criarBoneco(a, u.adversario, false));
+    goleiroMaquina = criarBoneco(elenco.goleiroMaquina, u.goleiroAdversario, true);
+  }
+  vestir(null);
+  /** O batedor da cobrança (ou da defesa) i. */
+  const batedor = (lista: Boneco[], i: number) => lista[Math.max(0, i) % lista.length];
 
   // ---------- efeitos ----------
   const efeitos = {
@@ -212,6 +252,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     // Ponto de fuga escolhido para a marca do pênalti (11 m) cair exatamente na bola.
     g.fugaY = g.chao - (g.bolaY - g.chao) / (fator(DIST_MARCA) - 1);
     prepararCenario(dpr);
+    prepararDegrades();
   }
 
   /** Escala de um ponto do chão a z metros da linha do gol (z positivo vem para a câmera). */
@@ -227,7 +268,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   /** Coordenadas do motor (x -1..1, y 0..1) para a tela. */
   const telaX = (x: number) => g.gx + ((x + 1) / 2) * g.gw;
   const telaY = (y: number) => g.gy + g.gh - y * g.gh;
-  const centroZona = (z: number) => ({ x: [-2 / 3, 0, 2 / 3][coluna(z)], y: linha(z) === 1 ? 0.72 : 0.25 });
+  const zonaX = (z: number) => (coluna(z) - 1) * (2 / 3);
+  const zonaY = (z: number) => (linha(z) === 1 ? 0.72 : 0.25);
+  const centroZona = (z: number) => ({ x: zonaX(z), y: zonaY(z) });
 
   // ---------- HUD ----------
   function atualizarHud(): void {
@@ -281,7 +324,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   }
 
   function comecarCobranca(): void {
-    fase = { tipo: 'mirar' };
+    fase = { tipo: 'mirar', inicio: relogio() };
     rastro = [];
     const extra = rodada - COBRANCAS + 1;
     instruir(
@@ -304,13 +347,15 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   }
 
   function depoisDe(ms: number, fn: () => void): void {
-    fase = { tipo: 'pausa', ate: relogio() + ms, depois: fn };
+    const agora = relogio();
+    fase = { tipo: 'pausa', inicio: agora, ate: agora + ms, depois: fn };
   }
 
   function chutar(gesto: GestoCobranca): void {
     const gq = normalizarCobranca(gesto);
     const r = resolverCobranca(semente, rodada, gq, dificuldade);
     gestosCobranca.push(gq);
+    if (fase.tipo === 'mirar') pertoNoChute = pertoDaBola(relogio() - fase.inicio);
     fase = { tipo: 'chute', inicio: relogio(), r, gesto: gq };
     instruir('');
     somChute();
@@ -348,10 +393,10 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     depoisDe(1500, comecarDefesa);
   }
 
-  function chuteDaMaquina(zona: number, pulouEm: number): void {
+  function chuteDaMaquina(zona: number, pulouEm: number, dica: number): void {
     const r = resolverDefesa(semente, rodada, zona, dificuldade, desafio?.cobrancas[rodada]);
     gestosDefesa.push(zona);
-    fase = { tipo: 'chuteMaquina', inicio: relogio(), r, pulouEm };
+    fase = { tipo: 'chuteMaquina', inicio: relogio(), r, pulouEm, dica };
     instruir('');
     somChute();
   }
@@ -503,7 +548,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         history.replaceState(null, '', location.pathname);
         root.querySelector('.placar-jogo .lado:last-child .sigla')!.textContent = desafio.apelido ?? 'Desafio';
         const t = timePorId(desafio.timeId);
-        if (t && t.id !== time.id) uniformeBatedor = { camisa: t.cores[0], detalhe: t.cores[1] };
+        if (t) vestir(t.cores);
       }
     } catch (e) {
       console.warn('Partida sem valer pontos:', e instanceof ErroServidor ? e.codigo : e);
@@ -670,6 +715,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   // O que não mexe (grama, linhas, rede, torcida) vai para canvas à parte e é só copiado a cada
   // quadro; ao vivo ficam bonecos, bola, traves e efeitos. Assim o jogo segura 60 quadros por segundo.
   const facil = (t: number) => 1 - (1 - t) * (1 - t);
+  const suave = (t: number) => t * t * (3 - 2 * t);
   const limitar01 = (t: number) => Math.max(0, Math.min(1, t));
   const fimArquibancada = () => g.gy + g.gh * 0.42;
 
@@ -753,10 +799,22 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   let torcida: HTMLCanvasElement[] = [];
   let campo: HTMLCanvasElement | null = null;
   let rede: HTMLCanvasElement | null = null;
+  // Para a ola (torcida redesenhada ao vivo): lugares, fundo e placas prontos, sem refazer a cada quadro.
+  let gente: ReturnType<typeof lugares> = [];
+  let fundoTorcida: HTMLCanvasElement | null = null;
+  let placasTorcida: HTMLCanvasElement | null = null;
 
   function prepararCenario(dpr: number): void {
     const fim = fimArquibancada();
-    const gente = lugares();
+    gente = lugares();
+    levantou = new Float32Array(gente.length);
+    deslocado = new Float32Array(gente.length);
+    coresDaTorcida = [...new Set(gente.map((l) => l.cor))];
+    let o: CanvasRenderingContext2D;
+    [fundoTorcida, o] = novoCanvas(dpr, W, fim);
+    fundoDaArquibancada(o, fim);
+    [placasTorcida, o] = novoCanvas(dpr, W, fim);
+    placas(o, fim);
     torcida = Array.from({ length: QUADROS_TORCIDA }, (_, q) => {
       const [off, o] = novoCanvas(dpr, W, fim);
       fundoDaArquibancada(o, fim);
@@ -764,7 +822,6 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       placas(o, fim);
       return off;
     });
-    let o: CanvasRenderingContext2D;
     [campo, o] = novoCanvas(dpr, W, H);
     desenharGramado(o);
     [rede, o] = novoCanvas(dpr, W, H);
@@ -801,6 +858,69 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     }
   }
 
+  // Ola ao vivo: a torcida é desenhada agrupada por cor (um preenchimento por cor, em vez de um por
+  // pessoa), o que corta o custo do quadro sem mudar o desenho de desenharTorcedor.
+  const CORES_DA_CABECA = ['#3a2a20', '#6b4a33', '#8a5f40'];
+  const corDaCabeca = (h: number) => (h > 0.6 ? 0 : h > 0.3 ? 1 : 2);
+  let levantou = new Float32Array(0);
+  let deslocado = new Float32Array(0);
+  let coresDaTorcida: string[] = [];
+
+  /** Mesma regra de desenharTorcedor: braços para cima na ola ou, de vez em quando, sem motivo. */
+  const comBracos = (i: number, q: number) => levantou[i] > 0.3 || (gente[i].h > 0.88 && q % 3 !== Math.floor(gente[i].h * 9) % 3);
+
+  function torcidaAoVivo(q: number): void {
+    for (let i = 0; i < gente.length; i++) {
+      const l = gente[i];
+      const balanco = Math.sin((q + l.h * 3) * ((Math.PI * 2) / 3)) * (l.h > 0.5 ? 1.4 : 0.6);
+      deslocado[i] = -levantou[i] * l.r * 2.2 + balanco;
+    }
+    for (let k = 0; k < coresDaTorcida.length; k++) {
+      const cor = coresDaTorcida[k];
+      c.fillStyle = cor;
+      c.beginPath();
+      for (let i = 0; i < gente.length; i++) {
+        const l = gente[i];
+        if (l.cor !== cor) continue;
+        const cy = l.y + deslocado[i] + l.r * 1.5;
+        c.moveTo(l.x - l.r * 1.3, cy);
+        c.ellipse(l.x, cy, l.r * 1.3, l.r * 1.05, 0, Math.PI, 0);
+      }
+      c.fill();
+      // Braços para cima (na ola ou de vez em quando).
+      c.strokeStyle = cor;
+      c.lineWidth = 2.1;
+      c.beginPath();
+      for (let i = 0; i < gente.length; i++) {
+        const l = gente[i];
+        if (l.cor !== cor || !comBracos(i, q)) continue;
+        const y = l.y + deslocado[i];
+        c.moveTo(l.x - l.r, y + l.r * 0.6);
+        c.lineTo(l.x - l.r * 1.5, y - l.r * 1.7);
+        c.moveTo(l.x + l.r, y + l.r * 0.6);
+        c.lineTo(l.x + l.r * 1.5, y - l.r * 1.7);
+      }
+      c.stroke();
+    }
+    for (let k = 0; k < CORES_DA_CABECA.length; k++) {
+      c.fillStyle = CORES_DA_CABECA[k];
+      c.beginPath();
+      for (let i = 0; i < gente.length; i++) {
+        const l = gente[i];
+        if (corDaCabeca(l.h) !== k) continue;
+        const y = l.y + deslocado[i];
+        c.moveTo(l.x + l.r * 0.8, y);
+        c.arc(l.x, y, l.r * 0.8, 0, Math.PI * 2);
+      }
+      c.fill();
+    }
+    // Bandeiras são poucas: uma a uma, pelo desenho de sempre.
+    for (let i = 0; i < gente.length; i++) {
+      const l = gente[i];
+      if (l.bandeira) desenharTorcedor(c, l.x, l.y, l.r, l.cor, l.h, levantou[i], q, true);
+    }
+  }
+
   function desenharArquibancada(agora: number): void {
     const fim = fimArquibancada();
     const t = (agora - efeitos.ola) / DUR_OLA;
@@ -810,15 +930,15 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       return;
     }
     // Ola: a onda atravessa da esquerda para a direita e cada torcedor levanta por um instante.
-    fundoDaArquibancada(c, fim);
+    if (fundoTorcida) c.drawImage(fundoTorcida, 0, 0, W, fim);
     const largura = 0.3;
     const frente = t * (1 + largura * 2) - largura;
-    for (const l of lugares()) {
-      const d = Math.abs(l.x / W - frente) / largura;
-      const lev = d < 1 ? Math.sin((1 - d) * (Math.PI / 2)) : 0;
-      desenharTorcedor(c, l.x, l.y, l.r, l.cor, l.h, lev, q, l.bandeira);
+    for (let i = 0; i < gente.length; i++) {
+      const d = Math.abs(gente[i].x / W - frente) / largura;
+      levantou[i] = d < 1 ? Math.sin((1 - d) * (Math.PI / 2)) : 0;
     }
-    placas(c, fim);
+    torcidaAoVivo(q);
+    if (placasTorcida) c.drawImage(placasTorcida, 0, 0, W, fim);
   }
 
   function desenharGramado(o: CanvasRenderingContext2D): void {
@@ -987,33 +1107,61 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     else if (rede) c.drawImage(rede, 0, 0, W, H);
   }
 
+  // Degradês das traves e da bola: criados quando a tela muda de tamanho, nunca dentro do quadro.
+  let gradTraves: CanvasGradient[] = [];
+  let gradBola: CanvasGradient | null = null;
+
+  function prepararDegrades(): void {
+    const e = Math.max(6, g.gw * 0.022);
+    const cilindro = (grad: CanvasGradient) => {
+      grad.addColorStop(0, '#9a9a95');
+      grad.addColorStop(0.35, '#ffffff');
+      grad.addColorStop(1, '#b5b5b0');
+      return grad;
+    };
+    gradTraves = [
+      cilindro(c.createLinearGradient(g.gx - e / 2, 0, g.gx + e / 2, 0)),
+      cilindro(c.createLinearGradient(g.gx + g.gw - e / 2, 0, g.gx + g.gw + e / 2, 0)),
+      cilindro(c.createLinearGradient(0, g.gy - e / 2, 0, g.gy + e / 2)),
+    ];
+    // Bola de raio 1 no centro: o desenho escala para o tamanho certo.
+    gradBola = c.createRadialGradient(-0.4, -0.45, 0.1, 0, 0, 1.05);
+    gradBola.addColorStop(0, 'rgba(255,255,255,0.55)');
+    gradBola.addColorStop(0.5, 'rgba(255,255,255,0)');
+    gradBola.addColorStop(1, 'rgba(0,0,0,0.38)');
+  }
+
   /** Traves redondas: luz de um lado, sombra do outro. */
   function desenharTraves(): void {
     const esq = g.gx;
     const dir = g.gx + g.gw;
-    const e = Math.max(6, g.gw * 0.022);
-    const cilindro = (x0: number, y0: number, x1: number, y1: number, vertical: boolean) => {
-      const grad = vertical ? c.createLinearGradient(x0 - e / 2, 0, x0 + e / 2, 0) : c.createLinearGradient(0, y0 - e / 2, 0, y0 + e / 2);
-      grad.addColorStop(0, '#9a9a95');
-      grad.addColorStop(0.35, '#ffffff');
-      grad.addColorStop(1, '#b5b5b0');
+    c.lineWidth = Math.max(6, g.gw * 0.022);
+    c.lineCap = 'round';
+    const cilindro = (grad: CanvasGradient, x0: number, y0: number, x1: number, y1: number) => {
       c.strokeStyle = grad;
-      c.lineWidth = e;
-      c.lineCap = 'round';
       c.beginPath();
       c.moveTo(x0, y0);
       c.lineTo(x1, y1);
       c.stroke();
     };
-    cilindro(esq, g.chao, esq, g.gy, true);
-    cilindro(dir, g.chao, dir, g.gy, true);
-    cilindro(esq, g.gy, dir, g.gy, false);
+    cilindro(gradTraves[0], esq, g.chao, esq, g.gy);
+    cilindro(gradTraves[1], dir, g.chao, dir, g.gy);
+    cilindro(gradTraves[2], esq, g.gy, dir, g.gy);
   }
 
   // ---------- bonecos ----------
   /** Altura do goleiro na tela: ~80% da altura do gol. */
   const escGoleiro = () => (g.gh * 0.8) / 100;
   const escBatedor = () => g.raio / 15;
+  /** Centro do corpo do goleiro (a pelve, onde ele gira no pulo): 50 unidades acima dos pés. */
+  const CENTRO = 50;
+  /** Queda do goleiro depois do pulo, até ficar deitado no chão (ms). */
+  const DUR_QUEDA = 340;
+
+  // Reaproveitados a cada quadro: nada de objeto novo no loop (docs/bonecos.md, seção 5).
+  const poseBatedor = novaPose();
+  const mao = { x: 0, y: 0 };
+  const goleiro = { x: 0, y: 0, ang: 0, pose: novaPose(), luvaX: 0, luvaY: 0 };
 
   function sombraNoChao(x: number, y: number, larg: number): void {
     c.fillStyle = 'rgba(0,0,0,0.32)';
@@ -1022,119 +1170,187 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     c.fill();
   }
 
+  /** Pose do pulo para cada uma das 6 zonas (baixo ou alto; esquerda, meio ou direita). */
+  function poseDoPulo(zona: number): Pose {
+    const alto = linha(zona) === 1;
+    if (coluna(zona) === 0) return alto ? GOLEIRO.altoE : GOLEIRO.baixoE;
+    if (coluna(zona) === 2) return alto ? GOLEIRO.altoD : GOLEIRO.baixoD;
+    return alto ? GOLEIRO.meioAlto : GOLEIRO.meioBaixo;
+  }
+
+  /** Como o goleiro termina o lance: caído no canto ou de pé no meio, com ou sem a bola. */
+  function poseDaQueda(zona: number, pegou: boolean): Pose {
+    if (coluna(zona) === 0) return pegou ? GOLEIRO.caidoPegouE : GOLEIRO.caidoE;
+    if (coluna(zona) === 2) return pegou ? GOLEIRO.caidoPegouD : GOLEIRO.caidoD;
+    return pegou ? GOLEIRO.encaixada : linha(zona) === 1 ? GOLEIRO.pronto : GOLEIRO.meioBaixo;
+  }
+
+  /** Põe na tela o centro das luvas (onde a bola para na defesa). */
+  function luvasNaTela(b: Boneco, esc: number): void {
+    maos(b, goleiro.pose, mao);
+    const lx = mao.x * esc;
+    const ly = (mao.y + CENTRO) * esc;
+    const cos = Math.cos(goleiro.ang);
+    const sin = Math.sin(goleiro.ang);
+    goleiro.luvaX = goleiro.x + lx * cos - ly * sin;
+    goleiro.luvaY = goleiro.y + lx * sin + ly * cos;
+  }
+
   /**
-   * Onde está o goleiro: parado balançando, ou no meio do pulo para a zona.
-   * Devolve o centro do corpo, o giro, a pose e a posição das luvas (onde a bola para na defesa).
+   * Onde está o goleiro: balançando na linha, no meio do pulo para a zona (t de 0 a 1) ou, com
+   * `queda` (ms depois do lance), caindo no chão. Grava em `goleiro` o centro do corpo, o giro,
+   * a pose e as luvas. O objeto é reaproveitado: leia os valores antes da próxima chamada.
    */
-  function goleiroNoQuadro(zona: number | null, t: number, agora: number) {
+  function goleiroNoQuadro(b: Boneco, zona: number | null, t: number, agora: number, queda = -1, pegou = false) {
     const esc = escGoleiro();
-    const repouso = { x: telaX(0), y: g.chao - 3 - 50 * esc };
+    const rx = telaX(0);
+    const ry = g.chao - 3 - CENTRO * esc;
+    goleiro.x = rx;
+    goleiro.y = ry;
+    goleiro.ang = 0;
     if (zona === null || zona < 0 || t <= 0) {
-      const pose = poseGoleiroEsperando(agora);
-      return { x: repouso.x, y: repouso.y, ang: 0, pose, luvas: luvas(repouso.x, repouso.y, 0, pose, esc) };
+      poseGoleiroEsperando(agora, goleiro.pose);
+      luvasNaTela(b, esc);
+      return goleiro;
     }
     const e = facil(limitar01(t));
-    const alvoTela = { x: telaX(centroZona(zona).x), y: telaY(centroZona(zona).y) };
+    const alvo = poseDoPulo(zona);
     const col = coluna(zona);
+    const alto = linha(zona) === 1;
     let ang = 0;
-    let pose: Pose;
-    let alvo: { x: number; y: number };
-    if (col === 1 && linha(zona) === 0) {
-      // Meio e embaixo: abafa no chão.
-      pose = entre(GOLEIRO.pronto, GOLEIRO.abafa, e);
-      alvo = repouso;
-    } else {
-      pose = entre(GOLEIRO.pronto, GOLEIRO.esticado, Math.min(1, e * 1.6));
-      ang = col === 1 ? 0 : (col === 0 ? -1 : 1) * (linha(zona) === 1 ? 1.15 : 1.4);
-      // As luvas (50 unidades acima do centro) chegam no ponto da zona.
-      const alcance = 50 * esc;
-      alvo = { x: alvoTela.x - Math.sin(ang) * alcance, y: alvoTela.y + Math.cos(ang) * alcance };
-      alvo.y = Math.min(alvo.y, repouso.y + (col === 1 ? 0 : 20 * esc));
+    let ax = rx;
+    let ay = ry;
+    if (col !== 1 || alto) {
+      // Meio e embaixo fica de pé; no resto o corpo vai até as luvas chegarem no meio da zona.
+      ang = col === 1 ? 0 : (col === 0 ? -1 : 1) * (alto ? 1.15 : 1.4);
+      maos(b, alvo, mao);
+      const lx = mao.x * esc;
+      const ly = (mao.y + CENTRO) * esc;
+      ax = telaX(zonaX(zona)) - (lx * Math.cos(ang) - ly * Math.sin(ang));
+      ay = Math.min(telaY(zonaY(zona)) - (lx * Math.sin(ang) + ly * Math.cos(ang)), ry + (col === 1 ? 0 : 20 * esc));
     }
-    const x = repouso.x + (alvo.x - repouso.x) * e;
-    const y = repouso.y + (alvo.y - repouso.y) * e - Math.sin(e * Math.PI) * 10 * esc;
-    const a = ang * e;
-    return { x, y, ang: a, pose, luvas: luvas(x, y, a, pose, esc) };
+    misturar(GOLEIRO.pronto, alvo, Math.min(1, e * 1.6), goleiro.pose);
+    goleiro.x = rx + (ax - rx) * e;
+    goleiro.y = ry + (ay - ry) * e - Math.sin(e * Math.PI) * 10 * esc;
+    goleiro.ang = ang * e;
+    if (queda >= 0) {
+      // Depois do lance: no canto cai deitado (acelerando, como na queda de verdade); no meio, volta ao chão.
+      const f = limitar01(queda / DUR_QUEDA);
+      const s = suave(f);
+      misturar(goleiro.pose, poseDaQueda(zona, pegou), s, goleiro.pose);
+      if (col !== 1) {
+        const lado = col === 0 ? -1 : 1;
+        goleiro.x += lado * 6 * esc * s;
+        goleiro.y += (g.chao - 3 - b.ombro * esc - goleiro.y) * f * f;
+        goleiro.ang += ((lado * Math.PI) / 2 - goleiro.ang) * s;
+      } else {
+        goleiro.y += (ry - goleiro.y) * f * f;
+      }
+    }
+    luvasNaTela(b, esc);
+    return goleiro;
   }
 
-  function luvas(x: number, y: number, ang: number, pose: Pose, esc: number) {
-    const lx = ((pose.maoE[0] + pose.maoD[0]) / 2) * esc;
-    const ly = ((pose.maoE[1] + pose.maoD[1]) / 2 + 50) * esc;
-    return { x: x + lx * Math.cos(ang) - ly * Math.sin(ang), y: y + lx * Math.sin(ang) + ly * Math.cos(ang) };
-  }
-
-  function desenharGoleiroNoQuadro(u: Uniforme, zona: number | null, t: number, agora: number): void {
+  function desenharGoleiroNoQuadro(b: Boneco, zona: number | null, t: number, agora: number, queda = -1, pegou = false): void {
     const esc = escGoleiro();
-    const q = goleiroNoQuadro(zona, t, agora);
-    const alturaDoChao = g.chao - 3 - (q.y + 50 * esc);
-    sombraNoChao(q.x, g.chao - 2, Math.max(10, 24 * esc - alturaDoChao * 0.1));
+    const q = goleiroNoQuadro(b, zona, t, agora, queda, pegou);
+    // Sombra: menor quanto mais alto; comprida com o goleiro deitado.
+    const alturaDoChao = Math.max(0, g.chao - 3 - (q.y + CENTRO * esc));
+    sombraNoChao(q.x, g.chao - 2, Math.max(10, (24 + 26 * Math.abs(Math.sin(q.ang))) * esc - alturaDoChao * 0.1));
     c.save();
     c.translate(q.x, q.y);
     c.rotate(q.ang);
     c.scale(esc, esc);
-    c.translate(0, 50);
-    desenharGoleiro(c, q.pose, u);
+    c.translate(0, CENTRO);
+    desenharBoneco(c, b, q.pose);
     c.restore();
   }
 
-  /** Batedor de costas na posição (x, y) dos pés. */
-  function desenharBatedorEm(u: Uniforme, x: number, y: number, pose: Pose): void {
+  /** Batedor de costas com os pés em (x, y). */
+  function desenharBatedorEm(b: Boneco, x: number, y: number, pose: Pose, realcePeDeApoio = false): void {
     const esc = escBatedor();
-    sombraNoChao(x + 4 * esc, y + 1, 22 * esc);
+    sombraNoChao(x + 2 * esc, y + 1, 20 * esc);
     c.save();
     c.translate(x, y);
     c.scale(esc, esc);
-    desenharBatedor(c, pose, u);
+    desenharBoneco(c, b, pose, realcePeDeApoio);
     c.restore();
   }
 
-  /** Você batendo: mãos na cintura na mira; no chute, avança e bate (DUR_BATIDA até o pé encontrar a bola). */
-  function desenharBatedorJogador(msChute: number | null, agora: number): void {
-    const avanco = msChute === null ? 0 : facil(limitar01(msChute / DUR_BATIDA));
-    const x = g.bolaX - g.raio * 3.3 + avanco * g.raio * 0.9;
-    const y = g.bolaY + g.raio * 1.5 - avanco * g.raio * 0.2;
-    desenharBatedorEm(uniformeJogador, x, y, msChute === null ? poseParado(agora) : poseChute(msChute));
+  /** Lugar da cobrança: atrás e à esquerda da bola; com `avanco` 1 o pé do chute alcança a bola. */
+  const batedorX = (avanco: number) => g.bolaX - g.raio * (3.3 - 0.9 * avanco);
+  const batedorY = (avanco: number) => g.bolaY + g.raio * (1.5 - 0.2 * avanco);
+  /** Ajeitando a bola, o batedor fica logo atrás dela; depois recua para o lugar da cobrança. */
+  const RECUO = 2.4;
+  /** 1 = ainda ajeitando, perto da bola; 0 = já no lugar da cobrança. */
+  const pertoDaBola = (msMira: number) => 1 - suave(limitar01((msMira - 620) / (DUR_AJEITAR - 620)));
+
+  /** Você na mira: ajeita a bola, recua e espera de mãos na cintura. */
+  function desenharBatedorNaMira(msMira: number, agora: number): void {
+    if (msMira < DUR_AJEITAR) poseAjeitando(msMira, poseBatedor);
+    else poseParado(agora, poseBatedor);
+    desenharBatedorEm(batedor(batedoresJogador, cobrancas.length), batedorX(0) + pertoDaBola(msMira) * g.raio * RECUO, batedorY(0), poseBatedor);
   }
 
-  /** Quem bate contra você: corre de trás, espera atrás da bola e bate. */
-  function desenharBatedorAdversario(msCorrida: number, msChute: number | null, agora: number): void {
-    const p = facil(limitar01(msCorrida / DUR_CORRIDA));
+  /** Você batendo: avança e bate (o pé encontra a bola em DUR_BATIDA). */
+  function desenharBatedorChutando(ms: number, cavadinha: boolean): void {
+    const avanco = facil(limitar01(ms / DUR_BATIDA));
+    const x = batedorX(avanco) + pertoNoChute * (1 - avanco) * g.raio * RECUO;
+    desenharBatedorEm(batedor(batedoresJogador, cobrancas.length), x, batedorY(avanco), poseChute(ms, cavadinha, poseBatedor));
+  }
+
+  /** Depois do lance: comemora o gol ou põe as mãos na cabeça. */
+  function desenharBatedorDepois(b: Boneco, ms: number, gol: boolean): void {
+    desenharBatedorEm(b, batedorX(1), batedorY(1), gol ? poseComemora(ms, poseBatedor) : poseLamenta(ms, poseBatedor));
+  }
+
+  /** Quem bate contra você: 3 passos de corrida e crava o pé de apoio apontando o canto (a dica). */
+  function desenharMaquinaCorrendo(ms: number, agora: number, dica: number): void {
+    const p = facil(limitar01(ms / DUR_CORRIDA));
     const x0 = g.bolaX - g.raio * 5.5;
     const y0 = g.bolaY + g.raio * 4.5;
-    const x1 = g.bolaX - g.raio * 3.3;
-    const y1 = g.bolaY + g.raio * 1.5;
-    const avanco = msChute === null ? 0 : facil(limitar01(msChute / DUR_BATIDA));
-    const x = x0 + (x1 - x0) * p + avanco * g.raio * 0.9;
-    const y = y0 + (y1 - y0) * p - avanco * g.raio * 0.2;
-    let pose: Pose;
-    if (msChute !== null) pose = poseChute(msChute);
-    else if (msCorrida < DUR_CORRIDA) pose = poseCorrida(msCorrida);
-    else pose = entre(poseCorrida(DUR_CORRIDA), poseParado(agora), limitar01((msCorrida - DUR_CORRIDA) / 200));
-    desenharBatedorEm(uniformeBatedor, x, y, pose);
+    if (ms < DUR_CORRIDA) poseCorrida(ms, DUR_CORRIDA, poseBatedor);
+    else poseEspera(agora, poseBatedor);
+    apontarPeDeApoio(poseBatedor, ANG_DICA[dica], suave(limitar01((ms - DUR_CORRIDA * 0.6) / (DUR_CORRIDA * 0.4))));
+    desenharBatedorEm(batedor(batedoresMaquina, defesas.length), x0 + (batedorX(1) - x0) * p, y0 + (batedorY(1) - y0) * p, poseBatedor, ms >= DUR_CORRIDA * 0.85);
   }
 
-  /** Pé de apoio (a dica), ao lado da bola, com um rastro no chão apontando o canto. */
+  /** A máquina bate com o pé de apoio ainda apontando o canto da dica, bem visível. */
+  function desenharMaquinaChutando(ms: number, dica: number): void {
+    poseChuteMaquina(ms, poseBatedor);
+    apontarPeDeApoio(poseBatedor, ANG_DICA[dica], 1);
+    desenharBatedorEm(batedor(batedoresMaquina, defesas.length), batedorX(1), batedorY(1), poseBatedor, true);
+  }
+
+  /** A dica no chão: onde o pé de apoio vai cravar e para que canto aponta. Sem desfoque. */
   function desenharDica(dica: number): void {
-    const ang = [-0.6, 0, 0.6][dica];
-    const px = g.bolaX - g.raio * 1.7;
-    const py = g.bolaY + g.raio * 0.2;
+    const esc = escBatedor();
+    const apoio = batedor(batedoresMaquina, defesas.length).apoio;
+    const px = batedorX(1) + apoio.x * esc;
+    const py = batedorY(1) + (apoio.y + 1.5) * esc;
     c.save();
     c.translate(px, py);
-    c.rotate(ang);
-    c.strokeStyle = 'rgba(255,210,63,0.85)';
-    c.lineWidth = 4;
-    c.setLineDash([6, 6]);
+    c.rotate(ANG_DICA[dica]);
+    c.fillStyle = 'rgba(255,210,63,0.22)';
     c.beginPath();
-    c.moveTo(0, -g.raio * 1.4);
+    c.ellipse(0, 0, g.raio * 0.85, g.raio * 1.3, 0, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = 'rgba(255,210,63,0.5)';
+    c.beginPath();
+    c.ellipse(0, 0, g.raio * 0.5, g.raio * 0.95, 0, 0, Math.PI * 2);
+    c.fill();
+    c.lineCap = 'round';
+    c.strokeStyle = 'rgba(255,210,63,0.25)';
+    c.lineWidth = 9;
+    c.beginPath();
+    c.moveTo(0, -g.raio * 1.5);
     c.lineTo(0, -g.raio * 5);
     c.stroke();
-    c.setLineDash([]);
-    c.fillStyle = '#ffd23f';
-    c.shadowColor = '#ffd23f';
-    c.shadowBlur = 16;
-    c.beginPath();
-    c.ellipse(0, 0, g.raio * 0.5, g.raio * 1.1, 0, 0, Math.PI * 2);
-    c.fill();
+    c.strokeStyle = 'rgba(255,210,63,0.9)';
+    c.lineWidth = 4;
+    c.setLineDash(TRACO_DA_DICA);
+    c.stroke();
+    c.setLineDash(SEM_TRACO);
     c.restore();
   }
 
@@ -1142,10 +1358,12 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   function desenharBola(x: number, y: number, escala = 1, sombraY = y, giro = 0): void {
     const r = g.raio * escala;
     const altura = Math.max(0, sombraY - y);
-    c.fillStyle = `rgba(0,0,0,${Math.max(0.12, 0.35 - altura / 600)})`;
+    c.globalAlpha = Math.max(0.12, 0.35 - altura / 600);
+    c.fillStyle = '#000';
     c.beginPath();
     c.ellipse(x + altura * 0.05, sombraY + r * 0.9, r * 0.95, r * 0.3, 0, 0, Math.PI * 2);
     c.fill();
+    c.globalAlpha = 1;
     c.save();
     c.beginPath();
     c.arc(x, y, r, 0, Math.PI * 2);
@@ -1171,12 +1389,12 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       c.fill();
     }
     // Luz e sombra da esfera.
-    const vol = c.createRadialGradient(x - r * 0.4, y - r * 0.45, r * 0.1, x, y, r * 1.05);
-    vol.addColorStop(0, 'rgba(255,255,255,0.55)');
-    vol.addColorStop(0.5, 'rgba(255,255,255,0)');
-    vol.addColorStop(1, 'rgba(0,0,0,0.38)');
-    c.fillStyle = vol;
-    c.fillRect(x - r, y - r, r * 2, r * 2);
+    if (gradBola) {
+      c.translate(x, y);
+      c.scale(r, r);
+      c.fillStyle = gradBola;
+      c.fillRect(-1, -1, 2, 2);
+    }
     c.restore();
     c.strokeStyle = 'rgba(0,0,0,0.45)';
     c.lineWidth = 1.2;
@@ -1190,11 +1408,13 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     if (t > 0 && t < 1) {
       for (const [atras, alfa] of [[0.09, 0.14], [0.05, 0.24]] as const) {
         const p = pos(Math.max(0, t - atras));
-        c.fillStyle = `rgba(255,255,255,${alfa})`;
+        c.globalAlpha = alfa;
+        c.fillStyle = '#fff';
         c.beginPath();
         c.arc(p.x, p.y, g.raio * p.escala, 0, Math.PI * 2);
         c.fill();
       }
+      c.globalAlpha = 1;
     }
     const p = pos(t);
     desenharBola(p.x, p.y, p.escala, p.sombraY, t * 14);
@@ -1222,17 +1442,21 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     c.lineCap = 'round';
     c.lineJoin = 'round';
     c.save();
-    c.shadowColor = 'rgba(255,210,63,0.8)';
-    c.shadowBlur = 12;
+    c.strokeStyle = '#ffd23f';
     const n = rastro.length;
-    for (let i = 1; i < n; i++) {
-      const t = i / n;
-      c.strokeStyle = `rgba(255,210,63,${0.25 + 0.7 * t})`;
-      c.lineWidth = 3 + 7 * t;
-      c.beginPath();
-      c.moveTo(rastro[i - 1].x, rastro[i - 1].y);
-      c.lineTo(rastro[i].x, rastro[i].y);
-      c.stroke();
+    // Brilho sem filtro: um traço largo e transparente por baixo do traço principal.
+    for (let k = 0; k < BRILHO_DO_RASTRO.length; k++) {
+      const largura = BRILHO_DO_RASTRO[k][0];
+      const alfa = BRILHO_DO_RASTRO[k][1];
+      for (let i = 1; i < n; i++) {
+        const t = i / n;
+        c.globalAlpha = (0.25 + 0.7 * t) * alfa;
+        c.lineWidth = (3 + 7 * t) * largura;
+        c.beginPath();
+        c.moveTo(rastro[i - 1].x, rastro[i - 1].y);
+        c.lineTo(rastro[i].x, rastro[i].y);
+        c.stroke();
+      }
     }
     c.restore();
     const ponta = rastro[n - 1];
@@ -1331,10 +1555,11 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     let lenta = -1;
     switch (fase.tipo) {
       case 'mirar': {
-        desenharGoleiroNoQuadro(UNIFORME_MAQUINA, null, 0, agora);
+        desenharGoleiroNoQuadro(goleiroMaquina, null, 0, agora);
         desenharTraves();
-        desenharBatedorJogador(null, agora);
+        // A bola antes: ajeitando, o batedor fica entre a câmera e a bola.
         desenharBola(g.bolaX, g.bolaY);
+        desenharBatedorNaMira(agora - fase.inicio, agora);
         desenharRastro();
         break;
       }
@@ -1347,13 +1572,15 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         if (r.cavadinha && !reduzido) lenta = t;
         // O goleiro segue o tempo da bola (fica lento junto na cavadinha).
         const tPulo = (t * dur - dur * 0.15) / DUR_PULO;
-        desenharGoleiroNoQuadro(UNIFORME_MAQUINA, r.zonaGoleiro, tPulo, agora);
+        desenharGoleiroNoQuadro(goleiroMaquina, r.zonaGoleiro, tPulo, agora);
         desenharTraves();
-        desenharBatedorJogador(ms, agora);
+        desenharBatedorChutando(ms, r.cavadinha);
         // Bola defendida para na luva do goleiro.
-        const luva = goleiroNoQuadro(r.zonaGoleiro, (dur - dur * 0.15) / DUR_PULO, agora).luvas;
-        const destino = r.desfecho === 'defesa' ? luva : { x: telaX(r.x), y: telaY(r.y) };
-        desenharBolaEmVoo((tt) => trajetoria(destino.x, destino.y, gesto.efeito, facil(tt), r.cavadinha), t);
+        const defendeu = r.desfecho === 'defesa';
+        const luva = goleiroNoQuadro(goleiroMaquina, r.zonaGoleiro, (dur - dur * 0.15) / DUR_PULO, agora);
+        const dx = defendeu ? luva.luvaX : telaX(r.x);
+        const dy = defendeu ? luva.luvaY : telaY(r.y);
+        desenharBolaEmVoo((tt) => trajetoria(dx, dy, gesto.efeito, facil(tt), r.cavadinha), t);
         if (t >= 1) fimDoChute(r);
         break;
       }
@@ -1363,12 +1590,12 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         const janela = 1900 - 700 * dificuldade;
         desenharZonas(fase.zona);
         const tPulo = fase.pulouEm === null ? 0 : (agora - fase.pulouEm) / DUR_PULO;
-        desenharGoleiroNoQuadro(uniformeJogador, fase.zona, tPulo, agora);
+        desenharGoleiroNoQuadro(goleiroJogador, fase.zona, tPulo, agora);
         desenharTraves();
         if (ms >= DUR_CORRIDA * 0.55) desenharDica(fase.plano.dica);
         desenharBola(g.bolaX, g.bolaY);
-        desenharBatedorAdversario(ms, null, agora);
-        if (ms >= DUR_CORRIDA + janela) chuteDaMaquina(fase.zona ?? -1, fase.pulouEm ?? agora);
+        desenharMaquinaCorrendo(ms, agora, fase.plano.dica);
+        if (ms >= DUR_CORRIDA + janela) chuteDaMaquina(fase.zona ?? -1, fase.pulouEm ?? agora, fase.plano.dica);
         break;
       }
       case 'chuteMaquina': {
@@ -1376,52 +1603,52 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         const ms = agora - fase.inicio;
         const t = limitar01((ms - DUR_BATIDA) / DUR_CHUTE);
         const tPulo = (agora - fase.pulouEm) / DUR_PULO;
-        desenharGoleiroNoQuadro(uniformeJogador, r.zonaGoleiro, Math.max(tPulo, 0), agora);
+        desenharGoleiroNoQuadro(goleiroJogador, r.zonaGoleiro, Math.max(tPulo, 0), agora);
         desenharTraves();
-        const luva = goleiroNoQuadro(r.zonaGoleiro, 1, agora).luvas;
-        const alvo =
+        const luva = goleiroNoQuadro(goleiroJogador, r.zonaGoleiro, 1, agora);
+        const ax =
           r.desfecho === 'fora'
-            ? { x: telaX(coluna(r.alvo) === 0 ? -0.7 : coluna(r.alvo) === 2 ? 0.7 : 0.1), y: telaY(1.35) }
+            ? telaX(coluna(r.alvo) === 0 ? -0.7 : coluna(r.alvo) === 2 ? 0.7 : 0.1)
             : r.desfecho === 'defesa'
-              ? luva
-              : { x: telaX(centroZona(r.alvo).x), y: telaY(centroZona(r.alvo).y) };
-        desenharBatedorAdversario(DUR_CORRIDA * 2, ms, agora);
-        desenharBolaEmVoo((tt) => trajetoria(alvo.x, alvo.y, 0, facil(tt), false), t);
+              ? luva.luvaX
+              : telaX(zonaX(r.alvo));
+        const ay = r.desfecho === 'fora' ? telaY(1.35) : r.desfecho === 'defesa' ? luva.luvaY : telaY(zonaY(r.alvo));
+        desenharMaquinaChutando(ms, fase.dica);
+        desenharBolaEmVoo((tt) => trajetoria(ax, ay, 0, facil(tt), false), t);
         if (t >= 1) fimDaDefesa(r);
         break;
       }
       case 'pausa': {
+        const ms = agora - fase.inicio;
         const ultimaDefesa = defesas.length === cobrancas.length;
         if (ultimaDefesa && defesas.length) {
           const r = defesas[defesas.length - 1];
-          desenharGoleiroNoQuadro(uniformeJogador, r.zonaGoleiro, 1, agora);
+          const pegou = r.desfecho === 'defesa';
+          desenharGoleiroNoQuadro(goleiroJogador, r.zonaGoleiro, 1, agora, ms, pegou);
+          const lx = goleiro.luvaX;
+          const ly = goleiro.luvaY;
           desenharTraves();
-          desenharBatedorAdversario(DUR_CORRIDA * 2, 2000, agora);
-          if (r.desfecho === 'defesa') {
-            const l = goleiroNoQuadro(r.zonaGoleiro, 1, agora).luvas;
-            bolaParada(l.x, l.y);
-          } else if (r.desfecho === 'gol') {
-            const z = centroZona(r.alvo);
-            bolaParada(telaX(z.x), telaY(z.y));
-          }
+          desenharBatedorDepois(batedor(batedoresMaquina, defesas.length - 1), ms, r.desfecho === 'gol');
+          if (pegou) bolaParada(lx, ly);
+          else if (r.desfecho === 'gol') bolaParada(telaX(zonaX(r.alvo)), telaY(zonaY(r.alvo)));
         } else if (cobrancas.length) {
           const r = cobrancas[cobrancas.length - 1];
-          desenharGoleiroNoQuadro(UNIFORME_MAQUINA, r.zonaGoleiro, 1, agora);
+          const pegou = r.desfecho === 'defesa';
+          desenharGoleiroNoQuadro(goleiroMaquina, r.zonaGoleiro, 1, agora, ms, pegou);
+          const lx = goleiro.luvaX;
+          const ly = goleiro.luvaY;
           desenharTraves();
-          desenharBatedorJogador(2000, agora);
+          desenharBatedorDepois(batedor(batedoresJogador, cobrancas.length - 1), ms, r.desfecho === 'gol');
           if (r.desfecho === 'gol' || r.desfecho === 'trave') bolaParada(telaX(r.x), telaY(r.y));
-          else if (r.desfecho === 'defesa') {
-            const l = goleiroNoQuadro(r.zonaGoleiro, 1, agora).luvas;
-            bolaParada(l.x, l.y);
-          }
+          else if (pegou) bolaParada(lx, ly);
         }
         break;
       }
       case 'preparando':
       case 'parOuImpar': {
-        desenharGoleiroNoQuadro(UNIFORME_MAQUINA, null, 0, agora);
+        desenharGoleiroNoQuadro(goleiroMaquina, null, 0, agora);
         desenharTraves();
-        desenharBatedorJogador(null, agora);
+        desenharBatedorEm(batedor(batedoresJogador, cobrancas.length), batedorX(0), batedorY(0), poseParado(agora, poseBatedor));
         desenharBola(g.bolaX, g.bolaY);
         break;
       }
@@ -1438,7 +1665,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
 
   // ---------- ligações ----------
   if (import.meta.env.DEV) {
-    (window as unknown as Record<string, unknown>).__partida = { semente, dificuldade, cobrancas, defesas, gestosCobranca, gestosDefesa, fase: () => fase.tipo, tempos: () => temposDeQuadro, abrirParOuImpar: () => abrirParOuImpar() };
+    (window as unknown as Record<string, unknown>).__partida = { semente, dificuldade, cobrancas, defesas, gestosCobranca, gestosDefesa, fase: () => fase.tipo, estado: () => fase, tempos: () => temposDeQuadro, abrirParOuImpar: () => abrirParOuImpar() };
   }
   medir();
   atualizarHud();

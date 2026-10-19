@@ -1,7 +1,7 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 19/10/2026 (bonecos Silhueta premium, gritos do narrador em áudio, narrador 1.2 com etiquetas de lance, botão Mais uma/Revanche)
+> Última atualização: 19/10/2026 (bonecos Silhueta premium com uniforme 1 e 2 e 5 batedores por lado, gritos do narrador em áudio, narrador 1.2 com etiquetas de lance, botão Mais uma/Revanche)
 > Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/gritos.md` (gritos em áudio), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
@@ -23,7 +23,9 @@ Minigames de futebol de 30 segundos em que **cada ponto que você faz vai para o
 ### Times oficiais
 - Os clubes da Série A 2026, mais "Outro time".
 - **Só nome, cores e artigo (o/a).** Nada de escudo, uniforme oficial, mascote, hino ou foto de jogador. O artigo serve para o narrador acertar "do"/"da", "pro"/"pra".
-- **Camiseta lisa:** batedor e goleiro vestem uma camiseta lisa nas 2 cores do time, sem escudo, listras, patrocínio ou qualquer desenho que imite a camisa oficial.
+- **Camiseta lisa:** os batedores vestem uma camiseta lisa nas 2 cores do time, sem escudo, listras, patrocínio ou qualquer desenho que imite a camisa oficial. Há o **uniforme 1** (camiseta na cor 1) e o **uniforme 2** (cores invertidas), sorteado a cada partida. Se os dois times em campo ficarem parecidos, o adversário troca de uniforme (decidido em 19/10).
+- **Goleiros:** camiseta lisa num tom forte de goleiro (amarelo, verde-limão, ciano, rosa ou lilás), escolhido para contrastar com os dois times e com o outro goleiro.
+- **Jogadores fictícios:** nenhum boneco imita jogador real, nem por número, tom de pele ou cabelo (direito de imagem; decidido em 19/10).
 - Cada time pode ter um **rival** cadastrado (o clássico). Sem clássico, vale a regra da seção 8.
 
 | Time | Artigo | Rival |
@@ -268,7 +270,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 
 - Direção **"Transmissão de domingo"** aprovada em 18/10/2026: placar de TV inclinado, grito do narrador como adesivo na cor do time, arquibancada nas cores do time, campo em perspectiva.
 - Detalhe, tela a tela, e ordem de implementação: `docs/visual.md`.
-- **Bonecos:** estilo "Silhueta premium" (aprovado em 19/10): formas chapadas sem contorno, camiseta lisa nas cores do time, tons de pele e cabelos variados, homens e mulheres. Detalhe em `docs/bonecos.md`.
+- **Bonecos:** estilo "Silhueta premium" (aprovado em 19/10): formas chapadas sem contorno, camiseta lisa nas cores do time (uniforme 1 ou 2), goleiro num tom forte que contrasta com os dois times, tons de pele e cabelos variados, homens e mulheres. Cada lado tem 5 batedores diferentes (um por cobrança) e 1 goleiro, sorteados a cada partida. Detalhe em `docs/bonecos.md`.
 
 ## 10. Roadmap
 

@@ -20,7 +20,7 @@ Placar de TV, grito de narrador e arquibancada. Tudo puxa a cor do time de quem 
 |---|---|
 | Fundo | Gramado listrado, como hoje (`#0b3d1f` e `#0e4625`) |
 | Destaque | Amarelo de placar `#ffd23f` (botão principal, números, alertas bons) |
-| Cor do time | `--c1` do time escolhido em faixas inclinadas, no grito do narrador, na arquibancada, no card e na **camiseta lisa** do batedor e do goleiro (aprovada em 18/10) |
+| Cor do time | `--c1` do time escolhido em faixas inclinadas, no grito do narrador, na arquibancada, no card e na **camiseta lisa** dos batedores (uniforme 1 ou 2; o goleiro usa um tom forte de contraste, ver `docs/bonecos.md`) |
 | Subiu / caiu | Verde `#3ddc84` e vermelho `#ff5a3c`, sempre com seta ou ícone, nunca só a cor |
 | Números e gritos | **Anton** (condensada, de placar) |
 | Rótulos | **Barlow Condensed** em caixa alta |
@@ -47,8 +47,9 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 - **Rastro da bola** amarelo seguindo o arraste do dedo; "+15" subindo do ponto do gol.
 - Gol: tremida curta da tela (120 ms), rede balançando e vibração no Android (`navigator.vibrate`).
 - Cavadinha: câmera lenta de 0,5 s antes de entrar.
-- **Bonecos animados (19/10):** batedor e goleiro desenhados por esqueleto, com poses interpoladas a cada quadro: batedor com mãos na cintura e respiração, corrida com passadas, chute em 3 tempos (arma, bate, acompanha); goleiro balançando e quicando na linha, mergulho esticado com as luvas chegando na bola, abafa no chão. Bola com gomos girando e rastro de borrão. Referência de clima: a cobrança de pênalti dos jogos de futebol de 16 bits (câmera atrás do batedor, rede quadriculada, torcida cheia).
-- **Desempenho:** grama, linhas, rede e 3 quadros da torcida ficam pré-desenhados; a cada quadro só bonecos, bola, traves e efeitos são desenhados ao vivo (cerca de 0,6 ms por quadro no computador).
+- **Bonecos (Silhueta premium, `docs/bonecos.md`):** esqueleto por rotações com poses-chave interpoladas. Batedor: ajeita a bola agachado e recua, mãos na cintura, chute em 4 tempos (pé de apoio, puxada, contato, finalização), cavadinha de toque curto, comemora o gol ou põe as mãos na cabeça. Máquina: corrida de 3 passos e crava o pé de apoio. Goleiro: balança na linha, pulo baixo ou alto para cada lado, de pé no meio, cai no chão depois do pulo, com a bola encaixada no peito quando defende. Bola com gomos girando e rastro de borrão.
+- **Dica da defesa no corpo:** a partir de 55% da corrida aparece no chão, em amarelo, a pegada de onde o pé de apoio vai cravar, com a seta do canto; quando o batedor chega, a chuteira do pé de apoio fica amarela e continua assim no chute.
+- **Desempenho:** grama, linhas, rede e 3 quadros da torcida ficam pré-desenhados; a cada quadro só bonecos, bola, traves e efeitos são desenhados ao vivo. Na ola, a torcida é redesenhada agrupada por cor (um preenchimento por cor). Medido em 19/10 com CPU 4× mais lenta (perfil de celular médio do Chrome), 390×844: 1,2 ms de trabalho por quadro em média, 99% dos quadros abaixo de 10 ms.
 - Contraste: texto sobre a cor do time usa sempre `corDeTexto` (escuro em time de cor clara, branco no resto).
 
 ### Resultado

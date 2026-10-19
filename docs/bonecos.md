@@ -1,6 +1,6 @@
 # Bonecos — estilo "Silhueta premium"
 
-> Versão 1 · 19/10/2026 · Estilo aprovado pelo Kauê em 19/10/2026. Complementa o `visual.md`; quando discordarem, vale o `jogo.md`.
+> Versão 1.1 · 19/10/2026 · Estilo aprovado pelo Kauê em 19/10/2026. Na 1.1: 5 batedores diferentes por lado, uniforme 1 e 2, goleiros com tom de contraste. Complementa o `visual.md`; quando discordarem, vale o `jogo.md`.
 > Referência visual: ilustrações de jogadores em vetor chapado (imagem enviada pelo Kauê em 19/10). **É só referência de estilo**: não copiar personagens, poses exatas nem uniformes de nenhuma imagem de banco.
 
 ## 1. O estilo
@@ -14,9 +14,10 @@
 
 ## 2. Uniforme (pilar: sem marcas de clubes)
 
-- **Camiseta lisa na cor 1 do time**, calção na cor 2, meião na cor 1. Sem número, listras, faixas, gola desenhada, escudo ou patrocínio.
+- **Uniforme 1:** camiseta lisa na cor 1 do time, calção na cor 2, meião na cor 1. **Uniforme 2:** as cores invertidas. Sem número, listras, faixas, gola desenhada, escudo ou patrocínio.
+- O uniforme de quem joga é sorteado a cada partida. O adversário (a máquina, de laranja e preto, ou o time de quem desafiou) troca de uniforme se as camisetas ficarem parecidas (distância de cor abaixo de 110); se nenhuma combinação servir, ele joga com as cores da máquina. Os testes conferem todos os pares de times.
 - Times com cores parecidas (preto e branco): camiseta na cor 1 e calção na cor 2, sempre com contraste mínimo; se não houver contraste, o calção fica num cinza neutro.
-- **Goleiro:** camiseta lisa num tom forte que contraste com o time (ex.: amarelo de placar `#ffd23f` ou um verde-limão), com luvas na mesma cor. Nunca as cores de um clube real.
+- **Goleiro (os dois lados):** camiseta lisa num tom forte (amarelo de placar `#ffd23f`, verde-limão, ciano, rosa ou lilás) escolhido para contrastar com os dois times e com o outro goleiro, com luvas na mesma cor e calção escuro. Nunca as cores de um clube real.
 - Chuteira neutra (preta ou branca). **Bola branca clássica**; o amarelo do jogo fica só no rastro.
 
 ## 3. Todo mundo em campo (inclusão)
@@ -24,9 +25,10 @@
 - **Tons de pele:** pelo menos 5, do claro ao escuro.
 - **Cabelos:** raspado, curto, crespo volumoso, tranças, coque, rabo de cavalo, comprido solto.
 - **Homens e mulheres** em proporção parecida.
-- O batedor e o goleiro **da máquina** são sorteados a cada partida (tom de pele, cabelo, homem ou mulher) com o gerador aleatório **do visual**, nunca a semente da partida (a física continua determinística).
-- O boneco de quem joga usa a mesma regra por enquanto. Escolher o próprio boneco fica no backlog (I06, Seu Craque).
+- Cada lado tem **5 batedores diferentes**, um por cobrança (na morte súbita volta o primeiro), e **1 goleiro**. Todos são sorteados a cada partida (tom de pele, cabelo, homem ou mulher) com o gerador aleatório **do visual**, nunca a semente da partida (a física continua determinística). Vale para quem joga e para a máquina (decidido em 19/10).
+- Escolher o próprio boneco fica no backlog (I06, Seu Craque).
 - Nenhum traço caricato de etnia, corpo ou origem.
+- **Nenhum boneco imita jogador real**, nem pela combinação de número, tom de pele e cabelo (direito de imagem; decidido em 19/10).
 
 ## 4. Poses (animação por poses-chave)
 

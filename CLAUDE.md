@@ -22,7 +22,7 @@ Conforme a tarefa, leia também: `docs/rankings.md` (rankings e justiça), `docs
 
 - Interface em português do Brasil, tom de resenha e zoeira (ver seção 8 do `docs/jogo.md`).
 - **Celular primeiro.** Teste sempre em 390×844. Toque, nunca hover. Nada de rolagem horizontal.
-- **Sem marcas de clubes:** nada de escudo, uniforme oficial, mascote, hino ou foto de jogador real. Só nome, cores e artigo. Batedor e goleiro usam camiseta lisa nas cores do time.
+- **Sem marcas de clubes:** nada de escudo, uniforme oficial, mascote, hino ou foto de jogador real. Só nome, cores e artigo. Batedores usam camiseta lisa nas cores do time (uniforme 1 ou 2); goleiros, um tom forte de contraste. Nenhum boneco imita jogador real.
 - Zoeira só com o time e a situação. Nunca com raça, orientação, gênero, religião, origem, corpo, deficiência ou pessoa real. Narrador neutro de gênero.
 - **Zero aposta:** nenhuma das palavras proibidas da seção 7 do `docs/jogo.md` em nenhum texto do jogo.
 - Nunca peça dados pessoais obrigatórios. Login anônimo por padrão. Apelido nunca aparece em ranking público no MVP.
