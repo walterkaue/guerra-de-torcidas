@@ -72,6 +72,9 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 - **Abas Palpites e Carreira:** aparecem com selo "em breve", sem tela vazia. Ranking mostra só a aba Semana.
 - **Ranking público só de torcidas:** nenhum apelido aparece em ranking.
 
+### Bonecos
+- Estilo "Silhueta premium", aprovado em 19/10: ver `docs/bonecos.md`.
+
 ## 4. Movimento (regras)
 
 - Tudo curto: 150 a 400 ms; só o grito do narrador e o confete passam disso.

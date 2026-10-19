@@ -1,8 +1,8 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 19/10/2026 (narrador 1.2 com etiquetas de lance, botão Mais uma/Revanche; antes: bloco B no servidor, Crava a Rodada sem Contra a maré, rotina contra a pausa do Supabase)
-> Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual). Ideias ainda não decididas ficam no backlog do projeto no Claude.
+> Última atualização: 19/10/2026 (bonecos Silhueta premium, gritos do narrador em áudio, narrador 1.2 com etiquetas de lance, botão Mais uma/Revanche)
+> Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/gritos.md` (gritos em áudio), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
 
@@ -251,6 +251,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 
 - **Narrador:** exagerado, rádio de domingo. Ex.: "É CAVADINHAAAA! Que categoria, que deboche!", "Pegou! O goleiro tava com o almoço pago!", "Isolou! Foi pra Marte, a bola tá orbitando!"
 - **Banco de frases:** `docs/narrador.md` (versão 1.2, com etiquetas para a frase combinar com o lance). Frase nova entra lá e passa pelo checklist de tom do próprio arquivo.
+- **Narrador com voz** (aprovado em 19/10): só os gritos curtos em áudio (GOOOL, PEGOU, ISOLOU…); a frase completa continua em texto. Duas vozes, **Narrador** e **Narradora**, mais a opção **Só efeitos**. Lista e regras em `docs/gritos.md`. Nunca imitar narrador real.
 - **Neutro de gênero:** o narrador fala do lance, não da pessoa ("Cavou!", não "Ele cavou!").
 - **Provocação ao rival** (só ao time, nunca à pessoa): "Sua torcida tá 300 pontos atrás do [rival]. Vai deixar?"
 - **Quem é o rival:** o clássico da tabela da seção 3. Sem clássico, o rival é o time logo acima no ranking da semana da sua divisão (ou logo abaixo, se for o líder); antes das divisões, no ranking geral (seção 5). Quem escolheu "Outro time" recebe só provocação de cidade.
@@ -267,6 +268,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 
 - Direção **"Transmissão de domingo"** aprovada em 18/10/2026: placar de TV inclinado, grito do narrador como adesivo na cor do time, arquibancada nas cores do time, campo em perspectiva.
 - Detalhe, tela a tela, e ordem de implementação: `docs/visual.md`.
+- **Bonecos:** estilo "Silhueta premium" (aprovado em 19/10): formas chapadas sem contorno, camiseta lisa nas cores do time, tons de pele e cabelos variados, homens e mulheres. Detalhe em `docs/bonecos.md`.
 
 ## 10. Roadmap
 
