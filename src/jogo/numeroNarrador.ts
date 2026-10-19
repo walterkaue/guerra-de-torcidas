@@ -2,7 +2,7 @@
 // PROVISÓRIO (bloco A): sorteado no próprio celular. No bloco B ele passa a vir do servidor,
 // gerado com um segredo que o celular não conhece e revelado só depois da escolha do jogador.
 
-import type { EscolhaParOuImpar } from './penaltis';
+import type { EscolhaParOuImpar } from './penaltis.ts';
 
 export async function pedirNumeroDoNarrador(_escolha: EscolhaParOuImpar): Promise<number> {
   const buf = new Uint8Array(1);

@@ -337,3 +337,65 @@ describe('auxiliares', () => {
     expect(dificuldadePorDia(0)).toBe(1);
   });
 });
+
+describe('desafio por link', () => {
+  const forte: GestoCobranca = { dir: 60, forca: 60, efeito: 0 };
+  const fraco: GestoCobranca = { dir: 60, forca: 28, efeito: 0 };
+
+  it('a bola segue a cobrança gravada e a defesa no canto certo vale 10', () => {
+    for (let s = 0; s < 200; s++) {
+      const plano = planejarDefesa(s, 0, 0.5, forte);
+      expect(plano.gravada).toBeDefined();
+      const r = resolverDefesa(s, 0, plano.alvo, 0.5, forte);
+      expect(r.contraGravada).toBe(true);
+      if (plano.erra) expect(r.desfecho).toBe('fora');
+      else expect(r).toMatchObject({ desfecho: 'defesa', pontos: PONTOS.defesa });
+    }
+  });
+
+  it('defender chute gravado fraco (força abaixo de 32) não vale pontos', () => {
+    for (let s = 0; s < 200; s++) {
+      const plano = planejarDefesa(s, 0, 0.5, fraco);
+      const r = resolverDefesa(s, 0, plano.alvo, 0.5, fraco);
+      if (r.desfecho === 'defesa') expect(r.pontos).toBe(0);
+    }
+  });
+
+  it('cavadinha gravada: só segura quem fica no meio ou nem pula', () => {
+    const cav: GestoCobranca = { dir: 0, forca: 15, efeito: 0 };
+    expect(resolverDefesa(1, 0, -1, 0.5, cav).desfecho).toBe('defesa');
+    expect(resolverDefesa(1, 0, 4, 0.5, cav).desfecho).toBe('defesa');
+    expect(resolverDefesa(1, 0, 0, 0.5, cav).desfecho).toBe('gol');
+    expect(resolverDefesa(1, 0, 4, 0.5, cav).pontos).toBe(0);
+  });
+
+  it('5 de 5 nas defesas não conta defesa sem pontos', () => {
+    const def = (pontos: number) => ({ desfecho: 'defesa' as const, alvo: 0, zonaGoleiro: 0, contraGravada: true, pontos });
+    const gol = { desfecho: 'gol' as const, x: 0, y: 0.3, zonaBola: 1, zonaGoleiro: 0, angulo: false, raspouTrave: false, cavadinha: false, fraca: false, goleiroLeu: false, pontos: 10 };
+    const r = totalizar(Array.from({ length: 5 }, () => gol), [def(10), def(10), def(10), def(10), def(0)]);
+    expect(r.cincoDefesas).toBe(false);
+    expect(r.pontos.defesas).toBe(40);
+  });
+
+  it('determinístico com gravadas, e na morte súbita sem gravada a máquina bate', () => {
+    const gravadas = Array.from({ length: COBRANCAS }, (_, i) => ({ dir: -80 + i * 40, forca: 55, efeito: 0 }));
+    for (let s = 1; s <= 300; s++) {
+      const semente = misturar(s, 21);
+      const rng = criarAleatorio(s);
+      const rc: ResultadoCobranca[] = [];
+      const rd: ResultadoDefesa[] = [];
+      const g: Gestos = { cobrancas: [], defesas: [] };
+      while (precisaDeOutraRodada(rc, rd)) {
+        const i = g.cobrancas.length;
+        g.cobrancas.push({ dir: rng() * 200 - 100, forca: rng() * 100, efeito: 0 });
+        g.defesas.push(Math.floor(rng() * 6));
+        rc.push(resolverCobranca(semente, i, g.cobrancas[i], 0.5));
+        rd.push(resolverDefesa(semente, i, g.defesas[i], 0.5, gravadas[i]));
+      }
+      if (precisaDeParOuImpar(rc, rd)) g.parOuImpar = { escolha: 'par', numero: 2 };
+      const r = simularPartida(semente, g, 0.5, NUM, gravadas);
+      expect(simularPartida(semente, g, 0.5, NUM, gravadas)).toEqual(r);
+      r.defesas.forEach((d, i) => expect(d.contraGravada).toBe(i < COBRANCAS));
+    }
+  });
+});

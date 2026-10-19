@@ -1,6 +1,8 @@
 import { esc, irPara, type Rota } from '../app';
 import { TIMES, corDeTexto } from '../dados/times';
 import { APELIDO_MAX, prefs } from '../estado';
+import { ErroServidor } from '../servidor/api';
+import { sincronizarTorcedor } from '../servidor/torcedor';
 
 export function telaTimes(root: HTMLElement, rota: Rota): void {
   const depois = rota.tela === 'times' ? (rota.depois ?? 'partida') : 'partida';
@@ -29,6 +31,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
         <span>Seu apelido no card <small>(opcional)</small></span>
         <input type="text" maxlength="${APELIDO_MAX}" autocomplete="off" placeholder="Ex.: Zé da Geral"
           value="${esc(atual.apelido ?? '')}" />
+        <small class="erro-campo" role="alert" hidden></small>
       </label>
 
       <button class="botao" type="button" data-acao="confirmar" ${atual.time ? '' : 'disabled'}>
@@ -49,10 +52,33 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
     });
   });
 
-  confirmar.addEventListener('click', () => {
+  const erro = root.querySelector<HTMLElement>('.erro-campo')!;
+  const textoBotao = confirmar.textContent;
+
+  confirmar.addEventListener('click', async () => {
     if (!escolhido) return;
-    prefs.set({ time: escolhido, apelido: input.value.trim().slice(0, APELIDO_MAX) || undefined });
-    irPara(depois === 'partida' ? { tela: 'partida' } : { tela: 'inicio' });
+    erro.hidden = true;
+    confirmar.disabled = true;
+    confirmar.textContent = 'Salvando…';
+    const anterior = prefs.get();
+    prefs.set({ time: escolhido, apelido: input.value.trim().replace(/\s+/g, ' ').slice(0, APELIDO_MAX) || undefined });
+    try {
+      await sincronizarTorcedor();
+    } catch (e) {
+      if (e instanceof ErroServidor && e.codigo === 'apelido_bloqueado') {
+        // Volta o apelido anterior e pede outro.
+        prefs.set({ apelido: anterior.apelido });
+        erro.textContent = 'Esse apelido não passa no filtro. Tenta outro?';
+        erro.hidden = false;
+        confirmar.disabled = false;
+        confirmar.textContent = textoBotao;
+        input.focus();
+        return;
+      }
+      // Sem internet: fica salvo no aparelho e sobe para o servidor na próxima partida.
+    }
+    const desafio = rota.tela === 'times' ? rota.desafio : undefined;
+    irPara(depois === 'partida' ? { tela: 'partida', desafio } : { tela: 'inicio' });
   });
 
   root.querySelector('.voltar')?.addEventListener('click', () => irPara({ tela: 'inicio' }));

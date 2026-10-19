@@ -7,3 +7,5 @@ dist/
 .DS_Store
 supabase/.temp/
 prints/
+!.env.production
+!.env.development

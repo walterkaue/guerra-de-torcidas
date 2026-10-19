@@ -17,14 +17,42 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   const { resultado: r } = d;
   const p = r.pontos;
 
-  // Etapa 3: este link vira o desafio "duvido você me vencer" com as cobranças gravadas.
-  const link = `${SITE}/?time=${time.id}`;
+  // Partida registrada vira desafio "duvido você me vencer" com as cobranças gravadas.
+  const codigo = d.servidor?.desafio?.codigo;
+  const link = codigo ? `${SITE}/?d=${codigo}` : `${SITE}/?time=${time.id}`;
   const paraTime = proTime(time);
   // Texto do convite vem do banco do narrador (desafio_convite), sorteado com o gerador do narrador.
   const convite =
     escolherFrase('desafio_convite', { ...contextoDoTime(time, apelidoSalvo), pontos: p.total }, Math.random)?.texto ??
     'Duvido você me vencer!';
   const textoShare = `${convite} ${link}`;
+
+  const situacao = !d.valendo
+    ? d.aviso ?? 'Partida sem valer pontos.'
+    : d.servidor?.sobSuspeita
+      ? 'Partida em revisão: fica fora do ranking até alguém conferir.'
+      : d.servidor?.contaNoRanking
+        ? `Contou pro ranking da semana${paraTime ? ` ${paraTime}` : ''}.`
+        : 'Essa não entrou no ranking: hoje só as 5 melhores partidas contam.';
+
+  // Desafio por link: placar dos dois lado a lado. Mais pontos vence; empate fica com quem desafiou.
+  const cmp = d.servidor?.comparacao;
+  const nomeDesafiante = d.desafio?.apelido ?? 'quem te desafiou';
+  const fraseDesafio =
+    cmp &&
+    escolherFrase(
+      cmp.venceu ? 'desafio_vitoria' : 'desafio_derrota',
+      { ...contextoDoTime(time, apelidoSalvo), desafiante: nomeDesafiante },
+      Math.random,
+    )?.texto;
+  const blocoDesafio = cmp
+    ? `<section class="duelo-desafio">
+        <div><span>Você</span><strong>${p.total}</strong><small>${r.golsJogador} x ${r.golsMaquina}</small></div>
+        <em>x</em>
+        <div><span>${esc(cmp.desafiante ?? 'Desafiante')}</span><strong>${cmp.pontosDesafiante}</strong><small>${cmp.golsJogadorDesafiante} x ${cmp.golsMaquinaDesafiante}</small></div>
+        ${fraseDesafio ? `<p>${esc(fraseDesafio)}</p>` : ''}
+      </section>`
+    : '';
 
   const linhas: [string, number][] = [
     ['Gols', p.gols],
@@ -38,6 +66,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   root.innerHTML = `
     <main class="tela resultado" style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
       <img class="card" alt="Card do resultado" />
+      <p class="situacao${d.valendo ? '' : ' sem-pontos'}">${esc(situacao)}</p>
+      ${blocoDesafio}
 
       <section class="pontos">
         ${d.frasesFinais.map((t) => `<p class="frase-final">${esc(t)}</p>`).join('')}

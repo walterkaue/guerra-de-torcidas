@@ -30,6 +30,14 @@ import {
   type ResultadoDefesa,
 } from '../jogo/penaltis';
 import { pedirNumeroDoNarrador } from '../jogo/numeroNarrador';
+import {
+  ErroServidor,
+  fecharPartida,
+  novaPartida,
+  type DesafioRecebido,
+  type FechamentoDoServidor,
+} from '../servidor/api';
+import { sincronizarTorcedor } from '../servidor/torcedor';
 import { destravarSom, somApito, somChute, somTorcida } from '../jogo/som';
 
 type Fase =
@@ -38,7 +46,8 @@ type Fase =
   | { tipo: 'corrida'; inicio: number; plano: PlanoDefesa; zona: number | null; pulouEm: number | null }
   | { tipo: 'chuteMaquina'; inicio: number; r: ResultadoDefesa; pulouEm: number }
   | { tipo: 'pausa'; ate: number; depois: () => void }
-  | { tipo: 'parOuImpar' };
+  | { tipo: 'parOuImpar' }
+  | { tipo: 'preparando' };
 
 /** Dia da semana no horário de Brasília (a temporada zera na segunda, 00h BRT). */
 function diaEmBrasilia(): number {
@@ -56,10 +65,18 @@ const DUR_CAVADINHA = 1050;
 const DUR_PULO = 420;
 const DUR_CORRIDA = 900;
 
-export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
+export const AVISO_SEM_PONTOS = 'Partida sem valer pontos: sem conexão com o placar da torcida.';
+
+export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   const time: Time = timePorId(prefs.get().time) ?? TIMES[TIMES.length - 1];
-  const semente = sementeNova();
-  const dificuldade = dificuldadePorDia(diaEmBrasilia());
+  const codigoDesafio = rota.tela === 'partida' ? rota.desafio : undefined;
+  // Valores locais (partida sem valer pontos); trocados pelos do servidor quando ele responde.
+  let semente = sementeNova();
+  let dificuldade = dificuldadePorDia(diaEmBrasilia());
+  let partidaId: string | null = null;
+  let desafio: DesafioRecebido | null = null;
+  let aviso: string | null = null;
+  let fechamento: Promise<FechamentoDoServidor> | null = null;
   const narrador = criarNarrador(time, prefs.get().apelido);
 
   root.innerHTML = `
@@ -76,6 +93,7 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
       <canvas class="campo-jogo"></canvas>
       <p class="instrucao" aria-live="polite"></p>
       <p class="narrador" aria-live="assertive"></p>
+      <p class="aviso-partida" hidden></p>
     </main>
   `;
 
@@ -90,7 +108,7 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
   const gestosCobranca: GestoCobranca[] = [];
   const gestosDefesa: number[] = [];
   let rodada = 0; // 0..4 no tempo normal, 5..9 na morte súbita
-  let fase: Fase = { tipo: 'mirar' };
+  let fase: Fase = { tipo: 'preparando' };
   let rastro: { x: number; y: number }[] = [];
   let acabou = false;
 
@@ -186,7 +204,7 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
   }
 
   function comecarDefesa(): void {
-    const plano = planejarDefesa(semente, rodada, dificuldade);
+    const plano = planejarDefesa(semente, rodada, dificuldade, desafio?.cobrancas[rodada]);
     fase = { tipo: 'corrida', inicio: performance.now(), plano, zona: null, pulouEm: null };
     instruir('Sua vez de defender! Olhe o pé de apoio e toque onde pular.');
     if (defesaDecisiva()) narrar(narrador.falar('decisiva'));
@@ -214,7 +232,7 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
   }
 
   function chuteDaMaquina(zona: number, pulouEm: number): void {
-    const r = resolverDefesa(semente, rodada, zona, dificuldade);
+    const r = resolverDefesa(semente, rodada, zona, dificuldade, desafio?.cobrancas[rodada]);
     gestosDefesa.push(zona);
     fase = { tipo: 'chuteMaquina', inicio: performance.now(), r, pulouEm };
     somChute();
@@ -231,7 +249,7 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
     rodada++;
     if (precisaDeOutraRodada(cobrancas, defesas)) depoisDe(1500, comecarCobranca);
     else if (precisaDeParOuImpar(cobrancas, defesas)) depoisDe(1600, abrirParOuImpar);
-    else depoisDe(1600, () => encerrar());
+    else depoisDe(1600, () => void encerrar());
   }
 
   const placarAtual = () => `${golsJogador()} x ${golsMaquina()}`;
@@ -285,19 +303,107 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
       painel.querySelectorAll('button').forEach((b) => (b.disabled = true));
       status.textContent = 'O narrador tá pensando…';
       painel.classList.add('pensando');
-      const numeroNarrador = await pedirNumeroDoNarrador(escolha);
+      const numeroNarrador = await numeroDoNarrador(escolha);
       if (acabou) return;
       const r = resolverParOuImpar(escolha, numeroNarrador);
       painel.classList.remove('pensando');
       status.innerHTML = `Narrador: <strong>${numeroNarrador}</strong> · soma <strong>${r.soma}</strong>, ${r.soma % 2 === 0 ? 'par' : 'ímpar'}`;
       somTorcida(r.ganhou ? 'festa' : 'uuuh');
-      setTimeout(() => encerrar(escolha, r), 1800);
+      setTimeout(() => void encerrar(escolha, r), 1800);
     });
   }
 
-  function encerrar(escolha?: EscolhaParOuImpar, parOuImpar?: ResultadoParOuImpar): void {
+  // ---------- servidor ----------
+  function mostrarAviso(texto: string): void {
+    aviso = texto;
+    const el = root.querySelector<HTMLElement>('.aviso-partida')!;
+    el.textContent = texto;
+    el.hidden = false;
+  }
+
+  /** Pede a semente ao servidor. Sem resposta, a partida segue local e sem valer pontos. */
+  async function preparar(): Promise<void> {
+    instruir('Preparando a partida…');
+    try {
+      // Time e apelido precisam estar no servidor; sessão nova (aparelho limpo) regrava.
+      const pedir = async (codigo?: string) => {
+        await sincronizarTorcedor();
+        try {
+          return await novaPartida(codigo);
+        } catch (e) {
+          if (!(e instanceof ErroServidor) || e.codigo !== 'sem_time') throw e;
+          await sincronizarTorcedor(true);
+          return novaPartida(codigo);
+        }
+      };
+      let p;
+      try {
+        p = await pedir(codigoDesafio);
+      } catch (e) {
+        if (!(e instanceof ErroServidor) || !codigoDesafio || !['proprio_desafio', 'desafio_nao_encontrado'].includes(e.codigo)) throw e;
+        // Link do próprio desafio ou link quebrado: vira partida normal, valendo.
+        p = await pedir();
+      }
+      semente = p.semente;
+      dificuldade = p.dificuldade;
+      partidaId = p.partidaId;
+      desafio = p.desafio;
+      if (desafio) {
+        // O convite já foi aceito: tira o ?d= do endereço para não oferecer de novo.
+        history.replaceState(null, '', location.pathname);
+        root.querySelector('.placar-jogo .lado:last-child .sigla')!.textContent = desafio.apelido ?? 'Desafio';
+      }
+    } catch (e) {
+      mostrarAviso(e instanceof ErroServidor && e.codigo === 'muitas_partidas'
+        ? 'Calma! Muitas partidas em 1 minuto: esta não vale pontos.'
+        : AVISO_SEM_PONTOS);
+    }
+    if (!acabou) comecarCobranca();
+  }
+
+  const gestosAtuais = (escolha?: EscolhaParOuImpar) => ({
+    cobrancas: gestosCobranca,
+    defesas: gestosDefesa,
+    ...(escolha ? { parOuImpar: escolha } : {}),
+  });
+
+  /** Fecha no servidor uma vez só (o par ou ímpar e o fim da partida usam a mesma resposta). */
+  function fecharNoServidor(escolha?: EscolhaParOuImpar): Promise<FechamentoDoServidor> | null {
+    if (!partidaId || aviso) return null;
+    fechamento ??= fecharPartida(partidaId, gestosAtuais(escolha));
+    return fechamento;
+  }
+
+  /** Número do narrador: do servidor (segredo que o celular não conhece); sem servidor, local. */
+  async function numeroDoNarrador(escolha: EscolhaParOuImpar): Promise<number> {
+    const fechando = fecharNoServidor(escolha);
+    if (fechando) {
+      try {
+        const r = await fechando;
+        if (r.numeroNarrador !== null) return r.numeroNarrador;
+      } catch {
+        fechamento = null;
+        mostrarAviso(AVISO_SEM_PONTOS);
+      }
+    }
+    return pedirNumeroDoNarrador(escolha);
+  }
+
+  async function encerrar(escolha?: EscolhaParOuImpar, parOuImpar?: ResultadoParOuImpar): Promise<void> {
     acabou = true;
-    const resultado = totalizar(cobrancas, defesas, parOuImpar);
+    let resultado = totalizar(cobrancas, defesas, parOuImpar);
+    let servidor: FechamentoDoServidor | undefined;
+    const fechando = fecharNoServidor(escolha);
+    if (fechando) {
+      instruir('Conferindo o placar com a torcida…');
+      try {
+        servidor = await fechando;
+        // Quem manda é o servidor (deve dar igual ao que o celular calculou).
+        resultado = servidor.resultado;
+      } catch {
+        aviso = 'Não deu pra registrar: esta partida ficou sem valer pontos.';
+      }
+    }
     somApito(true);
     irPara({
       tela: 'resultado',
@@ -305,8 +411,12 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
         timeId: time.id,
         semente,
         dificuldade,
-        gestos: { cobrancas: gestosCobranca, defesas: gestosDefesa, parOuImpar: escolha },
+        gestos: gestosAtuais(escolha),
         numeroNarrador: parOuImpar?.numeroNarrador,
+        valendo: !!servidor,
+        aviso: aviso ?? undefined,
+        servidor,
+        desafio: desafio ?? undefined,
         resultado,
         frasesFinais: eventosDoFim(resultado)
           .map((ev) =>
@@ -719,6 +829,7 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
         }
         break;
       }
+      case 'preparando':
       case 'parOuImpar': {
         desenharGoleiro(corJogador[0], corJogador[1], null, 0);
         desenharBola(g.bolaX, g.bolaY);
@@ -734,7 +845,7 @@ export function telaPartida(root: HTMLElement, _rota: Rota): () => void {
   }
   medir();
   atualizarHud();
-  comecarCobranca();
+  void preparar();
   somApito();
   let raf = proximoQuadro(quadro);
 

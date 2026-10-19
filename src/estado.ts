@@ -10,6 +10,8 @@ interface Prefs {
   time?: string;
   apelido?: string;
   mudo?: boolean;
+  /** "time|apelido" que o servidor já tem (para não regravar à toa). */
+  sincronizado?: string;
 }
 
 function ler(): Prefs {
