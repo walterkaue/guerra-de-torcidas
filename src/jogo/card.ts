@@ -18,11 +18,11 @@ export interface DadosCard {
 const L = 1080;
 const A = 1350;
 // Mesmas fontes da interface (docs/visual.md); o sistema entra só se elas não carregarem.
-const FONTE = 'Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-const PLACAR = 'Anton, Impact, "Arial Narrow", sans-serif';
-const ROTULO = '"Barlow Condensed", "Arial Narrow", sans-serif';
+export const FONTE = 'Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+export const PLACAR = 'Anton, Impact, "Arial Narrow", sans-serif';
+export const ROTULO = '"Barlow Condensed", "Arial Narrow", sans-serif';
 
-function quebrarTexto(c: CanvasRenderingContext2D, texto: string, largura: number): string[] {
+export function quebrarTexto(c: CanvasRenderingContext2D, texto: string, largura: number): string[] {
   const palavras = texto.split(' ');
   const linhas: string[] = [];
   let atual = '';

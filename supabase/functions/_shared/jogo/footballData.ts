@@ -35,7 +35,7 @@ export const CHAVES_API: Record<string, readonly string[][]> = {
 export function palavras(nome: string): string[] {
   return nome
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .split(/[^a-z0-9]+/)
     .filter(Boolean);

@@ -19,14 +19,14 @@ export class ErroServidor extends Error {
   }
 }
 
-function comTempoLimite<T>(p: PromiseLike<T>, ms = TEMPO_LIMITE_MS): Promise<T> {
+export function comTempoLimite<T>(p: PromiseLike<T>, ms = TEMPO_LIMITE_MS): Promise<T> {
   return Promise.race([
     Promise.resolve(p),
     new Promise<T>((_, falha) => setTimeout(() => falha(new ErroServidor('tempo_esgotado')), ms)),
   ]);
 }
 
-async function supabase(): Promise<SupabaseClient> {
+export async function supabase(): Promise<SupabaseClient> {
   if (!URL_SUPABASE || !CHAVE_PUBLICA) throw new ErroServidor('sem_configuracao');
   cliente ??= import('@supabase/supabase-js').then(({ createClient }) =>
     createClient(URL_SUPABASE, CHAVE_PUBLICA, { auth: { persistSession: true, autoRefreshToken: true } }),
@@ -193,12 +193,18 @@ export async function ouvirRanking(semana: string, aoMudar: () => void): Promise
   return () => void sb.removeChannel(canal);
 }
 
-/** Quantas partidas fechei hoje (para o "hoje contam mais N partidas"). */
+/** Quantas partidas fechei hoje, somando os minigames de partida (para o "hoje contam mais N partidas"). */
 export async function partidasFechadasHoje(dia: string): Promise<number> {
   await garantirSessao();
   const sb = await supabase();
+  // Teto somado entre os minigames de partida; amistoso não ocupa vaga.
   const { count, error } = await comTempoLimite(
-    sb.from('partidas').select('id', { count: 'exact', head: true }).eq('dia', dia).not('fechada_em', 'is', null),
+    sb
+      .from('partidas')
+      .select('id', { count: 'exact', head: true })
+      .eq('dia', dia)
+      .eq('amistoso', false)
+      .not('fechada_em', 'is', null),
   );
   if (error) throw new ErroServidor('falha');
   return count ?? 0;

@@ -78,8 +78,8 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
       // Sem internet: fica salvo no aparelho e sobe para o servidor na próxima partida.
     }
     const desafio = rota.tela === 'times' ? rota.desafio : undefined;
-    irPara(depois === 'partida' ? { tela: 'partida', desafio } : { tela: 'inicio' });
+    irPara(depois === 'partida' ? { tela: 'partida', desafio } : { tela: depois });
   });
 
-  root.querySelector('.voltar')?.addEventListener('click', () => irPara({ tela: 'inicio' }));
+  root.querySelector('.voltar')?.addEventListener('click', () => irPara({ tela: depois === 'palpites' ? 'palpites' : 'inicio' }));
 }

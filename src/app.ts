@@ -24,7 +24,9 @@ export interface DadosResultado {
 export type Rota =
   | { tela: 'inicio' }
   | { tela: 'ranking' }
-  | { tela: 'times'; depois?: 'partida' | 'inicio'; desafio?: string }
+  | { tela: 'palpites' }
+  | { tela: 'admin' }
+  | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites'; desafio?: string }
   | { tela: 'partida'; desafio?: string }
   | { tela: 'resultado'; dados: DadosResultado };
 

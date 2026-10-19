@@ -93,12 +93,27 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         <div class="mini-linhas"><p class="vazio">Carregando o ranking…</p></div>
       </section>
 
-      <section class="jogar">
+      <section class="jogar" aria-label="Jogos">
         <button class="botao" type="button" data-acao="jogar">
           Bate Contra Mim
           <small>5 cobranças · 5 defesas</small>
         </button>
         <p class="teto" data-teto>Sem cadastro. Abre e joga.</p>
+        <div class="jogos-em-breve">
+          <div class="jogo-em-breve" aria-disabled="true">
+            <span class="em-breve">em breve</span>
+            <strong>Prova de Boleiro</strong>
+            <small>8 perguntas · para ou segue</small>
+          </div>
+          <div class="jogo-em-breve" aria-disabled="true">
+            <span class="em-breve">em breve</span>
+            <strong>Time do Dia</strong>
+            <small>1 clube secreto · 6 chutes</small>
+          </div>
+        </div>
+        <button class="link-crava" type="button" data-acao="palpites">
+          <span class="rotulo">Crava a Rodada</span> Palpita o placar dos jogos do Brasileirão →
+        </button>
       </section>
 
       ${barraNavegacao('jogar')}
@@ -112,6 +127,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     b.addEventListener('click', () => irPara({ tela: 'times', depois: 'inicio' })),
   );
   root.querySelector('[data-acao="ranking"]')?.addEventListener('click', () => irPara({ tela: 'ranking' }));
+  root.querySelector('[data-acao="palpites"]')?.addEventListener('click', () => irPara({ tela: 'palpites' }));
   ligarBarraNavegacao(root);
 
   // ---------- contagem até zerar a semana ----------
