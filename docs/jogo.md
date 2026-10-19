@@ -1,7 +1,7 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 18/10/2026 (rankings e temporadas, artigo e rival de cada time, camiseta lisa, troca livre, Crava a Rodada em 2026, direção visual aprovada, regras de implementação do pênalti, desafio na morte súbita, MVP antes das divisões)
+> Última atualização: 19/10/2026 (bloco B no servidor: limites, detecção, par ou ímpar, desafio por pontos; Crava a Rodada sem Contra a maré; rotina contra a pausa do Supabase)
 > Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
@@ -227,13 +227,12 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 | Vencedor e saldo de gols certos (ou empate com outro placar) | 7 |
 | Só o vencedor (ou só o empate) | 5 |
 | Errou | 0 |
-| **Contra a maré:** acertou um resultado que menos de 20% da torcida cravou | +3 |
 | **Jogo da certeza:** 1 jogo por rodada, escolhido antes do primeiro jogo da rodada | ×2 |
 
 - **Peso na torcida:** os pontos de palpite entram multiplicados por 2, com teto de **300 por rodada** (o mesmo que um dia de minigames).
 - Rankings próprios: da rodada, do mês e do Brasileirão inteiro (Palpiteiro do Brasileirão).
 - Palpitar contra o próprio time vale normalmente, e o narrador zoa.
-- **A definir antes de construir:** no "Contra a maré", "torcida" é a torcida do próprio jogador ou todo mundo que palpitou aquele jogo.
+- **Sem bônus "Contra a maré" na estreia** (decidido em 18/10): simplifica a regra e, com pouca gente palpitando, a porcentagem não seria confiável. A ideia fica no backlog.
 
 ### Linha vermelha: nada que pareça aposta
 - **Aviso fixo** no topo da tela do minigame e no card: **"Aqui é só resenha: sem aposta, sem dinheiro, sem prêmio em dinheiro. Nunca."**
@@ -244,6 +243,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 ### Dados dos jogos
 - Calendário e placares de uma fonte externa (o plano grátis do football-data.org cobre a Série A, com placar atrasado, o que serve, porque o palpite fecha no início do jogo).
 - O administrador confirma o placar final no painel antes de distribuir os pontos.
+- A chave da API do football-data.org é segredo: fica só como segredo da função no servidor, nunca no front-end nem no repositório. O plano grátis permite 10 chamadas por minuto, então só o servidor consulta a API (poucas vezes por rodada) e guarda os jogos no banco.
 
 ## 8. Tom e zoeira
 
@@ -292,6 +292,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - Chaves: o front-end usa a URL do projeto e a **publishable key** (`sb_publishable_…`). As funções no servidor usam a **secret key** (`sb_secret_…`), só como segredo das funções. As chaves antigas `anon` e `service_role` estão sendo descontinuadas pela Supabase até o fim de 2026: não usar.
 - Como a URL e a publishable key são públicas, ficam versionadas no repositório (o build do GitHub Pages precisa delas). Nada secreto entra no repositório.
 - **Antes de divulgar:** CAPTCHA (Cloudflare Turnstile) no login anônimo, limpeza periódica de usuários anônimos inativos, anti-trapaça completo e decidir sobre o plano Pro (o Free pausa o projeto depois de 1 semana sem uso).
+- **Rotina contra a pausa do plano Free:** um agendamento no GitHub Actions faz uma consulta leve ao banco a cada 2 dias. Enquanto o projeto estiver no Free, isso evita a pausa por 7 dias sem uso. O GitHub desliga agendamentos de repositório público depois de 60 dias sem commit; se isso acontecer, o GitHub avisa por e-mail e basta reativar.
 - DNS: CNAME `torcida` no Hostgator, feito manualmente pelo Kauê.
 - **Lista de cidades:** municípios do IBGE num arquivo estático (nome, UF, código IBGE), carregado só na tela de escolha.
 - **Times:** `src/dados/times.ts` guarda id, nome, cores, artigo e rival (id do outro time ou vazio), conforme a tabela da seção 3.

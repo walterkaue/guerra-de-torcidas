@@ -131,10 +131,10 @@ Tarefa para o Claude Code: **Fable ou Opus, intensidade Extra alta** (revisão d
 | Vencedor e saldo de gols certos (ou empate com outro placar) | 7 |
 | Só o vencedor (ou só o empate) | 5 |
 | Errou | 0 |
-| **Contra a maré:** acertou um resultado que menos de 20% da torcida cravou | +3 |
 | **Jogo da certeza:** 1 jogo por rodada, escolhido antes do primeiro jogo; vale o dobro | ×2 |
 
-- Máximo por rodada com 10 jogos: cerca de 140 pontos de palpite. Na torcida, entram multiplicados por 2, até o teto da regra 4 (300).
+- Máximo por rodada com 10 jogos: 110 pontos de palpite (10 placares exatos, um deles em dobro). Na torcida, entram multiplicados por 2 (até 220), abaixo do teto da regra 4 (300).
+- O bônus "Contra a maré" saiu da estreia (18/10); está no backlog.
 - Palpitar contra o próprio time vale normalmente, e o narrador zoa ("cravou derrota do próprio time, que coragem").
 - Rankings: da rodada, do mês e do Brasileirão inteiro (Palpiteiro do Brasileirão).
 - Estreia: ainda nas últimas rodadas do Brasileirão 2026.
