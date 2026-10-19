@@ -35,7 +35,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
       </label>
 
       <button class="botao" type="button" data-acao="confirmar" ${atual.time ? '' : 'disabled'}>
-        ${depois === 'partida' ? 'Bora pro jogo' : 'Salvar'}
+        ${depois === 'partida' || depois === 'prova' ? 'Bora pro jogo' : 'Salvar'}
       </button>
     </main>
   `;
@@ -78,7 +78,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
       // Sem internet: fica salvo no aparelho e sobe para o servidor na próxima partida.
     }
     const desafio = rota.tela === 'times' ? rota.desafio : undefined;
-    irPara(depois === 'partida' ? { tela: 'partida', desafio } : { tela: depois });
+    irPara(depois === 'partida' ? { tela: 'partida', desafio } : depois === 'prova' ? { tela: 'prova', desafio } : { tela: depois });
   });
 
   root.querySelector('.voltar')?.addEventListener('click', () => irPara({ tela: depois === 'palpites' ? 'palpites' : 'inicio' }));

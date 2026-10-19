@@ -2,6 +2,7 @@
 
 import type { Gestos, ResultadoPartida } from './jogo/penaltis';
 import type { DesafioRecebido, FechamentoDoServidor } from './servidor/api';
+import type { DadosResultadoProva } from './telas/prova';
 
 export interface DadosResultado {
   timeId: string;
@@ -27,9 +28,11 @@ export type Rota =
   | { tela: 'palpites' }
   | { tela: 'admin' }
   | { tela: 'feedback'; de?: string }
-  | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites'; desafio?: string }
+  | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites' | 'prova'; desafio?: string }
   | { tela: 'partida'; desafio?: string }
-  | { tela: 'resultado'; dados: DadosResultado };
+  | { tela: 'resultado'; dados: DadosResultado }
+  | { tela: 'prova'; desafio?: string }
+  | { tela: 'provaResultado'; dados: DadosResultadoProva };
 
 type Limpeza = (() => void) | void;
 type Renderizador = (root: HTMLElement, rota: Rota) => Limpeza;
@@ -57,6 +60,12 @@ export function irPara(rota: Rota): void {
 export function desafioDoLink(): string | undefined {
   const d = new URLSearchParams(location.search).get('d');
   return d && /^[a-z0-9]{8}$/i.test(d) ? d.toLowerCase() : undefined;
+}
+
+/** Código de desafio da Prova de Boleiro que veio no link (?p=). */
+export function desafioProvaDoLink(): string | undefined {
+  const p = new URLSearchParams(location.search).get('p');
+  return p && /^[a-z0-9]{8}$/i.test(p) ? p.toLowerCase() : undefined;
 }
 
 /** Escapa texto do usuário (apelido) antes de colocar no HTML. */

@@ -1,7 +1,7 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 19/10/2026, noite (nomes "Prova de Boleiro" e "Time do Dia"; os três jogos novos construídos já, para o teste com amigos; Crava em ensaio desde a 32ª rodada)
+> Última atualização: 19/10/2026, noite (Prova de Boleiro construída e no menu em amistoso, com servidor, desafio por link e importador de perguntas; Crava em ensaio desde a 32ª rodada)
 > Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
@@ -333,6 +333,24 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 ### Card
 - "Prova de Boleiro: cheguei na 6ª e parei, 58 {pro_time}" + a escada em emoji: 🟩 acertou, 🟥 errou, ⏹️ parou, 🆘 usou ajuda (ex.: 🟩🟩🟩🆘🟩⏹️).
 - **Nunca mostra o texto das perguntas**, porque o desafio por link usa as mesmas.
+- Durante o amistoso, o card e o texto do WhatsApp levam "(amistoso)" depois dos pontos.
+
+### Como está no servidor (19/10/2026)
+- **Tabelas que o celular não lê** (RLS sem leitura e sem grant): `perguntas`, `prova_estado` (andamento de cada partida), `prova_vistas` (30 dias sem repetir), `prova_respostas` (Arquibancada, calibragem e detecção) e `prova_desafios`. A partida em si fica em `partidas` com `minigame = 'prova'`.
+- **Função `prova`**, com as ações `nova`, `proxima`, `responder` e `ajuda`. A `nova` já manda a 1ª pergunta. Cada pergunta sai com ids de alternativa novos e embaralhados; a certa só volta na resposta da escolha. Uma trava otimista (`versao`) impede clique duplo ou duas abas.
+- **Tempo:** medido da hora em que a pergunta saiu até a resposta chegar. Acima de 15 s + 2 s, conta como tempo esgotado. O relógio da tela é só aviso.
+- **Sorteio:** 4 clubes diferentes sorteados de forma uniforme entre os 20, cada degrau com 1 pergunta de clube e 1 geral, em ordem sorteada. Clube sem pergunta naquele degrau (banco incompleto): outro clube sorteado, depois uma geral.
+- **Ajudas** (decidido em 19/10):
+  - **Troca:** dá **15 s cheios** para a pergunta nova (é texto novo para ler) e puxa outra do mesmo clube (ou geral) e degrau.
+  - **Tira duas e "tira uma":** nunca deixam menos de 2 alternativas na tela. Por isso, com a Tira duas já usada, a Arquibancada em modo "tira uma" fica indisponível naquela pergunta (sem gastar a ajuda).
+- **Prova largada** (app fechado no meio): é fechada ao começar a próxima, ou quando expira (15 min). No meio de uma pergunta, conta como tempo esgotado; antes dela, como parar.
+- **Desafio por link** (`?p=xxxxxxxx`): as 8 perguntas planejadas de quem desafiou, na mesma ordem (se quem desafiou usou Troca, vai a que ele respondeu). A regra dos 30 dias não vale no desafio. **Cada desafio vale uma vez por pessoa** (decidido em 19/10: na segunda, as perguntas já seriam conhecidas); por isso o botão Mais uma / Revanche sempre começa uma prova nova.
+- **Amistoso:** `config_deteccao.prova_amistoso` = 1. Para a prova passar a somar no teto diário, troque para 0 no Table Editor. Na mesma tabela ficam `prova_segundos`, `prova_tolerancia`, `prova_dias_sem_repetir`, `prova_min_arquibancada` e os números da detecção (`prova_janela`, `prova_min_acerto`, `prova_tempo_medio_ms`).
+- **Pontuação, sorteio, ajudas e detecção** ficam no módulo puro `src/jogo/prova.ts` (com testes), copiado para o servidor pelo `npm run compartilhar`.
+- **Importar perguntas:** `npm run importar-perguntas` lê `dados/perguntas/*.csv`, valida tudo (colunas, clube, degrau, ano na pergunta, tamanho, fonte de domínio aceito, Wikipédia só como `fonte2`, palavras proibidas, temas fora da regra, repetidas) e grava só as `revisada`, que entram como `ativa`. `aposentada` tira a pergunta do sorteio. `--seco` só valida. A lista de domínios aceitos fica em `scripts/perguntas/validar.mjs`.
+- **Formato do CSV:** `id,clube,degrau,tema,pergunta,certa,errada1,errada2,errada3,fonte,fonte2,verificada_em,status,observacao`. O id segue `clube-f-01` (f, m, d, c = degrau; `geral-…` para as gerais), o degrau é `facil|media|dificil|craque`, a pergunta tem até 140 caracteres e cada alternativa até 40.
+- **Painel de cobertura:** no fim do `#admin`, perguntas ativas por clube × degrau e % de acerto (função `cobertura_perguntas`, só admin).
+- **Testar a tela sem servidor:** em `npm run dev`, abra `/?provaFalsa` (perguntas de mentira, só em desenvolvimento).
 
 ## 7.2 Desafio diário — "Time do Dia"
 
@@ -441,7 +459,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - Como a URL e a publishable key são públicas, ficam versionadas no repositório (o build do GitHub Pages precisa delas). Nada secreto entra no repositório.
 - **Antes de divulgar:** CAPTCHA (Cloudflare Turnstile) no login anônimo, limpeza periódica de usuários anônimos inativos, anti-trapaça completo (inclusive as cobranças do desafio, que hoje chegam ao celular antes da defesa), ranking que aguente muitos jogadores (hoje a semana inteira é recalculada a cada partida fechada; trocar por cálculo incremental ou de minuto em minuto) e decidir sobre o plano Pro (o Free pausa o projeto depois de 1 semana sem uso).
 - **Rotina contra a pausa do plano Free:** um agendamento no GitHub Actions faz uma consulta leve ao banco a cada 2 dias. Enquanto o projeto estiver no Free, isso evita a pausa por 7 dias sem uso. O GitHub desliga agendamentos de repositório público depois de 60 dias sem commit; se isso acontecer, o GitHub avisa por e-mail e basta reativar. Arquivo: `.github/workflows/manter-supabase.yml` (a cada 2 dias às 09h de Brasília e pelo botão "Run workflow"): lê 1 linha do ranking com a publishable key e falha se a resposta não for 200.
-- **Navegação** (19/10): barra com Jogar (Bate Contra Mim, Prova de Boleiro e Time do Dia; os dois últimos com selo "em breve" até ficarem prontos), Palpites (Crava a Rodada), Ranking (com a semana passada "provisória até segunda 12h") e Carreira (em breve).
+- **Navegação** (19/10): barra com Jogar (Bate Contra Mim, Prova de Boleiro com a etiqueta "amistoso" e Time do Dia com selo "em breve" até ficar pronto), Palpites (Crava a Rodada), Ranking (com a semana passada "provisória até segunda 12h") e Carreira (em breve).
 - **Teto diário entre minigames:** `partidas.minigame` (`penaltis` ou `prova`) e `partidas.amistoso`. As 5 melhores partidas do dia contam somando os minigames; partida de amistoso não ocupa vaga.
 - **Feedback** (19/10): link "Feedback ou bug? Conta pra gente" na aba Jogar abre um formulário (Bug, Ideia ou Outro, até 1000 caracteres) que grava na tabela `feedbacks`, junto com a tela e o navegador. Ninguém lê pelo celular, nem quem mandou; só o admin, no fim do `#admin`, com "Marcar como lido". Até 5 envios por hora por pessoa. O formulário pede para não colocar dado pessoal.
 - **Palavras proibidas:** `src/palavrasProibidas.test.ts` falha se alguma palavra da seção 7 aparecer no código do jogo (a única exceção é o aviso fixo).

@@ -5,6 +5,7 @@
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { prefs } from '../estado';
 import type { GestoCobranca, Gestos, ResultadoPartida } from '../jogo/penaltis.ts';
+import type { Ajuda, Degrau, Desfecho, Fim, Passo, PontosProva } from '../jogo/prova.ts';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -159,6 +160,113 @@ export async function verDesafio(id: string): Promise<ResumoDesafio | null> {
   const { data, error } = await comTempoLimite(sb.rpc('ver_desafio', { p_id: id }));
   if (error) throw new ErroServidor('falha');
   return ((data as ResumoDesafio[] | null) ?? [])[0] ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// Prova de Boleiro: uma pergunta por vez, pela função "prova" (docs/jogo.md, seção 7.1).
+// ---------------------------------------------------------------------------
+
+export interface PerguntaProva {
+  numero: number;
+  degrau: Degrau;
+  /** Id do clube da pergunta ou "geral". */
+  clube: string;
+  texto: string;
+  alternativas: { id: string; texto: string }[];
+  segundos: number;
+  /** Pontos garantidos antes desta pergunta. */
+  levar: number;
+  ajudasUsadas: Ajuda[];
+}
+
+export interface DesafioProvaRecebido {
+  id: string;
+  timeId: string;
+  apelido: string | null;
+  pontos: number;
+  escada: string;
+  resumo: string;
+}
+
+export interface FimProva {
+  fim: Fim;
+  pontos: PontosProva;
+  escada: string;
+  resumo: string;
+  passos: Passo[];
+  amistoso: boolean;
+  contaNoRanking: boolean;
+  sobSuspeita: boolean;
+  semana: string;
+  desafio: { codigo: string } | null;
+  comparacao: {
+    desafiante: string | null;
+    pontosDesafiante: number;
+    escadaDesafiante: string;
+    resumoDesafiante: string;
+    venceu: boolean;
+  } | null;
+}
+
+export interface RespostaProva {
+  desfecho: Desfecho;
+  certa: string;
+  escolhida: string | null;
+  levar: number;
+  proxima: { numero: number; decidir: boolean } | null;
+  fim: FimProva | null;
+}
+
+export interface AjudaProva {
+  tipo: Ajuda;
+  removidas?: string[];
+  tiraUma?: boolean;
+  porcentagens?: Record<string, number>;
+  respostas?: number;
+  pergunta?: PerguntaProva;
+}
+
+export function novaProva(desafio?: string): Promise<{
+  partidaId: string;
+  amistoso: boolean;
+  total: number;
+  desafio: DesafioProvaRecebido | null;
+  pergunta: PerguntaProva;
+}> {
+  return chamar('prova', desafio ? { acao: 'nova', desafio } : { acao: 'nova' });
+}
+
+export function proximaPergunta(
+  partidaId: string,
+  decisao?: 'seguir' | 'parar',
+): Promise<{ pergunta?: PerguntaProva; fim?: FimProva }> {
+  return chamar('prova', { acao: 'proxima', partidaId, decisao });
+}
+
+/** `alternativa` null = o tempo acabou no celular. */
+export function responderPergunta(partidaId: string, alternativa: string | null): Promise<RespostaProva> {
+  return chamar('prova', { acao: 'responder', partidaId, alternativa });
+}
+
+export function pedirAjuda(partidaId: string, tipo: Ajuda): Promise<AjudaProva> {
+  return chamar('prova', { acao: 'ajuda', partidaId, tipo });
+}
+
+export interface ResumoDesafioProva {
+  id: string;
+  time_id: string;
+  apelido: string | null;
+  pontos: number;
+  escada: string;
+  resumo: string;
+}
+
+/** Resumo do desafio da prova para a tela inicial (sem as perguntas). */
+export async function verDesafioProva(id: string): Promise<ResumoDesafioProva | null> {
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('ver_prova_desafio', { p_id: id }));
+  if (error) throw new ErroServidor('falha');
+  return ((data as ResumoDesafioProva[] | null) ?? [])[0] ?? null;
 }
 
 export interface LinhaRanking {

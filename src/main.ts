@@ -2,6 +2,7 @@ import './style.css';
 import './estilos/inicio.css';
 import './estilos/resultado.css';
 import './estilos/palpites.css';
+import './estilos/prova.css';
 import { iniciarApp, irPara, registrarTela } from './app';
 import { prefs } from './estado';
 import { timePorId } from './dados/times';
@@ -12,6 +13,8 @@ import { telaResultado } from './telas/resultado';
 import { telaRanking } from './telas/ranking';
 import { telaPalpites } from './telas/palpites';
 import { telaFeedback } from './telas/feedback';
+import { telaProva } from './telas/prova';
+import { telaProvaResultado } from './telas/provaResultado';
 
 registrarTela('inicio', telaInicio);
 registrarTela('times', telaTimes);
@@ -20,6 +23,8 @@ registrarTela('resultado', telaResultado);
 registrarTela('ranking', telaRanking);
 registrarTela('palpites', telaPalpites);
 registrarTela('feedback', telaFeedback);
+registrarTela('prova', telaProva);
+registrarTela('provaResultado', telaProvaResultado);
 // Painel do administrador: só baixa o código quando alguém abre #admin.
 registrarTela('admin', (root) => {
   let limpar: (() => void) | undefined;

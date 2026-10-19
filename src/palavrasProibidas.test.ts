@@ -15,6 +15,8 @@ const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 const PROIBIDAS = ['aposta', 'apostas', 'apostar', 'bet', 'bets', 'odd', 'odds', 'cotacao', 'cotacoes', 'banca', 'bolao valendo', 'green', 'red'];
 /** Narrador, seção 9: no Crava também nada de "valendo", "prêmio" ou "lucro". */
 const PROIBIDAS_NO_CRAVA = ['valendo', 'premio', 'premios', 'lucro'];
+/** Narrador, seção 10 e jogo.md 7.1: na Prova de Boleiro nada de "prêmio", "milhão" ou "valendo". */
+const PROIBIDAS_NA_PROVA = ['valendo', 'premio', 'premios', 'milhao', 'milhoes'];
 
 const normalizar = (s: string) =>
   s
@@ -67,5 +69,16 @@ describe('palavras proibidas (zero aposta)', () => {
       achar(readFileSync(join(RAIZ, a), 'utf8'), PROIBIDAS_NO_CRAVA).map((p) => `${a}: "${p}"`),
     );
     expect(achados).toEqual([]);
+  });
+
+  it('Prova de Boleiro sem "prêmio", "milhão" ou "valendo" (frases e telas)', () => {
+    const frases = Object.entries(FRASES)
+      .filter(([ev]) => ev.startsWith('prova_'))
+      .flatMap(([ev, l]) => (l as readonly Frase[]).flatMap((f) => achar(f.t, PROIBIDAS_NA_PROVA).map((p) => `${ev}: "${p}" em "${f.t}"`)));
+    const telas = ['src/telas/prova.ts', 'src/telas/provaResultado.ts', 'src/jogo/cardProva.ts', 'src/jogo/prova.ts'];
+    const achados = telas.flatMap((a) =>
+      achar(readFileSync(join(RAIZ, a), 'utf8'), PROIBIDAS_NA_PROVA).map((p) => `${a}: "${p}"`),
+    );
+    expect([...frases, ...achados]).toEqual([]);
   });
 });

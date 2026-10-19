@@ -25,6 +25,14 @@ interface Feedback {
   criado_em: string;
 }
 
+interface Cobertura {
+  clube: string;
+  degrau: number;
+  ativas: number;
+  respostas: number;
+  acerto: number | null;
+}
+
 interface Sincronizacao {
   quando: string;
   origem: string;
@@ -105,7 +113,9 @@ export function telaAdmin(root: HTMLElement): () => void {
       <p class="nota">Confirmar distribui os pontos da rodada inteira. Confirmar de novo ou corrigir não duplica:
       o servidor grava só a diferença. Placar confirmado depois de segunda 12h entra na semana atual.</p>
       <h3 class="titulo-placar">Feedback</h3>
-      <section class="lista-jogos" data-feedbacks><p class="nota">Carregando…</p></section>`);
+      <section class="lista-jogos" data-feedbacks><p class="nota">Carregando…</p></section>
+      <h3 class="titulo-placar">Prova de Boleiro</h3>
+      <section data-cobertura><p class="nota">Carregando…</p></section>`);
     root.querySelector('[data-feedbacks]')!.addEventListener('click', marcarLido);
     root.querySelector('[data-acao="sair"]')!.addEventListener('click', sair);
     root.querySelector('[data-acao="sincronizar"]')!.addEventListener('click', sincronizar);
@@ -116,7 +126,7 @@ export function telaAdmin(root: HTMLElement): () => void {
   }
 
   async function carregar(): Promise<void> {
-    const [j, s, c, f] = await Promise.all([
+    const [j, s, c, f, cob] = await Promise.all([
       sb
         .from('jogos')
         .select('id, rodada, mandante_id, visitante_id, inicio, status_api, gols_api_mandante, gols_api_visitante, gols_mandante, gols_visitante, confirmado_em, corrigido_em, anulado')
@@ -124,6 +134,7 @@ export function telaAdmin(root: HTMLElement): () => void {
       sb.from('sincronizacoes').select('quando, origem, ok, jogos, sem_par, mensagem').order('quando', { ascending: false }).limit(1),
       sb.from('config_crava').select('valor').eq('chave', 'valendo_desde_rodada').maybeSingle(),
       sb.from('feedbacks').select('id, tipo, texto, tela, aparelho, lido, criado_em').order('criado_em', { ascending: false }).limit(50),
+      sb.rpc('cobertura_perguntas'),
     ]);
     if (saiu) return;
     jogos = (j.data ?? []) as Jogo[];
@@ -142,7 +153,35 @@ export function telaAdmin(root: HTMLElement): () => void {
         ? 'Modo ensaio ligado: nenhuma rodada soma no ranking da semana (config_crava.valendo_desde_rodada = 99).'
         : `Somam no ranking da semana as rodadas a partir da ${ordinalRodada(valendo)}.`;
     desenharFeedbacks((f.data ?? []) as Feedback[], !!f.error);
+    desenharCobertura((cob.data ?? []) as Cobertura[], !!cob.error);
     desenhar();
+  }
+
+  /** Painel de cobertura (jogo.md 7.1): perguntas ativas por clube × degrau e acerto médio. */
+  function desenharCobertura(linhas: Cobertura[], falhou: boolean): void {
+    const el = root.querySelector<HTMLElement>('[data-cobertura]');
+    if (!el) return;
+    if (falhou) {
+      el.innerHTML = '<p class="admin-alerta">Não deu pra ler o banco de perguntas.</p>';
+      return;
+    }
+    if (!linhas.length) {
+      el.innerHTML = '<p class="nota">Nenhuma pergunta ativa. Rode <code>npm run importar-perguntas</code> com perguntas revisadas.</p>';
+      return;
+    }
+    const clubes = [...new Set(linhas.map((l) => l.clube))];
+    const celula = (clube: string, d: number) => {
+      const l = linhas.find((x) => x.clube === clube && x.degrau === d);
+      if (!l) return '<td class="falta">0</td>';
+      return `<td>${l.ativas}${l.acerto !== null ? `<small> ${Number(l.acerto).toFixed(0)}%</small>` : ''}</td>`;
+    };
+    el.innerHTML = `<p class="nota">Perguntas ativas por degrau (e % de acerto). Meta do amistoso: 3/3/2/2 por clube.</p>
+      <div class="admin-tabela"><table>
+        <thead><tr><th>Clube</th><th>Fác.</th><th>Méd.</th><th>Dif.</th><th>Craq.</th></tr></thead>
+        <tbody>${clubes
+          .map((c) => `<tr><th>${esc(c === 'geral' ? 'Gerais' : nome(c))}</th>${[1, 2, 3, 4].map((d) => celula(c, d)).join('')}</tr>`)
+          .join('')}</tbody>
+      </table></div>`;
   }
 
   function desenharFeedbacks(lista: Feedback[], falhou: boolean): void {

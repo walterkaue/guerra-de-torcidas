@@ -1,7 +1,7 @@
 # Banco do narrador — pênaltis, palpites, quiz e Time do Dia
 
 > Versão 1.4 · 19/10/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
-> Mudanças da 1.4: seções 10 (**Prova de Boleiro**) e 11 (**Time do Dia**).
+> Mudanças da 1.4: seções 10 (**Prova de Boleiro**) e 11 (**Time do Dia**); frases de `prova_ajuda` com a etiqueta da ajuda usada (`[tira_duas]`, `[arquibancada]`, `[troca]`).
 > Mudanças da 1.3: seção 9, frases do **Crava a Rodada**, com as variáveis `{rodada}`, `{acertos}` e `{jogos}` e as etiquetas `[empate]` e `[contra]`.
 > Frase nova entra aqui e passa pelo checklist de tom abaixo.
 > Mudanças da 1.1: frases neutras de gênero, desempate (morte súbita e par ou ímpar) no lugar do empate, provocação entre cidades.
@@ -74,6 +74,7 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 | `[nao_pulou]` | quem joga não tocou em nenhuma zona a tempo | defesa |
 | `[dica_honesta]` | o pé de apoio apontava a coluna certa | defesa |
 | `[cobranca]` / `[defesa]` | o lance decisivo é uma cobrança / uma defesa | decisiva |
+| `[tira_duas]` / `[arquibancada]` / `[troca]` | a ajuda usada na pergunta | prova_ajuda |
 
 ## 3. Frases do lance
 
@@ -583,10 +584,10 @@ Cuidado extra: o narrador **nunca** fala da pessoa real da pergunta (nem elogio,
 - Quinze segundos voam, hein! Leva metade.
 - Pensou tanto que o apito soou!
 
-### `prova_ajuda`
+### `prova_ajuda` — etiqueta com a ajuda usada: `[tira_duas]`, `[arquibancada]` ou `[troca]`
 - Pediu ajuda! Sem vergonha nenhuma, é estratégia.
-- A arquibancada respondeu! Agora é com você.
-- Tirou duas! Ficou meio a meio.
+- A arquibancada respondeu! Agora é com você. [arquibancada]
+- Tirou duas! Ficou meio a meio. [tira_duas]
 
 ### `prova_perfeita` — 8 de 8
 - OITO DE OITO! Isso é doutorado em futebol!

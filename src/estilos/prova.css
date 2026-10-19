@@ -1,0 +1,358 @@
+/* Prova de Boleiro (quiz): celular primeiro, só toque, nada de rolagem horizontal. */
+
+/* ---------- menu Jogar ---------- */
+.jogo-liberado {
+  border: 2px solid rgba(255, 210, 63, 0.6);
+  color: var(--cal);
+  font: inherit;
+  text-align: left;
+  opacity: 1;
+  touch-action: manipulation;
+}
+.jogo-liberado:active {
+  transform: translateY(2px);
+}
+.em-breve.amistoso {
+  background: var(--cal);
+}
+
+.escada-emoji {
+  font-size: 22px;
+  letter-spacing: 2px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.escada-emoji.grande {
+  font-size: 30px;
+}
+
+/* ---------- tela ---------- */
+.prova {
+  position: relative;
+  gap: 14px;
+}
+
+.prova-topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.prova-nome {
+  flex: 1;
+  font-size: 18px;
+}
+.selo-amistoso {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--cal);
+  color: var(--tinta);
+  font-size: 12px;
+}
+.prova-como {
+  font-size: 20px;
+  font-weight: 900;
+}
+
+/* Escada: 8 degraus lado a lado, com o valor de cada um. */
+.escada {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+.escada li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 0;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid transparent;
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  line-height: 1.1;
+}
+.escada .num {
+  font-size: 15px;
+}
+.escada .val {
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+.escada li.atual {
+  border-color: var(--amarelo);
+  background: rgba(255, 210, 63, 0.2);
+}
+.escada li.certa {
+  background: #1f9d55;
+}
+.escada li.ajuda {
+  background: #1f9d55;
+  border-color: var(--amarelo);
+}
+.escada li.errada {
+  background: #c0392b;
+}
+.escada li.certa .val,
+.escada li.ajuda .val,
+.escada li.errada .val {
+  color: #fff;
+}
+
+.prova-inicio {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.prova-inicio .cj-faixa {
+  align-self: flex-start;
+  padding: 2px 12px;
+  color: var(--txt);
+}
+.prova-erro {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 90, 60, 0.2);
+  border: 1px solid var(--caiu);
+  font-weight: 700;
+}
+
+/* ---------- relógio ---------- */
+.relogio {
+  position: relative;
+  height: 28px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+.relogio-barra {
+  position: absolute;
+  inset: 0;
+  background: var(--amarelo);
+  transform-origin: left center;
+}
+.relogio.correndo .relogio-barra {
+  animation: esvaziar var(--dur, 15s) linear forwards;
+}
+.relogio.acabando .relogio-barra {
+  background: var(--caiu);
+}
+.relogio strong {
+  position: relative;
+  display: block;
+  text-align: center;
+  font: 400 20px/28px var(--fonte-placar);
+  color: #fff;
+  text-shadow: 0 0 3px #000, 0 0 6px #000;
+}
+@keyframes esvaziar {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .relogio.correndo .relogio-barra {
+    animation-timing-function: steps(15);
+  }
+}
+
+/* ---------- pergunta ---------- */
+.prova-jogo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cartao-pergunta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+}
+.cartao-rotulo {
+  color: var(--amarelo);
+  font-size: 13px;
+}
+.pergunta-texto {
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.alternativas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.alt {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cal);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  text-align: left;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+.alt:active:not(:disabled) {
+  transform: translateY(2px);
+}
+.alt .letra {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  font-family: var(--fonte-rotulo);
+}
+.alt-texto {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.alt.com-pct::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--pct, 0%);
+  background: rgba(255, 210, 63, 0.22);
+  z-index: 0;
+}
+.alt > * {
+  position: relative;
+}
+.alt .pct {
+  font-family: var(--fonte-rotulo);
+  color: var(--amarelo);
+}
+.alt.escolhida {
+  border-color: var(--amarelo);
+}
+.alt.certa {
+  background: #1f9d55;
+  border-color: #7dffb0;
+}
+.alt.errada {
+  background: #c0392b;
+  border-color: #ffb3a7;
+}
+.alt.removida {
+  opacity: 0.25;
+  text-decoration: line-through;
+}
+.alt:disabled {
+  color: var(--cal);
+}
+
+/* ---------- ajudas ---------- */
+.ajudas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.ajuda-btn {
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--cal);
+  font-family: var(--fonte-rotulo);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+.ajuda-btn span {
+  font-size: 18px;
+}
+.ajuda-btn:disabled {
+  opacity: 0.35;
+}
+
+.prova-grito {
+  align-self: center;
+  text-align: center;
+}
+.prova-grito.pulso {
+  animation: grito-prova 0.35s ease-out;
+}
+@keyframes grito-prova {
+  from { transform: scale(0.85) rotate(-2deg); opacity: 0; }
+  to { transform: scale(1) rotate(-2deg); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .prova-grito.pulso { animation: none; }
+}
+
+/* ---------- parar ou seguir ---------- */
+.prova-decisao {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.75);
+}
+.prova-decisao .botao small {
+  font-size: 13px;
+}
+
+/* ---------- resultado ---------- */
+.prova-placar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  color: var(--txt);
+}
+.prova-resultado .duelo-desafio small {
+  font-size: 14px;
+  letter-spacing: 1px;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- #admin: cobertura do banco de perguntas ---------- */
+.admin-tabela {
+  overflow-x: auto;
+}
+.admin-tabela table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.admin-tabela th,
+.admin-tabela td {
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+.admin-tabela tbody th {
+  text-align: left;
+  font-weight: 700;
+}
+.admin-tabela td small {
+  color: var(--texto-suave);
+}
+.admin-tabela td.falta {
+  color: var(--caiu);
+  font-weight: 900;
+}

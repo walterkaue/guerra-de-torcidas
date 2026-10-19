@@ -52,6 +52,8 @@ export const ETIQUETAS = [
   'pulou_outro_lado', 'mesma_coluna', 'nao_pulou', 'dica_honesta', 'cobranca', 'defesa',
   // Crava a Rodada (seção 9).
   'empate', 'contra',
+  // Prova de Boleiro (seção 10): qual ajuda foi usada.
+  'tira_duas', 'arquibancada', 'troca',
 ] as const;
 
 export type Etiqueta = (typeof ETIQUETAS)[number];

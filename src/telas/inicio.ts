@@ -1,13 +1,13 @@
 // Tela inicial (docs/visual.md, "Início" e "No MVP"): AO VIVO com contagem, bloco do time,
 // cabo de guerra contra o rival, mini tabela do ranking geral, teto do dia e barra de navegação.
 
-import { desafioDoLink, esc, irPara, type Rota } from '../app';
+import { desafioDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, TIMES, corDeTexto, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { escolherFrase } from '../narrador/escolher';
 import { rivalDaSemana, situacaoDoDuelo } from '../narrador/rival';
 import { contextoDoTime } from '../narrador/sessao';
-import { ouvirRanking, partidasFechadasHoje, rankingDaSemana, verDesafio, type LinhaRanking } from '../servidor/api';
+import { ouvirRanking, partidasFechadasHoje, rankingDaSemana, verDesafio, verDesafioProva, type LinhaRanking } from '../servidor/api';
 import { diaBrasilia, msAteZerarSemana, semanaBrasilia } from '../servidor/tempo';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 
@@ -42,6 +42,7 @@ const pelo = (t: Time) => (t.artigo === 'a' ? 'pela' : 'pelo');
 export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const time = timePorId(prefs.get().time);
   const codigoDesafio = desafioDoLink();
+  const codigoProva = desafioProvaDoLink();
   const semana = semanaBrasilia();
   let pararRanking: (() => void) | null = null;
   let saiu = false;
@@ -100,11 +101,11 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         </button>
         <p class="teto" data-teto>Sem cadastro. Abre e joga.</p>
         <div class="jogos-em-breve">
-          <div class="jogo-em-breve" aria-disabled="true">
-            <span class="em-breve">em breve</span>
+          <button class="jogo-em-breve jogo-liberado" type="button" data-acao="prova">
+            <span class="em-breve amistoso">amistoso</span>
             <strong>Prova de Boleiro</strong>
             <small>8 perguntas · para ou segue</small>
-          </div>
+          </button>
           <div class="jogo-em-breve" aria-disabled="true">
             <span class="em-breve">em breve</span>
             <strong>Time do Dia</strong>
@@ -124,6 +125,9 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const jogar = (desafio?: string) =>
     irPara(time ? { tela: 'partida', desafio } : { tela: 'times', depois: 'partida', desafio });
   root.querySelector('[data-acao="jogar"]')?.addEventListener('click', () => jogar());
+  const jogarProva = (desafio?: string) =>
+    irPara(time ? { tela: 'prova', desafio } : { tela: 'times', depois: 'prova', desafio });
+  root.querySelector('[data-acao="prova"]')?.addEventListener('click', () => jogarProva());
   root.querySelectorAll('[data-acao="trocar"]').forEach((b) =>
     b.addEventListener('click', () => irPara({ tela: 'times', depois: 'inicio' })),
   );
@@ -168,6 +172,28 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           <button class="botao" type="button" data-acao="desafio">Aceitar o desafio</button>`;
         caixa.hidden = false;
         caixa.querySelector('[data-acao="desafio"]')!.addEventListener('click', () => jogar(d.id));
+      })
+      .catch(() => {
+        // sem internet: o desafio fica para quando voltar
+      });
+  }
+
+  // ---------- convite de desafio da Prova de Boleiro (link ?p=) ----------
+  if (codigoProva) {
+    const caixa = root.querySelector<HTMLElement>('.convite-desafio')!;
+    verDesafioProva(codigoProva)
+      .then((d) => {
+        if (!d || saiu) return;
+        const t = timePorId(d.time_id);
+        const quem = d.apelido ? esc(d.apelido) : 'Alguém';
+        caixa.innerHTML = `
+          <p class="rotulo">Desafio na Prova de Boleiro</p>
+          <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''}: ${esc(d.resumo)},
+          <strong>${d.pontos} pontos</strong>. Mesmas 8 perguntas, faz mais?</p>
+          <p class="escada-emoji">${esc(d.escada)}</p>
+          <button class="botao" type="button" data-acao="desafio-prova">Aceitar o desafio</button>`;
+        caixa.hidden = false;
+        caixa.querySelector('[data-acao="desafio-prova"]')!.addEventListener('click', () => jogarProva(d.id));
       })
       .catch(() => {
         // sem internet: o desafio fica para quando voltar

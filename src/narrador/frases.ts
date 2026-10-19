@@ -472,8 +472,8 @@ export const FRASES = {
   ],
   prova_ajuda: [
     { t: "Pediu ajuda! Sem vergonha nenhuma, é estratégia." },
-    { t: "A arquibancada respondeu! Agora é com você." },
-    { t: "Tirou duas! Ficou meio a meio." },
+    { t: "A arquibancada respondeu! Agora é com você.", e: ["arquibancada"] },
+    { t: "Tirou duas! Ficou meio a meio.", e: ["tira_duas"] },
   ],
   prova_perfeita: [
     { t: "OITO DE OITO! Isso é doutorado em futebol!" },
