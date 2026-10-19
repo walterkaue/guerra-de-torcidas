@@ -114,6 +114,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         <button class="link-crava" type="button" data-acao="palpites">
           <span class="rotulo">Crava a Rodada</span> Palpita o placar dos jogos do Brasileirão →
         </button>
+        <button class="link-feedback" type="button" data-acao="feedback">💬 Feedback ou bug? Conta pra gente</button>
       </section>
 
       ${barraNavegacao('jogar')}
@@ -128,6 +129,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   );
   root.querySelector('[data-acao="ranking"]')?.addEventListener('click', () => irPara({ tela: 'ranking' }));
   root.querySelector('[data-acao="palpites"]')?.addEventListener('click', () => irPara({ tela: 'palpites' }));
+  root.querySelector('[data-acao="feedback"]')?.addEventListener('click', () => irPara({ tela: 'feedback', de: 'inicio' }));
   ligarBarraNavegacao(root);
 
   // ---------- contagem até zerar a semana ----------

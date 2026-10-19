@@ -69,7 +69,10 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   root.innerHTML = `
     <main class="tela palpites">
       <p class="aviso-resenha" role="note">${esc(AVISO_RESENHA)}</p>
-      <header class="cabecalho"><h2 class="titulo-placar">Crava a Rodada</h2></header>
+      <header class="cabecalho cabecalho-crava">
+        <h2 class="titulo-placar">Crava a Rodada</h2>
+        <button class="ajuda" type="button" data-acao="como-cravar" aria-label="Como cravar">?</button>
+      </header>
       <p class="faixa-ensaio" data-ensaio hidden><strong>Modo ensaio:</strong> os palpites valem pra resenha e pro ranking do Crava, mas ainda não somam no ranking da semana.</p>
       <nav class="seletor-rodada" aria-label="Rodada" hidden>
         <button type="button" class="voltar" data-acao="rodada-ant" aria-label="Rodada anterior">‹</button>
@@ -91,8 +94,31 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
         <p class="explica">Média dos 30 melhores palpiteiros de cada torcida. Torcida com menos de 30 completa as vagas com 80% da média geral. Os pontos já vêm com o peso ×2 e o teto de 300 por rodada.</p>
       </section>
       <section class="crava-compartilhar" hidden>
-        <button class="botao botao-zap" type="button" data-acao="card-meus">Mandar meus palpites</button>
-        <button class="botao botao-sec" type="button" data-acao="card-resultado" hidden>Mandar o resultado da rodada</button>
+        <p class="rotulo">Manda no grupo</p>
+        <button class="botao botao-zap" type="button" data-acao="card-meus">
+          Mandar meus palpites
+          <small>Card com os placares que você cravou, sem porcentagem</small>
+        </button>
+        <button class="botao botao-sec" type="button" data-acao="card-resultado" hidden>
+          Mandar o resultado da rodada
+          <small>Seus pontos e um emoji por jogo: 🎯 ✅ ☑️ ❌</small>
+        </button>
+      </section>
+      <section class="como-jogar" role="dialog" aria-modal="true" aria-labelledby="cc-titulo" hidden>
+        <div class="cj-caixa">
+          <p class="rotulo cj-faixa faixa-tv">Antes da rodada</p>
+          <h2 id="cc-titulo" class="cj-titulo">Como cravar</h2>
+          <ul class="cj-passos">
+            <li><span class="cj-icone" aria-hidden="true">✎</span><p><strong>Crava o placar.</strong> Use − e + nos dois times e toque em CRAVAR. Dá pra mudar até a bola rolar, e pode pular os jogos que quiser.</p></li>
+            <li><span class="cj-icone" aria-hidden="true">★</span><p><strong>Jogo da certeza.</strong> A estrela marca 1 jogo por rodada que vale o <strong>dobro</strong>. Escolha até o 1º jogo da rodada começar; depois trava.</p></li>
+            <li><span class="cj-icone" aria-hidden="true">🎯</span><p><strong>Pontos.</strong> Placar exato 10 · vencedor e saldo certos (ou empate com outro placar) 7 · só o vencedor 5 · errou 0. Na torcida entram em dobro, até 300 por rodada.</p></li>
+            <li><span class="cj-icone" aria-hidden="true">👀</span><p><strong>Bola rolando.</strong> O palpite tranca e aparece como a torcida cravou (com 20 palpites ou mais). Os pontos saem quando o placar é confirmado.</p></li>
+            <li><span class="cj-icone" aria-hidden="true">📲</span><p><strong>Manda no grupo.</strong> No fim da página: <em>Mandar meus palpites</em> gera o card com seus placares; depois dos jogos, <em>Mandar o resultado</em> mostra seus pontos e um emoji por jogo.</p></li>
+          </ul>
+          <p class="cj-nota">🎯 placar exato · ✅ vencedor e saldo · ☑️ só o vencedor · ❌ errou · ⭐ jogo da certeza</p>
+          <label class="cj-check"><input type="checkbox" data-cc-pular> Não exibir novamente</label>
+          <button class="botao" type="button" data-cc-fechar>Bora cravar!</button>
+        </div>
       </section>
       ${barraNavegacao('palpites')}
     </main>`;
@@ -180,9 +206,9 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       <span class="rotulo">${esc(horaDoJogo(j.inicio))}${adiado(j) ? ' <em class="tag-adiado">adiado</em>' : ''}</span>
       ${
         fase === 'aberto' && !certezaTravada()
-          ? `<button type="button" class="certeza" data-acao="certeza" aria-pressed="${certeza}">${certeza ? '★' : '☆'} Certeza</button>`
+          ? `<button type="button" class="certeza" data-acao="certeza" aria-pressed="${certeza}">${certeza ? '★' : '☆'} Certeza ×2</button>`
           : certeza
-            ? '<span class="certeza ligada">★ Certeza</span>'
+            ? '<span class="certeza ligada">★ Certeza ×2</span>'
             : ''
       }
     </header>`;
@@ -531,6 +557,25 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       textoResultadoRodada(rodada, pontos, paraTime, resultados, link()),
     );
   });
+
+  // ---------- como cravar (abre sozinho na primeira vez; o "?" reabre) ----------
+  const elComo = $('.como-jogar');
+  const elPular = $<HTMLInputElement>('[data-cc-pular]');
+  function abrirComoCravar(): void {
+    elPular.checked = !!prefs.get().semComoCravar;
+    elComo.hidden = false;
+    $<HTMLButtonElement>('[data-cc-fechar]').focus();
+  }
+  function fecharComoCravar(): void {
+    prefs.set({ semComoCravar: elPular.checked });
+    elComo.hidden = true;
+  }
+  $('[data-acao="como-cravar"]').addEventListener('click', abrirComoCravar);
+  $('[data-cc-fechar]').addEventListener('click', fecharComoCravar);
+  elComo.addEventListener('click', (ev) => {
+    if (ev.target === elComo) fecharComoCravar();
+  });
+  if (!prefs.get().semComoCravar) abrirComoCravar();
 
   // ---------- carga ----------
   async function recarregar(): Promise<void> {

@@ -15,6 +15,16 @@ const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | 
 
 const nome = (id: string) => timePorId(id)?.nome ?? id;
 
+interface Feedback {
+  id: number;
+  tipo: string;
+  texto: string;
+  tela: string | null;
+  aparelho: string | null;
+  lido: boolean;
+  criado_em: string;
+}
+
 interface Sincronizacao {
   quando: string;
   origem: string;
@@ -93,7 +103,10 @@ export function telaAdmin(root: HTMLElement): () => void {
       </nav>
       <section class="lista-jogos" data-jogos></section>
       <p class="nota">Confirmar distribui os pontos da rodada inteira. Confirmar de novo ou corrigir não duplica:
-      o servidor grava só a diferença. Placar confirmado depois de segunda 12h entra na semana atual.</p>`);
+      o servidor grava só a diferença. Placar confirmado depois de segunda 12h entra na semana atual.</p>
+      <h3 class="titulo-placar">Feedback</h3>
+      <section class="lista-jogos" data-feedbacks><p class="nota">Carregando…</p></section>`);
+    root.querySelector('[data-feedbacks]')!.addEventListener('click', marcarLido);
     root.querySelector('[data-acao="sair"]')!.addEventListener('click', sair);
     root.querySelector('[data-acao="sincronizar"]')!.addEventListener('click', sincronizar);
     root.querySelector('[data-acao="ant"]')!.addEventListener('click', () => mudarRodada(-1));
@@ -103,13 +116,14 @@ export function telaAdmin(root: HTMLElement): () => void {
   }
 
   async function carregar(): Promise<void> {
-    const [j, s, c] = await Promise.all([
+    const [j, s, c, f] = await Promise.all([
       sb
         .from('jogos')
         .select('id, rodada, mandante_id, visitante_id, inicio, status_api, gols_api_mandante, gols_api_visitante, gols_mandante, gols_visitante, confirmado_em, corrigido_em, anulado')
         .order('inicio'),
       sb.from('sincronizacoes').select('quando, origem, ok, jogos, sem_par, mensagem').order('quando', { ascending: false }).limit(1),
       sb.from('config_crava').select('valor').eq('chave', 'valendo_desde_rodada').maybeSingle(),
+      sb.from('feedbacks').select('id, tipo, texto, tela, aparelho, lido, criado_em').order('criado_em', { ascending: false }).limit(50),
     ]);
     if (saiu) return;
     jogos = (j.data ?? []) as Jogo[];
@@ -127,7 +141,45 @@ export function telaAdmin(root: HTMLElement): () => void {
       valendo >= 99
         ? 'Modo ensaio ligado: nenhuma rodada soma no ranking da semana (config_crava.valendo_desde_rodada = 99).'
         : `Somam no ranking da semana as rodadas a partir da ${ordinalRodada(valendo)}.`;
+    desenharFeedbacks((f.data ?? []) as Feedback[], !!f.error);
     desenhar();
+  }
+
+  function desenharFeedbacks(lista: Feedback[], falhou: boolean): void {
+    const el = root.querySelector<HTMLElement>('[data-feedbacks]');
+    if (!el) return;
+    const rotulo = { bug: '🐞 Bug', ideia: '💡 Ideia', outro: '💬 Outro' } as Record<string, string>;
+    const novos = lista.filter((x) => !x.lido).length;
+    el.innerHTML = falhou
+      ? '<p class="admin-alerta">Não deu pra ler os feedbacks.</p>'
+      : !lista.length
+        ? '<p class="nota">Nenhum feedback ainda.</p>'
+        : `<p class="nota">${novos} ${novos === 1 ? 'novo' : 'novos'} · últimos 50</p>` +
+          lista
+            .map(
+              (x) => `<article class="admin-feedback${x.lido ? ' lido' : ''}" data-feedback="${x.id}">
+                <p class="rotulo">${rotulo[x.tipo] ?? esc(x.tipo)} · ${new Date(x.criado_em).toLocaleString('pt-BR')} · tela ${esc(x.tela ?? '?')}</p>
+                <p class="texto">${esc(x.texto)}</p>
+                <p class="nota"><small>${esc(x.aparelho ?? '')}</small></p>
+                ${x.lido ? '' : '<button type="button" data-acao="lido">Marcar como lido</button>'}
+              </article>`,
+            )
+            .join('');
+  }
+
+  async function marcarLido(ev: Event): Promise<void> {
+    const botao = (ev.target as HTMLElement).closest<HTMLButtonElement>('[data-acao="lido"]');
+    const id = botao?.closest<HTMLElement>('[data-feedback]')?.dataset.feedback;
+    if (!botao || !id) return;
+    botao.disabled = true;
+    const { error } = await sb.from('feedbacks').update({ lido: true }).eq('id', Number(id));
+    if (saiu) return;
+    if (error) {
+      botao.disabled = false;
+      alert(`Não deu certo: ${error.message}`);
+      return;
+    }
+    await carregar();
   }
 
   function mudarRodada(passo: number): void {

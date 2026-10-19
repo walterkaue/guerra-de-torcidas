@@ -319,6 +319,30 @@ span.certeza {
   gap: 12px;
 }
 
+/* "Como cravar": o mesmo "Como jogar" dos pênaltis, preso à tela inteira. */
+.cabecalho-crava {
+  justify-content: space-between;
+}
+
+.palpites .como-jogar {
+  position: fixed;
+  z-index: 40;
+}
+
+.cj-passos em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--amarelo);
+}
+
+.crava-compartilhar > .rotulo {
+  color: var(--texto-suave);
+}
+
+.crava-compartilhar .botao {
+  font-size: 20px;
+}
+
 /* ---------- aba Jogar: os outros jogos ---------- */
 .jogos-em-breve {
   display: grid;
@@ -458,4 +482,97 @@ span.certeza {
 
 .admin .nota {
   text-align: left;
+}
+
+/* ---------- feedback ---------- */
+.link-feedback {
+  min-height: 48px;
+  border: 0;
+  background: none;
+  color: var(--texto-suave);
+  font: inherit;
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  touch-action: manipulation;
+}
+
+.tipos-feedback {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.tipos-feedback button {
+  min-height: 48px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--cal);
+  font: 700 16px var(--fonte-rotulo);
+  touch-action: manipulation;
+}
+
+.tipos-feedback [aria-checked='true'] {
+  border-color: var(--amarelo);
+  background: var(--amarelo);
+  color: var(--tinta);
+}
+
+.feedback textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--cal);
+  font: inherit;
+  font-size: 17px;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.feedback .contador {
+  align-self: flex-end;
+}
+
+.nota-esquerda {
+  text-align: left;
+}
+
+.feedback-ok {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.38);
+  line-height: 1.35;
+}
+
+.admin-feedback.lido {
+  opacity: 0.55;
+}
+
+.admin-feedback .texto {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.admin-feedback button {
+  align-self: flex-start;
+  min-height: 40px;
+  padding: 4px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  background: none;
+  color: var(--cal);
+  font: 700 14px var(--fonte-rotulo);
+  text-transform: uppercase;
 }

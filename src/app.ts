@@ -26,6 +26,7 @@ export type Rota =
   | { tela: 'ranking' }
   | { tela: 'palpites' }
   | { tela: 'admin' }
+  | { tela: 'feedback'; de?: string }
   | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites'; desafio?: string }
   | { tela: 'partida'; desafio?: string }
   | { tela: 'resultado'; dados: DadosResultado };

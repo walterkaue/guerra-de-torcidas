@@ -11,6 +11,7 @@ import { telaPartida } from './telas/partida';
 import { telaResultado } from './telas/resultado';
 import { telaRanking } from './telas/ranking';
 import { telaPalpites } from './telas/palpites';
+import { telaFeedback } from './telas/feedback';
 
 registrarTela('inicio', telaInicio);
 registrarTela('times', telaTimes);
@@ -18,6 +19,7 @@ registrarTela('partida', telaPartida);
 registrarTela('resultado', telaResultado);
 registrarTela('ranking', telaRanking);
 registrarTela('palpites', telaPalpites);
+registrarTela('feedback', telaFeedback);
 // Painel do administrador: só baixa o código quando alguém abre #admin.
 registrarTela('admin', (root) => {
   let limpar: (() => void) | undefined;

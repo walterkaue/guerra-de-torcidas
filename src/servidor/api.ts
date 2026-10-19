@@ -209,3 +209,15 @@ export async function partidasFechadasHoje(dia: string): Promise<number> {
   if (error) throw new ErroServidor('falha');
   return count ?? 0;
 }
+
+export type TipoFeedback = 'bug' | 'ideia' | 'outro';
+
+/** Feedback ou relato de bug. Só administradores leem; até 5 por hora. */
+export async function enviarFeedback(tipo: TipoFeedback, texto: string, tela: string): Promise<void> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { error } = await comTempoLimite(
+    sb.from('feedbacks').insert({ tipo, texto: texto.trim(), tela, aparelho: navigator.userAgent.slice(0, 300) }),
+  );
+  if (error) throw new ErroServidor(error.code === '42501' ? 'muitos' : 'falha');
+}
