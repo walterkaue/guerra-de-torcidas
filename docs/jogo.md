@@ -190,6 +190,19 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Risco conhecido:** hoje o celular recebe a semente antes de jogar, então quem ler o código consegue prever o canto do goleiro e se a dica do pé de apoio é verdadeira.
   - Já no ranking: o servidor marca partidas estatisticamente impossíveis e congela os pontos até revisão.
   - **Antes de divulgar:** a decisão do goleiro e do batedor passa a usar um segredo que só o servidor conhece; o celular manda o gesto de cada lance e recebe o resultado, um lance por vez.
+  - O mesmo vale para o desafio por link: quem aceita recebe as cobranças gravadas antes de defender.
+
+### Como está no servidor (bloco B, 19/10/2026)
+- **Limites:** 3 partidas criadas por minuto por torcedor; a semente expira em 15 minutos. Ajustáveis na tabela `config_deteccao`.
+- **Detecção** (aprovada em 19/10/2026), a cada partida fechada, olhando o histórico do torcedor:
+  - **Defesas:** nas últimas 30 defesas contra o batedor da máquina com chute no gol, 27 ou mais defendidas.
+  - **Cobranças:** nas últimas 40 cobranças em que o goleiro pulou por sorteio (sem "ler"), nenhuma no canto dele.
+  - Partida marcada fica **sob suspeita**, fora do ranking até revisão. Números ajustáveis em `config_deteccao`.
+- **Par ou ímpar:** o número do narrador é sorteado no servidor quando a partida começa e fica numa tabela que o celular não lê. Só sai na resposta do fechamento, depois da escolha.
+- **Desafio por link:** toda partida normal registrada gera um código (`?d=xxxxxxxx`) com as cobranças gravadas. Vence o desafio quem fizer **mais pontos**; empate em pontos fica com quem desafiou (chegou primeiro). Partida de desafio não gera outro desafio; a revanche é uma partida normal.
+- **Ranking da semana:** time sem nenhum torcedor ativo fica com 0. A "torcida emprestada" (vagas a 80% da média geral) só completa time que já tem gente jogando.
+- **Rival "colado":** diferença de até 4 pontos na média dos 30 melhores (≈ 2 partidas boas de uma pessoa do top 30).
+- **Horário de Brasília:** UTC−3 fixo (sem horário de verão desde 2019).
 
 ### Card de resultado
 - Imagem gerada no próprio celular: placar, cores do time, frase do narrador, "Fulano fez 47 pontos {pro_time}" (com o artigo certo) e o link do desafio.
