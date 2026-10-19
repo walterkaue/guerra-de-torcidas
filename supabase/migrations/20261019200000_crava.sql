@@ -360,12 +360,12 @@ set search_path = ''
 as $$
 declare
   v_semana date;
+  v_semanas date[];
   v_gravados integer;
   v_semana_atual date := date_trunc('week', now() at time zone 'America/Sao_Paulo')::date;
 begin
   perform pg_advisory_xact_lock(hashtext('crava_rodada'), p_rodada);
 
-  create temporary table crava_novos on commit drop as
   with alvo as (
     select (a ->> 'torcedorId')::uuid as torcedor_id, (a ->> 'jogoId')::uuid as jogo_id,
            (a ->> 'pontos')::integer as pontos, (a ->> 'semana')::date as semana
@@ -384,18 +384,19 @@ begin
            coalesce(alvo.semana, v_semana_atual) as semana
     from alvo
     full join atual on atual.torcedor_id = alvo.torcedor_id and atual.jogo_id = alvo.jogo_id
+  ),
+  novos as (
+    insert into public.crava_pontos (torcedor_id, jogo_id, rodada, time_id, semana, pontos)
+    select d.torcedor_id, d.jogo_id, p_rodada, coalesce(pa.time_id, 'outro'), d.semana, d.pontos
+    from dif d
+    join public.jogos j on j.id = d.jogo_id and j.rodada = p_rodada
+    left join public.palpites pa on pa.torcedor_id = d.torcedor_id and pa.jogo_id = d.jogo_id
+    where d.pontos <> 0
+    returning semana
   )
-  select d.torcedor_id, d.jogo_id, coalesce(pa.time_id, 'outro') as time_id, d.semana, d.pontos
-  from dif d
-  join public.jogos j on j.id = d.jogo_id and j.rodada = p_rodada
-  left join public.palpites pa on pa.torcedor_id = d.torcedor_id and pa.jogo_id = d.jogo_id
-  where d.pontos <> 0;
+  select count(*)::integer, coalesce(array_agg(distinct n.semana), '{}') into v_gravados, v_semanas from novos n;
 
-  insert into public.crava_pontos (torcedor_id, jogo_id, rodada, time_id, semana, pontos)
-  select n.torcedor_id, n.jogo_id, p_rodada, n.time_id, n.semana, n.pontos from crava_novos n;
-  get diagnostics v_gravados = row_count;
-
-  for v_semana in select distinct n.semana from crava_novos n loop
+  foreach v_semana in array v_semanas loop
     perform public.recalcular_ranking(v_semana);
   end loop;
   return v_gravados;
