@@ -354,6 +354,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         root.querySelector('.placar-jogo .lado:last-child .sigla')!.textContent = desafio.apelido ?? 'Desafio';
       }
     } catch (e) {
+      console.warn('Partida sem valer pontos:', e instanceof ErroServidor ? e.codigo : e);
       mostrarAviso(e instanceof ErroServidor && e.codigo === 'muitas_partidas'
         ? 'Calma! Muitas partidas em 1 minuto: esta não vale pontos.'
         : AVISO_SEM_PONTOS);

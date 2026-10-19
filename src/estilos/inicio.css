@@ -1,0 +1,486 @@
+/* Início, barra de navegação e Ranking (docs/visual.md). */
+
+.inicio {
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: calc(12px + env(safe-area-inset-top)) 16px calc(88px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---------- AO VIVO ---------- */
+.barra-ao-vivo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ao-vivo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 4px;
+  background: var(--caiu);
+  color: #fff;
+  transform: skewX(var(--inclinacao));
+}
+
+.ao-vivo i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  /* 1 piscada por segundo: bem abaixo do limite de 3 por segundo. */
+  animation: piscar 1s steps(2, start) infinite;
+}
+
+@keyframes piscar {
+  to {
+    visibility: hidden;
+  }
+}
+
+.contagem {
+  color: var(--texto-suave);
+  font-size: 13px;
+}
+
+.contagem strong {
+  color: var(--amarelo);
+  font-variant-numeric: tabular-nums;
+}
+
+.marca-pequena {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+.marca-pequena span {
+  color: var(--amarelo);
+}
+
+/* ---------- bloco do time ---------- */
+.bloco-time {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bloco-time-faixa {
+  --fundo-faixa: var(--c1);
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 8px 22px 10px 16px;
+  color: var(--txt);
+}
+
+.bloco-time-faixa::after {
+  /* Filete na cor de apoio, como a tarja de transmissão. */
+  content: '';
+  position: absolute;
+  left: 6px;
+  right: -4px;
+  bottom: -5px;
+  height: 5px;
+  z-index: -1;
+  background: var(--c2);
+  transform: skewX(var(--inclinacao));
+}
+
+.bloco-time-faixa .rotulo {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.bloco-time-faixa h2 {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.05;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.bloco-time-pos {
+  font-size: 15px;
+  color: var(--texto-suave);
+}
+
+.bloco-time-pos strong {
+  color: var(--cal);
+}
+
+.link-trocar {
+  position: absolute;
+  top: 6px;
+  right: 0;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--texto-suave);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  touch-action: manipulation;
+}
+
+.sem-time {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* ---------- cabo de guerra ---------- */
+.cabo {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cabo-titulo {
+  color: var(--texto-suave);
+}
+
+.cabo-titulo small {
+  font-family: var(--fonte-texto);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.cabo-nomes > span {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cabo-nomes strong {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 26px;
+  color: var(--amarelo);
+}
+
+.cabo-nomes,
+.cabo-valores {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.cabo-nomes span span {
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 18px;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cabo-barra {
+  display: flex;
+  height: 18px;
+  border-radius: 4px;
+  overflow: hidden;
+  transform: skewX(var(--inclinacao));
+  border: 2px solid rgba(255, 255, 255, 0.85);
+}
+
+.cabo-barra span:first-child {
+  flex: var(--fracao, 0.5) 0 0;
+  background: var(--cor-eu);
+  transition: flex-grow 400ms ease-out;
+}
+
+.cabo-barra span:last-child {
+  flex: calc(1 - var(--fracao, 0.5)) 0 0;
+  background: var(--cor-rival);
+  transition: flex-grow 400ms ease-out;
+}
+
+.cabo-valores strong {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 26px;
+  color: var(--amarelo);
+}
+
+.cabo-valores small {
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+/* Grito do narrador como adesivo levemente torto. */
+.adesivo {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 8px 12px;
+  border: 3px solid #fff;
+  border-radius: 6px;
+  background: var(--cor-eu, var(--c1, var(--amarelo)));
+  color: #fff;
+  font-weight: 800;
+  line-height: 1.25;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  transform: rotate(-1.5deg);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- mini tabela / ranking ---------- */
+.mini-tabela {
+  padding: 6px 14px 8px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.mini-tabela header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mini-tabela header .rotulo {
+  color: var(--texto-suave);
+}
+
+.link-ver {
+  min-height: 40px;
+  border: 0;
+  background: none;
+  color: var(--amarelo);
+  touch-action: manipulation;
+}
+
+.vazio {
+  padding: 10px 0;
+  color: var(--texto-suave);
+}
+
+.mini-linha {
+  display: grid;
+  grid-template-columns: 30px 14px 10px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.mini-linha + .mini-linha {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* O "º" da Anton parece um zero elevado: posição vai na Barlow Condensed. */
+.mini-linha .pos {
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--texto-suave);
+}
+
+.mini-linha .seta {
+  font-size: 11px;
+  text-align: center;
+}
+
+.seta.subiu {
+  color: var(--subiu);
+}
+
+.seta.caiu {
+  color: var(--caiu);
+}
+
+.mini-linha .cor {
+  height: 26px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--c1) 55%, var(--c2) 55%);
+  transform: skewX(var(--inclinacao));
+}
+
+.mini-linha .nome {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.mini-linha .nome small {
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.mini-linha .valor {
+  font-family: var(--fonte-placar);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mini-linha.lider {
+  box-shadow: inset 4px 0 0 var(--amarelo);
+}
+
+.mini-linha.meu {
+  background: rgba(255, 210, 63, 0.16);
+}
+
+/* ---------- jogar ---------- */
+.jogar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.teto {
+  text-align: center;
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.teto strong {
+  color: var(--amarelo);
+}
+
+/* ---------- convite de desafio ---------- */
+.convite-desafio {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 2px solid var(--amarelo);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.4);
+  line-height: 1.35;
+}
+
+.convite-desafio .rotulo {
+  color: var(--amarelo);
+}
+
+/* ---------- barra de navegação ---------- */
+.barra-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+  background: rgba(6, 26, 14, 0.96);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.barra-nav button {
+  position: relative;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 0;
+  background: none;
+  color: var(--texto-suave);
+  font-size: 13px;
+  touch-action: manipulation;
+}
+
+.barra-nav .icone {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.barra-nav .ativa {
+  color: var(--amarelo);
+}
+
+.barra-nav [aria-disabled='true'] {
+  opacity: 0.6;
+}
+
+.em-breve {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--amarelo);
+  color: var(--tinta);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- tela de ranking ---------- */
+.ranking {
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+}
+
+.titulo-placar {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 34px;
+  text-transform: uppercase;
+}
+
+.abas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.abas button {
+  min-height: 46px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--cal);
+  font-size: 15px;
+  touch-action: manipulation;
+}
+
+.abas [aria-selected='true'] {
+  border-color: var(--amarelo);
+  background: var(--amarelo);
+  color: var(--tinta);
+}
+
+.tabela {
+  padding: 6px 10px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.explica {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--texto-suave);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ao-vivo i {
+    animation: none;
+  }
+  .cabo-barra span {
+    transition: none;
+  }
+}

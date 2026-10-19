@@ -17,7 +17,10 @@ export interface DadosCard {
 
 const L = 1080;
 const A = 1350;
-const FONTE = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+// Mesmas fontes da interface (docs/visual.md); o sistema entra só se elas não carregarem.
+const FONTE = 'Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+const PLACAR = 'Anton, Impact, "Arial Narrow", sans-serif';
+const ROTULO = '"Barlow Condensed", "Arial Narrow", sans-serif';
 
 function quebrarTexto(c: CanvasRenderingContext2D, texto: string, largura: number): string[] {
   const palavras = texto.split(' ');
@@ -60,16 +63,16 @@ export function desenharCard(d: DadosCard): HTMLCanvasElement {
 
   c.textAlign = 'center';
   c.fillStyle = txt;
-  c.font = `800 44px ${FONTE}`;
+  c.font = `700 44px ${ROTULO}`;
   c.fillText('GUERRA DE TORCIDAS · BATE CONTRA MIM', L / 2, 130);
 
-  c.font = `900 78px ${FONTE}`;
+  c.font = `400 92px ${PLACAR}`;
   c.fillText(d.time.nome.toUpperCase(), L / 2, 250);
 
   c.fillStyle = '#ffffff';
-  c.font = `900 230px ${FONTE}`;
+  c.font = `400 250px ${PLACAR}`;
   c.fillText(`${d.golsJogador} x ${d.golsMaquina}`, L / 2, 600);
-  c.font = `700 40px ${FONTE}`;
+  c.font = `700 40px ${ROTULO}`;
   c.globalAlpha = 0.8;
   c.fillText('VOCÊ          MÁQUINA', L / 2, 690);
   c.globalAlpha = 1;
@@ -90,7 +93,7 @@ export function desenharCard(d: DadosCard): HTMLCanvasElement {
   c.roundRect(110, A - 190, L - 220, 110, 55);
   c.fill();
   c.fillStyle = '#111111';
-  c.font = `900 44px ${FONTE}`;
+  c.font = `700 46px ${ROTULO}`;
   c.fillText('Duvido você me vencer →', L / 2, A - 140);
   c.font = `700 32px ${FONTE}`;
   c.fillText(d.link, L / 2, A - 98);

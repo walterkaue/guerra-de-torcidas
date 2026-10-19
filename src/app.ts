@@ -23,6 +23,7 @@ export interface DadosResultado {
 
 export type Rota =
   | { tela: 'inicio' }
+  | { tela: 'ranking' }
   | { tela: 'times'; depois?: 'partida' | 'inicio'; desafio?: string }
   | { tela: 'partida'; desafio?: string }
   | { tela: 'resultado'; dados: DadosResultado };

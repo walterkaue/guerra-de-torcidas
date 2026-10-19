@@ -7,7 +7,8 @@ import type { GestoCobranca, Gestos, ResultadoPartida } from '../jogo/penaltis.t
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
-const TEMPO_LIMITE_MS = 8000;
+// Folga para a função "acordar" depois de um tempo parada (partida fria) em rede de celular.
+const TEMPO_LIMITE_MS = 15000;
 
 let cliente: Promise<SupabaseClient> | null = null;
 

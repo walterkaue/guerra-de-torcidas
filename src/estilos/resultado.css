@@ -1,0 +1,308 @@
+/* Resultado (docs/visual.md, "Resultado"). */
+
+.resultado {
+  position: relative;
+  gap: 14px;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+.confete {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.res-topo {
+  text-align: center;
+}
+
+.res-topo .rotulo {
+  color: var(--texto-suave);
+}
+
+.res-titulo {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 64px;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--amarelo);
+  letter-spacing: 0.01em;
+}
+
+.perdeu .res-titulo {
+  color: var(--cal);
+}
+
+.res-placar {
+  --fundo-faixa: var(--c1);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 10px 12px;
+  color: var(--txt);
+  text-align: center;
+}
+
+.res-placar div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.res-placar .rotulo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+}
+
+.res-placar strong {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 88px;
+  line-height: 1;
+}
+
+.res-placar em {
+  font-family: var(--fonte-placar);
+  font-style: normal;
+  font-size: 36px;
+  opacity: 0.7;
+}
+
+.res-pontos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.res-total {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 10px;
+  font-family: var(--fonte-placar);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.res-total strong {
+  font-weight: 400;
+  font-size: 56px;
+  color: var(--amarelo);
+  font-variant-numeric: tabular-nums;
+}
+
+.res-total span {
+  font-size: 28px;
+}
+
+.etiquetas {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.etiquetas li {
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 14px;
+  transform: skewX(var(--inclinacao));
+}
+
+.etiquetas b {
+  color: var(--amarelo);
+}
+
+.resultado .adesivo {
+  --cor-eu: var(--c1);
+  color: var(--txt);
+  text-shadow: none;
+  font-size: 17px;
+}
+
+.resultado .adesivo.segundo {
+  transform: rotate(1deg);
+  align-self: flex-end;
+}
+
+.res-efeito {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.efeito-texto {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.efeito-texto strong {
+  color: var(--amarelo);
+}
+
+.efeito-barra {
+  height: 12px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+  transform: skewX(var(--inclinacao));
+}
+
+.efeito-barra span {
+  display: block;
+  height: 100%;
+  width: calc(var(--enche, 0) * 100%);
+  background: var(--amarelo);
+  transition: width 400ms ease-out;
+}
+
+.efeito-falta {
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.situacao {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.situacao.sem-pontos {
+  background: var(--caiu);
+  color: #fff;
+}
+
+.res-compartilhar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.botao-zap {
+  min-height: 68px;
+  font-size: 26px;
+}
+
+.trio {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.trio .botao {
+  min-height: 56px;
+  padding: 8px 4px;
+  font-size: 15px;
+  line-height: 1.1;
+  justify-content: center;
+}
+
+.res-card summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.resultado .card {
+  width: 100%;
+  aspect-ratio: 1080 / 1350;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* Revanche sempre à mão, no rodapé. */
+.res-acoes {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  background: rgba(6, 26, 14, 0.96);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.res-acoes .botao {
+  min-height: 60px;
+  justify-content: center;
+}
+
+.res-acoes .botao-sec {
+  font-size: 18px;
+}
+
+/* Desafio lado a lado */
+.duelo-desafio {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+.duelo-desafio > .rotulo {
+  grid-column: 1 / -1;
+  color: var(--amarelo);
+}
+
+.duelo-desafio div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.duelo-desafio span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.duelo-desafio strong {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 40px;
+  color: var(--amarelo);
+}
+
+.duelo-desafio em {
+  font-family: var(--fonte-placar);
+  font-style: normal;
+  opacity: 0.6;
+}
+
+.duelo-desafio .adesivo {
+  grid-column: 1 / -1;
+  justify-self: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .efeito-barra span {
+    transition: none;
+  }
+}

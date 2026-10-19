@@ -1,85 +1,139 @@
+// Tela inicial (docs/visual.md, "Início" e "No MVP"): AO VIVO com contagem, bloco do time,
+// cabo de guerra contra o rival, mini tabela do ranking geral, teto do dia e barra de navegação.
+
 import { desafioDoLink, esc, irPara, type Rota } from '../app';
-import { ID_OUTRO, corDeTexto, timePorId } from '../dados/times';
+import { ID_OUTRO, TIMES, corDeTexto, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { escolherFrase } from '../narrador/escolher';
 import { rivalDaSemana, situacaoDoDuelo } from '../narrador/rival';
 import { contextoDoTime } from '../narrador/sessao';
-import { ouvirRanking, rankingDaSemana, verDesafio, type LinhaRanking } from '../servidor/api';
-import { semanaBrasilia } from '../servidor/tempo';
+import { ouvirRanking, partidasFechadasHoje, rankingDaSemana, verDesafio, type LinhaRanking } from '../servidor/api';
+import { diaBrasilia, msAteZerarSemana, semanaBrasilia } from '../servidor/tempo';
+import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 
-const FRASES = [
-  'Joga 30 segundos e bota sua torcida na frente do rival.',
-  'Cada gol seu é um ponto pro seu time. Cada defesa também.',
-  'O rival tá na frente? Vai deixar?',
-];
-
+export const TETO_DIARIO = 5;
 const CHAVE_DUELO = 'gdt:duelo';
+const CHAVE_POSICOES = 'gdt:posicoes';
 
-/** O que o aparelho viu do duelo da última vez ("time>rival": estava na frente?). */
-function lembrarDuelo(chave: string, frente?: boolean): boolean | null {
+/** Lê/grava um pedacinho de memória do aparelho (sempre com try/catch). */
+function memoria<T>(chave: string, valor?: T): T | null {
   try {
-    const salvo = JSON.parse(localStorage.getItem(CHAVE_DUELO) ?? '{}') as Record<string, boolean>;
-    const antes = chave in salvo ? salvo[chave] : null;
-    if (frente !== undefined) localStorage.setItem(CHAVE_DUELO, JSON.stringify({ [chave]: frente }));
+    const antes = JSON.parse(localStorage.getItem(chave) ?? 'null') as T | null;
+    if (valor !== undefined) localStorage.setItem(chave, JSON.stringify(valor));
     return antes;
   } catch {
     return null;
   }
 }
 
+export function formatarContagem(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const seg = s % 60;
+  const dois = (n: number) => String(n).padStart(2, '0');
+  return d > 0 ? `${d}d ${dois(h)}h ${dois(m)}m` : `${dois(h)}h ${dois(m)}m ${dois(seg)}s`;
+}
+
+const numero = (n: number) => Math.round(n).toLocaleString('pt-BR');
+const pelo = (t: Time) => (t.artigo === 'a' ? 'pela' : 'pelo');
+
 export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
-  const frase = FRASES[Math.floor(Math.random() * FRASES.length)];
   const time = timePorId(prefs.get().time);
   const codigoDesafio = desafioDoLink();
   const semana = semanaBrasilia();
-  let parar: (() => void) | null = null;
+  let pararRanking: (() => void) | null = null;
   let saiu = false;
 
+  const estiloTime = (t: Time) => `--c1:${t.cores[0]};--c2:${t.cores[1]};--txt:${corDeTexto(t.cores[0])}`;
+
   const blocoTime = time
-    ? `<button class="time-atual" type="button" data-acao="trocar"
-         style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
-         <span class="faixa"></span>
-         <span>${time.id === ID_OUTRO ? 'Você joga pelo' : `Você joga ${time.artigo === 'a' ? 'pela' : 'pelo'}`} <strong>${esc(time.id === ID_OUTRO ? 'seu time' : time.nome)}</strong></span>
-         <small>trocar</small>
-       </button>`
-    : '';
+    ? `<section class="bloco-time" style="${estiloTime(time)}">
+        <div class="bloco-time-faixa faixa-tv">
+          <p class="rotulo">${time.id === ID_OUTRO ? 'Você joga pelo' : `Você joga ${pelo(time)}`}</p>
+          <h2>${esc(time.id === ID_OUTRO ? 'Seu time' : time.nome)}</h2>
+        </div>
+        <p class="bloco-time-pos" data-minha-posicao>${time.id === ID_OUTRO ? '"Outro time" não entra no ranking de times.' : 'Carregando a posição…'}</p>
+        <button class="link-trocar" type="button" data-acao="trocar">trocar</button>
+      </section>`
+    : `<section class="bloco-time sem-time">
+        <p class="rotulo">Qual é a sua torcida?</p>
+        <button class="botao botao-sec" type="button" data-acao="trocar">Escolher meu time</button>
+      </section>`;
 
   root.innerHTML = `
     <main class="inicio">
-      <header class="topo">
-        <span class="selo">Temporada da semana</span>
+      <header class="barra-ao-vivo">
+        <span class="ao-vivo rotulo"><i aria-hidden="true"></i>Ao vivo</span>
+        <span class="contagem rotulo">Semana zera em <strong data-contagem>${formatarContagem(msAteZerarSemana())}</strong></span>
       </header>
 
-      <section class="marca">
-        <h1>Guerra<br /><span>de Torcidas</span></h1>
-        <p class="frase">${frase}</p>
-      </section>
+      <h1 class="marca-pequena">Guerra <span>de Torcidas</span></h1>
 
       <section class="convite-desafio" hidden></section>
 
-      <section class="placar" aria-label="Ranking da semana" aria-live="polite">
-        <p class="placar-titulo">Campeão da semana</p>
-        <div class="placar-linhas"><p class="placar-vazio">Carregando o ranking…</p></div>
-        <p class="frase-rival" hidden></p>
+      ${blocoTime}
+
+      <section class="cabo" hidden aria-label="Cabo de guerra contra o rival">
+        <p class="rotulo cabo-titulo">Cabo de guerra <small>· média dos 30 melhores</small></p>
+        <div class="cabo-nomes">
+          <span><strong data-cabo-v-eu></strong><span data-cabo-eu></span></span>
+          <span><span data-cabo-rival></span><strong data-cabo-v-rival></strong></span>
+        </div>
+        <div class="cabo-barra"><span data-cabo-lado="eu"></span><span data-cabo-lado="rival"></span></div>
+        <p class="adesivo" data-frase-rival hidden></p>
       </section>
 
-      <section class="acoes">
-        ${blocoTime}
+      <section class="mini-tabela" aria-label="Ranking da semana" aria-live="polite">
+        <header>
+          <p class="rotulo">Campeão da semana</p>
+          <button class="rotulo link-ver" type="button" data-acao="ranking">Ver tudo</button>
+        </header>
+        <div class="mini-linhas"><p class="vazio">Carregando o ranking…</p></div>
+      </section>
+
+      <section class="jogar">
         <button class="botao" type="button" data-acao="jogar">
           Bate Contra Mim
           <small>5 cobranças · 5 defesas</small>
         </button>
-        <p class="nota">Sem cadastro. Abre e joga.</p>
+        <p class="teto" data-teto>Sem cadastro. Abre e joga.</p>
       </section>
+
+      ${barraNavegacao('jogar')}
     </main>
   `;
 
   const jogar = (desafio?: string) =>
     irPara(time ? { tela: 'partida', desafio } : { tela: 'times', depois: 'partida', desafio });
   root.querySelector('[data-acao="jogar"]')?.addEventListener('click', () => jogar());
-  root.querySelector('[data-acao="trocar"]')?.addEventListener('click', () => {
-    irPara({ tela: 'times', depois: 'inicio' });
-  });
+  root.querySelectorAll('[data-acao="trocar"]').forEach((b) =>
+    b.addEventListener('click', () => irPara({ tela: 'times', depois: 'inicio' })),
+  );
+  root.querySelector('[data-acao="ranking"]')?.addEventListener('click', () => irPara({ tela: 'ranking' }));
+  ligarBarraNavegacao(root);
+
+  // ---------- contagem até zerar a semana ----------
+  const elContagem = root.querySelector<HTMLElement>('[data-contagem]')!;
+  const relogio = window.setInterval(() => (elContagem.textContent = formatarContagem(msAteZerarSemana())), 1000);
+
+  // ---------- teto do dia ----------
+  const elTeto = root.querySelector<HTMLElement>('[data-teto]')!;
+  if (time) {
+    partidasFechadasHoje(diaBrasilia())
+      .then((n) => {
+        if (saiu) return;
+        const faltam = TETO_DIARIO - n;
+        elTeto.innerHTML =
+          faltam > 0
+            ? `Hoje contam mais <strong>${faltam}</strong> ${faltam === 1 ? 'partida' : 'partidas'} pro ranking.`
+            : `Hoje só as <strong>5 melhores</strong> contam: supera a pior pra subir.`;
+      })
+      .catch(() => {
+        // sem internet: fica o texto padrão
+      });
+  }
 
   // ---------- convite de desafio (link ?d=) ----------
   if (codigoDesafio) {
@@ -90,7 +144,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         const t = timePorId(d.time_id);
         const quem = d.apelido ? esc(d.apelido) : 'Alguém';
         caixa.innerHTML = `
-          <p><strong>${quem}</strong> ${t && t.id !== ID_OUTRO ? `(${esc(t.nome)}) ` : ''}te desafiou:
+          <p class="rotulo">Desafio na área</p>
+          <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''} te desafiou:
           <strong>${d.pontos} pontos</strong>, ${d.gols_jogador} x ${d.gols_maquina} contra a máquina.</p>
           <button class="botao" type="button" data-acao="desafio">Aceitar o desafio</button>`;
         caixa.hidden = false;
@@ -101,68 +156,110 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       });
   }
 
-  // ---------- ranking da semana ao vivo ----------
-  const elLinhas = root.querySelector<HTMLElement>('.placar-linhas')!;
-  const elRival = root.querySelector<HTMLElement>('.frase-rival')!;
+  // ---------- ranking ao vivo ----------
+  const elLinhas = root.querySelector<HTMLElement>('.mini-linhas')!;
+  const elCabo = root.querySelector<HTMLElement>('.cabo')!;
+  const elPos = root.querySelector<HTMLElement>('[data-minha-posicao]');
 
   function desenhar(linhas: LinhaRanking[]): void {
+    // Setas: comparam com a posição que o aparelho viu da última vez nesta semana.
+    const vistas = memoria<{ semana: string; pos: Record<string, number> }>(CHAVE_POSICOES);
+    const antes = vistas?.semana === semana ? vistas.pos : {};
+    memoria(CHAVE_POSICOES, { semana, pos: Object.fromEntries(linhas.map((l) => [l.time_id, l.posicao_campeao])) });
+
     const jogando = linhas.filter((l) => l.ativos > 0);
-    if (!jogando.length) {
-      elLinhas.innerHTML = '<p class="placar-vazio">Ninguém jogou ainda nesta semana. Abre o placar!</p>';
-      elRival.hidden = true;
-      return;
-    }
     const meu = time ? linhas.find((l) => l.time_id === time.id) : undefined;
     const rivalId = time && time.id !== ID_OUTRO ? rivalDaSemana(time.id, time.rival, linhas) : null;
-    const visiveis = linhas.filter((l) => l.posicao_campeao <= 5 || l.time_id === meu?.time_id || l.time_id === rivalId);
-    elLinhas.innerHTML = visiveis
-      .map((l) => {
-        const t = timePorId(l.time_id);
-        const classe = l.time_id === meu?.time_id ? ' meu' : l.time_id === rivalId ? ' rival' : '';
-        return `<div class="linha${classe}">
-          <span class="pos">${l.posicao_campeao}º</span>
-          <span class="faixa" style="--c1:${t?.cores[0] ?? '#666'};--c2:${t?.cores[1] ?? '#999'}"></span>
-          <span class="nome">${esc(t?.nome ?? l.time_id)}</span>
-          <span class="pts">${l.media30.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</span>
-        </div>`;
-      })
-      .join('');
 
-    // Frase do rival do momento (Outro time não recebe provocação de time).
+    if (elPos && meu) {
+      elPos.innerHTML =
+        meu.ativos > 0
+          ? `<strong>${meu.posicao_campeao}º</strong> no Campeão da semana · média <strong>${numero(meu.media30)}</strong>`
+          : 'Ninguém da sua torcida jogou ainda nesta semana. Abre o placar!';
+    }
+
+    if (!jogando.length) {
+      elLinhas.innerHTML = '<p class="vazio">Ninguém jogou ainda nesta semana. Abre o placar!</p>';
+    } else {
+      const visiveis = linhas.filter(
+        (l) => (l.posicao_campeao <= 5 && l.ativos > 0) || l.time_id === meu?.time_id || l.time_id === rivalId,
+      );
+      elLinhas.innerHTML = visiveis
+        .map((l) => {
+          const t = timePorId(l.time_id);
+          const anterior = antes[l.time_id];
+          const seta =
+            anterior === undefined || anterior === l.posicao_campeao
+              ? '<span class="seta" aria-hidden="true"></span>'
+              : anterior > l.posicao_campeao
+                ? '<span class="seta subiu" title="Subiu">▲</span>'
+                : '<span class="seta caiu" title="Caiu">▼</span>';
+          const classes = ['mini-linha'];
+          if (l.posicao_campeao === 1 && l.ativos > 0) classes.push('lider');
+          if (l.time_id === meu?.time_id) classes.push('meu');
+          if (l.time_id === rivalId) classes.push('rival');
+          return `<div class="${classes.join(' ')}">
+            <span class="pos">${l.posicao_campeao}º</span>${seta}
+            <span class="cor" style="--c1:${t?.cores[0] ?? '#666'};--c2:${t?.cores[1] ?? '#999'}"></span>
+            <span class="nome">${esc(t?.nome ?? l.time_id)}${l.time_id === rivalId ? '<small> rival</small>' : ''}</span>
+            <span class="valor">${numero(l.media30)}</span>
+          </div>`;
+        })
+        .join('');
+    }
+
+    // Cabo de guerra + frase do narrador do momento.
     const rival = rivalId ? linhas.find((l) => l.time_id === rivalId) : undefined;
     const tRival = rivalId ? timePorId(rivalId) : undefined;
     if (!time || !meu || !rival || !tRival) {
-      elRival.hidden = true;
+      elCabo.hidden = true;
       return;
     }
+    const total = meu.media30 + rival.media30;
+    const fracao = total > 0 ? meu.media30 / total : 0.5;
+    elCabo.style.setProperty('--cor-eu', time.cores[0]);
+    elCabo.style.setProperty('--cor-rival', tRival.cores[0] === time.cores[0] ? tRival.cores[1] : tRival.cores[0]);
+    elCabo.style.setProperty('--fracao', String(Math.min(0.92, Math.max(0.08, fracao))));
+    elCabo.querySelector('[data-cabo-eu]')!.textContent = time.nome;
+    elCabo.querySelector('[data-cabo-rival]')!.textContent = tRival.nome;
+    elCabo.querySelector('[data-cabo-v-eu]')!.textContent = numero(meu.media30);
+    elCabo.querySelector('[data-cabo-v-rival]')!.textContent = numero(rival.media30);
+    elCabo.hidden = false;
+
+    const elFrase = elCabo.querySelector<HTMLElement>('[data-frase-rival]')!;
     const chave = `${time.id}>${rival.time_id}`;
-    const duelo = situacaoDoDuelo(meu, rival, lembrarDuelo(chave));
+    const vistos = memoria<Record<string, boolean>>(CHAVE_DUELO) ?? {};
+    const duelo = situacaoDoDuelo(meu, rival, chave in vistos ? vistos[chave] : null);
     if (!duelo) {
-      elRival.hidden = true;
+      elFrase.hidden = true;
       return;
     }
-    lembrarDuelo(chave, duelo.frente);
+    memoria(CHAVE_DUELO, { [chave]: duelo.frente });
     const ctx = { ...contextoDoTime(time), rival: { nome: tRival.nome, artigo: tRival.artigo }, dif: duelo.dif };
     const texto = escolherFrase(duelo.evento, ctx, Math.random)?.texto;
-    elRival.textContent = texto ?? '';
-    elRival.hidden = !texto;
+    elFrase.textContent = texto ?? '';
+    elFrase.hidden = !texto;
   }
 
   const carregar = () =>
     rankingDaSemana(semana)
-      .then((l) => !saiu && desenhar(l))
+      .then((l) => !saiu && desenhar(l.length ? l : TIMES.filter((t) => t.id !== ID_OUTRO).map((t, i) => ({
+        time_id: t.id, ativos: 0, soma: 0, media30: 0, posicao_campeao: i + 1, posicao_soma: i + 1,
+      }))))
       .catch(() => {
-        if (!saiu) elLinhas.innerHTML = '<p class="placar-vazio">Sem conexão com o placar agora. Dá pra jogar mesmo assim.</p>';
+        if (!saiu) elLinhas.innerHTML = '<p class="vazio">Sem conexão com o placar agora. Dá pra jogar mesmo assim.</p>';
+        if (elPos && !saiu) elPos.textContent = 'Sem conexão com o placar agora.';
       });
   void carregar();
   ouvirRanking(semana, () => void carregar())
-    .then((f) => (saiu ? f() : (parar = f)))
+    .then((f) => (saiu ? f() : (pararRanking = f)))
     .catch(() => {
       // sem Realtime: fica a foto do momento
     });
 
   return () => {
     saiu = true;
-    parar?.();
+    clearInterval(relogio);
+    pararRanking?.();
   };
 }

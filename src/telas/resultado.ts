@@ -1,115 +1,273 @@
+// Resultado (docs/visual.md, "Resultado"): placar gigante, VITÓRIA/DERROTA, "+85 PRA [TIME]" contando,
+// bônus em etiquetas, efeito no ranking, desafio lado a lado, compartilhar e Revanche como ação principal.
+
 import { esc, irPara, type DadosResultado, type Rota } from '../app';
-import { corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
+import { ID_OUTRO, corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
 import { prefs } from '../estado';
 import { desenharCard } from '../jogo/card';
+import { placarEmoji } from '../jogo/emoji';
 import { escolherFrase } from '../narrador/escolher';
 import { contextoDoTime } from '../narrador/sessao';
+import { rankingDaSemana } from '../servidor/api';
 
 const SITE = 'https://torcida.kauewalter.com.br';
+const semMovimento = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+/** Conta de 0 até `total` em ~700 ms (sem animação para quem pediu menos movimento). */
+function contar(el: HTMLElement, total: number): void {
+  if (semMovimento() || total <= 0) {
+    el.textContent = `+${total}`;
+    return;
+  }
+  const inicio = performance.now();
+  const passo = (agora: number) => {
+    const t = Math.min(1, (agora - inicio) / 700);
+    el.textContent = `+${Math.round(total * (1 - (1 - t) ** 3))}`;
+    if (t < 1) requestAnimationFrame(passo);
+  };
+  requestAnimationFrame(passo);
+}
+
+/** Confete curto nas cores do time (só na vitória e só para quem não pediu menos movimento). */
+function confete(canvas: HTMLCanvasElement, cores: string[]): void {
+  if (semMovimento()) {
+    canvas.remove();
+    return;
+  }
+  const c = canvas.getContext('2d');
+  if (!c) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = (canvas.width = innerWidth * dpr);
+  const H = (canvas.height = innerHeight * dpr);
+  const pedacos = Array.from({ length: 90 }, () => ({
+    x: Math.random() * W,
+    y: -Math.random() * H * 0.4,
+    vx: (Math.random() - 0.5) * 3 * dpr,
+    vy: (2 + Math.random() * 3) * dpr,
+    giro: Math.random() * Math.PI,
+    cor: cores[Math.floor(Math.random() * cores.length)],
+    t: (6 + Math.random() * 6) * dpr,
+  }));
+  const inicio = performance.now();
+  const quadro = (agora: number) => {
+    const passou = agora - inicio;
+    c.clearRect(0, 0, W, H);
+    c.globalAlpha = passou > 1200 ? Math.max(0, 1 - (passou - 1200) / 400) : 1;
+    for (const p of pedacos) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.giro += 0.15;
+      c.save();
+      c.translate(p.x, p.y);
+      c.rotate(p.giro);
+      c.fillStyle = p.cor;
+      c.fillRect(-p.t / 2, -p.t / 4, p.t, p.t / 2);
+      c.restore();
+    }
+    if (passou < 1600) requestAnimationFrame(quadro);
+    else canvas.remove();
+  };
+  requestAnimationFrame(quadro);
+}
+
+/** "do Flamengo" / "da Chapecoense" */
+const doTime = (id: string) => {
+  const t = timePorId(id);
+  return t ? `${t.artigo === 'a' ? 'da' : 'do'} ${t.nome}` : '';
+};
 
 export function telaResultado(root: HTMLElement, rota: Rota): void {
   if (rota.tela !== 'resultado') return;
   const d: DadosResultado = rota.dados;
   const time = timePorId(d.timeId) ?? TIMES[TIMES.length - 1];
-  const apelidoSalvo = prefs.get().apelido;
-  // Sem apelido, o card fala em primeira pessoa ("Fiz 47 pontos…"), neutro de gênero.
-  const apelido = apelidoSalvo;
-  const { resultado: r } = d;
+  const outro = time.id === ID_OUTRO;
+  const apelido = prefs.get().apelido;
+  const r = d.resultado;
   const p = r.pontos;
+  const paraTime = proTime(time);
+  const nomeAdversario = d.desafio ? (d.desafio.apelido ?? 'Desafiante') : 'Máquina';
 
-  // Partida registrada vira desafio "duvido você me vencer" com as cobranças gravadas.
   const codigo = d.servidor?.desafio?.codigo;
   const link = codigo ? `${SITE}/?d=${codigo}` : `${SITE}/?time=${time.id}`;
-  const paraTime = proTime(time);
-  // Texto do convite vem do banco do narrador (desafio_convite), sorteado com o gerador do narrador.
   const convite =
-    escolherFrase('desafio_convite', { ...contextoDoTime(time, apelidoSalvo), pontos: p.total }, Math.random)?.texto ??
+    escolherFrase('desafio_convite', { ...contextoDoTime(time, apelido), pontos: p.total }, Math.random)?.texto ??
     'Duvido você me vencer!';
   const textoShare = `${convite} ${link}`;
+  const emoji = placarEmoji({
+    resultado: r,
+    nomeJogador: outro ? 'Eu' : time.nome,
+    nomeAdversario,
+    linhaPontos: `+${p.total}${paraTime ? ` ${paraTime}` : ''}`,
+    link,
+  });
 
-  const situacao = !d.valendo
-    ? d.aviso ?? 'Partida sem valer pontos.'
-    : d.servidor?.sobSuspeita
-      ? 'Partida em revisão: fica fora do ranking até alguém conferir.'
-      : d.servidor?.contaNoRanking
-        ? `Contou pro ranking da semana${paraTime ? ` ${paraTime}` : ''}.`
-        : 'Essa não entrou no ranking: hoje só as 5 melhores partidas contam.';
+  const decisao =
+    r.decisao === 'par_ou_impar' ? 'No par ou ímpar' : r.decisao === 'morte_subita' ? 'Na morte súbita' : 'Fim de jogo';
 
-  // Desafio por link: placar dos dois lado a lado. Mais pontos vence; empate fica com quem desafiou.
-  const cmp = d.servidor?.comparacao;
-  const nomeDesafiante = d.desafio?.apelido ?? 'quem te desafiou';
-  const fraseDesafio =
-    cmp &&
-    escolherFrase(
-      cmp.venceu ? 'desafio_vitoria' : 'desafio_derrota',
-      { ...contextoDoTime(time, apelidoSalvo), desafiante: nomeDesafiante },
-      Math.random,
-    )?.texto;
-  const blocoDesafio = cmp
-    ? `<section class="duelo-desafio">
-        <div><span>Você</span><strong>${p.total}</strong><small>${r.golsJogador} x ${r.golsMaquina}</small></div>
-        <em>x</em>
-        <div><span>${esc(cmp.desafiante ?? 'Desafiante')}</span><strong>${cmp.pontosDesafiante}</strong><small>${cmp.golsJogadorDesafiante} x ${cmp.golsMaquinaDesafiante}</small></div>
-        ${fraseDesafio ? `<p>${esc(fraseDesafio)}</p>` : ''}
-      </section>`
-    : '';
-
-  const linhas: [string, number][] = [
+  const etiquetas: [string, number][] = [
     ['Gols', p.gols],
-    ['Gols no ângulo', p.angulos],
-    ['Cavadinhas', p.cavadinhas],
+    ['Ângulo', p.angulos],
+    ['Cavadinha', p.cavadinhas],
     ['Defesas', p.defesas],
     ['Vitória', p.vitoria],
     ['5 de 5', p.cincoDeCinco],
   ];
 
-  root.innerHTML = `
-    <main class="tela resultado" style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
-      <img class="card" alt="Card do resultado" />
-      <p class="situacao${d.valendo ? '' : ' sem-pontos'}">${esc(situacao)}</p>
-      ${blocoDesafio}
+  // Quando a partida não entrou no ranking, a explicação vem no lugar do efeito.
+  const situacao = !d.valendo
+    ? (d.aviso ?? 'Partida sem valer pontos.')
+    : d.servidor?.sobSuspeita
+      ? 'Partida em revisão: fica fora do ranking até alguém conferir.'
+      : !d.servidor?.contaNoRanking
+        ? 'Essa não entrou no ranking: hoje só as 5 melhores partidas contam.'
+        : null;
 
-      <section class="pontos">
-        ${d.frasesFinais.map((t) => `<p class="frase-final">${esc(t)}</p>`).join('')}
-        <h2>${p.total} pontos${paraTime ? ` ${esc(paraTime)}` : ''}</h2>
-        <ul>
-          ${linhas
+  // Desafio por link: placar dos dois lado a lado. Mais pontos vence; empate fica com quem desafiou.
+  const cmp = d.servidor?.comparacao;
+  const fraseDesafio =
+    cmp &&
+    escolherFrase(
+      cmp.venceu ? 'desafio_vitoria' : 'desafio_derrota',
+      { ...contextoDoTime(time, apelido), desafiante: d.desafio?.apelido ?? 'quem te desafiou' },
+      Math.random,
+    )?.texto;
+  const blocoDesafio = cmp
+    ? `<section class="duelo-desafio">
+        <p class="rotulo">Desafio</p>
+        <div><span>Você</span><strong>${p.total}</strong><small>${r.golsJogador} x ${r.golsMaquina}</small></div>
+        <em>x</em>
+        <div><span>${esc(cmp.desafiante ?? 'Desafiante')}</span><strong>${cmp.pontosDesafiante}</strong><small>${cmp.golsJogadorDesafiante} x ${cmp.golsMaquinaDesafiante}</small></div>
+        ${fraseDesafio ? `<p class="adesivo">${esc(fraseDesafio)}</p>` : ''}
+      </section>`
+    : '';
+
+  root.innerHTML = `
+    <main class="tela resultado ${r.venceu ? 'venceu' : 'perdeu'}"
+      style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
+      ${r.venceu ? '<canvas class="confete" aria-hidden="true"></canvas>' : ''}
+
+      <header class="res-topo">
+        <p class="rotulo">${decisao}</p>
+        <h1 class="res-titulo">${r.venceu ? 'Vitória' : 'Derrota'}</h1>
+      </header>
+
+      <section class="res-placar faixa-tv" aria-label="Placar">
+        <div><span class="rotulo">${esc(outro ? 'Você' : time.nome)}</span><strong>${r.golsJogador}</strong></div>
+        <em>x</em>
+        <div><span class="rotulo">${esc(nomeAdversario)}</span><strong>${r.golsMaquina}</strong></div>
+      </section>
+
+      <section class="res-pontos">
+        <p class="res-total"><strong data-contador>+0</strong>${paraTime ? `<span>${esc(paraTime)}</span>` : ''}</p>
+        <ul class="etiquetas">
+          ${etiquetas
             .filter(([, v]) => v > 0)
-            .map(([nome, v]) => `<li><span>${nome}</span><strong>+${v}</strong></li>`)
+            .map(([nome, v]) => `<li class="rotulo">${nome} <b>+${v}</b></li>`)
             .join('')}
         </ul>
       </section>
 
-      <section class="compartilhar">
+      ${d.frasesFinais.map((t, i) => `<p class="adesivo${i ? ' segundo' : ''}">${esc(t)}</p>`).join('')}
+
+      <section class="res-efeito" aria-live="polite">
+        ${situacao ? `<p class="situacao${d.valendo ? '' : ' sem-pontos'}">${esc(situacao)}</p>` : ''}
+      </section>
+
+      ${blocoDesafio}
+
+      <section class="res-compartilhar">
         <a class="botao botao-zap" target="_blank" rel="noopener"
-          href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Mandar no WhatsApp</a>
-        <div class="dupla">
-          <button class="botao botao-sec" type="button" data-acao="share">Stories / mais</button>
+          href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Duvido no grupo</a>
+        <div class="trio">
+          <button class="botao botao-sec" type="button" data-acao="share">Stories</button>
+          <button class="botao botao-sec" type="button" data-acao="emoji">Placar em emoji</button>
           <button class="botao botao-sec" type="button" data-acao="copiar">Copiar link</button>
         </div>
       </section>
 
-      <section class="dupla">
+      <details class="res-card">
+        <summary class="rotulo">Ver o card</summary>
+        <img class="card" alt="Card do resultado" />
+      </details>
+
+      <div class="res-acoes">
         <button class="botao botao-sec" type="button" data-acao="inicio">Início</button>
-        <button class="botao" type="button" data-acao="denovo">Jogar de novo</button>
-      </section>
+        <button class="botao" type="button" data-acao="revanche">Revanche</button>
+      </div>
     </main>
   `;
 
-  const canvas = desenharCard({
-    time,
-    apelido,
-    paraTime,
-    golsJogador: r.golsJogador,
-    golsMaquina: r.golsMaquina,
-    pontos: p.total,
-    frase: d.frasesFinais[0] ?? '',
-    link: link.replace('https://', ''),
-  });
-  const img = root.querySelector<HTMLImageElement>('.card')!;
-  img.src = canvas.toDataURL('image/png');
+  contar(root.querySelector<HTMLElement>('[data-contador]')!, p.total);
+  const elConfete = root.querySelector<HTMLCanvasElement>('.confete');
+  if (elConfete) confete(elConfete, [time.cores[0], time.cores[1], '#ffd23f']);
 
-  const aviso = (botao: HTMLButtonElement, texto: string) => {
+  // ---------- efeito no ranking ("subiu de 5º pra 3º") ----------
+  const elEfeito = root.querySelector<HTMLElement>('.res-efeito')!;
+  const rk = d.servidor?.ranking;
+  if (!situacao && d.servidor && rk?.depois && !outro) {
+    const depois = rk.depois.posicao_campeao;
+    const antes = rk.antes && rk.antes.media30 > 0 ? rk.antes.posicao_campeao : undefined;
+    const frase =
+      antes === undefined
+        ? `Entrou em <strong>${depois}º</strong> no ranking geral`
+        : antes > depois
+          ? `<span class="seta subiu" aria-hidden="true">▲</span> Subiu de ${antes}º pra <strong>${depois}º</strong> no ranking geral`
+          : antes < depois
+            ? `<span class="seta caiu" aria-hidden="true">▼</span> Caiu de ${antes}º pra <strong>${depois}º</strong> no ranking geral`
+            : `Segue em <strong>${depois}º</strong> no ranking geral`;
+    elEfeito.innerHTML = `<p class="efeito-texto">${frase}</p>
+      <div class="efeito-barra"><span></span></div>
+      <p class="efeito-falta"></p>`;
+    rankingDaSemana(d.servidor.semana)
+      .then((linhas) => {
+        const meu = linhas.find((l) => l.time_id === time.id);
+        if (!meu) return;
+        const barra = elEfeito.querySelector<HTMLElement>('.efeito-barra span')!;
+        const falta = elEfeito.querySelector<HTMLElement>('.efeito-falta')!;
+        if (meu.posicao_campeao === 1) {
+          const segundo = linhas.find((l) => l.posicao_campeao === 2);
+          barra.style.setProperty('--enche', '1');
+          falta.textContent = segundo
+            ? `Na liderança, ${Math.round(meu.media30 - segundo.media30)} de média na frente ${doTime(segundo.time_id)}.`
+            : 'Na liderança!';
+          return;
+        }
+        const acima = linhas.find((l) => l.posicao_campeao === meu.posicao_campeao - 1);
+        const tAcima = acima && timePorId(acima.time_id);
+        if (!acima || !tAcima) return;
+        barra.style.setProperty('--enche', String(acima.media30 > 0 ? Math.min(1, meu.media30 / acima.media30) : 1));
+        falta.textContent = `Faltam ${Math.max(1, Math.ceil(acima.media30 - meu.media30))} de média pra passar ${tAcima.artigo} ${tAcima.nome} (${acima.posicao_campeao}º).`;
+      })
+      .catch(() => {});
+  } else if (!situacao) {
+    elEfeito.innerHTML = `<p class="situacao">Contou pro ranking da semana${paraTime ? ` ${esc(paraTime)}` : ''}.</p>`;
+  }
+
+  // ---------- card ----------
+  const img = root.querySelector<HTMLImageElement>('.card')!;
+  const cardPronto = (async () => {
+    // O card usa Anton e Barlow: espera as fontes para não sair com a fonte do sistema.
+    try {
+      await Promise.all([document.fonts.load('400 100px Anton'), document.fonts.load('700 40px Barlow')]);
+    } catch {
+      // segue com a fonte que tiver
+    }
+    const canvas = desenharCard({
+      time,
+      apelido,
+      paraTime,
+      golsJogador: r.golsJogador,
+      golsMaquina: r.golsMaquina,
+      pontos: p.total,
+      frase: d.frasesFinais[0] ?? '',
+      link: link.replace('https://', ''),
+    });
+    img.src = canvas.toDataURL('image/png');
+    return canvas;
+  })();
+
+  // ---------- botões ----------
+  const avisar = (botao: HTMLButtonElement, texto: string) => {
     const antes = botao.textContent;
     botao.textContent = texto;
     setTimeout(() => (botao.textContent = antes), 1800);
@@ -118,6 +276,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   const btnShare = root.querySelector<HTMLButtonElement>('[data-acao="share"]')!;
   btnShare.addEventListener('click', async () => {
     try {
+      const canvas = await cardPronto;
       const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, 'image/png'));
       const arquivo = blob ? new File([blob], 'guerra-de-torcidas.png', { type: 'image/png' }) : null;
       if (arquivo && navigator.canShare?.({ files: [arquivo] })) {
@@ -126,10 +285,23 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
         await navigator.share({ text: textoShare, url: link });
       } else {
         await navigator.clipboard.writeText(textoShare);
-        aviso(btnShare, 'Texto copiado!');
+        avisar(btnShare, 'Copiado!');
       }
     } catch {
-      // usuário cancelou o compartilhamento
+      // cancelou o compartilhamento
+    }
+  });
+
+  const btnEmoji = root.querySelector<HTMLButtonElement>('[data-acao="emoji"]')!;
+  btnEmoji.addEventListener('click', async () => {
+    try {
+      if (navigator.share) await navigator.share({ text: emoji });
+      else {
+        await navigator.clipboard.writeText(emoji);
+        avisar(btnEmoji, 'Copiado!');
+      }
+    } catch {
+      // cancelou
     }
   });
 
@@ -137,12 +309,15 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   btnCopiar.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(link);
-      aviso(btnCopiar, 'Copiado!');
+      avisar(btnCopiar, 'Copiado!');
     } catch {
-      aviso(btnCopiar, link);
+      avisar(btnCopiar, link);
     }
   });
 
-  root.querySelector('[data-acao="denovo"]')?.addEventListener('click', () => irPara({ tela: 'partida' }));
+  // Revanche: no desafio, joga o mesmo desafio de novo; senão, partida nova contra a máquina.
+  root.querySelector('[data-acao="revanche"]')?.addEventListener('click', () =>
+    irPara({ tela: 'partida', desafio: d.desafio?.id }),
+  );
   root.querySelector('[data-acao="inicio"]')?.addEventListener('click', () => irPara({ tela: 'inicio' }));
 }

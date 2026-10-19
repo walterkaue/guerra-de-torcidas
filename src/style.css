@@ -1,11 +1,46 @@
+/* Direção "Transmissão de domingo" (docs/visual.md). */
+
+@font-face {
+  font-family: 'Anton';
+  src: url('/fontes/anton.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow';
+  src: url('/fontes/barlow-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow';
+  src: url('/fontes/barlow-700.woff2') format('woff2');
+  font-weight: 600 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow Condensed';
+  src: url('/fontes/barlow-condensed-700.woff2') format('woff2');
+  font-weight: 600 900;
+  font-display: swap;
+}
+
 :root {
   --gramado: #0b3d1f;
-  --gramado-claro: #13562d;
+  --gramado-claro: #0e4625;
   --cal: #f5f5f0;
   --amarelo: #ffd23f;
+  --amarelo-escuro: #b8920f;
+  --subiu: #3ddc84;
+  --caiu: #ff5a3c;
   --texto-suave: rgba(245, 245, 240, 0.72);
+  --tinta: #111111;
+  --fonte-placar: 'Anton', 'Impact', 'Arial Narrow', sans-serif;
+  --fonte-rotulo: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --fonte-texto: 'Barlow', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --inclinacao: -8deg;
   color-scheme: dark;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--fonte-texto);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -26,105 +61,33 @@ body {
 }
 
 body {
-  background:
-    repeating-linear-gradient(180deg, var(--gramado) 0 56px, var(--gramado-claro) 56px 112px);
+  background: repeating-linear-gradient(180deg, var(--gramado) 0 56px, var(--gramado-claro) 56px 112px);
   color: var(--cal);
   -webkit-tap-highlight-color: transparent;
 }
 
-.inicio {
-  min-height: 100dvh;
-  max-width: 480px;
-  margin: 0 auto;
-  padding: calc(16px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 28px;
-}
-
-/* Desktop: a coluna fica estreita, então centraliza o conteúdo dentro dela. */
-@media (min-width: 600px) {
-  .inicio {
-    max-width: 440px;
-    text-align: center;
-  }
-}
-
-.selo {
-  display: inline-block;
-  padding: 6px 12px;
-  border: 2px solid var(--cal);
-  border-radius: 999px;
-  font-size: 13px;
+/* Rótulo de transmissão: Barlow Condensed em caixa alta. */
+.rotulo {
+  font-family: var(--fonte-rotulo);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: 14px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.marca h1 {
-  font-size: clamp(48px, 15vw, 72px);
-  line-height: 0.92;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
+/* Faixa inclinada (tarja de TV): o fundo inclina, o texto fica reto. */
+.faixa-tv {
+  position: relative;
+  isolation: isolate;
 }
-
-.marca h1 span {
-  color: var(--amarelo);
-}
-
-.frase {
-  margin-top: 16px;
-  font-size: 18px;
-  line-height: 1.4;
-  color: var(--texto-suave);
-}
-
-.placar {
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 16px;
-  padding: 8px 16px;
-  text-align: left;
-}
-
-.linha {
-  display: grid;
-  grid-template-columns: 28px 10px 1fr auto;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  font-size: 17px;
-}
-
-.linha + .linha {
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.pos {
-  font-weight: 800;
-  color: var(--texto-suave);
-}
-
-.faixa {
-  height: 28px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, var(--c1) 50%, var(--c2) 50%);
-}
-
-.nome {
-  font-weight: 700;
-}
-
-.pts {
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-}
-
-.acoes {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.faixa-tv::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--fundo-faixa, var(--c1, var(--amarelo)));
+  transform: skewX(var(--inclinacao));
+  border-radius: 4px;
 }
 
 .botao {
@@ -135,9 +98,10 @@ body {
   border-radius: 16px;
   background: var(--amarelo);
   color: #1a1a1a;
-  font: inherit;
-  font-size: 22px;
-  font-weight: 900;
+  font-family: var(--fonte-rotulo);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   display: flex;
   flex-direction: column;
@@ -157,8 +121,10 @@ body {
 }
 
 .botao small {
+  font-family: var(--fonte-texto);
   font-size: 13px;
   font-weight: 700;
+  letter-spacing: 0;
   text-transform: none;
   opacity: 0.75;
 }
@@ -376,8 +342,9 @@ body {
 }
 
 .placar-jogo .gols {
-  font-size: 28px;
-  font-weight: 900;
+  font-family: var(--fonte-placar);
+  font-size: 30px;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
 }
 
@@ -445,48 +412,6 @@ body {
   20% { transform: scale(1); }
   80% { opacity: 1; }
   100% { opacity: 0; }
-}
-
-/* ---------- resultado ---------- */
-.resultado .card {
-  width: 100%;
-  aspect-ratio: 1080 / 1350;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-.frase-final {
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1.3;
-  margin-bottom: 6px;
-}
-
-.pontos h2 {
-  margin-top: 6px;
-  font-size: 22px;
-  font-weight: 900;
-  margin-bottom: 8px;
-}
-
-.pontos ul {
-  list-style: none;
-  padding: 0;
-  display: grid;
-  gap: 4px;
-}
-
-.pontos li {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.compartilhar {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }
 
 /* ---------- par ou ímpar ---------- */
@@ -579,22 +504,10 @@ body {
   }
 }
 
-/* ---------- resultado: situação e desafio ---------- */
-.situacao {
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.3);
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.situacao.sem-pontos,
+/* ---------- aviso de partida sem valer pontos ---------- */
 .aviso-partida {
-  background: #ff5a3c;
+  background: var(--caiu);
   color: #fff;
-}
-
-.aviso-partida {
   position: absolute;
   top: calc(64px + env(safe-area-inset-top));
   left: 12px;
@@ -605,95 +518,6 @@ body {
   font-weight: 700;
   text-align: center;
   pointer-events: none;
-}
-
-.duelo-desafio {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 8px;
-  padding: 14px;
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.35);
-  text-align: center;
-}
-
-.duelo-desafio div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.duelo-desafio span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 700;
-}
-
-.duelo-desafio strong {
-  font-size: 34px;
-  font-weight: 900;
-  color: var(--amarelo);
-}
-
-.duelo-desafio em {
-  font-style: normal;
-  font-weight: 900;
-  opacity: 0.6;
-}
-
-.duelo-desafio p {
-  grid-column: 1 / -1;
-  font-weight: 800;
-}
-
-/* ---------- início: ranking ao vivo, rival e desafio ---------- */
-.placar-titulo {
-  padding-top: 6px;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--texto-suave);
-}
-
-.placar-vazio {
-  padding: 12px 0;
-  color: var(--texto-suave);
-}
-
-.linha.meu {
-  margin: 0 -8px;
-  padding-left: 8px;
-  padding-right: 8px;
-  border-radius: 10px;
-  background: rgba(255, 210, 63, 0.18);
-}
-
-.linha.rival .nome::after {
-  content: ' · rival';
-  font-weight: 600;
-  color: var(--texto-suave);
-}
-
-.frase-rival {
-  padding: 10px 0 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  font-weight: 800;
-  line-height: 1.3;
-}
-
-.convite-desafio {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 14px;
-  border: 2px solid var(--amarelo);
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.35);
-  line-height: 1.35;
 }
 
 .erro-campo {
