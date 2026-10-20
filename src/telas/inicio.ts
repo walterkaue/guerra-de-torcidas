@@ -106,11 +106,11 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
             <strong>Prova de Boleiro</strong>
             <small>8 perguntas · para ou segue</small>
           </button>
-          <div class="jogo-em-breve" aria-disabled="true">
-            <span class="em-breve">em breve</span>
+          <button class="jogo-em-breve jogo-liberado" type="button" data-acao="dia">
+            <span class="em-breve amistoso">amistoso</span>
             <strong>Time do Dia</strong>
             <small>1 clube secreto · 6 chutes</small>
-          </div>
+          </button>
         </div>
         <button class="link-crava" type="button" data-acao="palpites">
           <span class="rotulo">Crava a Rodada</span> Palpita o placar dos jogos do Brasileirão →
@@ -128,6 +128,9 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const jogarProva = (desafio?: string) =>
     irPara(time ? { tela: 'prova', desafio } : { tela: 'times', depois: 'prova', desafio });
   root.querySelector('[data-acao="prova"]')?.addEventListener('click', () => jogarProva());
+  root.querySelector('[data-acao="dia"]')?.addEventListener('click', () =>
+    irPara(time ? { tela: 'timeDoDia' } : { tela: 'times', depois: 'timeDoDia' }),
+  );
   root.querySelectorAll('[data-acao="trocar"]').forEach((b) =>
     b.addEventListener('click', () => irPara({ tela: 'times', depois: 'inicio' })),
   );

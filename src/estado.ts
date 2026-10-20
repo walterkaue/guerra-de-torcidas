@@ -16,6 +16,8 @@ interface Prefs {
   semComoCravar?: boolean;
   /** Marcou "não exibir as regras de novo" na Prova de Boleiro. */
   semComoProva?: boolean;
+  /** Marcou "não exibir de novo" no "Como jogar" do Time do Dia. */
+  semComoDia?: boolean;
   /** "time|apelido" que o servidor já tem (para não regravar à toa). */
   sincronizado?: string;
 }

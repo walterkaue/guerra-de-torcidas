@@ -6,6 +6,7 @@ import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { prefs } from '../estado';
 import type { GestoCobranca, Gestos, ResultadoPartida } from '../jogo/penaltis.ts';
 import type { Ajuda, Degrau, Desfecho, Fim, Passo, PontosProva } from '../jogo/prova.ts';
+import type { Tentativa } from '../jogo/timeDoDia.ts';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -267,6 +268,43 @@ export async function verDesafioProva(id: string): Promise<ResumoDesafioProva | 
   const { data, error } = await comTempoLimite(sb.rpc('ver_prova_desafio', { p_id: id }));
   if (error) throw new ErroServidor('falha');
   return ((data as ResumoDesafioProva[] | null) ?? [])[0] ?? null;
+}
+
+// ---------- Time do Dia (função time-do-dia) ----------
+
+export interface ClubeDaLista {
+  id: string;
+  nome: string;
+  uf: string;
+}
+
+export interface EstadoDoDia {
+  pronto: true;
+  dia: string;
+  numero: number;
+  amistoso: boolean;
+  tentativas: Tentativa[];
+  maxTentativas: number;
+  fim: boolean;
+  acertou: boolean;
+  pontos: number;
+  /** Só quando a partida terminou. */
+  secreto: { id: string; nome: string } | null;
+  sequencia: number;
+  /** Hora (ISO) em que entra o próximo clube. */
+  proximoEm: string;
+  /** Só na ação "estado". */
+  clubes?: ClubeDaLista[];
+}
+
+export type RespostaDoDia = EstadoDoDia | { pronto: false };
+
+export function estadoDoDia(): Promise<RespostaDoDia> {
+  return chamar('time-do-dia', { acao: 'estado' });
+}
+
+export function tentarClube(dia: string, clube: string): Promise<EstadoDoDia> {
+  return chamar('time-do-dia', { acao: 'tentar', dia, clube });
 }
 
 export interface LinhaRanking {

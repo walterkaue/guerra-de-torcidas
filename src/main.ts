@@ -3,7 +3,8 @@ import './estilos/inicio.css';
 import './estilos/resultado.css';
 import './estilos/palpites.css';
 import './estilos/prova.css';
-import { iniciarApp, irPara, registrarTela } from './app';
+import './estilos/timeDoDia.css';
+import { iniciarApp, irPara, linkDoTimeDoDia, registrarTela } from './app';
 import { prefs } from './estado';
 import { timePorId } from './dados/times';
 import { telaInicio } from './telas/inicio';
@@ -15,6 +16,7 @@ import { telaPalpites } from './telas/palpites';
 import { telaFeedback } from './telas/feedback';
 import { telaProva } from './telas/prova';
 import { telaProvaResultado } from './telas/provaResultado';
+import { telaTimeDoDia } from './telas/timeDoDia';
 
 registrarTela('inicio', telaInicio);
 registrarTela('times', telaTimes);
@@ -25,6 +27,7 @@ registrarTela('palpites', telaPalpites);
 registrarTela('feedback', telaFeedback);
 registrarTela('prova', telaProva);
 registrarTela('provaResultado', telaProvaResultado);
+registrarTela('timeDoDia', telaTimeDoDia);
 // Painel do administrador: só baixa o código quando alguém abre #admin.
 registrarTela('admin', (root) => {
   let limpar: (() => void) | undefined;
@@ -46,7 +49,17 @@ if (!prefs.get().time && timePorId(timeDoLink)) prefs.set({ time: timeDoLink! })
 const app = document.querySelector<HTMLDivElement>('#app');
 if (app) {
   iniciarApp(app);
-  irPara(location.hash === '#admin' ? { tela: 'admin' } : { tela: 'inicio' });
+  // ?dia (link do card do Time do Dia) abre direto no jogo; sem time escolhido, passa antes pela escolha.
+  const dia = linkDoTimeDoDia() || (import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso'));
+  irPara(
+    location.hash === '#admin'
+      ? { tela: 'admin' }
+      : dia
+        ? prefs.get().time
+          ? { tela: 'timeDoDia' }
+          : { tela: 'times', depois: 'timeDoDia' }
+        : { tela: 'inicio' },
+  );
   window.addEventListener('hashchange', () => {
     if (location.hash === '#admin') irPara({ tela: 'admin' });
   });

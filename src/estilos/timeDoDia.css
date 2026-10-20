@@ -1,0 +1,208 @@
+/* Time do Dia (desafio diário): celular primeiro, só toque, nada de rolagem horizontal.
+   A grade tem 6 colunas que cabem em 390 px (≈ 56 px cada). */
+
+.time-do-dia {
+  gap: 12px;
+}
+.time-do-dia .adesivo:empty {
+  display: none;
+}
+
+.dia-como .cj-passos {
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* ---------- grade ---------- */
+.dia-cabecalho,
+.dia-celulas {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+}
+.dia-cabecalho span {
+  font: 700 12px var(--fonte-rotulo);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: var(--texto-suave);
+}
+
+.dia-grade {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dia-linha {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.dia-chute {
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dia-linha.vazia .dia-chute {
+  font-weight: 600;
+  color: var(--texto-suave);
+  font-size: 13px;
+}
+.dia-cel {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font: 700 15px var(--fonte-rotulo);
+  font-variant-numeric: tabular-nums;
+  color: var(--cal);
+  overflow: hidden;
+}
+.dia-cel i {
+  font-style: normal;
+  font-size: 15px;
+  font-weight: 900;
+}
+/* 🟩 igual, 🟨 perto, ⬜ longe (as mesmas cores do emoji do card). */
+.dia-cel.certo {
+  background: #2e9d4f;
+  border-color: #2e9d4f;
+  color: #fff;
+}
+.dia-cel.perto {
+  background: #e3b416;
+  border-color: #e3b416;
+  color: var(--tinta);
+}
+.dia-cel.longe {
+  background: #d9d9d4;
+  border-color: #d9d9d4;
+  color: var(--tinta);
+}
+.amostra {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.45);
+  flex: none;
+}
+
+.dia-linha.nova .dia-cel {
+  animation: dia-vira 0.45s ease-out both;
+}
+.dia-linha.nova .dia-cel:nth-child(2) { animation-delay: 0.08s; }
+.dia-linha.nova .dia-cel:nth-child(3) { animation-delay: 0.16s; }
+.dia-linha.nova .dia-cel:nth-child(4) { animation-delay: 0.24s; }
+.dia-linha.nova .dia-cel:nth-child(5) { animation-delay: 0.32s; }
+.dia-linha.nova .dia-cel:nth-child(6) { animation-delay: 0.4s; }
+@keyframes dia-vira {
+  from { transform: rotateX(90deg); }
+  to { transform: rotateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dia-linha.nova .dia-cel { animation: none; }
+}
+
+/* ---------- chute ---------- */
+.dia-chutar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dia-busca {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--cal);
+  /* 16 px ou mais: o iPhone não dá zoom ao focar. */
+  font: 600 17px var(--fonte-texto);
+}
+.dia-busca:focus {
+  outline: none;
+  border-color: var(--amarelo);
+}
+.dia-resultados {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dia-opcao {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--cal);
+  font: 700 16px var(--fonte-texto);
+  text-align: left;
+  touch-action: manipulation;
+}
+.dia-opcao small {
+  font: 700 13px var(--fonte-rotulo);
+  color: var(--texto-suave);
+}
+.dia-opcao.escolhida {
+  background: var(--amarelo);
+  color: var(--tinta);
+}
+.dia-opcao.escolhida small {
+  color: var(--tinta);
+}
+
+/* ---------- fim ---------- */
+.dia-fim {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dia-revelado {
+  padding: 10px 16px;
+  color: var(--txt);
+}
+.dia-revelado h2 {
+  font: 400 34px var(--fonte-placar);
+  text-transform: uppercase;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+.dia-placar {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.dia-placar strong {
+  font: 400 56px var(--fonte-placar);
+  line-height: 1;
+  color: var(--amarelo);
+}
+.dia-placar span {
+  font-weight: 800;
+}
+.dia-proximo {
+  font-size: 15px;
+  color: var(--texto-suave);
+}
+.dia-proximo strong {
+  color: var(--cal);
+  font-variant-numeric: tabular-nums;
+}

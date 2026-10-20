@@ -1,7 +1,7 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 19/10/2026, noite (Prova de Boleiro construída e no menu em amistoso, com servidor, desafio por link e importador de perguntas; Crava em ensaio desde a 32ª rodada)
+> Última atualização: 20/10/2026 (Time do Dia construído e no menu em amistoso, com servidor, card e importador de clubes; dados dos 60 clubes em rascunho, esperando conferência)
 > Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
@@ -392,6 +392,30 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 
 ### Card
 - "Time do Dia #34 · 4/6 · 🔥 5 dias" + a grade de emoji (uma linha por tentativa), **sem nome de clube** (nada de spoiler) e com o link para jogar.
+- Durante o amistoso, o card e o texto do WhatsApp levam "(amistoso)". Não acertou: "X/6". A sequência só aparece a partir de 2 dias.
+
+### Decisões da construção (20/10/2026)
+- **Setas:** ⬆️ (na tela, ↑) quer dizer que o número do secreto é **maior** que o do chute: fundado depois ou com mais títulos. ⬇️, menor.
+- **Divisão vizinha:** A↔B e B↔C. A↔C é "outra" (⬜).
+- **Cores:** cada clube tem 2 cores de uma lista fechada (branco, preto, vermelho, grená, verde, azul, amarelo, laranja), sem ordem. Clube tricolor fica com as 2 principais (anotado no CSV). Azul-celeste e azul-marinho contam como azul.
+- **Capital ou interior:** "interior" é qualquer cidade que não é capital de estado (Santos, São Bernardo do Campo e Balneário Camboriú incluídos).
+- **Títulos do Brasileirão:** lista oficial da CBF (unificação de 2010 com Taça Brasil e Robertão, mais o título de 1937 do Atlético-MG, reconhecido em 2023). O de 1987 é só do Sport (decisão do STF). Contam os títulos até 2025; o campeão de 2026 é atualizado no CSV depois da 38ª rodada.
+- **Sequência:** dias seguidos em que a pessoa terminou o Time do Dia, ganhando ou perdendo. Se ainda não jogou hoje, a sequência até ontem continua valendo.
+- **Número do dia:** o primeiro dia em que alguém abriu o jogo depois da estreia é o #1; cada dia de calendário soma 1 (mesmo dia sem ninguém jogando).
+- **Virada:** a partida é do dia em que começou. Tentativa depois das 00h05 de Brasília é recusada, e a partida daquele dia fica sem terminar (não conta na sequência).
+- **Quem joga:** todo mundo, inclusive "Outro time" (card nas cores neutras). Pede o time antes, como os outros jogos.
+- **Link:** `?dia` abre direto no Time do Dia.
+
+### Como está no servidor (20/10/2026)
+- **Tabelas que o celular não lê** (RLS sem leitura e sem grant): `dia_clubes` (os 60 clubes), `dia_sorteio` (o clube de cada dia) e `dia_partidas` (uma por torcedor por dia: clubes chutados, acertou, pontos, amistoso, sob suspeita). Não usa a tabela `partidas`: fica fora do teto diário.
+- **Função `time-do-dia`**, com as ações `estado` (número do dia, lista de clubes para a busca, minhas tentativas com as pistas, sequência e, só depois do fim, o nome do secreto) e `tentar` (grava o chute e devolve a linha de pistas). Uma trava otimista (`versao`) impede clique duplo ou duas abas. Clube repetido ou fora da lista é recusado.
+- **Sorteio:** no primeiro acesso do dia (horário de Brasília, pelo relógio do servidor), sem agendamento. Não repete clube até passar pela lista inteira; o ciclo novo nunca começa com o clube de ontem. Dois acessos ao mesmo tempo na virada ficam com o primeiro que gravou.
+- **Pistas, pontos, grade, sequência, sorteio e detecção** ficam no módulo puro `src/jogo/timeDoDia.ts` (com testes), copiado para o servidor pelo `npm run compartilhar`.
+- **Detecção:** acerto na 1ª tentativa em 5 dos últimos 7 dias marca a partida como sob suspeita (gravado, sem efeito enquanto for amistoso).
+- **Amistoso:** `config_deteccao.dia_amistoso` = 1. Somar no ranking da semana (por fora do teto) **ainda não está construído**: precisa entrar no cálculo do ranking antes de trocar para 0.
+- **Clubes:** `dados/clubes-do-dia.csv` (id, nome, cidade, UF, região, fundação, títulos, divisão 2026, 2 cores, capital ou interior, `fonte`, `fonte2`, `fonte_titulos`, `fonte_divisao`, data, status, observação). Nasce em rascunho; a sessão de conferência marca `revisada`. `npm run importar-clubes-do-dia` valida tudo (20 por série, UF e região, ano, cores da lista, fontes de domínio aceito, Wikipédia só como `fonte2`, palavras proibidas e dois clubes com as mesmas 6 pistas) e grava só as revisadas, que entram como `ativa`. `aposentada` tira o clube da lista e do sorteio. `--seco` só valida.
+- **Sem clubes importados**, a tela mostra "O Time do Dia entra em campo já já".
+- **Testar a tela sem servidor:** em `npm run dev`, abra `/?diaFalso` (usa o CSV, inclusive os rascunhos; `/?diaFalso=goias` escolhe o secreto).
 
 ### Regras comuns aos jogos de conhecimento
 - Os dois entram em **amistoso por 2 semanas** (não somam pontos) para medir a pontuação real e calibrar.
@@ -460,8 +484,8 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - Como a URL e a publishable key são públicas, ficam versionadas no repositório (o build do GitHub Pages precisa delas). Nada secreto entra no repositório.
 - **Antes de divulgar:** CAPTCHA (Cloudflare Turnstile) no login anônimo, limpeza periódica de usuários anônimos inativos, anti-trapaça completo (inclusive as cobranças do desafio, que hoje chegam ao celular antes da defesa), ranking que aguente muitos jogadores (hoje a semana inteira é recalculada a cada partida fechada; trocar por cálculo incremental ou de minuto em minuto) e decidir sobre o plano Pro (o Free pausa o projeto depois de 1 semana sem uso).
 - **Rotina contra a pausa do plano Free:** um agendamento no GitHub Actions faz uma consulta leve ao banco a cada 2 dias. Enquanto o projeto estiver no Free, isso evita a pausa por 7 dias sem uso. O GitHub desliga agendamentos de repositório público depois de 60 dias sem commit; se isso acontecer, o GitHub avisa por e-mail e basta reativar. Arquivo: `.github/workflows/manter-supabase.yml` (a cada 2 dias às 09h de Brasília e pelo botão "Run workflow"): lê 1 linha do ranking com a publishable key e falha se a resposta não for 200.
-- **Navegação** (19/10): barra com Jogar (Bate Contra Mim, Prova de Boleiro com a etiqueta "amistoso" e Time do Dia com selo "em breve" até ficar pronto), Palpites (Crava a Rodada), Ranking (com a semana passada "provisória até segunda 12h") e Carreira (em breve).
-- **Teto diário entre minigames:** `partidas.minigame` (`penaltis` ou `prova`) e `partidas.amistoso`. As 5 melhores partidas do dia contam somando os minigames; partida de amistoso não ocupa vaga.
+- **Navegação** (19/10): barra com Jogar (Bate Contra Mim, e Prova de Boleiro e Time do Dia com a etiqueta "amistoso"), Palpites (Crava a Rodada), Ranking (com a semana passada "provisória até segunda 12h") e Carreira (em breve).
+- **Teto diário entre minigames:** `partidas.minigame` (`penaltis` ou `prova`) e `partidas.amistoso`. As 5 melhores partidas do dia contam somando os minigames; partida de amistoso não ocupa vaga. O Time do Dia fica fora (tabela `dia_partidas`).
 - **Feedback** (19/10): link "Feedback ou bug? Conta pra gente" na aba Jogar abre um formulário (Bug, Ideia ou Outro, até 1000 caracteres) que grava na tabela `feedbacks`, junto com a tela e o navegador. Ninguém lê pelo celular, nem quem mandou; só o admin, no fim do `#admin`, com "Marcar como lido". Até 5 envios por hora por pessoa. O formulário pede para não colocar dado pessoal.
 - **Palavras proibidas:** `src/palavrasProibidas.test.ts` falha se alguma palavra da seção 7 aparecer no código do jogo (a única exceção é o aviso fixo).
 - **Zerar pré-temporada:** `npm run zerar-pre-temporada` apaga partidas, desafios e ranking (mantém times e torcedores). Mostra as contagens e só apaga depois de digitar ZERAR.

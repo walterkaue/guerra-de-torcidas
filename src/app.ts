@@ -28,11 +28,12 @@ export type Rota =
   | { tela: 'palpites' }
   | { tela: 'admin' }
   | { tela: 'feedback'; de?: string }
-  | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites' | 'prova'; desafio?: string }
+  | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia'; desafio?: string }
   | { tela: 'partida'; desafio?: string }
   | { tela: 'resultado'; dados: DadosResultado }
   | { tela: 'prova'; desafio?: string }
-  | { tela: 'provaResultado'; dados: DadosResultadoProva };
+  | { tela: 'provaResultado'; dados: DadosResultadoProva }
+  | { tela: 'timeDoDia' };
 
 type Limpeza = (() => void) | void;
 type Renderizador = (root: HTMLElement, rota: Rota) => Limpeza;
@@ -66,6 +67,11 @@ export function desafioDoLink(): string | undefined {
 export function desafioProvaDoLink(): string | undefined {
   const p = new URLSearchParams(location.search).get('p');
   return p && /^[a-z0-9]{8}$/i.test(p) ? p.toLowerCase() : undefined;
+}
+
+/** O link do Time do Dia (?dia) abre direto no jogo. */
+export function linkDoTimeDoDia(): boolean {
+  return new URLSearchParams(location.search).has('dia');
 }
 
 /** Escapa texto do usuário (apelido) antes de colocar no HTML. */
