@@ -434,3 +434,7 @@ verify_jwt = true
 # Prova de Boleiro (quiz): uma função com ações (nova, proxima, responder, ajuda).
 [functions.prova]
 verify_jwt = true
+
+# Time do Dia (desafio diário): uma função com ações (estado, tentar).
+[functions.time-do-dia]
+verify_jwt = true
