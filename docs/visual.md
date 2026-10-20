@@ -1,8 +1,8 @@
 # Revisão gráfica — direção "Transmissão de domingo"
 
-> Versão 1.2 · 18/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Versão 1.3 · 20/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
 > Base: o jogo publicado em 18/10/2026 (commit b492b99), testado em 390×844.
-> Mudanças da 1.2: o que muda no MVP antes das divisões e das abas novas (seção 3), ajustes de código passados para o prompt da etapa 3 (seção 5).
+> Mudanças da 1.3: cards de time com "faixa de placar" (seção 3, Escolha do time), no lugar das listras diagonais translúcidas; "sua posição" e recorde na Home e nos resultados.
 
 ## 1. O que vi no jogo hoje
 
@@ -20,23 +20,33 @@ Placar de TV, grito de narrador e arquibancada. Tudo puxa a cor do time de quem 
 |---|---|
 | Fundo | Gramado listrado, como hoje (`#0b3d1f` e `#0e4625`) |
 | Destaque | Amarelo de placar `#ffd23f` (botão principal, números, alertas bons) |
-| Cor do time | `--c1` do time escolhido em faixas inclinadas, no grito do narrador, na arquibancada, no card e na **camiseta lisa** dos batedores (uniforme 1 ou 2; o goleiro usa um tom forte de contraste, ver `docs/bonecos.md`) |
+| Cor do time | `--c1` do time escolhido no bloco do time, no grito do narrador, na arquibancada, no card e na **camiseta lisa** dos batedores (uniforme 1 ou 2; o goleiro usa um tom forte de contraste, ver `docs/bonecos.md`) |
 | Subiu / caiu | Verde `#3ddc84` e vermelho `#ff5a3c`, sempre com seta ou ícone, nunca só a cor |
 | Números e gritos | **Anton** (condensada, de placar) |
 | Rótulos | **Barlow Condensed** em caixa alta |
 | Texto | **Barlow** |
-| Assinatura visual | Faixas inclinadas (−8°) como as tarjas de transmissão, "AO VIVO" piscando, adesivo do narrador levemente torto |
+| Assinatura visual | Tarjas de transmissão inclinadas (−8°) nos elementos de TV (placar, "AO VIVO", adesivo do narrador levemente torto). **Cores de time sempre cheias**, nunca translúcidas por cima de outra cor |
 
 As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB no total), dentro do limite de 300 KB do `CLAUDE.md`.
 
 ## 3. Tela a tela
 
+### Escolha do time (decidido em 20/10)
+- **Card "faixa de placar":** cor 1 cheia; faixa reta na cor 2 embaixo (~1/4 da altura); nos tricolores, filete de 3 px da 3ª cor entre as duas (Bahia e Fluminense e Grêmio: branco; São Paulo: preto).
+- Nome em Barlow Condensed 800, caixa alta, alinhado em cima à esquerda, cor pelo `corDeTexto(cor1)`; sem sombra em fundo claro.
+- Times de cor 1 branca (Bragantino, Santos, São Paulo) ganham um contorno interno sutil, para não sumirem.
+- Selecionado: borda amarela `#ffd23f` + halo, como hoje.
+- **Proibido:** listras na direção da camisa, faixa diagonal, estrelas, xadrez ou qualquer elemento de camisa ou escudo. Todos os clubes usam o mesmo desenho; a diferença está na cor e no nome.
+- Mesmo desenho reaproveitado onde o time aparece em bloco (Home, ranking, Crava), sem mudar o que já usa a divisão `c1/c2`.
+
 ### Início
 - Tarja "AO VIVO" e **contagem regressiva** até zerar a semana.
 - Bloco do time nas cores dele, com a cidade embaixo (segunda camisa).
-- **Duelo com o rival** (o cabo de guerra): barra dividida nas duas cores, com a frase do narrador do momento (`rival_colado` etc.).
+- **Cabo de guerra contra o rival:** barra dividida nas duas cores, com a frase do narrador do momento (`rival_colado` etc.).
 - Mini tabela da Série A com a sua torcida destacada e a seta de subida ou queda.
-- **Grade 2×2 com os 4 jogos** (20/10, ver "Home" na seção 9 do `jogo.md`): cards iguais com tarja inclinada nas cores do time, nome em Anton, selo de status e o teto diário à vista no card dos Pênaltis ("faltam 2 partidas que contam hoje"). O mini ranking vem depois da grade.
+- **Sua posição na semana** (20/10): "Você é o 3º de 14 torcedores na semana", com seta se subiu ou caiu desde a última visita.
+- Botão principal + **"hoje contam mais 2 partidas"** (o teto diário à vista, para ninguém achar que é injusto).
+- Aviso único da **pré-temporada** ("tudo vale ponto, mas zera antes do lançamento") no lugar dos selos "Em teste" e "Ensaio".
 - Barra de navegação: Jogar, Ranking, Palpites, Carreira.
 
 ### Partida
@@ -52,10 +62,11 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 - **Desempenho:** grama, linhas, rede e 3 quadros da torcida ficam pré-desenhados; a cada quadro só bonecos, bola, traves e efeitos são desenhados ao vivo. Na ola, a torcida é redesenhada agrupada por cor (um preenchimento por cor). Medido em 19/10 com CPU 4× mais lenta (perfil de celular médio do Chrome), 390×844: 1,2 ms de trabalho por quadro em média, 99% dos quadros abaixo de 10 ms.
 - Contraste: texto sobre a cor do time usa sempre `corDeTexto` (escuro em time de cor clara, branco no resto).
 
-### Resultado
+### Resultado (todos os minigames)
 - Placar gigante, "VITÓRIA" ou "DERROTA", confete nas cores do time quando vence.
 - **"+85 PRO [TIME]"** contando de 0 até o total, com os bônus em etiquetas (com o artigo certo: "pra Chapecoense").
 - **O efeito na torcida:** "subiu de 5º pra 3º na Série A" com barra enchendo, e quanto falta para o próximo.
+- **Sua posição naquele minigame** na semana e o **recorde pessoal**; quando bate o recorde, selo "NOVO RECORDE!" (que entra no card).
 - Botões: "Chamar no X1" (WhatsApp, o maior), Stories, Placar em emoji, Copiar link, e "Revanche" como ação principal.
 
 ### Ranking
@@ -71,7 +82,7 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 - **Sem divisões ainda:** onde está "Série A", mostrar o ranking geral da semana com os 20 times (Campeão da semana, com a Maior torcida como segunda aba). Sem faixa de rebaixamento.
 - **Sem cidade ainda:** o bloco do time não mostra cidade.
 - **Abas Palpites e Carreira:** aparecem com selo "em breve", sem tela vazia. Ranking mostra só a aba Semana.
-- **Ranking público só de torcidas:** nenhum apelido aparece em ranking.
+- **Ranking público só de torcidas:** nenhum apelido aparece em ranking; cada pessoa vê só a própria posição.
 
 ### Bonecos
 - Estilo "Silhueta premium", aprovado em 19/10: ver `docs/bonecos.md`.
@@ -84,14 +95,13 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 
 ## 5. Ajustes encontrados no código
 
-Os três ajustes abaixo entraram no prompt da etapa 3 (bloco A), junto com o desempate:
-- **Artigo do time:** o card e a tela de resultado escrevem "pro {nome}" fixo. Com time feminino sai errado ("pro Chapecoense"). `src/dados/times.ts` ainda não tem o campo `artigo` nem o `rival`.
-- **`CLAUDE.md` e `.env.example` desatualizados:** ainda falam da chave `anon` e da `service_role`.
-- **Frases do narrador:** `src/jogo/narrador.ts` ainda tem as frases provisórias da etapa 2 (com "goleiro do {time}" se referindo a quem joga e "torcida do {time}" sem artigo). Precisa da versão 1.1.
+- (18/10, já feitos na etapa 3) Artigo do time, `CLAUDE.md`/`.env.example` com chaves antigas, frases provisórias do narrador.
+- (20/10) `.cartao-time .listras` em `src/style.css`: listras de 115° na cor 2 com `opacity: 0.35` por cima da cor 1, o que desbota as cores. Substituir pela faixa de placar. `src/telas/times.ts` passa `--c3` igual à cor 2; passar a usar a 3ª cor opcional de `src/dados/times.ts`.
 
 ## 6. Ordem sugerida no Claude Code
 
-1. Ajustes da seção 5 + desempate + Supabase (etapa 3) — **opusplan, Alta**.
-2. Fontes, cores e tela de Início — **opusplan, Alta**.
-3. Partida em perspectiva + efeitos de gol — **opusplan, Alta**.
-4. Resultado com efeito no ranking — **opusplan, Alta** (depende do ranking existir no servidor).
+1. Ajustes da seção 5 + desempate + Supabase (etapa 3) — feito.
+2. Fontes, cores e tela de Início — feito.
+3. Partida em perspectiva + efeitos de gol — feito.
+4. Resultado com efeito no ranking — feito.
+5. Cards de time "faixa de placar" (20/10) — **Sonnet + Média**.

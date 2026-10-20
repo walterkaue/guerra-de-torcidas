@@ -94,3 +94,30 @@ export function sortear(n: number): number {
   while (buf[0] >= limite);
   return buf[0] % n;
 }
+
+/** Posição da pessoa naquele minigame e recorde pessoal, para a tela de resultado (seção 5 do jogo.md). */
+export interface Desempenho {
+  /** Nula quando a partida não entra (sob suspeita). */
+  posicao: number | null;
+  total: number;
+  recorde: number | null;
+  novoRecorde: boolean;
+}
+
+/**
+ * Lê `desempenho_partida` ou `desempenho_dia`. A partida já está gravada quando isto roda, então uma
+ * falha aqui só tira o bloco de posição da tela (não derruba o fechamento).
+ */
+export async function lerDesempenho(
+  sb: SupabaseClient,
+  funcao: 'desempenho_partida' | 'desempenho_dia',
+  args: Record<string, unknown>,
+): Promise<Desempenho | null> {
+  const { data, error } = await sb.rpc(funcao, args);
+  if (error) {
+    console.error(error);
+    return null;
+  }
+  const l = ((data ?? []) as { posicao: number | null; total: number; recorde: number | null; novo_recorde: boolean }[])[0];
+  return l ? { posicao: l.posicao, total: l.total, recorde: l.recorde, novoRecorde: !!l.novo_recorde } : null;
+}

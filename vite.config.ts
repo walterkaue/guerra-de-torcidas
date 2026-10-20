@@ -7,6 +7,6 @@ export default defineConfig({
     target: 'es2022',
   },
   test: {
-    include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'scripts/**/*.test.ts', 'supabase/testes/**/*.test.ts'],
   },
 });

@@ -6,7 +6,7 @@
 //   tentar { dia, clube }           grava a tentativa e devolve o estado com a linha nova
 
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
-import { admin, configDeteccao, ErroHttp, lerCorpo, servir, sortear, usuario } from '../_shared/comum.ts';
+import { admin, configDeteccao, ErroHttp, lerCorpo, lerDesempenho, servir, sortear, usuario } from '../_shared/comum.ts';
 import {
   TENTATIVAS,
   acabou,
@@ -23,7 +23,7 @@ import {
   type DiaSorteado,
   type Tentativa,
 } from '../_shared/jogo/timeDoDia.ts';
-import { diaBrasilia } from '../_shared/tempo.ts';
+import { diaBrasilia, semanaBrasilia } from '../_shared/tempo.ts';
 
 /** Partida começada antes da virada aceita tentativa até 00h05 (mesma tolerância das partidas). */
 const TOLERANCIA_MS = 5 * 60 * 1000;
@@ -182,6 +182,8 @@ async function montarEstado(
     pontos: partida?.pontos ?? 0,
     // O nome do secreto só sai quando a partida termina.
     secreto: fim ? { id: secreto.id, nome: secreto.nome } : null,
+    // Posição no Time do Dia daquele dia e recorde pessoal, só depois do fim.
+    desempenho: fim ? await lerDesempenho(sb, 'desempenho_dia', { p_torcedor: uid, p_dia: dia }) : null,
     sequencia: sequenciaDeDias(
       dias.map((d) => d.dia),
       diaBrasilia(new Date()),
@@ -262,6 +264,12 @@ async function tentar(sb: SupabaseClient, uid: string, corpo: Record<string, unk
     .maybeSingle();
   if (eUp) throw eUp;
   if (!gravada) throw new ErroHttp(409, 'conflito');
+
+  // Fora do teto diário: soma por cima na semana do dia (seção 7.2), no time de quando jogou.
+  if (fim && !(gravada as Partida).amistoso) {
+    const { error: eRank } = await sb.rpc('recalcular_ranking', { p_semana: semanaBrasilia(new Date(inicioDoDia(dia))) });
+    if (eRank) throw eRank;
+  }
 
   return montarEstado(sb, uid, dia, secretoId, gravada as Partida, clubes, amistoso);
 }

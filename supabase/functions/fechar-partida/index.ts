@@ -3,7 +3,7 @@
 // celular não conhece) depois de receber a escolha do jogador.
 // Corpo: { partidaId: string, gestos: Gestos }
 
-import { admin, configDeteccao, ErroHttp, lerCorpo, servir, sortear, usuario } from '../_shared/comum.ts';
+import { admin, configDeteccao, ErroHttp, lerCorpo, lerDesempenho, servir, sortear, usuario } from '../_shared/comum.ts';
 import { motivoSuspeita } from '../_shared/jogo/deteccao.ts';
 import {
   RODADAS_MAX,
@@ -158,6 +158,7 @@ servir(async (req) => {
   const { error: eRank } = await sb.rpc('recalcular_ranking', { p_semana: semana });
   if (eRank) throw eRank;
   const rankingDepois = await posicao();
+  const desempenho = await lerDesempenho(sb, 'desempenho_partida', { p_partida: partida.id });
 
   const { data: estado, error: eE } = await sb
     .from('partidas')
@@ -194,6 +195,7 @@ servir(async (req) => {
     contaNoRanking: estado.conta_no_teto && !estado.sob_suspeita,
     sobSuspeita: estado.sob_suspeita,
     ranking: { antes: rankingAntes, depois: rankingDepois },
+    desempenho,
     desafio: codigo ? { codigo } : null,
     // Desafio: mais pontos vence; empate em pontos fica com quem desafiou (chegou primeiro).
     comparacao: desafio && {

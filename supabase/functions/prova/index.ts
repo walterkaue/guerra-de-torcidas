@@ -8,7 +8,7 @@
 //   ajuda     { partidaId, tipo: 'tira_duas' | 'arquibancada' | 'troca' }
 
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
-import { admin, configDeteccao, ErroHttp, lerCorpo, servir, sortear, usuario } from '../_shared/comum.ts';
+import { admin, configDeteccao, ErroHttp, lerCorpo, lerDesempenho, servir, sortear, usuario } from '../_shared/comum.ts';
 import {
   AJUDAS,
   GERAL,
@@ -233,6 +233,7 @@ async function fechar(sb: SupabaseClient, uid: string, partida: Partida, est: Es
     if (error) throw error;
     contaNoRanking = e.conta_no_teto && !e.sob_suspeita;
   }
+  const desempenho = await lerDesempenho(sb, 'desempenho_partida', { p_partida: partida.id });
 
   // Toda partida que não é de desafio vira um desafio com as mesmas 8 perguntas.
   let desafio: { codigo: string } | null = null;
@@ -277,6 +278,7 @@ async function fechar(sb: SupabaseClient, uid: string, partida: Partida, est: Es
     contaNoRanking,
     sobSuspeita: Boolean(motivo),
     semana,
+    desempenho,
     desafio,
     comparacao,
   };
