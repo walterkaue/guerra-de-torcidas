@@ -70,9 +70,9 @@ export function calcularPontos(passos: readonly Passo[]): PontosProva {
 
 export function escadaEmoji(passos: readonly Passo[], fim: Fim): string {
   const linha = passos
-    .map((p) => (p.desfecho !== 'acertou' ? '🟥' : p.ajuda ? '🆘' : '🟩'))
+    .map((p) => (p.desfecho !== 'acertou' ? '❌' : p.ajuda ? '💡' : '✅'))
     .join('');
-  return fim === 'parou' ? `${linha}⏹️` : linha;
+  return fim === 'parou' ? `${linha}✋` : linha;
 }
 
 /** "cheguei na 6ª e parei", "errei na 5ª", "o tempo acabou na 3ª", "fiz 8 de 8". */

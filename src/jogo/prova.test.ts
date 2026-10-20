@@ -75,10 +75,10 @@ describe('pontuação da Prova de Boleiro', () => {
 });
 
 describe('card em emoji', () => {
-  it('🟩 acertou, 🆘 acertou com ajuda, 🟥 errou, ⏹️ parou', () => {
+  it('✅ acertou, 💡 acertou com ajuda, ❌ errou, ✋ parou', () => {
     const passos: Passo[] = [...certas(3), { desfecho: 'acertou', ajuda: true }, certa];
-    expect(escadaEmoji(passos, 'parou')).toBe('🟩🟩🟩🆘🟩⏹️');
-    expect(escadaEmoji([...certas(2), { desfecho: 'errou', ajuda: true }], 'errou')).toBe('🟩🟩🟥');
+    expect(escadaEmoji(passos, 'parou')).toBe('✅✅✅💡✅✋');
+    expect(escadaEmoji([...certas(2), { desfecho: 'errou', ajuda: true }], 'errou')).toBe('✅✅❌');
   });
 
   it('resumo sem o texto das perguntas', () => {

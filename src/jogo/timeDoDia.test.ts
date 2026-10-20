@@ -34,10 +34,10 @@ const base: ClubeDoDia = {
 const clube = (o: Partial<ClubeDoDia>): ClubeDoDia => ({ ...base, id: 'chute', nome: 'Chute', ...o });
 
 describe('pistas', () => {
-  it('o próprio clube é tudo 🟩 e acerta', () => {
+  it('o próprio clube é tudo 🟢 e acerta', () => {
     const t = tentar(base, base);
     expect(t.acertou).toBe(true);
-    expect(linhaEmoji(t.pistas)).toBe('🟩🟩🟩🟩🟩🟩');
+    expect(linhaEmoji(t.pistas)).toBe('🟢🟢🟢🟢🟢🟢');
     expect(quantasCertas(t.pistas)).toBe(6);
   });
 
@@ -82,7 +82,7 @@ describe('pistas', () => {
     expect(compararClubes(clube({ cores: ['azul', 'vermelho'] }), base).cores.tom).toBe('longe');
   });
 
-  it('capital ou interior: igual ou diferente (sem 🟨)', () => {
+  it('capital ou interior: igual ou diferente (sem 🟡)', () => {
     expect(compararClubes(clube({ capital: false }), base).capital.tom).toBe('certo');
     expect(compararClubes(clube({ capital: true }), base).capital.tom).toBe('longe');
   });
@@ -112,7 +112,7 @@ describe('pontos e card', () => {
       compararClubes(clube({ uf: 'RJ' }), base),
       compararClubes(base, base),
     ];
-    expect(gradeEmoji(linhas)).toBe('⬜⬜⬜🟨⬜⬜\n🟨🟩🟩🟩🟩🟩\n🟩🟩🟩🟩🟩🟩');
+    expect(gradeEmoji(linhas)).toBe('⚪⚪⚪🟡⚪⚪\n🟡🟢🟢🟢🟢🟢\n🟢🟢🟢🟢🟢🟢');
   });
 
   it('linha do card', () => {

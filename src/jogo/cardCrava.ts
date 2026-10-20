@@ -2,7 +2,7 @@
 // porcentagem) e "Resultado da rodada" (pontos e linha de emoji). Os dois levam o aviso fixo.
 
 import { corDeTexto, type Time } from '../dados/times';
-import { FONTE, PLACAR, ROTULO, quebrarTexto, rodapePreTemporada, seloRecorde } from './card';
+import { FONTE, fundoFaixaDePlacar, PLACAR, ROTULO, quebrarTexto, rodapePreTemporada, seloRecorde } from './card';
 import { ordinalRodada } from './crava';
 import { AVISO_RESENHA, type LinhaMeuPalpite } from './cravaTela';
 
@@ -29,17 +29,10 @@ export function desenharCardCrava(d: DadosCardCrava): HTMLCanvasElement {
   canvas.width = L;
   canvas.height = A;
   const c = canvas.getContext('2d')!;
-  const [c1, c2] = d.time.cores;
+  const [c1] = d.time.cores;
   const txt = corDeTexto(c1);
 
-  c.fillStyle = c1;
-  c.fillRect(0, 0, L, A);
-  c.save();
-  c.globalAlpha = 0.18;
-  c.fillStyle = c2;
-  c.rotate(-0.35);
-  for (let x = -A; x < L * 2; x += 180) c.fillRect(x, -200, 70, A * 2);
-  c.restore();
+  fundoFaixaDePlacar(c, d.time);
 
   c.textAlign = 'center';
   c.fillStyle = txt;
@@ -48,7 +41,7 @@ export function desenharCardCrava(d: DadosCardCrava): HTMLCanvasElement {
   c.font = `400 96px ${PLACAR}`;
   c.fillText(`${ordinalRodada(d.rodada)} RODADA`.toUpperCase(), L / 2, 240);
 
-  c.fillStyle = 'rgba(0,0,0,0.55)';
+  c.fillStyle = txt === '#111111' ? 'rgba(17,17,17,0.9)' : 'rgba(0,0,0,0.55)';
   c.beginPath();
   c.roundRect(60, 290, L - 120, 720, 40);
   c.fill();
@@ -104,6 +97,6 @@ export function desenharCardCrava(d: DadosCardCrava): HTMLCanvasElement {
   c.fillText('Crava você também →', L / 2, A - 140);
   c.font = `700 32px ${FONTE}`;
   c.fillText(d.link, L / 2, A - 98);
-  rodapePreTemporada(c, txt);
+  rodapePreTemporada(c, corDeTexto(d.time.cores[1]));
   return canvas;
 }

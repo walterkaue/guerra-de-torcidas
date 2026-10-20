@@ -127,7 +127,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
         <ul class="cj-passos">
           <li><span class="cj-icone" aria-hidden="true">🔎</span><p><strong>Um clube secreto por dia</strong>, o mesmo pra todo mundo. Clubes das Séries A, B e C de 2026. Troca às 00h.</p></li>
           <li><span class="cj-icone" aria-hidden="true">⚽</span><p><strong>6 chutes.</strong> Escolha um clube na busca e veja as pistas.</p></li>
-          <li><span class="cj-icone" aria-hidden="true">🟩</span><p><strong>🟩 igual, 🟨 perto, ⬜ longe.</strong> Estado (🟨 = mesma região), fundação (🟨 = até 10 anos), títulos do Brasileirão (🟨 = até 2), série, as 2 cores (🟨 = uma igual) e capital ou interior.</p></li>
+          <li><span class="cj-icone" aria-hidden="true">🟢</span><p><strong>🟢 igual, 🟡 perto, ⚪ longe.</strong> Estado (🟡 = mesma região), fundação (🟡 = até 10 anos), títulos do Brasileirão (🟡 = até 2), série, as 2 cores (🟡 = uma igual) e capital ou interior.</p></li>
           <li><span class="cj-icone" aria-hidden="true">↑</span><p><strong>↑ ou ↓</strong> no ano e nos títulos: o secreto tem número maior (fundado depois, mais títulos) ou menor.</p></li>
           <li><span class="cj-icone" aria-hidden="true">🏆</span><p><strong>Pontos:</strong> 100 de primeira, depois 85, 70, 55, 40 e 25.</p></li>
         </ul>

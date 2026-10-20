@@ -232,6 +232,6 @@ describe('narrador e card', () => {
         { acerto: null, certeza: false },
         { acerto: 'errou', certeza: false },
       ]),
-    ).toBe('🎯✅⭐☑️❌');
+    ).toBe('🎯✅⭐👍❌');
   });
 });

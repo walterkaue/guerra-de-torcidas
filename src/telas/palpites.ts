@@ -122,7 +122,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
         </button>
         <button class="botao botao-sec" type="button" data-acao="card-resultado" hidden>
           Mandar o resultado da rodada
-          <small>Seus pontos e um emoji por jogo: 🎯 ✅ ☑️ ❌</small>
+          <small>Seus pontos e um emoji por jogo: 🎯 ✅ 👍 ❌</small>
         </button>
       </section>
       </div>
@@ -138,7 +138,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
             <li><span class="cj-icone" aria-hidden="true">👀</span><p><strong>Bola rolando.</strong> O palpite tranca e aparece como a torcida cravou (com 20 palpites ou mais). Os pontos saem quando o placar é confirmado.</p></li>
             <li><span class="cj-icone" aria-hidden="true">📲</span><p><strong>Manda no grupo.</strong> No fim da página: <em>Mandar meus palpites</em> gera o card com seus placares; depois dos jogos, <em>Mandar o resultado</em> mostra seus pontos e um emoji por jogo.</p></li>
           </ul>
-          <p class="cj-nota">🎯 placar exato · ✅ vencedor e saldo · ☑️ só o vencedor · ❌ errou · ⭐ jogo da certeza</p>
+          <p class="cj-nota">🎯 placar exato · ✅ vencedor e saldo · 👍 só o vencedor · ❌ errou · ⭐ jogo da certeza</p>
           <label class="cj-check"><input type="checkbox" data-cc-pular> Não exibir novamente</label>
           <button class="botao" type="button" data-cc-fechar>Bora cravar!</button>
         </div>

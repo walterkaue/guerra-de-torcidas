@@ -47,7 +47,7 @@ export interface ClubeDoDia {
   capital: boolean;
 }
 
-/** 🟩 certo, 🟨 perto, ⬜ longe. */
+/** 🟢 certo, 🟡 perto, ⚪ longe. */
 export type Tom = 'certo' | 'perto' | 'longe';
 /** O número do secreto é maior (acima) ou menor (abaixo) que o do chute. */
 export type Seta = 'acima' | 'abaixo';
@@ -77,9 +77,9 @@ export interface Tentativa {
   acertou: boolean;
 }
 
-/** Até 10 anos de diferença na fundação = 🟨. */
+/** Até 10 anos de diferença na fundação = 🟡. */
 export const PERTO_ANOS = 10;
-/** Até 2 títulos de diferença = 🟨. */
+/** Até 2 títulos de diferença = 🟡. */
 export const PERTO_TITULOS = 2;
 
 const ORDEM_DIVISAO: Record<Divisao, number> = { A: 1, B: 2, C: 3 };
@@ -125,7 +125,7 @@ export function pontosDoDia(acertouNa: number | null): number {
   return PONTOS[acertouNa - 1];
 }
 
-export const EMOJI_TOM: Record<Tom, string> = { certo: '🟩', perto: '🟨', longe: '⬜' };
+export const EMOJI_TOM: Record<Tom, string> = { certo: '🟢', perto: '🟡', longe: '⚪' };
 
 export function linhaEmoji(p: Pistas): string {
   return NOMES_PISTAS.map((n) => EMOJI_TOM[p[n].tom]).join('');

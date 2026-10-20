@@ -24,6 +24,17 @@ export const FONTE = 'Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans
 export const PLACAR = 'Anton, Impact, "Arial Narrow", sans-serif';
 export const ROTULO = '"Barlow Condensed", "Arial Narrow", sans-serif';
 
+/** Fundo "faixa de placar" (docs/visual.md): cor 1 cheia, faixa reta da cor 2 embaixo e filete da 3ª cor. */
+export function fundoFaixaDePlacar(c: CanvasRenderingContext2D, time: Time): void {
+  const topo = A - 230;
+  c.fillStyle = time.cores[0];
+  c.fillRect(0, 0, L, A);
+  c.fillStyle = time.cores[1];
+  c.fillRect(0, topo, L, A - topo);
+  c.fillStyle = time.cor3 ?? time.cores[1];
+  c.fillRect(0, topo, L, 8);
+}
+
 export function quebrarTexto(c: CanvasRenderingContext2D, texto: string, largura: number): string[] {
   const palavras = texto.split(' ');
   const linhas: string[] = [];
@@ -77,21 +88,13 @@ export function desenharCard(d: DadosCard): HTMLCanvasElement {
   canvas.width = L;
   canvas.height = A;
   const c = canvas.getContext('2d')!;
-  const [c1, c2] = d.time.cores;
+  const [c1] = d.time.cores;
   const txt = corDeTexto(c1);
 
-  // Fundo em listras diagonais com as cores do time.
-  c.fillStyle = c1;
-  c.fillRect(0, 0, L, A);
-  c.save();
-  c.globalAlpha = 0.18;
-  c.fillStyle = c2;
-  c.rotate(-0.35);
-  for (let x = -A; x < L * 2; x += 180) c.fillRect(x, -200, 70, A * 2);
-  c.restore();
+  fundoFaixaDePlacar(c, d.time);
 
   // Faixa escura para o placar.
-  c.fillStyle = 'rgba(0,0,0,0.55)';
+  c.fillStyle = txt === '#111111' ? 'rgba(17,17,17,0.9)' : 'rgba(0,0,0,0.55)';
   c.beginPath();
   c.roundRect(70, 330, L - 140, 420, 40);
   c.fill();
@@ -133,7 +136,7 @@ export function desenharCard(d: DadosCard): HTMLCanvasElement {
   c.fillText('Faz mais? →', L / 2, A - 140);
   c.font = `700 32px ${FONTE}`;
   c.fillText(d.link, L / 2, A - 98);
-  rodapePreTemporada(c, txt);
+  rodapePreTemporada(c, corDeTexto(d.time.cores[1]));
 
   return canvas;
 }

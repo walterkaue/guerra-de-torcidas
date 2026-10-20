@@ -19,7 +19,7 @@ describe('placar em emoji', () => {
     const texto = placarEmoji({ resultado: r, nomeJogador: 'Chapecoense', nomeAdversario: 'Máquina', linhaPontos: '+55 pra Chapecoense', link: 'x' });
     expect(texto).toContain('Chapecoense 3 x 2 Máquina');
     expect(texto).toContain('Cobranças: ⚽🎯✨❌❌');
-    expect(texto).toContain('🧤🥅💨🥅🧤');
+    expect(texto).toContain('✅❌💨❌✅');
     expect(texto.endsWith('+55 pra Chapecoense\nx')).toBe(true);
   });
 

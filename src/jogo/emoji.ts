@@ -10,9 +10,9 @@ export function emojiCobranca(c: ResultadoCobranca): string {
 }
 
 export function emojiDefesa(d: ResultadoDefesa): string {
-  if (d.desfecho === 'defesa') return '🧤';
+  if (d.desfecho === 'defesa') return '✅';
   if (d.desfecho === 'fora') return '💨';
-  return '🥅';
+  return '❌';
 }
 
 /** Os 5 do tempo normal, e a morte súbita depois de uma barra. */

@@ -105,8 +105,8 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
         <ul class="cj-passos" data-regras ${mostrarComo ? '' : 'hidden'}>
           <li><span class="cj-icone" aria-hidden="true">❓</span><p><strong>8 perguntas, 15 s cada.</strong> 2 fáceis, 2 médias, 2 difíceis e 2 de craque. Toque na alternativa.</p></li>
           <li><span class="cj-icone" aria-hidden="true">✋</span><p><strong>Parar ou seguir.</strong> Da 3ª em diante, antes de ver a pergunta: para e leva o que juntou, ou arrisca.</p></li>
-          <li><span class="cj-icone" aria-hidden="true">🟥</span><p><strong>Errou ou o tempo acabou?</strong> Leva metade do que juntou.</p></li>
-          <li><span class="cj-icone" aria-hidden="true">🆘</span><p><strong>3 ajudas, uma de cada:</strong> Tira duas, Arquibancada e Troca. O relógio não para.</p></li>
+          <li><span class="cj-icone" aria-hidden="true">❌</span><p><strong>Errou ou o tempo acabou?</strong> Leva metade do que juntou.</p></li>
+          <li><span class="cj-icone" aria-hidden="true">💡</span><p><strong>3 ajudas, uma de cada:</strong> Tira duas, Arquibancada e Troca. O relógio não para.</p></li>
           <li><span class="cj-icone" aria-hidden="true">🏆</span><p><strong>Pontos:</strong> 8, 12, 18 e 25 por degrau. 8 de 8 ganha +24.</p></li>
         </ul>
         <label class="cj-check" ${mostrarComo ? '' : 'hidden'}><input type="checkbox" data-pular> Não exibir as regras de novo</label>

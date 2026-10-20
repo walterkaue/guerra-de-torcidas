@@ -159,7 +159,7 @@ export function palpiteContra(p: Placar, mandanteId: string, visitanteId: string
   return false;
 }
 
-export const EMOJI_ACERTO: Record<Acerto, string> = { exato: '🎯', saldo: '✅', vencedor: '☑️', errou: '❌' };
+export const EMOJI_ACERTO: Record<Acerto, string> = { exato: '🎯', saldo: '✅', vencedor: '👍', errou: '❌' };
 
 /** Linha de emoji do card "Resultado da rodada": um por jogo palpitado, ⭐ logo depois do jogo da certeza. */
 export function linhaEmoji(resultados: readonly Pick<PontosDoJogo, 'acerto' | 'certeza'>[]): string {

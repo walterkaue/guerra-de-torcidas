@@ -2,7 +2,7 @@
 // em emoji. Nunca mostra o nome de nenhum clube (nada de spoiler para o grupo).
 
 import { corDeTexto, type Time } from '../dados/times';
-import { FONTE, PLACAR, ROTULO, quebrarTexto, rodapePreTemporada, seloRecorde } from './card';
+import { FONTE, fundoFaixaDePlacar, PLACAR, ROTULO, quebrarTexto, rodapePreTemporada, seloRecorde } from './card';
 
 const L = 1080;
 const A = 1350;
@@ -26,17 +26,10 @@ export function desenharCardDia(d: DadosCardDia): HTMLCanvasElement {
   canvas.width = L;
   canvas.height = A;
   const c = canvas.getContext('2d')!;
-  const [c1, c2] = d.time.cores;
+  const [c1] = d.time.cores;
   const txt = corDeTexto(c1);
 
-  c.fillStyle = c1;
-  c.fillRect(0, 0, L, A);
-  c.save();
-  c.globalAlpha = 0.18;
-  c.fillStyle = c2;
-  c.rotate(-0.35);
-  for (let x = -A; x < L * 2; x += 180) c.fillRect(x, -200, 70, A * 2);
-  c.restore();
+  fundoFaixaDePlacar(c, d.time);
 
   c.textAlign = 'center';
   c.fillStyle = txt;
@@ -49,7 +42,7 @@ export function desenharCardDia(d: DadosCardDia): HTMLCanvasElement {
   const linhas = d.grade.split('\n').slice(0, 6);
   const altGrade = linhas.length * 74;
   const altCaixa = 230 + altGrade;
-  c.fillStyle = 'rgba(0,0,0,0.55)';
+  c.fillStyle = txt === '#111111' ? 'rgba(17,17,17,0.9)' : 'rgba(0,0,0,0.55)';
   c.beginPath();
   c.roundRect(70, 280, L - 140, altCaixa, 40);
   c.fill();
@@ -83,7 +76,7 @@ export function desenharCardDia(d: DadosCardDia): HTMLCanvasElement {
   c.fillText('E você? →', L / 2, A - 140);
   c.font = `700 32px ${FONTE}`;
   c.fillText(d.link, L / 2, A - 98);
-  rodapePreTemporada(c, txt);
+  rodapePreTemporada(c, corDeTexto(d.time.cores[1]));
 
   return canvas;
 }

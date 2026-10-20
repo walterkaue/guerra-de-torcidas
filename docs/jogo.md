@@ -224,6 +224,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Horário de Brasília:** UTC−3 fixo (sem horário de verão desde 2019).
 
 ### Card de resultado
+- **Emojis básicos (decidido em 20/10):** nos textos de compartilhamento só emojis antigos e universais (sem seletor de variação nem quadrados coloridos), para não quebrar no WhatsApp. Os cards de imagem usam o mesmo fundo "faixa de placar" do card do time.
 - Imagem gerada no próprio celular: placar, cores do time, frase do narrador, "Fulano fez 47 pontos {pro_time}" (com o artigo certo) e o link do desafio.
 - Botões: WhatsApp, stories (via compartilhamento nativo), placar em emoji, copiar link.
 - **Botão principal do resultado:** "MAIS UMA" depois de vitória e "REVANCHE" depois de derrota (decidido em 19/10). O que o botão faz não muda.
@@ -268,7 +269,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Porcentagem da torcida:** aparece depois do início do jogo e só com pelo menos 20 palpites naquele jogo (abaixo disso: "pouca gente cravou esse").
 - **Cards:**
   - "Meus palpites" (antes): só os placares cravados e o jogo da certeza, sem porcentagem.
-  - "Resultado da rodada" (depois): pontos {pro_time} e uma linha de emoji, um por jogo palpitado: 🎯 exato, ✅ saldo, ☑️ vencedor, ❌ errou, com ⭐ logo depois do jogo da certeza.
+  - "Resultado da rodada" (depois): pontos {pro_time} e uma linha de emoji, um por jogo palpitado: 🎯 exato, ✅ saldo, 👍 vencedor, ❌ errou, com ⭐ logo depois do jogo da certeza.
   - Os dois levam o aviso fixo "Aqui é só resenha".
 - **Frases do narrador:** `docs/narrador.md`, seção 9 (versão 1.3).
 
@@ -336,7 +337,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Como o banco nasce:** lotes escritos numa sessão do Code com busca na web, sempre com fonte, em CSV (status rascunho). **Uma segunda sessão, nova, confere cada fonte** e marca revisada ou descarta (decidido em 19/10: não há revisão manual). Só entra no jogo, via `npm run importar-perguntas`, pergunta revisada e com fonte.
 
 ### Card
-- "Prova de Boleiro: cheguei na 6ª e parei, 58 {pro_time}" + a escada em emoji: 🟩 acertou, 🟥 errou, ⏹️ parou, 🆘 usou ajuda (ex.: 🟩🟩🟩🆘🟩⏹️).
+- "Prova de Boleiro: cheguei na 6ª e parei, 58 {pro_time}" + a escada em emoji: ✅ acertou, ❌ errou, ✋ parou, 💡 usou ajuda (ex.: ✅✅✅💡✅✋).
 - **Nunca mostra o texto das perguntas**, porque o desafio por link usa as mesmas.
 
 ## 7.2 Desafio diário — "Time do Dia"
@@ -348,7 +349,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **6 tentativas.** Cada tentativa é um clube escolhido numa lista com busca (sem texto livre).
 - A cada tentativa, o servidor devolve uma linha de pistas comparando com o clube secreto:
 
-| Pista | 🟩 | 🟨 | ⬜ |
+| Pista | 🟢 | 🟡 | ⚪ |
 |---|---|---|---|
 | Estado | mesmo estado | mesma região | outra região |
 | Fundação | mesmo ano | até 10 anos de diferença | mais longe |
