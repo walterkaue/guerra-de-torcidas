@@ -93,18 +93,14 @@ export function ultimoConfronto(resultados: readonly Resultado[], a: string, b: 
 export interface TimeNomeado {
   id: string;
   nome: string;
-  artigo: 'o' | 'a';
 }
 
 const decimal = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-const golsPorJogo = (c: Campanha) => {
-  const media = c.gp / c.jogos;
-  return `${decimal(media)} ${Math.round(media * 10) >= 20 ? 'gols' : 'gol'} por jogo`;
-};
 
 /**
- * Até 2 linhas curtas de apoio para o cartão do jogo: o confronto anterior e os gols do mandante
- * em casa e do visitante fora. Linha sem dado suficiente (menos de 3 jogos) fica de fora.
+ * Até 2 linhas curtas de apoio para o cartão do jogo (bater o olho e cravar): o confronto anterior
+ * e a média de gols do mandante em casa e do visitante fora. Sem dado suficiente (menos de 3 jogos
+ * em casa ou fora), a linha de gols fica de fora.
  */
 export function dicasDoJogo(resultados: readonly Resultado[], mandante: TimeNomeado, visitante: TimeNomeado): string[] {
   const dicas: string[] = [];
@@ -117,9 +113,9 @@ export function dicasDoJogo(resultados: readonly Resultado[], mandante: TimeNome
   const casa = campanha(resultados, mandante.id, 'casa');
   const fora = campanha(resultados, visitante.id, 'fora');
   if (casa.jogos >= 3 && fora.jogos >= 3) {
-    const art = (t: TimeNomeado) => `${t.artigo} ${t.nome}`;
-    const frase = `Em casa, ${art(mandante)} faz ${golsPorJogo(casa)}; fora, ${art(visitante)} faz ${golsPorJogo(fora)}`;
-    dicas.push(frase.charAt(0).toUpperCase() + frase.slice(1));
+    dicas.push(
+      `Gols por jogo: ${mandante.nome} ${decimal(casa.gp / casa.jogos)} em casa · ${visitante.nome} ${decimal(fora.gp / fora.jogos)} fora`,
+    );
   }
   return dicas;
 }

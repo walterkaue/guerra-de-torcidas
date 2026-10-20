@@ -2,6 +2,7 @@
 // gravar antes do início, pela hora do servidor), os próprios pontos e as leituras agregadas.
 
 import type { Placar } from '../jogo/crava';
+import type { Resultado } from '../jogo/tabela';
 import { comTempoLimite, ErroServidor, garantirSessao, supabase } from './api';
 
 export interface Jogo {
@@ -156,4 +157,14 @@ export async function minhaPosicaoCrava(rodada: number | null): Promise<MinhaPos
   const { data, error } = await comTempoLimite(sb.rpc('minha_posicao_crava', { p_rodada: rodada }));
   if (error) falhou(error);
   return ((data ?? []) as MinhaPosicao[])[0] ?? null;
+}
+
+/** Resultados da temporada inteira (placar da API), para a tabela e os indicadores dos cartões. */
+export async function resultadosDaTemporada(): Promise<Resultado[]> {
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(
+    sb.from('resultados_temporada').select('rodada, mandante_id, visitante_id, inicio, gols_mandante, gols_visitante').order('inicio'),
+  );
+  if (error) falhou(error);
+  return (data ?? []) as Resultado[];
 }

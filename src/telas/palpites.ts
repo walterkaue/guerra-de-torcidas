@@ -4,7 +4,7 @@
 // Quem decide se o palpite ainda vale é o servidor (RLS pela hora dele); a tela só acompanha.
 
 import { esc, irPara, type Rota } from '../app';
-import { ID_OUTRO, corDeTexto, proTime, timePorId, type Time } from '../dados/times';
+import { ID_OUTRO, TIMES, corDeTexto, proTime, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { desenharCardCrava, type DadosCardCrava } from '../jogo/cardCrava';
 import {
@@ -17,6 +17,7 @@ import {
   type PontosDoJogo,
 } from '../jogo/crava';
 import { AVISO_RESENHA, adiado, faseDoJogo, horaDoJogo, rodadaEmFoco, tempoAte, textoMeusPalpites, textoResultadoRodada } from '../jogo/cravaTela';
+import { ZONA_REBAIXAMENTO, classificacao, dicasDoJogo, type Letra, type LinhaTabela, type Resultado } from '../jogo/tabela';
 import { escolherFrase, type ContextoNarrador, type Etiqueta } from '../narrador/escolher';
 import type { EventoNarrador } from '../narrador/frases';
 import { lerRecentes, registrarVista } from '../narrador/historico';
@@ -30,6 +31,7 @@ import {
   meusDadosDoCrava,
   minhaPosicaoCrava,
   rankingCrava,
+  resultadosDaTemporada,
   rodadasDoCrava,
   valendoDesdeRodada,
   type ComoCravaram,
@@ -44,6 +46,15 @@ const LINK = 'https://torcida.kauewalter.com.br/';
 const nomeDo = (id: string) => timePorId(id)?.nome ?? id;
 const iguais = (a?: Placar, b?: Placar) => !!a && !!b && a.m === b.m && a.v === b.v;
 const placarTexto = (p: Placar) => `${p.m} x ${p.v}`;
+const OFICIAIS = TIMES.filter((t) => t.id !== ID_OUTRO).map((t) => t.id);
+const NOME_LETRA: Record<Letra, string> = { V: 'vitória', E: 'empate', D: 'derrota' };
+
+/** Últimos 5 jogos em quadradinhos V/E/D (do mais antigo ao mais recente). */
+function formaHtml(forma: readonly Letra[]): string {
+  if (!forma.length) return '';
+  const rotulo = `Últimos ${forma.length} jogos: ${forma.map((l) => NOME_LETRA[l]).join(', ')}`;
+  return `<span class="forma" role="img" aria-label="${rotulo}">${forma.map((l) => `<i class="f-${l}" aria-hidden="true">${l}</i>`).join('')}</span>`;
+}
 
 export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   const time = timePorId(prefs.get().time);
@@ -58,6 +69,10 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   let valendoDesde = 99;
   let rodada: number | null = null;
   let rankingDe: 'rodada' | 'tudo' = 'rodada';
+  let visao: 'palpites' | 'tabela' = 'palpites';
+  // Resultados da temporada (placar da API) e a tabela calculada deles: apoio para cravar.
+  let temporada: Resultado[] = [];
+  let tabela = new Map<string, LinhaTabela>();
   const rascunho = new Map<string, Placar>();
   const como = new Map<string, ComoCravaram>();
   const fraseDoJogo = new Map<string, string>();
@@ -73,6 +88,12 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
         <h2 class="titulo-placar">Crava a Rodada</h2>
         <button class="ajuda" type="button" data-acao="como-cravar" aria-label="Como cravar">?</button>
       </header>
+      <div class="abas abas-crava" role="tablist" aria-label="O que ver">
+        <button role="tab" class="rotulo" aria-selected="true" data-visao="palpites">Palpites</button>
+        <button role="tab" class="rotulo" aria-selected="false" data-visao="tabela">Tabela</button>
+      </div>
+      <section class="tabela-campeonato" data-tabela hidden></section>
+      <div class="visao-palpites" data-visao-palpites>
       <p class="faixa-ensaio" data-ensaio hidden><strong>Modo ensaio:</strong> os palpites valem pra resenha e pro ranking do Crava, mas ainda não somam no ranking da semana.</p>
       <nav class="seletor-rodada" aria-label="Rodada" hidden>
         <button type="button" class="voltar" data-acao="rodada-ant" aria-label="Rodada anterior">‹</button>
@@ -104,6 +125,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
           <small>Seus pontos e um emoji por jogo: 🎯 ✅ ☑️ ❌</small>
         </button>
       </section>
+      </div>
       <section class="como-jogar" role="dialog" aria-modal="true" aria-labelledby="cc-titulo" hidden>
         <div class="cj-caixa">
           <p class="rotulo cj-faixa faixa-tv">Antes da rodada</p>
@@ -111,6 +133,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
           <ul class="cj-passos">
             <li><span class="cj-icone" aria-hidden="true">✎</span><p><strong>Crava o placar.</strong> Use − e + nos dois times e toque em CRAVAR. Dá pra mudar até a bola rolar, e pode pular os jogos que quiser.</p></li>
             <li><span class="cj-icone" aria-hidden="true">★</span><p><strong>Jogo da certeza.</strong> A estrela marca 1 jogo por rodada que vale o <strong>dobro</strong>. Escolha até o 1º jogo da rodada começar; depois trava.</p></li>
+            <li><span class="cj-icone" aria-hidden="true">📊</span><p><strong>Na dúvida, olhe os dados.</strong> Embaixo de cada time: posição, pontos e os últimos 5 jogos (V vitória, E empate, D derrota). A aba <em>Tabela</em> mostra o campeonato inteiro.</p></li>
             <li><span class="cj-icone" aria-hidden="true">🎯</span><p><strong>Pontos.</strong> Placar exato 10 · vencedor e saldo certos (ou empate com outro placar) 7 · só o vencedor 5 · errou 0. Na torcida entram em dobro, até 300 por rodada.</p></li>
             <li><span class="cj-icone" aria-hidden="true">👀</span><p><strong>Bola rolando.</strong> O palpite tranca e aparece como a torcida cravou (com 20 palpites ou mais). Os pontos saem quando o placar é confirmado.</p></li>
             <li><span class="cj-icone" aria-hidden="true">📲</span><p><strong>Manda no grupo.</strong> No fim da página: <em>Mandar meus palpites</em> gera o card com seus placares; depois dos jogos, <em>Mandar o resultado</em> mostra seus pontos e um emoji por jogo.</p></li>
@@ -176,11 +199,21 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
           <button type="button" data-acao="mais" data-lado="${lado}" aria-label="Mais um gol ${esc(nomeDo(id))}" ${valor === GOLS_MAX ? 'disabled' : ''}>+</button>
         </div>`
       : `<span class="gols-final">${valor ?? ''}</span>`;
-    return `<div class="linha-time">
+    const l = editavel ? tabela.get(id) : undefined;
+    const indicador = l && l.jogos ? `<span class="indicador">${l.posicao}º · ${l.pontos} pts ${formaHtml(l.forma)}</span>` : '';
+    return `<div class="linha-time${indicador ? ' com-indicador' : ''}">
       <span class="cor" style="--c1:${t?.cores[0] ?? '#666'};--c2:${t?.cores[1] ?? '#999'}"></span>
-      <span class="nome">${esc(nomeDo(id))}${time && id === time.id ? '<small> seu time</small>' : ''}</span>
+      <span class="nome"><span class="nome-time">${esc(nomeDo(id))}${time && id === time.id ? '<small> seu time</small>' : ''}</span>${indicador}</span>
       ${ajuste}
     </div>`;
+  }
+
+  function dicasHtml(j: Jogo): string {
+    const m = timePorId(j.mandante_id);
+    const v = timePorId(j.visitante_id);
+    if (!m || !v || !temporada.length) return '';
+    const dicas = dicasDoJogo(temporada, m, v);
+    return dicas.length ? `<p class="dicas">${dicas.map(esc).join('<br />')}</p>` : '';
   }
 
   function blocoComo(j: Jogo): string {
@@ -220,6 +253,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
         ${topo}
         ${linhaTime(j.mandante_id, 'm', atual.m, true)}
         ${linhaTime(j.visitante_id, 'v', atual.v, true)}
+        ${dicasHtml(j)}
         <div class="jogo-rodape">
           <span class="estado">${salvo ? `Cravado: <strong>${placarTexto(salvo)}</strong>` : 'Ainda não cravado'}</span>
           <button type="button" class="botao cravar" data-acao="cravar" ${pronto ? 'disabled' : ''}>${pronto ? 'Cravado ✓' : 'Cravar'}</button>
@@ -409,6 +443,54 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     }
   }
 
+  // ---------- tabela do campeonato ----------
+  function desenharTabela(): void {
+    const el = $('[data-tabela]');
+    const linhas = [...tabela.values()].sort((a, b) => a.posicao - b.posicao);
+    if (!linhas.some((l) => l.jogos > 0)) {
+      el.innerHTML = '<p class="vazio">A tabela aparece depois da próxima atualização dos resultados.</p>';
+      return;
+    }
+    const ultimaRodada = Math.max(...temporada.map((r) => r.rodada));
+    el.innerHTML = `
+      <div class="tabela tabela-brasileirao" role="table" aria-label="Classificação do Brasileirão">
+        <div class="tb-linha tb-cabeca" role="row">
+          <span role="columnheader">#</span><span></span><span role="columnheader">Time</span>
+          <span role="columnheader" title="Pontos">P</span><span role="columnheader" title="Jogos">J</span>
+          <span role="columnheader" title="Saldo de gols">SG</span><span role="columnheader">Últimos 5</span>
+        </div>
+        ${linhas
+          .map((l) => {
+            const t = timePorId(l.timeId);
+            const classes = ['tb-linha'];
+            if (l.posicao > linhas.length - ZONA_REBAIXAMENTO) classes.push('z4');
+            if (time && l.timeId === time.id) classes.push('meu');
+            return `<div class="${classes.join(' ')}" role="row">
+              <span class="pos">${l.posicao}</span>
+              <span class="cor" style="--c1:${t?.cores[0] ?? '#666'};--c2:${t?.cores[1] ?? '#999'}"></span>
+              <span class="nome">${esc(t?.nome ?? l.timeId)}</span>
+              <strong>${l.pontos}</strong><span>${l.jogos}</span>
+              <span>${l.saldo > 0 ? '+' : ''}${l.saldo}</span>
+              ${formaHtml(l.forma)}
+            </div>`;
+          })
+          .join('')}
+      </div>
+      <p class="explica">Até a ${ultimaRodada}ª rodada, pelos placares da API (pode atrasar uns minutos depois do apito).
+      Desempate: pontos, vitórias, saldo e gols marcados. Em vermelho, a zona de rebaixamento.
+      Últimos 5: V vitória, E empate, D derrota, do mais antigo ao mais recente.</p>`;
+  }
+
+  root.querySelectorAll<HTMLButtonElement>('[data-visao]').forEach((b) =>
+    b.addEventListener('click', () => {
+      visao = b.dataset.visao === 'tabela' ? 'tabela' : 'palpites';
+      root.querySelectorAll('[data-visao]').forEach((o) => o.setAttribute('aria-selected', String(o === b)));
+      $('[data-visao-palpites]').hidden = visao !== 'palpites';
+      $('[data-tabela]').hidden = visao !== 'tabela';
+      if (visao === 'tabela') desenharTabela();
+    }),
+  );
+
   // ---------- ações ----------
   async function salvar(j: Jogo, botao: HTMLButtonElement): Promise<void> {
     if (!time) {
@@ -592,11 +674,25 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       if (saiu) return;
       if (rodada === null || !jogos.some((x) => x.rodada === rodada)) rodada = rodadaEmFoco(jogos, new Date());
       desenhar();
+      void carregarTemporada();
     } catch {
       if (!saiu) elLista.innerHTML = '<p class="vazio">Sem conexão com o placar agora. Tenta de novo daqui a pouco.</p>';
     }
   }
   void recarregar();
+
+  async function carregarTemporada(): Promise<void> {
+    try {
+      temporada = await resultadosDaTemporada();
+    } catch {
+      return; // sem os dados de apoio, a aba funciona igual
+    }
+    if (saiu) return;
+    tabela = new Map(classificacao(temporada, OFICIAIS).map((l) => [l.timeId, l]));
+    // Só os cartões abertos mostram os indicadores: redesenha sem mexer no grito do topo.
+    for (const j of daRodada()) if (faseDoJogo(j, new Date()) === 'aberto') desenharCartao(j.id);
+    if (visao === 'tabela') desenharTabela();
+  }
 
   // Jogo que começa com a tela aberta tranca na hora (o servidor já recusa; a tela acompanha).
   let fasesVistas = '';

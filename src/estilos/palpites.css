@@ -576,3 +576,141 @@ span.certeza {
   font: 700 14px var(--fonte-rotulo);
   text-transform: uppercase;
 }
+
+/* ---------- indicadores e tabela do campeonato (apoio para cravar) ---------- */
+.abas-crava {
+  margin-top: -6px;
+}
+
+.linha-time.com-indicador {
+  min-height: 54px;
+}
+
+.linha-time .nome {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nome-time {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.indicador {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+
+.forma {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.forma i {
+  width: 13px;
+  height: 13px;
+  display: grid;
+  place-items: center;
+  border-radius: 3px;
+  font: 700 9px var(--fonte-rotulo);
+  font-style: normal;
+  color: var(--tinta);
+}
+
+.forma .f-V {
+  background: var(--subiu);
+}
+
+.forma .f-E {
+  background: #9aa39d;
+}
+
+.forma .f-D {
+  background: var(--caiu);
+  color: #fff;
+}
+
+.dicas {
+  padding: 6px 10px;
+  border-left: 3px solid rgba(255, 210, 63, 0.5);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--texto-suave);
+}
+
+.tabela-brasileirao {
+  padding: 4px 8px;
+}
+
+.tb-linha {
+  display: grid;
+  grid-template-columns: 22px 8px minmax(0, 1fr) 28px 24px 32px 74px;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-linha + .tb-linha {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.tb-linha > :nth-child(n + 4) {
+  text-align: center;
+}
+
+.tb-cabeca {
+  min-height: 28px;
+  font: 700 12px var(--fonte-rotulo);
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.tb-linha .pos {
+  font: 700 15px var(--fonte-rotulo);
+  color: var(--texto-suave);
+}
+
+.tb-linha .cor {
+  height: 20px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--c1) 55%, var(--c2) 55%);
+  transform: skewX(var(--inclinacao));
+}
+
+.tb-linha .nome {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.tb-linha strong {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 16px;
+}
+
+.tb-linha .forma {
+  justify-content: flex-end;
+}
+
+.tb-linha.meu {
+  background: rgba(255, 210, 63, 0.16);
+}
+
+.tb-linha.z4 {
+  box-shadow: inset 3px 0 0 var(--caiu);
+}

@@ -71,7 +71,7 @@ describe('dicas do cartão', () => {
   const cru = { id: 'cruzeiro', nome: 'Cruzeiro', artigo: 'o' as const };
   const chape = { id: 'chapecoense', nome: 'Chapecoense', artigo: 'a' as const };
 
-  it('confronto do 1º turno e gols em casa e fora, com o artigo certo', () => {
+  it('confronto do 1º turno e gols em casa e fora', () => {
     dia = 0;
     const res = [
       r(5, 'chapecoense', 0, 2, 'cruzeiro'),
@@ -84,7 +84,7 @@ describe('dicas do cartão', () => {
     ];
     expect(dicasDoJogo(res, cru, chape)).toEqual([
       '1º turno: Chapecoense 0 x 2 Cruzeiro',
-      'Em casa, o Cruzeiro faz 2,0 gols por jogo; fora, a Chapecoense faz 0,0 gol por jogo',
+      'Gols por jogo: Cruzeiro 2,0 em casa · Chapecoense 0,0 fora',
     ]);
   });
 
