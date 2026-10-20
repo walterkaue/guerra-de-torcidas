@@ -2,12 +2,12 @@
 // porcentagem) e "Resultado da rodada" (pontos e linha de emoji). Os dois levam o aviso fixo.
 
 import { corDeTexto, type Time } from '../dados/times';
-import { FONTE, fundoFaixaDePlacar, PLACAR, ROTULO, quebrarTexto, rodapeCard, seloRecorde } from './card';
+import { DESLOC, FONTE, fundoFaixaDePlacar, PLACAR, ROTULO, quebrarTexto, rodapeCard, seloRecorde } from './card';
 import { ordinalRodada } from './crava';
 import { AVISO_RESENHA, type LinhaMeuPalpite } from './cravaTela';
 
 const L = 1080;
-const A = 1350;
+const A = 1920;
 
 export type DadosCardCrava =
   | { tipo: 'meus'; time: Time; rodada: number; linhas: readonly LinhaMeuPalpite[]; link: string }
@@ -33,6 +33,8 @@ export function desenharCardCrava(d: DadosCardCrava): HTMLCanvasElement {
   const txt = corDeTexto(c1);
 
   fundoFaixaDePlacar(c, d.time);
+  // Stories 9:16: o conteúdo desce para fora das zonas que o Instagram cobre.
+  c.translate(0, DESLOC);
 
   c.textAlign = 'center';
   c.fillStyle = txt;

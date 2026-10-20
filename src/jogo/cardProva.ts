@@ -2,10 +2,10 @@
 // Nunca mostra o texto das perguntas (o desafio por link usa as mesmas).
 
 import { corDeTexto, type Time } from '../dados/times';
-import { FONTE, fundoFaixaDePlacar, PLACAR, ROTULO, quebrarTexto, rodapeCard, seloRecorde } from './card';
+import { DESLOC, FONTE, fundoFaixaDePlacar, PLACAR, ROTULO, quebrarTexto, rodapeCard, seloRecorde } from './card';
 
 const L = 1080;
-const A = 1350;
+const A = 1920;
 const EMOJI = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
 
 export interface DadosCardProva {
@@ -37,6 +37,8 @@ export function desenharCardProva(d: DadosCardProva): HTMLCanvasElement {
   const txt = corDeTexto(c1);
 
   fundoFaixaDePlacar(c, d.time);
+  // Stories 9:16: o conteúdo desce para fora das zonas que o Instagram cobre.
+  c.translate(0, DESLOC);
 
   c.textAlign = 'center';
   c.fillStyle = txt;
