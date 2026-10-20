@@ -473,6 +473,12 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · T
 
 - Direção **"Transmissão de domingo"** aprovada em 18/10/2026: placar de TV inclinado, grito do narrador como adesivo na cor do time, arquibancada nas cores do time, campo em perspectiva.
 - Detalhe, tela a tela, e ordem de implementação: `docs/visual.md`.
+- **Home** (decidida em 20/10, para o teste com amigos): os 4 jogos com o mesmo peso. Ordem: barra AO VIVO, convite de X1 (só quando a pessoa chega por link), bloco do time com o cabo de guerra contra o rival, **grade 2×2 de cards iguais**, mini ranking, link de feedback. Cada card tem selo, nome, uma linha do que é e uma linha de status:
+  - **Pênaltis:** "Valendo" + "faltam N partidas que contam hoje" (o teto do dia mora aqui).
+  - **Prova de Boleiro:** "Em teste".
+  - **Time do Dia:** "Em teste"; se já terminou hoje, "Feito ✓ · volta em 5h 12m".
+  - **Crava a Rodada:** "Ensaio" (enquanto a rodada em foco for menor que `valendo_desde_rodada`) ou "Valendo"; status "32ª rodada · fecha em 3h" (até o próximo jogo aberto começar) ou "Cravado ✓" (todos os jogos abertos da rodada com palpite).
+  - Tocar no card abre o jogo; sem time, Pênaltis, Prova e Time do Dia passam antes pela escolha de time (o Crava pede o time só na hora de cravar). Nada de "em breve" em jogo que já existe. Textos de status em `src/jogo/statusJogos.ts` (com testes).
 - **Bonecos:** estilo "Silhueta premium" (aprovado em 19/10): formas chapadas sem contorno, camiseta lisa nas cores do time (uniforme 1 ou 2), goleiro num tom forte que contrasta com os dois times, tons de pele e cabelos variados, homens e mulheres. Cada lado tem 5 batedores diferentes (um por cobrança) e 1 goleiro, sorteados a cada partida. Detalhe em `docs/bonecos.md`.
 
 ## 10. Roadmap

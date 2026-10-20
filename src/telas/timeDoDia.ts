@@ -290,6 +290,8 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
   function terminar(): void {
     const e = estado!;
     elChutar.hidden = true;
+    // O fim já explica se soma ou não: o aviso do topo sairia repetido.
+    $('[data-aviso-amistoso]').hidden = true;
     const n = e.tentativas.length;
     if (!frasesFinais.length) {
       const f1 = e.acertou

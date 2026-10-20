@@ -1,17 +1,44 @@
-// Tela inicial (docs/visual.md, "Início" e "No MVP"): AO VIVO com contagem, bloco do time,
-// cabo de guerra contra o rival, mini tabela do ranking geral, teto do dia e barra de navegação.
+// Tela inicial (docs/jogo.md, seção 9, "Home"): AO VIVO com contagem, bloco do time com o cabo de
+// guerra contra o rival, os 4 jogos em grade (com selo de status vivo), mini tabela e feedback.
 
 import { desafioDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, TIMES, corDeTexto, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
+import { formatarVolta, linhaPenaltis, statusCrava } from '../jogo/statusJogos';
 import { escolherFrase } from '../narrador/escolher';
 import { rivalDaSemana, situacaoDoDuelo } from '../narrador/rival';
 import { contextoDoTime } from '../narrador/sessao';
-import { ouvirRanking, partidasFechadasHoje, rankingDaSemana, verDesafio, verDesafioProva, type LinhaRanking } from '../servidor/api';
+import {
+  estadoDoDia,
+  ouvirRanking,
+  partidasFechadasHoje,
+  rankingDaSemana,
+  verDesafio,
+  verDesafioProva,
+  type LinhaRanking,
+} from '../servidor/api';
+import { jogosDoCrava, meusDadosDoCrava, valendoDesdeRodada, type Jogo } from '../servidor/crava';
 import { diaBrasilia, msAteZerarSemana, semanaBrasilia } from '../servidor/tempo';
+import { sincronizarTorcedor } from '../servidor/torcedor';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 
 export const TETO_DIARIO = 5;
+// Em desenvolvimento, ?diaFalso usa o Time do Dia de mentira também no card (src/dev/diaFalso.ts).
+const FALSA_DIA = import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso');
+
+type JogoDaHome = 'penaltis' | 'prova' | 'dia' | 'crava';
+/** `aguardando`: selo reservado (invisível) até o servidor dizer se a rodada vale ou é ensaio. */
+type TipoSelo = 'valendo' | 'teste' | 'aguardando';
+
+/** Card da grade: selo de status, nome, uma linha do que é e a linha de status (preenchida depois). */
+function cardJogo(id: JogoDaHome, nome: string, oQueE: string, selo: string, tipo: TipoSelo, linha = ''): string {
+  return `<button class="card-jogo" type="button" data-jogo="${id}">
+    <span class="selo-jogo rotulo ${tipo}">${selo}</span>
+    <span class="nome-jogo">${nome}</span>
+    <span class="o-que-e">${oQueE}</span>
+    <span class="status-jogo rotulo" aria-live="polite">${linha}</span>
+  </button>`;
+}
 const CHAVE_DUELO = 'gdt:duelo';
 const CHAVE_POSICOES = 'gdt:posicoes';
 
@@ -60,6 +87,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       </section>`
     : `<section class="bloco-time sem-time">
         <p class="rotulo">Qual é a sua torcida?</p>
+        <p class="sem-time-nota">Sem cadastro. Abre e joga.</p>
         <button class="botao botao-sec" type="button" data-acao="trocar">Escolher meu time</button>
       </section>`;
 
@@ -86,6 +114,13 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         <p class="adesivo" data-frase-rival hidden></p>
       </section>
 
+      <section class="grade-jogos" aria-label="Jogos"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>
+        ${cardJogo('penaltis', 'Pênaltis', 'Bate 5, pega 5', 'Valendo', 'valendo', linhaPenaltis(null, TETO_DIARIO))}
+        ${cardJogo('prova', 'Prova de Boleiro', '8 perguntas · para quando quiser', 'Em teste', 'teste')}
+        ${cardJogo('dia', 'Time do Dia', 'Adivinha o clube em 6 chutes', 'Em teste', 'teste')}
+        ${cardJogo('crava', 'Crava a Rodada', 'Palpita o placar do Brasileirão', 'Ensaio', 'aguardando')}
+      </section>
+
       <section class="mini-tabela" aria-label="Ranking da semana" aria-live="polite">
         <header>
           <p class="rotulo">Campeão da semana</p>
@@ -94,29 +129,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         <div class="mini-linhas"><p class="vazio">Carregando o ranking…</p></div>
       </section>
 
-      <section class="jogar" aria-label="Jogos">
-        <button class="botao" type="button" data-acao="jogar">
-          Pênaltis
-          <small>Bate 5, pega 5</small>
-        </button>
-        <p class="teto" data-teto>Sem cadastro. Abre e joga.</p>
-        <div class="jogos-em-breve">
-          <button class="jogo-em-breve jogo-liberado" type="button" data-acao="prova">
-            <span class="em-breve amistoso">em teste</span>
-            <strong>Prova de Boleiro</strong>
-            <small>8 perguntas · para quando quiser</small>
-          </button>
-          <button class="jogo-em-breve jogo-liberado" type="button" data-acao="dia">
-            <span class="em-breve amistoso">em teste</span>
-            <strong>Time do Dia</strong>
-            <small>Adivinha o clube em 6 chutes</small>
-          </button>
-        </div>
-        <button class="link-crava" type="button" data-acao="palpites">
-          <span class="rotulo">Crava a Rodada</span> Palpita o placar dos jogos do Brasileirão →
-        </button>
-        <button class="link-feedback" type="button" data-acao="feedback">💬 Feedback ou bug? Conta pra gente</button>
-      </section>
+      <button class="link-feedback" type="button" data-acao="feedback">💬 Feedback ou bug? Conta pra gente</button>
 
       ${barraNavegacao('jogar')}
     </main>
@@ -124,41 +137,96 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
   const jogar = (desafio?: string) =>
     irPara(time ? { tela: 'partida', desafio } : { tela: 'times', depois: 'partida', desafio });
-  root.querySelector('[data-acao="jogar"]')?.addEventListener('click', () => jogar());
   const jogarProva = (desafio?: string) =>
     irPara(time ? { tela: 'prova', desafio } : { tela: 'times', depois: 'prova', desafio });
-  root.querySelector('[data-acao="prova"]')?.addEventListener('click', () => jogarProva());
-  root.querySelector('[data-acao="dia"]')?.addEventListener('click', () =>
-    irPara(time ? { tela: 'timeDoDia' } : { tela: 'times', depois: 'timeDoDia' }),
+  const abrir: Record<JogoDaHome, () => void> = {
+    penaltis: () => jogar(),
+    prova: () => jogarProva(),
+    dia: () => irPara(time ? { tela: 'timeDoDia' } : { tela: 'times', depois: 'timeDoDia' }),
+    // Palpites funciona sem time (pede o time só na hora de cravar), como antes.
+    crava: () => irPara({ tela: 'palpites' }),
+  };
+  root.querySelectorAll<HTMLElement>('[data-jogo]').forEach((b) =>
+    b.addEventListener('click', () => abrir[b.dataset.jogo as JogoDaHome]()),
   );
   root.querySelectorAll('[data-acao="trocar"]').forEach((b) =>
     b.addEventListener('click', () => irPara({ tela: 'times', depois: 'inicio' })),
   );
   root.querySelector('[data-acao="ranking"]')?.addEventListener('click', () => irPara({ tela: 'ranking' }));
-  root.querySelector('[data-acao="palpites"]')?.addEventListener('click', () => irPara({ tela: 'palpites' }));
   root.querySelector('[data-acao="feedback"]')?.addEventListener('click', () => irPara({ tela: 'feedback', de: 'inicio' }));
   ligarBarraNavegacao(root);
 
+  // ---------- status vivo dos cards ----------
+  /** Troca o selo (quando vem) e a linha de status; `feito` pinta a linha de verde. */
+  const status = (jogo: JogoDaHome, selo: [string, TipoSelo] | null, linha?: string, feito = false) => {
+    const card = root.querySelector<HTMLElement>(`[data-jogo="${jogo}"]`)!;
+    if (selo) {
+      const el = card.querySelector<HTMLElement>('.selo-jogo')!;
+      el.textContent = selo[0];
+      el.className = `selo-jogo rotulo ${selo[1]}`;
+    }
+    if (linha !== undefined) card.querySelector<HTMLElement>('.status-jogo')!.textContent = linha;
+    card.classList.toggle('feito', feito);
+  };
+  let voltaDoDia: number | null = null;
+  let crava: { jogos: Jogo[]; palpites: Set<string> | null; valendoDesde: number } | null = null;
+
+  function atualizarRelogios(): void {
+    if (voltaDoDia !== null) status('dia', null, `Feito ✓ · volta em ${formatarVolta(voltaDoDia - Date.now())}`, true);
+    if (crava) {
+      const s = statusCrava(crava.jogos, crava.palpites, crava.valendoDesde, new Date());
+      if (s) status('crava', s.ensaio ? ['Ensaio', 'teste'] : ['Valendo', 'valendo'], s.linha, s.cravado);
+    }
+  }
+
   // ---------- contagem até zerar a semana ----------
   const elContagem = root.querySelector<HTMLElement>('[data-contagem]')!;
-  const relogio = window.setInterval(() => (elContagem.textContent = formatarContagem(msAteZerarSemana())), 1000);
+  let tique = 0;
+  const relogio = window.setInterval(() => {
+    elContagem.textContent = formatarContagem(msAteZerarSemana());
+    if (++tique % 20 === 0) atualizarRelogios();
+  }, 1000);
 
-  // ---------- teto do dia ----------
-  const elTeto = root.querySelector<HTMLElement>('[data-teto]')!;
+  // Pênaltis: o teto do dia (soma com a Prova quando ela sair do teste).
   if (time) {
     partidasFechadasHoje(diaBrasilia())
-      .then((n) => {
-        if (saiu) return;
-        const faltam = TETO_DIARIO - n;
-        elTeto.innerHTML =
-          faltam > 0
-            ? `Hoje contam mais <strong>${faltam}</strong> ${faltam === 1 ? 'partida' : 'partidas'} pro ranking.`
-            : `Hoje só as <strong>5 melhores</strong> contam: supera a pior pra subir.`;
-      })
+      .then((n) => !saiu && status('penaltis', null, linhaPenaltis(TETO_DIARIO - n, TETO_DIARIO)))
       .catch(() => {
-        // sem internet: fica o texto padrão
+        // sem internet: fica a regra geral
       });
   }
+
+  // Time do Dia: feito hoje? (precisa do time, como o próprio jogo)
+  if (time) {
+    (async () => {
+      const api = FALSA_DIA ? await import('../dev/diaFalso') : { estadoDoDia };
+      if (!FALSA_DIA) await sincronizarTorcedor();
+      const e = await api.estadoDoDia();
+      if (saiu || !e.pronto) return;
+      if (!e.amistoso) status('dia', ['Valendo', 'valendo']);
+      if (e.fim) {
+        voltaDoDia = Date.parse(e.proximoEm);
+        atualizarRelogios();
+      }
+    })().catch(() => {
+      // sem internet: fica "Em teste"
+    });
+  }
+
+  // Crava a Rodada: rodada em foco, quanto falta pro próximo palpite trancar e se já cravou tudo.
+  Promise.all([
+    jogosDoCrava(),
+    valendoDesdeRodada(),
+    time ? meusDadosDoCrava().then((m) => new Set(m.palpites.keys())).catch(() => null) : Promise.resolve(null),
+  ])
+    .then(([jogos, valendoDesde, palpites]) => {
+      if (saiu) return;
+      crava = { jogos, palpites, valendoDesde };
+      atualizarRelogios();
+    })
+    .catch(() => {
+      // sem internet: fica sem a rodada
+    });
 
   // ---------- convite de desafio (link ?d=) ----------
   if (codigoDesafio) {

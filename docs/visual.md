@@ -36,7 +36,7 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 - Bloco do time nas cores dele, com a cidade embaixo (segunda camisa).
 - **Cabo de guerra contra o rival:** barra dividida nas duas cores, com a frase do narrador do momento (`rival_colado` etc.).
 - Mini tabela da Série A com a sua torcida destacada e a seta de subida ou queda.
-- Botão principal + **"hoje contam mais 2 partidas"** (o teto diário à vista, para ninguém achar que é injusto).
+- **Grade 2×2 com os 4 jogos** (20/10, ver "Home" na seção 9 do `jogo.md`): cards iguais com tarja inclinada nas cores do time, nome em Anton, selo de status e o teto diário à vista no card dos Pênaltis ("faltam 2 partidas que contam hoje"). O mini ranking vem depois da grade.
 - Barra de navegação: Jogar, Ranking, Palpites, Carreira.
 
 ### Partida

@@ -343,54 +343,6 @@ span.certeza {
   font-size: 20px;
 }
 
-/* ---------- aba Jogar: os outros jogos ---------- */
-.jogos-em-breve {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.jogo-em-breve {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 14px 12px 12px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 2px dashed rgba(255, 255, 255, 0.2);
-  opacity: 0.8;
-}
-
-.jogo-em-breve strong {
-  font-family: var(--fonte-rotulo);
-  font-size: 18px;
-  text-transform: uppercase;
-}
-
-.jogo-em-breve small {
-  font-size: 13px;
-  color: var(--texto-suave);
-}
-
-.link-crava {
-  min-height: 52px;
-  padding: 10px 14px;
-  border: 2px solid rgba(255, 210, 63, 0.5);
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.3);
-  color: var(--cal);
-  font: inherit;
-  font-size: 15px;
-  text-align: left;
-  touch-action: manipulation;
-}
-
-.link-crava .rotulo {
-  display: block;
-  color: var(--amarelo);
-}
-
 /* ---------- ranking: semana passada ---------- */
 .selo-semana {
   font-size: 14px;

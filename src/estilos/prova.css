@@ -1,21 +1,5 @@
 /* Prova de Boleiro (quiz): celular primeiro, só toque, nada de rolagem horizontal. */
 
-/* ---------- menu Jogar ---------- */
-.jogo-liberado {
-  border: 2px solid rgba(255, 210, 63, 0.6);
-  color: var(--cal);
-  font: inherit;
-  text-align: left;
-  opacity: 1;
-  touch-action: manipulation;
-}
-.jogo-liberado:active {
-  transform: translateY(2px);
-}
-.em-breve.amistoso {
-  background: var(--cal);
-}
-
 .escada-emoji {
   font-size: 22px;
   letter-spacing: 2px;
