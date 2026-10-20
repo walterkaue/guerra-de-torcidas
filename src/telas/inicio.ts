@@ -82,7 +82,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           <p class="rotulo">${time.id === ID_OUTRO ? 'Você joga pelo' : `Você joga ${pelo(time)}`}</p>
           <h2>${esc(time.id === ID_OUTRO ? 'Seu time' : time.nome)}</h2>
         </div>
-        <p class="bloco-time-pos" data-minha-posicao>${time.id === ID_OUTRO ? '"Outro time" não entra no ranking de times.' : 'Carregando a posição…'}</p>
+        <p class="bloco-time-pos" data-minha-posicao>${time.id === ID_OUTRO ? 'Quem joga por "Outro time" fica fora do ranking das torcidas.' : 'Carregando a posição…'}</p>
         <button class="link-trocar" type="button" data-acao="trocar">trocar</button>
       </section>`
     : `<section class="bloco-time sem-time">
@@ -95,7 +95,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     <main class="inicio">
       <header class="barra-ao-vivo">
         <span class="ao-vivo rotulo"><i aria-hidden="true"></i>Ao vivo</span>
-        <span class="contagem rotulo">Semana zera em <strong data-contagem>${formatarContagem(msAteZerarSemana())}</strong></span>
+        <span class="contagem rotulo">Semana acaba em <strong data-contagem>${formatarContagem(msAteZerarSemana())}</strong></span>
       </header>
 
       <h1 class="marca-pequena">Guerra <span>de Torcidas</span></h1>
@@ -104,8 +104,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
       ${blocoTime}
 
-      <section class="cabo" hidden aria-label="Cabo de guerra contra o rival">
-        <p class="rotulo cabo-titulo">Cabo de guerra <small>· média dos 30 melhores</small></p>
+      <section class="cabo" hidden aria-label="Duelo com o rival">
+        <p class="rotulo cabo-titulo">Duelo com o rival</p>
         <div class="cabo-nomes">
           <span><strong data-cabo-v-eu></strong><span data-cabo-eu></span></span>
           <span><span data-cabo-rival></span><strong data-cabo-v-rival></strong></span>
@@ -289,7 +289,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     if (elPos && meu) {
       elPos.innerHTML =
         meu.ativos > 0
-          ? `<strong>${meu.posicao_campeao}º</strong> no Campeão da semana · média <strong>${numero(meu.media30)}</strong>`
+          ? `<strong>${meu.posicao_campeao}º</strong> na semana · <strong>${numero(meu.media30)}</strong> de média`
           : 'Ninguém da sua torcida jogou ainda nesta semana. Abre o placar!';
     }
 

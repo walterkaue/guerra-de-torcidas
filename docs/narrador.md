@@ -1,7 +1,7 @@
 # Banco do narrador — pênaltis, palpites, quiz e Time do Dia
 
 > Versão 1.5 · 20/10/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
-> Mudanças da 1.5: glossário novo ("Pênaltis", "Chamar no X1", "em teste"): frases de X1 sem "duvido" e "desafio", e o convite do link virou texto fixo (sai `desafio_convite`).
+> Mudanças da 1.5: 7 frases de tiozão trocadas (fila do banco, manchete, capa de jornal, picolé, primeira pedra, caneta, doutorado); glossário novo ("Pênaltis", "Chamar no X1", "em teste"): frases de X1 sem "duvido" e "desafio", e o convite do link virou texto fixo (sai `desafio_convite`).
 > Mudanças da 1.4: seções 10 (**Prova de Boleiro**) e 11 (**Time do Dia**); frases de `prova_ajuda` com a etiqueta da ajuda usada (`[tira_duas]`, `[arquibancada]`, `[troca]`).
 > Mudanças da 1.3: seção 9, frases do **Crava a Rodada**, com as variáveis `{rodada}`, `{acertos}` e `{jogos}` e as etiquetas `[empate]` e `[contra]`.
 > Frase nova entra aqui e passa pelo checklist de tom abaixo.
@@ -94,9 +94,9 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - GOOOL! Bola de um lado, goleiro do outro! [canto] [goleiro_outro_lado]
 - É REDE! Mandou o goleiro buscar lá dentro!
 - GOL! Deslocou o goleiro, que foi comprar pão do outro lado. [goleiro_outro_lado]
-- Entrouuu! Frio que nem picolé de limão!
+- Entrouuu! Sangue frio!
 - GOL! O goleiro só viu o vulto.
-- É GOL! Bateu com a calma de quem tá na fila do banco.
+- GOL! Bateu com a calma de quem tá no sofá.
 - GOOOL! Balançou a rede e o coração da torcida {do_time}!
 - Lá dentro! O goleiro escolheu o canto errado com muita convicção. [goleiro_outro_lado]
 - GOL! Simples, seco, sem conversa.
@@ -193,7 +193,7 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - Pegou! O goleiro tava com o almoço pago!
 - DEFENDEU! Chutou fraquinho, entregou na mão. [fraca]
 - Pegou! Bateu com a força de quem desliga despertador. [fraca]
-- O goleiro adivinhou! Leu o chute como quem lê manchete.
+- O goleiro adivinhou! Leu o chute antes de você bater.
 - Defesaça! O goleiro acordou de bom humor hoje.
 - Pegou firme, encaixou no peito. Sem rebote, sem chance. [meio]
 - Bateu no meio, o goleiro só ficou parado e agradeceu. [meio]
@@ -211,7 +211,7 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - DEFENDEU! Fechou o gol com cadeado!
 - É PAREDÃO! Aqui não passa nem pensamento!
 - Pegou! Leu o pé de apoio que nem professor pega cola.
-- Voou no canto! Defesa de capa de jornal! [canto]
+- Voou no canto! Defesa de figurinha rara! [canto]
 - Espalmou! O batedor vai ter pesadelo hoje.
 - A torcida {do_time} grita: {apelido}! {apelido}!
 - DEFESA! Adivinhou o canto antes do batedor saber. [canto]
@@ -312,7 +312,7 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - Derrota... Respira, bebe uma água e volta.
 - Não foi dessa vez. A torcida {do_time} ainda acredita!
 - Perdeu, mas os pontos vão {pro_time} do mesmo jeito!
-- Quem nunca isolou um pênalti que atire a primeira bola.
+- Isolar acontece. Bora de novo!
 - Perdeu! Treino é treino, jogo é jogo, e revanche é agora.
 - Hoje a máquina ganhou. Amanhã é outro campeonato.
 - Perdeu... A torcida {do_rival} não pode saber disso. Joga de novo!
@@ -548,7 +548,7 @@ Cuidado extra: o narrador **nunca** fala da pessoa real da pergunta (nem elogio,
 ### `prova_abertura`
 - Prova de Boleiro! Oito perguntas, quinze segundos cada.
 - Hora de mostrar que entende de bola, não só de grito.
-- Caneta na mão... quer dizer, dedo na tela. Bora!
+- Dedo na tela e cabeça no jogo. Bora!
 - ⭐ O narrador estudou a semana toda. E você?
 
 ### `prova_acertou`
@@ -586,7 +586,7 @@ Cuidado extra: o narrador **nunca** fala da pessoa real da pergunta (nem elogio,
 - Tirou duas! Ficou meio a meio. [tira_duas]
 
 ### `prova_perfeita` — 8 de 8
-- OITO DE OITO! Isso é doutorado em futebol!
+- OITO DE OITO! Sabe mais que o comentarista!
 - Gabaritou! Pode emoldurar o card.
 - 8 de 8! A torcida {do_time} tem um professor em campo.
 - ⭐ Gabaritou! O narrador vai pedir aula particular.

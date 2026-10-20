@@ -5,7 +5,10 @@
 import { esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, corDeTexto, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
-import { DEGRAU_DA_POSICAO, NOME_DEGRAU, PERGUNTAS, PONTOS_DO_DEGRAU, levar, type Ajuda } from '../jogo/prova';
+import { DEGRAU_DA_POSICAO, NOME_DEGRAU, PERGUNTAS, PONTOS_DO_DEGRAU, levar, type Ajuda, type Degrau } from '../jogo/prova';
+
+/** Nome do degrau na tela: "Média" sozinho parecia média de pontos. */
+const ROTULO_DEGRAU: Record<Degrau, string> = { ...NOME_DEGRAU, 2: 'Nível médio' };
 import { criarNarrador } from '../narrador/sessao';
 import type { ContextoNarrador } from '../narrador/escolher';
 import type { EventoNarrador } from '../narrador/frases';
@@ -212,7 +215,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
     pergunta = p;
     ajudaNaAtual = false;
     const i = p.numero - 1;
-    elRotulo.textContent = `Pergunta ${p.numero} · ${NOME_DEGRAU[p.degrau]} · ${nomeOrigem(p.clube)}`;
+    elRotulo.textContent = `Pergunta ${p.numero} · ${ROTULO_DEGRAU[p.degrau]} · ${nomeOrigem(p.clube)}`;
     elTexto.textContent = p.texto;
     elAlts.innerHTML = p.alternativas
       .map(
@@ -279,10 +282,10 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   // ---------- parar ou seguir ----------
   function decidir(numero: number, garantidos: number): void {
     const d = DEGRAU_DA_POSICAO[numero - 1];
-    $('[data-decisao-degrau]').textContent = `Pergunta ${numero} · ${NOME_DEGRAU[d]} · vale ${PONTOS_DO_DEGRAU[d]}`;
+    $('[data-decisao-degrau]').textContent = `Pergunta ${numero} · ${ROTULO_DEGRAU[d]} · vale ${PONTOS_DO_DEGRAU[d]}`;
     $('[data-decisao-titulo]').textContent = 'Para ou segue?';
     $('[data-decisao-frase]').textContent = falar('prova_decisao', { levar: garantidos, numero }) ?? '';
-    $('[data-seguir]').innerHTML = `Seguir<small>errou, leva ${Math.ceil(garantidos / 2)}</small>`;
+    $('[data-seguir]').innerHTML = `Seguir<small>se errar, leva ${Math.ceil(garantidos / 2)}</small>`;
     $('[data-parar]').innerHTML = `Parar e levar ${garantidos}`;
     elDecisao.hidden = false;
     pintarEscada(numero - 1);

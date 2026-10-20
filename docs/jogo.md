@@ -1,7 +1,7 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 20/10/2026 (glossário da interface: Pênaltis, Chamar no X1, em teste; Home com os 4 jogos em grade)
+> Última atualização: 20/10/2026 (glossário da interface: Pênaltis, Chamar no X1, em teste; Home com os 4 jogos em grade; revisão de textos dúbios, técnicos e de tiozão)
 > Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
@@ -455,7 +455,7 @@ Vale para telas, cards, textos de compartilhamento e frases do narrador. Nomes i
 | Antes | Agora |
 |---|---|
 | Bate Contra Mim | **Pênaltis** (subtítulo "Bate 5, pega 5") |
-| Duvido no grupo, "Duvido você…" | **Chamar no X1** |
+| Duvido no grupo, "Duvido você…" | **Chamar no X1** (no Time do Dia, que não tem X1: **Mandar no grupo**) |
 | Desafio na área | **Te chamaram no X1** |
 | Aceitar o desafio | **Aceitar o X1** |
 | desafio (por link), na tela | **X1** ("X1 · você venceu!", "quem te chamou") |
@@ -464,6 +464,7 @@ Vale para telas, cards, textos de compartilhamento e frases do narrador. Nomes i
 | 1 clube secreto · 6 chutes | Adivinha o clube em 6 chutes |
 
 - Ficam como estão: Cravar, Jogo da certeza, Mais uma, Revanche, Campeão da semana, Time do Dia, Prova de Boleiro, Crava a Rodada.
+- **Revisão de textos (20/10):** "Duelo com o rival" (antes "Cabo de guerra"), "Semana acaba em", "Ranking do Crava" (antes "Torcidas no palpite"), "Ensaio: ainda não soma no ranking da semana.", "Mandar no grupo", "Fim da prova", degrau "Nível médio", colunas do Time do Dia "Estado · Ano · … · Capital/Interior", resultado "na semana" (antes "no ranking geral") e "Mais N de média e passa {o time}". Explicações de ranking encurtadas (sem "80% da média geral" na tela; a regra continua valendo, ver seção 5).
 - Convites do WhatsApp (texto fixo, em `src/jogo/convites.ts`): pênaltis "Te chamei no X1: fiz {pontos} {pro_time}. Faz mais?"; quiz "Te chamei no X1 na Prova de Boleiro: {pontos} pontos. Faz mais?"; Time do Dia "Achei o Time do Dia em {tentativas} chutes. E você?".
 
 ### Nomes candidatos
@@ -477,7 +478,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · T
   - **Pênaltis:** "Valendo" + "faltam N partidas que contam hoje" (o teto do dia mora aqui).
   - **Prova de Boleiro:** "Em teste".
   - **Time do Dia:** "Em teste"; se já terminou hoje, "Feito ✓ · volta em 5h 12m".
-  - **Crava a Rodada:** "Ensaio" (enquanto a rodada em foco for menor que `valendo_desde_rodada`) ou "Valendo"; status "32ª rodada · fecha em 3h" (até o próximo jogo aberto começar) ou "Cravado ✓" (todos os jogos abertos da rodada com palpite).
+  - **Crava a Rodada:** "Ensaio" (enquanto a rodada em foco for menor que `valendo_desde_rodada`) ou "Valendo"; status "32ª rodada · 1º jogo em 3h" (ou "próximo jogo em 2h" depois que a rodada começou) ou "Cravado ✓" (todos os jogos abertos da rodada com palpite).
   - Tocar no card abre o jogo; sem time, Pênaltis, Prova e Time do Dia passam antes pela escolha de time (o Crava pede o time só na hora de cravar). Nada de "em breve" em jogo que já existe. Textos de status em `src/jogo/statusJogos.ts` (com testes).
 - **Bonecos:** estilo "Silhueta premium" (aprovado em 19/10): formas chapadas sem contorno, camiseta lisa nas cores do time (uniforme 1 ou 2), goleiro num tom forte que contrasta com os dois times, tons de pele e cabelos variados, homens e mulheres. Cada lado tem 5 batedores diferentes (um por cobrança) e 1 goleiro, sorteados a cada partida. Detalhe em `docs/bonecos.md`.
 

@@ -29,9 +29,9 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
   const situacao = fim.amistoso
     ? 'Em teste: ainda não soma no ranking.'
     : fim.sobSuspeita
-      ? 'Partida em revisão: fica fora do ranking até alguém conferir.'
+      ? 'Essa ficou fora do ranking até a gente conferir.'
       : !fim.contaNoRanking
-        ? 'Essa não entrou no ranking: hoje só as 5 melhores partidas contam.'
+        ? 'Não superou suas 5 melhores de hoje: o ranking não muda.'
         : `Contou pro ranking da semana${paraTime ? ` ${paraTime}` : ''}.`;
 
   const cmp = fim.comparacao;
@@ -44,7 +44,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
       </section>`
     : '';
 
-  const titulo = fim.fim === 'perfeita' ? '8 de 8' : fim.fim === 'parou' ? 'Parou na hora' : 'Prova entregue';
+  const titulo = fim.fim === 'perfeita' ? '8 de 8' : fim.fim === 'parou' ? 'Parou na hora' : 'Fim da prova';
 
   root.innerHTML = `
     <main class="tela resultado prova-resultado ${fim.fim === 'perfeita' || cmp?.venceu ? 'venceu' : ''}"

@@ -18,7 +18,7 @@ describe('linha dos Pênaltis', () => {
     expect(linhaPenaltis(3, 5)).toBe('faltam 3 partidas que contam hoje');
     expect(linhaPenaltis(1, 5)).toBe('falta 1 partida que conta hoje');
     expect(linhaPenaltis(0, 5)).toBe('hoje só as 5 melhores contam');
-    expect(linhaPenaltis(null, 5)).toBe('5 partidas contam por dia');
+    expect(linhaPenaltis(null, 5)).toBe('As 5 melhores do dia contam');
   });
 });
 
@@ -40,13 +40,18 @@ describe('status do Crava', () => {
   const jogos = [jogo('a', 32, 3), jogo('b', 32, 27), jogo('c', 33, 200)];
 
   it('rodada em foco e o próximo palpite que tranca', () => {
-    expect(statusCrava(jogos, null, 99, agora)).toEqual({ rodada: 32, linha: '32ª rodada · fecha em 3h', cravado: false, ensaio: true });
+    expect(statusCrava(jogos, null, 99, agora)).toEqual({ rodada: 32, linha: '32ª rodada · 1º jogo em 3h', cravado: false, ensaio: true });
   });
 
   it('cravado só com todos os jogos abertos palpitados', () => {
     expect(statusCrava(jogos, new Set(['a']), 34, agora)?.cravado).toBe(false);
     expect(statusCrava(jogos, new Set(['a', 'b']), 34, agora)).toEqual({ rodada: 32, linha: 'Cravado ✓', cravado: true, ensaio: true });
     expect(statusCrava(jogos, new Set(['a', 'b']), 32, agora)?.ensaio).toBe(false);
+  });
+
+  it('depois do 1º jogo, conta até o próximo', () => {
+    const meio = [jogo('a', 32, -1), jogo('b', 32, 2)];
+    expect(statusCrava(meio, new Set(), 99, agora)?.linha).toBe('32ª rodada · próximo jogo em 2h');
   });
 
   it('jogo já começado não conta; sem jogo aberto, bola rolando', () => {

@@ -119,9 +119,9 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   const situacao = !d.valendo
     ? (d.aviso ?? 'Partida sem valer pontos.')
     : d.servidor?.sobSuspeita
-      ? 'Partida em revisão: fica fora do ranking até alguém conferir.'
+      ? 'Essa ficou fora do ranking até a gente conferir.'
       : !d.servidor?.contaNoRanking
-        ? 'Essa não entrou no ranking: hoje só as 5 melhores partidas contam.'
+        ? 'Não superou suas 5 melhores de hoje: o ranking não muda.'
         : null;
 
   // Desafio por link: placar dos dois lado a lado. Mais pontos vence; empate fica com quem desafiou.
@@ -211,12 +211,12 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
     const antes = rk.antes && rk.antes.media30 > 0 ? rk.antes.posicao_campeao : undefined;
     const frase =
       antes === undefined
-        ? `Entrou em <strong>${depois}º</strong> no ranking geral`
+        ? `Entrou em <strong>${depois}º</strong> na semana`
         : antes > depois
-          ? `<span class="seta subiu" aria-hidden="true">▲</span> Subiu de ${antes}º pra <strong>${depois}º</strong> no ranking geral`
+          ? `<span class="seta subiu" aria-hidden="true">▲</span> Subiu de ${antes}º pra <strong>${depois}º</strong> na semana`
           : antes < depois
-            ? `<span class="seta caiu" aria-hidden="true">▼</span> Caiu de ${antes}º pra <strong>${depois}º</strong> no ranking geral`
-            : `Segue em <strong>${depois}º</strong> no ranking geral`;
+            ? `<span class="seta caiu" aria-hidden="true">▼</span> Caiu de ${antes}º pra <strong>${depois}º</strong> na semana`
+            : `Segue em <strong>${depois}º</strong> na semana`;
     elEfeito.innerHTML = `<p class="efeito-texto">${frase}</p>
       <div class="efeito-barra"><span></span></div>
       <p class="efeito-falta"></p>`;
@@ -239,7 +239,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
         if (!acima || !tAcima) return;
         barra.style.setProperty('--enche', String(acima.media30 > 0 ? Math.min(1, meu.media30 / acima.media30) : 1));
         const n = Math.max(1, Math.ceil(acima.media30 - meu.media30));
-        falta.textContent = `${n === 1 ? 'Falta' : 'Faltam'} ${pontosDeMedia(n)} pra passar ${tAcima.artigo} ${tAcima.nome} (${acima.posicao_campeao}º).`;
+        falta.textContent = `Mais ${n} de média e passa ${tAcima.artigo} ${tAcima.nome} (${acima.posicao_campeao}º).`;
       })
       .catch(() => {});
   } else if (!situacao) {

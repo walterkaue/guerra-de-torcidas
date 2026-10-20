@@ -94,7 +94,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       </div>
       <section class="tabela-campeonato" data-tabela hidden></section>
       <div class="visao-palpites" data-visao-palpites>
-      <p class="faixa-ensaio" data-ensaio hidden><strong>Modo ensaio:</strong> os palpites valem pra resenha e pro ranking do Crava, mas ainda não somam no ranking da semana.</p>
+      <p class="faixa-ensaio" data-ensaio hidden><strong>Ensaio:</strong> ainda não soma no ranking da semana.</p>
       <nav class="seletor-rodada" aria-label="Rodada" hidden>
         <button type="button" class="voltar" data-acao="rodada-ant" aria-label="Rodada anterior">‹</button>
         <strong class="rotulo" data-rodada></strong>
@@ -106,16 +106,16 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       <section class="crava-resumo" hidden>
         <p class="crava-meus-pontos" data-meus-pontos></p>
         <p class="crava-posicao" data-posicao></p>
-        <p class="rotulo">Torcidas no palpite</p>
+        <p class="rotulo">Ranking do Crava</p>
         <div class="abas" role="tablist">
           <button role="tab" class="rotulo" aria-selected="true" data-acao="rk-rodada">Rodada</button>
           <button role="tab" class="rotulo" aria-selected="false" data-acao="rk-tudo">Brasileirão</button>
         </div>
         <div class="tabela" data-ranking><p class="vazio">Carregando…</p></div>
-        <p class="explica">Média dos 30 melhores palpiteiros de cada torcida. Torcida com menos de 30 completa as vagas com 80% da média geral. Os pontos já vêm com o peso ×2 e o teto de 300 por rodada.</p>
+        <p class="explica">Média dos 30 melhores de cada torcida. Na semana, vale em dobro (até 300 por rodada).</p>
       </section>
       <section class="crava-compartilhar" hidden>
-        <p class="rotulo">Manda no grupo</p>
+        <p class="rotulo">Mandar no grupo</p>
         <button class="botao botao-zap" type="button" data-acao="card-meus">
           Mandar meus palpites
           <small>Card com os placares que você cravou, sem porcentagem</small>
@@ -133,7 +133,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
           <ul class="cj-passos">
             <li><span class="cj-icone" aria-hidden="true">✎</span><p><strong>Crava o placar.</strong> Use − e + nos dois times e toque em CRAVAR. Dá pra mudar até a bola rolar, e pode pular os jogos que quiser.</p></li>
             <li><span class="cj-icone" aria-hidden="true">★</span><p><strong>Jogo da certeza.</strong> A estrela marca 1 jogo por rodada que vale o <strong>dobro</strong>. Escolha até o 1º jogo da rodada começar; depois trava.</p></li>
-            <li><span class="cj-icone" aria-hidden="true">📊</span><p><strong>Na dúvida, olhe os dados.</strong> Embaixo de cada time: posição, pontos e os últimos 5 jogos (V vitória, E empate, D derrota). A aba <em>Tabela</em> mostra o campeonato inteiro.</p></li>
+            <li><span class="cj-icone" aria-hidden="true">📊</span><p><strong>Na dúvida, olhe os números.</strong> Embaixo de cada time: posição, pontos e os últimos 5 jogos (V vitória, E empate, D derrota). A aba <em>Tabela</em> mostra o campeonato inteiro.</p></li>
             <li><span class="cj-icone" aria-hidden="true">🎯</span><p><strong>Pontos.</strong> Placar exato 10 · vencedor e saldo certos (ou empate com outro placar) 7 · só o vencedor 5 · errou 0. Na torcida entram em dobro, até 300 por rodada.</p></li>
             <li><span class="cj-icone" aria-hidden="true">👀</span><p><strong>Bola rolando.</strong> O palpite tranca e aparece como a torcida cravou (com 20 palpites ou mais). Os pontos saem quando o placar é confirmado.</p></li>
             <li><span class="cj-icone" aria-hidden="true">📲</span><p><strong>Manda no grupo.</strong> No fim da página: <em>Mandar meus palpites</em> gera o card com seus placares; depois dos jogos, <em>Mandar o resultado</em> mostra seus pontos e um emoji por jogo.</p></li>

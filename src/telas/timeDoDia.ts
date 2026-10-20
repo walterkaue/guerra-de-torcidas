@@ -50,8 +50,8 @@ const SERVIDOR = { estadoDoDia, tentarClube };
 const servidor = (): Promise<typeof SERVIDOR> => (FALSA ? import('../dev/diaFalso') : Promise.resolve(SERVIDOR));
 
 const SIGLA_CURTA: Record<NomePista, string> = {
-  estado: 'UF',
-  fundacao: 'Fund.',
+  estado: 'Estado',
+  fundacao: 'Ano',
   titulos: 'Títulos',
   divisao: 'Série',
   cores: 'Cores',
@@ -75,7 +75,7 @@ function valorDaPista(t: Tentativa, n: NomePista): string {
         .map((cor) => `<span class="amostra" style="background:${AMOSTRA_COR[cor]}" title="${esc(cor)}"></span>`)
         .join('');
     case 'capital':
-      return c.capital ? 'Cap.' : 'Int.';
+      return c.capital ? 'Capital' : 'Interior';
   }
 }
 
@@ -311,7 +311,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     const textoShare = `${linha}\n${grade}\n${conviteDia(n, e.acertou)} ${link}`;
     const situacao = e.amistoso
       ? 'Em teste: ainda não soma no ranking.'
-      : `+${e.pontos} no ranking da semana, por fora do teto das 5 partidas.`;
+      : `+${e.pontos} na semana, além das 5 partidas do dia.`;
 
     elFim.innerHTML = `
       <div class="dia-revelado faixa-tv">
@@ -327,7 +327,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       <p class="dia-proximo rotulo">Próximo time em <strong data-relogio>${formatarRelogio(Date.parse(e.proximoEm) - Date.now())}</strong></p>
       <section class="res-compartilhar">
         <a class="botao botao-zap" target="_blank" rel="noopener"
-          href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Chamar no X1</a>
+          href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Mandar no grupo</a>
         <div class="trio">
           <button class="botao botao-sec" type="button" data-acao="share">Stories</button>
           <button class="botao botao-sec" type="button" data-acao="emoji">Grade em emoji</button>
@@ -340,7 +340,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       </details>
       <div class="res-acoes">
         <button class="botao botao-sec" type="button" data-acao="inicio">Início</button>
-        <button class="botao" type="button" data-acao="jogar">Pênaltis<small>enquanto o dia não vira</small></button>
+        <button class="botao" type="button" data-acao="jogar">Pênaltis<small>bora jogar mais</small></button>
       </div>`;
     elFim.hidden = false;
 

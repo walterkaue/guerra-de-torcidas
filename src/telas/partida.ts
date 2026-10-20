@@ -121,7 +121,7 @@ const MEIA_PEQUENA_AREA = 3.75;
 const PROF_PEQUENA_AREA = 5.5;
 const PROF_REDE = 2;
 
-export const AVISO_SEM_PONTOS = 'Partida sem valer pontos: sem conexão com o placar da torcida.';
+export const AVISO_SEM_PONTOS = 'Sem internet: essa partida não vale pontos.';
 
 export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   const time: Time = timePorId(prefs.get().time) ?? TIMES[TIMES.length - 1];
@@ -594,7 +594,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     let servidor: FechamentoDoServidor | undefined;
     const fechando = fecharNoServidor(escolha);
     if (fechando) {
-      instruir('Conferindo o placar com a torcida…');
+      instruir('Mandando seus pontos pra torcida…');
       try {
         servidor = await fechando;
         // Quem manda é o servidor (deve dar igual ao que o celular calculou).

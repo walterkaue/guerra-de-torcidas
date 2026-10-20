@@ -5,7 +5,7 @@ import { faseDoJogo, rodadaEmFoco, type JogoBasico } from './cravaTela';
 
 /** "faltam 3 partidas que contam hoje"; sem time (ou sem conexão), a regra geral. */
 export function linhaPenaltis(faltam: number | null, teto: number): string {
-  if (faltam === null) return `${teto} partidas contam por dia`;
+  if (faltam === null) return `As ${teto} melhores do dia contam`;
   if (faltam <= 0) return 'hoje só as 5 melhores contam';
   return `${faltam === 1 ? 'falta 1 partida que conta' : `faltam ${faltam} partidas que contam`} hoje`;
 }
@@ -17,7 +17,7 @@ export function formatarVolta(ms: number): string {
   return h ? `${h}h ${String(min % 60).padStart(2, '0')}m` : `${min}m`;
 }
 
-/** "3h", "40min", "2 dias": até o próximo palpite trancar. */
+/** "3h", "40min", "2 dias": até o próximo jogo da rodada (quando o palpite tranca). */
 export function formatarFecha(ms: number): string {
   const min = Math.max(1, Math.floor(ms / 60_000));
   if (min < 60) return `${min}min`;
@@ -28,7 +28,7 @@ export function formatarFecha(ms: number): string {
 
 export interface StatusCrava {
   rodada: number;
-  /** "32ª rodada · fecha em 3h", "Cravado ✓" ou "32ª rodada · bola rolando". */
+  /** "32ª rodada · 1º jogo em 3h", "… · próximo jogo em 2h", "Cravado ✓" ou "32ª rodada · bola rolando". */
   linha: string;
   cravado: boolean;
   ensaio: boolean;
@@ -53,5 +53,7 @@ export function statusCrava(
   const cravado = !!palpites && abertos.every((j) => palpites.has(j.id));
   if (cravado) return { rodada, linha: 'Cravado ✓', cravado, ensaio };
   const proximo = Math.min(...abertos.map((j) => Date.parse(j.inicio)));
-  return { rodada, linha: `${nome} · fecha em ${formatarFecha(proximo - agora.getTime())}`, cravado, ensaio };
+  const primeiro = !jogos.some((j) => j.rodada === rodada && Date.parse(j.inicio) < proximo);
+  const qual = primeiro ? '1º jogo' : 'próximo jogo';
+  return { rodada, linha: `${nome} · ${qual} em ${formatarFecha(proximo - agora.getTime())}`, cravado, ensaio };
 }

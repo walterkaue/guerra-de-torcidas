@@ -34,7 +34,7 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 ### Início
 - Tarja "AO VIVO" e **contagem regressiva** até zerar a semana.
 - Bloco do time nas cores dele, com a cidade embaixo (segunda camisa).
-- **Cabo de guerra contra o rival:** barra dividida nas duas cores, com a frase do narrador do momento (`rival_colado` etc.).
+- **Duelo com o rival** (o cabo de guerra): barra dividida nas duas cores, com a frase do narrador do momento (`rival_colado` etc.).
 - Mini tabela da Série A com a sua torcida destacada e a seta de subida ou queda.
 - **Grade 2×2 com os 4 jogos** (20/10, ver "Home" na seção 9 do `jogo.md`): cards iguais com tarja inclinada nas cores do time, nome em Anton, selo de status e o teto diário à vista no card dos Pênaltis ("faltam 2 partidas que contam hoje"). O mini ranking vem depois da grade.
 - Barra de navegação: Jogar, Ranking, Palpites, Carreira.

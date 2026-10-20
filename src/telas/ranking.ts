@@ -57,7 +57,7 @@ export function telaRanking(root: HTMLElement, _rota: Rota): () => void {
     } else elSelo.hidden = true;
     elExplica.textContent =
       modo === 'campeao'
-        ? 'Média dos 30 melhores torcedores da semana. Torcida com menos de 30 completa as vagas com 80% da média geral. Só as 5 melhores partidas do dia de cada um contam, somando os minigames; os pontos do Crava a Rodada entram por fora desse teto. Zera segunda 00h.'
+        ? 'Conta a média dos 30 melhores de cada torcida. Só as 5 melhores partidas do dia de cada um valem.'
         : 'Soma de todo mundo que jogou na semana. É vitrine: o título sai do Campeão da semana.';
     if (!linhas.some((l) => l.ativos > 0)) {
       elTabela.innerHTML = `<p class="vazio">Ninguém jogou ${semana === atual ? 'ainda nesta semana' : 'na semana passada'}.</p>`;
