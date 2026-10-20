@@ -34,15 +34,19 @@ export const REGIAO_DA_UF = {
 export const DOMINIOS_ACEITOS = [
   ...DOMINIOS_PERGUNTAS,
   // clubes das Séries B e C (sites oficiais)
+  // (conferidos em 20/10/2026: crb.com.br responde 403, saobernardofc.com.br se diz "site não oficial"
+  // e ituano.com é domínio à venda; os três ficaram de fora)
   'americafc.com.br', 'athleticclub.com.br', 'atleticogoianiense.com.br', 'avai.com.br', 'botafogofutebolsa.com.br',
-  'cearasc.com', 'crb.com.br', 'criciumaec.com.br', 'cuiabaesporteclube.com.br', 'fortaleza1918.com.br',
+  'cearasc.com', 'crboficial.com.br', 'criciumaec.com.br', 'cuiabaesporteclube.com.br', 'fortaleza1918.com.br',
   'goiasec.com.br', 'juventude.com.br', 'londrinaesporteclube.com.br', 'nautico-pe.com.br',
-  'gremionovorizontino.com.br', 'operarioferroviario.com.br', 'pontepreta.com.br', 'saobernardofc.com.br',
+  'gremionovorizontino.com.br', 'operarioferroviario.com.br', 'pontepreta.com.br',
   'sportrecife.com.br', 'vilanovafc.com.br', 'barrafc.com.br', 'botafogopb.com.br', 'sercaxias.com.br',
-  'figueirense.com.br', 'guaranifc.com.br', 'interdelimeira.com', 'ituano.com', 'maringafc.com.br',
-  'paysandu.com.br', 'santacruzpe.com.br', 'redbullbragantino.com',
+  'figueirense.com.br', 'guaranifc.com.br', 'interdelimeira.com', 'ituanofc.com', 'maringafc.com.br',
+  'paysandu.com.br', 'santacruzpe.com.br', 'redbullbragantino.com', 'adconfianca.net', 'ferroviariasaf.com',
+  'yfc.com.br',
   // imprensa
   'jornaldebrasilia.com.br', 'vavel.com', 'dgabc.com.br', 'oimparcial.com.br', 'diariodonordeste.verdesmares.com.br',
+  'diariodovale.com.br',
 ];
 
 /** Linhas do CSV como objetos, com o número da linha no arquivo (cabeçalho = 1). */
