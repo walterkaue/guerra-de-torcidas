@@ -2,7 +2,7 @@
 // porcentagem) e "Resultado da rodada" (pontos e linha de emoji). Os dois levam o aviso fixo.
 
 import { corDeTexto, type Time } from '../dados/times';
-import { FONTE, fundoFaixaDePlacar, PLACAR, ROTULO, quebrarTexto, rodapePreTemporada, seloRecorde } from './card';
+import { FONTE, fundoFaixaDePlacar, PLACAR, ROTULO, quebrarTexto, rodapeCard, seloRecorde } from './card';
 import { ordinalRodada } from './crava';
 import { AVISO_RESENHA, type LinhaMeuPalpite } from './cravaTela';
 
@@ -88,15 +88,6 @@ export function desenharCardCrava(d: DadosCardCrava): HTMLCanvasElement {
   c.font = `700 34px ${FONTE}`;
   quebrarTexto(c, AVISO_RESENHA, L - 160).forEach((l, i) => c.fillText(l, L / 2, 1080 + i * 44));
 
-  c.fillStyle = '#ffd23f';
-  c.beginPath();
-  c.roundRect(110, A - 190, L - 220, 110, 55);
-  c.fill();
-  c.fillStyle = '#111111';
-  c.font = `700 46px ${ROTULO}`;
-  c.fillText('Crava você também →', L / 2, A - 140);
-  c.font = `700 32px ${FONTE}`;
-  c.fillText(d.link, L / 2, A - 98);
-  rodapePreTemporada(c, corDeTexto(d.time.cores[1]));
+  rodapeCard(c, d.time, d.link);
   return canvas;
 }

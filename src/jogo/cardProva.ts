@@ -2,7 +2,7 @@
 // Nunca mostra o texto das perguntas (o desafio por link usa as mesmas).
 
 import { corDeTexto, type Time } from '../dados/times';
-import { FONTE, fundoFaixaDePlacar, PLACAR, ROTULO, quebrarTexto, rodapePreTemporada, seloRecorde } from './card';
+import { FONTE, fundoFaixaDePlacar, PLACAR, ROTULO, quebrarTexto, rodapeCard, seloRecorde } from './card';
 
 const L = 1080;
 const A = 1350;
@@ -73,16 +73,7 @@ export function desenharCardProva(d: DadosCardProva): HTMLCanvasElement {
   const yFrase = 880 + Math.min(destaque.length, 2) * 72 + 46;
   frase.slice(0, 2).forEach((l, i) => c.fillText(l, L / 2, yFrase + i * 56));
 
-  c.fillStyle = '#ffd23f';
-  c.beginPath();
-  c.roundRect(110, A - 190, L - 220, 110, 55);
-  c.fill();
-  c.fillStyle = '#111111';
-  c.font = `700 46px ${ROTULO}`;
-  c.fillText('Faz mais? →', L / 2, A - 140);
-  c.font = `700 32px ${FONTE}`;
-  c.fillText(d.link, L / 2, A - 98);
-  rodapePreTemporada(c, corDeTexto(d.time.cores[1]));
+  rodapeCard(c, d.time, d.link);
 
   return canvas;
 }
