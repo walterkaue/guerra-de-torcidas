@@ -1,15 +1,17 @@
 // Tela inicial (docs/jogo.md, seção 9, "Home"): AO VIVO com contagem, bloco do time com o cabo de
-// guerra contra o rival, os 4 jogos em grade (com selo de status vivo), mini tabela e feedback.
+// guerra contra o rival, sua posição na semana, os 4 jogos em grade (com status vivo), mini tabela e feedback.
 
 import { desafioDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, TIMES, corDeTexto, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
+import { AVISO_PRE_TEMPORADA, linhaPosicaoSemana, setaDaPosicao } from '../jogo/posicao';
 import { formatarVolta, linhaPenaltis, statusCrava } from '../jogo/statusJogos';
 import { escolherFrase } from '../narrador/escolher';
 import { rivalDaSemana, situacaoDoDuelo } from '../narrador/rival';
 import { contextoDoTime } from '../narrador/sessao';
 import {
   estadoDoDia,
+  minhaPosicaoSemana,
   ouvirRanking,
   partidasFechadasHoje,
   rankingDaSemana,
@@ -17,7 +19,7 @@ import {
   verDesafioProva,
   type LinhaRanking,
 } from '../servidor/api';
-import { jogosDoCrava, meusDadosDoCrava, valendoDesdeRodada, type Jogo } from '../servidor/crava';
+import { jogosDoCrava, meusDadosDoCrava, type Jogo } from '../servidor/crava';
 import { diaBrasilia, msAteZerarSemana, semanaBrasilia } from '../servidor/tempo';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
@@ -27,13 +29,10 @@ export const TETO_DIARIO = 5;
 const FALSA_DIA = import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso');
 
 type JogoDaHome = 'penaltis' | 'prova' | 'dia' | 'crava';
-/** `aguardando`: selo reservado (invisível) até o servidor dizer se a rodada vale ou é ensaio. */
-type TipoSelo = 'valendo' | 'teste' | 'aguardando';
 
-/** Card da grade: selo de status, nome, uma linha do que é e a linha de status (preenchida depois). */
-function cardJogo(id: JogoDaHome, nome: string, oQueE: string, selo: string, tipo: TipoSelo, linha = ''): string {
+/** Card da grade: nome, uma linha do que é e a linha de status (preenchida depois). */
+function cardJogo(id: JogoDaHome, nome: string, oQueE: string, linha = ''): string {
   return `<button class="card-jogo" type="button" data-jogo="${id}">
-    <span class="selo-jogo rotulo ${tipo}">${selo}</span>
     <span class="nome-jogo">${nome}</span>
     <span class="o-que-e">${oQueE}</span>
     <span class="status-jogo rotulo" aria-live="polite">${linha}</span>
@@ -41,6 +40,7 @@ function cardJogo(id: JogoDaHome, nome: string, oQueE: string, selo: string, tip
 }
 const CHAVE_DUELO = 'gdt:duelo';
 const CHAVE_POSICOES = 'gdt:posicoes';
+const CHAVE_MINHA_POSICAO = 'gdt:minha-posicao';
 
 /** Lê/grava um pedacinho de memória do aparelho (sempre com try/catch). */
 function memoria<T>(chave: string, valor?: T): T | null {
@@ -114,12 +114,15 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         <p class="adesivo" data-frase-rival hidden></p>
       </section>
 
+      <p class="minha-posicao" data-posicao-semana aria-live="polite" hidden></p>
+
       <section class="grade-jogos" aria-label="Jogos"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>
-        ${cardJogo('penaltis', 'Pênaltis', 'Bate 5, pega 5', 'Valendo', 'valendo', linhaPenaltis(null, TETO_DIARIO))}
-        ${cardJogo('prova', 'Prova de Boleiro', '8 perguntas · para quando quiser', 'Em teste', 'teste')}
-        ${cardJogo('dia', 'Time do Dia', 'Adivinha o clube em 6 chutes', 'Em teste', 'teste')}
-        ${cardJogo('crava', 'Crava a Rodada', 'Palpita o placar do Brasileirão', 'Ensaio', 'aguardando')}
+        ${cardJogo('penaltis', 'Pênaltis', 'Bate 5, pega 5', linhaPenaltis(null, TETO_DIARIO))}
+        ${cardJogo('prova', 'Prova de Boleiro', '8 perguntas · para quando quiser')}
+        ${cardJogo('dia', 'Time do Dia', 'Adivinha o clube em 6 chutes')}
+        ${cardJogo('crava', 'Crava a Rodada', 'Palpita o placar do Brasileirão')}
       </section>
+      <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
 
       <section class="mini-tabela" aria-label="Ranking da semana" aria-live="polite">
         <header>
@@ -157,25 +160,20 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   ligarBarraNavegacao(root);
 
   // ---------- status vivo dos cards ----------
-  /** Troca o selo (quando vem) e a linha de status; `feito` pinta a linha de verde. */
-  const status = (jogo: JogoDaHome, selo: [string, TipoSelo] | null, linha?: string, feito = false) => {
+  /** Troca a linha de status; `feito` pinta a linha de verde. */
+  const status = (jogo: JogoDaHome, linha?: string, feito = false) => {
     const card = root.querySelector<HTMLElement>(`[data-jogo="${jogo}"]`)!;
-    if (selo) {
-      const el = card.querySelector<HTMLElement>('.selo-jogo')!;
-      el.textContent = selo[0];
-      el.className = `selo-jogo rotulo ${selo[1]}`;
-    }
     if (linha !== undefined) card.querySelector<HTMLElement>('.status-jogo')!.textContent = linha;
     card.classList.toggle('feito', feito);
   };
   let voltaDoDia: number | null = null;
-  let crava: { jogos: Jogo[]; palpites: Set<string> | null; valendoDesde: number } | null = null;
+  let crava: { jogos: Jogo[]; palpites: Set<string> | null } | null = null;
 
   function atualizarRelogios(): void {
-    if (voltaDoDia !== null) status('dia', null, `Feito ✓ · volta em ${formatarVolta(voltaDoDia - Date.now())}`, true);
+    if (voltaDoDia !== null) status('dia', `Feito ✓ · volta em ${formatarVolta(voltaDoDia - Date.now())}`, true);
     if (crava) {
-      const s = statusCrava(crava.jogos, crava.palpites, crava.valendoDesde, new Date());
-      if (s) status('crava', s.ensaio ? ['Ensaio', 'teste'] : ['Valendo', 'valendo'], s.linha, s.cravado);
+      const s = statusCrava(crava.jogos, crava.palpites, new Date());
+      if (s) status('crava', s.linha, s.cravado);
     }
   }
 
@@ -187,10 +185,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     if (++tique % 20 === 0) atualizarRelogios();
   }, 1000);
 
-  // Pênaltis: o teto do dia (soma com a Prova quando ela sair do teste).
+  // Pênaltis: o teto do dia (somado com a Prova).
   if (time) {
     partidasFechadasHoje(diaBrasilia())
-      .then((n) => !saiu && status('penaltis', null, linhaPenaltis(TETO_DIARIO - n, TETO_DIARIO)))
+      .then((n) => !saiu && status('penaltis', linhaPenaltis(TETO_DIARIO - n, TETO_DIARIO)))
       .catch(() => {
         // sem internet: fica a regra geral
       });
@@ -203,25 +201,23 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       if (!FALSA_DIA) await sincronizarTorcedor();
       const e = await api.estadoDoDia();
       if (saiu || !e.pronto) return;
-      if (!e.amistoso) status('dia', ['Valendo', 'valendo']);
       if (e.fim) {
         voltaDoDia = Date.parse(e.proximoEm);
         atualizarRelogios();
       }
     })().catch(() => {
-      // sem internet: fica "Em teste"
+      // sem internet: fica só o que é
     });
   }
 
   // Crava a Rodada: rodada em foco, quanto falta pro próximo palpite trancar e se já cravou tudo.
   Promise.all([
     jogosDoCrava(),
-    valendoDesdeRodada(),
     time ? meusDadosDoCrava().then((m) => new Set(m.palpites.keys())).catch(() => null) : Promise.resolve(null),
   ])
-    .then(([jogos, valendoDesde, palpites]) => {
+    .then(([jogos, palpites]) => {
       if (saiu) return;
-      crava = { jogos, palpites, valendoDesde };
+      crava = { jogos, palpites };
       atualizarRelogios();
     })
     .catch(() => {
@@ -357,8 +353,35 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     elFrase.hidden = !texto;
   }
 
-  const carregar = () =>
-    rankingDaSemana(semana)
+  // ---------- sua posição na semana (só a própria, entre todos os torcedores) ----------
+  const elMinha = root.querySelector<HTMLElement>('[data-posicao-semana]')!;
+  // Seta: compara com a posição da última visita nesta semana (lida uma vez, ao abrir a Home).
+  const vista = memoria<{ semana: string; posicao: number | null }>(CHAVE_MINHA_POSICAO);
+  const posicaoAntes = vista?.semana === semana ? vista.posicao : null;
+  const carregarMinhaPosicao = () => {
+    // Sem time ainda, não cria login só para isso.
+    if (!time) return;
+    minhaPosicaoSemana(semana)
+      .then((p) => {
+        if (saiu || !p) return;
+        memoria(CHAVE_MINHA_POSICAO, { semana, posicao: p.posicao });
+        const seta = setaDaPosicao(posicaoAntes, p.posicao);
+        elMinha.innerHTML =
+          (seta === 'subiu'
+            ? '<span class="seta subiu" title="Subiu">▲</span> '
+            : seta === 'caiu'
+              ? '<span class="seta caiu" title="Caiu">▼</span> '
+              : '') + esc(linhaPosicaoSemana(p));
+        elMinha.hidden = false;
+      })
+      .catch(() => {
+        // sem internet: fica sem a linha
+      });
+  };
+
+  const carregar = () => {
+    carregarMinhaPosicao();
+    return rankingDaSemana(semana)
       .then((l) => !saiu && desenhar(l.length ? l : TIMES.filter((t) => t.id !== ID_OUTRO).map((t, i) => ({
         time_id: t.id, ativos: 0, soma: 0, media30: 0, posicao_campeao: i + 1, posicao_soma: i + 1,
       }))))
@@ -366,6 +389,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         if (!saiu) elLinhas.innerHTML = '<p class="vazio">Sem conexão com o placar agora. Dá pra jogar mesmo assim.</p>';
         if (elPos && !saiu) elPos.textContent = 'Sem conexão com o placar agora.';
       });
+  };
   void carregar();
   ouvirRanking(semana, () => void carregar())
     .then((f) => (saiu ? f() : (pararRanking = f)))

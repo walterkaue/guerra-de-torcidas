@@ -7,6 +7,7 @@ import { prefs } from '../estado';
 import { desenharCard } from '../jogo/card';
 import { conviteX1Penaltis } from '../jogo/convites';
 import { placarEmoji } from '../jogo/emoji';
+import { htmlPosicao } from '../jogo/posicao';
 import { escolherFrase } from '../narrador/escolher';
 import { contextoDoTime } from '../narrador/sessao';
 import { rankingDaSemana } from '../servidor/api';
@@ -175,6 +176,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
         ${situacao ? `<p class="situacao${d.valendo ? '' : ' sem-pontos'}">${esc(situacao)}</p>` : ''}
       </section>
 
+      ${htmlPosicao(d.servidor?.desempenho ?? null, 'penaltis')}
+
       ${blocoDesafio}
 
       <section class="res-compartilhar">
@@ -263,6 +266,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
       golsMaquina: r.golsMaquina,
       pontos: p.total,
       frase: d.frasesFinais[0] ?? '',
+      novoRecorde: !!d.servidor?.desempenho?.novoRecorde,
       link: link.replace('https://', ''),
     });
     img.src = canvas.toDataURL('image/png');

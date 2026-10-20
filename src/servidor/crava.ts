@@ -71,16 +71,6 @@ export async function rodadasDoCrava(): Promise<Rodada[]> {
   return (data ?? []) as Rodada[];
 }
 
-/** Rodada a partir da qual o Crava soma no ranking da semana (99 = modo ensaio). */
-export async function valendoDesdeRodada(): Promise<number> {
-  const sb = await supabase();
-  const { data, error } = await comTempoLimite(
-    sb.from('config_crava').select('valor').eq('chave', 'valendo_desde_rodada').maybeSingle(),
-  );
-  if (error) falhou(error);
-  return data ? Number(data.valor) : 99;
-}
-
 export interface MeusDados {
   palpites: Map<string, Placar>;
   /** Jogo da certeza por rodada. */

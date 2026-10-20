@@ -25,13 +25,6 @@
   flex: 1;
   font-size: 18px;
 }
-.selo-amistoso {
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: var(--cal);
-  color: var(--tinta);
-  font-size: 12px;
-}
 .prova-como {
   font-size: 20px;
   font-weight: 900;

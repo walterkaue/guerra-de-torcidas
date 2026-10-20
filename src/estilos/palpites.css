@@ -20,19 +20,6 @@
   text-align: center;
 }
 
-.faixa-ensaio {
-  padding: 10px 12px;
-  border: 2px dashed rgba(255, 255, 255, 0.35);
-  border-radius: 12px;
-  font-size: 14px;
-  line-height: 1.35;
-  color: var(--texto-suave);
-}
-
-.faixa-ensaio strong {
-  color: var(--cal);
-}
-
 .seletor-rodada {
   display: grid;
   grid-template-columns: 44px 1fr 44px;
@@ -307,6 +294,11 @@ span.certeza {
 
 .crava-posicao {
   font-weight: 700;
+}
+
+.crava-recorde {
+  font-size: 15px;
+  color: var(--texto-suave);
 }
 
 .crava-resumo > .rotulo {

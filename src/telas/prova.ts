@@ -6,6 +6,7 @@ import { esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, corDeTexto, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { DEGRAU_DA_POSICAO, NOME_DEGRAU, PERGUNTAS, PONTOS_DO_DEGRAU, levar, type Ajuda, type Degrau } from '../jogo/prova';
+import { AVISO_PRE_TEMPORADA } from '../jogo/posicao';
 
 /** Nome do degrau na tela: "Média" sozinho parecia média de pontos. */
 const ROTULO_DEGRAU: Record<Degrau, string> = { ...NOME_DEGRAU, 2: 'Nível médio' };
@@ -88,7 +89,6 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       <header class="prova-topo">
         <button class="voltar" type="button" aria-label="Sair da prova">‹</button>
         <p class="rotulo prova-nome">Prova de Boleiro</p>
-        <span class="selo-amistoso rotulo" data-amistoso hidden>em teste</span>
         <button class="voltar prova-como" type="button" aria-label="Como jogar">?</button>
       </header>
 
@@ -110,7 +110,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
           <li><span class="cj-icone" aria-hidden="true">🏆</span><p><strong>Pontos:</strong> 8, 12, 18 e 25 por degrau. 8 de 8 ganha +24.</p></li>
         </ul>
         <label class="cj-check" ${mostrarComo ? '' : 'hidden'}><input type="checkbox" data-pular> Não exibir as regras de novo</label>
-        <p class="nota" data-aviso-amistoso>Em teste: ainda não soma no ranking.</p>
+        <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
         <button class="botao" type="button" data-comecar>Começar a prova</button>
         <p class="prova-erro" data-erro hidden></p>
       </section>
@@ -416,7 +416,6 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       if (saiu) return;
       partidaId = p.partidaId;
       desafio = p.desafio;
-      $('[data-amistoso]').hidden = !p.amistoso;
       elInicio.hidden = true;
       degraus.fill('futuro');
       usadas.clear();

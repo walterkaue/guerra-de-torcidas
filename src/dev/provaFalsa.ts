@@ -55,16 +55,17 @@ function pergunta(): PerguntaProva {
 function fim(): FimProva {
   const e = estado!;
   const f = fimDosPassos(e.passos) ?? 'parou';
+  const pontos = calcularPontos(e.passos);
   return {
     fim: f,
-    pontos: calcularPontos(e.passos),
+    pontos,
     escada: escadaEmoji(e.passos, f),
     resumo: resumoDaProva(e.passos, f),
     passos: e.passos,
-    amistoso: true,
-    contaNoRanking: false,
+    contaNoRanking: true,
     sobSuspeita: false,
     semana: '2026-10-19',
+    desempenho: { posicao: 3, total: 14, recorde: pontos.total, novoRecorde: pontos.total > 0 },
     desafio: { codigo: 'teste123' },
     comparacao: null,
   };
@@ -73,7 +74,7 @@ function fim(): FimProva {
 export async function novaProva() {
   await espera();
   estado = { atual: 0, alternativas: [], passos: [], ajudas: new Set(), ajudaNaAtual: false, removidas: [], trocas: 0 };
-  return { partidaId: 'falsa', amistoso: true, total: PERGUNTAS, desafio: null, pergunta: pergunta() };
+  return { partidaId: 'falsa', total: PERGUNTAS, desafio: null, pergunta: pergunta() };
 }
 
 export async function proximaPergunta(_id: string, decisao?: 'seguir' | 'parar') {

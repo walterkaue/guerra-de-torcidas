@@ -6,6 +6,7 @@ import { corDeTexto, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { desenharCardDia } from '../jogo/cardDia';
 import { conviteDia } from '../jogo/convites';
+import { AVISO_PRE_TEMPORADA, htmlPosicao } from '../jogo/posicao';
 import {
   AMOSTRA_COR,
   NOMES_PISTAS,
@@ -117,7 +118,6 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       <header class="prova-topo">
         <button class="voltar" type="button" aria-label="Voltar">‹</button>
         <p class="rotulo prova-nome" data-titulo>Time do Dia</p>
-        <span class="selo-amistoso rotulo" data-amistoso hidden>em teste</span>
         <button class="voltar prova-como" type="button" aria-label="Como jogar">?</button>
       </header>
 
@@ -134,7 +134,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
         <label class="cj-check"><input type="checkbox" data-pular> Não exibir de novo</label>
       </section>
 
-      <p class="nota" data-aviso-amistoso hidden>Em teste: ainda não soma no ranking.</p>
+      <p class="aviso-pre" role="note" data-aviso-pre>${esc(AVISO_PRE_TEMPORADA)}</p>
 
       <div class="dia-cabecalho" aria-hidden="true">
         ${NOMES_PISTAS.map((n) => `<span>${SIGLA_CURTA[n]}</span>`).join('')}
@@ -290,8 +290,6 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
   function terminar(): void {
     const e = estado!;
     elChutar.hidden = true;
-    // O fim já explica se soma ou não: o aviso do topo sairia repetido.
-    $('[data-aviso-amistoso]').hidden = true;
     const n = e.tentativas.length;
     if (!frasesFinais.length) {
       const f1 = e.acertou
@@ -307,11 +305,10 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     const placar = placarDoDia(n, e.acertou);
     const grade = gradeEmoji(e.tentativas.map((t) => t.pistas));
     const link = `${SITE}/?dia`;
-    const linha = linhaDoCard(e.numero, placar, e.sequencia, e.amistoso);
+    const novoRecorde = !!e.desempenho?.novoRecorde;
+    const linha = linhaDoCard(e.numero, placar, e.sequencia, novoRecorde);
     const textoShare = `${linha}\n${grade}\n${conviteDia(n, e.acertou)} ${link}`;
-    const situacao = e.amistoso
-      ? 'Em teste: ainda não soma no ranking.'
-      : `+${e.pontos} na semana, além das 5 partidas do dia.`;
+    const situacao = `+${e.pontos} na semana, além das 5 partidas do dia.`;
 
     elFim.innerHTML = `
       <div class="dia-revelado faixa-tv">
@@ -323,7 +320,8 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
         <span>${e.acertou ? `${e.pontos} pontos` : 'sem pontos hoje'}${e.sequencia > 1 ? ` · 🔥 ${e.sequencia} dias` : ''}</span>
       </div>
       ${frasesFinais[1] ? `<p class="adesivo segundo">${esc(frasesFinais[1])}</p>` : ''}
-      <p class="situacao${e.amistoso ? ' sem-pontos' : ''}">${esc(situacao)}</p>
+      <p class="situacao">${esc(situacao)}</p>
+      ${htmlPosicao(e.desempenho, 'dia')}
       <p class="dia-proximo rotulo">Próximo time em <strong data-relogio>${formatarRelogio(Date.parse(e.proximoEm) - Date.now())}</strong></p>
       <section class="res-compartilhar">
         <a class="botao botao-zap" target="_blank" rel="noopener"
@@ -370,7 +368,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
         dias: e.sequencia,
         grade,
         frase: frasesFinais[0] ?? '',
-        amistoso: e.amistoso,
+        novoRecorde,
         link: link.replace('https://', ''),
       });
       img.src = canvas.toDataURL('image/png');
@@ -440,8 +438,6 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       estado = r;
       clubes = r.clubes ?? clubes;
       $('[data-titulo]').textContent = `Time do Dia #${r.numero}`;
-      $('[data-amistoso]').hidden = !r.amistoso;
-      $('[data-aviso-amistoso]').hidden = !r.amistoso || r.fim;
       desenharGrade();
       if (r.fim) terminar();
       else {

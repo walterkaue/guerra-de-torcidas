@@ -1,4 +1,4 @@
-// Selos e linhas de status dos cards da Home (docs/jogo.md, seção 9, "Home"). Puro: sem DOM nem relógio.
+// Linhas de status dos cards da Home (docs/jogo.md, seção 9, "Home"). Puro: sem DOM nem relógio.
 
 import { ordinalRodada } from './crava';
 import { faseDoJogo, rodadaEmFoco, type JogoBasico } from './cravaTela';
@@ -31,7 +31,6 @@ export interface StatusCrava {
   /** "32ª rodada · 1º jogo em 3h", "… · próximo jogo em 2h", "Cravado ✓" ou "32ª rodada · bola rolando". */
   linha: string;
   cravado: boolean;
-  ensaio: boolean;
 }
 
 /**
@@ -41,19 +40,17 @@ export interface StatusCrava {
 export function statusCrava(
   jogos: readonly JogoBasico[],
   palpites: ReadonlySet<string> | null,
-  valendoDesde: number,
   agora: Date,
 ): StatusCrava | null {
   const rodada = rodadaEmFoco(jogos, agora);
   if (rodada === null) return null;
   const abertos = jogos.filter((j) => j.rodada === rodada && faseDoJogo(j, agora) === 'aberto');
-  const ensaio = rodada < valendoDesde;
   const nome = `${ordinalRodada(rodada)} rodada`;
-  if (!abertos.length) return { rodada, linha: `${nome} · bola rolando`, cravado: false, ensaio };
+  if (!abertos.length) return { rodada, linha: `${nome} · bola rolando`, cravado: false };
   const cravado = !!palpites && abertos.every((j) => palpites.has(j.id));
-  if (cravado) return { rodada, linha: 'Cravado ✓', cravado, ensaio };
+  if (cravado) return { rodada, linha: 'Cravado ✓', cravado };
   const proximo = Math.min(...abertos.map((j) => Date.parse(j.inicio)));
   const primeiro = !jogos.some((j) => j.rodada === rodada && Date.parse(j.inicio) < proximo);
   const qual = primeiro ? '1º jogo' : 'próximo jogo';
-  return { rodada, linha: `${nome} · ${qual} em ${formatarFecha(proximo - agora.getTime())}`, cravado, ensaio };
+  return { rodada, linha: `${nome} · ${qual} em ${formatarFecha(proximo - agora.getTime())}`, cravado };
 }

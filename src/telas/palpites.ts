@@ -17,6 +17,7 @@ import {
   type PontosDoJogo,
 } from '../jogo/crava';
 import { AVISO_RESENHA, adiado, faseDoJogo, horaDoJogo, rodadaEmFoco, tempoAte, textoMeusPalpites, textoResultadoRodada } from '../jogo/cravaTela';
+import { AVISO_PRE_TEMPORADA, linhaRecorde, recordeCrava } from '../jogo/posicao';
 import { ZONA_REBAIXAMENTO, classificacao, dicasDoJogo, type Letra, type LinhaTabela, type Resultado } from '../jogo/tabela';
 import { escolherFrase, type ContextoNarrador, type Etiqueta } from '../narrador/escolher';
 import type { EventoNarrador } from '../narrador/frases';
@@ -33,7 +34,6 @@ import {
   rankingCrava,
   resultadosDaTemporada,
   rodadasDoCrava,
-  valendoDesdeRodada,
   type ComoCravaram,
   type Jogo,
   type MeusDados,
@@ -66,7 +66,6 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   let jogos: Jogo[] = [];
   let rodadas: Rodada[] = [];
   let meus: MeusDados = { palpites: new Map(), certezas: new Map(), pontos: new Map() };
-  let valendoDesde = 99;
   let rodada: number | null = null;
   let rankingDe: 'rodada' | 'tudo' = 'rodada';
   let visao: 'palpites' | 'tabela' = 'palpites';
@@ -94,7 +93,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       </div>
       <section class="tabela-campeonato" data-tabela hidden></section>
       <div class="visao-palpites" data-visao-palpites>
-      <p class="faixa-ensaio" data-ensaio hidden><strong>Ensaio:</strong> ainda não soma no ranking da semana.</p>
+      <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
       <nav class="seletor-rodada" aria-label="Rodada" hidden>
         <button type="button" class="voltar" data-acao="rodada-ant" aria-label="Rodada anterior">‹</button>
         <strong class="rotulo" data-rodada></strong>
@@ -106,6 +105,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       <section class="crava-resumo" hidden>
         <p class="crava-meus-pontos" data-meus-pontos></p>
         <p class="crava-posicao" data-posicao></p>
+        <p class="crava-recorde" data-recorde hidden></p>
         <p class="rotulo">Ranking do Crava</p>
         <div class="abas" role="tablist">
           <button role="tab" class="rotulo" aria-selected="true" data-acao="rk-rodada">Rodada</button>
@@ -327,7 +327,6 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     $('[data-rodada]').textContent = `${ordinalRodada(rodada)} rodada`;
     $<HTMLButtonElement>('[data-acao="rodada-ant"]').disabled = rodada <= nums[0];
     $<HTMLButtonElement>('[data-acao="rodada-prox"]').disabled = rodada >= nums[nums.length - 1];
-    $('[data-ensaio]').hidden = rodada >= valendoDesde;
 
     const lista = daRodada();
     const resultados = resultadosDaRodada();
@@ -400,6 +399,16 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     }
   }
 
+  /** Pontos que já foram pra torcida, somados por rodada (para o recorde pessoal). */
+  function pontosPorRodada(): Map<number, number> {
+    const porRodada = new Map<number, number>();
+    for (const j of jogos) {
+      const p = meus.pontos.get(j.id);
+      if (p !== undefined) porRodada.set(j.rodada, (porRodada.get(j.rodada) ?? 0) + p);
+    }
+    return porRodada;
+  }
+
   // ---------- ranking das torcidas no palpite e a própria posição ----------
   async function carregarRanking(): Promise<void> {
     const r = rodada;
@@ -408,8 +417,15 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     const alvo = rankingDe === 'rodada' ? r : null;
     const meusPontos = daRodada().reduce((s, j) => s + (meus.pontos.get(j.id) ?? 0), 0);
     $('[data-meus-pontos]').innerHTML =
-      `Na ${ordinalRodada(r)}: <strong>${meusPontos}</strong> ${meusPontos === 1 ? 'ponto' : 'pontos'}${paraTime ? ` ${esc(paraTime)}` : ''}` +
-      (r < valendoDesde ? ' <small>(ensaio)</small>' : '');
+      `Na ${ordinalRodada(r)}: <strong>${meusPontos}</strong> ${meusPontos === 1 ? 'ponto' : 'pontos'}${paraTime ? ` ${esc(paraTime)}` : ''}`;
+    // Recorde pessoal: a melhor rodada (já com peso).
+    const rec = recordeCrava(pontosPorRodada(), r);
+    const elRec = $('[data-recorde]');
+    const textoRec = linhaRecorde(rec.recorde);
+    elRec.hidden = !textoRec;
+    elRec.innerHTML = rec.novo
+      ? `<span class="selo-recorde">NOVO RECORDE!</span> ${esc(textoRec ?? '')} numa rodada`
+      : textoRec ? `${esc(textoRec)} numa rodada` : '';
     const elRk = $('[data-ranking]');
     const elPos = $('[data-posicao]');
     try {
@@ -633,6 +649,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
         pontos,
         paraTime,
         emoji: linhaEmoji(resultados),
+        novoRecorde: recordeCrava(pontosPorRodada(), rodada).novo,
         frase: elAdesivo.hidden ? '' : (elAdesivo.textContent ?? ''),
         link: link().replace('https://', ''),
       },
@@ -662,10 +679,9 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   // ---------- carga ----------
   async function recarregar(): Promise<void> {
     try {
-      const [j, r, v] = await Promise.all([jogosDoCrava(), rodadasDoCrava(), valendoDesdeRodada()]);
+      const [j, r] = await Promise.all([jogosDoCrava(), rodadasDoCrava()]);
       jogos = j;
       rodadas = r;
-      valendoDesde = v;
       try {
         meus = await meusDadosDoCrava();
       } catch {

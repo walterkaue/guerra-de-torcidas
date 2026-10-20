@@ -1,6 +1,7 @@
 // Card de resultado 1080×1350 (bom para WhatsApp e stories), gerado no próprio celular.
 
 import { corDeTexto, type Time } from '../dados/times';
+import { AVISO_PRE_TEMPORADA } from './posicao';
 
 export interface DadosCard {
   time: Time;
@@ -12,6 +13,7 @@ export interface DadosCard {
   golsMaquina: number;
   pontos: number;
   frase: string;
+  novoRecorde: boolean;
   link: string;
 }
 
@@ -37,6 +39,39 @@ export function quebrarTexto(c: CanvasRenderingContext2D, texto: string, largura
   return linhas;
 }
 
+/** Selo amarelo "NOVO RECORDE!", levemente torto (adesivo de transmissão), centrado em (x, y). */
+export function seloRecorde(c: CanvasRenderingContext2D, x: number, y: number): void {
+  c.save();
+  c.translate(x, y);
+  c.rotate(-0.14);
+  c.font = `400 54px ${PLACAR}`;
+  const largura = c.measureText('NOVO RECORDE!').width + 56;
+  c.fillStyle = '#ffffff';
+  c.beginPath();
+  c.roundRect(-largura / 2 - 6, -46, largura + 12, 92, 18);
+  c.fill();
+  c.fillStyle = '#ffd23f';
+  c.beginPath();
+  c.roundRect(-largura / 2, -40, largura, 80, 14);
+  c.fill();
+  c.fillStyle = '#111111';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText('NOVO RECORDE!', 0, 3);
+  c.restore();
+}
+
+/** Letra miúda da pré-temporada, embaixo do botão do link (todos os cards). */
+export function rodapePreTemporada(c: CanvasRenderingContext2D, cor: string): void {
+  c.save();
+  c.textAlign = 'center';
+  c.fillStyle = cor;
+  c.globalAlpha = 0.85;
+  c.font = `600 28px ${FONTE}`;
+  c.fillText(AVISO_PRE_TEMPORADA, L / 2, A - 32, L - 120);
+  c.restore();
+}
+
 export function desenharCard(d: DadosCard): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = L;
@@ -60,6 +95,7 @@ export function desenharCard(d: DadosCard): HTMLCanvasElement {
   c.beginPath();
   c.roundRect(70, 330, L - 140, 420, 40);
   c.fill();
+  if (d.novoRecorde) seloRecorde(c, L - 210, 330);
 
   c.textAlign = 'center';
   c.fillStyle = txt;
@@ -97,6 +133,7 @@ export function desenharCard(d: DadosCard): HTMLCanvasElement {
   c.fillText('Faz mais? →', L / 2, A - 140);
   c.font = `700 32px ${FONTE}`;
   c.fillText(d.link, L / 2, A - 98);
+  rodapePreTemporada(c, txt);
 
   return canvas;
 }

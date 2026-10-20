@@ -316,3 +316,28 @@
     transition: none;
   }
 }
+
+/* Sua posição naquele minigame e o recorde pessoal. */
+.res-posicao {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.res-posicao p {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.res-posicao .recorde {
+  color: var(--texto-suave);
+}
+
+.res-posicao .selo-recorde {
+  font-size: 22px;
+  margin: 4px 0 2px 4px;
+}

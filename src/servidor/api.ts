@@ -6,6 +6,7 @@ import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { prefs } from '../estado';
 import type { GestoCobranca, Gestos, ResultadoPartida } from '../jogo/penaltis.ts';
 import type { Ajuda, Degrau, Desfecho, Fim, Passo, PontosProva } from '../jogo/prova.ts';
+import type { Desempenho, PosicaoSemana } from '../jogo/posicao.ts';
 import type { Tentativa } from '../jogo/timeDoDia.ts';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -132,6 +133,8 @@ export interface FechamentoDoServidor {
   contaNoRanking: boolean;
   sobSuspeita: boolean;
   ranking: { antes: PosicaoRanking | null; depois: PosicaoRanking | null };
+  /** Posição nos pênaltis na semana e recorde pessoal (null se o servidor não conseguiu ler). */
+  desempenho: Desempenho | null;
   desafio: { codigo: string } | null;
   comparacao: {
     desafiante: string | null;
@@ -195,10 +198,10 @@ export interface FimProva {
   escada: string;
   resumo: string;
   passos: Passo[];
-  amistoso: boolean;
   contaNoRanking: boolean;
   sobSuspeita: boolean;
   semana: string;
+  desempenho: Desempenho | null;
   desafio: { codigo: string } | null;
   comparacao: {
     desafiante: string | null;
@@ -229,7 +232,6 @@ export interface AjudaProva {
 
 export function novaProva(desafio?: string): Promise<{
   partidaId: string;
-  amistoso: boolean;
   total: number;
   desafio: DesafioProvaRecebido | null;
   pergunta: PerguntaProva;
@@ -282,7 +284,6 @@ export interface EstadoDoDia {
   pronto: true;
   dia: string;
   numero: number;
-  amistoso: boolean;
   tentativas: Tentativa[];
   maxTentativas: number;
   fim: boolean;
@@ -290,6 +291,8 @@ export interface EstadoDoDia {
   pontos: number;
   /** Só quando a partida terminou. */
   secreto: { id: string; nome: string } | null;
+  /** Posição no Time do Dia daquele dia e recorde pessoal; só depois do fim. */
+  desempenho: Desempenho | null;
   sequencia: number;
   /** Hora (ISO) em que entra o próximo clube. */
   proximoEm: string;
@@ -337,6 +340,15 @@ export async function ouvirRanking(semana: string, aoMudar: () => void): Promise
     .on('postgres_changes', { event: '*', schema: 'public', table: 'ranking_semana', filter: `semana=eq.${semana}` }, aoMudar)
     .subscribe();
   return () => void sb.removeChannel(canal);
+}
+
+/** Minha posição geral na semana, somando todos os jogos e todos os times ("3º de 14"). */
+export async function minhaPosicaoSemana(semana: string): Promise<PosicaoSemana | null> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('minha_posicao_semana', { p_semana: semana }));
+  if (error) throw new ErroServidor('falha');
+  return ((data ?? []) as PosicaoSemana[])[0] ?? null;
 }
 
 /** Quantas partidas fechei hoje, somando os minigames de partida (para o "hoje contam mais N partidas"). */

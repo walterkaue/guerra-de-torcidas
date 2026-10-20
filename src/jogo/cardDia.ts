@@ -2,7 +2,7 @@
 // em emoji. Nunca mostra o nome de nenhum clube (nada de spoiler para o grupo).
 
 import { corDeTexto, type Time } from '../dados/times';
-import { FONTE, PLACAR, ROTULO, quebrarTexto } from './card';
+import { FONTE, PLACAR, ROTULO, quebrarTexto, rodapePreTemporada, seloRecorde } from './card';
 
 const L = 1080;
 const A = 1350;
@@ -17,7 +17,7 @@ export interface DadosCardDia {
   /** Uma linha por tentativa. */
   grade: string;
   frase: string;
-  amistoso: boolean;
+  novoRecorde: boolean;
   link: string;
 }
 
@@ -41,7 +41,7 @@ export function desenharCardDia(d: DadosCardDia): HTMLCanvasElement {
   c.textAlign = 'center';
   c.fillStyle = txt;
   c.font = `700 44px ${ROTULO}`;
-  c.fillText(`GUERRA DE TORCIDAS${d.amistoso ? ' · EM TESTE' : ''}`, L / 2, 110);
+  c.fillText('GUERRA DE TORCIDAS', L / 2, 110);
   c.font = `400 110px ${PLACAR}`;
   c.fillText(`TIME DO DIA #${d.numero}`, L / 2, 235);
 
@@ -53,6 +53,7 @@ export function desenharCardDia(d: DadosCardDia): HTMLCanvasElement {
   c.beginPath();
   c.roundRect(70, 280, L - 140, altCaixa, 40);
   c.fill();
+  if (d.novoRecorde) seloRecorde(c, L - 210, 315);
 
   c.fillStyle = '#ffffff';
   c.font = `400 150px ${PLACAR}`;
@@ -82,6 +83,7 @@ export function desenharCardDia(d: DadosCardDia): HTMLCanvasElement {
   c.fillText('E você? →', L / 2, A - 140);
   c.font = `700 32px ${FONTE}`;
   c.fillText(d.link, L / 2, A - 98);
+  rodapePreTemporada(c, txt);
 
   return canvas;
 }

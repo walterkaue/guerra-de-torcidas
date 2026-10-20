@@ -2,7 +2,7 @@
 // Nunca mostra o texto das perguntas (o desafio por link usa as mesmas).
 
 import { corDeTexto, type Time } from '../dados/times';
-import { FONTE, PLACAR, ROTULO, quebrarTexto } from './card';
+import { FONTE, PLACAR, ROTULO, quebrarTexto, rodapePreTemporada, seloRecorde } from './card';
 
 const L = 1080;
 const A = 1350;
@@ -18,14 +18,14 @@ export interface DadosCardProva {
   pontos: number;
   escada: string;
   frase: string;
-  amistoso: boolean;
+  novoRecorde: boolean;
   link: string;
 }
 
 /** "Prova de Boleiro: cheguei na 6ª e parei, 58 pro Flamengo" (texto do card e do WhatsApp). */
-export function linhaDoCard(resumo: string, pontos: number, paraTime: string | null, amistoso: boolean): string {
+export function linhaDoCard(resumo: string, pontos: number, paraTime: string | null, novoRecorde = false): string {
   const quanto = paraTime ? `${pontos} ${paraTime}` : `${pontos} pontos`;
-  return `Prova de Boleiro: ${resumo}, ${quanto}${amistoso ? ' (em teste)' : ''}`;
+  return `Prova de Boleiro: ${resumo}, ${quanto}${novoRecorde ? ' · NOVO RECORDE!' : ''}`;
 }
 
 export function desenharCardProva(d: DadosCardProva): HTMLCanvasElement {
@@ -48,7 +48,7 @@ export function desenharCardProva(d: DadosCardProva): HTMLCanvasElement {
   c.textAlign = 'center';
   c.fillStyle = txt;
   c.font = `700 44px ${ROTULO}`;
-  c.fillText(`GUERRA DE TORCIDAS${d.amistoso ? ' · EM TESTE' : ''}`, L / 2, 120);
+  c.fillText('GUERRA DE TORCIDAS', L / 2, 120);
   c.font = `400 110px ${PLACAR}`;
   c.fillText('PROVA DE BOLEIRO', L / 2, 245);
 
@@ -56,6 +56,7 @@ export function desenharCardProva(d: DadosCardProva): HTMLCanvasElement {
   c.beginPath();
   c.roundRect(70, 300, L - 140, 470, 40);
   c.fill();
+  if (d.novoRecorde) seloRecorde(c, L - 210, 335);
 
   c.fillStyle = '#ffffff';
   c.font = `400 200px ${PLACAR}`;
@@ -88,6 +89,7 @@ export function desenharCardProva(d: DadosCardProva): HTMLCanvasElement {
   c.fillText('Faz mais? →', L / 2, A - 140);
   c.font = `700 32px ${FONTE}`;
   c.fillText(d.link, L / 2, A - 98);
+  rodapePreTemporada(c, txt);
 
   return canvas;
 }

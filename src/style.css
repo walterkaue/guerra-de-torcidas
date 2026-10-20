@@ -553,3 +553,29 @@ body {
 .cj-nota { font-size: 14px; color: var(--texto-suave); }
 .cj-check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 700; }
 .cj-check input { width: 24px; height: 24px; accent-color: var(--amarelo); }
+
+/* ---------- pré-temporada e recorde (docs/jogo.md, seção 5) ---------- */
+/* Aviso único da pré-temporada, no lugar dos antigos selos de teste. */
+.aviso-pre {
+  padding: 8px 12px;
+  border: 2px dashed rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--texto-suave);
+}
+
+/* "NOVO RECORDE!": adesivo amarelo, levemente torto, como no card. */
+.selo-recorde {
+  display: inline-block;
+  padding: 3px 9px;
+  border: 2px solid #fff;
+  border-radius: 6px;
+  background: var(--amarelo);
+  color: var(--tinta);
+  font-family: var(--fonte-placar);
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  transform: rotate(var(--inclinacao));
+}

@@ -6,6 +6,7 @@ import { ID_OUTRO, corDeTexto, proTime, timePorId, TIMES } from '../dados/times'
 import { prefs } from '../estado';
 import { desenharCardProva, linhaDoCard } from '../jogo/cardProva';
 import { conviteX1Prova } from '../jogo/convites';
+import { htmlPosicao } from '../jogo/posicao';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 const maiuscula = (s: string) => s.charAt(0).toLocaleUpperCase('pt-BR') + s.slice(1);
@@ -21,14 +22,13 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
 
   const codigo = fim.desafio?.codigo;
   const link = codigo ? `${SITE}/?p=${codigo}` : `${SITE}/?time=${time.id}`;
-  const linha = linhaDoCard(fim.resumo, total, paraTime, fim.amistoso);
+  const novoRecorde = !!fim.desempenho?.novoRecorde;
+  const linha = linhaDoCard(fim.resumo, total, paraTime, novoRecorde);
   const textoShare = codigo
     ? `${conviteX1Prova(total, true)}\n${fim.escada}\n${link}`
     : `${linha}\n${fim.escada}\n${conviteX1Prova(total, false)} ${link}`;
 
-  const situacao = fim.amistoso
-    ? 'Em teste: ainda não soma no ranking.'
-    : fim.sobSuspeita
+  const situacao = fim.sobSuspeita
       ? 'Essa ficou fora do ranking até a gente conferir.'
       : !fim.contaNoRanking
         ? 'Não superou suas 5 melhores de hoje: o ranking não muda.'
@@ -50,7 +50,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
     <main class="tela resultado prova-resultado ${fim.fim === 'perfeita' || cmp?.venceu ? 'venceu' : ''}"
       style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
       <header class="res-topo">
-        <p class="rotulo">Prova de Boleiro${fim.amistoso ? ' · em teste' : ''}</p>
+        <p class="rotulo">Prova de Boleiro</p>
         <h1 class="res-titulo">${titulo}</h1>
       </header>
 
@@ -70,7 +70,9 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
 
       ${frases.map((t, i) => `<p class="adesivo${i ? ' segundo' : ''}">${esc(t)}</p>`).join('')}
 
-      <section class="res-efeito"><p class="situacao${fim.amistoso ? ' sem-pontos' : ''}">${esc(situacao)}</p></section>
+      <section class="res-efeito"><p class="situacao">${esc(situacao)}</p></section>
+
+      ${htmlPosicao(fim.desempenho, 'prova')}
 
       ${blocoDesafio}
 
@@ -112,7 +114,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
       pontos: total,
       escada: fim.escada,
       frase: frases[0] ?? '',
-      amistoso: fim.amistoso,
+      novoRecorde,
       link: link.replace('https://', ''),
     });
     img.src = canvas.toDataURL('image/png');

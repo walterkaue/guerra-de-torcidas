@@ -119,6 +119,16 @@
   color: var(--cal);
 }
 
+/* Sua posição entre todos os torcedores na semana (só a própria, nunca a lista). */
+.minha-posicao {
+  padding: 10px 14px;
+  border-left: 4px solid var(--amarelo);
+  border-radius: 0 12px 12px 0;
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 15px;
+  font-weight: 700;
+}
+
 .link-trocar {
   position: absolute;
   top: 6px;
@@ -386,28 +396,6 @@
 .card-jogo:active {
   transform: translateY(2px);
   border-color: var(--amarelo);
-}
-
-.selo-jogo {
-  padding: 2px 7px;
-  border-radius: 3px;
-  font-size: 11px;
-  line-height: 1.3;
-  transform: skewX(var(--inclinacao));
-}
-
-.selo-jogo.valendo {
-  background: var(--amarelo);
-  color: var(--tinta);
-}
-
-.selo-jogo.teste {
-  background: var(--cal);
-  color: var(--tinta);
-}
-
-.selo-jogo.aguardando {
-  visibility: hidden;
 }
 
 .nome-jogo {

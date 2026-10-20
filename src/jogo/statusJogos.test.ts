@@ -40,27 +40,26 @@ describe('status do Crava', () => {
   const jogos = [jogo('a', 32, 3), jogo('b', 32, 27), jogo('c', 33, 200)];
 
   it('rodada em foco e o próximo palpite que tranca', () => {
-    expect(statusCrava(jogos, null, 99, agora)).toEqual({ rodada: 32, linha: '32ª rodada · 1º jogo em 3h', cravado: false, ensaio: true });
+    expect(statusCrava(jogos, null, agora)).toEqual({ rodada: 32, linha: '32ª rodada · 1º jogo em 3h', cravado: false });
   });
 
   it('cravado só com todos os jogos abertos palpitados', () => {
-    expect(statusCrava(jogos, new Set(['a']), 34, agora)?.cravado).toBe(false);
-    expect(statusCrava(jogos, new Set(['a', 'b']), 34, agora)).toEqual({ rodada: 32, linha: 'Cravado ✓', cravado: true, ensaio: true });
-    expect(statusCrava(jogos, new Set(['a', 'b']), 32, agora)?.ensaio).toBe(false);
+    expect(statusCrava(jogos, new Set(['a']), agora)?.cravado).toBe(false);
+    expect(statusCrava(jogos, new Set(['a', 'b']), agora)).toEqual({ rodada: 32, linha: 'Cravado ✓', cravado: true });
   });
 
   it('depois do 1º jogo, conta até o próximo', () => {
     const meio = [jogo('a', 32, -1), jogo('b', 32, 2)];
-    expect(statusCrava(meio, new Set(), 99, agora)?.linha).toBe('32ª rodada · próximo jogo em 2h');
+    expect(statusCrava(meio, new Set(), agora)?.linha).toBe('32ª rodada · próximo jogo em 2h');
   });
 
   it('jogo já começado não conta; sem jogo aberto, bola rolando', () => {
     const rolando = [jogo('a', 32, -1), jogo('b', 32, -2)];
-    expect(statusCrava(rolando, new Set(), 99, agora)?.linha).toBe('32ª rodada · bola rolando');
-    expect(statusCrava([jogo('a', 32, -1), jogo('b', 32, 5)], new Set(['b']), 99, agora)?.linha).toBe('Cravado ✓');
+    expect(statusCrava(rolando, new Set(), agora)?.linha).toBe('32ª rodada · bola rolando');
+    expect(statusCrava([jogo('a', 32, -1), jogo('b', 32, 5)], new Set(['b']), agora)?.linha).toBe('Cravado ✓');
   });
 
   it('sem jogos', () => {
-    expect(statusCrava([], null, 99, agora)).toBeNull();
+    expect(statusCrava([], null, agora)).toBeNull();
   });
 });

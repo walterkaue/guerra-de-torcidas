@@ -175,7 +175,7 @@ export function telaAdmin(root: HTMLElement): () => void {
       if (!l) return '<td class="falta">0</td>';
       return `<td>${l.ativas}${l.acerto !== null ? `<small> ${Number(l.acerto).toFixed(0)}%</small>` : ''}</td>`;
     };
-    el.innerHTML = `<p class="nota">Perguntas ativas por degrau (e % de acerto). Meta da fase em teste: 3/3/2/2 por clube.</p>
+    el.innerHTML = `<p class="nota">Perguntas ativas por degrau (e % de acerto). Meta da pré-temporada: 3/3/2/2 por clube.</p>
       <div class="admin-tabela"><table>
         <thead><tr><th>Clube</th><th>Fác.</th><th>Méd.</th><th>Dif.</th><th>Craq.</th></tr></thead>
         <tbody>${clubes
