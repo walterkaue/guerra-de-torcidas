@@ -10,3 +10,6 @@ prints/
 !.env.production
 !.env.development
 prints-revisao/
+
+# Configuração pessoal do Claude Code (permissões locais)
+.claude/settings.local.json
