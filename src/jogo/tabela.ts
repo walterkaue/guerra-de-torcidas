@@ -1,6 +1,6 @@
 // Tabela do Brasileirão e indicadores dos cartões do Crava, calculados dos resultados da temporada
 // (tabela resultados_temporada, placar da API). Puro: sem DOM, relógio nem banco.
-// Só fatos da campanha (posição, pontos, forma, gols): nada de chance de vitória, que pareceria cotação.
+// Só fatos da campanha (posição, pontos, forma, gols): nunca chance de vitória nem previsão de resultado.
 
 export interface Resultado {
   rodada: number;
