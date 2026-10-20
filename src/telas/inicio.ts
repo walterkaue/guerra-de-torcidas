@@ -1,9 +1,10 @@
-// Tela inicial (docs/jogo.md, seção 9, "Home"): AO VIVO com contagem, bloco do time com o cabo de
+// Tela inicial (docs/jogo.md, seção 9, "Home"): título com a contagem da semana, bloco do time com o cabo de
 // guerra contra o rival, sua posição na semana, os 4 jogos em grade (com status vivo), mini tabela e feedback.
 
 import { desafioDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, TIMES, corDeTexto, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
+import { AVISO_RESENHA } from '../jogo/cravaTela';
 import { AVISO_PRE_TEMPORADA, linhaPosicaoSemana, setaDaPosicao } from '../jogo/posicao';
 import { formatarVolta, linhaPenaltis, statusCrava } from '../jogo/statusJogos';
 import { escolherFrase } from '../narrador/escolher';
@@ -93,12 +94,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
   root.innerHTML = `
     <main class="inicio">
-      <header class="barra-ao-vivo">
-        <span class="ao-vivo rotulo"><i aria-hidden="true"></i>Ao vivo</span>
-        <span class="contagem rotulo">Semana acaba em <strong data-contagem>${formatarContagem(msAteZerarSemana())}</strong></span>
+      <header class="cabecalho">
+        <h1 class="marca-pequena">Guerra <span>de Torcidas</span></h1>
+        <p class="contagem rotulo"><span class="etiqueta-fase">Pré-temporada</span>Semana fecha em <strong data-contagem>${formatarContagem(msAteZerarSemana())}</strong></p>
       </header>
-
-      <h1 class="marca-pequena">Guerra <span>de Torcidas</span></h1>
 
       <section class="convite-desafio" hidden></section>
 
@@ -133,6 +132,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       </section>
 
       <button class="link-feedback" type="button" data-acao="feedback">💬 Feedback ou bug? Conta pra gente</button>
+
+      <p class="rodape-resenha" role="note">${esc(AVISO_RESENHA)} Jogo 100% grátis.</p>
 
       ${barraNavegacao('jogar')}
     </main>

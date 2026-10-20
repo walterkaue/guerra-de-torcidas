@@ -10,41 +10,21 @@
   gap: 12px;
 }
 
-/* ---------- AO VIVO ---------- */
-.barra-ao-vivo {
+/* ---------- cabeçalho ---------- */
+/* Título e contagem na mesma coluna; nada flutua no canto superior direito (parece botão de fechar). */
+.cabecalho {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.ao-vivo {
-  display: inline-flex;
-  align-items: center;
+  flex-direction: column;
   gap: 6px;
-  padding: 4px 10px 4px 8px;
-  border-radius: 4px;
-  background: var(--caiu);
-  color: #fff;
-  transform: skewX(var(--inclinacao));
-}
-
-.ao-vivo i {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #fff;
-  /* 1 piscada por segundo: bem abaixo do limite de 3 por segundo. */
-  animation: piscar 1s steps(2, start) infinite;
-}
-
-@keyframes piscar {
-  to {
-    visibility: hidden;
-  }
 }
 
 .contagem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(245, 245, 240, 0.18);
   color: var(--texto-suave);
   font-size: 13px;
 }
@@ -52,6 +32,24 @@
 .contagem strong {
   color: var(--amarelo);
   font-variant-numeric: tabular-nums;
+}
+
+/* Etiqueta reta e cinza, sem piscar, sem inclinar. */
+.etiqueta-fase {
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgba(245, 245, 240, 0.16);
+  color: var(--cal);
+  letter-spacing: 0.08em;
+}
+
+.rodape-resenha {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--texto-suave);
+  opacity: 0.85;
 }
 
 .marca-pequena {
@@ -445,7 +443,7 @@
   flex-direction: column;
   gap: 10px;
   padding: 14px;
-  border: 2px solid var(--amarelo);
+  border: 1px solid rgba(245, 245, 240, 0.28);
   border-radius: 16px;
   background: rgba(0, 0, 0, 0.4);
   line-height: 1.35;

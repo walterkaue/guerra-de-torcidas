@@ -1,7 +1,8 @@
 # Revisão gráfica — direção "Transmissão de domingo"
 
-> Versão 1.3 · 20/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Versão 1.4 · 20/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
 > Base: o jogo publicado em 18/10/2026 (commit b492b99), testado em 390×844.
+> Mudanças da 1.4: a Home deixa de lembrar anúncio de aposta (seção 3, Início); amarelo de placar mais fosco `#e9c75a`; selo vermelho "AO VIVO" removido.
 > Mudanças da 1.3: cards de time com "faixa de placar" (seção 3, Escolha do time), no lugar das listras diagonais translúcidas; "sua posição" e recorde na Home e nos resultados.
 
 ## 1. O que vi no jogo hoje
@@ -19,13 +20,13 @@ Placar de TV, grito de narrador e arquibancada. Tudo puxa a cor do time de quem 
 | Item | Proposta |
 |---|---|
 | Fundo | Gramado listrado, como hoje (`#0b3d1f` e `#0e4625`) |
-| Destaque | Amarelo de placar `#ffd23f` (botão principal, números, alertas bons) |
+| Destaque | Amarelo de placar fosco `#e9c75a` (botão principal, números, alertas bons). Só para leitura e ação, nunca como contorno de cartão. (Era `#ffd23f`; o desenho em canvas, como o goleiro amarelo, segue com `#ffd23f`) |
 | Cor do time | `--c1` do time escolhido no bloco do time, no grito do narrador, na arquibancada, no card e na **camiseta lisa** dos batedores (uniforme 1 ou 2; o goleiro usa um tom forte de contraste, ver `docs/bonecos.md`) |
 | Subiu / caiu | Verde `#3ddc84` e vermelho `#ff5a3c`, sempre com seta ou ícone, nunca só a cor |
 | Números e gritos | **Anton** (condensada, de placar) |
 | Rótulos | **Barlow Condensed** em caixa alta |
 | Texto | **Barlow** |
-| Assinatura visual | Tarjas de transmissão inclinadas (−8°) nos elementos de TV (placar, "AO VIVO", adesivo do narrador levemente torto). **Cores de time sempre cheias**, nunca translúcidas por cima de outra cor |
+| Assinatura visual | Tarjas de transmissão inclinadas (−8°) nos elementos de TV (placar, adesivo do narrador levemente torto). **Sem selo vermelho "AO VIVO" nem nada piscando fora da partida:** na Home isso lembrava painel de aposta. **Cores de time sempre cheias**, nunca translúcidas por cima de outra cor |
 
 As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB no total), dentro do limite de 300 KB do `CLAUDE.md`.
 
@@ -40,13 +41,15 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 - Mesmo desenho reaproveitado onde o time aparece em bloco (Home, ranking, Crava), sem mudar o que já usa a divisão `c1/c2`.
 
 ### Início
-- Tarja "AO VIVO" e **contagem regressiva** até zerar a semana.
+- **Cabeçalho jornalístico:** título e, logo abaixo, uma linha com a etiqueta reta cinza "Pré-temporada" e a **contagem regressiva** ("Semana fecha em 5d 03h"). Nada fica solto no canto superior direito (parece botão de fechar anúncio). Sem selo vermelho, sem piscar.
 - Bloco do time nas cores dele, com a cidade embaixo (segunda camisa).
 - **Cabo de guerra contra o rival:** barra dividida nas duas cores, com a frase do narrador do momento (`rival_colado` etc.).
 - Mini tabela da Série A com a sua torcida destacada e a seta de subida ou queda.
 - **Sua posição na semana** (20/10): "Você é o 3º de 14 torcedores na semana", com seta se subiu ou caiu desde a última visita.
 - Botão principal + **"hoje contam mais 2 partidas"** (o teto diário à vista, para ninguém achar que é injusto).
 - Aviso único da **pré-temporada** ("tudo vale ponto, mas zera antes do lançamento") no lugar dos selos "Em teste" e "Ensaio".
+- **Rodapé da Home:** "Aqui é só resenha: sem aposta, sem dinheiro, sem prêmio em dinheiro. Nunca. Jogo 100% grátis.", em texto pequeno e opaco (a frase é a mesma `AVISO_RESENHA` do Crava).
+- Convite de desafio com borda neutra fina, não amarela.
 - Barra de navegação: Jogar, Ranking, Palpites, Carreira.
 
 ### Partida
@@ -105,3 +108,5 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 3. Partida em perspectiva + efeitos de gol — feito.
 4. Resultado com efeito no ranking — feito.
 5. Cards de time "faixa de placar" (20/10) — **Sonnet + Média**.
+
+7. Home sem cara de anúncio de aposta (20/10, a partir de feedback de teste): selo "AO VIVO" e contador do canto removidos, aviso de resenha no rodapé, amarelo fosco — feito.
