@@ -238,32 +238,41 @@ body {
   gap: 8px;
 }
 
+/* Faixa de placar: cor 1 cheia, faixa reta da cor 2 embaixo (24%), filete da 3ª cor. */
 .cartao-time {
   position: relative;
   overflow: hidden;
-  min-height: 64px;
-  padding: 8px 6px;
+  min-height: 72px;
+  padding: 8px 6px 0;
   border: 3px solid transparent;
   border-radius: 12px;
-  background: var(--c1);
+  background: linear-gradient(
+    to bottom,
+    var(--c1) 0 76%,
+    var(--c3) 76% calc(76% + 3px),
+    var(--c2) calc(76% + 3px) 100%
+  );
   color: var(--txt);
   font: inherit;
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1.15;
+  text-align: left;
+  vertical-align: top;
   touch-action: manipulation;
 }
 
-.cartao-time .listras {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(115deg, transparent 0 14px, var(--c2) 14px 20px, transparent 20px 34px, var(--c3) 34px 38px);
-  opacity: 0.35;
+.cartao-time.clara {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
 }
 
 .cartao-time .nome-time {
-  position: relative;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.05;
+  white-space: normal;
+  text-overflow: clip;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .cartao-time[aria-checked='true'] {

@@ -127,8 +127,6 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
   - **Por minigame, na semana:** pela **melhor partida** da semana (pênaltis, Prova de Boleiro), pelos pontos do dia (Time do Dia) e pelos pontos da rodada (Crava, que já tem isso).
   - Empate: fica na frente quem chegou primeiro.
 - **Recorde pessoal** de cada minigame (zera junto com a pré-temporada, porque a pontuação pode mudar no balanço): aparece no resultado ("NOVO RECORDE!") e entra no card quando for recorde.
-  - Recorde = melhor partida (pênaltis, Prova), melhor dia (Time do Dia) ou melhor rodada (Crava, já ×2). "NOVO RECORDE!" só quando passa o recorde anterior: a primeira partida de cada minigame não conta, empate não conta, partida sob suspeita não vale recorde.
-  - Textos neutros de gênero: "Sua posição: 3º de 14 na semana", nunca "você é o/a".
 - Onde aparece: Home (posição geral da semana) e tela de resultado de cada minigame (posição naquele minigame + recorde).
 - Nunca mostra a lista de outras pessoas nem apelidos. Lista com apelido só com ligas entre amigos e moderação (fase 2).
 
@@ -457,7 +455,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - Como a URL e a publishable key são públicas, ficam versionadas no repositório (o build do GitHub Pages precisa delas). Nada secreto entra no repositório.
 - **Antes de divulgar:** CAPTCHA (Cloudflare Turnstile) no login anônimo, limpeza periódica de usuários anônimos inativos, anti-trapaça completo (inclusive as cobranças do desafio, que hoje chegam ao celular antes da defesa), ranking que aguente muitos jogadores (hoje a semana inteira é recalculada a cada partida fechada; trocar por cálculo incremental ou de minuto em minuto) e decidir sobre o plano Pro (o Free pausa o projeto depois de 1 semana sem uso).
 - **Rotina contra a pausa do plano Free:** um agendamento no GitHub Actions faz uma consulta leve ao banco a cada 2 dias. Enquanto o projeto estiver no Free, isso evita a pausa por 7 dias sem uso. O GitHub desliga agendamentos de repositório público depois de 60 dias sem commit; se isso acontecer, o GitHub avisa por e-mail e basta reativar. Arquivo: `.github/workflows/manter-supabase.yml` (a cada 2 dias às 09h de Brasília e pelo botão "Run workflow"): lê 1 linha do ranking com a publishable key e falha se a resposta não for 200.
-- **Zerar pré-temporada:** `npm run zerar-pre-temporada` apaga partidas, desafios, dias do Time do Dia, pontos do Crava e ranking (mantém times, torcedores, palpites, perguntas e o sorteio do Time do Dia). Os recordes pessoais saem dessas tabelas, então zeram junto. Mostra as contagens, avisa se o balanço do dia (`npm run balanco`) ainda não foi gravado e só apaga depois de digitar ZERAR. Depois do zerar, não confirmar de novo placar de rodada que já tinha fechado (os pontos voltariam).
+- **Zerar pré-temporada:** `npm run zerar-pre-temporada` apaga partidas, desafios e ranking (mantém times e torcedores; recordes pessoais zeram junto). Mostra as contagens, lembra de rodar o balanço antes e só apaga depois de digitar ZERAR.
 - **Sessão de usuário apagado:** se o login anônimo salvo no aparelho não existir mais no servidor, o jogo sai e faz um login anônimo novo.
 - DNS: CNAME `torcida` no Hostgator, feito manualmente pelo Kauê.
 - **Lista de cidades:** municípios do IBGE num arquivo estático (nome, UF, código IBGE), carregado só na tela de escolha.

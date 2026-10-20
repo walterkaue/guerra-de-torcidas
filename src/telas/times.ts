@@ -18,10 +18,9 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
       <div class="grade-times" role="radiogroup" aria-label="Times">
         ${TIMES.map(
           (t) => `
-          <button type="button" role="radio" class="cartao-time" data-id="${t.id}"
+          <button type="button" role="radio" class="cartao-time${t.cores[0].toLowerCase() === '#ffffff' ? ' clara' : ''}" data-id="${t.id}"
             aria-checked="${t.id === atual.time}"
-            style="--c1:${t.cores[0]};--c2:${t.cores[1]};--c3:${t.cores[1]};--txt:${corDeTexto(t.cores[0])}">
-            <span class="listras"></span>
+            style="--c1:${t.cores[0]};--c2:${t.cores[1]};--c3:${t.cor3 ?? t.cores[1]};--txt:${corDeTexto(t.cores[0])}">
             <span class="nome-time">${esc(t.nome)}</span>
           </button>`,
         ).join('')}

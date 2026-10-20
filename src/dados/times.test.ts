@@ -26,6 +26,11 @@ const TABELA: Record<string, [artigo: 'o' | 'a', rival: string | null]> = {
 };
 
 describe('times', () => {
+  it('3ª cor (filete do card) só nos clubes da tabela da seção 3', () => {
+    const esperado: Record<string, string> = { bahia: '#ffffff', fluminense: '#ffffff', gremio: '#ffffff', 'sao-paulo': '#111111' };
+    for (const t of TIMES) expect(t.cor3, t.nome).toBe(esperado[t.id]);
+  });
+
   it('ids únicos', () => {
     expect(new Set(TIMES.map((t) => t.id)).size).toBe(TIMES.length);
   });
