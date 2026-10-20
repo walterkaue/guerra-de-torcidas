@@ -187,28 +187,11 @@ async function fechar(sb: SupabaseClient, uid: string, partida: Partida, est: Es
   const resumo = resumoDaProva(passos, fim);
   const agora = new Date();
 
-  const { data: torcedor, error: eT } = await sb.from('torcedores').select('time_id, apelido').eq('id', uid).single();
+  const { data: torcedor, error: eT } = await sb.from('torcedores').select('time_id').eq('id', uid).single();
   if (eT) throw eT;
   const { dia, semana } = periodoDaPartida(new Date(partida.criada_em), agora);
 
-  const { data: fechada, error: eF } = await sb
-    .from('partidas')
-    .update({
-      fechada_em: agora.toISOString(),
-      time_id: torcedor.time_id,
-      resultado: { fim, passos: est.passos, pontos, escada, resumo },
-      pontos: pontos.total,
-      dia,
-      semana,
-    })
-    .eq('id', partida.id)
-    .is('fechada_em', null)
-    .select('id')
-    .maybeSingle();
-  if (eF) throw eF;
-  if (!fechada) throw new ErroHttp(409, 'partida_ja_fechada');
-
-  // Detecção: últimas respostas difíceis e de craque do torcedor.
+  // Detecção antes de gravar: últimas respostas difíceis e de craque do torcedor.
   const { data: respostas, error: eR } = await sb
     .from('prova_respostas')
     .select('degrau, acertou, ms')
@@ -218,43 +201,29 @@ async function fechar(sb: SupabaseClient, uid: string, partida: Partida, est: Es
     .limit(cfg.deteccao.janela);
   if (eR) throw eR;
   const motivo = motivoSuspeitaProva(respostas ?? [], cfg.deteccao);
-  if (motivo) {
-    const { error } = await sb.from('partidas').update({ sob_suspeita: true, motivo_suspeita: motivo }).eq('id', partida.id);
-    if (error) throw error;
-  }
 
-  let contaNoRanking = false;
-  if (!partida.amistoso) {
-    const { error: eTeto } = await sb.rpc('atualizar_teto', { p_torcedor: uid, p_dia: dia });
-    if (eTeto) throw eTeto;
-    const { error: eRank } = await sb.rpc('recalcular_ranking', { p_semana: semana });
-    if (eRank) throw eRank;
-    const { data: e, error } = await sb.from('partidas').select('conta_no_teto, sob_suspeita').eq('id', partida.id).single();
-    if (error) throw error;
-    contaNoRanking = e.conta_no_teto && !e.sob_suspeita;
-  }
+  // Grava, refaz o teto e o ranking e cria o desafio com as mesmas 8 perguntas (toda partida que não
+  // é de desafio vira um) numa transação só. Nenhuma linha = alguém fechou antes.
+  const { data: fechamento, error: eF } = await sb.rpc('fechar_partida', {
+    p_partida: partida.id,
+    p_torcedor: uid,
+    p_time: torcedor.time_id,
+    p_gestos: null,
+    p_resultado: { fim, passos: est.passos, pontos, escada, resumo },
+    p_pontos: pontos.total,
+    p_dia: dia,
+    p_semana: semana,
+    p_fechada_em: agora.toISOString(),
+    p_motivo_suspeita: motivo,
+    p_desafio: est.desafio_id ? null : { perguntas: est.escada.map((v) => v.perguntaId), escada, resumo },
+    p_codigos: [codigo(8), codigo(8), codigo(8)],
+  });
+  if (eF) throw eF;
+  const e = (fechamento as { teto: boolean; suspeita: boolean; codigo: string | null }[] | null)?.[0];
+  if (!e) throw new ErroHttp(409, 'partida_ja_fechada');
+  const contaNoRanking = !partida.amistoso && e.teto && !e.suspeita;
+  const desafio = e.codigo ? { codigo: e.codigo } : null;
   const desempenho = await lerDesempenho(sb, 'desempenho_partida', { p_partida: partida.id });
-
-  // Toda partida que não é de desafio vira um desafio com as mesmas 8 perguntas.
-  let desafio: { codigo: string } | null = null;
-  if (!est.desafio_id) {
-    for (let tentativa = 0; tentativa < 3 && !desafio; tentativa++) {
-      const id = codigo(8);
-      const { error } = await sb.from('prova_desafios').insert({
-        id,
-        partida_id: partida.id,
-        torcedor_id: uid,
-        time_id: torcedor.time_id,
-        apelido: torcedor.apelido,
-        perguntas: est.escada.map((v) => v.perguntaId),
-        pontos: pontos.total,
-        escada,
-        resumo,
-      });
-      if (!error) desafio = { codigo: id };
-      else if (error.code !== '23505') throw error; // código repetido, tenta outro
-    }
-  }
 
   let comparacao = null;
   if (est.desafio_id) {
@@ -263,7 +232,8 @@ async function fechar(sb: SupabaseClient, uid: string, partida: Partida, est: Es
       .select('apelido, pontos, escada, resumo')
       .eq('id', est.desafio_id)
       .maybeSingle();
-    if (error) throw error;
+    // A partida já está gravada: sem a comparação, a tela mostra só o resultado.
+    if (error) console.error(error);
     // Mais pontos vence; empate fica com quem desafiou (chegou primeiro).
     if (d) comparacao = { desafiante: d.apelido, pontosDesafiante: d.pontos, escadaDesafiante: d.escada, resumoDesafiante: d.resumo, venceu: pontos.total > d.pontos };
   }

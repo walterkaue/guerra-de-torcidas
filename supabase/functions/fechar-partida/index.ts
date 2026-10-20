@@ -63,7 +63,7 @@ servir(async (req) => {
   const agora = new Date();
   if (agora > new Date(partida.expira_em)) throw new ErroHttp(410, 'partida_expirada');
 
-  const { data: torcedor, error: eT } = await sb.from('torcedores').select('time_id, apelido').eq('id', uid).single();
+  const { data: torcedor, error: eT } = await sb.from('torcedores').select('time_id').eq('id', uid).single();
   if (eT) throw eT;
 
   let desafio: { apelido: string | null; cobrancas: GestoCobranca[]; pontos: number; gols_jogador: number; gols_maquina: number } | null = null;
@@ -110,90 +110,63 @@ servir(async (req) => {
   };
   const rankingAntes = await posicao();
 
-  // Grava só se ninguém fechou antes (duas abas, clique duplo).
-  const { data: fechada, error: eF } = await sb
-    .from('partidas')
-    .update({
-      fechada_em: agora.toISOString(),
-      time_id: torcedor.time_id,
-      gestos,
-      resultado,
-      pontos: resultado.pontos.total,
-      dia,
-      semana,
-    })
-    .eq('id', partida.id)
-    .is('fechada_em', null)
-    .select('id')
-    .maybeSingle();
-  if (eF) throw eF;
-  if (!fechada) throw new ErroHttp(409, 'partida_ja_fechada');
-
-  // Detecção: histórico recente do torcedor (só partidas normais entram na conta das defesas,
-  // porque no desafio a defesa é contra cobrança gravada).
+  // Detecção antes de gravar: histórico recente de pênaltis do torcedor, com esta partida na frente
+  // (a Prova tem outro formato de resultado e fica de fora). No desafio, a defesa é contra cobrança
+  // gravada e o próprio módulo tira da conta.
   const cfg = await configDeteccao(sb);
   const { data: recentes, error: eR } = await sb
     .from('partidas')
     .select('resultado')
     .eq('torcedor_id', uid)
+    .eq('minigame', 'penaltis')
     .not('fechada_em', 'is', null)
     .order('fechada_em', { ascending: false })
-    .limit(40);
+    .limit(39);
   if (eR) throw eR;
   const motivo = motivoSuspeita(
-    (recentes ?? []).map((r) => r.resultado as ResultadoPartida),
+    [resultado, ...(recentes ?? []).map((r) => r.resultado as ResultadoPartida)],
     {
       janelaDefesas: cfg.janela_defesas ?? 30,
       minDefesas: cfg.min_defesas ?? 27,
       janelaCobrancas: cfg.janela_cobrancas ?? 40,
     },
   );
-  if (motivo) {
-    const { error } = await sb.from('partidas').update({ sob_suspeita: true, motivo_suspeita: motivo }).eq('id', partida.id);
-    if (error) throw error;
-  }
 
-  const { error: eTeto } = await sb.rpc('atualizar_teto', { p_torcedor: uid, p_dia: dia });
-  if (eTeto) throw eTeto;
-  const { error: eRank } = await sb.rpc('recalcular_ranking', { p_semana: semana });
-  if (eRank) throw eRank;
+  // Grava, refaz o teto e o ranking e cria o X1 (toda partida normal vira um desafio por link com as
+  // cobranças gravadas) numa transação só: ou entra tudo, ou a partida continua aberta.
+  // Nenhuma linha = alguém fechou antes (duas abas, clique duplo).
+  const { data: fechamento, error: eF } = await sb.rpc('fechar_partida', {
+    p_partida: partida.id,
+    p_torcedor: uid,
+    p_time: torcedor.time_id,
+    p_gestos: gestos,
+    p_resultado: resultado,
+    p_pontos: resultado.pontos.total,
+    p_dia: dia,
+    p_semana: semana,
+    p_fechada_em: agora.toISOString(),
+    p_motivo_suspeita: motivo,
+    p_desafio:
+      partida.modo === 'normal'
+        ? { cobrancas: gestos.cobrancas, gols_jogador: resultado.golsJogador, gols_maquina: resultado.golsMaquina }
+        : null,
+    p_codigos: [codigoDesafio(), codigoDesafio(), codigoDesafio()],
+  });
+  if (eF) throw eF;
+  const estado = (fechamento as { teto: boolean; suspeita: boolean; codigo: string | null }[] | null)?.[0];
+  if (!estado) throw new ErroHttp(409, 'partida_ja_fechada');
+  const codigo = estado.codigo;
+
+  // Daqui para baixo a partida já está gravada: leitura que falhar só tira o bloco da tela.
   const rankingDepois = await posicao();
   const desempenho = await lerDesempenho(sb, 'desempenho_partida', { p_partida: partida.id });
-
-  const { data: estado, error: eE } = await sb
-    .from('partidas')
-    .select('conta_no_teto, sob_suspeita')
-    .eq('id', partida.id)
-    .single();
-  if (eE) throw eE;
-
-  // Toda partida normal vira um X1 (desafio por link) com as cobranças gravadas.
-  let codigo: string | null = null;
-  if (partida.modo === 'normal') {
-    for (let tentativa = 0; tentativa < 3 && !codigo; tentativa++) {
-      const id = codigoDesafio();
-      const { error } = await sb.from('desafios').insert({
-        id,
-        partida_id: partida.id,
-        torcedor_id: uid,
-        time_id: torcedor.time_id,
-        apelido: torcedor.apelido,
-        cobrancas: gestos.cobrancas,
-        gols_jogador: resultado.golsJogador,
-        gols_maquina: resultado.golsMaquina,
-        pontos: resultado.pontos.total,
-      });
-      if (!error) codigo = id;
-      else if (error.code !== '23505') throw error; // 23505 = código repetido, tenta outro
-    }
-  }
 
   return {
     resultado,
     numeroNarrador: resultado.parOuImpar?.numeroNarrador ?? null,
     semana,
-    contaNoRanking: estado.conta_no_teto && !estado.sob_suspeita,
-    sobSuspeita: estado.sob_suspeita,
+    contaNoRanking: estado.teto && !estado.suspeita,
+    sobSuspeita: estado.suspeita,
     ranking: { antes: rankingAntes, depois: rankingDepois },
     desempenho,
     desafio: codigo ? { codigo } : null,

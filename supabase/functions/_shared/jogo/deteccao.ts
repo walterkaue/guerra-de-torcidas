@@ -22,9 +22,12 @@ interface PartidaParaDeteccao {
 
 /**
  * Recebe as partidas do torcedor da MAIS RECENTE para a mais antiga (incluindo a que acabou de fechar)
- * e devolve o motivo da suspeita, ou null.
+ * e devolve o motivo da suspeita, ou null. Resultado de outro minigame (a Prova não tem cobranças
+ * nem defesas) é ignorado: em 20/10/2026 um deles quebrou o fechamento dos pênaltis.
  */
-export function motivoSuspeita(partidas: readonly PartidaParaDeteccao[], cfg: ConfigDeteccao = DETECCAO_PADRAO): string | null {
+export function motivoSuspeita(todas: readonly PartidaParaDeteccao[], cfg: ConfigDeteccao = DETECCAO_PADRAO): string | null {
+  const partidas = todas.filter((p) => Array.isArray(p?.cobrancas) && Array.isArray(p?.defesas));
+
   // 1. Defesas: quem lê a semente sabe o canto do batedor e defende quase tudo.
   const defesas = partidas
     .flatMap((p) => [...p.defesas].reverse())

@@ -23,7 +23,7 @@ import {
   type DiaSorteado,
   type Tentativa,
 } from '../_shared/jogo/timeDoDia.ts';
-import { diaBrasilia, semanaBrasilia } from '../_shared/tempo.ts';
+import { diaBrasilia } from '../_shared/tempo.ts';
 
 /** Partida começada antes da virada aceita tentativa até 00h05 (mesma tolerância das partidas). */
 const TOLERANCIA_MS = 5 * 60 * 1000;
@@ -243,35 +243,40 @@ async function tentar(sb: SupabaseClient, uid: string, corpo: Record<string, unk
   const tentativas = [...partida.tentativas, clube];
   const acertou = clube === secretoId;
   const fim = acabou(tentativas.length, acertou);
-  const mudancas: Record<string, unknown> = { tentativas, versao: partida.versao + 1 };
-  if (fim) {
-    mudancas.acertou = acertou;
-    mudancas.pontos = acertou ? pontosDoDia(tentativas.length) : 0;
-    mudancas.fechada_em = new Date(agora).toISOString();
-    if (acertou && tentativas.length === 1) {
-      const historico = [...(await meusDias(sb, uid)), { dia, acertouNa: 1 }];
-      mudancas.sob_suspeita = suspeitoNoDia(historico, dia);
-    }
-  }
   // Trava otimista: clique duplo ou duas abas gravam uma tentativa só.
-  const { data: gravada, error: eUp } = await sb
-    .from('dia_partidas')
-    .update(mudancas)
-    .eq('torcedor_id', uid)
-    .eq('dia', dia)
-    .eq('versao', partida.versao)
-    .select('dia, tentativas, acertou, pontos, amistoso, fechada_em, versao')
-    .maybeSingle();
-  if (eUp) throw eUp;
+  let gravada: Partida | null;
+  if (fim) {
+    const sobSuspeita =
+      acertou && tentativas.length === 1 && suspeitoNoDia([...(await meusDias(sb, uid)), { dia, acertouNa: 1 }], dia);
+    // A última tentativa fecha o dia e recalcula a semana (fora do teto diário, seção 7.2) numa
+    // transação só: ou entram as duas coisas, ou nenhuma.
+    const { data, error: eUp } = await sb.rpc('fechar_dia', {
+      p_torcedor: uid,
+      p_dia: dia,
+      p_versao: partida.versao,
+      p_tentativas: tentativas,
+      p_acertou: acertou,
+      p_pontos: acertou ? pontosDoDia(tentativas.length) : 0,
+      p_fechada_em: new Date(agora).toISOString(),
+      p_sob_suspeita: sobSuspeita,
+    });
+    if (eUp) throw eUp;
+    gravada = ((data ?? []) as Partida[])[0] ?? null;
+  } else {
+    const { data, error: eUp } = await sb
+      .from('dia_partidas')
+      .update({ tentativas, versao: partida.versao + 1 })
+      .eq('torcedor_id', uid)
+      .eq('dia', dia)
+      .eq('versao', partida.versao)
+      .select('dia, tentativas, acertou, pontos, amistoso, fechada_em, versao')
+      .maybeSingle();
+    if (eUp) throw eUp;
+    gravada = data as Partida | null;
+  }
   if (!gravada) throw new ErroHttp(409, 'conflito');
 
-  // Fora do teto diário: soma por cima na semana do dia (seção 7.2), no time de quando jogou.
-  if (fim && !(gravada as Partida).amistoso) {
-    const { error: eRank } = await sb.rpc('recalcular_ranking', { p_semana: semanaBrasilia(new Date(inicioDoDia(dia))) });
-    if (eRank) throw eRank;
-  }
-
-  return montarEstado(sb, uid, dia, secretoId, gravada as Partida, clubes, amistoso);
+  return montarEstado(sb, uid, dia, secretoId, gravada, clubes, amistoso);
 }
 
 servir(async (req) => {

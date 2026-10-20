@@ -64,6 +64,14 @@ describe('detecção', () => {
     expect(motivoSuspeita([fora])).toBeNull();
   });
 
+  it('resultado da Prova no histórico não quebra a conta e não muda o veredito', () => {
+    const prova = { fim: 'errou', escada: '🟥', passos: [] } as never;
+    expect(motivoSuspeita([prova, ...historico(3, 5, 0, true)])).toBeNull();
+    const ladrao = historico(12, 1, 0.5, true);
+    expect(motivoSuspeita(ladrao)).not.toBeNull();
+    expect(motivoSuspeita([prova, ...ladrao, prova])).toBe(motivoSuspeita(ladrao));
+  });
+
   it('coluna da dica e alvo usam a mesma convenção do motor', () => {
     const p = planejarDefesa(1, 0, 0);
     expect(coluna(p.alvo)).toBeGreaterThanOrEqual(0);
