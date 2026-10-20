@@ -266,24 +266,17 @@ export const FRASES = {
     { t: "Cinco defesas! A torcida {do_time} já tá encomendando estátua." },
     { t: "5 de 5! O gol pediu folga porque não teve trabalho.", rara: true },
   ],
-  desafio_convite: [
-    { t: "Duvido você me vencer! Fiz {pontos} {pro_time}." },
-    { t: "Bati 5 pênaltis e defendi 5. Sua vez, se tiver coragem." },
-    { t: "{apelido} te desafiou: {pontos} pontos {pro_time}. Aguenta?" },
-    { t: "Pega meus pênaltis, se for capaz." },
-    { t: "Fiz {pontos} {pro_time}. Vem me parar." },
-  ],
   desafio_vitoria: [
-    { t: "Venceu o desafio! {desafiante} duvidou e agora vai ter que respeitar." },
-    { t: "Desafio aceito e vencido! Manda o placar pra {desafiante}." },
+    { t: "Venceu o X1! {desafiante} chamou e agora vai ter que respeitar." },
+    { t: "X1 aceito e vencido! Manda o placar pra {desafiante}." },
     { t: "{desafiante} achou que ia ser fácil. Achou." },
     { t: "Ganhou de {desafiante}! Essa vai pro grupo com print e tudo." },
     { t: "Vitória sobre {desafiante}! O grupo inteiro precisa ver.", rara: true },
   ],
   desafio_derrota: [
     { t: "{desafiante} venceu essa. Revanche? O link tá aqui." },
-    { t: "Perdeu pra {desafiante}! Agora é você que manda o \"duvido\"." },
-    { t: "Deu {desafiante}. Bora devolver o desafio?" },
+    { t: "Perdeu pra {desafiante}! Agora é você que chama no X1." },
+    { t: "Deu {desafiante}. Bora devolver o X1?" },
     { t: "{desafiante} levou essa. Vai deixar barato?" },
     { t: "{desafiante} venceu. Finge que foi o vento e manda a revanche.", rara: true },
   ],
@@ -484,11 +477,11 @@ export const FRASES = {
   prova_fim: [
     { t: "Fim da prova: {pontos} {pro_time}!" },
     { t: "Prova entregue! {pontos} pontos na conta {do_time}." },
-    { t: "Fechou com {pontos}. Duvida de alguém no grupo?" },
+    { t: "Fechou com {pontos}. Chama alguém do grupo no X1?" },
   ],
   dia_abertura: [
     { t: "Tem um time escondido aí. Seis chutes pra achar!" },
-    { t: "Time do Dia no ar! Mesmo desafio pra todo mundo." },
+    { t: "Time do Dia no ar! Mesmo clube pra todo mundo." },
     { t: "Hoje tem charada de clube. Bora chutar?" },
   ],
   dia_quase: [

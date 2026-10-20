@@ -56,7 +56,7 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 - Placar gigante, "VITÓRIA" ou "DERROTA", confete nas cores do time quando vence.
 - **"+85 PRO [TIME]"** contando de 0 até o total, com os bônus em etiquetas (com o artigo certo: "pra Chapecoense").
 - **O efeito na torcida:** "subiu de 5º pra 3º na Série A" com barra enchendo, e quanto falta para o próximo.
-- Botões: "Duvido no grupo" (WhatsApp, o maior), Stories, Placar em emoji, Copiar link, e "Revanche" como ação principal.
+- Botões: "Chamar no X1" (WhatsApp, o maior), Stories, Placar em emoji, Copiar link, e "Revanche" como ação principal.
 
 ### Ranking
 - Abas: Semana, Temporada, 52 semanas, Cidades.

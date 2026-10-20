@@ -166,7 +166,7 @@ servir(async (req) => {
     .single();
   if (eE) throw eE;
 
-  // Toda partida normal vira um desafio "duvido você me vencer" com as cobranças gravadas.
+  // Toda partida normal vira um X1 (desafio por link) com as cobranças gravadas.
   let codigo: string | null = null;
   if (partida.modo === 'normal') {
     for (let tentativa = 0; tentativa < 3 && !codigo; tentativa++) {

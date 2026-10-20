@@ -99,10 +99,10 @@ Uma semana arrasadora não ganha o mês sozinha; regularidade conta.
 
 1. **Título por média, vitrine por soma.** Ver seção 2.
 2. **Teto diário:** só as 5 melhores partidas do dia de cada jogador contam (já está no `jogo.md`). Com os 30 melhores, ninguém carrega a torcida sozinho.
-3. **Todo minigame vale parecido.** Cada minigame novo entra primeiro em "amistoso", sem contar pontos, por 2 semanas. Depois a pontuação é ajustada para que uma pessoa mediana faça cerca de 60 pontos por partida e o teto fique perto de 150, em qualquer minigame. Assim ninguém escolhe minigame por "render mais".
+3. **Todo minigame vale parecido.** Cada minigame novo entra primeiro **em teste** (antes "amistoso"), sem contar pontos, por 2 semanas. Depois a pontuação é ajustada para que uma pessoa mediana faça cerca de 60 pontos por partida e o teto fique perto de 150, em qualquer minigame. Assim ninguém escolhe minigame por "render mais".
 4. **Palpites pesam, mas não decidem.** Os pontos do Crava a Rodada entram na torcida com peso limitado: uma rodada inteira bem palpitada vale no máximo o mesmo que um dia de minigames (cerca de 300 pontos). Quem não gosta de palpite não fica para trás.
 5. **Troca de time ou cidade:** livre por enquanto, para o pessoal experimentar; os pontos ficam onde foram feitos. Reavaliar antes da temporada 2027 (proposta inicial era 1 troca a cada 30 dias).
-6. **Desafio por link sem fazenda de pontos:** as partidas de desafio contam dentro do teto diário, e uma defesa só vale contra chute que ia no gol com força mínima (32 ou mais). Gravar chute fraco de propósito para o amigo "defender" não rende nada.
+6. **X1 (desafio por link) sem fazenda de pontos:** as partidas de X1 contam dentro do teto diário, e uma defesa só vale contra chute que ia no gol com força mínima (32 ou mais). Gravar chute fraco de propósito para o amigo "defender" não rende nada.
 7. **Dificuldade da semana igual para todos:** a dificuldade sobe ao longo da semana para todo mundo, então segunda-feira rende mais para qualquer pessoa. Isso premia quem joga cedo sem favorecer ninguém em particular.
 8. **Empate no ranking:** fica na frente quem chegou primeiro àquela pontuação.
 

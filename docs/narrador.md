@@ -1,6 +1,7 @@
 # Banco do narrador — pênaltis, palpites, quiz e Time do Dia
 
-> Versão 1.4 · 19/10/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Versão 1.5 · 20/10/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Mudanças da 1.5: glossário novo ("Pênaltis", "Chamar no X1", "em teste"): frases de X1 sem "duvido" e "desafio", e o convite do link virou texto fixo (sai `desafio_convite`).
 > Mudanças da 1.4: seções 10 (**Prova de Boleiro**) e 11 (**Time do Dia**); frases de `prova_ajuda` com a etiqueta da ajuda usada (`[tira_duas]`, `[arquibancada]`, `[troca]`).
 > Mudanças da 1.3: seção 9, frases do **Crava a Rodada**, com as variáveis `{rodada}`, `{acertos}` e `{jogos}` e as etiquetas `[empate]` e `[contra]`.
 > Frase nova entra aqui e passa pelo checklist de tom abaixo.
@@ -28,7 +29,7 @@
 - **Desempate:** `morte_subita` sai quando a morte súbita começa; `par_ou_impar_escolha` enquanto o servidor responde; `par_ou_impar_ganhou` ou `par_ou_impar_perdeu` no resultado, antes da frase de vitória ou derrota.
 - **Tamanho:** até ~75 caracteres depois de trocar as variáveis, para caber em 2 linhas em 390 px. Grito em MAIÚSCULAS só no começo.
 - **Primeira letra** da frase final sempre maiúscula (para `{o_time}` no começo virar "O Flamengo").
-- **Variável faltando** (ex.: jogador sem rival, partida fora de desafio, jogador sem cidade): pular a frase e sortear outra.
+- **Variável faltando** (ex.: jogador sem rival, partida fora de X1, jogador sem cidade): pular a frase e sortear outra.
 - **"Outro time":** quem escolheu "Outro time" não recebe frases com variáveis de time ou rival; recebe as de cidade.
 - **Etiquetas de lance (1.2):** uma frase pode terminar com etiquetas entre colchetes, por exemplo `[canto] [goleiro_outro_lado]`. Ela **só pode ser sorteada se todas as etiquetas forem verdadeiras** naquele lance. Frase sem etiqueta vale para qualquer lance. Entre as frases possíveis, as que têm etiqueta têm **peso 2** (combinam mais com o lance). As etiquetas nunca aparecem na tela.
 - **Cidade sem preposição:** `{cidade}` nunca vem depois de "de", "do", "da", "em", "no" ou "na" (cada cidade pede um artigo diferente). Escreva "{cidade} tá em 3º", nunca "a torcida de {cidade}".
@@ -43,7 +44,7 @@
 | `{no_time}` | no Galo da Vila | na Ponte Rasa |
 | `{o_rival}`, `{do_rival}`, `{pro_rival}` | idem, para o rival | |
 | `{apelido}` | apelido do jogador | |
-| `{desafiante}` | apelido de quem mandou o desafio | |
+| `{desafiante}` | apelido de quem chamou no X1 | |
 | `{placar}` | 4 x 3 | |
 | `{pontos}` | 47 | |
 | `{dif}` | 300 pontos · 1 ponto | |
@@ -337,26 +338,21 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - Cinco defesas! A torcida {do_time} já tá encomendando estátua.
 - ⭐ 5 de 5! O gol pediu folga porque não teve trabalho.
 
-## 6. Desafio por link
+## 6. X1 (desafio por link)
 
-### `desafio_convite` — texto que acompanha o link
-- Duvido você me vencer! Fiz {pontos} {pro_time}.
-- Bati 5 pênaltis e defendi 5. Sua vez, se tiver coragem.
-- {apelido} te desafiou: {pontos} pontos {pro_time}. Aguenta?
-- Pega meus pênaltis, se for capaz.
-- Fiz {pontos} {pro_time}. Vem me parar.
+O convite que vai com o link é texto fixo, sem sorteio (glossário de 20/10): "Te chamei no X1: fiz {pontos} {pro_time}. Faz mais?". Por isso não existe mais a situação `desafio_convite`.
 
-### `desafio_vitoria` — você venceu quem desafiou
-- Venceu o desafio! {desafiante} duvidou e agora vai ter que respeitar.
-- Desafio aceito e vencido! Manda o placar pra {desafiante}.
+### `desafio_vitoria` — você venceu quem te chamou no X1
+- Venceu o X1! {desafiante} chamou e agora vai ter que respeitar.
+- X1 aceito e vencido! Manda o placar pra {desafiante}.
 - {desafiante} achou que ia ser fácil. Achou.
 - Ganhou de {desafiante}! Essa vai pro grupo com print e tudo.
 - ⭐ Vitória sobre {desafiante}! O grupo inteiro precisa ver.
 
-### `desafio_derrota` — quem desafiou venceu
+### `desafio_derrota` — quem te chamou no X1 venceu
 - {desafiante} venceu essa. Revanche? O link tá aqui.
-- Perdeu pra {desafiante}! Agora é você que manda o "duvido".
-- Deu {desafiante}. Bora devolver o desafio?
+- Perdeu pra {desafiante}! Agora é você que chama no X1.
+- Deu {desafiante}. Bora devolver o X1?
 - {desafiante} levou essa. Vai deixar barato?
 - ⭐ {desafiante} venceu. Finge que foi o vento e manda a revanche.
 
@@ -598,7 +594,7 @@ Cuidado extra: o narrador **nunca** fala da pessoa real da pergunta (nem elogio,
 ### `prova_fim`
 - Fim da prova: {pontos} {pro_time}!
 - Prova entregue! {pontos} pontos na conta {do_time}.
-- Fechou com {pontos}. Duvida de alguém no grupo?
+- Fechou com {pontos}. Chama alguém do grupo no X1?
 
 ## 11. Time do Dia (desafio diário)
 
@@ -611,7 +607,7 @@ Cuidado extra: o narrador nunca dá dica do clube secreto nem fala o nome dele a
 
 ### `dia_abertura`
 - Tem um time escondido aí. Seis chutes pra achar!
-- Time do Dia no ar! Mesmo desafio pra todo mundo.
+- Time do Dia no ar! Mesmo clube pra todo mundo.
 - Hoje tem charada de clube. Bora chutar?
 
 ### `dia_quase` — tentativa com 4 pistas ou mais em 🟩

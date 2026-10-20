@@ -1,10 +1,11 @@
 // Resultado (docs/visual.md, "Resultado"): placar gigante, VITÓRIA/DERROTA, "+85 PRA [TIME]" contando,
-// bônus em etiquetas, efeito no ranking, desafio lado a lado, compartilhar e Mais uma/Revanche como ação principal.
+// bônus em etiquetas, efeito no ranking, X1 lado a lado, compartilhar e Mais uma/Revanche como ação principal.
 
 import { esc, irPara, type DadosResultado, type Rota } from '../app';
 import { ID_OUTRO, corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
 import { prefs } from '../estado';
 import { desenharCard } from '../jogo/card';
+import { conviteX1Penaltis } from '../jogo/convites';
 import { placarEmoji } from '../jogo/emoji';
 import { escolherFrase } from '../narrador/escolher';
 import { contextoDoTime } from '../narrador/sessao';
@@ -88,13 +89,11 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   const r = d.resultado;
   const p = r.pontos;
   const paraTime = proTime(time);
-  const nomeAdversario = d.desafio ? (d.desafio.apelido ?? 'Desafiante') : 'Máquina';
+  const nomeAdversario = d.desafio ? (d.desafio.apelido ?? 'Quem te chamou') : 'Máquina';
 
   const codigo = d.servidor?.desafio?.codigo;
   const link = codigo ? `${SITE}/?d=${codigo}` : `${SITE}/?time=${time.id}`;
-  const convite =
-    escolherFrase('desafio_convite', { ...contextoDoTime(time, apelido), pontos: p.total }, Math.random)?.texto ??
-    'Duvido você me vencer!';
+  const convite = conviteX1Penaltis(p.total, paraTime, !!codigo);
   const textoShare = `${convite} ${link}`;
   const emoji = placarEmoji({
     resultado: r,
@@ -131,15 +130,15 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
     cmp &&
     escolherFrase(
       cmp.venceu ? 'desafio_vitoria' : 'desafio_derrota',
-      { ...contextoDoTime(time, apelido), desafiante: d.desafio?.apelido ?? 'quem te desafiou' },
+      { ...contextoDoTime(time, apelido), desafiante: d.desafio?.apelido ?? 'quem te chamou' },
       Math.random,
     )?.texto;
   const blocoDesafio = cmp
     ? `<section class="duelo-desafio">
-        <p class="rotulo">Desafio</p>
+        <p class="rotulo">X1</p>
         <div><span>Você</span><strong>${p.total}</strong><small>${r.golsJogador} x ${r.golsMaquina}</small></div>
         <em>x</em>
-        <div><span>${esc(cmp.desafiante ?? 'Desafiante')}</span><strong>${cmp.pontosDesafiante}</strong><small>${cmp.golsJogadorDesafiante} x ${cmp.golsMaquinaDesafiante}</small></div>
+        <div><span>${esc(cmp.desafiante ?? 'Quem te chamou')}</span><strong>${cmp.pontosDesafiante}</strong><small>${cmp.golsJogadorDesafiante} x ${cmp.golsMaquinaDesafiante}</small></div>
         ${fraseDesafio ? `<p class="adesivo">${esc(fraseDesafio)}</p>` : ''}
       </section>`
     : '';
@@ -180,7 +179,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
 
       <section class="res-compartilhar">
         <a class="botao botao-zap" target="_blank" rel="noopener"
-          href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Duvido no grupo</a>
+          href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Chamar no X1</a>
         <div class="trio">
           <button class="botao botao-sec" type="button" data-acao="share">Stories</button>
           <button class="botao botao-sec" type="button" data-acao="emoji">Placar em emoji</button>

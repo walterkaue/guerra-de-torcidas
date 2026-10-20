@@ -1,4 +1,4 @@
-// Motor puro do "Bate Contra Mim". Sem DOM, sem relógio, sem Math.random:
+// Motor puro dos Pênaltis. Sem DOM, sem relógio, sem Math.random:
 // mesma semente + mesmos gestos = mesmo resultado, no navegador e no servidor.
 // Evite funções trigonométricas aqui: só aritmética básica é idêntica entre motores.
 

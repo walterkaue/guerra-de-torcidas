@@ -41,7 +41,7 @@ const PAUSA_RESPOSTA_MS = 1400;
 const MENSAGENS: Record<string, string> = {
   muitas_partidas: 'Calma! São até 3 partidas por minuto. Respira e tenta de novo já já.',
   sem_perguntas: 'O banco de perguntas ainda tá sendo montado. Volta logo!',
-  desafio_sem_perguntas: 'Esse desafio usa perguntas que saíram do banco. Bora numa prova nova?',
+  desafio_sem_perguntas: 'Esse X1 usa perguntas que saíram do banco. Bora numa prova nova?',
   sem_conexao: 'Sem conexão: a Prova de Boleiro precisa de internet.',
   tempo_esgotado: 'O servidor demorou pra responder. Confere a internet e tenta de novo.',
 };
@@ -85,7 +85,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       <header class="prova-topo">
         <button class="voltar" type="button" aria-label="Sair da prova">‹</button>
         <p class="rotulo prova-nome">Prova de Boleiro</p>
-        <span class="selo-amistoso rotulo" data-amistoso hidden>amistoso</span>
+        <span class="selo-amistoso rotulo" data-amistoso hidden>em teste</span>
         <button class="voltar prova-como" type="button" aria-label="Como jogar">?</button>
       </header>
 
@@ -107,7 +107,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
           <li><span class="cj-icone" aria-hidden="true">🏆</span><p><strong>Pontos:</strong> 8, 12, 18 e 25 por degrau. 8 de 8 ganha +24.</p></li>
         </ul>
         <label class="cj-check" ${mostrarComo ? '' : 'hidden'}><input type="checkbox" data-pular> Não exibir as regras de novo</label>
-        <p class="nota" data-aviso-amistoso>Amistoso: por 2 semanas a prova não soma no ranking, pra gente calibrar as perguntas.</p>
+        <p class="nota" data-aviso-amistoso>Em teste: ainda não soma no ranking.</p>
         <button class="botao" type="button" data-comecar>Começar a prova</button>
         <p class="prova-erro" data-erro hidden></p>
       </section>
@@ -161,7 +161,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   const mostrarConvite = (d: Pick<DesafioProvaRecebido, 'apelido' | 'timeId' | 'pontos' | 'escada' | 'resumo'>) => {
     const t = timePorId(d.timeId);
     const el = $('[data-convite]');
-    el.innerHTML = `<p class="rotulo">Desafio na área</p>
+    el.innerHTML = `<p class="rotulo">Te chamaram no X1</p>
       <p><strong>${esc(d.apelido ?? 'Alguém')}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''}: ${esc(d.resumo)},
       <strong>${d.pontos} pontos</strong>.</p><p class="escada-emoji">${esc(d.escada)}</p>
       <p class="nota">As mesmas 8 perguntas, na mesma ordem. Faz mais pontos e vence.</p>`;
@@ -405,7 +405,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
         if (!(e instanceof ErroServidor) || !codigoDesafio || !['proprio_desafio', 'desafio_nao_encontrado', 'desafio_sem_perguntas', 'desafio_ja_jogado'].includes(e.codigo)) throw e;
         // Link do próprio desafio ou quebrado: vira prova normal.
         const aviso =
-          e.codigo === 'desafio_ja_jogado' ? 'Esse desafio você já jogou. Vai uma prova nova!' : 'Desafio indisponível. Vai uma prova nova!';
+          e.codigo === 'desafio_ja_jogado' ? 'Esse X1 você já jogou. Vai uma prova nova!' : 'X1 indisponível. Vai uma prova nova!';
         codigoDesafio = undefined;
         p = await pedir();
         window.setTimeout(() => !saiu && gritar(aviso), 50);
@@ -447,7 +447,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       .then((d) => {
         if (!d || saiu) return;
         mostrarConvite({ apelido: d.apelido, timeId: d.time_id, pontos: d.pontos, escada: d.escada, resumo: d.resumo });
-        btnComecar.textContent = 'Aceitar o desafio';
+        btnComecar.textContent = 'Aceitar o X1';
       })
       .catch(() => {});
   }

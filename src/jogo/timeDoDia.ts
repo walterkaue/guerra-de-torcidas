@@ -156,10 +156,10 @@ export function placarDoDia(tentativas: number, acertou: boolean): string {
   return `${acertou ? tentativas : 'X'}/${TENTATIVAS}`;
 }
 
-/** "Time do Dia #34 · 4/6 · 🔥 5 dias (amistoso)" — texto do card e do WhatsApp. */
+/** "Time do Dia #34 · 4/6 · 🔥 5 dias (em teste)" — texto do card e do WhatsApp. */
 export function linhaDoCard(numeroDoDia: number, placar: string, dias: number, amistoso: boolean): string {
   const fogo = dias > 1 ? ` · 🔥 ${dias} dias` : '';
-  return `Time do Dia #${numeroDoDia} · ${placar}${fogo}${amistoso ? ' (amistoso)' : ''}`;
+  return `Time do Dia #${numeroDoDia} · ${placar}${fogo}${amistoso ? ' (em teste)' : ''}`;
 }
 
 // ---------------------------------------------------------------------------

@@ -81,7 +81,7 @@ const COM_LIMITE: ReadonlySet<EventoNarrador> = new Set<EventoNarrador>([
   'fora_cima', 'fora_lado', 'goleiro_pegou', 'defesa', 'sofreu_gol', 'decisiva',
   'morte_subita', 'par_ou_impar_escolha', 'par_ou_impar_ganhou', 'par_ou_impar_perdeu',
   'maquina_fora', 'vitoria', 'derrota', 'cinco_cobrancas', 'cinco_defesas',
-  'desafio_convite', 'desafio_vitoria', 'desafio_derrota',
+  'desafio_vitoria', 'desafio_derrota',
 ]);
 
 export const temLimite = (ev: EventoNarrador) => COM_LIMITE.has(ev);

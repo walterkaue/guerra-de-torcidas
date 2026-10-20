@@ -1,10 +1,11 @@
-// Resultado da Prova de Boleiro: resumo, pontos, escada em emoji, desafio lado a lado,
+// Resultado da Prova de Boleiro: resumo, pontos, escada em emoji, X1 lado a lado,
 // compartilhar (sem o texto das perguntas) e Mais uma / Revanche.
 
 import { esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
 import { prefs } from '../estado';
 import { desenharCardProva, linhaDoCard } from '../jogo/cardProva';
+import { conviteX1Prova } from '../jogo/convites';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 const maiuscula = (s: string) => s.charAt(0).toLocaleUpperCase('pt-BR') + s.slice(1);
@@ -21,10 +22,12 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
   const codigo = fim.desafio?.codigo;
   const link = codigo ? `${SITE}/?p=${codigo}` : `${SITE}/?time=${time.id}`;
   const linha = linhaDoCard(fim.resumo, total, paraTime, fim.amistoso);
-  const textoShare = `${linha}\n${fim.escada}\n${codigo ? 'Duvido você fazer mais:' : 'Joga também:'} ${link}`;
+  const textoShare = codigo
+    ? `${conviteX1Prova(total, true)}\n${fim.escada}\n${link}`
+    : `${linha}\n${fim.escada}\n${conviteX1Prova(total, false)} ${link}`;
 
   const situacao = fim.amistoso
-    ? 'Amistoso: a prova ainda não soma no ranking (2 semanas pra calibrar as perguntas).'
+    ? 'Em teste: ainda não soma no ranking.'
     : fim.sobSuspeita
       ? 'Partida em revisão: fica fora do ranking até alguém conferir.'
       : !fim.contaNoRanking
@@ -34,10 +37,10 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
   const cmp = fim.comparacao;
   const blocoDesafio = cmp
     ? `<section class="duelo-desafio">
-        <p class="rotulo">Desafio · ${cmp.venceu ? 'você venceu!' : 'ficou com quem desafiou'}</p>
+        <p class="rotulo">X1 · ${cmp.venceu ? 'você venceu!' : 'ficou com quem te chamou'}</p>
         <div><span>Você</span><strong>${total}</strong><small>${esc(fim.escada)}</small></div>
         <em>x</em>
-        <div><span>${esc(cmp.desafiante ?? 'Desafiante')}</span><strong>${cmp.pontosDesafiante}</strong><small>${esc(cmp.escadaDesafiante)}</small></div>
+        <div><span>${esc(cmp.desafiante ?? 'Quem te chamou')}</span><strong>${cmp.pontosDesafiante}</strong><small>${esc(cmp.escadaDesafiante)}</small></div>
       </section>`
     : '';
 
@@ -47,7 +50,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
     <main class="tela resultado prova-resultado ${fim.fim === 'perfeita' || cmp?.venceu ? 'venceu' : ''}"
       style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
       <header class="res-topo">
-        <p class="rotulo">Prova de Boleiro${fim.amistoso ? ' · amistoso' : ''}</p>
+        <p class="rotulo">Prova de Boleiro${fim.amistoso ? ' · em teste' : ''}</p>
         <h1 class="res-titulo">${titulo}</h1>
       </header>
 
@@ -73,7 +76,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
 
       <section class="res-compartilhar">
         <a class="botao botao-zap" target="_blank" rel="noopener"
-          href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Duvido no grupo</a>
+          href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Chamar no X1</a>
         <div class="trio">
           <button class="botao botao-sec" type="button" data-acao="share">Stories</button>
           <button class="botao botao-sec" type="button" data-acao="emoji">Escada em emoji</button>

@@ -86,14 +86,14 @@ const CONTEXTO_LONGO: ContextoNarrador = {
   numero: 5,
 };
 
-// Pedido do Kauê: lance, fim de partida, desempate e desafio cabem em 75 caracteres.
+// Pedido do Kauê: lance, fim de partida, desempate e X1 cabem em 75 caracteres.
 // Ranking e cidade ficam de fora (aparecem em blocos maiores da tela inicial e do ranking).
 const LIMITADOS: EventoNarrador[] = [
   'abertura', 'gol', 'gol_angulo', 'cavadinha', 'cavadinha_falhou', 'trave_gol', 'trave',
   'fora_cima', 'fora_lado', 'goleiro_pegou', 'defesa', 'sofreu_gol', 'decisiva',
   'morte_subita', 'par_ou_impar_escolha', 'par_ou_impar_ganhou', 'par_ou_impar_perdeu',
   'maquina_fora', 'vitoria', 'derrota', 'cinco_cobrancas', 'cinco_defesas',
-  'desafio_convite', 'desafio_vitoria', 'desafio_derrota',
+  'desafio_vitoria', 'desafio_derrota',
 ];
 
 // Etiquetas que cada situação de lance pode receber (tabela "Etiquetas de lance" do narrador.md).

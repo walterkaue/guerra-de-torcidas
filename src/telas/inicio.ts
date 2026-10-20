@@ -96,20 +96,20 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
       <section class="jogar" aria-label="Jogos">
         <button class="botao" type="button" data-acao="jogar">
-          Bate Contra Mim
-          <small>5 cobranças · 5 defesas</small>
+          Pênaltis
+          <small>Bate 5, pega 5</small>
         </button>
         <p class="teto" data-teto>Sem cadastro. Abre e joga.</p>
         <div class="jogos-em-breve">
           <button class="jogo-em-breve jogo-liberado" type="button" data-acao="prova">
-            <span class="em-breve amistoso">amistoso</span>
+            <span class="em-breve amistoso">em teste</span>
             <strong>Prova de Boleiro</strong>
-            <small>8 perguntas · para ou segue</small>
+            <small>8 perguntas · para quando quiser</small>
           </button>
           <button class="jogo-em-breve jogo-liberado" type="button" data-acao="dia">
-            <span class="em-breve amistoso">amistoso</span>
+            <span class="em-breve amistoso">em teste</span>
             <strong>Time do Dia</strong>
-            <small>1 clube secreto · 6 chutes</small>
+            <small>Adivinha o clube em 6 chutes</small>
           </button>
         </div>
         <button class="link-crava" type="button" data-acao="palpites">
@@ -169,10 +169,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         const t = timePorId(d.time_id);
         const quem = d.apelido ? esc(d.apelido) : 'Alguém';
         caixa.innerHTML = `
-          <p class="rotulo">Desafio na área</p>
-          <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''} te desafiou:
+          <p class="rotulo">Te chamaram no X1</p>
+          <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''} te chamou no X1:
           <strong>${d.pontos} pontos</strong>, ${d.gols_jogador} x ${d.gols_maquina} contra a máquina.</p>
-          <button class="botao" type="button" data-acao="desafio">Aceitar o desafio</button>`;
+          <button class="botao" type="button" data-acao="desafio">Aceitar o X1</button>`;
         caixa.hidden = false;
         caixa.querySelector('[data-acao="desafio"]')!.addEventListener('click', () => jogar(d.id));
       })
@@ -190,11 +190,11 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         const t = timePorId(d.time_id);
         const quem = d.apelido ? esc(d.apelido) : 'Alguém';
         caixa.innerHTML = `
-          <p class="rotulo">Desafio na Prova de Boleiro</p>
+          <p class="rotulo">Te chamaram no X1 na Prova de Boleiro</p>
           <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''}: ${esc(d.resumo)},
           <strong>${d.pontos} pontos</strong>. Mesmas 8 perguntas, faz mais?</p>
           <p class="escada-emoji">${esc(d.escada)}</p>
-          <button class="botao" type="button" data-acao="desafio-prova">Aceitar o desafio</button>`;
+          <button class="botao" type="button" data-acao="desafio-prova">Aceitar o X1</button>`;
         caixa.hidden = false;
         caixa.querySelector('[data-acao="desafio-prova"]')!.addEventListener('click', () => jogarProva(d.id));
       })

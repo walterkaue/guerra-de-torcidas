@@ -94,7 +94,7 @@ export function desenharCard(d: DadosCard): HTMLCanvasElement {
   c.fill();
   c.fillStyle = '#111111';
   c.font = `700 46px ${ROTULO}`;
-  c.fillText('Duvido você me vencer →', L / 2, A - 140);
+  c.fillText('Faz mais? →', L / 2, A - 140);
   c.font = `700 32px ${FONTE}`;
   c.fillText(d.link, L / 2, A - 98);
 

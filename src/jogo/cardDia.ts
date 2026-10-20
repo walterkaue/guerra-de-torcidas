@@ -41,7 +41,7 @@ export function desenharCardDia(d: DadosCardDia): HTMLCanvasElement {
   c.textAlign = 'center';
   c.fillStyle = txt;
   c.font = `700 44px ${ROTULO}`;
-  c.fillText(`GUERRA DE TORCIDAS${d.amistoso ? ' · AMISTOSO' : ''}`, L / 2, 110);
+  c.fillText(`GUERRA DE TORCIDAS${d.amistoso ? ' · EM TESTE' : ''}`, L / 2, 110);
   c.font = `400 110px ${PLACAR}`;
   c.fillText(`TIME DO DIA #${d.numero}`, L / 2, 235);
 
@@ -79,7 +79,7 @@ export function desenharCardDia(d: DadosCardDia): HTMLCanvasElement {
   c.fill();
   c.fillStyle = '#111111';
   c.font = `700 46px ${ROTULO}`;
-  c.fillText('Duvido você achar em menos →', L / 2, A - 140);
+  c.fillText('E você? →', L / 2, A - 140);
   c.font = `700 32px ${FONTE}`;
   c.fillText(d.link, L / 2, A - 98);
 

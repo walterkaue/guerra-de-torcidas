@@ -36,7 +36,7 @@ export interface DadosEmoji {
 export function placarEmoji(d: DadosEmoji): string {
   const r = d.resultado;
   const linhas = [
-    '⚽ Guerra de Torcidas · Bate Contra Mim',
+    '⚽ Guerra de Torcidas · Pênaltis',
     `${d.nomeJogador} ${r.golsJogador} x ${r.golsMaquina} ${d.nomeAdversario}`,
     `Cobranças: ${linha(r.cobrancas, emojiCobranca)}`,
     `Defesas:   ${linha(r.defesas, emojiDefesa)}`,

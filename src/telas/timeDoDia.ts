@@ -5,6 +5,7 @@ import { esc, irPara, type Rota } from '../app';
 import { corDeTexto, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { desenharCardDia } from '../jogo/cardDia';
+import { conviteDia } from '../jogo/convites';
 import {
   AMOSTRA_COR,
   NOMES_PISTAS,
@@ -116,7 +117,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       <header class="prova-topo">
         <button class="voltar" type="button" aria-label="Voltar">‹</button>
         <p class="rotulo prova-nome" data-titulo>Time do Dia</p>
-        <span class="selo-amistoso rotulo" data-amistoso hidden>amistoso</span>
+        <span class="selo-amistoso rotulo" data-amistoso hidden>em teste</span>
         <button class="voltar prova-como" type="button" aria-label="Como jogar">?</button>
       </header>
 
@@ -133,7 +134,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
         <label class="cj-check"><input type="checkbox" data-pular> Não exibir de novo</label>
       </section>
 
-      <p class="nota" data-aviso-amistoso hidden>Amistoso: por 2 semanas o Time do Dia não soma no ranking, pra gente calibrar.</p>
+      <p class="nota" data-aviso-amistoso hidden>Em teste: ainda não soma no ranking.</p>
 
       <div class="dia-cabecalho" aria-hidden="true">
         ${NOMES_PISTAS.map((n) => `<span>${SIGLA_CURTA[n]}</span>`).join('')}
@@ -305,9 +306,9 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     const grade = gradeEmoji(e.tentativas.map((t) => t.pistas));
     const link = `${SITE}/?dia`;
     const linha = linhaDoCard(e.numero, placar, e.sequencia, e.amistoso);
-    const textoShare = `${linha}\n${grade}\nDuvido você achar em menos: ${link}`;
+    const textoShare = `${linha}\n${grade}\n${conviteDia(n, e.acertou)} ${link}`;
     const situacao = e.amistoso
-      ? 'Amistoso: o Time do Dia ainda não soma no ranking (2 semanas pra calibrar).'
+      ? 'Em teste: ainda não soma no ranking.'
       : `+${e.pontos} no ranking da semana, por fora do teto das 5 partidas.`;
 
     elFim.innerHTML = `
@@ -324,7 +325,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       <p class="dia-proximo rotulo">Próximo time em <strong data-relogio>${formatarRelogio(Date.parse(e.proximoEm) - Date.now())}</strong></p>
       <section class="res-compartilhar">
         <a class="botao botao-zap" target="_blank" rel="noopener"
-          href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Duvido no grupo</a>
+          href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Chamar no X1</a>
         <div class="trio">
           <button class="botao botao-sec" type="button" data-acao="share">Stories</button>
           <button class="botao botao-sec" type="button" data-acao="emoji">Grade em emoji</button>
@@ -337,7 +338,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       </details>
       <div class="res-acoes">
         <button class="botao botao-sec" type="button" data-acao="inicio">Início</button>
-        <button class="botao" type="button" data-acao="jogar">Bate Contra Mim<small>enquanto o dia não vira</small></button>
+        <button class="botao" type="button" data-acao="jogar">Pênaltis<small>enquanto o dia não vira</small></button>
       </div>`;
     elFim.hidden = false;
 

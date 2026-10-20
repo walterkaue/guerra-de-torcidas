@@ -119,7 +119,7 @@ describe('pontos e card', () => {
     expect(placarDoDia(4, true)).toBe('4/6');
     expect(placarDoDia(6, false)).toBe('X/6');
     expect(linhaDoCard(34, '4/6', 5, false)).toBe('Time do Dia #34 · 4/6 · 🔥 5 dias');
-    expect(linhaDoCard(1, 'X/6', 1, true)).toBe('Time do Dia #1 · X/6 (amistoso)');
+    expect(linhaDoCard(1, 'X/6', 1, true)).toBe('Time do Dia #1 · X/6 (em teste)');
   });
 });
 

@@ -25,7 +25,7 @@ export interface DadosCardProva {
 /** "Prova de Boleiro: cheguei na 6ª e parei, 58 pro Flamengo" (texto do card e do WhatsApp). */
 export function linhaDoCard(resumo: string, pontos: number, paraTime: string | null, amistoso: boolean): string {
   const quanto = paraTime ? `${pontos} ${paraTime}` : `${pontos} pontos`;
-  return `Prova de Boleiro: ${resumo}, ${quanto}${amistoso ? ' (amistoso)' : ''}`;
+  return `Prova de Boleiro: ${resumo}, ${quanto}${amistoso ? ' (em teste)' : ''}`;
 }
 
 export function desenharCardProva(d: DadosCardProva): HTMLCanvasElement {
@@ -48,7 +48,7 @@ export function desenharCardProva(d: DadosCardProva): HTMLCanvasElement {
   c.textAlign = 'center';
   c.fillStyle = txt;
   c.font = `700 44px ${ROTULO}`;
-  c.fillText(`GUERRA DE TORCIDAS${d.amistoso ? ' · AMISTOSO' : ''}`, L / 2, 120);
+  c.fillText(`GUERRA DE TORCIDAS${d.amistoso ? ' · EM TESTE' : ''}`, L / 2, 120);
   c.font = `400 110px ${PLACAR}`;
   c.fillText('PROVA DE BOLEIRO', L / 2, 245);
 
@@ -85,7 +85,7 @@ export function desenharCardProva(d: DadosCardProva): HTMLCanvasElement {
   c.fill();
   c.fillStyle = '#111111';
   c.font = `700 46px ${ROTULO}`;
-  c.fillText('Duvido você fazer mais →', L / 2, A - 140);
+  c.fillText('Faz mais? →', L / 2, A - 140);
   c.font = `700 32px ${FONTE}`;
   c.fillText(d.link, L / 2, A - 98);
 

@@ -546,7 +546,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       if (desafio) {
         // O convite já foi aceito: tira o ?d= do endereço para não oferecer de novo.
         history.replaceState(null, '', location.pathname);
-        root.querySelector('.placar-jogo .lado:last-child .sigla')!.textContent = desafio.apelido ?? 'Desafio';
+        root.querySelector('.placar-jogo .lado:last-child .sigla')!.textContent = desafio.apelido ?? 'X1';
         const t = timePorId(desafio.timeId);
         if (t) vestir(t.cores);
       }

@@ -1,7 +1,7 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 20/10/2026 (Time do Dia construído e no menu em amistoso, com servidor, card e importador de clubes; dados dos 60 clubes em rascunho, esperando conferência)
+> Última atualização: 20/10/2026 (glossário da interface: Pênaltis, Chamar no X1, em teste; Home com os 4 jogos em grade)
 > Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
@@ -139,18 +139,20 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 
 ### Regras de justiça (resumo)
 - Título por média, vitrine por soma.
-- Minigame novo entra em "amistoso" (sem contar pontos) por 2 semanas, até a pontuação ficar parecida com a dos outros (~60 por partida para uma pessoa mediana, teto ~150).
+- Minigame novo entra **em teste** (antes "amistoso"; sem contar pontos) por 2 semanas, até a pontuação ficar parecida com a dos outros (~60 por partida para uma pessoa mediana, teto ~150).
 - Partidas de desafio contam dentro do teto diário; defesa só vale contra chute que ia no gol com força mínima (força 32 ou mais, ou seja, não vale defender chute fraco).
 - Empate no ranking: fica na frente quem chegou primeiro àquela pontuação.
 
-## 6. Minigame 1 — "Bate Contra Mim" (pênaltis)
+## 6. Minigame 1 — "Pênaltis" (Bate 5, pega 5)
+
+> Nome trocado em 20/10 (antes "Bate Contra Mim"), junto com o glossário da seção 8.
 
 ### Como joga
 - **Cobrar (5 cobranças):** deslizar o dedo na direção do gol. Direção do arraste = canto, comprimento = força, curva no fim do arraste = efeito. Força demais vai por cima, de menos o goleiro pega.
 - **Defender (5 defesas):** o batedor corre; antes do chute aparece uma "dica" no corpo dele (o pé de apoio). O jogador toca em uma de 6 zonas do gol para pular.
 - Jogo normal: contra o goleiro e o batedor da máquina (dificuldade sobe ao longo da semana, igual para todos).
 - **Como jogar:** antes do apito de cada partida aparece um resumo (cobrar, efeito e cavadinha, defender, pontos) com a caixa "Não exibir novamente", guardada só no aparelho. O botão "?" no placar reabre o resumo na hora da cobrança (nunca no meio de uma defesa, que corre contra o relógio).
-- **Desafio por link:** ao terminar, o jogo gera "duvido você me vencer". Quem abre o link defende as cobranças gravadas de quem desafiou e cobra contra o goleiro da máquina. No fim, placar dos dois lado a lado.
+- **X1 (desafio por link):** ao terminar, o jogo gera o convite "Te chamei no X1: fiz {pontos} {pro_time}. Faz mais?". Quem abre o link defende as cobranças gravadas de quem desafiou e cobra contra o goleiro da máquina. No fim, placar dos dois lado a lado.
 
 ### Regras de implementação (etapa 2, 18/10/2026)
 - **Ordem:** alterna cobrança e defesa (C, D, C, D…), 5 de cada. Se empatar, vai para o desempate (abaixo).
@@ -202,14 +204,14 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
   - **Cobranças:** nas últimas 40 cobranças em que o goleiro pulou por sorteio (sem "ler"), nenhuma no canto dele.
   - Partida marcada fica **sob suspeita**, fora do ranking até revisão. Números ajustáveis em `config_deteccao`.
 - **Par ou ímpar:** o número do narrador é sorteado no servidor quando a partida começa e fica numa tabela que o celular não lê. Só sai na resposta do fechamento, depois da escolha.
-- **Desafio por link:** toda partida normal registrada gera um código (`?d=xxxxxxxx`) com as cobranças gravadas. Vence o desafio quem fizer **mais pontos**; empate em pontos fica com quem desafiou (chegou primeiro). Partida de desafio não gera outro desafio. O botão **Revanche** joga de novo o mesmo desafio; fora do desafio, é uma partida nova contra a máquina.
+- **X1 (desafio por link):** toda partida normal registrada gera um código (`?d=xxxxxxxx`) com as cobranças gravadas. Vence o desafio quem fizer **mais pontos**; empate em pontos fica com quem desafiou (chegou primeiro). Partida de X1 não gera outro X1 (o convite vira "Fiz {pontos} {pro_time} nos Pênaltis. Joga também:"). O botão **Revanche** joga de novo o mesmo desafio; fora do desafio, é uma partida nova contra a máquina.
 - **Ranking da semana:** time sem nenhum torcedor ativo fica com 0. A "torcida emprestada" (vagas a 80% da média geral) só completa time que já tem gente jogando.
 - **Rival "colado":** diferença de até 4 pontos na média dos 30 melhores (≈ 2 partidas boas de uma pessoa do top 30).
 - **Horário de Brasília:** UTC−3 fixo (sem horário de verão desde 2019).
 
 ### Card de resultado
-- Imagem gerada no próprio celular: placar, cores do time, frase do narrador, "Fulano fez 47 pontos {pro_time}" (com o artigo certo) e o link do desafio.
-- Botões: WhatsApp, stories (via compartilhamento nativo), placar em emoji, copiar link.
+- Imagem gerada no próprio celular: placar, cores do time, frase do narrador, "Fulano fez 47 pontos {pro_time}" (com o artigo certo) e o link do X1, com "Faz mais? →".
+- Botões: "Chamar no X1" (WhatsApp), stories (via compartilhamento nativo), placar em emoji, copiar link.
 - **Botão principal do resultado:** "MAIS UMA" depois de vitória e "REVANCHE" depois de derrota (decidido em 19/10). O que o botão faz não muda.
 
 ## 7. Minigame 2 — "Crava a Rodada" (palpites)
@@ -243,7 +245,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Rankings sem apelido (regra do MVP):** a tela mostra o ranking das torcidas no palpite (média dos 30 melhores palpiteiros de cada time na rodada, com as vagas vazias a 80% como na semana) e, para cada pessoa, só a própria posição ("você é o 37º de 412 na rodada"). Ranking individual público só depois da moderação.
 - **Em que semana os pontos entram:** na semana em que o jogo começou (horário de Brasília). Como jogo de domingo à noite é confirmado depois da virada, o **Campeão da semana é confirmado segunda às 12h**; até lá, a semana que fechou aparece como "provisória". Placar confirmado depois disso (raro) entra na semana atual: semana fechada não reabre.
 - **Soma no ranking:** os pontos de palpite (×2) somam ao total da semana da pessoa, por fora do teto diário de minigames. O teto de 300 por rodada é aplicado na ordem em que os jogos são confirmados; rodada que atravessa duas semanas reparte os pontos pela data de cada jogo.
-- **Fora do amistoso:** o Crava não passa pelas 2 semanas de amistoso; o peso dele já é limitado pela regra própria e o Brasileirão acaba em 2/12.
+- **Fora da fase em teste:** o Crava não passa pelas 2 semanas em teste; o peso dele já é limitado pela regra própria e o Brasileirão acaba em 2/12.
 - **Ensaio:** construído em 19/10; roda em modo ensaio (sem somar no ranking) nas rodadas 32 (23 a 26/10, junto com o teste com amigos) e 33, e vale pontos a partir da **34ª (2/11)**.
 - **Quem palpita:** todo mundo, em qualquer jogo da rodada, inclusive de time que não é o seu. Quem é de "Outro time" soma no ranking pessoal (e na cidade, quando ela existir).
 - **Palpite:** de 0 a 9 gols para cada lado; pode editar até o início do jogo. **Jogo da certeza** pode ser marcado e trocado até o início do primeiro jogo da rodada; depois trava.
@@ -254,7 +256,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
   - "Meus palpites" (antes): só os placares cravados e o jogo da certeza, sem porcentagem.
   - "Resultado da rodada" (depois): pontos {pro_time} e uma linha de emoji, um por jogo palpitado: 🎯 exato, ✅ saldo, ☑️ vencedor, ❌ errou, com ⭐ logo depois do jogo da certeza.
   - Os dois levam o aviso fixo "Aqui é só resenha".
-- **Frases do narrador:** `docs/narrador.md`, seção 9 (versão 1.3).
+- **Frases do narrador:** `docs/narrador.md`, seção 9 (versão 1.5).
 
 ### Como está no servidor (19/10/2026)
 - **Jogos:** a função `sincronizar-jogos` lê a competição BSA da API v4 do football-data.org (1 chamada traz a temporada inteira) e guarda as rodadas 32 a 38 na tabela `jogos`. Os nomes da API viram os ids de `src/dados/times.ts` por `src/jogo/footballData.ts`; time sem par aparece em vermelho no `#admin`. Jogo adiado atualiza o horário e o palpite reabre até o novo início.
@@ -282,7 +284,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 ## 7.1 Minigame 3 — "Prova de Boleiro" (quiz)
 
 > Nome escolhido em 19/10. Inspirado no formato de escada e "parar ou seguir" dos programas de perguntas da TV, **sem usar nome, marca, vinheta ou visual de nenhum programa** e sem "prêmio", "milhão" ou "valendo".
-> Desenho aprovado em 19/10/2026. **Construído junto com o Crava (decidido em 19/10) para entrar no teste com amigos**, em amistoso de 2 semanas.
+> Desenho aprovado em 19/10/2026. **Construído junto com o Crava (decidido em 19/10) para entrar no teste com amigos**, em teste por 2 semanas.
 
 ### Como joga
 - **8 perguntas**, 4 alternativas, **15 s** cada (cerca de 1 minuto por partida).
@@ -293,7 +295,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
   - **Tira duas:** some com duas alternativas erradas.
   - **Arquibancada:** mostra como quem já respondeu aquela pergunta escolheu; com menos de 30 respostas, vira "tira uma".
   - **Troca:** troca a pergunta por outra do mesmo degrau.
-- **Desafio por link:** quem aceita recebe as mesmas 8 perguntas, na mesma ordem (alternativas embaralhadas de novo). Vence quem fizer mais pontos; empate fica com quem desafiou.
+- **X1 (desafio por link):** convite "Te chamei no X1 na Prova de Boleiro: {pontos} pontos. Faz mais?". Quem aceita recebe as mesmas 8 perguntas, na mesma ordem (alternativas embaralhadas de novo). Vence quem fizer mais pontos; empate fica com quem desafiou.
 
 ### Pontuação
 | Degrau | Perguntas | Pontos cada |
@@ -304,7 +306,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 | Craque | 7 e 8 | 25 |
 | **8 de 8** | | **+24** |
 
-- Máximo: 150. Pessoa mediana (chega à 5ª e para, ou erra por ali): ~40 a 70. O ajuste fino sai do amistoso.
+- Máximo: 150. Pessoa mediana (chega à 5ª e para, ou erra por ali): ~40 a 70. O ajuste fino sai da fase em teste.
 - Conta dentro do teto diário (5 melhores partidas do dia, somando com os pênaltis).
 
 ### Anti-trapaça
@@ -324,17 +326,17 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Pode:** títulos, gols, artilheiros, recordes, estádios, fundação, apelidos de clubes, transferências, escalações históricas, regras do jogo.
 - **Não pode:** além do que a seção 8 proíbe com nomes reais (vida pessoal, polêmica, processo, crime, saúde, religião, política, menores de idade): **tragédias, mortes e acidentes**; rebaixamentos, goleadas sofridas e vexames (a pergunta celebra o clube; a zoeira é papel do narrador); qualquer tema de aposta.
 - **Equilíbrio entre os 20 clubes:**
-  - **Mesma cota para todos.** Amistoso começa com **10 por clube** (3 fáceis, 3 médias, 2 difíceis, 2 de craque) + **60 gerais** = 260; a meta para valer pontos é 30 por clube + 200 gerais = **800**. Depois, ~100 novas por semana, sempre repondo por igual.
+  - **Mesma cota para todos.** A fase em teste começa com **10 por clube** (3 fáceis, 3 médias, 2 difíceis, 2 de craque) + **60 gerais** = 260; a meta para valer pontos é 30 por clube + 200 gerais = **800**. Depois, ~100 novas por semana, sempre repondo por igual.
   - **Cada partida:** 4 perguntas de 4 clubes diferentes, sorteados de forma uniforme entre os 20 (nunca pelo tamanho da torcida), e 4 gerais. Todo mundo tem a mesma chance de pegar pergunta do próprio clube.
   - Clubes com menos história nacional (Mirassol, Remo, Bragantino, Chapecoense) têm a mesma cota; as difíceis podem vir de campanhas recentes, estádio, fundação e acessos.
   - **Painel de cobertura** (consulta no banco): perguntas ativas por clube × degrau e acerto médio por clube. Clube com acerto muito fora da média tem as perguntas recalibradas.
-- **Dificuldade calibrada pelos dados:** no amistoso, cada pergunta acumula respostas; com 50 ou mais, o degrau é corrigido: fácil ≥ 75% de acerto, média 50–75%, difícil 30–50%, craque < 30%.
+- **Dificuldade calibrada pelos dados:** na fase em teste, cada pergunta acumula respostas; com 50 ou mais, o degrau é corrigido: fácil ≥ 75% de acerto, média 50–75%, difícil 30–50%, craque < 30%.
 - **Como o banco nasce:** lotes escritos numa sessão do Code com busca na web, sempre com fonte, em CSV (status rascunho). **Uma segunda sessão, nova, confere cada fonte** e marca revisada ou descarta (decidido em 19/10: não há revisão manual). Só entra no jogo, via `npm run importar-perguntas`, pergunta revisada e com fonte.
 
 ### Card
 - "Prova de Boleiro: cheguei na 6ª e parei, 58 {pro_time}" + a escada em emoji: 🟩 acertou, 🟥 errou, ⏹️ parou, 🆘 usou ajuda (ex.: 🟩🟩🟩🆘🟩⏹️).
 - **Nunca mostra o texto das perguntas**, porque o desafio por link usa as mesmas.
-- Durante o amistoso, o card e o texto do WhatsApp levam "(amistoso)" depois dos pontos.
+- Durante a fase em teste, o card e o texto do WhatsApp levam "(em teste)" depois dos pontos.
 
 ### Como está no servidor (19/10/2026)
 - **Tabelas que o celular não lê** (RLS sem leitura e sem grant): `perguntas`, `prova_estado` (andamento de cada partida), `prova_vistas` (30 dias sem repetir), `prova_respostas` (Arquibancada, calibragem e detecção) e `prova_desafios`. A partida em si fica em `partidas` com `minigame = 'prova'`.
@@ -345,8 +347,8 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
   - **Troca:** dá **15 s cheios** para a pergunta nova (é texto novo para ler) e puxa outra do mesmo clube (ou geral) e degrau.
   - **Tira duas e "tira uma":** nunca deixam menos de 2 alternativas na tela. Por isso, com a Tira duas já usada, a Arquibancada em modo "tira uma" fica indisponível naquela pergunta (sem gastar a ajuda).
 - **Prova largada** (app fechado no meio): é fechada ao começar a próxima, ou quando expira (15 min). No meio de uma pergunta, conta como tempo esgotado; antes dela, como parar.
-- **Desafio por link** (`?p=xxxxxxxx`): as 8 perguntas planejadas de quem desafiou, na mesma ordem (se quem desafiou usou Troca, vai a que ele respondeu). A regra dos 30 dias não vale no desafio. **Cada desafio vale uma vez por pessoa** (decidido em 19/10: na segunda, as perguntas já seriam conhecidas); por isso o botão Mais uma / Revanche sempre começa uma prova nova.
-- **Amistoso:** `config_deteccao.prova_amistoso` = 1. Para a prova passar a somar no teto diário, troque para 0 no Table Editor. Na mesma tabela ficam `prova_segundos`, `prova_tolerancia`, `prova_dias_sem_repetir`, `prova_min_arquibancada` e os números da detecção (`prova_janela`, `prova_min_acerto`, `prova_tempo_medio_ms`).
+- **X1 (desafio por link)** (`?p=xxxxxxxx`): as 8 perguntas planejadas de quem desafiou, na mesma ordem (se quem desafiou usou Troca, vai a que ele respondeu). A regra dos 30 dias não vale no desafio. **Cada desafio vale uma vez por pessoa** (decidido em 19/10: na segunda, as perguntas já seriam conhecidas); por isso o botão Mais uma / Revanche sempre começa uma prova nova.
+- **Em teste:** `config_deteccao.prova_amistoso` = 1 (o nome da coluna ficou "amistoso"). Para a prova passar a somar no teto diário, troque para 0 no Table Editor. Na mesma tabela ficam `prova_segundos`, `prova_tolerancia`, `prova_dias_sem_repetir`, `prova_min_arquibancada` e os números da detecção (`prova_janela`, `prova_min_acerto`, `prova_tempo_medio_ms`).
 - **Pontuação, sorteio, ajudas e detecção** ficam no módulo puro `src/jogo/prova.ts` (com testes), copiado para o servidor pelo `npm run compartilhar`.
 - **Importar perguntas:** `npm run importar-perguntas` lê `dados/perguntas/*.csv`, valida tudo (colunas, clube, degrau, ano na pergunta, tamanho, fonte de domínio aceito, Wikipédia só como `fonte2`, palavras proibidas, temas fora da regra, repetidas) e grava só as `revisada`, que entram como `ativa`. `aposentada` tira a pergunta do sorteio. `--seco` só valida. A lista de domínios aceitos fica em `scripts/perguntas/validar.mjs`.
 - **Formato do CSV:** `id,clube,degrau,tema,pergunta,certa,errada1,errada2,errada3,fonte,fonte2,verificada_em,status,observacao`. O id segue `clube-f-01` (f, m, d, c = degrau; `geral-…` para as gerais), o degrau é `facil|media|dificil|craque`, a pergunta tem até 140 caracteres e cada alternativa até 40.
@@ -355,7 +357,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 
 ## 7.2 Desafio diário — "Time do Dia"
 
-> Nome escolhido em 19/10 (é o D01 do backlog), estilo Wordle. Desenho aprovado em 19/10/2026. **Construído junto com o Crava e o quiz para entrar no teste com amigos**, em amistoso de 2 semanas.
+> Nome escolhido em 19/10 (é o D01 do backlog), estilo Wordle. Desenho aprovado em 19/10/2026. **Construído junto com o Crava e o quiz para entrar no teste com amigos**, em teste por 2 semanas.
 
 ### Como joga
 - **Um clube secreto por dia, o mesmo para todo mundo.** Troca às 00h de Brasília.
@@ -392,7 +394,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 
 ### Card
 - "Time do Dia #34 · 4/6 · 🔥 5 dias" + a grade de emoji (uma linha por tentativa), **sem nome de clube** (nada de spoiler) e com o link para jogar.
-- Durante o amistoso, o card e o texto do WhatsApp levam "(amistoso)". Não acertou: "X/6". A sequência só aparece a partir de 2 dias.
+- Durante a fase em teste, o card e o texto do WhatsApp levam "(em teste)". Não acertou: "X/6". O texto do WhatsApp termina com "Achei o Time do Dia em {tentativas} chutes. E você?" (ou "Não achei o Time do Dia hoje. E você?") e o card com "E você? →". A sequência só aparece a partir de 2 dias.
 
 ### Decisões da construção (20/10/2026)
 - **Setas:** ⬆️ (na tela, ↑) quer dizer que o número do secreto é **maior** que o do chute: fundado depois ou com mais títulos. ⬇️, menor.
@@ -411,21 +413,21 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Função `time-do-dia`**, com as ações `estado` (número do dia, lista de clubes para a busca, minhas tentativas com as pistas, sequência e, só depois do fim, o nome do secreto) e `tentar` (grava o chute e devolve a linha de pistas). Uma trava otimista (`versao`) impede clique duplo ou duas abas. Clube repetido ou fora da lista é recusado.
 - **Sorteio:** no primeiro acesso do dia (horário de Brasília, pelo relógio do servidor), sem agendamento. Não repete clube até passar pela lista inteira; o ciclo novo nunca começa com o clube de ontem. Dois acessos ao mesmo tempo na virada ficam com o primeiro que gravou.
 - **Pistas, pontos, grade, sequência, sorteio e detecção** ficam no módulo puro `src/jogo/timeDoDia.ts` (com testes), copiado para o servidor pelo `npm run compartilhar`.
-- **Detecção:** acerto na 1ª tentativa em 5 dos últimos 7 dias marca a partida como sob suspeita (gravado, sem efeito enquanto for amistoso).
-- **Amistoso:** `config_deteccao.dia_amistoso` = 1. Somar no ranking da semana (por fora do teto) **ainda não está construído**: precisa entrar no cálculo do ranking antes de trocar para 0.
+- **Detecção:** acerto na 1ª tentativa em 5 dos últimos 7 dias marca a partida como sob suspeita (gravado, sem efeito enquanto estiver em teste).
+- **Em teste:** `config_deteccao.dia_amistoso` = 1. Somar no ranking da semana (por fora do teto) **ainda não está construído**: precisa entrar no cálculo do ranking antes de trocar para 0.
 - **Clubes:** `dados/clubes-do-dia.csv` (id, nome, cidade, UF, região, fundação, títulos, divisão 2026, 2 cores, capital ou interior, `fonte`, `fonte2`, `fonte_titulos`, `fonte_divisao`, data, status, observação). Nasce em rascunho; a sessão de conferência marca `revisada`. `npm run importar-clubes-do-dia` valida tudo (20 por série, UF e região, ano, cores da lista, fontes de domínio aceito, Wikipédia só como `fonte2`, palavras proibidas e dois clubes com as mesmas 6 pistas) e grava só as revisadas, que entram como `ativa`. `aposentada` tira o clube da lista e do sorteio. `--seco` só valida.
 - **Sem clubes importados**, a tela mostra "O Time do Dia entra em campo já já".
 - **Testar a tela sem servidor:** em `npm run dev`, abra `/?diaFalso` (usa o CSV, inclusive os rascunhos; `/?diaFalso=goias` escolhe o secreto).
 
 ### Regras comuns aos jogos de conhecimento
-- Os dois entram em **amistoso por 2 semanas** (não somam pontos) para medir a pontuação real e calibrar.
+- Os dois entram **em teste por 2 semanas** (não somam pontos) para medir a pontuação real e calibrar.
 - Nomes reais só como fato, com fonte (seção 8). Na estreia, o Time do Dia usa só clubes; "Jogador do Dia", com pistas factuais e sem foto, fica no backlog (D07).
 - Frases do narrador: `docs/narrador.md`, seções 10 e 11.
 
 ## 8. Tom e zoeira
 
 - **Narrador:** exagerado, rádio de domingo. Ex.: "É CAVADINHAAAA! Que categoria, que deboche!", "Pegou! O goleiro tava com o almoço pago!", "Isolou! Foi pra Marte, a bola tá orbitando!"
-- **Banco de frases:** `docs/narrador.md` (versão 1.3, com etiquetas para a frase combinar com o lance e frases do Crava a Rodada). Frase nova entra lá e passa pelo checklist de tom do próprio arquivo.
+- **Banco de frases:** `docs/narrador.md` (versão 1.5, com etiquetas para a frase combinar com o lance e frases do Crava a Rodada). Frase nova entra lá e passa pelo checklist de tom do próprio arquivo.
 - **Narrador com voz:** formato definido em 19/10 (só os gritos curtos em áudio; vozes Narrador e Narradora, mais a opção Só efeitos; nunca imitar narrador real), mas **fica no backlog** por enquanto (decidido em 19/10). A lista de gritos está no backlog do projeto no Claude (`gritos.md`).
 - **Neutro de gênero:** o narrador fala do lance, não da pessoa ("Cavou!", não "Ele cavou!").
 - **Provocação ao rival** (só ao time, nunca à pessoa): "Sua torcida tá 300 pontos atrás do [rival]. Vai deixar?"
@@ -445,10 +447,27 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - Toda pergunta com nome real precisa de **fonte verificável** guardada junto com a pergunta.
 - Fantasy com jogadores reais (escalar time) continua fora (backlog, seção 7).
 - **Classificação livre:** sem palavrão, bebida, aposta ou violência em nenhum texto do jogo. Escolas entram na fase 2.
-- **Derrota zoa, mas aponta a saída:** revanche, desafio, "os pontos contam igual pro seu time".
+- **Derrota zoa, mas aponta a saída:** revanche, X1, "os pontos contam igual pro seu time".
+
+### Glossário da interface (decidido em 20/10/2026)
+Vale para telas, cards, textos de compartilhamento e frases do narrador. Nomes internos (`desafio`, `amistoso`, `?d=`, colunas do banco) não mudam.
+
+| Antes | Agora |
+|---|---|
+| Bate Contra Mim | **Pênaltis** (subtítulo "Bate 5, pega 5") |
+| Duvido no grupo, "Duvido você…" | **Chamar no X1** |
+| Desafio na área | **Te chamaram no X1** |
+| Aceitar o desafio | **Aceitar o X1** |
+| desafio (por link), na tela | **X1** ("X1 · você venceu!", "quem te chamou") |
+| amistoso (selo e avisos) | **em teste**; aviso: "Em teste: ainda não soma no ranking." |
+| 8 perguntas · para ou segue | 8 perguntas · para quando quiser |
+| 1 clube secreto · 6 chutes | Adivinha o clube em 6 chutes |
+
+- Ficam como estão: Cravar, Jogo da certeza, Mais uma, Revanche, Campeão da semana, Time do Dia, Prova de Boleiro, Crava a Rodada.
+- Convites do WhatsApp (texto fixo, em `src/jogo/convites.ts`): pênaltis "Te chamei no X1: fiz {pontos} {pro_time}. Faz mais?"; quiz "Te chamei no X1 na Prova de Boleiro: {pontos} pontos. Faz mais?"; Time do Dia "Achei o Time do Dia em {tentativas} chutes. E você?".
 
 ### Nomes candidatos
-Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · Bate Contra Mim (nome do minigame) · Treta FC · Torcida Braba
+Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · Treta FC · Torcida Braba
 
 ## 9. Visual
 
@@ -460,10 +479,10 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 
 | Fase | Conteúdo |
 |---|---|
-| **1. MVP** ✅ pênaltis concluído em 19/10, em teste com amigos | Pênaltis com desempate, times oficiais com artigo e rival, ranking da semana (campeão pelos 30 melhores + Maior torcida), desafio por link, card de resultado com placar em emoji, direção visual nova |
+| **1. MVP** ✅ pênaltis concluído em 19/10, em teste com amigos | Pênaltis com desempate, times oficiais com artigo e rival, ranking da semana (campeão pelos 30 melhores + Maior torcida), X1 (desafio por link), card de resultado com placar em emoji, direção visual nova |
 | **1.5 Logo depois do MVP** | **Crava a Rodada: construir na semana de 26/10; estreia na 34ª rodada (2 a 6/11) ou, no máximo, na 35ª (18/11)**, cobrindo a reta final até a 38ª (2/12). Depois: cidade como segunda camisa, Série A e Série B mensais, ranking de 52 semanas, Galeria, carreira, anti-trapaça completo antes de divulgar |
 | **2. Comunidade** | Times criados, ligas e campeonatos combinados, moderação, Copa das Torcidas |
-| **3. Mais minigames** | **Próximos: quiz "Prova de Boleiro" (seção 7.1) e desafio diário "Time do Dia" (seção 7.2), desenhados em 19/10.** Construídos em 19/10, logo depois do Crava, para entrar no teste com amigos em amistoso de 2 semanas. Depois: Embaixadinha (com chinelo, laranja e bola murcha) |
+| **3. Mais minigames** | **Próximos: quiz "Prova de Boleiro" (seção 7.1) e desafio diário "Time do Dia" (seção 7.2), desenhados em 19/10.** Construídos em 19/10, logo depois do Crava, para entrar no teste com amigos, em teste por 2 semanas. Depois: Embaixadinha (com chinelo, laranja e bola murcha) |
 | **4. Coleção e resenha** | Álbum de figurinhas com jogadores fictícios e trocas, Técnico por Um Jogo, Pelada de Rua |
 
 ## 11. Como saber se está funcionando
@@ -471,7 +490,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - **Convites por jogador:** quantos amigos cada um traz (meta: mais de 1).
 - **Volta no dia seguinte e em 7 dias.**
 - **Partidas por visita.**
-- **Desafios aceitos / desafios enviados.**
+- **X1 aceitos / X1 enviados.**
 - Enquanto não houver ferramenta de métricas, os números saem do próprio banco (partidas, desafios e torcedores), por um relatório simples: `npm run metricas` (só leitura; jogador = quem fechou ao menos 1 partida; "voltou em 7 dias" = jogou em algum dos 7 dias seguintes à estreia; "entrou por link" = a 1ª partida foi desafio de outra pessoa).
 
 ## 12. Técnica (resumo)
@@ -484,8 +503,8 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - Como a URL e a publishable key são públicas, ficam versionadas no repositório (o build do GitHub Pages precisa delas). Nada secreto entra no repositório.
 - **Antes de divulgar:** CAPTCHA (Cloudflare Turnstile) no login anônimo, limpeza periódica de usuários anônimos inativos, anti-trapaça completo (inclusive as cobranças do desafio, que hoje chegam ao celular antes da defesa), ranking que aguente muitos jogadores (hoje a semana inteira é recalculada a cada partida fechada; trocar por cálculo incremental ou de minuto em minuto) e decidir sobre o plano Pro (o Free pausa o projeto depois de 1 semana sem uso).
 - **Rotina contra a pausa do plano Free:** um agendamento no GitHub Actions faz uma consulta leve ao banco a cada 2 dias. Enquanto o projeto estiver no Free, isso evita a pausa por 7 dias sem uso. O GitHub desliga agendamentos de repositório público depois de 60 dias sem commit; se isso acontecer, o GitHub avisa por e-mail e basta reativar. Arquivo: `.github/workflows/manter-supabase.yml` (a cada 2 dias às 09h de Brasília e pelo botão "Run workflow"): lê 1 linha do ranking com a publishable key e falha se a resposta não for 200.
-- **Navegação** (19/10): barra com Jogar (Bate Contra Mim, e Prova de Boleiro e Time do Dia com a etiqueta "amistoso"), Palpites (Crava a Rodada), Ranking (com a semana passada "provisória até segunda 12h") e Carreira (em breve).
-- **Teto diário entre minigames:** `partidas.minigame` (`penaltis` ou `prova`) e `partidas.amistoso`. As 5 melhores partidas do dia contam somando os minigames; partida de amistoso não ocupa vaga. O Time do Dia fica fora (tabela `dia_partidas`).
+- **Navegação** (19/10): barra com Jogar (a Home, com os 4 jogos em grade; ver "Home" na seção 9), Palpites (Crava a Rodada), Ranking (com a semana passada "provisória até segunda 12h") e Carreira (em breve).
+- **Teto diário entre minigames:** `partidas.minigame` (`penaltis` ou `prova`) e `partidas.amistoso`. As 5 melhores partidas do dia contam somando os minigames; partida em teste (`amistoso`) não ocupa vaga. O Time do Dia fica fora (tabela `dia_partidas`).
 - **Feedback** (19/10): link "Feedback ou bug? Conta pra gente" na aba Jogar abre um formulário (Bug, Ideia ou Outro, até 1000 caracteres) que grava na tabela `feedbacks`, junto com a tela e o navegador. Ninguém lê pelo celular, nem quem mandou; só o admin, no fim do `#admin`, com "Marcar como lido". Até 5 envios por hora por pessoa. O formulário pede para não colocar dado pessoal.
 - **Palavras proibidas:** `src/palavrasProibidas.test.ts` falha se alguma palavra da seção 7 aparecer no código do jogo (a única exceção é o aviso fixo).
 - **Zerar pré-temporada:** `npm run zerar-pre-temporada` apaga partidas, desafios e ranking (mantém times e torcedores). Mostra as contagens e só apaga depois de digitar ZERAR.
