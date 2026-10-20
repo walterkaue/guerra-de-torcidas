@@ -10,6 +10,8 @@ prints/
 !.env.production
 !.env.development
 prints-revisao/
+# Relatórios do balanço (npm run balanco): ficam só na máquina
+relatorios/
 
 # Configuração pessoal do Claude Code (permissões locais)
 .claude/settings.local.json

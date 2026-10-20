@@ -1,11 +1,12 @@
 // Relatório de métricas (seção 11 do jogo.md). Só leitura: roda apenas SELECTs no projeto ligado (supabase link).
-// Uso: npm run metricas
+// Uso: npm run metricas (no fim, o balanço entre minigames; sozinho: npm run balanco)
 // Definições: "jogou" = partida fechada (com ou sem suspeita). Dias em horário de Brasília (coluna partidas.dia).
 
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { rodarBalanco } from './balanco/balanco.mjs';
 
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 // O SQL vai por arquivo: no Windows o shell quebra argumentos com várias linhas.
@@ -103,3 +104,7 @@ for (const [titulo, sql] of secoes) {
 }
 
 rmSync(pasta, { recursive: true, force: true });
+
+console.log('
+## Balanço entre minigames');
+rodarBalanco();

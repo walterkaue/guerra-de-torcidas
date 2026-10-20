@@ -1,6 +1,9 @@
--- Zerar pré-temporada: apaga partidas, desafios e ranking. Mantém times, torcedores (e os logins),
--- palavras bloqueadas e a configuração da detecção.
--- NÃO rode direto: use `npm run zerar-pre-temporada`, que mostra o que vai sumir e pede confirmação.
+-- Zerar pré-temporada: apaga partidas, desafios, dias do Time do Dia, pontos do Crava e ranking.
+-- Os recordes pessoais saem dessas tabelas (recorde_pessoal), então zeram junto.
+-- Mantém times, torcedores (e os logins), palpites e certezas, perguntas e respostas da Prova,
+-- clubes e sorteio do Time do Dia (o número do dia continua), palavras bloqueadas e configurações.
+-- NÃO rode direto: use `npm run zerar-pre-temporada`, que lembra do balanço, mostra o que vai sumir
+-- e pede confirmação.
 
 begin;
 
@@ -9,11 +12,15 @@ begin;
 -- As respostas da prova ficam (sem a partida): servem para calibrar o degrau das perguntas.
 delete from public.partidas;
 delete from public.desafios;
+delete from public.dia_partidas;
+delete from public.crava_pontos;
 delete from public.ranking_semana;
 
 select
   (select count(*) from public.partidas) as partidas_restantes,
   (select count(*) from public.desafios) as desafios_restantes,
+  (select count(*) from public.dia_partidas) as dias_restantes,
+  (select count(*) from public.crava_pontos) as pontos_do_crava_restantes,
   (select count(*) from public.ranking_semana) as linhas_de_ranking_restantes,
   (select count(*) from public.torcedores) as torcedores_mantidos;
 
