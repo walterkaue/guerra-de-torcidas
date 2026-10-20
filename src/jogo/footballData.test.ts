@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ID_OUTRO, TIMES } from '../dados/times';
-import { CHAVES_API, lerPartidas, timeDaApi, timeDoNome, type PartidaApi } from './footballData';
+import { CHAVES_API, lerPartidas, lerResultados, timeDaApi, timeDoNome, type PartidaApi } from './footballData';
 
 // Nomes do football-data.org para a Série A (nome completo e curto). Ao sincronizar,
 // nome novo que não casar aparece no #admin; acrescente aqui e em CHAVES_API.
@@ -92,5 +92,33 @@ describe('leitura das partidas', () => {
     const r = lerPartidas([partida({ awayTeam: { id: 9, name: 'Clube Novo', shortName: 'Novo' } })]);
     expect(r.jogos).toEqual([]);
     expect(r.semPar).toEqual(['Clube Novo']);
+  });
+});
+
+describe('resultados da temporada', () => {
+  const p = (o: Partial<PartidaApi>): PartidaApi => ({
+    id: 1,
+    utcDate: '2026-05-10T19:00:00Z',
+    status: 'FINISHED',
+    matchday: 7,
+    homeTeam: { name: 'CR Flamengo' },
+    awayTeam: { name: 'SE Palmeiras' },
+    score: { fullTime: { home: 2, away: 2 } },
+    ...o,
+  });
+
+  it('pega só jogo terminado, de qualquer rodada', () => {
+    const r = lerResultados([
+      p({ id: 1 }),
+      p({ id: 2, status: 'TIMED', score: { fullTime: { home: null, away: null } } }),
+      p({ id: 3, matchday: 33, status: 'IN_PLAY', score: { fullTime: { home: 1, away: 0 } } }),
+      p({ id: 4, matchday: 31, status: 'AWARDED', score: { fullTime: { home: 3, away: 0 } } }),
+    ]);
+    expect(r.map((x) => x.api_id)).toEqual([1, 4]);
+    expect(r[0]).toMatchObject({ rodada: 7, mandante_id: 'flamengo', visitante_id: 'palmeiras', gols_mandante: 2, gols_visitante: 2 });
+  });
+
+  it('time sem par fica de fora', () => {
+    expect(lerResultados([p({ awayTeam: { name: 'Clube Novo' } })])).toEqual([]);
   });
 });

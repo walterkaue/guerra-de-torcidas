@@ -121,3 +121,35 @@ export function lerPartidas(partidas: readonly PartidaApi[]): LeituraDaApi {
 
 /** Status da API em que o jogo não acontece no horário marcado. */
 export const STATUS_ADIADO = ['POSTPONED', 'SUSPENDED', 'CANCELLED'];
+
+export interface ResultadoTemporada {
+  api_id: number;
+  rodada: number;
+  mandante_id: string;
+  visitante_id: string;
+  inicio: string;
+  gols_mandante: number;
+  gols_visitante: number;
+}
+
+/** Jogos já terminados da temporada inteira (qualquer rodada), para a tabela e os indicadores. */
+export function lerResultados(partidas: readonly PartidaApi[]): ResultadoTemporada[] {
+  const lista: ResultadoTemporada[] = [];
+  for (const p of partidas) {
+    const gols = p.score?.fullTime;
+    if ((p.status !== 'FINISHED' && p.status !== 'AWARDED') || gols?.home == null || gols?.away == null) continue;
+    const mandante = timeDaApi(p.homeTeam);
+    const visitante = timeDaApi(p.awayTeam);
+    if (!mandante || !visitante || !p.matchday || Number.isNaN(Date.parse(p.utcDate))) continue;
+    lista.push({
+      api_id: p.id,
+      rodada: p.matchday,
+      mandante_id: mandante,
+      visitante_id: visitante,
+      inicio: new Date(p.utcDate).toISOString(),
+      gols_mandante: gols.home,
+      gols_visitante: gols.away,
+    });
+  }
+  return lista;
+}

@@ -4,9 +4,10 @@
 // chamada com menos de 2 minutos da anterior, para ninguém gastar a cota de 10 chamadas por minuto.
 // Uma sincronização = 1 chamada à API (a temporada inteira de uma vez).
 // Nunca mexe no placar confirmado: só no horário, no status e no placar que veio da API.
+// Da mesma resposta sai a tabela `resultados_temporada` (jogos já terminados, qualquer rodada).
 
 import { admin, lerCorpo, servir } from '../_shared/comum.ts';
-import { lerPartidas, type PartidaApi } from '../_shared/jogo/footballData.ts';
+import { lerPartidas, lerResultados, type PartidaApi } from '../_shared/jogo/footballData.ts';
 
 const API = 'https://api.football-data.org/v4/competitions/BSA/matches';
 const INTERVALO_MIN_MS = 2 * 60_000;
@@ -62,6 +63,19 @@ servir(async (req) => {
     if (eT) throw eT;
   }
 
+  // Resultados da temporada inteira (tabela e indicadores da aba Palpites), da mesma chamada.
+  const resultados = lerResultados(matches ?? []);
+  if (resultados.length) {
+    const agora = new Date().toISOString();
+    const { error } = await sb
+      .from('resultados_temporada')
+      .upsert(resultados.map((r) => ({ ...r, atualizado_em: agora })), { onConflict: 'api_id' });
+    if (error) {
+      await fechar({ mensagem: `Falha ao gravar resultados: ${error.message}`, sem_par: semPar });
+      throw error;
+    }
+  }
+
   await fechar({ ok: true, jogos: jogos.length, sem_par: semPar, mensagem: semPar.length ? 'Time sem par' : null });
-  return { ok: true, jogos: jogos.length, semPar };
+  return { ok: true, jogos: jogos.length, resultados: resultados.length, semPar };
 });
