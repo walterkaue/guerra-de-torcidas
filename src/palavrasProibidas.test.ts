@@ -52,7 +52,7 @@ describe('palavras proibidas (zero aposta)', () => {
   it(`nenhum arquivo do jogo usa as palavras proibidas (${lista.length} arquivos)`, () => {
     // Na Casa do [time], os links de fonte não são texto do jogo (o slug de uma matéria pode ter "red-bull-bragantino");
     // o validador da Casa (scripts/casa/validar.mjs) barra link de aposta.
-    const semLinks = (a: string, t: string) => (a.endsWith('dados/casa/dados.gerado.ts') ? t.replace(/https?:\/\/[^"\s]+/g, ' ') : t);
+    const semLinks = (a: string, t: string) => (a.replace(/\\/g, '/').endsWith('dados/casa/dados.gerado.ts') ? t.replace(/https?:\/\/[^"\s]+/g, ' ') : t);
     const achados = lista.flatMap((a) =>
       achar(semLinks(a, readFileSync(a, 'utf8')), PROIBIDAS).map((p) => `${relative(RAIZ, a)}: "${p}"`),
     );
