@@ -1,0 +1,8 @@
+# Fim de linha LF em todo o repositório (sem isso, o Windows com core.autocrlf=true
+# troca para CRLF no checkout e os testes que comparam arquivos gerados falham).
+* text=auto eol=lf
+
+*.woff2 binary
+*.png binary
+*.jpg binary
+*.ico binary
