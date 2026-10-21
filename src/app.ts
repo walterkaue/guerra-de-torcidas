@@ -33,7 +33,8 @@ export type Rota =
   | { tela: 'resultado'; dados: DadosResultado }
   | { tela: 'prova'; desafio?: string }
   | { tela: 'provaResultado'; dados: DadosResultadoProva }
-  | { tela: 'timeDoDia' };
+  | { tela: 'timeDoDia' }
+  | { tela: 'lances' };
 
 type Limpeza = (() => void) | void;
 type Renderizador = (root: HTMLElement, rota: Rota) => Limpeza;

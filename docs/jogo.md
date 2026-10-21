@@ -1,7 +1,7 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 20/10/2026, manhã (pré-temporada valendo: todos os minigames somam no ranking até o zerar; "sua posição" e recorde pessoal; relatório de balanço por minigame; cards de time com "faixa de placar")
+> Última atualização: 21/10/2026, noite (tela dos Lances do Jogo em teste, sem valer pontos; antes: novo minigame Lances do Jogo, com medalhas e página Conquistas; Pênaltis vão virar uma sessão dos Lances com disputas históricas; nomes reais na ficha factual dos lances)
 > Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
@@ -114,7 +114,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 
 - Torcida com menos de 30 torcedores ativos: as vagas vazias contam como **80% da média geral da semana**.
 - **Pontos de campeonato** pela posição na divisão, estilo Fórmula 1: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1.
-- **Teto diário:** só as 5 melhores partidas do dia de cada jogador contam, **somando todos os minigames de partida** (pênaltis, quiz). O desafio diário (uma vez por dia) e o Crava a Rodada (teto próprio por rodada) ficam por fora (decidido em 19/10).
+- **Teto diário:** só as 5 melhores partidas do dia de cada jogador contam, **somando todos os minigames de partida** (pênaltis, quiz). O desafio diário (uma vez por dia), o Crava a Rodada (teto próprio por rodada) e os Lances do Jogo (vale a melhor partida do dia, teto 120; seção 7.3) ficam por fora (decidido em 19/10; Lances em 21/10).
 
 ### MVP, antes das divisões
 - Enquanto a Série A e a Série B não existem (fase 1.5), o ranking da semana é **um só, com os 20 times**: Campeão da semana (30 melhores) e Maior torcida. Ainda sem pontos de campeonato.
@@ -124,7 +124,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 ### Sua posição e recorde pessoal (decidido em 20/10)
 - Para dar a disputa pelo 1º lugar sem ranking público com apelido, cada pessoa vê **só a própria posição** entre todos os torcedores (de qualquer time), calculada no servidor:
   - **Na semana, geral:** "Você é o 3º de 14 torcedores na semana" (soma do que conta no ranking: 5 melhores partidas do dia + Time do Dia + Crava).
-  - **Por minigame, na semana:** pela **melhor partida** da semana (pênaltis, Prova de Boleiro), pelos pontos do dia (Time do Dia) e pelos pontos da rodada (Crava, que já tem isso).
+  - **Por minigame, na semana:** pela **melhor partida** da semana (pênaltis, Prova de Boleiro, Lances do Jogo), pelos pontos do dia (Time do Dia) e pelos pontos da rodada (Crava, que já tem isso).
   - Empate: fica na frente quem chegou primeiro.
 - **Recorde pessoal** de cada minigame (zera junto com a pré-temporada, porque a pontuação pode mudar no balanço): aparece no resultado ("NOVO RECORDE!") e entra no card quando for recorde.
 - Onde aparece: Home (posição geral da semana) e tela de resultado de cada minigame (posição naquele minigame + recorde).
@@ -167,6 +167,14 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - Jogo normal: contra o goleiro e o batedor da máquina (dificuldade sobe ao longo da semana, igual para todos).
 - **Como jogar:** antes do apito de cada partida aparece um resumo (cobrar, efeito e cavadinha, defender, pontos) com a caixa "Não exibir novamente", guardada só no aparelho. O botão "?" no placar reabre o resumo na hora da cobrança (nunca no meio de uma defesa, que corre contra o relógio).
 - **Desafio por link:** ao terminar, o jogo gera "duvido você me vencer". Quem abre o link defende as cobranças gravadas de quem desafiou e cobra contra o goleiro da máquina. No fim, placar dos dois lado a lado.
+
+### Pênaltis dentro dos Lances (decidido em 21/10, entra depois dos Lances no ar)
+- Os pênaltis viram uma **sessão dos Lances do Jogo** (seção 7.3): na Home, o card dos Lances ocupa o lugar dos Pênaltis.
+- **Disputas históricas:** disputas de pênaltis que o clube **venceu**, com o adversário de verdade já escolhido (nome, artigo e cores, sem escudo) e a ficha do jogo ("Final de 2018: foi 4 x 3. E hoje?"). Os chutes **não** são pré-definidos: o formato é o de hoje (semente, goleiro e batedor da máquina, morte súbita, par ou ímpar).
+- Cada torcedor vê as disputas **do time do coração** e as da **Seleção Brasileira** (pelo menos 2, para todo mundo). Meta: 3 por clube; clube com menos disputas marcantes é completado pelas da Seleção.
+- **Disputa livre** contra a Máquina continua (é o jogo de hoje): obrigatória para quem é de "Outro time" e para quem só quer bater pênalti.
+- **Só cenário:** motor, dificuldade da semana, detecção, desafio por link e pontuação dos pênaltis não mudam, e os pênaltis continuam **dentro** do teto de 5 partidas. A partida guarda qual disputa foi jogada (`disputa_id`), para a ficha, o card e as medalhas.
+- Adversários de fora da Série A (outras divisões e clubes estrangeiros) ganham cadastro próprio: nome, artigo e cores.
 
 ### Regras de implementação (etapa 2, 18/10/2026)
 - **Ordem:** alterna cobrança e defesa (C, D, C, D…), 5 de cada. Se empatar, vai para o desempate (abaixo).
@@ -385,6 +393,71 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - Nomes reais só como fato, com fonte (seção 8). Na estreia, o Time do Dia usa só clubes; "Jogador do Dia", com pistas factuais e sem foto, fica no backlog (D07).
 - Frases do narrador: `docs/narrador.md`, seções 10 e 11.
 
+## 7.3 Minigame 4 — "Lances do Jogo"
+
+> Nome provisório (M17 no backlog). Desenho aprovado em 21/10/2026. Recria lances marcantes dos clubes com o motor e o gesto dos pênaltis, para jogar e repetir muitas vezes. Na pré-temporada, **soma no ranking** como os outros (seção 5).
+
+### Como joga
+- **Tipos no MVP:** **falta** (bola fora da área, com barreira) e **cara a cara** (finalização na área ou perto dela, com o goleiro podendo sair do gol). **Defesa fica fora do MVP:** repete a defesa dos pênaltis e, com lance fixo, a resposta seria decorada. As ideias de defesas históricas ficam guardadas.
+- **Gesto igual ao do pênalti:** direção, força e efeito, com cavadinha. O que muda é de onde a bola sai, a barreira e o goleiro.
+- **Álbum de lances:** a pessoa escolhe os lances, com filtros por clube (abre no time do coração) e por tipo. Pode jogar lance de qualquer clube e da Seleção; os pontos vão sempre para o time dela.
+- **Partida = 3 lances** escolhidos pela pessoa (pode repetir o mesmo lance). Cerca de 30 s.
+- **Valendo:** até **6 partidas por dia** (18 lances; ajustável). O dia vale a **melhor partida**.
+- **Treino:** ilimitado, roda só no celular, sem pontos e sem medalhas.
+
+### Pontuação
+| Faixa do lance | Chance de gol esperada | Gol vale |
+|---|---|---|
+| Fácil | 75% ou mais | 10 |
+| Média | 50% a 75% | 18 |
+| Difícil | 30% a 50% | 26 |
+| Craque | menos de 30% | 34 |
+| **Recriou o lance** (gol na zona onde entrou o gol de verdade) | | **+6** |
+
+- **Partida:** soma dos 3 lances (teto 3 × 40 = **120**). **Dia:** a melhor partida.
+- **Por fora do teto de 5 partidas**, como o Time do Dia (os lances não disputam vaga com pênaltis e Prova). O peso na semana é conferido no balanço da pré-temporada (seção 11).
+- **Por que a melhor partida, e não os 3 melhores lances soltos:** com 20 tentativas e lance repetido, uma pessoa mediana acertaria 3 vezes o lance mais difícil em ~91% dos dias, e quase todo mundo bateria o teto. Fazer 3 seguidos separa quem joga bem: em 6 partidas de 3 lances de craque, ~9% para quem acerta 25% e ~55% para quem acerta 50%.
+- **Faixa calibrada por dados:** a inicial sai do robô de calibragem (`calibrar` em `src/jogo/lances.ts`: chance de gol de quem mira no melhor gesto com o erro de mão típico). Com 50 ou mais tentativas valendo, a faixa é corrigida pela taxa de acerto real. Mudança de faixa nunca mexe em partida já fechada.
+- **Dificuldade fixa por lance:** não sobe ao longo da semana, para "o melhor do dia" de segunda valer o mesmo que o de domingo.
+
+### Tela em teste (21/10/2026)
+- **No ar sem servidor:** álbum, partida de 3 e treino rodam só no celular e **ainda não valem pontos** (exceção à pré-temporada valendo da seção 5, até o servidor dos Lances existir). A tela avisa: "Em teste: os Lances ainda não valem pontos."
+- **Na Home:** um card "Novo · em teste" logo abaixo da grade dos 4 jogos (a grade não muda até os Pênaltis virarem sessão dos Lances).
+- **Álbum:** filtro de clube (abre no time do coração; sem lance do time, abre em todos) e de tipo (Todos, Faltas, Cara a cara). Tocar no lance abre a ficha, a situação ("Falta a 21 m, pela esquerda, barreira de 4") e os botões **Treinar** e **Pôr na partida**. A partida fica numa barra fixa no rodapé com 3 vagas; tocar numa vaga tira o lance.
+- **Jogo:** a mesma cena dos pênaltis (`src/telas/cena.ts`), com a barreira (bonecos fictícios da máquina, de frente) e o goleiro no lado sorteado ou adiantado e maior no cara a cara. A câmera fica sempre atrás da bola, então a distância aparece na situação e no tamanho da barreira, não no tamanho do gol.
+- **Resultado:** pontos da partida, um emoji por lance (⚽ gol, 🧤 defesa, 🧱 barreira, ❌ fora ou trave) e "Jogar de novo" ou "Escolher outros". Card de compartilhar fica para quando valer pontos.
+- **Narrador:** seção 12 do `docs/narrador.md` (abertura, barreira, lance recriado e fim) mais as frases genéricas de gol, trave e fora da seção 3.
+- **Catálogo no jogo:** `npm run catalogo-lances` gera `src/dados/lances.ts` com os lances `revisada` ou `ativa` dos CSVs; o teste avisa se esquecer.
+
+### Medalhas e Conquistas
+- Por lance, contando só gols em partidas valendo (conferidas no servidor): **bronze** com 5 gols, **prata** com 20, **ouro** com 50 gols, dos quais 10 recriando o lance.
+- **Nunca zeram**, nem no zerar da pré-temporada: ficam numa tabela própria, que o `zerar-pre-temporada` preserva.
+- **Não valem ponto** no ranking (são coleção, como a Carreira).
+- **Página Conquistas**, como aba ao lado do Ranking das torcidas: as medalhas do jogador por clube e por lance, e a vitrine da torcida ("a torcida do São Paulo tem 1.240 medalhas de ouro"), por soma e sem apelido.
+- **Card de medalha:** "Já sou ouro no Gol 100 do goleiro — São Paulo x Corinthians (2011)". Título do lance, nunca nome de pessoa (seção 8).
+- O id de um lance nunca muda depois de publicado (as medalhas apontam para ele).
+
+### Regras do motor (21/10/2026)
+- `src/jogo/lances.ts`, puro e compartilhado com o servidor (sem trigonometria; `Math.sqrt` pode). Medidas em metros: origem no meio da linha do gol, x para a direita de quem bate, z até a linha do gol.
+- **Ponto final** na linha do gol: a mesma conta dos pênaltis (`trajetoria`). O tremor cresce com a distância (até 3 vezes o do pênalti).
+- **Caminho da bola:** reta até o ponto final, mais a curva do efeito (até 1,5 m no meio do caminho, a 20 m) e um arco que sobe mais com força menor e com a distância. Força alta = chute reto e rápido; força média = bola que sobe e cai.
+- **Barreira:** a 9,15 m da bola, tapando a linha entre a bola e um ponto do gol; de 2 a 6 jogadores de 0,5 m e 1,9 m de altura. Bate nela a bola que passa nessa faixa abaixo de 1,9 m. Bola que sai de trás da barreira atrasa o goleiro.
+- **Goleiro:** começa no lado aberto (falta) ou de frente para a bola (cara a cara); reação sorteada entre 0,15 e 0,45 s; alcance que cresce com o tempo de voo da bola (até 3,8 m, um pouco menos no ângulo). Em 25% das vezes "lê" o chute, como nos pênaltis. Saindo do gol, abafa mais; a cavadinha só encobre goleiro que saiu 3 m ou mais e não leu.
+- **Trave, fora, ângulo e cavadinha:** mesmas regras dos pênaltis.
+
+### Anti-trapaça
+- Como nos pênaltis: o servidor sorteia a semente, recebe os 3 lances e os 3 gestos, recalcula e grava. O limite de partidas valendo por dia é contado no servidor.
+- O treino não passa pelo servidor e não conta para nada.
+- Risco conhecido: o celular recebe a semente antes de jogar (o mesmo risco dos pênaltis, com a mesma solução antes de divulgar).
+
+### Catálogo
+- **Refeito do zero.** Os lotes de ideias de 20/10 servem só de ponto de partida (vários tinham fatos trocados).
+- **Cada lance guarda:** id, clube (ou Seleção), tipo, título, ficha, competição, ano, adversário, cena (bola, barreira, goleiro), zona histórica, faixa, **fontes** (links de notícias públicas), data da verificação e status (rascunho, revisado, ativo).
+- **Mesma cota para todos os clubes:** 2 a 3 lances por clube na estreia; a Seleção Brasileira entra como coleção extra, aberta a todos.
+- **Só lances que celebram o clube:** nada de tragédia, morte ou acidente, vexame ou atleta menor de idade na data do lance. Nada de opinião sobre pessoas ("vacilo do zagueiro").
+- **Competição e estádio** sem nome de patrocinador.
+- **Como nasce:** como o banco de perguntas (seção 7.1): lotes escritos numa sessão com busca na web, sempre com fonte, e uma segunda sessão, nova, que confere cada fonte.
+
 ## 8. Tom e zoeira
 
 - **Narrador:** exagerado, rádio de domingo. Ex.: "É CAVADINHAAAA! Que categoria, que deboche!", "Pegou! O goleiro tava com o almoço pago!", "Isolou! Foi pra Marte, a bola tá orbitando!"
@@ -399,6 +472,8 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 
 ### Nomes reais (decidido em 19/10/2026)
 - **Pode:** citar nomes de jogadores, técnicos e outras pessoas reais do futebol em **perguntas e respostas factuais dos jogos de conhecimento** (quiz e desafios diários): gols, títulos, recordes, transferências, escalações históricas.
+- **Pode (decidido em 21/10):** na **ficha** de um lance histórico (Lances do Jogo e disputas históricas de pênaltis), o texto que conta o que aconteceu cita o nome como fato, do jeito que as notícias públicas contam, com fonte guardada junto. Ex.: "27/03/2011, Paulistão: Rogério Ceni marca o 100º gol da carreira, de falta, contra o Corinthians."
+- **Não pode no lance:** nome, apelido ou número da camisa no **título**, no **card** ou texto de compartilhar, no **narrador** e no **boneco** (que continua fictício, sem o número do jogador real). O título conta o fato: "Gol 100 do goleiro", nunca "Gol 100 do Mito 01".
 - **Não pode:**
   - imagem, foto, voz, caricatura ou boneco que imite pessoa real (os bonecos continuam fictícios);
   - zoeira, apelido pejorativo ou opinião sobre a pessoa (a zoeira continua sendo com o time e a situação);
@@ -427,7 +502,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 | **1. MVP** ✅ pênaltis concluído em 19/10, em teste com amigos | Pênaltis com desempate, times oficiais com artigo e rival, ranking da semana (campeão pelos 30 melhores + Maior torcida), desafio por link, card de resultado com placar em emoji, direção visual nova |
 | **1.5 Logo depois do MVP** | Crava a Rodada no ar desde 20/10, somando desde a 32ª na pré-temporada, até a 38ª (2/12). Depois: cidade como segunda camisa, Série A e Série B mensais, ranking de 52 semanas, Galeria, carreira, anti-trapaça completo antes de divulgar |
 | **2. Comunidade** | Times criados, ligas e campeonatos combinados (com ranking entre amigos com apelido), moderação, Copa das Torcidas |
-| **3. Mais minigames** | Prova de Boleiro (seção 7.1) e Time do Dia (seção 7.2) construídos em 19–20/10, somando na pré-temporada. Depois: Embaixadinha (com chinelo, laranja e bola murcha) |
+| **3. Mais minigames** | Prova de Boleiro (seção 7.1) e Time do Dia (seção 7.2) construídos em 19–20/10, somando na pré-temporada. Lances do Jogo (seção 7.3) aprovado em 21/10: motor primeiro, depois catálogo com fontes, tela, servidor, Conquistas e, por fim, os Pênaltis como sessão dos Lances. Depois: Embaixadinha (com chinelo, laranja e bola murcha) |
 | **4. Coleção e resenha** | Álbum de figurinhas com jogadores fictícios e trocas, Técnico por Um Jogo, Pelada de Rua |
 
 ## 11. Como saber se está funcionando
@@ -439,7 +514,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - Enquanto não houver ferramenta de métricas, os números saem do próprio banco (partidas, desafios e torcedores), por um relatório simples: `npm run metricas` (só leitura; jogador = quem fechou ao menos 1 partida; "voltou em 7 dias" = jogou em algum dos 7 dias seguintes à estreia; "entrou por link" = a 1ª partida foi desafio de outra pessoa).
 
 ### Balanço entre minigames (decidido em 20/10)
-- Seção nova no `npm run metricas` (ou `npm run balanco`), só leitura, **por minigame** (pênaltis, Prova de Boleiro, Time do Dia, Crava): partidas, jogadores, média, mediana, quartis (25% e 75%), 90%, máximo e quantas bateram o teto (150 nos jogos de partida, 100 no Time do Dia). No Crava, por palpite e por pessoa na rodada (já ×2).
+- Seção nova no `npm run metricas` (ou `npm run balanco`), só leitura, **por minigame** (pênaltis, Prova de Boleiro, Time do Dia, Crava e, quando estrear, Lances do Jogo, com teto de 120 e taxa de gol por lance): partidas, jogadores, média, mediana, quartis (25% e 75%), 90%, máximo e quantas bateram o teto (150 nos jogos de partida, 100 no Time do Dia). No Crava, por palpite e por pessoa na rodada (já ×2).
 - **Peso de cada minigame na semana:** dos pontos que contaram no ranking, quanto veio de cada minigame (no geral e na mediana por pessoa).
 - **Alvo:** mediana entre ~45 e ~75 por partida e teto ~150 nos jogos de partida; o relatório marca com ⚠️ o que sair dessa faixa. Prova de Boleiro mostra também até que pergunta as pessoas chegam e quantas param; Time do Dia, a distribuição de tentativas.
 - Mostra só o que tiver pelo menos 20 partidas (abaixo disso: "pouca amostra").

@@ -514,6 +514,31 @@ export const FRASES = {
     { t: "{dias} dias seguidos! Isso é torcida fiel." },
     { t: "Sequência de {dias} dias! Não para agora." },
   ],
+  lance_abertura: [
+    { t: "Três lances, três chances de fazer história {pro_time}!" },
+    { t: "A história tá aí de novo. Agora a perna é sua!" },
+    { t: "Bola parada, torcida em pé. Bora recriar!" },
+    { t: "O narrador já viu esse filme. Quer ver o final de novo!", rara: true },
+  ],
+  lance_barreira: [
+    { t: "NA BARREIRA! A parede não se mexeu." },
+    { t: "Bateu na barreira! Tem que passar por cima ou contornar." },
+    { t: "A barreira ficou com a bola. Próximo lance!" },
+    { t: "Parou no muro! Mais curva ou mais altura da próxima." },
+    { t: "A barreira agradece o presente. Mas não era pra ela!", rara: true },
+  ],
+  lance_recriou: [
+    { t: "IGUALZINHO! Recriou o lance do jeito que a história conta!" },
+    { t: "No mesmo canto da história! Isso é aula!" },
+    { t: "Recriou o lance! A torcida {do_time} jura que é replay!" },
+    { t: "Igual ao original! Já pode pedir a placa.", rara: true },
+  ],
+  lance_fim: [
+    { t: "Fim dos lances: {pontos} {pro_time}!" },
+    { t: "Três lances, {pontos} pontos na conta {do_time}." },
+    { t: "Fechou com {pontos}! Escolhe outros lances e vai de novo." },
+    { t: "Acabou a sessão de história! {pontos} pontos no placar." },
+  ],
 } satisfies Record<string, readonly Frase[]>;
 
 export type EventoNarrador = keyof typeof FRASES;
