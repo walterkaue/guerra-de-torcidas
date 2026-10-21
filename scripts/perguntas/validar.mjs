@@ -45,6 +45,9 @@ export const DOMINIOS_ACEITOS = [
   'gazetadopovo.com.br', 'bandeirantes.com.br', 'sportv.globo.com', 'bbc.com', 'reuters.com',
   'jovempan.com.br', 'itatiaia.com.br', 'opovo.com.br', 'tribunapr.com.br', 'bahianoticias.com.br',
   'bandab.com.br', 'superesportes.com.br', 'radioguaiba.com.br', 'gzh.com.br',
+  // aprovado pelo Kauê em 21/10/2026 (abriu na conferência; bemparana.com.br e band.com.br
+  // responderam 403 com desafio do Cloudflare e ficaram de fora)
+  'umdoisesportes.com.br',
 ];
 
 /** Zero aposta (seção 7) e, no quiz, nada de "prêmio", "milhão" ou "valendo" (narrador, seção 10). */
