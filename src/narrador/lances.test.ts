@@ -12,6 +12,7 @@ const base: ResultadoLance = {
   raspouTrave: false,
   recriou: false,
   goleiroX: -0.15,
+  tFim: 1,
   pontos: 23,
 };
 

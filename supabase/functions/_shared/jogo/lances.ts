@@ -45,6 +45,8 @@ export interface ResultadoLance {
   recriou: boolean;
   /** Onde o goleiro ficou para o chute (x de -1 a 1, já com a leitura). Só para o desenho. */
   goleiroX: number;
+  /** Até onde a bola anda no caminho (0 a 1): 1 chega na linha do gol; menos, parou na barreira ou no goleiro. */
+  tFim: number;
   pontos: number;
 }
 
@@ -59,6 +61,9 @@ export interface Lance extends CenaLance {
   /** AAAA-MM-DD */
   data: string;
   adversario: string;
+  /** Cara a cara: como a bola chegou ("A jogada"), sem nomes, e de onde ela vem. */
+  chegada?: string;
+  chegadaDe?: 'tras' | 'esquerda' | 'direita' | 'rebote';
 }
 
 /** Pontos de um gol em cada faixa de dificuldade; "Recriou o lance" soma o bônus. */
@@ -184,24 +189,14 @@ export function goleiroAntesDoChute(semente: number, i: number, cena: CenaLance)
   return sortear(semente, i, cena).x0;
 }
 
-/** Resolve o lance i de uma partida: o gesto do jogador contra a barreira e o goleiro da máquina. */
-export function resolverLance(semente: number, i: number, cena: CenaLance, gestoBruto: GestoCobranca): ResultadoLance {
-  const g = normalizarCobranca(gestoBruto);
-  const sorteio = sortear(semente, i, cena);
-  const { tremX, tremY, leu } = sorteio;
+/**
+ * Caminho da bola em metros, da bola (t = 0) ao ponto final na linha do gol (t = 1): reta até o ponto final,
+ * mais a curva do efeito e a altura do arco.
+ */
+function caminho(cena: CenaLance, g: GestoCobranca, x: number, y: number, cavadinha: boolean, fraca: boolean) {
   const bx = cena.bola.x;
   const bz = cena.bola.z;
-  const d = distancia(bx, bz);
-
-  const { x, y, cavadinha, fraca } = trajetoria(g, tremX, tremY);
-  const zonaBola = zonaDoPonto(limitar(x, -1, 1), limitar(y, 0, 1));
   const gx = x * MEIA_LARGURA_GOL;
-  // Goleiro: no lado sorteado ou, quando lê o chute, adiantado para o lado da bola.
-  const x0 = sorteio.x0 * MEIA_LARGURA_GOL;
-  const xg = leu ? x0 + (gx - x0) * LEITURA_DESLOCA : x0;
-  const base = { x, y, zonaBola, cavadinha, angulo: false, raspouTrave: false, recriou: false, goleiroX: xg / MEIA_LARGURA_GOL, pontos: 0 };
-
-  // Caminho da bola, em metros: reta da bola até o ponto final, mais a curva do efeito e a altura do arco.
   const alturaFinal = y * ALTURA_GOL;
   const L = distancia(gx - bx, bz);
   const ax = (gx - bx) / L;
@@ -223,6 +218,38 @@ export function resolverLance(semente: number, i: number, cena: CenaLance, gesto
     z: bz + az * L * t - rz * curva * sino(t),
   });
   const altura = (t: number) => alturaFinal * t + loft * sino(t);
+  return { L, ax, az, ponto, altura };
+}
+
+/** O caminho de um lance já resolvido, para o desenho: posição da bola (m) em t de 0 a `r.tFim`. */
+export function caminhoDoLance(cena: CenaLance, gestoBruto: GestoCobranca, r: ResultadoLance): (t: number) => { x: number; y: number; z: number } {
+  const g = normalizarCobranca(gestoBruto);
+  const fraca = !r.cavadinha && g.forca < 32;
+  const c = caminho(cena, g, r.x, r.y, r.cavadinha, fraca);
+  return (t) => {
+    const p = c.ponto(t);
+    return { x: p.x, y: c.altura(t), z: p.z };
+  };
+}
+
+/** Resolve o lance i de uma partida: o gesto do jogador contra a barreira e o goleiro da máquina. */
+export function resolverLance(semente: number, i: number, cena: CenaLance, gestoBruto: GestoCobranca): ResultadoLance {
+  const g = normalizarCobranca(gestoBruto);
+  const sorteio = sortear(semente, i, cena);
+  const { tremX, tremY, leu } = sorteio;
+  const bx = cena.bola.x;
+  const bz = cena.bola.z;
+  const d = distancia(bx, bz);
+
+  const { x, y, cavadinha, fraca } = trajetoria(g, tremX, tremY);
+  const zonaBola = zonaDoPonto(limitar(x, -1, 1), limitar(y, 0, 1));
+  const gx = x * MEIA_LARGURA_GOL;
+  // Goleiro: no lado sorteado ou, quando lê o chute, adiantado para o lado da bola.
+  const x0 = sorteio.x0 * MEIA_LARGURA_GOL;
+  const xg = leu ? x0 + (gx - x0) * LEITURA_DESLOCA : x0;
+  const base = { x, y, zonaBola, cavadinha, angulo: false, raspouTrave: false, recriou: false, goleiroX: xg / MEIA_LARGURA_GOL, tFim: 1, pontos: 0 };
+
+  const { L, ax, az, ponto, altura } = caminho(cena, g, x, y, cavadinha, fraca);
 
   // Barreira: parede de jogadores a 9,15 m da bola, de frente para `miraX`.
   let escondida = false;
@@ -240,7 +267,7 @@ export function resolverLance(semente: number, i: number, cena: CenaLance, gesto
       const cz = bz + uz * DIST_BARREIRA;
       const lateral = Math.abs((p.x - cx) * -uz + (p.z - cz) * ux);
       const meia = (cena.barreira.jogadores * LARGURA_JOGADOR) / 2 + RAIO_BOLA;
-      if (lateral <= meia && altura(t) < ALTURA_BARREIRA) return { ...base, desfecho: 'barreira' };
+      if (lateral <= meia && altura(t) < ALTURA_BARREIRA) return { ...base, desfecho: 'barreira', tFim: t };
       escondida = lateral <= meia + 1;
     }
   }
@@ -268,7 +295,7 @@ export function resolverLance(semente: number, i: number, cena: CenaLance, gesto
   const porCima = !leu && saida >= SAIDA_MIN_POR_CIMA && altura(tk) > ALTURA_GOLEIRO;
   const defendeu = !porCima && Math.abs(pk.x - kx) <= alcance;
 
-  if (defendeu) return { ...base, angulo, desfecho: 'defesa' };
+  if (defendeu) return { ...base, angulo, desfecho: 'defesa', tFim: tk };
   const recriou = zonaBola === cena.zonaHistorica;
   const pontos = PONTOS_FAIXA[cena.faixa] + (recriou ? BONUS_RECRIOU : 0);
   return { ...base, angulo, raspouTrave, recriou, desfecho: 'gol', pontos };

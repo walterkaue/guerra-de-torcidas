@@ -17,6 +17,7 @@ Regras: `docs/jogo.md`, seção 7.3 ("Catálogo") e seção 8 ("Nomes reais"). U
 | `barreira`, `barreira_mira_x` | só na falta: jogadores (2 a 6) e o ponto da linha do gol que a barreira tapa (m) |
 | `goleiro_saida` | só no cara a cara: quantos metros o goleiro saiu |
 | `canto` | onde entrou o gol de verdade, visto de trás de quem bate: `alto-esquerda`, `alto-meio`, `alto-direita`, `baixo-esquerda`, `baixo-meio`, `baixo-direita` (gol aí = "Recriou o lance") |
+| `chegada`, `chegada_de` | só no cara a cara: "A jogada", como a bola chegou (até 90 caracteres, **sem nome**), e de onde ela vem: `tras` (passe ou lançamento de trás), `esquerda`, `direita` ou `rebote` |
 | `faixa` | a que o robô de calibragem calcula (o teste avisa se não bater) |
 | `fonte`, `fonte2` | links de notícias públicas, dos domínios aceitos em `scripts/perguntas/validar.mjs` (Wikipédia só como `fonte2`) |
 | `verificada_em`, `status` | `rascunho` → `revisada` (conferido) → `ativa`; `aposentada` tira do jogo |

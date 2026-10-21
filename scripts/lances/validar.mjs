@@ -6,7 +6,7 @@ import { CLUBES, DOMINIOS_ACEITOS, acharPalavras, acharTemas, lerCsv, normalizar
 
 export const COLUNAS = [
   'id', 'clube', 'tipo', 'titulo', 'ficha', 'pessoas', 'competicao', 'data', 'adversario', 'estadio',
-  'bola_x', 'bola_z', 'barreira', 'barreira_mira_x', 'goleiro_saida', 'canto', 'faixa',
+  'bola_x', 'bola_z', 'barreira', 'barreira_mira_x', 'goleiro_saida', 'canto', 'chegada', 'chegada_de', 'faixa',
   'fonte', 'fonte2', 'verificada_em', 'status', 'observacao',
 ];
 
@@ -22,7 +22,11 @@ export const CANTOS = {
   'alto-esquerda': 3, 'alto-meio': 4, 'alto-direita': 5,
 };
 
+/** De onde a bola chega no cara a cara (a seta de "A jogada"): passe de trás, de um lado ou rebote na área. */
+export const CHEGADAS = ['tras', 'esquerda', 'direita', 'rebote'];
+
 export const MAX_TITULO = 40;
+export const MAX_CHEGADA = 90;
 export const MAX_FICHA = 260;
 
 function dominioDe(url) {
@@ -111,6 +115,13 @@ export function validarLance(l) {
     if (l.goleiro_saida !== '' && !Number.isFinite(numero(l.goleiro_saida))) erros.push('goleiro_saida não é número');
   }
   if (!(l.canto in CANTOS)) erros.push(`canto "${l.canto}" (${Object.keys(CANTOS).join(', ')})`);
+  // "A jogada" (como a bola chegou): obrigatória no cara a cara, sem nome de pessoa.
+  if (l.tipo === 'finalizacao') {
+    if (l.chegada.length < 10 || l.chegada.length > MAX_CHEGADA) erros.push(`chegada com ${l.chegada.length} caracteres (10 a ${MAX_CHEGADA})`);
+    if (!CHEGADAS.includes(l.chegada_de)) erros.push(`chegada_de "${l.chegada_de}" (${CHEGADAS.join(', ')})`);
+    const chegadaN = normalizar(l.chegada).split(/[^a-z0-9]+/);
+    for (const p of pedacosDeNomes(l.pessoas)) if (chegadaN.includes(p)) erros.push(`chegada com nome de pessoa: "${p}"`);
+  } else if (l.chegada || l.chegada_de) erros.push('falta não tem chegada');
   if (!FAIXAS.includes(l.faixa)) erros.push(`faixa "${l.faixa}" (${FAIXAS.join(', ')})`);
 
   const dom = dominioDe(l.fonte);
@@ -128,7 +139,7 @@ export function validarLance(l) {
     erros.push(`verificada_em "${l.verificada_em}" (use AAAA-MM-DD; obrigatória depois do rascunho)`);
   }
 
-  const texto = [l.titulo, l.ficha, l.competicao, l.adversario, l.estadio].join(' | ');
+  const texto = [l.titulo, l.ficha, l.chegada, l.competicao, l.adversario, l.estadio].join(' | ');
   for (const w of acharPalavras(texto)) erros.push(`palavra proibida: "${w}"`);
   for (const w of acharTemas(texto)) erros.push(`tema fora da regra: "${w}"`);
   return erros;

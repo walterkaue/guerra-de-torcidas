@@ -21,6 +21,8 @@ const boa = {
   barreira_mira_x: '-2',
   goleiro_saida: '',
   canto: 'alto-direita',
+  chegada: '',
+  chegada_de: '',
   faixa: 'media',
   fonte: 'https://www.gazetaesportiva.com/?p=2712013',
   fonte2: '',
@@ -58,6 +60,15 @@ describe('validarLance', () => {
     expect(validarLance({ ...boa, barreira: '' }).join()).toMatch(/barreira/);
     expect(validarLance({ ...boa, goleiro_saida: '2' }).join()).toMatch(/goleiro fica na linha/);
     expect(validarLance({ ...boa, tipo: 'finalizacao' }).join()).toMatch(/cara a cara não tem barreira/);
+  });
+
+  it('cara a cara precisa de "A jogada" sem nome; falta não tem', () => {
+    const cara = { ...boa, id: 'sao-paulo-2011-cara', tipo: 'finalizacao', barreira: '', barreira_mira_x: '', goleiro_saida: '2' };
+    expect(validarLance(cara).join()).toMatch(/chegada com 0 caracteres/);
+    expect(validarLance({ ...cara, chegada: 'Lançamento por cima da defesa.', chegada_de: 'tras' })).toEqual([]);
+    expect(validarLance({ ...cara, chegada: 'Lançamento de Ceni por cima da defesa.', chegada_de: 'tras' }).join()).toMatch(/chegada com nome/);
+    expect(validarLance({ ...cara, chegada: 'Lançamento por cima da defesa.', chegada_de: 'cima' }).join()).toMatch(/chegada_de/);
+    expect(validarLance({ ...boa, chegada: 'Algo qualquer aqui.' }).join()).toMatch(/falta não tem chegada/);
   });
 
   it('palavras e temas proibidos', () => {
