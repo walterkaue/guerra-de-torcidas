@@ -1,8 +1,8 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 21/10/2026, noite (Lances do Jogo no lugar dos Pênaltis na Home, com 3 abas; câmera 3D com três distâncias; "A jogada" no cara a cara; antes: tela dos Lances do Jogo em teste, sem valer pontos; novo minigame Lances do Jogo, com medalhas e página Conquistas; Pênaltis vão virar uma sessão dos Lances com disputas históricas; nomes reais na ficha factual dos lances)
-> Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos). Ideias ainda não decididas ficam no backlog do projeto no Claude.
+> Última atualização: 21/10/2026, noite (Casa do [time] planejada, com dados em rascunho em dados/casa; Lances do Jogo no lugar dos Pênaltis na Home, com 3 abas; câmera 3D com três distâncias; "A jogada" no cara a cara; antes: tela dos Lances do Jogo em teste, sem valer pontos; novo minigame Lances do Jogo, com medalhas e página Conquistas; Pênaltis vão virar uma sessão dos Lances com disputas históricas; nomes reais na ficha factual dos lances)
+> Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos), `docs/casa.md` (Casa do [time]). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
 
@@ -25,6 +25,7 @@ Minigames de futebol de 30 segundos em que **cada ponto que você faz vai para o
 - **Só nome, cores e artigo (o/a).** Nada de escudo, uniforme oficial, mascote, hino ou foto de jogador. O artigo serve para o narrador acertar "do"/"da", "pro"/"pra".
 - **Camiseta lisa:** os batedores vestem uma camiseta lisa nas 2 cores do time, sem escudo, listras, patrocínio ou qualquer desenho que imite a camisa oficial. Há o **uniforme 1** (camiseta na cor 1) e o **uniforme 2** (cores invertidas), sorteado a cada partida. Se os dois times em campo ficarem parecidos, o adversário troca de uniforme (decidido em 19/10).
 - **Card do time (tela de escolha e onde mais o time aparecer em bloco), decidido em 20/10: "faixa de placar".** Cor 1 cheia, sem transparência; embaixo, uma faixa reta na cor 2 (cerca de 1/4 da altura); nos clubes de três cores, um filete da 3ª cor separando as duas. Nome em Barlow Condensed, caixa alta, cor de texto pelo `corDeTexto`. O mesmo desenho para todos os clubes: **nenhum padrão que imite a camisa** (listras na direção da camisa, faixa diagonal, estrelas ou outro elemento de escudo). Quem diferencia os clubes é a cor e o nome. Substitui as listras diagonais translúcidas, que deixavam as cores com cara de pastel.
+- **Única exceção (decidida em 21/10):** o manto desenhado no bloco de cores da **Casa do [time]**, com o padrão tradicional (listras, aros, faixa) e sem escudo, símbolo, patrocínio ou fornecedor (`docs/casa.md`, seção 5). Card do time, bonecos e cards de compartilhamento continuam como acima.
 - **Goleiros:** camiseta lisa num tom forte de goleiro (amarelo, verde-limão, ciano, rosa ou lilás), escolhido para contrastar com os dois times e com o outro goleiro.
 - **Jogadores fictícios:** nenhum boneco imita jogador real, nem por número, tom de pele ou cabelo (direito de imagem; decidido em 19/10).
 - Cada time pode ter um **rival** cadastrado (o clássico). Sem clássico, vale a regra da seção 8.
@@ -462,6 +463,16 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Competição e estádio** sem nome de patrocinador.
 - **Como nasce:** como o banco de perguntas (seção 7.1): lotes escritos numa sessão com busca na web, sempre com fonte, e uma segunda sessão, nova, que confere cada fonte.
 
+## 7.4 Casa do [time] (história dos clubes)
+
+> Desenho aprovado em 21/10/2026, a partir da proposta "Galeria dos Clubes". **Entra depois do upgrade do minigame de pênaltis.** Detalhe completo: `docs/casa.md`.
+
+- Uma página por clube da Série A 2026 ("Casa do Flamengo", "Casa da Chapecoense"): estádio, sala de troféus, livro de recordes, cores e manto. Só fatos com fonte, revisados por uma segunda sessão, como o quiz.
+- **Vitrine, não minigame:** não dá pontos, XP nem selo. A ligação com o jogo é só por navegação (Home, Ranking, Time do Dia depois que o dia acaba).
+- Competições pelo nome real da entidade (FIFA, CONMEBOL, CBF, federação), **sem patrocinador**. Títulos: só a lista oficial; o que o clube reivindica e a entidade não lista aparece à parte, com nota neutra.
+- O nome "Galeria" continua sendo da **Galeria de Troféus** da torcida no jogo (seção 5), que vira a prateleira "Aqui no jogo" da Casa quando existir.
+- Estático, fora do bundle inicial, sem servidor.
+
 ## 8. Tom e zoeira
 
 - **Narrador:** exagerado, rádio de domingo. Ex.: "É CAVADINHAAAA! Que categoria, que deboche!", "Pegou! O goleiro tava com o almoço pago!", "Isolou! Foi pra Marte, a bola tá orbitando!"
@@ -476,6 +487,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 
 ### Nomes reais (decidido em 19/10/2026)
 - **Pode:** citar nomes de jogadores, técnicos e outras pessoas reais do futebol em **perguntas e respostas factuais dos jogos de conhecimento** (quiz e desafios diários): gols, títulos, recordes, transferências, escalações históricas.
+- **Pode também (21/10):** nas **fichas factuais da Casa do [time]** (artilheiros, recordistas em jogos), só nome + número + data de referência + fonte. Todo o "Não pode" abaixo continua valendo.
 - **Pode (decidido em 21/10):** na **ficha** de um lance histórico (Lances do Jogo e disputas históricas de pênaltis), o texto que conta o que aconteceu cita o nome como fato, do jeito que as notícias públicas contam, com fonte guardada junto. Ex.: "27/03/2011, Paulistão: Rogério Ceni marca o 100º gol da carreira, de falta, contra o Corinthians."
 - **Não pode no lance:** nome, apelido ou número da camisa no **título**, no **card** ou texto de compartilhar, no **narrador** e no **boneco** (que continua fictício, sem o número do jogador real). O título conta o fato: "Gol 100 do goleiro", nunca "Gol 100 do Mito 01".
 - **Não pode:**
@@ -484,7 +496,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
   - vida pessoal, família, saúde, religião, política, polêmica, processo ou crime;
   - atletas menores de idade (categorias de base);
   - usar nome de pessoa real para divulgar o jogo (anúncio, post, card de convite).
-- Toda pergunta com nome real precisa de **fonte verificável** guardada junto com a pergunta.
+- Toda pergunta ou ficha com nome real precisa de **fonte verificável** guardada junto.
 - Fantasy com jogadores reais (escalar time) continua fora (backlog, seção 7).
 - **Classificação livre:** sem palavrão, bebida, aposta ou violência em nenhum texto do jogo. Escolas entram na fase 2.
 - **Derrota zoa, mas aponta a saída:** revanche, desafio, "os pontos contam igual pro seu time".
@@ -504,7 +516,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 | Fase | Conteúdo |
 |---|---|
 | **1. MVP** ✅ pênaltis concluído em 19/10, em teste com amigos | Pênaltis com desempate, times oficiais com artigo e rival, ranking da semana (campeão pelos 30 melhores + Maior torcida), desafio por link, card de resultado com placar em emoji, direção visual nova |
-| **1.5 Logo depois do MVP** | Crava a Rodada no ar desde 20/10, somando desde a 32ª na pré-temporada, até a 38ª (2/12). Depois: cidade como segunda camisa, Série A e Série B mensais, ranking de 52 semanas, Galeria, carreira, anti-trapaça completo antes de divulgar |
+| **1.5 Logo depois do MVP** | Crava a Rodada no ar desde 20/10, somando desde a 32ª na pré-temporada, até a 38ª (2/12). Depois: cidade como segunda camisa, Série A e Série B mensais, ranking de 52 semanas, Galeria, carreira, anti-trapaça completo antes de divulgar. **Casa do [time]** (seção 7.3) logo depois do upgrade dos pênaltis |
 | **2. Comunidade** | Times criados, ligas e campeonatos combinados (com ranking entre amigos com apelido), moderação, Copa das Torcidas |
 | **3. Mais minigames** | Prova de Boleiro (seção 7.1) e Time do Dia (seção 7.2) construídos em 19–20/10, somando na pré-temporada. Lances do Jogo (seção 7.3) aprovado em 21/10: motor primeiro, depois catálogo com fontes, tela, servidor, Conquistas e, por fim, os Pênaltis como sessão dos Lances. Depois: Embaixadinha (com chinelo, laranja e bola murcha) |
 | **4. Coleção e resenha** | Álbum de figurinhas com jogadores fictícios e trocas, Técnico por Um Jogo, Pelada de Rua |
