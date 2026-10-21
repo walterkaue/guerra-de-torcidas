@@ -29,7 +29,9 @@ Você vai fazer a **conferência das fontes** de dados históricos de clubes de 
 **Pré-condição.** Você precisa conseguir abrir páginas da web de verdade. Se não consegue, responda só `SEM ACESSO À WEB` e pare. Não confirme nada de memória: o ponto da tarefa é abrir a fonte.
 
 **Prova de navegação (antes de tudo).** Abra a página abaixo e responda, numa mensagem só com isso, a **primeira frase do texto da notícia, copiada literalmente**, e a **data de publicação** que aparece na página. Não deduza pelo endereço: quem confere vai abrir a mesma página e comparar. Espere o "pode seguir" antes de começar a conferência.
-PROVA: https://www.conmebol.com/noticias/river-plate-derroto-1-0-san-lorenzo-y-gano-su-primera-recopa-santander-sudamericana/
+PROVA: https://trivela.com.br/brasil/copa-do-brasil/copa-do-brasil-maiores-campeoes-lista/
+
+**Página que não abre.** Alguns sites não respondem a programas (conmebol.com e fifa.com costumam falhar). Se a ferramenta de abrir páginas travar ou falhar, tente outra forma (no Gemini CLI: `curl.exe`, ver `GEMINI.md`). Se a página não abrir de jeito nenhum, procure a mesma informação numa fonte aceita que abra e troque o link; se não achar, a linha **fica em rascunho**. Nunca marque `revisada` uma linha cuja página você não leu.
 
 **Sem trecho, sem confirmação.** Cada linha que você confirmar ou corrigir precisa, no RESUMO, do link que você abriu e de um trecho curto copiado da página que prova o fato. Observação genérica ("validado", "confirmado pela Conmebol") não vale. Se a página da `fonte` não fala do fato (já aconteceu: link de outro clube), procure uma fonte aceita que fale e mande a linha corrigida; se não achar, deixe a linha fora de todas as seções.
 

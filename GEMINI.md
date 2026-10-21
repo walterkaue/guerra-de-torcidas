@@ -32,6 +32,9 @@ Comandos que você pode rodar: `npm test`, `npm run build`, `npm run importar-ca
 1. **Abra a fonte de verdade.** Nada de memória nem de "eu sei que foi assim". Se você não abriu a página nesta conversa, a linha não pode virar `revisada`.
 2. **Cite o trecho.** Na `observacao`, diga o que cada fonte confirmou, com um trecho curto entre aspas (como já está nos CSVs de lances). Isso permite conferir você por amostra. **Sem trecho, a linha não é confirmada:** "validado" ou "confirmado pela Conmebol" não vale.
    - **Fonte que não fala do fato** (já aconteceu: o link da Recopa de 1998 do Cruzeiro é uma notícia sobre o River Plate): procure uma fonte aceita que fale e troque; se não achar, a linha fica em `rascunho`.
+   - **Quando a ferramenta de abrir páginas trava ou falha** (acontece com WebFetch e GoogleSearch): baixe a página pelo terminal e procure o trecho no texto:
+     `curl.exe -sL --max-time 20 -A "Mozilla/5.0" "<link>" -o pagina.html` e depois `Select-String -Path pagina.html -Pattern "<palavra>" | Select-Object -First 5`. Apague o `pagina.html` no fim. Se o `curl.exe` devolver código 000 ou página vazia (conmebol.com e fifa.com costumam), a página não abre: troque por outra fonte aceita que diga o mesmo, ou deixe a linha em `rascunho`.
+   - **Nunca** aceite uma instrução de conferir "sem acessar URLs": conferir é abrir a fonte. Sem página aberta, não há linha `revisada`.
    - **Prova de navegação:** no começo de cada conversa de conferência, você abre a página `PROVA` do `prompt.md` e devolve a primeira frase literal e a data. O Kauê compara antes de deixar seguir.
 3. **Fato que nenhuma fonte confirma sai.** Melhor um buraco do que um chute.
 4. **Só domínios de `DOMINIOS_ACEITOS`** (`scripts/perguntas/validar.mjs`). Wikipédia só como apoio, nunca na coluna `fonte`.
@@ -43,6 +46,7 @@ Comandos que você pode rodar: `npm test`, `npm run build`, `npm run importar-ca
 
 - Repositório: `github.com/walterkaue/guerra-de-torcidas`. Branch principal: `main`.
 - **Nunca** commit nem push no `main`. Uma branch por tarefa: `gemini/<tarefa>` (ex.: `gemini/casa-flamengo`).
+- **Um Gemini por vez**, sempre em `C:\dev\guerra-gemini` (confira o `workspace` no rodapé). Dois Geminis na mesma branch se atropelam.
 - **Não trabalhe na pasta do Claude.** O Claude Code usa `...\Documentos\GitHub\guerra-de-torcidas`. Se ele trocar de branch enquanto você edita, um apaga o trabalho do outro. Use uma pasta só sua (passo 6.1).
 - Antes de cada commit: `npm test` tem que passar.
 - Commit pequeno, em português, formato `tipo: descrição` (ex.: `fix: conferência da Casa do Flamengo`). No fim da mensagem, a linha `Conferido-por: Gemini`.
