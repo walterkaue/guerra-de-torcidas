@@ -106,9 +106,10 @@ describe('catálogo em dados/lances', () => {
   });
 
   // Se o motor mudar, a faixa de cada lance pode mudar junto: atualize a coluna faixa com o que o robô diz.
+  // O robô leva ~70 ms por lance; o prazo cresce com o catálogo.
   it('a faixa de cada lance é a que o robô de calibragem calcula', () => {
     for (const l of lances) expect([l.id, calibrar(cenaDoLance(l)).faixa]).toEqual([l.id, l.faixa]);
-  });
+  }, 60_000);
 
   it('src/dados/lances.ts está em dia com os CSVs (rode npm run catalogo-lances)', () => {
     const gerado = readFileSync(new URL('../../src/dados/lances.ts', import.meta.url), 'utf8');
