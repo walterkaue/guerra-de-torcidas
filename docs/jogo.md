@@ -1,7 +1,7 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 21/10/2026 (novo minigame Lances do Jogo, com medalhas e página Conquistas; Pênaltis vão virar uma sessão dos Lances com disputas históricas; nomes reais na ficha factual dos lances)
+> Última atualização: 21/10/2026, noite (tela dos Lances do Jogo em teste, sem valer pontos; antes: novo minigame Lances do Jogo, com medalhas e página Conquistas; Pênaltis vão virar uma sessão dos Lances com disputas históricas; nomes reais na ficha factual dos lances)
 > Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
@@ -419,6 +419,15 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Por que a melhor partida, e não os 3 melhores lances soltos:** com 20 tentativas e lance repetido, uma pessoa mediana acertaria 3 vezes o lance mais difícil em ~91% dos dias, e quase todo mundo bateria o teto. Fazer 3 seguidos separa quem joga bem: em 6 partidas de 3 lances de craque, ~9% para quem acerta 25% e ~55% para quem acerta 50%.
 - **Faixa calibrada por dados:** a inicial sai do robô de calibragem (`calibrar` em `src/jogo/lances.ts`: chance de gol de quem mira no melhor gesto com o erro de mão típico). Com 50 ou mais tentativas valendo, a faixa é corrigida pela taxa de acerto real. Mudança de faixa nunca mexe em partida já fechada.
 - **Dificuldade fixa por lance:** não sobe ao longo da semana, para "o melhor do dia" de segunda valer o mesmo que o de domingo.
+
+### Tela em teste (21/10/2026)
+- **No ar sem servidor:** álbum, partida de 3 e treino rodam só no celular e **ainda não valem pontos** (exceção à pré-temporada valendo da seção 5, até o servidor dos Lances existir). A tela avisa: "Em teste: os Lances ainda não valem pontos."
+- **Na Home:** um card "Novo · em teste" logo abaixo da grade dos 4 jogos (a grade não muda até os Pênaltis virarem sessão dos Lances).
+- **Álbum:** filtro de clube (abre no time do coração; sem lance do time, abre em todos) e de tipo (Todos, Faltas, Cara a cara). Tocar no lance abre a ficha, a situação ("Falta a 21 m, pela esquerda, barreira de 4") e os botões **Treinar** e **Pôr na partida**. A partida fica numa barra fixa no rodapé com 3 vagas; tocar numa vaga tira o lance.
+- **Jogo:** a mesma cena dos pênaltis (`src/telas/cena.ts`), com a barreira (bonecos fictícios da máquina, de frente) e o goleiro no lado sorteado ou adiantado e maior no cara a cara. A câmera fica sempre atrás da bola, então a distância aparece na situação e no tamanho da barreira, não no tamanho do gol.
+- **Resultado:** pontos da partida, um emoji por lance (⚽ gol, 🧤 defesa, 🧱 barreira, ❌ fora ou trave) e "Jogar de novo" ou "Escolher outros". Card de compartilhar fica para quando valer pontos.
+- **Narrador:** seção 12 do `docs/narrador.md` (abertura, barreira, lance recriado e fim) mais as frases genéricas de gol, trave e fora da seção 3.
+- **Catálogo no jogo:** `npm run catalogo-lances` gera `src/dados/lances.ts` com os lances `revisada` ou `ativa` dos CSVs; o teste avisa se esquecer.
 
 ### Medalhas e Conquistas
 - Por lance, contando só gols em partidas valendo (conferidas no servidor): **bronze** com 5 gols, **prata** com 20, **ouro** com 50 gols, dos quais 10 recriando o lance.

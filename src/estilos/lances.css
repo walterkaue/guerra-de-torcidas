@@ -1,0 +1,303 @@
+/* Lances do Jogo (docs/jogo.md, seção 7.3): álbum, partida de 3 e resultado. */
+
+/* ---------- card na Home ---------- */
+.card-lances {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  padding: 16px 12px 12px;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.38);
+  color: var(--cal);
+  font: inherit;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.card-lances .rotulo {
+  color: var(--amarelo);
+}
+
+.card-lances:active {
+  transform: translateY(2px);
+  border-color: var(--amarelo);
+}
+
+/* ---------- álbum ---------- */
+.lances {
+  gap: 14px;
+}
+
+.lances-intro {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.lances-aviso {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--amarelo);
+}
+
+.lances-filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lances-clube {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lances-clube select {
+  min-height: 48px;
+  padding: 0 12px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--cal);
+  font: inherit;
+  font-size: 16px;
+}
+
+.lances-tipos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lances-tipos button {
+  min-height: 44px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--cal);
+  font: 700 15px var(--fonte-rotulo);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  touch-action: manipulation;
+}
+
+.lances-tipos button[aria-checked='true'] {
+  border-color: var(--amarelo);
+  background: var(--amarelo);
+  color: #111;
+}
+
+.lista-lances {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lance {
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.38);
+  overflow: hidden;
+  box-shadow: inset 6px 0 0 var(--c1), inset 10px 0 0 var(--c2);
+}
+
+.lance-topo {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  padding: 12px 12px 12px 20px;
+  border: 0;
+  background: none;
+  color: var(--cal);
+  font: inherit;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.lance-titulo {
+  font-weight: 800;
+  font-size: 17px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.lance-meta {
+  grid-column: 1;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.lance-pontos {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font: 700 13px var(--fonte-rotulo);
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.faixa-media { background: rgba(61, 220, 132, 0.25); }
+.faixa-dificil { background: rgba(233, 199, 90, 0.3); }
+.faixa-craque { background: var(--amarelo); color: #111; }
+
+.lance-ficha {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 12px 12px 20px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.lance-situacao {
+  color: var(--amarelo);
+}
+
+.lance-ficha .botao {
+  min-height: 52px;
+  font-size: 16px;
+}
+
+/* Barra da partida: sempre à mão no rodapé. */
+.sua-partida {
+  position: sticky;
+  bottom: 0;
+  margin: 0 -16px calc(-24px - env(safe-area-inset-bottom));
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(4, 19, 10, 0.95);
+  border-top: 2px solid rgba(255, 255, 255, 0.12);
+}
+
+.slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.slot {
+  min-height: 44px;
+  padding: 4px 6px;
+  display: grid;
+  place-items: center;
+  border: 2px dashed rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  color: var(--texto-suave);
+  font: 700 13px var(--fonte-rotulo);
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.1;
+  overflow: hidden;
+}
+
+.slot.cheio {
+  border: 0;
+  background: var(--c1);
+  color: var(--txt);
+  box-shadow: inset 0 -5px 0 var(--c2);
+  touch-action: manipulation;
+}
+
+.sua-partida .botao {
+  min-height: 52px;
+}
+
+/* ---------- jogo ---------- */
+.lances-placar {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #0a0a0a;
+  box-shadow: inset 6px 0 0 var(--c1);
+}
+
+.lances-placar strong {
+  font: 400 24px var(--fonte-placar);
+  color: var(--amarelo);
+}
+
+/* ---------- resultado ---------- */
+.placar-lances {
+  align-self: flex-start;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 18px;
+  color: var(--txt);
+}
+
+.placar-lances strong {
+  font: 400 56px var(--fonte-placar);
+  line-height: 1;
+}
+
+.resumo-lances {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resumo-lances li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.38);
+}
+
+.resumo-lances .emoji {
+  font-size: 22px;
+}
+
+.resumo-titulo {
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.resumo-titulo small {
+  font-weight: 400;
+  color: var(--texto-suave);
+}
+
+.resumo-lances strong {
+  font: 400 24px var(--fonte-placar);
+  color: var(--amarelo);
+}
+
+/* A Home deixa o .cabecalho em coluna; aqui o voltar fica ao lado do título. */
+.lances .cabecalho,
+.lances-resultado .cabecalho {
+  flex-direction: row;
+  align-items: center;
+}
+
+/* O grito do narrador desce para não esconder a barreira nem o gol na hora de mirar. */
+.lances-jogo .grito {
+  top: auto;
+  bottom: 18%;
+}

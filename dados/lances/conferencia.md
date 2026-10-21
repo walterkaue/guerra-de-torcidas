@@ -19,6 +19,7 @@ Você vai fazer a **conferência das fontes** do lote `dados/lances/lote-01.csv`
 5. Marque `revisada` com `verificada_em` (data de hoje, AAAA-MM-DD) e reescreva a `observacao` dizendo o que cada fonte confirmou. Se o lance não se sustentar (fato errado sem conserto, só uma fonte fraca), apague a linha e diga por quê no resumo.
 
 **Regras**
-- Mexa só em `dados/lances/lote-01.csv`. Se precisar aceitar um domínio novo de imprensa esportiva confiável, acrescente em `DOMINIOS_ACEITOS` e explique no resumo.
+- Mexa só em `dados/lances/lote-01.csv` (e no `src/dados/lances.ts` gerado). Se precisar aceitar um domínio novo de imprensa esportiva confiável, acrescente em `DOMINIOS_ACEITOS` e explique no resumo.
+- Depois de marcar os lances, rode `npm run catalogo-lances` (atualiza `src/dados/lances.ts`, que o jogo lê) e inclua o arquivo no commit.
 - Rode `npm test` antes do commit. Commit em português, no formato `fix: conferência do lote 1 dos Lances`. Faça push para a sua branch. Não abra PR.
 - No fim, me mande uma tabela: lance, o que mudou, status final e as fontes usadas (links).

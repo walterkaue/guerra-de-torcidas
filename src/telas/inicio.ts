@@ -121,6 +121,11 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         ${cardJogo('dia', 'Time do Dia', 'Adivinha o clube em 6 chutes')}
         ${cardJogo('crava', 'Crava a Rodada', 'Palpita o placar do Brasileirão')}
       </section>
+      <button class="card-lances" type="button" data-acao="lances">
+        <span class="rotulo">Novo · em teste</span>
+        <span class="nome-jogo">Lances do Jogo</span>
+        <span class="o-que-e">Recrie gols históricos de falta e cara a cara. Ainda não vale pontos.</span>
+      </button>
       <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
 
       <section class="mini-tabela" aria-label="Ranking da semana" aria-live="polite">
@@ -157,6 +162,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     b.addEventListener('click', () => irPara({ tela: 'times', depois: 'inicio' })),
   );
   root.querySelector('[data-acao="ranking"]')?.addEventListener('click', () => irPara({ tela: 'ranking' }));
+  root.querySelector('[data-acao="lances"]')?.addEventListener('click', () => irPara({ tela: 'lances' }));
   root.querySelector('[data-acao="feedback"]')?.addEventListener('click', () => irPara({ tela: 'feedback', de: 'inicio' }));
   ligarBarraNavegacao(root);
 

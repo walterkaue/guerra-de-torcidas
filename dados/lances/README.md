@@ -32,3 +32,5 @@ Para cada lance em `rascunho`:
 3. Conferir as linhas vermelhas: sem tragédia, vexame, opinião sobre pessoa ou atleta menor de idade na data; título sem nome.
 4. Se mudar a posição, a barreira ou o goleiro, rodar `npm test` e atualizar a `faixa` com o que o robô disser.
 5. Marcar `revisada` com `verificada_em`, ou apagar a linha se o lance não se sustentar.
+
+Depois da conferência, `npm run catalogo-lances` atualiza `src/dados/lances.ts`, que é o que o jogo lê (só entra lance `revisada` ou `ativa`).
