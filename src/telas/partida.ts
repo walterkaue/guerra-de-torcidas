@@ -837,7 +837,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   canvas.addEventListener('pointermove', aoMover);
   canvas.addEventListener('pointerup', aoSoltar);
   canvas.addEventListener('pointercancel', () => (rastro = []));
-  root.querySelector('.voltar')?.addEventListener('click', () => irPara({ tela: 'inicio' }));
+  root.querySelector('.voltar')?.addEventListener('click', () => irPara({ tela: 'lances', aba: 'penaltis' }));
   root.querySelector('[data-cj-fechar]')!.addEventListener('click', fecharComoJogar);
   root.querySelector('.ajuda')!.addEventListener('click', () => {
     // Só abre quando nada corre contra o relógio (na mira ou antes do apito).

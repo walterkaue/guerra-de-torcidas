@@ -34,7 +34,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
       </label>
 
       <button class="botao" type="button" data-acao="confirmar" ${atual.time ? '' : 'disabled'}>
-        ${depois === 'partida' || depois === 'prova' || depois === 'timeDoDia' ? 'Bora pro jogo' : 'Salvar'}
+        ${depois === 'partida' || depois === 'prova' || depois === 'timeDoDia' || depois === 'lances' ? 'Bora pro jogo' : 'Salvar'}
       </button>
     </main>
   `;
