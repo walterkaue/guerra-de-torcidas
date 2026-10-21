@@ -30,7 +30,9 @@ Comandos que você pode rodar: `npm test`, `npm run build`, `npm run importar-ca
 ## 3. Regras de dado factual (o que mais importa)
 
 1. **Abra a fonte de verdade.** Nada de memória nem de "eu sei que foi assim". Se você não abriu a página nesta conversa, a linha não pode virar `revisada`.
-2. **Cite o trecho.** Na `observacao`, diga o que cada fonte confirmou, com um trecho curto entre aspas (como já está nos CSVs de lances). Isso permite conferir você por amostra.
+2. **Cite o trecho.** Na `observacao`, diga o que cada fonte confirmou, com um trecho curto entre aspas (como já está nos CSVs de lances). Isso permite conferir você por amostra. **Sem trecho, a linha não é confirmada:** "validado" ou "confirmado pela Conmebol" não vale.
+   - **Fonte que não fala do fato** (já aconteceu: o link da Recopa de 1998 do Cruzeiro é uma notícia sobre o River Plate): procure uma fonte aceita que fale e troque; se não achar, a linha fica em `rascunho`.
+   - **Prova de navegação:** no começo de cada conversa de conferência, você abre a página `PROVA` do `prompt.md` e devolve a primeira frase literal e a data. O Kauê compara antes de deixar seguir.
 3. **Fato que nenhuma fonte confirma sai.** Melhor um buraco do que um chute.
 4. **Só domínios de `DOMINIOS_ACEITOS`** (`scripts/perguntas/validar.mjs`). Wikipédia só como apoio, nunca na coluna `fonte`.
 5. **Linhas vermelhas** (`docs/jogo.md` seções 7 e 8): nenhuma palavra de aposta; sem marca de patrocinador, fornecedor ou casa de aposta; sem escudo, símbolo ou número de camisa na descrição de manto; sem tragédia, rebaixamento, vexame ou goleada sofrida; sem opinião sobre pessoa; nunca atleta menor de idade.
@@ -82,10 +84,10 @@ O Kauê cola o prompt de `dados/casa/conferencia-outra-ia/prompt.md` e anexa o a
 Os dados de `dados/casa/` foram escritos pelo Claude e estão em `rascunho`. O lote 1 já foi conferido. Você é a "segunda sessão" que confere: quem escreveu não confere o próprio trabalho.
 
 - **Roteiro e formato:** `dados/casa/conferencia-outra-ia/prompt.md`, à risca. Os dados de cada lote estão em `lote-02.md`, `lote-03.md` e `lote-04.md`, na mesma pasta.
-- **Unidade de trabalho:** um lote por conversa e por branch (`gemini/casa-lote-02`). Se a resposta ficar grande demais, divida o lote em dois ou três clubes por conversa: o `--clubes=` do script aceita qualquer subconjunto.
-- **Ordem:** lote 2 (com Flamengo e Corinthians), depois o 3 (Palmeiras), depois o 4.
-- **No CLI:** salve a resposta em `resposta-lote-NN.txt`, rode `node scripts/casa/aplicar-conferencia.mjs resposta-lote-NN.txt --clubes=<os do lote> --seco`, depois sem o `--seco`, depois `npm run importar-casa` e `npm test`. Apague o `resposta-*.txt`. O commit leva só `dados/casa/*.csv`, `dados/casa/RELATORIO.md` (atualize a seção do lote) e `src/dados/casa/dados.gerado.ts`.
-- **Pronto quando:** as linhas do lote estão `revisada` (ou apagadas com motivo), o `importar-casa` e o `npm test` passam, o push foi feito e o `RESUMO` foi entregue ao Kauê, com links e trechos, mais a lista do que ficou em dúvida.
+- **Unidade de trabalho:** **um clube por conversa** (todas as linhas dele, nos seis arquivos) e uma branch por lote (`gemini/casa-lote-02`, um commit por clube). Na primeira tentativa com o lote inteiro, a resposta cobriu menos de 1/5 das linhas e disse que tinha validado tudo. Termine o RESUMO com a contagem por arquivo: quantas linhas havia, quantas você confirmou, corrigiu e apagou, e quais ficaram de fora.
+- **Ordem:** lote 2 (cruzeiro, flamengo, corinthians, chapecoense, coritiba), depois o 3 (Palmeiras primeiro), depois o 4.
+- **No CLI:** salve a resposta em `resposta-lote-NN.txt`, rode `node scripts/casa/aplicar-conferencia.mjs resposta-lote-NN.txt --clubes=<o clube> --seco`, depois sem o `--seco`, depois `npm run importar-casa` e `npm test`. Apague o `resposta-*.txt`. O commit leva só `dados/casa/*.csv`, `dados/casa/RELATORIO.md` (atualize a seção do lote) e `src/dados/casa/dados.gerado.ts`.
+- **Pronto quando:** as linhas do clube estão `revisada` (ou apagadas com motivo), o `importar-casa` e o `npm test` passam, o push foi feito e o `RESUMO` foi entregue ao Kauê, com links e trechos, mais a lista do que ficou em dúvida.
 - **Depois:** o Kauê ou o Claude abrem por amostra de 5 a 10 links, principalmente dos fatos que você mudou.
 
 ### Tarefa 2. Lacunas da Casa
