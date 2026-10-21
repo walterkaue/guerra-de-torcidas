@@ -1,7 +1,7 @@
 # Guerra de Torcidas — instruções para o Claude Code
 
 Leia `docs/jogo.md` antes de qualquer tarefa. Ele é a fonte da verdade sobre regras, tom e escopo.
-Conforme a tarefa, leia também: `docs/rankings.md` (rankings e justiça), `docs/narrador.md` (frases e regras do narrador), `docs/visual.md` (direção visual). Se um deles discordar do `jogo.md`, vale o `jogo.md`.
+Conforme a tarefa, leia também: `docs/rankings.md` (rankings e justiça), `docs/narrador.md` (frases e regras do narrador), `docs/visual.md` (direção visual), `docs/casa.md` (Casa do [time], a página de história de cada clube). Se um deles discordar do `jogo.md`, vale o `jogo.md`.
 
 ## Limites do projeto (importante)
 
@@ -24,7 +24,7 @@ Conforme a tarefa, leia também: `docs/rankings.md` (rankings e justiça), `docs
 - **Celular primeiro.** Teste sempre em 390×844. Toque, nunca hover. Nada de rolagem horizontal.
 - **Sem marcas de clubes:** nada de escudo, uniforme oficial, mascote, hino ou foto de jogador real. Só nome, cores e artigo. Batedores usam camiseta lisa nas cores do time (uniforme 1 ou 2); goleiros, um tom forte de contraste. Nenhum boneco imita jogador real.
 - Zoeira só com o time e a situação. Nunca com raça, orientação, gênero, religião, origem, corpo, deficiência ou pessoa real. Narrador neutro de gênero.
-- **Nomes reais** de jogadores e técnicos só em perguntas factuais dos jogos de conhecimento (quiz, desafios diários), com fonte guardada junto. Nunca imagem, voz, zoeira, vida pessoal ou atleta menor de idade. Regra completa: "Nomes reais" na seção 8 do `docs/jogo.md`.
+- **Nomes reais** de jogadores e técnicos só em perguntas factuais dos jogos de conhecimento (quiz, desafios diários) e nas fichas factuais da Casa do [time], com fonte guardada junto. Nunca imagem, voz, zoeira, vida pessoal ou atleta menor de idade. Regra completa: "Nomes reais" na seção 8 do `docs/jogo.md`.
 - **Zero aposta:** nenhuma das palavras proibidas da seção 7 do `docs/jogo.md` em nenhum texto do jogo.
 - Nunca peça dados pessoais obrigatórios. Login anônimo por padrão. Apelido nunca aparece em ranking público no MVP.
 
