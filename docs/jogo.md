@@ -465,11 +465,11 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 
 ## 7.4 Casa do [time] (história dos clubes)
 
-> Desenho aprovado em 21/10/2026, a partir da proposta "Galeria dos Clubes". **Entra depois do upgrade do minigame de pênaltis.** Detalhe completo: `docs/casa.md`.
+> Desenho aprovado em 21/10/2026, a partir da proposta "Galeria dos Clubes". **Liberada em 21/10, com o upgrade dos pênaltis fechado (Lances do Jogo no ar); dados em rascunho em `dados/casa/`.** Detalhe completo: `docs/casa.md`; plano de publicação: `docs/casa-publicacao.md`.
 
 - Uma página por clube da Série A 2026 ("Casa do Flamengo", "Casa da Chapecoense"): estádio, sala de troféus, livro de recordes, cores e manto. Só fatos com fonte, revisados por uma segunda sessão, como o quiz.
 - **Vitrine, não minigame:** não dá pontos, XP nem selo. A ligação com o jogo é só por navegação (Home, Ranking, Time do Dia depois que o dia acaba).
-- Competições pelo nome real da entidade (FIFA, CONMEBOL, CBF, federação), **sem patrocinador**. Títulos: só a lista oficial; o que o clube reivindica e a entidade não lista aparece à parte, com nota neutra.
+- Competições pelo nome real da entidade (FIFA, CONMEBOL, CBF, federação), **sem patrocinador**. Títulos: na Casa do clube vale o lado da torcida (o que o clube reivindica conta no total dele, com nota neutra do que a entidade reconhece); fora da Casa vale a lista oficial.
 - O nome "Galeria" continua sendo da **Galeria de Troféus** da torcida no jogo (seção 5), que vira a prateleira "Aqui no jogo" da Casa quando existir.
 - Estático, fora do bundle inicial, sem servidor.
 
@@ -516,7 +516,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 | Fase | Conteúdo |
 |---|---|
 | **1. MVP** ✅ pênaltis concluído em 19/10, em teste com amigos | Pênaltis com desempate, times oficiais com artigo e rival, ranking da semana (campeão pelos 30 melhores + Maior torcida), desafio por link, card de resultado com placar em emoji, direção visual nova |
-| **1.5 Logo depois do MVP** | Crava a Rodada no ar desde 20/10, somando desde a 32ª na pré-temporada, até a 38ª (2/12). Depois: cidade como segunda camisa, Série A e Série B mensais, ranking de 52 semanas, Galeria, carreira, anti-trapaça completo antes de divulgar. **Casa do [time]** (seção 7.3) logo depois do upgrade dos pênaltis |
+| **1.5 Logo depois do MVP** | Crava a Rodada no ar desde 20/10, somando desde a 32ª na pré-temporada, até a 38ª (2/12). Depois: cidade como segunda camisa, Série A e Série B mensais, ranking de 52 semanas, Galeria, carreira, anti-trapaça completo antes de divulgar. **Casa do [time]** (seção 7.4; plano em `docs/casa-publicacao.md`), liberada com o upgrade dos pênaltis fechado |
 | **2. Comunidade** | Times criados, ligas e campeonatos combinados (com ranking entre amigos com apelido), moderação, Copa das Torcidas |
 | **3. Mais minigames** | Prova de Boleiro (seção 7.1) e Time do Dia (seção 7.2) construídos em 19–20/10, somando na pré-temporada. Lances do Jogo (seção 7.3) aprovado em 21/10: motor primeiro, depois catálogo com fontes, tela, servidor, Conquistas e, por fim, os Pênaltis como sessão dos Lances. Depois: Embaixadinha (com chinelo, laranja e bola murcha) |
 | **4. Coleção e resenha** | Álbum de figurinhas com jogadores fictícios e trocas, Técnico por Um Jogo, Pelada de Rua |
