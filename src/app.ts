@@ -28,12 +28,13 @@ export type Rota =
   | { tela: 'palpites' }
   | { tela: 'admin' }
   | { tela: 'feedback'; de?: string }
-  | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia'; desafio?: string }
+  | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia' | 'lances'; desafio?: string }
   | { tela: 'partida'; desafio?: string }
   | { tela: 'resultado'; dados: DadosResultado }
   | { tela: 'prova'; desafio?: string }
   | { tela: 'provaResultado'; dados: DadosResultadoProva }
-  | { tela: 'timeDoDia' };
+  | { tela: 'timeDoDia' }
+  | { tela: 'lances'; aba?: 'penaltis' | 'falta' | 'finalizacao' };
 
 type Limpeza = (() => void) | void;
 type Renderizador = (root: HTMLElement, rota: Rota) => Limpeza;

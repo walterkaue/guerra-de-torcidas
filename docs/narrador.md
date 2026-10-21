@@ -1,6 +1,7 @@
-# Banco do narrador — pênaltis, palpites, quiz e Time do Dia
+# Banco do narrador — pênaltis, palpites, quiz, Time do Dia e Lances
 
-> Versão 1.5 · 20/10/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Versão 1.6 · 21/10/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Mudanças da 1.6: seção 12, **Lances do Jogo** (abertura, barreira, lance recriado e fim); nas jogadas, os Lances reaproveitam as frases da seção 3 que não falam de pênalti.
 > Mudanças da 1.5: 7 frases de tiozão trocadas (fila do banco, manchete, capa de jornal, picolé, primeira pedra, caneta, doutorado); glossário novo ("Pênaltis", "Chamar no X1", "em teste"): frases de X1 sem "duvido" e "desafio", e o convite do link virou texto fixo (sai `desafio_convite`).
 > Mudanças da 1.4: seções 10 (**Prova de Boleiro**) e 11 (**Time do Dia**); frases de `prova_ajuda` com a etiqueta da ajuda usada (`[tira_duas]`, `[arquibancada]`, `[troca]`).
 > Mudanças da 1.3: seção 9, frases do **Crava a Rodada**, com as variáveis `{rodada}`, `{acertos}` e `{jogos}` e as etiquetas `[empate]` e `[contra]`.
@@ -639,3 +640,35 @@ Cuidado extra: o narrador nunca dá dica do clube secreto nem fala o nome dele a
 ### `dia_sequencia`
 - {dias} dias seguidos! Isso é torcida fiel.
 - Sequência de {dias} dias! Não para agora.
+
+## 12. Lances do Jogo
+
+Cuidado extra: o narrador **nunca** fala de quem fez o gol de verdade (nem nome, nem apelido, nem elogio): quem conta a história é a ficha do lance. O narrador fala da jogada, da barreira e do goleiro.
+
+Nas jogadas, os Lances usam as frases da seção 3 que servem para qualquer chute: `gol`, `gol_angulo`, `cavadinha`, `cavadinha_falhou`, `trave_gol`, `trave`, `fora_cima`, `fora_lado` e `goleiro_pegou` (com as mesmas etiquetas). `abertura` e `decisiva` não entram, porque falam de pênalti. As frases abaixo são só dos Lances.
+
+### `lance_abertura` — começo da partida de 3 lances
+- Três lances, três chances de fazer história {pro_time}!
+- A história tá aí de novo. Agora a perna é sua!
+- Bola parada, torcida em pé. Bora recriar!
+- ⭐ O narrador já viu esse filme. Quer ver o final de novo!
+
+### `lance_barreira` — a bola parou na barreira
+- NA BARREIRA! A parede não se mexeu.
+- Bateu na barreira! Tem que passar por cima ou contornar.
+- A barreira ficou com a bola. Próximo lance!
+- Parou no muro! Mais curva ou mais altura da próxima.
+- ⭐ A barreira agradece o presente. Mas não era pra ela!
+
+### `lance_recriou` — gol no mesmo canto do lance de verdade
+- IGUALZINHO! Recriou o lance do jeito que a história conta!
+- No mesmo canto da história! Isso é aula!
+- Recriou o lance! A torcida {do_time} jura que é replay!
+- ⭐ Igual ao original! Já pode pedir a placa.
+
+### `lance_fim` — fim da partida de 3 lances
+- Fim dos lances: {pontos} {pro_time}!
+- Três lances, {pontos} pontos na conta {do_time}.
+- Fechou com {pontos}! Escolhe outros lances e vai de novo.
+- Acabou a sessão de história! {pontos} pontos no placar.
+

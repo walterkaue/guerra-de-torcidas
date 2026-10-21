@@ -1,5 +1,6 @@
 // Qual situação do narrador cada lance gera. Puro, sem sorteio.
 
+import type { ResultadoLance } from '../jogo/lances';
 import { coluna, linha, type ResultadoCobranca, type ResultadoDefesa, type ResultadoPartida } from '../jogo/penaltis';
 import type { Etiqueta } from './escolher';
 import type { EventoNarrador } from './frases';
@@ -61,4 +62,32 @@ export function eventosDoFim(r: ResultadoPartida): EventoNarrador[] {
   if (r.parOuImpar) lista.push(r.parOuImpar.ganhou ? 'par_ou_impar_ganhou' : 'par_ou_impar_perdeu');
   lista.push(r.venceu ? 'vitoria' : 'derrota');
   return lista.slice(0, 2);
+}
+
+/** Coluna do gol (0, 1 ou 2) de um x de -1 a 1, como em zonaDoPonto. */
+const colunaDoX = (x: number) => (x < -1 / 3 ? 0 : x > 1 / 3 ? 2 : 1);
+
+/** Etiquetas de um lance dos Lances do Jogo (as mesmas da cobrança, seção 3 do narrador.md). */
+export function etiquetasDoLance(r: ResultadoLance): Set<Etiqueta> {
+  const e = new Set(lugar(r.zonaBola));
+  if (colunaDoX(r.goleiroX) !== coluna(r.zonaBola)) e.add('goleiro_outro_lado');
+  if (r.desfecho === 'trave' && r.y > 1) e.add('travessao');
+  return e;
+}
+
+/** Lances do Jogo (narrador.md, seção 12): barreira e lance recriado têm frases próprias; o resto é como a cobrança. */
+export function eventoDoLance(r: ResultadoLance): EventoNarrador {
+  if (r.desfecho === 'barreira') return 'lance_barreira';
+  if (r.desfecho === 'gol' && r.recriou) return 'lance_recriou';
+  if (r.cavadinha) return r.desfecho === 'gol' ? 'cavadinha' : 'cavadinha_falhou';
+  switch (r.desfecho) {
+    case 'gol':
+      return r.raspouTrave ? 'trave_gol' : r.angulo ? 'gol_angulo' : 'gol';
+    case 'defesa':
+      return 'goleiro_pegou';
+    case 'trave':
+      return 'trave';
+    case 'fora':
+      return r.y > 1 ? 'fora_cima' : 'fora_lado';
+  }
 }

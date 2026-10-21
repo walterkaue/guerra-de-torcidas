@@ -116,7 +116,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       <p class="minha-posicao" data-posicao-semana aria-live="polite" hidden></p>
 
       <section class="grade-jogos" aria-label="Jogos"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>
-        ${cardJogo('penaltis', 'Pênaltis', 'Bate 5, pega 5', linhaPenaltis(null, TETO_DIARIO))}
+        ${cardJogo('penaltis', 'Lances do Jogo', 'Pênaltis, faltas e cara a cara', linhaPenaltis(null, TETO_DIARIO))}
         ${cardJogo('prova', 'Prova de Boleiro', '8 perguntas · para quando quiser')}
         ${cardJogo('dia', 'Time do Dia', 'Adivinha o clube em 6 chutes')}
         ${cardJogo('crava', 'Crava a Rodada', 'Palpita o placar do Brasileirão')}
@@ -144,7 +144,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const jogarProva = (desafio?: string) =>
     irPara(time ? { tela: 'prova', desafio } : { tela: 'times', depois: 'prova', desafio });
   const abrir: Record<JogoDaHome, () => void> = {
-    penaltis: () => jogar(),
+    // O card dos Lances abre o hub (Pênaltis, Faltas e Cara a cara); o convite de X1 continua indo direto para a partida.
+    penaltis: () => irPara(time ? { tela: 'lances' } : { tela: 'times', depois: 'lances' }),
     prova: () => jogarProva(),
     dia: () => irPara(time ? { tela: 'timeDoDia' } : { tela: 'times', depois: 'timeDoDia' }),
     // Palpites funciona sem time (pede o time só na hora de cravar), como antes.
