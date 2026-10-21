@@ -11,8 +11,9 @@
 }
 
 /* ---------- cabeçalho ---------- */
-/* Título e contagem na mesma coluna; nada flutua no canto superior direito (parece botão de fechar). */
-.cabecalho {
+/* Título e contagem na mesma coluna; nada flutua no canto superior direito (parece botão de fechar).
+   Só na Home: nas outras telas o .cabecalho do style.css deixa o voltar ao lado do título. */
+.inicio .cabecalho {
   display: flex;
   flex-direction: column;
   gap: 6px;
