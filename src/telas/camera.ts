@@ -35,6 +35,7 @@ export interface Enquadramento {
 /** Três distâncias de câmera (decidido em 21/10): pênalti perto, cara a cara um pouco mais longe, falta mais longe. */
 export const ENQUADRAMENTOS = {
   // Ajustados para metas de tela (390×844): largura do gol 78%, 60% e 42%; bola perto de 80% da altura.
+  // O pênalti fica como referência: a aba Pênaltis usa a cena de TV de sempre (telas/cena.ts), decidido em 21/10.
   penalti: { atras: 6, altura: 7, olhar: 0.4, alturaOlhar: 0.75, zoom: 1.95, centroY: 0.5 },
   caraACara: { atras: 7, altura: 7, olhar: 0.55, alturaOlhar: -0.5, zoom: 1.8, centroY: 0.5 },
   falta: { atras: 6, altura: 5, olhar: 0.45, alturaOlhar: -1.75, zoom: 1.9, centroY: 0.5 },
