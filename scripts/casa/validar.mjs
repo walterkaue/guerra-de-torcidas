@@ -83,7 +83,7 @@ export function validarCasa(tabelas, ctx) {
     if (!d) return erro(arq, l, `${campo} não é um link: ${url}`);
     if (/(^|\.)wikipedia\.org$/.test(d)) return !wikipedia && erro(arq, l, `Wikipédia só em fonte2 (${campo})`);
     if (!dominioAceito(d)) erro(arq, l, `domínio fora da lista de fontes aceitas: ${d} (${campo})`);
-    if (/apostas|bet365|betano/i.test(url)) erro(arq, l, `link de aposta em ${campo}`);
+    if (/aposta|(^|[/.-])bet[s]?([/.-]|$)|bet365|betano|sportingbet/i.test(url)) erro(arq, l, `link de aposta em ${campo}`);
   };
 
   for (const arq of ARQUIVOS) {

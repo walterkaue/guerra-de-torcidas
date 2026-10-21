@@ -54,9 +54,11 @@ describe('validarCasa', () => {
     const e = copia();
     linha(e, 'titulos', (l) => l.clube === 'flamengo' && l.ano === '1981').fonte = 'https://blogdotorcedor.example/x';
     linha(e, 'goleadas', (l) => l.clube === 'flamengo').fonte = 'https://pt.wikipedia.org/wiki/Flamengo';
+    linha(e, 'goleadas', (l) => l.clube === 'corinthians').fonte = 'https://www.lance.com.br/bet-do-dia.html';
     const r = erros(e).join('\n');
     expect(r).toMatch(/domínio fora da lista/);
     expect(r).toMatch(/Wikipédia só em fonte2/);
+    expect(r).toMatch(/link de aposta/);
   });
 
   it('barra palavra proibida e marca de terceiros', () => {
