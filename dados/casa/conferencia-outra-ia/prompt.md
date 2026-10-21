@@ -4,18 +4,19 @@ Para rodar a conferência de um lote fora do Claude Code (por exemplo, numa IA c
 
 ## Como usar
 1. Abra uma conversa nova numa IA que **navega na web** (busca e abre páginas).
-2. Cole o texto de "O prompt" abaixo e **anexe (ou cole) o arquivo do lote**: `lote-02.md`, `lote-03.md` ou `lote-04.md` desta pasta (o lote 1 já foi conferido).
-3. Salve a resposta inteira num arquivo de texto (ex.: `resposta-lote-02.txt`) na raiz do repositório.
-4. Aplique no repositório (simulação primeiro, depois de verdade):
+2. Cole o texto de "O prompt" abaixo, **anexe (ou cole) o arquivo do lote** (`lote-02.md`, `lote-03.md` ou `lote-04.md` desta pasta; o lote 1 já foi conferido) e escreva na mesma mensagem **qual clube** conferir: **um clube por conversa** (ex.: "Clube desta conversa: cruzeiro"). No lote inteiro de uma vez, a IA cobre uma parte e diz que validou tudo.
+3. **Confira a prova de navegação** antes de seguir: a IA começa respondendo a primeira frase e a data de uma página de teste. Abra o link de `PROVA` (abaixo, no prompt) no seu navegador e compare. Se não bater, a IA não está abrindo páginas: pare e use outra (o Gemini CLI baixa a página de verdade).
+4. Salve a resposta inteira num arquivo de texto (ex.: `resposta-lote-02.txt`) na raiz do repositório.
+5. Aplique no repositório (simulação primeiro, depois de verdade):
    ```
-   node scripts/casa/aplicar-conferencia.mjs resposta-lote-02.txt --clubes=chapecoense,corinthians,coritiba,cruzeiro,flamengo --seco
-   node scripts/casa/aplicar-conferencia.mjs resposta-lote-02.txt --clubes=chapecoense,corinthians,coritiba,cruzeiro,flamengo
+   node scripts/casa/aplicar-conferencia.mjs resposta-lote-02.txt --clubes=cruzeiro --seco
+   node scripts/casa/aplicar-conferencia.mjs resposta-lote-02.txt --clubes=cruzeiro
    npm run importar-casa
    npm test
    git diff dados/casa
    ```
    `npm run importar-casa` valida os CSVs (domínios, ids, palavras proibidas, ordem dos recordes, Brasileiros contra o `clubes-do-dia.csv`…) e atualiza `src/dados/casa/dados.gerado.ts`; se ele reclamar, o dado da IA tem erro. O script de aplicar mostra quantas linhas foram corrigidas, apagadas e confirmadas, avisa o que não achou e lista o que ficou em `rascunho`. Linha de clube fora do `--clubes` é recusada.
-5. **Confira por amostra**: abra no navegador 5 a 10 links da resposta, principalmente dos fatos que a IA mudou. IA sem acesso real à web inventa confirmação; por isso o prompt exige o link aberto e o trecho que prova.
+6. **Confira por amostra**: abra no navegador 5 a 10 links da resposta, principalmente dos fatos que a IA mudou, e veja se o trecho citado está lá. Apague o `resposta-*.txt` depois de aplicar; ele nunca vai no commit. IA sem acesso real à web inventa confirmação; por isso o prompt exige o link aberto e o trecho que prova.
 
 Lotes: 2 = chapecoense, corinthians, coritiba, cruzeiro, flamengo. 3 = fluminense, gremio, internacional, mirassol, palmeiras. 4 = remo, santos, sao-paulo, vasco, vitoria.
 
@@ -23,9 +24,16 @@ Lotes: 2 = chapecoense, corinthians, coritiba, cruzeiro, flamengo. 3 = fluminens
 
 ## O prompt (copie daqui até o fim do arquivo)
 
-Você vai fazer a **conferência das fontes** de dados históricos de clubes de futebol brasileiros para uma página chamada "Casa do [time]" de um jogo gratuito e independente (sem vínculo com clubes, atletas ou entidades). Quem escreveu os dados não pode conferir o próprio trabalho: você é a segunda sessão. O arquivo anexo traz seis blocos CSV (clubes, estádios, títulos, recordes, goleadas, mantos) de 5 clubes, todos em `rascunho`.
+Você vai fazer a **conferência das fontes** de dados históricos de clubes de futebol brasileiros para uma página chamada "Casa do [time]" de um jogo gratuito e independente (sem vínculo com clubes, atletas ou entidades). Quem escreveu os dados não pode conferir o próprio trabalho: você é a segunda sessão. O arquivo anexo traz seis blocos CSV (clubes, estádios, títulos, recordes, goleadas, mantos) de 5 clubes, todos em `rascunho`. **Confira só o clube indicado na mensagem**, em todos os seis blocos, e ignore os outros quatro.
 
 **Pré-condição.** Você precisa conseguir abrir páginas da web de verdade. Se não consegue, responda só `SEM ACESSO À WEB` e pare. Não confirme nada de memória: o ponto da tarefa é abrir a fonte.
+
+**Prova de navegação (antes de tudo).** Abra a página abaixo e responda, numa mensagem só com isso, a **primeira frase do texto da notícia, copiada literalmente**, e a **data de publicação** que aparece na página. Não deduza pelo endereço: quem confere vai abrir a mesma página e comparar. Espere o "pode seguir" antes de começar a conferência.
+PROVA: https://www.conmebol.com/noticias/river-plate-derroto-1-0-san-lorenzo-y-gano-su-primera-recopa-santander-sudamericana/
+
+**Sem trecho, sem confirmação.** Cada linha que você confirmar ou corrigir precisa, no RESUMO, do link que você abriu e de um trecho curto copiado da página que prova o fato. Observação genérica ("validado", "confirmado pela Conmebol") não vale. Se a página da `fonte` não fala do fato (já aconteceu: link de outro clube), procure uma fonte aceita que fale e mande a linha corrigida; se não achar, deixe a linha fora de todas as seções.
+
+**Cubra o clube inteiro ou diga o que faltou.** No fim do RESUMO, conte: quantas linhas do clube havia em cada arquivo, quantas você confirmou, corrigiu e apagou, e quais ficaram de fora e por quê. Nunca escreva que "todas foram validadas" se alguma ficou de fora.
 
 ### O que fazer em cada linha
 1. Abra a página do campo `fonte` (no estádio, também `fonte_capacidade` e `fonte_recorde`) e confira o fato: número, data, nome, placar, ano.
@@ -67,8 +75,10 @@ Responda **só** com estas quatro seções, nesta ordem, com estes títulos exat
 
 ```
 === RESUMO ===
-Tabela em texto livre: clube | arquivo | linha | o que mudou | links que você ABRIU e o trecho que prova.
-Depois, lista do que continua em dúvida.
+Tabela em texto livre: clube | arquivo | linha | o que mudou | link que você ABRIU | trecho copiado da página que prova.
+Uma linha da tabela para cada linha confirmada ou corrigida (títulos podem ser agrupados por competição quando a mesma página prova todos os anos, com o trecho da lista).
+Depois: a decisão de cada "conferir", "DIVERGÊNCIA" ou "EM DÚVIDA" da observação, com os dois lados e os links.
+Por fim: a contagem por arquivo (havia, confirmadas, corrigidas, apagadas, de fora).
 
 === CORRIGIDAS ===
 #### titulos.csv
@@ -93,8 +103,10 @@ mantos.csv | clube | ordens separadas por espaço
 ```
 
 Regras do formato:
-- Em `CORRIGIDAS`, cada bloco começa com `#### nome.csv`, depois o **cabeçalho exatamente como no arquivo anexo** e as linhas completas (todas as colunas, todos os campos entre aspas, aspas internas dobradas). Linha nova (fato que você acrescentou) também vai aqui. Use `status` = `revisada` e `verificada_em` = a data de hoje.
+- Em `CORRIGIDAS`, cada bloco começa com `#### nome.csv` (o nome do arquivo daquelas linhas, sem crases), depois o **cabeçalho exatamente como no arquivo anexo** e as linhas completas (todas as colunas, todos os campos entre aspas, aspas internas dobradas). Linha nova (fato que você acrescentou) também vai aqui. Use `status` = `revisada` e `verificada_em` = a data de hoje.
 - Em `APAGAR`, uma linha por fato que sai (explique no RESUMO).
+- Linha que você só confirmou, sem mudar nada, vai em `CONFIRMADAS`, não em `CORRIGIDAS`.
+- Em `CONFIRMADAS` e `APAGAR`, uma chave por linha, sem marcadores, crases nem texto livre.
 - Em `CONFIRMADAS`, as linhas que você abriu a fonte e **não precisaram mudar**. Agrupe títulos por clube e competição (`titulos.csv | flamengo | libertadores | 1981 2019 2022 2025`).
 - Linha que você não conseguiu conferir não aparece em nenhuma seção (fica em rascunho). Melhor deixar de fora do que confirmar sem abrir a fonte.
 - Não mude `formato` do estádio nem invente campo. Nada fora das quatro seções.
