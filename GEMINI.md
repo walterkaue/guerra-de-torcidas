@@ -17,14 +17,15 @@ As regras do projeto estão em `CLAUDE.md` e `docs/jogo.md`. **Elas valem para v
 | `docs/jogo.md` | Fonte da verdade: regras, tom, palavras proibidas (seção 7), nomes reais (seção 8) | Só lê |
 | `docs/casa.md`, `docs/casa-publicacao.md` | Desenho e plano de publicação da Casa do [time] | Só lê |
 | `dados/casa/*.csv` + `RELATORIO.md` | Casa do [time]: clubes, estádios, títulos, recordes, goleadas, mantos | **Sim** (sua tarefa principal) |
-| `dados/casa/conferencia.md` | Roteiro da conferência, linha a linha | Só lê e segue |
+| `dados/casa/conferencia-outra-ia/` | **Pacote pronto para você:** `prompt.md` (regras e formato de resposta) e `lote-02.md` a `lote-04.md` (dados de cada lote) | Só lê e segue |
+| `scripts/casa/aplicar-conferencia.mjs` | Aplica a sua resposta nos CSVs | Roda (CLI), não edita |
 | `dados/perguntas/*.csv` | Banco da Prova de Boleiro (quiz) | Sim, quando a tarefa pedir |
 | `dados/lances/*.csv` | Lances históricos dos Lances do Jogo | Sim, quando a tarefa pedir |
-| `scripts/*/validar.mjs` | Validadores (colunas, ids, domínios aceitos, palavras proibidas) | Só a lista `DOMINIOS_ACEITOS`, e só se a tarefa autorizar |
-| `src/`, `supabase/`, `public/`, `package.json` | Código do jogo e do servidor | **Não** |
+| `scripts/*/validar.mjs`, `scripts/casa/importar.mjs` | Validadores (colunas, ids, domínios aceitos, palavras proibidas) | Só a lista `DOMINIOS_ACEITOS`, e só se a tarefa autorizar |
+| `src/`, `supabase/`, `public/`, `package.json` | Código do jogo e do servidor | **Não** (exceção: `src/dados/casa/dados.gerado.ts`, que o `importar-casa` gera) |
 | `relatorios/` | Balanço local dos minigames (fora do git, ainda com pouca amostra) | Não, por enquanto |
 
-Comandos que existem hoje: `npm test`, `npm run build`, `npm run importar-perguntas -- --seco`, `npm run catalogo-lances`. **`npm run importar-casa` ainda não existe** (é a Etapa C do `docs/casa-publicacao.md`, tarefa do Claude).
+Comandos que você pode rodar: `npm test`, `npm run build`, `npm run importar-casa` (valida os CSVs da Casa e gera `src/dados/casa/dados.gerado.ts`; não toca no banco), `npm run aplicar-conferencia-casa`, `npm run importar-perguntas -- --seco`, `npm run catalogo-lances`.
 
 ## 3. Regras de dado factual (o que mais importa)
 
@@ -59,8 +60,10 @@ Comandos que existem hoje: `npm test`, `npm run build`, `npm run importar-pergun
 Uma vez só, no terminal (fora do OneDrive):
 
 ```bash
-git clone https://github.com/walterkaue/guerra-de-torcidas.git C:/dev/guerra-gemini
+git clone -c core.autocrlf=false https://github.com/walterkaue/guerra-de-torcidas.git C:/dev/guerra-gemini
 ```
+
+O `core.autocrlf=false` importa: com ele ligado, o Windows troca o fim de linha dos arquivos e cinco testes falham sem motivo real.
 
 Em cada tarefa:
 
@@ -68,21 +71,22 @@ Em cada tarefa:
 cd C:/dev/guerra-gemini && git fetch origin && git checkout -B gemini/casa-flamengo origin/main && npm install
 ```
 
-Aí você lê os arquivos, edita os CSVs, roda `npm test`, faz o commit e o `git push -u origin gemini/casa-flamengo`.
+Aí você faz a tarefa, roda `npm test`, faz o commit e o `git push -u origin gemini/casa-flamengo`.
 
-### 6.2 Gemini na web (quando o CLI não estiver à mão)
-O Kauê anexa: este arquivo, `docs/casa.md`, `dados/casa/conferencia.md` e os seis CSVs de `dados/casa/`. Você devolve **as linhas completas do clube** em um bloco de código por arquivo (`titulos.csv`, `recordes.csv`…), com o cabeçalho, prontas para substituir as linhas daquele clube. Mais a tabela de mudanças. Nada de arquivo solto na raiz do repositório.
+### 6.2 Gemini na web
+O Kauê cola o prompt de `dados/casa/conferencia-outra-ia/prompt.md` e anexa o arquivo do lote. Você responde **só** no formato das quatro seções (`RESUMO`, `CORRIGIDAS`, `APAGAR`, `CONFIRMADAS`), porque um programa lê a resposta. O Kauê salva a resposta em `resposta-lote-NN.txt` e aplica com o `aplicar-conferencia` (passo 4 do `prompt.md`). Esse arquivo é temporário: apague depois de aplicar e nunca o inclua no commit.
 
 ## 7. Fila de tarefas (nesta ordem)
 
-### Tarefa 1. Conferência da Casa do [time], um clube por vez
-Os ~1.000 registros de `dados/casa/` foram escritos pelo Claude e estão todos `rascunho`. Você é a "segunda sessão" que confere: quem escreveu não confere o próprio trabalho.
+### Tarefa 1. Conferência da Casa do [time], lotes 2, 3 e 4
+Os dados de `dados/casa/` foram escritos pelo Claude e estão em `rascunho`. O lote 1 já foi conferido. Você é a "segunda sessão" que confere: quem escreveu não confere o próprio trabalho.
 
-- **Roteiro:** siga `dados/casa/conferencia.md` à risca (passos, conferência cruzada, decisões do Kauê de 21/10). Leia antes `docs/casa.md` e `dados/casa/RELATORIO.md`.
-- **Unidade de trabalho:** **um clube por conversa / branch** (o Flamengo sozinho tem dezenas de títulos; cinco clubes juntos estouram a atenção). Branch `gemini/casa-<clube>`.
-- **Ordem:** flamengo, corinthians, palmeiras, sao-paulo, santos, depois os demais em ordem alfabética, deixando bragantino, chapecoense, mirassol, vitoria e remo por último (mais lacunas).
-- **Pode mexer:** só nas linhas daquele clube em `dados/casa/*.csv`, na seção dele em `dados/casa/RELATORIO.md` e, se um dos domínios `bemparana.com.br`, `umdoisesportes.com.br` ou `band.com.br` abrir, em `DOMINIOS_ACEITOS`.
-- **Pronto quando:** todas as linhas do clube estão `revisada` com `verificada_em` (ou apagadas com motivo), `npm test` passa, push feito, e você entrega a tabela: arquivo, linha, o que mudou, status final, links usados, e o que continua em dúvida.
+- **Roteiro e formato:** `dados/casa/conferencia-outra-ia/prompt.md`, à risca. Os dados de cada lote estão em `lote-02.md`, `lote-03.md` e `lote-04.md`, na mesma pasta.
+- **Unidade de trabalho:** um lote por conversa e por branch (`gemini/casa-lote-02`). Se a resposta ficar grande demais, divida o lote em dois ou três clubes por conversa: o `--clubes=` do script aceita qualquer subconjunto.
+- **Ordem:** lote 2 (com Flamengo e Corinthians), depois o 3 (Palmeiras), depois o 4.
+- **No CLI:** salve a resposta em `resposta-lote-NN.txt`, rode `node scripts/casa/aplicar-conferencia.mjs resposta-lote-NN.txt --clubes=<os do lote> --seco`, depois sem o `--seco`, depois `npm run importar-casa` e `npm test`. Apague o `resposta-*.txt`. O commit leva só `dados/casa/*.csv`, `dados/casa/RELATORIO.md` (atualize a seção do lote) e `src/dados/casa/dados.gerado.ts`.
+- **Pronto quando:** as linhas do lote estão `revisada` (ou apagadas com motivo), o `importar-casa` e o `npm test` passam, o push foi feito e o `RESUMO` foi entregue ao Kauê, com links e trechos, mais a lista do que ficou em dúvida.
+- **Depois:** o Kauê ou o Claude abrem por amostra de 5 a 10 links, principalmente dos fatos que você mudou.
 
 ### Tarefa 2. Lacunas da Casa
 Depois dos 20 clubes: para cada buraco listado no `RELATORIO.md` (recordes, goleadas, capacidade, maior público), procure fonte aceita e acrescente a linha como `rascunho` (quem confere é o Claude ou o Kauê, nunca você mesmo).
