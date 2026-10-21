@@ -30,19 +30,13 @@ export function lerResposta(texto) {
     }
     if (!secao || secao === 'RESUMO' || linha === '' || linha.startsWith('```')) continue;
     if (secao === 'CORRIGIDAS') {
-      const titulo = linha.match(/^#+\s*(.+)$/);
+      // título do bloco: "#### titulos.csv", "titulos.csv" ou "**titulos.csv**"; troca o arquivo atual
+      const titulo = linha.match(/^[#*`\s]*(clubes|estadios|titulos|recordes|goleadas|mantos)(\.csv)?[*`:\s]*$/i);
       if (titulo) {
-        arquivo = nomeArquivo(titulo[1]);
+        arquivo = titulo[1].toLowerCase();
         continue;
       }
-      if (!arquivo) {
-        const solto = nomeArquivo(linha);
-        if (solto && !linha.includes('"')) {
-          arquivo = solto;
-          continue;
-        }
-        throw new Error(`linha CSV sem arquivo antes: ${linha.slice(0, 60)}`);
-      }
+      if (!arquivo) throw new Error(`linha CSV sem arquivo antes: ${linha.slice(0, 60)}`);
       (r.corrigidas[arquivo] ??= []).push(linha);
     } else {
       const campos = linha.replace(/^[-*•\d.)\s]+(?=\w+(\.csv)?\s*\|)/, '').split('|').map((c) => c.trim());

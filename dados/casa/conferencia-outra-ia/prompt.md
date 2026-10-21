@@ -92,6 +92,15 @@ goleadas.csv | clube | adversario
 mantos.csv | clube | ordens separadas por espaço
 ```
 
+Erros que já aconteceram em conferências anteriores (não repita):
+- **`fonte` com o link completo da página** (`https://www.flamengo.com.br/noticias/...`), nunca só o domínio (`goal.com`), a home (`https://cbf.com.br`) ou texto solto. Se você não tem o link exato da página que abriu, a linha não vai em CORRIGIDAS nem em CONFIRMADAS.
+- **Não atribua a um site um número que você não leu nele.** Se o site oficial do clube diz 872 e a imprensa 875, a observação diz os dois e o valor segue a regra das decisões acima; não escreva "o site oficial confirma" sem o trecho.
+- **Não apague linha válida** para "respeitar um limite": o máximo é 3 goleadas por clube, e 3 não passa de 3. Só apague fato errado, com a fonte que mostra o erro.
+- **Não "corrija" para o mesmo valor** (ex.: trocar 78.838 por 78.838) e não acrescente +1 por palpite. Mudou o número? Diga qual era e qual a fonte nova.
+- **Não invente siglas ou documentos** ("GDD", "notas do responsável"). Só vale o que está numa página aberta.
+- Placar histórico com discussão (ex.: 15 x 2 ou 16 x 2): abra a página do clube e diga o que ela diz; não escolha de memória.
+- Linhas que você não conseguiu conferir ficam de fora: "Não há dúvida remanescente" só vale se todas as linhas do lote foram abertas.
+
 Regras do formato:
 - Em `CORRIGIDAS`, cada bloco começa com `#### nome.csv`, depois o **cabeçalho exatamente como no arquivo anexo** e as linhas completas (todas as colunas, todos os campos entre aspas, aspas internas dobradas). Linha nova (fato que você acrescentou) também vai aqui. Use `status` = `revisada` e `verificada_em` = a data de hoje.
 - Em `APAGAR`, uma linha por fato que sai (explique no RESUMO).

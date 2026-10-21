@@ -36,6 +36,12 @@ describe('lerResposta', () => {
     expect(r.confirmadas).toHaveLength(2);
   });
 
+  it('aceita título de bloco sem "####" e troca de arquivo no meio', () => {
+    const r = lerResposta(['=== CORRIGIDAS ===', 'estadios.csv', '"clube","nome"', '"vasco","X"', 'recordes.csv', '"clube","lista"', '"vasco","gols"'].join('\n'));
+    expect(Object.keys(r.corrigidas)).toEqual(['estadios', 'recordes']);
+    expect(r.corrigidas.recordes).toEqual(['"clube","lista"', '"vasco","gols"']);
+  });
+
   it('recusa linha CSV sem arquivo', () => {
     expect(() => lerResposta('=== CORRIGIDAS ===\n"a","b"')).toThrow(/sem arquivo/);
   });
