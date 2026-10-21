@@ -42,7 +42,22 @@ export interface ResultadoLance {
   raspouTrave: boolean;
   /** Gol na zona onde o gol de verdade entrou. */
   recriou: boolean;
+  /** Onde o goleiro ficou para o chute (x de -1 a 1, já com a leitura). Só para o desenho. */
+  goleiroX: number;
   pontos: number;
+}
+
+/** Um lance do catálogo (src/dados/lances.ts, gerado de dados/lances/*.csv). */
+export interface Lance extends CenaLance {
+  id: string;
+  /** Id do time (src/dados/times.ts) ou "selecao". */
+  clube: string;
+  titulo: string;
+  ficha: string;
+  competicao: string;
+  /** AAAA-MM-DD */
+  data: string;
+  adversario: string;
 }
 
 /** Pontos de um gol em cada faixa de dificuldade; "Recriou o lance" soma o bônus. */
@@ -149,28 +164,43 @@ function goleiroInicial(c: CenaLance, palpite: number): number {
   return m > 0 ? -0.15 : 0.15;
 }
 
-/** Resolve o lance i de uma partida: o gesto do jogador contra a barreira e o goleiro da máquina. */
-export function resolverLance(semente: number, i: number, cena: CenaLance, gestoBruto: GestoCobranca): ResultadoLance {
-  const g = normalizarCobranca(gestoBruto);
+/** Sorteio do lance i: tremor da bola e goleiro. A ordem dos sorteios não pode mudar (mudaria os resultados). */
+function sortear(semente: number, i: number, cena: CenaLance) {
   const rnd = criarAleatorio(misturar(semente, SAL_LANCE, i));
-  const bx = cena.bola.x;
-  const bz = cena.bola.z;
-  const d = distancia(bx, bz);
   // De longe a bola treme mais (até 3 vezes o tremor do pênalti).
-  const escala = limitar(d / DIST_PENALTI, 1, 3);
+  const escala = limitar(distancia(cena.bola.x, cena.bola.z) / DIST_PENALTI, 1, 3);
   const tremX = (rnd() - 0.5) * 0.12 * escala;
   const tremY = (rnd() - 0.5) * 0.12 * escala;
-  const reacaoSorteada = REACAO_MIN + rnd() * REACAO_VAR;
+  const reacao = REACAO_MIN + rnd() * REACAO_VAR;
   const leu = rnd() < CHANCE_LER;
   const palpite = rnd();
   const ajusteGoleiro = (rnd() - 0.5) * 0.1;
+  return { tremX, tremY, reacao, leu, x0: goleiroInicial(cena, palpite) + ajusteGoleiro };
+}
+
+/** Onde o goleiro está antes do chute (x de -1 a 1). Só para o desenho. */
+export function goleiroAntesDoChute(semente: number, i: number, cena: CenaLance): number {
+  return sortear(semente, i, cena).x0;
+}
+
+/** Resolve o lance i de uma partida: o gesto do jogador contra a barreira e o goleiro da máquina. */
+export function resolverLance(semente: number, i: number, cena: CenaLance, gestoBruto: GestoCobranca): ResultadoLance {
+  const g = normalizarCobranca(gestoBruto);
+  const sorteio = sortear(semente, i, cena);
+  const { tremX, tremY, leu } = sorteio;
+  const bx = cena.bola.x;
+  const bz = cena.bola.z;
+  const d = distancia(bx, bz);
 
   const { x, y, cavadinha, fraca } = trajetoria(g, tremX, tremY);
   const zonaBola = zonaDoPonto(limitar(x, -1, 1), limitar(y, 0, 1));
-  const base = { x, y, zonaBola, cavadinha, angulo: false, raspouTrave: false, recriou: false, pontos: 0 };
+  const gx = x * MEIA_LARGURA_GOL;
+  // Goleiro: no lado sorteado ou, quando lê o chute, adiantado para o lado da bola.
+  const x0 = sorteio.x0 * MEIA_LARGURA_GOL;
+  const xg = leu ? x0 + (gx - x0) * LEITURA_DESLOCA : x0;
+  const base = { x, y, zonaBola, cavadinha, angulo: false, raspouTrave: false, recriou: false, goleiroX: xg / MEIA_LARGURA_GOL, pontos: 0 };
 
   // Caminho da bola, em metros: reta da bola até o ponto final, mais a curva do efeito e a altura do arco.
-  const gx = x * MEIA_LARGURA_GOL;
   const alturaFinal = y * ALTURA_GOL;
   const L = distancia(gx - bx, bz);
   const ax = (gx - bx) / L;
@@ -223,9 +253,7 @@ export function resolverLance(semente: number, i: number, cena: CenaLance, gesto
   // Goleiro: chega até onde der no tempo que a bola leva para alcançá-lo.
   const saida = cena.goleiroSaida ?? 0;
   const v = cavadinha ? V_CAVADINHA : fraca ? V_FRACA : V_MIN + ((V_MAX - V_MIN) * g.forca) / 100;
-  const x0 = (goleiroInicial(cena, palpite) + ajusteGoleiro) * MEIA_LARGURA_GOL;
-  const xg = leu ? x0 + (gx - x0) * LEITURA_DESLOCA : x0;
-  const reacao = leu ? reacaoSorteada - LEITURA_REACAO : reacaoSorteada;
+  const reacao = leu ? sorteio.reacao - LEITURA_REACAO : sorteio.reacao;
   // O goleiro adiantado fica na reta entre a bola e o ponto onde ele começou na linha.
   const kx = xg + (bx - xg) * (saida / d);
   const kz = bz * (saida / d);

@@ -10,6 +10,7 @@ import {
   TETO_PARTIDA,
   calibrar,
   faixaPorChance,
+  goleiroAntesDoChute,
   medalhaDoLance,
   resolverLance,
   simularPartidaLances,
@@ -70,6 +71,23 @@ describe('resolverLance', () => {
       if (resolverLance(s, 0, CENAS.faltaFrontal, g).x !== resolverLance(s, 1, CENAS.faltaFrontal, g).x) diferentes++;
     }
     expect(diferentes).toBeGreaterThan(90);
+  });
+
+  it('o goleiro do desenho começa onde o motor diz e só sai do lugar quando lê o chute', () => {
+    const g = { dir: 70, forca: 70, efeito: 0 };
+    let leu = 0;
+    for (let s = 0; s < 200; s++) {
+      const antes = goleiroAntesDoChute(s, 2, CENAS.faltaFrontal);
+      expect(Math.abs(antes)).toBeLessThan(0.25);
+      const r = resolverLance(s, 2, CENAS.faltaFrontal, g);
+      if (Math.abs(r.goleiroX - antes) > 1e-9) {
+        leu++;
+        // Leu: deslocado na direção da bola.
+        expect(Math.sign(r.goleiroX - antes)).toBe(Math.sign(r.x - antes));
+      }
+    }
+    expect(leu).toBeGreaterThan(25);
+    expect(leu).toBeLessThan(80);
   });
 
   it('normaliza o gesto como nos pênaltis', () => {

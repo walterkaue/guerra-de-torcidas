@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { calibrar, validarCena } from '../../src/jogo/lances';
+import { gerarCatalogo, lerTodos } from './catalogo.mjs';
 import { CANTOS, cenaDoLance, lerLances, validarConjunto, validarLance } from './validar.mjs';
 
 const boa = {
@@ -96,5 +97,16 @@ describe('catálogo em dados/lances', () => {
   // Se o motor mudar, a faixa de cada lance pode mudar junto: atualize a coluna faixa com o que o robô diz.
   it('a faixa de cada lance é a que o robô de calibragem calcula', () => {
     for (const l of lances) expect([l.id, calibrar(cenaDoLance(l)).faixa]).toEqual([l.id, l.faixa]);
+  });
+
+  it('src/dados/lances.ts está em dia com os CSVs (rode npm run catalogo-lances)', () => {
+    const gerado = readFileSync(new URL('../../src/dados/lances.ts', import.meta.url), 'utf8');
+    expect(gerado).toBe(gerarCatalogo(lerTodos()));
+  });
+
+  it('o catálogo publica só lance revisado ou ativo', () => {
+    const publicados = lances.filter((l) => l.status === 'revisada' || l.status === 'ativa').length;
+    expect(gerarCatalogo(lances).split('\n').filter((l) => l.startsWith('  {')).length).toBe(publicados);
+    expect(gerarCatalogo([{ ...lances[0], status: 'rascunho' }])).not.toMatch(/"id"/);
   });
 });
