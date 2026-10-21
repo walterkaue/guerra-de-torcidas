@@ -172,8 +172,8 @@ export function zonaDoPonto(x: number, y: number): number {
 /** Força mínima para a defesa valer pontos no desafio (chute fraco gravado de propósito não rende). */
 export const FORCA_MINIMA_DESAFIO = 32;
 
-/** Para onde a bola vai, dado o gesto e o "tremor" sorteado. */
-function trajetoria(g: GestoCobranca, tremX: number, tremY: number) {
+/** Para onde a bola vai, dado o gesto e o "tremor" sorteado. Os Lances (lances.ts) usam a mesma conta. */
+export function trajetoria(g: GestoCobranca, tremX: number, tremY: number) {
   const cavadinha = g.forca >= 8 && g.forca <= 24 && g.dir >= -30 && g.dir <= 30;
   const fraca = !cavadinha && g.forca < 32;
   let x: number;
