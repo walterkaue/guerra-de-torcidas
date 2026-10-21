@@ -1,38 +1,78 @@
 /* Lances do Jogo (docs/jogo.md, seção 7.3): álbum, partida de 3 e resultado. */
 
-/* ---------- card na Home ---------- */
-.card-lances {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
+/* ---------- hub ---------- */
+.lances {
+  gap: 14px;
+}
+
+.lances-abas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lances-abas button {
+  min-height: 56px;
+  padding: 4px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--cal);
+  font: 700 16px var(--fonte-rotulo);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  touch-action: manipulation;
+}
+
+.lances-abas small {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.8;
+}
+
+.lances-abas button[aria-selected='true'] {
+  border-color: var(--amarelo);
+  background: var(--amarelo);
+  color: #111;
+}
+
+.lances-conteudo {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  gap: 14px;
+}
+
+.lances-secao {
+  color: var(--texto-suave);
+}
+
+/* Card do hub (Disputa livre, disputas históricas). */
+.lance-card {
+  display: flex;
+  flex-direction: column;
   gap: 4px;
-  width: 100%;
-  padding: 16px 12px 12px;
-  border: 2px dashed rgba(255, 255, 255, 0.3);
-  border-radius: 14px;
+  margin: 0;
+  padding: 14px 14px 14px 20px;
+  border: 0;
+  border-radius: 12px;
   background: rgba(0, 0, 0, 0.38);
+  box-shadow: inset 6px 0 0 var(--c1), inset 10px 0 0 var(--c2);
   color: var(--cal);
   font: inherit;
   text-align: left;
   touch-action: manipulation;
 }
 
-.card-lances .rotulo {
-  color: var(--amarelo);
-}
-
-.card-lances:active {
-  transform: translateY(2px);
-  border-color: var(--amarelo);
+.lance-card-breve {
+  opacity: 0.7;
+  box-shadow: inset 6px 0 0 rgba(255, 255, 255, 0.25);
 }
 
 /* ---------- álbum ---------- */
-.lances {
-  gap: 14px;
-}
 
 .lances-intro {
   font-size: 15px;
@@ -68,30 +108,6 @@
   color: var(--cal);
   font: inherit;
   font-size: 16px;
-}
-
-.lances-tipos {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.lances-tipos button {
-  min-height: 44px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.35);
-  color: var(--cal);
-  font: 700 15px var(--fonte-rotulo);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  touch-action: manipulation;
-}
-
-.lances-tipos button[aria-checked='true'] {
-  border-color: var(--amarelo);
-  background: var(--amarelo);
-  color: #111;
 }
 
 .lista-lances {
@@ -296,8 +312,37 @@
   align-items: center;
 }
 
-/* O grito do narrador desce para não esconder a barreira nem o gol na hora de mirar. */
+/* "A jogada" no cara a cara: como a bola chegou, no alto, enquanto ela rola até o pé. */
+.jogada {
+  position: absolute;
+  top: calc(118px + env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 3px solid #fff;
+  border-radius: 6px;
+  background: var(--c1);
+  color: var(--txt);
+  font-weight: 800;
+  line-height: 1.25;
+  transform: rotate(-1.5deg);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.4), 0 4px 0 2px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.jogada[hidden] {
+  display: none;
+}
+
+.jogada b {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* O grito do narrador fica no meio da tela: não esconde o gol, nem a bola onde o dedo arrasta. */
 .lances-jogo .grito {
-  top: auto;
-  bottom: 18%;
+  top: 50%;
 }

@@ -30,6 +30,113 @@ export const facil = (t: number) => 1 - (1 - t) * (1 - t);
 export const suave = (t: number) => t * t * (3 - 2 * t);
 export const limitar01 = (t: number) => Math.max(0, Math.min(1, t));
 
+/** Bola com gomos girando, luz da esfera e sombra no chão em `sombraY`. */
+export function desenharBolaEm(c: CanvasRenderingContext2D, x: number, y: number, r: number, sombraY: number, giro: number, gradBola: CanvasGradient | null): void {
+  const altura = Math.max(0, sombraY - y);
+  c.globalAlpha = Math.max(0.12, 0.35 - altura / 600);
+  c.fillStyle = '#000';
+  c.beginPath();
+  c.ellipse(x + altura * 0.05, sombraY + r * 0.9, r * 0.95, r * 0.3, 0, 0, Math.PI * 2);
+  c.fill();
+  c.globalAlpha = 1;
+  c.save();
+  c.beginPath();
+  c.arc(x, y, r, 0, Math.PI * 2);
+  c.clip();
+  c.fillStyle = '#f2f2ee';
+  c.fillRect(x - r, y - r, r * 2, r * 2);
+  // Gomos girando: o pentágono do meio e os vizinhos passam pela frente da bola.
+  c.fillStyle = '#1b1b1b';
+  for (let k = 0; k < 6; k++) {
+    const a = giro + k * ((Math.PI * 2) / 5);
+    const dist = k === 5 ? 0 : 0.78;
+    const cx = x + Math.cos(a) * r * dist;
+    const cy = y + Math.sin(a) * r * dist * 0.92;
+    const tam = r * (k === 5 ? 0.33 : 0.27);
+    c.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const b = giro * 1.3 + -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+      const px = cx + Math.cos(b) * tam;
+      const py = cy + Math.sin(b) * tam;
+      if (i === 0) c.moveTo(px, py);
+      else c.lineTo(px, py);
+    }
+    c.fill();
+  }
+  // Luz e sombra da esfera.
+  if (gradBola) {
+    c.translate(x, y);
+    c.scale(r, r);
+    c.fillStyle = gradBola;
+    c.fillRect(-1, -1, 2, 2);
+  }
+  c.restore();
+  c.strokeStyle = 'rgba(0,0,0,0.45)';
+  c.lineWidth = 1.2;
+  c.beginPath();
+  c.arc(x, y, r, 0, Math.PI * 2);
+  c.stroke();
+}
+
+/** Rastro amarelo seguindo o dedo: mais grosso e mais forte na ponta. */
+export function desenharRastroEm(c: CanvasRenderingContext2D, rastro: readonly { x: number; y: number }[]): void {
+  if (rastro.length < 2) return;
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
+  c.save();
+  c.strokeStyle = '#ffd23f';
+  const n = rastro.length;
+  // Brilho sem filtro: um traço largo e transparente por baixo do traço principal.
+  for (let k = 0; k < BRILHO_DO_RASTRO.length; k++) {
+    const largura = BRILHO_DO_RASTRO[k][0];
+    const alfa = BRILHO_DO_RASTRO[k][1];
+    for (let i = 1; i < n; i++) {
+      const t = i / n;
+      c.globalAlpha = (0.25 + 0.7 * t) * alfa;
+      c.lineWidth = (3 + 7 * t) * largura;
+      c.beginPath();
+      c.moveTo(rastro[i - 1].x, rastro[i - 1].y);
+      c.lineTo(rastro[i].x, rastro[i].y);
+      c.stroke();
+    }
+  }
+  c.restore();
+  const ponta = rastro[n - 1];
+  c.fillStyle = '#ffd23f';
+  c.beginPath();
+  c.arc(ponta.x, ponta.y, 7, 0, Math.PI * 2);
+  c.fill();
+}
+
+/** "+pontos" subindo, segurando e sumindo. Devolve os que ainda estão na tela. */
+export function desenharPontosEm(
+  c: CanvasRenderingContext2D,
+  lista: readonly { inicio: number; x: number; y: number; texto: string }[],
+  agora: number,
+  tamanho: number,
+): { inicio: number; x: number; y: number; texto: string }[] {
+  const vivos = lista.filter((p) => agora - p.inicio < DUR_PONTOS);
+  for (const p of vivos) {
+    const t = (agora - p.inicio) / DUR_PONTOS;
+    // Sobe em 400 ms, segura e some.
+    const sobe = facil(Math.min(1, (agora - p.inicio) / 400));
+    const alfa = t < 0.75 ? 1 : 1 - (t - 0.75) / 0.25;
+    c.save();
+    c.globalAlpha = alfa;
+    c.font = `400 ${Math.round(tamanho)}px Anton, Impact, sans-serif`;
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.lineWidth = 5;
+    c.strokeStyle = '#111111';
+    const y = p.y - 10 - sobe * 46;
+    c.strokeText(p.texto, p.x, y);
+    c.fillStyle = '#ffd23f';
+    c.fillText(p.texto, p.x, y);
+    c.restore();
+  }
+  return vivos;
+}
+
 export interface OpcoesCena {
   /** Cores do time: torcida, bandeiras e placas de beira de campo. */
   cores: readonly [string, string];
@@ -715,51 +822,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
 
   // ---------- bola ----------
   function desenharBola(x: number, y: number, escala = 1, sombraY = y, giro = 0): void {
-    const r = g.raio * escala;
-    const altura = Math.max(0, sombraY - y);
-    c.globalAlpha = Math.max(0.12, 0.35 - altura / 600);
-    c.fillStyle = '#000';
-    c.beginPath();
-    c.ellipse(x + altura * 0.05, sombraY + r * 0.9, r * 0.95, r * 0.3, 0, 0, Math.PI * 2);
-    c.fill();
-    c.globalAlpha = 1;
-    c.save();
-    c.beginPath();
-    c.arc(x, y, r, 0, Math.PI * 2);
-    c.clip();
-    c.fillStyle = '#f2f2ee';
-    c.fillRect(x - r, y - r, r * 2, r * 2);
-    // Gomos girando: o pentágono do meio e os vizinhos passam pela frente da bola.
-    c.fillStyle = '#1b1b1b';
-    for (let k = 0; k < 6; k++) {
-      const a = giro + k * ((Math.PI * 2) / 5);
-      const dist = k === 5 ? 0 : 0.78;
-      const cx = x + Math.cos(a) * r * dist;
-      const cy = y + Math.sin(a) * r * dist * 0.92;
-      const tam = r * (k === 5 ? 0.33 : 0.27);
-      c.beginPath();
-      for (let i = 0; i < 5; i++) {
-        const b = giro * 1.3 + -Math.PI / 2 + (i * 2 * Math.PI) / 5;
-        const px = cx + Math.cos(b) * tam;
-        const py = cy + Math.sin(b) * tam;
-        if (i === 0) c.moveTo(px, py);
-        else c.lineTo(px, py);
-      }
-      c.fill();
-    }
-    // Luz e sombra da esfera.
-    if (gradBola) {
-      c.translate(x, y);
-      c.scale(r, r);
-      c.fillStyle = gradBola;
-      c.fillRect(-1, -1, 2, 2);
-    }
-    c.restore();
-    c.strokeStyle = 'rgba(0,0,0,0.45)';
-    c.lineWidth = 1.2;
-    c.beginPath();
-    c.arc(x, y, r, 0, Math.PI * 2);
-    c.stroke();
+    desenharBolaEm(c, x, y, g.raio * escala, sombraY, giro, gradBola);
   }
 
   /** Bola em voo: rastro de borrão atrás (quadros anteriores) e giro. */
@@ -795,35 +858,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
     }
   }
 
-  /** Rastro amarelo seguindo o dedo: mais grosso e mais forte na ponta. */
-  function desenharRastro(rastro: readonly { x: number; y: number }[]): void {
-    if (rastro.length < 2) return;
-    c.lineCap = 'round';
-    c.lineJoin = 'round';
-    c.save();
-    c.strokeStyle = '#ffd23f';
-    const n = rastro.length;
-    // Brilho sem filtro: um traço largo e transparente por baixo do traço principal.
-    for (let k = 0; k < BRILHO_DO_RASTRO.length; k++) {
-      const largura = BRILHO_DO_RASTRO[k][0];
-      const alfa = BRILHO_DO_RASTRO[k][1];
-      for (let i = 1; i < n; i++) {
-        const t = i / n;
-        c.globalAlpha = (0.25 + 0.7 * t) * alfa;
-        c.lineWidth = (3 + 7 * t) * largura;
-        c.beginPath();
-        c.moveTo(rastro[i - 1].x, rastro[i - 1].y);
-        c.lineTo(rastro[i].x, rastro[i].y);
-        c.stroke();
-      }
-    }
-    c.restore();
-    const ponta = rastro[n - 1];
-    c.fillStyle = '#ffd23f';
-    c.beginPath();
-    c.arc(ponta.x, ponta.y, 7, 0, Math.PI * 2);
-    c.fill();
-  }
+  const desenharRastro = (rastro: readonly { x: number; y: number }[]) => desenharRastroEm(c, rastro);
 
   /** Posição da bola num chute com curva (bezier quadrática). */
   function trajetoria(alvoX: number, alvoY: number, efeito: number, t: number, alto: boolean) {
@@ -853,25 +888,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
   }
 
   function desenharPontos(agora: number): void {
-    efeitos.pontos = efeitos.pontos.filter((p) => agora - p.inicio < DUR_PONTOS);
-    for (const p of efeitos.pontos) {
-      const t = (agora - p.inicio) / DUR_PONTOS;
-      // Sobe em 400 ms, segura e some.
-      const sobe = facil(Math.min(1, (agora - p.inicio) / 400));
-      const alfa = t < 0.75 ? 1 : 1 - (t - 0.75) / 0.25;
-      c.save();
-      c.globalAlpha = alfa;
-      c.font = `400 ${Math.round(g.raio * 1.5)}px Anton, Impact, sans-serif`;
-      c.textAlign = 'center';
-      c.textBaseline = 'middle';
-      c.lineWidth = 5;
-      c.strokeStyle = '#111111';
-      const y = p.y - 10 - sobe * 46;
-      c.strokeText(p.texto, p.x, y);
-      c.fillStyle = '#ffd23f';
-      c.fillText(p.texto, p.x, y);
-      c.restore();
-    }
+    efeitos.pontos = desenharPontosEm(c, efeitos.pontos, agora, g.raio * 1.5);
   }
 
   /** Onde a bola fica parada depois do lance (luva, rede ou trave). */

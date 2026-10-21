@@ -28,6 +28,7 @@ export function gerarCatalogo(lances) {
       competicao: l.competicao,
       data: l.data,
       adversario: l.adversario,
+      ...(l.chegada ? { chegada: l.chegada, chegadaDe: l.chegada_de } : {}),
       ...cenaDoLance(l),
     };
     return `  ${JSON.stringify(lance)},`;

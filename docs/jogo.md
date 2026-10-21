@@ -1,7 +1,7 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 21/10/2026, noite (tela dos Lances do Jogo em teste, sem valer pontos; antes: novo minigame Lances do Jogo, com medalhas e página Conquistas; Pênaltis vão virar uma sessão dos Lances com disputas históricas; nomes reais na ficha factual dos lances)
+> Última atualização: 21/10/2026, noite (Lances do Jogo no lugar dos Pênaltis na Home, com 3 abas; câmera 3D com três distâncias; "A jogada" no cara a cara; antes: tela dos Lances do Jogo em teste, sem valer pontos; novo minigame Lances do Jogo, com medalhas e página Conquistas; Pênaltis vão virar uma sessão dos Lances com disputas históricas; nomes reais na ficha factual dos lances)
 > Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
@@ -168,8 +168,9 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Como jogar:** antes do apito de cada partida aparece um resumo (cobrar, efeito e cavadinha, defender, pontos) com a caixa "Não exibir novamente", guardada só no aparelho. O botão "?" no placar reabre o resumo na hora da cobrança (nunca no meio de uma defesa, que corre contra o relógio).
 - **Desafio por link:** ao terminar, o jogo gera "duvido você me vencer". Quem abre o link defende as cobranças gravadas de quem desafiou e cobra contra o goleiro da máquina. No fim, placar dos dois lado a lado.
 
-### Pênaltis dentro dos Lances (decidido em 21/10, entra depois dos Lances no ar)
-- Os pênaltis viram uma **sessão dos Lances do Jogo** (seção 7.3): na Home, o card dos Lances ocupa o lugar dos Pênaltis.
+### Pênaltis dentro dos Lances (decidido em 21/10)
+- Os pênaltis viram uma **sessão dos Lances do Jogo** (seção 7.3): na Home, o card dos Lances ocupa o lugar dos Pênaltis. **No ar desde 21/10:** o card "Lances do Jogo" (com a linha de partidas que contam hoje) abre o hub, e a aba **Pênaltis** abre a Disputa livre de sempre, valendo pontos; o voltar da partida leva de volta ao hub. O convite de X1 por link continua indo direto para a partida.
+- **Visual:** os Pênaltis continuam com a cena de TV de hoje (decidido em 21/10); a câmera 3D é só das faltas e do cara a cara.
 - **Disputas históricas:** disputas de pênaltis que o clube **venceu**, com o adversário de verdade já escolhido (nome, artigo e cores, sem escudo) e a ficha do jogo ("Final de 2018: foi 4 x 3. E hoje?"). Os chutes **não** são pré-definidos: o formato é o de hoje (semente, goleiro e batedor da máquina, morte súbita, par ou ímpar).
 - Cada torcedor vê as disputas **do time do coração** e as da **Seleção Brasileira** (pelo menos 2, para todo mundo). Meta: 3 por clube; clube com menos disputas marcantes é completado pelas da Seleção.
 - **Disputa livre** contra a Máquina continua (é o jogo de hoje): obrigatória para quem é de "Outro time" e para quem só quer bater pênalti.
@@ -422,9 +423,12 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 
 ### Tela em teste (21/10/2026)
 - **No ar sem servidor:** álbum, partida de 3 e treino rodam só no celular e **ainda não valem pontos** (exceção à pré-temporada valendo da seção 5, até o servidor dos Lances existir). A tela avisa: "Em teste: os Lances ainda não valem pontos."
-- **Na Home:** um card "Novo · em teste" logo abaixo da grade dos 4 jogos (a grade não muda até os Pênaltis virarem sessão dos Lances).
-- **Álbum:** filtro de clube (abre no time do coração; sem lance do time, abre em todos) e de tipo (Todos, Faltas, Cara a cara). Tocar no lance abre a ficha, a situação ("Falta a 21 m, pela esquerda, barreira de 4") e os botões **Treinar** e **Pôr na partida**. A partida fica numa barra fixa no rodapé com 3 vagas; tocar numa vaga tira o lance.
-- **Jogo:** a mesma cena dos pênaltis (`src/telas/cena.ts`), com a barreira (bonecos fictícios da máquina, de frente) e o goleiro no lado sorteado ou adiantado e maior no cara a cara. A câmera fica sempre atrás da bola, então a distância aparece na situação e no tamanho da barreira, não no tamanho do gol.
+- **Na Home:** o card **Lances do Jogo** ocupa o lugar dos Pênaltis na grade e abre o hub com 3 abas: **Pênaltis** (valendo), **Faltas** e **Cara a cara** (em teste).
+- **Álbum (abas Faltas e Cara a cara):** filtro de clube (abre no time do coração; sem lance do time, abre em todos). Tocar no lance abre a ficha, a situação ("Falta a 25 m, pela direita, barreira de 4") e os botões **Treinar** e **Pôr na partida**. A partida fica numa barra fixa no rodapé com 3 vagas (pode misturar faltas e cara a cara); tocar numa vaga tira o lance.
+- **Câmera 3D com três distâncias (decidido em 21/10):** `src/telas/camera.ts` põe a câmera atrás da bola, olhando para o gol, e `src/telas/cena3d.ts` desenha o campo com a grande área, a pequena área, a marca do pênalti e a meia-lua no chão, o gol com rede, a barreira a 9,15 m da bola (dentro ou fora da área, como na regra), o goleiro, o batedor e a bola. Enquadramentos ajustados para o gol ocupar ~78% da largura da tela no pênalti (referência), ~60% no cara a cara e ~42% na falta de 25 m (falta mais longe, gol menor). A bola é desenhada 2,2 vezes maior que a real, para o dedo achar.
+- **Bola e goleiro seguem a física:** a bola voa pelo caminho 3D do motor (`caminhoDoLance`) e para onde o motor diz (`tFim`: na barreira, no goleiro ou na linha do gol); o goleiro começa onde o motor sorteou (`goleiroAntesDoChute`) e pula para a bola.
+- **Arraste:** como nos pênaltis, mas a linha do arraste prolongada cruza a boca do gol onde ela aparece na tela (que muda de tamanho e de ângulo conforme a distância).
+- **"A jogada" (cara a cara):** antes do chute, um quadro conta como a bola chegou (coluna `chegada` do catálogo, até 90 caracteres, sem nomes) e a bola rola até o pé, vinda de trás, de um lado ou de rebote (coluna `chegada_de`). Dura ~2 s; o dedo só chuta depois.
 - **Resultado:** pontos da partida, um emoji por lance (⚽ gol, 🧤 defesa, 🧱 barreira, ❌ fora ou trave) e "Jogar de novo" ou "Escolher outros". Card de compartilhar fica para quando valer pontos.
 - **Narrador:** seção 12 do `docs/narrador.md` (abertura, barreira, lance recriado e fim) mais as frases genéricas de gol, trave e fora da seção 3.
 - **Catálogo no jogo:** `npm run catalogo-lances` gera `src/dados/lances.ts` com os lances `revisada` ou `ativa` dos CSVs; o teste avisa se esquecer.

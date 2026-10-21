@@ -9,6 +9,7 @@ import {
   type ResultadoLance,
   TETO_PARTIDA,
   calibrar,
+  caminhoDoLance,
   faixaPorChance,
   goleiroAntesDoChute,
   medalhaDoLance,
@@ -88,6 +89,33 @@ describe('resolverLance', () => {
     }
     expect(leu).toBeGreaterThan(25);
     expect(leu).toBeLessThan(80);
+  });
+
+  it('o caminho do desenho sai da bola e chega no ponto do motor', () => {
+    const g = { dir: 60, forca: 70, efeito: 40 };
+    for (let s = 0; s < 40; s++) {
+      const r = resolverLance(s, 0, CENAS.faltaEsquerda, g);
+      const em = caminhoDoLance(CENAS.faltaEsquerda, g, r);
+      expect(em(0)).toEqual({ x: -3, y: 0, z: 18 });
+      const fim = em(1);
+      expect(fim.x).toBeCloseTo(r.x * 3.66, 9);
+      expect(fim.y).toBeCloseTo(r.y * 2.44, 9);
+      expect(fim.z).toBeCloseTo(0, 9);
+    }
+  });
+
+  it('na barreira a bola para a 9,15 m da bola; na defesa, no goleiro; no resto, na linha do gol', () => {
+    const naBarreira = resolverLance(1, 0, CENAS.faltaFrontal, { dir: 0, forca: 90, efeito: 0 });
+    expect(naBarreira.desfecho).toBe('barreira');
+    const p = caminhoDoLance(CENAS.faltaFrontal, { dir: 0, forca: 90, efeito: 0 }, naBarreira)(naBarreira.tFim);
+    expect(Math.hypot(p.x - 0, p.z - 20)).toBeCloseTo(9.15, 1);
+    const defesa = resolverLance(1, 0, CENAS.caraACara, { dir: 0, forca: 28, efeito: 0 });
+    expect(defesa.desfecho).toBe('defesa');
+    expect(defesa.tFim).toBeCloseTo(0.75, 9); // goleiro 2 m à frente, bola a 8 m
+    for (let s = 0; s < 50; s++) {
+      const r = resolverLance(s, 0, CENAS.pequenaArea, { dir: -70, forca: 40, efeito: 0 });
+      if (r.desfecho === 'gol' || r.desfecho === 'fora' || r.desfecho === 'trave') expect(r.tFim).toBe(1);
+    }
   });
 
   it('normaliza o gesto como nos pênaltis', () => {
