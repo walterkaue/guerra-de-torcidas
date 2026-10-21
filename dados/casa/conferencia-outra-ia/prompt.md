@@ -10,10 +10,11 @@ Para rodar a conferência de um lote fora do Claude Code (por exemplo, numa IA c
    ```
    node scripts/casa/aplicar-conferencia.mjs resposta-lote-02.txt --clubes=chapecoense,corinthians,coritiba,cruzeiro,flamengo --seco
    node scripts/casa/aplicar-conferencia.mjs resposta-lote-02.txt --clubes=chapecoense,corinthians,coritiba,cruzeiro,flamengo
+   npm run importar-casa
    npm test
    git diff dados/casa
    ```
-   O script mostra quantas linhas foram corrigidas, apagadas e confirmadas, avisa o que não achou e lista o que ficou em `rascunho`. Linha de clube fora do `--clubes` é recusada.
+   `npm run importar-casa` valida os CSVs (domínios, ids, palavras proibidas, ordem dos recordes, Brasileiros contra o `clubes-do-dia.csv`…) e atualiza `src/dados/casa/dados.gerado.ts`; se ele reclamar, o dado da IA tem erro. O script de aplicar mostra quantas linhas foram corrigidas, apagadas e confirmadas, avisa o que não achou e lista o que ficou em `rascunho`. Linha de clube fora do `--clubes` é recusada.
 5. **Confira por amostra**: abra no navegador 5 a 10 links da resposta, principalmente dos fatos que a IA mudou. IA sem acesso real à web inventa confirmação; por isso o prompt exige o link aberto e o trecho que prova.
 
 Lotes: 2 = chapecoense, corinthians, coritiba, cruzeiro, flamengo. 3 = fluminense, gremio, internacional, mirassol, palmeiras. 4 = remo, santos, sao-paulo, vasco, vitoria.
