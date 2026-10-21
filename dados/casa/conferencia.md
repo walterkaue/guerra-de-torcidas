@@ -2,6 +2,8 @@
 
 Cole o texto abaixo numa sessão nova do Claude Code, no repositório `guerra-de-torcidas`. Troque os clubes pelo lote da vez (5 por lote, em ordem alfabética do id).
 
+**Sem créditos no Claude Code?** Use o pacote para outra IA em `dados/casa/conferencia-outra-ia/` (prompt autônomo, dados de cada lote e script `scripts/casa/aplicar-conferencia.mjs` que aplica a resposta).
+
 Lotes: 1 = athletico-pr, atletico-mg, bahia, botafogo, bragantino. 2 = chapecoense, corinthians, coritiba, cruzeiro, flamengo. 3 = fluminense, gremio, internacional, mirassol, palmeiras. 4 = remo, santos, sao-paulo, vasco, vitoria.
 
 ---
@@ -35,5 +37,5 @@ Você vai fazer a **conferência das fontes** dos dados da Casa do [time] dos cl
 **Regras**
 - Fontes: só os domínios de `DOMINIOS_ACEITOS` (`scripts/perguntas/validar.mjs` e `scripts/clubes/validar.mjs`). Wikipédia só como apoio de decisão, nunca como `fonte`. Os domínios `bemparana.com.br`, `umdoisesportes.com.br` e `band.com.br` estão aprovados pelo Kauê **se abrirem** na sua rede: nesse caso acrescente em `DOMINIOS_ACEITOS` (`scripts/perguntas/validar.mjs`, único arquivo fora de `dados/casa/` que você pode tocar) e diga no resumo. Qualquer outro domínio: não acrescente por conta própria, liste no resumo.
 - Mexa só em `dados/casa/*.csv` e em `dados/casa/RELATORIO.md` (atualize cobertura e dúvidas do lote), mais a exceção dos domínios acima. Não toque em `src/` nem em `supabase/`.
-- Rode `npm test` antes do commit. Commit em português, no formato `fix: conferência do lote N da Casa do time`. Faça push para a sua branch. Não abra PR.
+- Depois de marcar as linhas, rode `npm run importar-casa` (valida os CSVs e atualiza `src/dados/casa/dados.gerado.ts`, que entra no commit) e `npm test` antes do commit. Se o validador reclamar, conserte o dado. Commit em português, no formato `fix: conferência do lote N da Casa do time`. Faça push para a sua branch. Não abra PR.
 - No fim, me mande uma tabela: clube, linha, o que mudou, status final e as fontes usadas (links), mais a lista do que continua em dúvida.

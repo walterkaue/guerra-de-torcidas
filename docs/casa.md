@@ -146,10 +146,10 @@ Todas com `verificada_em`, `status` (rascunho, revisada, aposentada) e `observac
 
 **Fontes aceitas:** as do quiz (CBF, FIFA, CONMEBOL, federações, site oficial do clube, imprensa esportiva, ogol.com.br), mais o cadastro de estádios da CBF. Wikipédia só como `fonte2`.
 
-### Validador (`scripts/casa/validar.mjs`, testado no `npm test`)
+### Validador (`scripts/casa/validar.mjs`, testado no `npm test`; importador: `npm run importar-casa`)
 - Colunas, ids de clube (os 20 do `times.ts`) e de competição (seção 6), datas e números válidos.
 - Toda linha revisada tem fonte de domínio aceito.
-- Recordes: posições 1–3 sem buraco e valores em ordem decrescente.
+- Recordes: posições 1–3 sem buraco e valores em ordem decrescente (empate repete a posição: 1, 2, 3, 3).
 - Títulos: sem ano repetido na mesma competição (salvo os dois Brasileiros de 1967 do Palmeiras, Taça Brasil e Robertão, marcados na nota).
 - **Cruzamento com `dados/clubes-do-dia.csv`:** Brasileiros oficiais e ano de fundação têm que bater.
 - **Palavras proibidas** (seção 7 do `jogo.md`) e **marcas proibidas** (patrocinadores de estádio, competição e camisa, fornecedores e casas de aposta) em todo texto.

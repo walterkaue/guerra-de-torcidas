@@ -37,7 +37,7 @@ O upgrade dos pênaltis que travava a Casa fechou (Lances do Jogo no `main`), en
 - **Pronto quando:** os 5 clubes do lote têm todas as linhas `revisada` (ou apagadas com motivo), `npm test` passa e a tabela de mudanças vem no resumo.
 - **Ordem sugerida:** começar pelos clubes mais completos e de maior audiência, para a Casa nascer com o melhor conteúdo (Flamengo, Corinthians, Palmeiras, São Paulo, Santos), e deixar os clubes com mais buracos (Bragantino, Chapecoense, Mirassol, Vitória, Remo) por último, com a pesquisa de lacunas.
 
-### Etapa C. Importador, validador e competições (sessão de código)
+### Etapa C. Importador, validador e competições (feita em 22/10/2026)
 Pode rodar **em paralelo** com a Etapa B, porque só lê os CSVs.
 - `src/dados/competicoes.ts` com os ids e nomes da seção 6 do `docs/casa.md`.
 - `scripts/casa/validar.mjs` + teste: colunas, ids de clube e de competição, datas e números, domínios aceitos, posições 1 a 3 em ordem decrescente, ano repetido na mesma competição, cruzamento com `dados/clubes-do-dia.csv` (Brasileiros e fundação), palavras e marcas proibidas, limites de caracteres.
