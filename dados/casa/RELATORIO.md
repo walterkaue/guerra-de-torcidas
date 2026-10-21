@@ -60,6 +60,8 @@ Estaduais conferidos só por Lance/Trivela/Goal (as federações FPF-SP, FERJ, F
 
 ## 3. Títulos "não oficiais" registrados (`oficial = não`)
 
+Decisão de 21/10: na Casa do próprio clube eles entram na prateleira normal e contam no total, com a nota neutra; a coluna só guarda o fato.
+
 | Clube | Competição | Ano | Nota |
 |---|---|---|---|
 | flamengo | brasileiro-a | 1987 | O clube se considera campeão de 1987; a CBF reconhece o Sport. |

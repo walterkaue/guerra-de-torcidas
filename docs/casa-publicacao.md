@@ -21,16 +21,14 @@ O upgrade dos pênaltis que travava a Casa fechou (Lances do Jogo no `main`), en
 
 ## 3. Etapas, em ordem
 
-### Etapa A. Decisões do Kauê (antes de tudo, 15 minutos)
-Perguntas que travam a conferência. Recomendação do rascunho entre parênteses:
-
-1. **Estaduais sem federação aberta** (FPF-SP, FERJ, FMF, FGF, FBF, FCF não abrem para a sessão): aceitar Lance/Trivela/Goal como fonte do estadual? *(Sim, com "conferir" na observação; o Kauê checa as listas nos sites das federações no navegador, que abre.)*
-2. **Contagem de jogos e gols**: valem os números que o clube divulga, mesmo com amistosos (Pelé, Dinamite)? *(Sim, com o rótulo "contagem do clube" no rodapé do Livro de Recordes.)*
-3. **Títulos reivindicados** (Flamengo 1987, Palmeiras Copa Rio 1951): ficam à parte, sem contar no total, com nota neutra? *(Sim, como na seção 6 do `docs/casa.md`.)*
-4. **Competições sem id** (Copa Master da Conmebol, Recopa de 1968/69 do Santos, Copa dos Campeões, Mercosul, Rio-São Paulo): ficam de fora por enquanto? *(Sim; entram depois, com id próprio.)*
-5. **Dois erros da fonte oficial** (Paranaense 2000 na página da FPF; Paraense 2000 na página do Remo): seguir a imprensa e o fato (já feito no rascunho)? *(Sim; o Kauê confere nas federações.)*
-6. **Aceitar mais domínios** em `DOMINIOS_ACEITOS`: `bemparana.com.br`, `umdoisesportes.com.br`, `band.com.br`. *(Sim, se abrirem.)*
-7. **Canal de erro**: botão "Achou um erro? Conta pra gente" na Casa? Se sim, onde chega (e-mail do projeto, sem pedir dado pessoal)? *(Sim, link de e-mail; erro factual público é o maior risco da Casa.)*
+### Etapa A. Decisões do Kauê (fechadas em 21/10/2026)
+1. **Estaduais sem federação aberta:** vale Lance/Trivela/Goal, com "conferir" na observação. O Kauê checa as listas nos sites das federações, no navegador.
+2. **Jogos e gols:** valem os números que o clube divulga, mesmo com amistosos. O rodapé do Livro de Recordes traz o rótulo **"contagem do clube"**.
+3. **Títulos reivindicados** (Flamengo 1987, Palmeiras Copa Rio 1951): **na Casa do clube, vale o lado da torcida.** O título aparece na prateleira normal e conta no total daquele clube, com a nota neutra ("a CBF reconhece o Sport", "a FIFA não lista entre os campeões mundiais"). Em outras telas (Time do Dia, Brasileiros do `clubes-do-dia.csv`) continua valendo a lista oficial da entidade. No dado, a coluna `oficial = não` segue registrando o fato; a tela é que decide mostrar.
+4. **Competições sem id** (Copa Master da Conmebol, Recopa de 1968/69 do Santos, Copa dos Campeões, Mercosul, Rio-São Paulo): ficam de fora por enquanto e entram depois, com id próprio.
+5. **Erros das fontes oficiais** (Paranaense 2000 na FPF; Paraense 2000 na página do Remo): vale o fato, como no rascunho. O Kauê confere nas federações.
+6. **Mais domínios aceitos** em `DOMINIOS_ACEITOS` (`bemparana.com.br`, `umdoisesportes.com.br`, `band.com.br`): sim, se abrirem.
+7. **Canal de erro:** botão "Achou um erro? Conta pra gente" com link de e-mail para **contato@kauewalter.com.br**, sem pedir dado pessoal.
 
 ### Etapa B. Conferência dos dados (sessão nova, sem o contexto da escrita)
 - **Quem:** sessões de Claude Code, uma por **lote de 5 clubes** (ordem alfabética do id, os mesmos lotes da escrita). Prompt pronto em `dados/casa/conferencia.md`.
@@ -50,8 +48,8 @@ Pode rodar **em paralelo** com a Etapa B, porque só lê os CSVs.
 ### Etapa D. Tela, índice e desenhos (sessão de código)
 - Rota `#casa` (índice) e `#casa/<id>` em `src/app.ts`; tela em `src/telas/casa.ts`; CSS em `src/estilos/casa.css`; **import dinâmico**, fora do bundle inicial (meta: ~20 KB gzip a mais, carregados só quando abre).
 - Blocos A a D e rodapé, como em `docs/casa.md` seção 4; SVGs gerados em código: silhueta do estádio por formato, taça genérica ouro/prata/bronze, manto por padrão (`lisa`, `listras-v`, `aros`, `faixa-diagonal`, `faixa-peito`).
-- Tolerância a buracos (seção 2 deste plano) e prateleira "à parte" para título reivindicado.
-- Rodapé: "Dados até DD/MM/AAAA", lista de fontes, nota de independência e o botão de erro (decisão 7).
+- Tolerância a buracos (seção 2 deste plano) e título reivindicado na prateleira normal e no total do próprio clube, com a nota neutra (decisão 3).
+- Rodapé: "Dados até DD/MM/AAAA", lista de fontes, nota de independência e o botão de erro (link `mailto:` para contato@kauewalter.com.br, decisão 7).
 - **Testes:** unitário do que for lógica (ordem dos troféus, agrupamento, data de referência) e conferência visual em **390×844** por captura de tela, sem rolagem horizontal, nos clubes extremos: um completo (Flamengo), um com buracos (Vitória) e um com título reivindicado (Palmeiras).
 - **Pronto quando:** `npm test` e `npm run build` passam e as capturas dos três clubes foram vistas.
 

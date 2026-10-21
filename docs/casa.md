@@ -18,7 +18,7 @@ Por que existe: os minigames dão motivo para jogar 30 segundos; a Casa dá orgu
 | Clubes | **Só os 20 da Série A 2026.** Para 2027, atualização completa (clubes que sobem e descem, títulos de 2026) |
 | Nomes reais | **Liberados nas fichas factuais da Casa** (artilheiros, recordistas), só nome + número + fonte. Regra de nomes reais ampliada no `jogo.md` seção 8 |
 | Competições | **Nome real, sem patrocinador**, padronizado pela entidade organizadora (FIFA, CONMEBOL, CBF, federação). Nada de "Taça Nacional" (seção 6) |
-| Títulos que geram discussão | **Só a lista oficial da entidade.** O que o clube reivindica e a entidade não lista aparece à parte, com nota neutra (seção 6) |
+| Títulos que geram discussão | **Na Casa do clube, vale o lado da torcida** (decidido em 21/10): o título que o clube reivindica aparece na prateleira normal e conta no total daquele clube, com nota neutra dizendo o que a entidade reconhece (seção 6). Fora da Casa, vale a lista oficial |
 | Manto | **O mais perto do real sem ferir direito autoral:** padrão de cores tradicional numa silhueta nossa, sem escudo, símbolo, patrocínio ou fornecedor. Exceção explícita à regra da faixa de placar, só dentro da Casa (seção 5) |
 | Ligação com o jogo | **Só ganchos de navegação** (seção 3). Nenhum ponto, nenhuma recompensa por visitar |
 | Quando | Liberada em 21/10/2026, com o upgrade dos pênaltis fechado (Lances do Jogo no ar). Ordem e etapas: `docs/casa-publicacao.md` |
@@ -111,7 +111,7 @@ Lista fechada no código (`src/dados/competicoes.ts`), com o nome da entidade or
 
 - **Estaduais entram** (decisão da proposta, 21/10): dão às Casas de Mirassol, Remo, Bragantino e Chapecoense a mesma riqueza das outras. Fonte: federação estadual.
 - **Ids e nomes fechados:** o dado aponta para o id, nunca escreve o nome à mão. Os nomes saem da página oficial da entidade (FIFA, CONMEBOL, CBF); onde a entidade usa o nome com patrocinador (ex.: Brasileirão e estaduais com marca de casa de aposta), fica só a parte sem marca.
-- **Títulos que geram discussão:** conta só o que a entidade lista. O que o clube reivindica e a entidade não lista aparece **à parte, na prateleira, com nota neutra** e sem contar no total. Exemplos: Copa Rio de 1951 (Palmeiras: "o clube considera título mundial; a FIFA não lista entre os campeões mundiais"); Brasileiro de 1987 (Flamengo: "a CBF reconhece o Sport como campeão"). Mesma regra dos títulos do Time do Dia (lista oficial da CBF).
+- **Títulos que geram discussão (decidido em 21/10):** na Casa do clube, **vale o lado da torcida**: o título que o clube reivindica e a entidade não lista entra na prateleira normal e **conta no total daquele clube**, com **nota neutra** do que a entidade reconhece. Exemplos: Copa Rio de 1951 (Palmeiras: "o clube considera título mundial; a FIFA não lista entre os campeões mundiais"); Brasileiro de 1987 (Flamengo: "a CBF reconhece o Sport como campeão"). A coluna `oficial = não` guarda o fato. **Fora da Casa** (Time do Dia, `clubes-do-dia.csv`) segue valendo a lista oficial da CBF.
 - **Outras competições** (Rio-São Paulo, Copa dos Campeões, Copa Norte) ficam para depois; entram com id próprio, nunca como texto livre.
 
 ## 7. Regras de conteúdo

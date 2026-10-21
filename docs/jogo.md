@@ -469,7 +469,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 
 - Uma página por clube da Série A 2026 ("Casa do Flamengo", "Casa da Chapecoense"): estádio, sala de troféus, livro de recordes, cores e manto. Só fatos com fonte, revisados por uma segunda sessão, como o quiz.
 - **Vitrine, não minigame:** não dá pontos, XP nem selo. A ligação com o jogo é só por navegação (Home, Ranking, Time do Dia depois que o dia acaba).
-- Competições pelo nome real da entidade (FIFA, CONMEBOL, CBF, federação), **sem patrocinador**. Títulos: só a lista oficial; o que o clube reivindica e a entidade não lista aparece à parte, com nota neutra.
+- Competições pelo nome real da entidade (FIFA, CONMEBOL, CBF, federação), **sem patrocinador**. Títulos: na Casa do clube vale o lado da torcida (o que o clube reivindica conta no total dele, com nota neutra do que a entidade reconhece); fora da Casa vale a lista oficial.
 - O nome "Galeria" continua sendo da **Galeria de Troféus** da torcida no jogo (seção 5), que vira a prateleira "Aqui no jogo" da Casa quando existir.
 - Estático, fora do bundle inicial, sem servidor.
 
