@@ -1,7 +1,7 @@
 # Casa do [time] — a página de história de cada clube
 
 > Versão 1.0 · 21/10/2026 · Desenho aprovado em 21/10/2026, a partir da proposta "Galeria dos Clubes".
-> **Ainda não construída.** Entra **depois do upgrade do minigame de pênaltis** (sessão paralela). A produção dos dados (seção 8) não mexe em código e pode começar antes.
+> **Ainda não construída.** Dados em rascunho em `dados/casa/` (21/10/2026). Ordem de publicação: `docs/casa-publicacao.md`.
 > Se algo aqui discordar do `docs/jogo.md`, vale o `jogo.md`.
 
 ## 1. O que é
@@ -21,7 +21,7 @@ Por que existe: os minigames dão motivo para jogar 30 segundos; a Casa dá orgu
 | Títulos que geram discussão | **Só a lista oficial da entidade.** O que o clube reivindica e a entidade não lista aparece à parte, com nota neutra (seção 6) |
 | Manto | **O mais perto do real sem ferir direito autoral:** padrão de cores tradicional numa silhueta nossa, sem escudo, símbolo, patrocínio ou fornecedor. Exceção explícita à regra da faixa de placar, só dentro da Casa (seção 5) |
 | Ligação com o jogo | **Só ganchos de navegação** (seção 3). Nenhum ponto, nenhuma recompensa por visitar |
-| Quando | Depois do upgrade dos pênaltis |
+| Quando | Liberada em 21/10/2026, com o upgrade dos pênaltis fechado (Lances do Jogo no ar). Ordem e etapas: `docs/casa-publicacao.md` |
 
 ## 3. Onde entra
 
