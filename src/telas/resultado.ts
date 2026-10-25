@@ -11,6 +11,7 @@ import { htmlPosicao } from '../jogo/posicao';
 import { escolherFrase } from '../narrador/escolher';
 import { contextoDoTime } from '../narrador/sessao';
 import { rankingDaSemana } from '../servidor/api';
+import { convidarParaAvisos } from './convitePush';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 const semMovimento = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -195,6 +196,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
         <img class="card" alt="Card do resultado" />
       </details>
 
+      <div data-convite-push></div>
+
       <div class="res-acoes">
         <button class="botao botao-sec" type="button" data-acao="inicio">Início</button>
         <button class="botao" type="button" data-acao="revanche">${r.venceu ? 'Mais uma' : 'Revanche'}</button>
@@ -203,6 +206,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   `;
 
   contar(root.querySelector<HTMLElement>('[data-contador]')!, p.total);
+  // Bom momento para oferecer o aviso de domingo: vitória que valeu pra torcida.
+  if (r.venceu && d.valendo) convidarParaAvisos(root.querySelector<HTMLElement>('[data-convite-push]'));
   const elConfete = root.querySelector<HTMLCanvasElement>('.confete');
   if (elConfete) confete(elConfete, [time.cores[0], time.cores[1], '#ffd23f']);
 

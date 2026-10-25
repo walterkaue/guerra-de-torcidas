@@ -1,7 +1,8 @@
 // Times oficiais: Série A 2026 + "Outro time". Só nome, 2 cores, artigo e rival.
 // O id é estável (vai para o banco na etapa 3); nunca renomeie um id já publicado.
 
-import type { Artigo } from '../narrador/escolher';
+/** "o" ou "a": o narrador usa para acertar do/da, pro/pra. Mora aqui para o servidor copiar só este arquivo. */
+export type Artigo = 'o' | 'a';
 
 export interface Time {
   id: string;

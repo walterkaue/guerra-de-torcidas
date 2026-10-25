@@ -28,6 +28,7 @@ import {
   type EstadoDoDia,
 } from '../servidor/api';
 import { sincronizarTorcedor } from '../servidor/torcedor';
+import { convidarParaAvisos } from './convitePush';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 /** Quantos clubes a busca mostra de uma vez (a lista inteira tem 60). */
@@ -331,6 +332,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       ${frasesFinais[1] ? `<p class="adesivo segundo">${esc(frasesFinais[1])}</p>` : ''}
       <p class="situacao">${esc(situacao)}</p>
       ${casa}
+      <div data-convite-push></div>
       ${htmlPosicao(e.desempenho, 'dia')}
       <p class="dia-proximo rotulo">Próximo time em <strong data-relogio>${formatarRelogio(Date.parse(e.proximoEm) - Date.now())}</strong></p>
       <section class="res-compartilhar">
@@ -351,6 +353,8 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
         <button class="botao" type="button" data-acao="jogar">Pênaltis<small>bora jogar mais</small></button>
       </div>`;
     elFim.hidden = false;
+    // Bom momento para oferecer o aviso de domingo: acertou o time do dia.
+    if (e.acertou) convidarParaAvisos(elFim.querySelector<HTMLElement>('[data-convite-push]'));
 
     const elRelogio = elFim.querySelector<HTMLElement>('[data-relogio]')!;
     clearInterval(relogio);

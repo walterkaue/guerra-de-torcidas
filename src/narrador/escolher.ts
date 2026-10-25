@@ -4,7 +4,9 @@
 
 import { FRASES, type EventoNarrador, type Frase } from './frases';
 
-export type Artigo = 'o' | 'a';
+import type { Artigo } from '../dados/times';
+
+export type { Artigo };
 
 export interface TimeNarrado {
   nome: string;

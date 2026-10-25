@@ -595,3 +595,34 @@
     transition: none;
   }
 }
+
+/* Aviso de domingo (push): linha no rodapé com "desligar". */
+.rodape-push {
+  text-align: center;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+.rodape-push button {
+  border: 0;
+  background: none;
+  color: var(--amarelo);
+  font: inherit;
+  text-decoration: underline;
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+/* Convite para o aviso de domingo, depois de um bom momento. */
+.convite-push {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 2px solid rgba(233, 199, 90, 0.5);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.3);
+}
+.convite-push .rotulo {
+  color: var(--amarelo);
+  font-size: 18px;
+}

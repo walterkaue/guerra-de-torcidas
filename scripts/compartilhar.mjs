@@ -4,7 +4,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 /** Motor do jogo: src/jogo → _shared/jogo. */
-export const ARQUIVOS = ['aleatorio.ts', 'penaltis.ts', 'deteccao.ts', 'crava.ts', 'footballData.ts', 'prova.ts', 'timeDoDia.ts', 'lances.ts'];
+export const ARQUIVOS = ['aleatorio.ts', 'penaltis.ts', 'deteccao.ts', 'crava.ts', 'footballData.ts', 'prova.ts', 'timeDoDia.ts', 'lances.ts', 'avisos.ts'];
 export const CABECALHO =
   '// CÓPIA GERADA de src/jogo por scripts/compartilhar.mjs. Não edite aqui: mude em src/jogo e rode `npm run compartilhar`.\n';
 
@@ -19,6 +19,8 @@ function copiar(origem, destino, nomes, cabecalho) {
 }
 
 copiar(new URL('../src/jogo/', import.meta.url), new URL('../supabase/functions/_shared/jogo/', import.meta.url), ARQUIVOS, CABECALHO);
+// Times (nome, artigo, rival): usados pelo texto dos avisos (jogo/avisos.ts importa ../dados/times.ts).
+copiar(new URL('../src/dados/', import.meta.url), new URL('../supabase/functions/_shared/dados/', import.meta.url), ['times.ts'], CABECALHO.replace('src/jogo', 'src/dados'));
 copiar(
   new URL('./perguntas/', import.meta.url),
   new URL('../supabase/functions/_shared/perguntas/', import.meta.url),

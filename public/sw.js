@@ -3,7 +3,7 @@
 // acelera o que nunca muda (arquivos com hash do build) e segura a página se a conexão cair.
 // Nada de outro domínio (Supabase, funções, APIs) passa por aqui.
 
-const VERSAO = 'gt-v1';
+const VERSAO = 'gt-v2';
 const CACHE_PAGINA = `${VERSAO}-pagina`;
 const CACHE_ARQUIVOS = `${VERSAO}-arquivos`;
 
@@ -74,3 +74,42 @@ async function cacheEAtualiza(req) {
     .catch(() => guardada ?? Response.error());
   return guardada ?? nova;
 }
+
+// ---------- aviso de domingo (push) ----------
+// O servidor manda { titulo, corpo, url }. Sem dado, mostra um aviso genérico.
+self.addEventListener('push', (evento) => {
+  let dados = {};
+  try {
+    dados = evento.data ? evento.data.json() : {};
+  } catch {
+    dados = { corpo: evento.data ? evento.data.text() : '' };
+  }
+  evento.waitUntil(
+    self.registration.showNotification(dados.titulo || 'Guerra de Torcidas', {
+      body: dados.corpo || 'A semana tá fechando. Bora somar pra sua torcida?',
+      icon: '/icones/icone-192.png',
+      badge: '/icones/icone-192.png',
+      tag: 'aviso-semana',
+      renotify: false,
+      data: { url: dados.url || '/' },
+    }),
+  );
+});
+
+// Tocar no aviso: volta para a aba do jogo aberta ou abre uma nova.
+self.addEventListener('notificationclick', (evento) => {
+  evento.notification.close();
+  const destino = new URL(evento.notification.data?.url || '/', self.location.origin).href;
+  evento.waitUntil(
+    (async () => {
+      const abas = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const aba = abas.find((c) => new URL(c.url).origin === self.location.origin);
+      if (aba) {
+        await aba.focus();
+        if ('navigate' in aba) await aba.navigate(destino).catch(() => {});
+        return;
+      }
+      await self.clients.openWindow(destino);
+    })(),
+  );
+});
