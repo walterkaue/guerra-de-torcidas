@@ -438,3 +438,36 @@ verify_jwt = true
 # Time do Dia (desafio diário): uma função com ações (estado, tentar).
 [functions.time-do-dia]
 verify_jwt = true
+
+[functions.gerar-conteudo]
+enabled = true
+verify_jwt = false
+import_map = "./functions/gerar-conteudo/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/gerar-conteudo/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/gerar-conteudo/*.html" ]
+
+[functions.auditar-conteudo]
+enabled = true
+verify_jwt = false
+import_map = "./functions/auditar-conteudo/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/auditar-conteudo/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/auditar-conteudo/*.html" ]
+
+[functions.corrigir-fontes]
+enabled = true
+verify_jwt = false
+import_map = "./functions/corrigir-fontes/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/corrigir-fontes/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/corrigir-fontes/*.html" ]
