@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { anosNaPagina, fatoDe, linksAceitos, motivoChave, numerosDe, observacaoConfirmada, textoDaPagina, trechoNaPagina } from './conferir-gemini.mjs';
+import { anosNaPagina, dataPorExtenso, fatoDe, motivoCampo, linksAceitos, motivoChave, numerosDe, observacaoConfirmada, textoDaPagina, trechoNaPagina } from './conferir-gemini.mjs';
 
 describe('conferir-gemini (partes puras)', () => {
   it('tira tags e decodifica entidades da página', () => {
@@ -58,6 +58,20 @@ describe('conferir-gemini (partes puras)', () => {
 
   it('busca: conta os anos que aparecem soltos na página', () => {
     expect(anosNaPagina('Santos: 1935, 1955 e 1956. Placar 2019x1', ['1935', '1956', '1958', '2019'])).toBe(2);
+  });
+
+  it('campos: data com ano e dia, cidade pelo nome, número sem separador', () => {
+    expect(dataPorExtenso('1921-01-02')).toBe('2 de janeiro de 1921');
+    expect(dataPorExtenso('2014')).toBe('2014');
+    const c = { fundacao: '1921-01-02', cidade: 'Belo Horizonte', capacidade: '61927' };
+    expect(motivoCampo('fundacao', c, 'em 2 de janeiro de 1921, nascia o Palestra')).toBeNull();
+    expect(motivoCampo('fundacao', c, 'fundado em 02/01/1921')).toBeNull();
+    expect(motivoCampo('fundacao', c, 'fundado em 1921')).toMatch(/dia 2/);
+    expect(motivoCampo('fundacao', c, 'em 2 de janeiro de 1922')).toMatch(/1921/);
+    expect(motivoCampo('cidade', c, 'o clube de Belo Horizonte')).toBeNull();
+    expect(motivoCampo('cidade', c, 'o clube mineiro')).toMatch(/Belo Horizonte/);
+    expect(motivoCampo('capacidade', c, 'cabem até 61.927 torcedores')).toBeNull();
+    expect(motivoCampo('inauguracao', { inauguracao: '2014' }, 'inaugurado em 2014')).toBeNull();
   });
 
   it('monta o fato e a observação', () => {
