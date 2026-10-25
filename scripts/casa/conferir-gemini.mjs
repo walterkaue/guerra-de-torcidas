@@ -9,14 +9,16 @@
 //   npm run conferir-casa -- --todos                     todos os clubes com linha em rascunho
 //   npm run conferir-casa -- --clube=santos --buscar     títulos cuja fonte saiu do ar: procura fonte nova
 //                                     (--candidatos=6 testa mais páginas candidatas; padrão 3)
+//   npm run conferir-casa -- --campos                    fatos de clubes e estádios + dados/casa/revisao-textos.md
 // Opções: --arquivos=titulos,recordes,goleadas (padrão: os três) --modelo=gemini-3.5-flash-lite
 //
-// Clubes, estádios e mantos têm texto livre (história, descrição) e continuam na conferência humana.
+// Clubes, estádios e mantos têm texto livre (história, descrição): o --campos prova os fatos deles e
+// monta dados/casa/revisao-textos.md; o texto e a virada para `revisada` ficam com uma pessoa.
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { DOMINIOS_ACEITOS } from '../clubes/validar.mjs';
-import { escreverTabela, lerTabela } from './tabela.mjs';
+import { colunaClube, escreverTabela, lerTabela } from './tabela.mjs';
 
 const PASTA = new URL('../../dados/casa/', import.meta.url);
 const RELATORIOS = new URL('../../dados/casa/conferencia-gemini/', import.meta.url);
@@ -296,7 +298,7 @@ async function checarNaPagina(arquivo, itens, pagina, fonte, modelos) {
       let motivo = null;
       if (!r || !r.confirma) motivo = 'o modelo não achou o fato na página';
       else if (!trechoNaPagina(trecho, pagina)) motivo = 'o trecho citado não está na página';
-      else motivo = motivoChave(arquivo, it.linha, trecho, dominio);
+      else motivo = it.motivoDe ? it.motivoDe(trecho) : motivoChave(arquivo, it.linha, trecho, dominio);
       if (motivo) recusadas.push({ it, motivo });
       else confirmadas.push({ it, trecho, modelo: resp.modelo });
     }
@@ -416,6 +418,150 @@ export async function buscarFontes(clube, { modelos, hoje, seco, candidatosPorGr
   return relatorio;
 }
 
+// ---------------------------------------------------------------------------
+// Modo --campos: campos objetivos de clubes e estádios + texto para a revisão humana
+// ---------------------------------------------------------------------------
+// Clube e estádio misturam fato (data, número, cidade) com texto (história das cores, apelidos,
+// nome popular). O script prova os fatos pelo trecho; a linha só vira `revisada` depois que uma
+// pessoa aprova o texto, a partir de dados/casa/revisao-textos.md.
+
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+export const dataPorExtenso = (d) => {
+  const [a, m, dia] = String(d).split('-');
+  return m && dia ? `${Number(dia)} de ${MESES[Number(m) - 1]} de ${a}` : a;
+};
+const fmtNum = (n) => Number(n).toLocaleString('pt-BR');
+
+/** Campos objetivos de cada arquivo: de quais colunas de fonte saem e o fato que o modelo procura. */
+export const CAMPOS = {
+  clubes: [
+    { campo: 'fundacao', rotulo: 'fundação', fontes: ['fonte', 'fonte2'], fato: (l) => `O clube ${l.id} foi fundado em ${dataPorExtenso(l.fundacao)}.` },
+    { campo: 'cidade', rotulo: 'cidade', fontes: ['fonte', 'fonte2'], fato: (l) => `O clube ${l.id} é da cidade de ${l.cidade} (${l.uf}).` },
+  ],
+  estadios: [
+    { campo: 'inauguracao', rotulo: 'inauguração', fontes: ['fonte'], fato: (l) => `O estádio ${l.nome} foi inaugurado em ${dataPorExtenso(l.inauguracao)}.` },
+    { campo: 'capacidade', rotulo: 'capacidade', fontes: ['fonte_capacidade', 'fonte'], fato: (l) => `A capacidade do estádio ${l.nome} é de ${fmtNum(l.capacidade)} pessoas.` },
+    {
+      campo: 'recorde_publico',
+      rotulo: 'recorde de público',
+      fontes: ['fonte_recorde'],
+      fato: (l) => `O maior público do ${l.clube} no ${l.nome} foi de ${fmtNum(l.recorde_publico)} (${l.recorde_tipo}), em ${dataPorExtenso(l.recorde_data)}.`,
+    },
+  ],
+};
+
+/** O trecho traz o dado do campo? (data: ano e dia; cidade: o nome; número: o número). */
+export function motivoCampo(campo, linha, trecho) {
+  const valor = linha[campo];
+  if (campo === 'fundacao' || campo === 'inauguracao') {
+    const [ano, , dia] = valor.split('-');
+    const n = numerosDe(trecho);
+    if (!n.includes(Number(ano))) return `o trecho não traz o ano ${ano}`;
+    if (dia && !n.includes(Number(dia))) return `o trecho não traz o dia ${Number(dia)}`;
+    return null;
+  }
+  if (campo === 'cidade') return ` ${normalizar(trecho)} `.includes(` ${normalizar(valor)} `) ? null : `o trecho não cita ${valor}`;
+  return numerosDe(trecho).includes(Number(valor)) ? null : `o trecho não traz o número ${valor}`;
+}
+
+export async function conferirCampos(clubes, { modelos, hoje, seco }) {
+  const tabelas = { clubes: ler('clubes'), estadios: ler('estadios') };
+  const resultado = new Map(); // `${arquivo}|${i}|${campo}` -> { ok, trecho?, dominio?, motivo }
+  let pendentes = [];
+  for (const arquivo of ['clubes', 'estadios']) {
+    tabelas[arquivo].linhas.forEach((l, i) => {
+      if (!clubes.includes(l[colunaClube(arquivo)]) || l.status !== 'rascunho') return;
+      for (const c of CAMPOS[arquivo]) {
+        if (!l[c.campo]) continue;
+        const urls = c.fontes.map((f) => l[f]).filter((u) => u && dominioAceito(dominioDe(u)));
+        const chave = `${arquivo}|${i}|${c.campo}`;
+        if (!urls.length) resultado.set(chave, { ok: false, motivo: 'sem fonte de domínio aceito' });
+        else pendentes.push({ id: `C${pendentes.length}`, chave, linha: l, urls, fato: c.fato(l), motivoDe: (t) => motivoCampo(c.campo, l, t) });
+      }
+    });
+  }
+
+  // Cada campo tenta a primeira fonte; o que falha tenta a seguinte (ex.: fonte2 do clube).
+  const paginas = new Map();
+  for (let passo = 0; pendentes.length; passo++) {
+    const porUrl = new Map();
+    for (const it of pendentes) {
+      const u = it.urls[passo];
+      if (!u) continue;
+      if (!porUrl.has(u)) porUrl.set(u, []);
+      porUrl.get(u).push(it);
+    }
+    if (!porUrl.size) break;
+    const falharam = [];
+    for (const [u, itens] of porUrl) {
+      if (!paginas.has(u)) paginas.set(u, await baixar(u));
+      const p = paginas.get(u);
+      if (p.erro) {
+        for (const it of itens) resultado.set(it.chave, { ok: false, motivo: `${dominioDe(u)}: ${p.erro}` }), falharam.push(it);
+        continue;
+      }
+      const res = await checarNaPagina('', itens, p.texto, u, modelos);
+      for (const { it, trecho } of res.confirmadas) resultado.set(it.chave, { ok: true, trecho, dominio: dominioDe(u) });
+      for (const { it, motivo } of res.recusadas) resultado.set(it.chave, { ok: false, motivo: `${dominioDe(u)}: ${motivo}` }), falharam.push(it);
+    }
+    pendentes = falharam;
+  }
+
+  // Grava na observação o que foi provado (o status só muda com a aprovação do texto).
+  const data = hoje.split('-').reverse().join('/');
+  for (const arquivo of ['clubes', 'estadios']) {
+    tabelas[arquivo].linhas.forEach((l, i) => {
+      const provados = CAMPOS[arquivo]
+        .map((c) => [c, resultado.get(`${arquivo}|${i}|${c.campo}`)])
+        .filter(([, r]) => r?.ok)
+        .map(([c, r]) => `${c.rotulo} ("${(r.trecho.length > 160 ? `${r.trecho.slice(0, 157)}...` : r.trecho).replace(/"/g, "'")}", ${r.dominio})`);
+      if (provados.length) l.observacao = `${l.observacao ? `${l.observacao} ` : ''}Campos conferidos em ${data} por script: ${provados.join('; ')}.`;
+    });
+  }
+  if (!seco) for (const a of ['clubes', 'estadios']) writeFileSync(new URL(`${a}.csv`, PASTA), escreverTabela(tabelas[a]));
+  return { tabelas, resultado };
+}
+
+/** Documento para a pessoa revisar: fatos provados pelo script e os textos que só ela aprova. */
+export function revisaoMd(clubes, { tabelas, resultado }, mantos, hoje) {
+  const linhas = [
+    '# Casa do [time]: revisão dos textos',
+    '',
+    `Gerado em ${hoje.split('-').reverse().join('/')} por \`npm run conferir-casa -- --campos\`. Para cada clube: os **fatos** (✅ provado pelo trecho literal da fonte, ❌ não provado, com o motivo) e os **textos** que só uma pessoa aprova.`,
+    'Responda clube a clube: "aprovo", ou o que mudar. Só depois a linha vira `revisada`.',
+    '',
+  ];
+  const fato = (arquivo, i, c, valor) => {
+    const r = resultado.get(`${arquivo}|${i}|${c.campo}`);
+    if (!r) return `- ${c.rotulo}: ${valor || '(vazio)'}`;
+    return r.ok ? `- ✅ ${c.rotulo}: ${valor} — "${r.trecho.slice(0, 180)}" (${r.dominio})` : `- ❌ ${c.rotulo}: ${valor} — ${r.motivo}`;
+  };
+  for (const clube of clubes) {
+    const ic = tabelas.clubes.linhas.findIndex((l) => l.id === clube);
+    const c = tabelas.clubes.linhas[ic];
+    const ie = tabelas.estadios.linhas.findIndex((l) => l.clube === clube);
+    const e = tabelas.estadios.linhas[ie];
+    const ms = mantos.linhas.filter((m) => m.clube === clube && m.status === 'rascunho');
+    if (c?.status !== 'rascunho' && e?.status !== 'rascunho' && !ms.length) continue;
+    linhas.push(`## ${clube}`, '');
+    if (c?.status === 'rascunho') {
+      linhas.push('**Clube**', fato('clubes', ic, CAMPOS.clubes[0], dataPorExtenso(c.fundacao)), fato('clubes', ic, CAMPOS.clubes[1], `${c.cidade} (${c.uf})`));
+      linhas.push(`- Apelidos: ${c.apelidos.split('|').join(', ') || '(vazio)'}`, `- História das cores: ${c.historia_cores || '(vazio)'}`, '');
+    }
+    if (e?.status === 'rascunho') {
+      linhas.push(`**Estádio: ${e.nome}${e.nome_popular ? ` ("${e.nome_popular}")` : ''}**`);
+      linhas.push(fato('estadios', ie, CAMPOS.estadios[0], dataPorExtenso(e.inauguracao)));
+      linhas.push(fato('estadios', ie, CAMPOS.estadios[1], e.capacidade ? fmtNum(e.capacidade) : ''));
+      linhas.push(fato('estadios', ie, CAMPOS.estadios[2], e.recorde_publico ? `${fmtNum(e.recorde_publico)} (${e.recorde_tipo}), ${dataPorExtenso(e.recorde_data)}` : ''));
+      linhas.push(`- Partida do recorde: ${e.recorde_partida || '(vazio)'}`, '');
+    }
+    for (const m of ms) {
+      linhas.push(`**Manto ${m.ordem} (${m.periodo})**: ${m.padrao}, cores ${m.cores.split('|').join(' ')}${m.listras ? `, listras ${m.listras}` : ''}`, `- Descrição: ${m.descricao}`, `- Fonte: ${dominioDe(m.fonte) ?? '(sem fonte)'}`, '');
+    }
+  }
+  return linhas.join('\n');
+}
+
 export function relatorioMd(r, hoje) {
   const linhas = [
     `# Conferência por script: ${r.clube}`,
@@ -448,6 +594,22 @@ async function principal() {
   const modelos = opcao('modelo') ? [opcao('modelo')] : MODELOS;
   if (!process.env.GEMINI_API_KEY) throw new Error('Falta a variável de ambiente GEMINI_API_KEY.');
   const hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+
+  if (args.includes('--campos')) {
+    const mantos = ler('mantos');
+    const emRascunho = (c) =>
+      ler('clubes').linhas.some((l) => l.id === c && l.status === 'rascunho') ||
+      ler('estadios').linhas.some((l) => l.clube === c && l.status === 'rascunho') ||
+      mantos.linhas.some((l) => l.clube === c && l.status === 'rascunho');
+    const alvo = opcao('clube') ? [opcao('clube')] : Object.keys(NOMES).filter(emRascunho);
+    const r = await conferirCampos(alvo, { modelos, hoje, seco });
+    const ok = [...r.resultado.values()].filter((x) => x.ok).length;
+    console.log(`${alvo.length} clubes: ${ok} de ${r.resultado.size} campos provados${seco ? ' (--seco: nada gravado)' : ''}`);
+    const md = revisaoMd(alvo, r, mantos, hoje) + '\n';
+    if (seco) console.log(md);
+    else writeFileSync(new URL('revisao-textos.md', PASTA), md);
+    return;
+  }
 
   let clubes;
   if (args.includes('--todos')) {
