@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fatoDe, motivoChave, numerosDe, observacaoConfirmada, textoDaPagina, trechoNaPagina } from './conferir-gemini.mjs';
+import { anosNaPagina, fatoDe, linksAceitos, motivoChave, numerosDe, observacaoConfirmada, textoDaPagina, trechoNaPagina } from './conferir-gemini.mjs';
 
 describe('conferir-gemini (partes puras)', () => {
   it('tira tags e decodifica entidades da página', () => {
@@ -44,6 +44,20 @@ describe('conferir-gemini (partes puras)', () => {
     expect(motivoChave('goleadas', l, 'goleou Alves Nogueira por 14 a 0', 'lance.com.br')).toBeNull();
     expect(motivoChave('goleadas', l, 'goleou Alves Nogueira por 10 a 0', 'lance.com.br')).toMatch(/placar/);
     expect(motivoChave('goleadas', l, 'goleou por 14 a 0', 'lance.com.br')).toMatch(/Alves/);
+  });
+
+  it('busca: colhe só links de domínio aceito que não são a página inicial', () => {
+    const html = [
+      '<a href="https://www.saopaulofc.net/spfcpedia/conquistas/">a</a>',
+      '<a href="https://www.lance.com.br/">home</a>',
+      '<a href="https://blog.qualquer.com/lista">fora</a>',
+      '<a href="https://ge.globo.com/futebol/lista.ghtml?x=1&amp;y=2#topo">ge</a>',
+    ].join('');
+    expect(linksAceitos(html)).toEqual(['https://www.saopaulofc.net/spfcpedia/conquistas/', 'https://ge.globo.com/futebol/lista.ghtml?x=1&y=2']);
+  });
+
+  it('busca: conta os anos que aparecem soltos na página', () => {
+    expect(anosNaPagina('Santos: 1935, 1955 e 1956. Placar 2019x1', ['1935', '1956', '1958', '2019'])).toBe(2);
   });
 
   it('monta o fato e a observação', () => {

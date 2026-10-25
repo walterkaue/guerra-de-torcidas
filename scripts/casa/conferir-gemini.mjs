@@ -7,6 +7,8 @@
 //   npm run conferir-casa -- --clube=cruzeiro --seco     simula: mostra o que confirmaria
 //   npm run conferir-casa -- --clube=cruzeiro            grava nos CSVs e no relatório
 //   npm run conferir-casa -- --todos                     todos os clubes com linha em rascunho
+//   npm run conferir-casa -- --clube=santos --buscar     títulos cuja fonte saiu do ar: procura fonte nova
+//                                     (--candidatos=6 testa mais páginas candidatas; padrão 3)
 // Opções: --arquivos=titulos,recordes,goleadas (padrão: os três) --modelo=gemini-3.5-flash-lite
 //
 // Clubes, estádios e mantos têm texto livre (história, descrição) e continuam na conferência humana.
@@ -240,7 +242,6 @@ export async function conferirClube(clube, { arquivos, modelos, hoje, seco }) {
     });
   }
 
-  let chamadas = 0;
   for (const { arquivo, fonte, itens } of grupos.values()) {
     const dominio = dominioDe(fonte);
     const rotulo = (it) => `${arquivo}: ${fatoDe(arquivo, it.linha)}`;
@@ -254,41 +255,164 @@ export async function conferirClube(clube, { arquivos, modelos, hoje, seco }) {
       for (const it of itens) relatorio.semFonte.push({ fato: rotulo(it), fonte, motivo: pagina.erro });
       continue;
     }
-    const texto = pagina.texto.slice(0, LIMITE_PAGINA);
-    for (let k = 0; k < itens.length; k += 40) {
-      const parte = itens.slice(k, k + 40);
-      if (chamadas++) await esperar(PAUSA_MS);
-      let resp;
-      try {
-        resp = await perguntarGemini(modelos, parte, texto);
-      } catch (e) {
-        for (const it of parte) relatorio.semFonte.push({ fato: rotulo(it), fonte, motivo: e.message });
-        continue;
-      }
-      const porId = new Map(resp.respostas.map((r) => [r.id, r]));
-      for (const it of parte) {
-        const r = porId.get(it.id);
-        const trecho = (r?.trecho ?? '').trim();
-        let motivo = null;
-        if (!r || !r.confirma) motivo = 'o modelo não achou o fato na página';
-        else if (!trechoNaPagina(trecho, pagina.texto)) motivo = 'o trecho citado não está na página';
-        else motivo = motivoChave(arquivo, it.linha, trecho, dominio);
-        if (motivo) {
-          relatorio.recusadas.push({ fato: rotulo(it), fonte, motivo });
-          continue;
-        }
-        relatorio.confirmadas.push({ fato: rotulo(it), fonte, trecho, modelo: resp.modelo });
-        const l = tabelas[arquivo].linhas[it.i];
-        l.status = 'revisada';
-        l.verificada_em = hoje;
-        l.observacao = observacaoConfirmada(l.observacao, trecho, dominio, resp.modelo, hoje);
-      }
+    const res = await checarNaPagina(arquivo, itens, pagina.texto, fonte, modelos);
+    for (const { it, motivo, falhaDoModelo } of res.recusadas) {
+      (falhaDoModelo ? relatorio.semFonte : relatorio.recusadas).push({ fato: rotulo(it), fonte, motivo });
+    }
+    for (const { it, trecho, modelo } of res.confirmadas) {
+      relatorio.confirmadas.push({ fato: rotulo(it), fonte, trecho, modelo });
+      marcar(tabelas[arquivo].linhas[it.i], trecho, fonte, modelo, hoje);
     }
   }
 
   if (!seco && relatorio.confirmadas.length) {
     for (const a of arquivos) writeFileSync(new URL(`${a}.csv`, PASTA), escreverTabela(tabelas[a]));
   }
+  return relatorio;
+}
+
+let chamadas = 0;
+
+/** Pergunta ao modelo sobre os itens numa página já baixada e aplica as travas do código. */
+async function checarNaPagina(arquivo, itens, pagina, fonte, modelos) {
+  const dominio = dominioDe(fonte);
+  const texto = pagina.slice(0, LIMITE_PAGINA);
+  const confirmadas = [];
+  const recusadas = [];
+  for (let k = 0; k < itens.length; k += 40) {
+    const parte = itens.slice(k, k + 40);
+    if (chamadas++) await esperar(PAUSA_MS);
+    let resp;
+    try {
+      resp = await perguntarGemini(modelos, parte, texto);
+    } catch (e) {
+      for (const it of parte) recusadas.push({ it, motivo: e.message, falhaDoModelo: true });
+      continue;
+    }
+    const porId = new Map(resp.respostas.map((r) => [r.id, r]));
+    for (const it of parte) {
+      const r = porId.get(it.id);
+      const trecho = (r?.trecho ?? '').trim();
+      let motivo = null;
+      if (!r || !r.confirma) motivo = 'o modelo não achou o fato na página';
+      else if (!trechoNaPagina(trecho, pagina)) motivo = 'o trecho citado não está na página';
+      else motivo = motivoChave(arquivo, it.linha, trecho, dominio);
+      if (motivo) recusadas.push({ it, motivo });
+      else confirmadas.push({ it, trecho, modelo: resp.modelo });
+    }
+  }
+  return { confirmadas, recusadas };
+}
+
+/** Marca a linha como revisada com o trecho; com fonteAntiga, troca a fonte e registra a troca. */
+function marcar(linha, trecho, fonte, modelo, hoje, fonteAntiga) {
+  linha.status = 'revisada';
+  linha.verificada_em = hoje;
+  let obs = linha.observacao;
+  if (fonteAntiga) {
+    linha.fonte = fonte;
+    obs = `${obs ? `${obs} ` : ''}Fonte trocada em ${hoje.split('-').reverse().join('/')}: a anterior (${fonteAntiga}) saiu do ar.`;
+  }
+  linha.observacao = observacaoConfirmada(obs, trecho, dominioDe(fonte), modelo, hoje);
+}
+
+// ---------------------------------------------------------------------------
+// Modo --buscar: fonte nova para títulos cuja fonte saiu do ar
+// ---------------------------------------------------------------------------
+// A busca do Google pelo Gemini não tem cota na chave gratuita, então os candidatos vêm das
+// referências da Wikipédia (do campeonato e do clube): a Wikipédia nunca vira fonte, mas aponta
+// para páginas da imprensa e dos clubes. O código fica só com links de domínio aceito, pré-seleciona
+// os que trazem mais anos da lista e passa os melhores pelo mesmo teste do trecho literal.
+
+const WIKI_ESTADUAL = {
+  'Campeonato Paulista': 'Campeonato_Paulista_de_Futebol', 'Campeonato Baiano': 'Campeonato_Baiano_de_Futebol',
+  'Campeonato Carioca': 'Campeonato_Carioca_de_Futebol', 'Campeonato Mineiro': 'Campeonato_Mineiro_de_Futebol',
+  'Campeonato Gaúcho': 'Campeonato_Gaúcho_de_Futebol', 'Campeonato Paranaense': 'Campeonato_Paranaense_de_Futebol',
+  'Campeonato Catarinense': 'Campeonato_Catarinense_de_Futebol', 'Campeonato Paraense': 'Campeonato_Paraense_de_Futebol',
+};
+const WIKI_CLUBE = {
+  'athletico-pr': 'Club_Athletico_Paranaense', 'atletico-mg': 'Clube_Atlético_Mineiro', bahia: 'Esporte_Clube_Bahia',
+  botafogo: 'Botafogo_de_Futebol_e_Regatas', bragantino: 'Red_Bull_Bragantino', chapecoense: 'Associação_Chapecoense_de_Futebol',
+  corinthians: 'Sport_Club_Corinthians_Paulista', coritiba: 'Coritiba_Foot_Ball_Club', cruzeiro: 'Cruzeiro_Esporte_Clube',
+  flamengo: 'Clube_de_Regatas_do_Flamengo', fluminense: 'Fluminense_Football_Club', gremio: 'Grêmio_Foot-Ball_Porto_Alegrense',
+  internacional: 'Sport_Club_Internacional', mirassol: 'Mirassol_Futebol_Clube', palmeiras: 'Sociedade_Esportiva_Palmeiras',
+  remo: 'Clube_do_Remo', santos: 'Santos_Futebol_Clube', 'sao-paulo': 'São_Paulo_Futebol_Clube', vasco: 'Club_de_Regatas_Vasco_da_Gama',
+  vitoria: 'Esporte_Clube_Vitória',
+};
+
+/** Links de domínio aceito de uma página, sem os que são só a página inicial do site. */
+export function linksAceitos(html) {
+  const links = new Set();
+  for (const m of String(html).matchAll(/href="(https?:\/\/[^"]+)"/g)) {
+    const u = m[1].replace(/&amp;/g, '&').replace(/#.*$/, '');
+    let caminho = '';
+    try {
+      caminho = new URL(u).pathname.replace(/\/+$/, '');
+    } catch {
+      continue;
+    }
+    if (caminho && dominioAceito(dominioDe(u))) links.add(u);
+  }
+  return [...links];
+}
+
+/** Quantos anos da lista aparecem na página como número solto. */
+export function anosNaPagina(texto, anos) {
+  const t = ` ${normalizar(texto)} `;
+  return anos.filter((a) => t.includes(` ${a} `)).length;
+}
+
+export async function buscarFontes(clube, { modelos, hoje, seco, candidatosPorGrupo = 3 }) {
+  const tab = ler('titulos');
+  const relatorio = { clube, confirmadas: [], recusadas: [], semFonte: [] };
+  const fora = new Map(); // fonte -> erro (ou null se abre)
+  const grupos = new Map();
+  for (const [i, l] of tab.linhas.entries()) {
+    if (l.clube !== clube || l.status !== 'rascunho') continue;
+    if (!fora.has(l.fonte)) fora.set(l.fonte, (await baixar(l.fonte)).erro ?? null);
+    if (!fora.get(l.fonte)) continue; // a fonte abre: é caso da conferência normal, não da busca
+    const chave = `${l.competicao}|${l.nota}`;
+    if (!grupos.has(chave)) grupos.set(chave, { competicao: l.competicao, nota: l.nota, itens: [] });
+    grupos.get(chave).itens.push({ id: `L${i}`, i, linha: l, fato: fatoDe('titulos', l) });
+  }
+
+  for (const g of grupos.values()) {
+    const artigos = [g.competicao === 'estadual' ? WIKI_ESTADUAL[g.nota] : null, WIKI_CLUBE[clube]].filter(Boolean);
+    const candidatos = new Set();
+    for (const a of artigos) {
+      const r = await fetch(`https://pt.wikipedia.org/wiki/${encodeURIComponent(a)}`, {
+        headers: { 'User-Agent': 'guerra-de-torcidas/1.0 (conferencia de fontes)' },
+      }).catch(() => null);
+      if (r?.ok) for (const u of linksAceitos(await r.text())) candidatos.add(u);
+    }
+    const anos = g.itens.map((it) => it.linha.ano);
+    const pontuados = [];
+    for (const u of candidatos) {
+      const p = await baixar(u);
+      if (p.erro) continue;
+      const n = anosNaPagina(p.texto, anos);
+      if (n >= Math.min(3, anos.length)) pontuados.push({ u, texto: p.texto, n });
+    }
+    pontuados.sort((a, b) => b.n - a.n);
+
+    let restantes = g.itens;
+    for (const { u, texto } of pontuados.slice(0, candidatosPorGrupo)) {
+      if (!restantes.length) break;
+      const res = await checarNaPagina('titulos', restantes, texto, u, modelos);
+      for (const { it, trecho, modelo } of res.confirmadas) {
+        relatorio.confirmadas.push({ fato: `titulos: ${it.fato}`, fonte: u, trecho, modelo });
+        marcar(tab.linhas[it.i], trecho, u, modelo, hoje, it.linha.fonte);
+      }
+      const ok = new Set(res.confirmadas.map((c) => c.it.id));
+      restantes = restantes.filter((it) => !ok.has(it.id));
+    }
+    const motivo = pontuados.length
+      ? `nenhum dos ${Math.min(candidatosPorGrupo, pontuados.length)} candidatos provou`
+      : 'nenhum candidato com a lista de anos';
+    for (const it of restantes) relatorio.semFonte.push({ fato: `titulos: ${it.fato}`, fonte: it.linha.fonte, motivo });
+  }
+
+  if (!seco && relatorio.confirmadas.length) writeFileSync(new URL('titulos.csv', PASTA), escreverTabela(tab));
   return relatorio;
 }
 
@@ -334,12 +458,13 @@ async function principal() {
     clubes = [c];
   }
 
+  const buscar = args.includes('--buscar');
   for (const clube of clubes) {
-    const r = await conferirClube(clube, { arquivos, modelos, hoje, seco });
+    const r = buscar ? await buscarFontes(clube, { modelos, hoje, seco, candidatosPorGrupo: Number(opcao('candidatos') ?? 3) }) : await conferirClube(clube, { arquivos, modelos, hoje, seco });
     console.log(`${clube}: ${r.confirmadas.length} confirmadas, ${r.recusadas.length} recusadas, ${r.semFonte.length} sem fonte que abra${seco ? ' (--seco: nada gravado)' : ''}`);
     if (!seco) {
       mkdirSync(RELATORIOS, { recursive: true });
-      writeFileSync(new URL(`${clube}.md`, RELATORIOS), relatorioMd(r, hoje) + '\n');
+      writeFileSync(new URL(`${clube}${buscar ? '-busca' : ''}.md`, RELATORIOS), relatorioMd(r, hoje) + '\n');
     } else {
       for (const x of r.recusadas) console.log(`   recusada: ${x.fato} — ${x.motivo}`);
       for (const x of r.semFonte) console.log(`   sem fonte: ${x.fato} — ${x.motivo}`);
