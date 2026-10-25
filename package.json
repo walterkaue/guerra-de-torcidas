@@ -16,6 +16,7 @@
     "metricas": "node scripts/metricas.mjs",
     "balanco": "node scripts/balanco/balanco.mjs",
     "importar-perguntas": "node scripts/importar-perguntas.mjs",
+    "exportar-perguntas": "node scripts/perguntas/exportar-staging.mjs",
     "importar-clubes-do-dia": "node scripts/importar-clubes-do-dia.mjs",
     "catalogo-lances": "node scripts/lances/catalogo.mjs",
     "importar-casa": "node scripts/casa/importar.mjs",

@@ -1,3 +1,5 @@
+> **Substituído em 26/10/2026.** As funções `gerar-conteudo` e `auditar-conteudo` foram reescritas (pipeline v2: página baixada pelo código, trecho literal, auditor que não sabe a resposta certa, tabela `staging_gt.rascunhos_perguntas`). A porta de entrada segue a mesma ideia (só secret key do projeto), agora em `supabase/functions/_shared/segredo.ts`. Ver `docs/jogo.md`, seção 7.1, "Banco de perguntas". O texto abaixo é histórico.
+
 # Ajustes da Edge Function auditar-conteudo
 
 ## Objetivo
