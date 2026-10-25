@@ -438,6 +438,36 @@
   align-self: center;
 }
 
+/* Entrada da Casa dos clubes (docs/casa.md, seção 3). */
+.link-casa {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 56px;
+  padding: 10px 16px;
+  border: 2px dashed rgba(233, 199, 90, 0.55);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--cal);
+  font: inherit;
+  text-align: left;
+  touch-action: manipulation;
+}
+.link-casa .rotulo {
+  font-size: 18px;
+  color: var(--amarelo);
+}
+.link-casa small {
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+/* Ranking: a linha da torcida abre a Casa dela. */
+.abre-casa {
+  cursor: pointer;
+}
+
 /* ---------- convite de desafio ---------- */
 .convite-desafio {
   display: flex;

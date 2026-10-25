@@ -5,7 +5,7 @@ import './estilos/palpites.css';
 import './estilos/prova.css';
 import './estilos/timeDoDia.css';
 import './estilos/lances.css';
-import { iniciarApp, irPara, linkDoTimeDoDia, registrarTela } from './app';
+import { iniciarApp, irPara, linkDoTimeDoDia, registrarTela, type Rota } from './app';
 import { prefs } from './estado';
 import { timePorId } from './dados/times';
 import { telaInicio } from './telas/inicio';
@@ -48,6 +48,28 @@ registrarTela('admin', (root) => {
   };
 });
 
+// Casa do [time]: tela e dados só baixam quando alguém abre (#casa ou #casa/<id>).
+registrarTela('casa', (root, rota) => {
+  let limpar: (() => void) | undefined;
+  let saiu = false;
+  root.innerHTML = '<main class="tela"><p class="vazio">Abrindo a Casa…</p></main>';
+  void import('./telas/casa/tela').then((m) => {
+    if (!saiu) limpar = m.telaCasa(root, rota);
+  });
+  return () => {
+    saiu = true;
+    limpar?.();
+  };
+});
+
+/** Rota do endereço: #admin, #casa e #casa/<id>. */
+function rotaDoHash(): Rota | undefined {
+  if (location.hash === '#admin') return { tela: 'admin' };
+  const casa = /^#casa(?:\/([a-z-]+))?$/.exec(location.hash);
+  if (casa) return { tela: 'casa', id: casa[1] };
+  return undefined;
+}
+
 // Link compartilhado com ?time=flamengo já sugere o time de quem mandou.
 const timeDoLink = new URLSearchParams(location.search).get('time');
 if (!prefs.get().time && timePorId(timeDoLink)) prefs.set({ time: timeDoLink! });
@@ -58,15 +80,15 @@ if (app) {
   // ?dia (link do card do Time do Dia) abre direto no jogo; sem time escolhido, passa antes pela escolha.
   const dia = linkDoTimeDoDia() || (import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso'));
   irPara(
-    location.hash === '#admin'
-      ? { tela: 'admin' }
-      : dia
+    rotaDoHash() ??
+      (dia
         ? prefs.get().time
           ? { tela: 'timeDoDia' }
           : { tela: 'times', depois: 'timeDoDia' }
-        : { tela: 'inicio' },
+        : { tela: 'inicio' }),
   );
   window.addEventListener('hashchange', () => {
-    if (location.hash === '#admin') irPara({ tela: 'admin' });
+    const rota = rotaDoHash();
+    if (rota) irPara(rota);
   });
 }

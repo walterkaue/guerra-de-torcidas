@@ -1,7 +1,7 @@
 # Casa do [time] — a página de história de cada clube
 
 > Versão 1.0 · 21/10/2026 · Desenho aprovado em 21/10/2026, a partir da proposta "Galeria dos Clubes".
-> **Ainda não construída.** Dados em rascunho em `dados/casa/` (21/10/2026). Ordem de publicação: `docs/casa-publicacao.md`.
+> **Tela construída em 25/10/2026** (`src/telas/casa/`, `#casa` e `#casa/<id>`), com ganchos na Home e no Ranking. Só aparecem os clubes com a linha de clube revisada; os outros ficam "em breve" no índice. Ordem de publicação: `docs/casa-publicacao.md`.
 > Se algo aqui discordar do `docs/jogo.md`, vale o `jogo.md`.
 
 ## 1. O que é

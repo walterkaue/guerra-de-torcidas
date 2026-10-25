@@ -472,6 +472,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - Competições pelo nome real da entidade (FIFA, CONMEBOL, CBF, federação), **sem patrocinador**. Títulos: na Casa do clube vale o lado da torcida (o que o clube reivindica conta no total dele, com nota neutra do que a entidade reconhece); fora da Casa vale a lista oficial.
 - O nome "Galeria" continua sendo da **Galeria de Troféus** da torcida no jogo (seção 5), que vira a prateleira "Aqui no jogo" da Casa quando existir.
 - Estático, fora do bundle inicial, sem servidor.
+- **Tela no ar desde 25/10/2026** (`#casa`, `#casa/<id>`): entra pela Home ("Casa dos clubes", abre a do seu time) e pelo Ranking (tocar numa torcida). Clube sem a linha de clube revisada fica "em breve" no índice.
 
 ## 8. Tom e zoeira
 
