@@ -23,7 +23,7 @@ import { colunaClube, escreverTabela, lerTabela } from './tabela.mjs';
 const PASTA = new URL('../../dados/casa/', import.meta.url);
 const RELATORIOS = new URL('../../dados/casa/conferencia-gemini/', import.meta.url);
 export const ARQUIVOS_OBJETIVOS = ['titulos', 'recordes', 'goleadas'];
-const MODELOS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash'];
+export const MODELOS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash'];
 const LIMITE_PAGINA = 80_000; // caracteres de texto mandados ao modelo (cerca de 20 mil tokens)
 const PAUSA_MS = 4_500; // entre chamadas, para caber na cota gratuita por minuto
 
@@ -164,9 +164,9 @@ export function observacaoConfirmada(antiga, trecho, dominio, modelo, hoje) {
 // Rede (página e Gemini)
 // ---------------------------------------------------------------------------
 
-const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+export const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function baixar(url) {
+export async function baixar(url) {
   try {
     const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, signal: AbortSignal.timeout(30_000) });
     if (!r.ok) return { erro: `HTTP ${r.status}` };
@@ -188,7 +188,7 @@ const ESQUEMA = {
   items: { type: 'OBJECT', properties: { id: { type: 'STRING' }, confirma: { type: 'BOOLEAN' }, trecho: { type: 'STRING' } }, required: ['id', 'confirma', 'trecho'] },
 };
 
-async function perguntarGemini(modelos, fatos, pagina) {
+export async function perguntarGemini(modelos, fatos, pagina) {
   const chave = process.env.GEMINI_API_KEY;
   const corpo = JSON.stringify({
     systemInstruction: { parts: [{ text: INSTRUCAO }] },
