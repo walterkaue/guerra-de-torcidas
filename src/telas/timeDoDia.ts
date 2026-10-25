@@ -2,7 +2,7 @@
 // chute. O secreto fica só no servidor; aqui é a lista com busca, a grade e o resultado (com o card).
 
 import { esc, irPara, type Rota } from '../app';
-import { corDeTexto, timePorId, TIMES, type Time } from '../dados/times';
+import { corDeTexto, ID_OUTRO, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { desenharCardDia } from '../jogo/cardDia';
 import { conviteDia } from '../jogo/convites';
@@ -309,6 +309,15 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     const linha = linhaDoCard(e.numero, placar, e.sequencia, novoRecorde);
     const textoShare = `${linha}\n${grade}\n${conviteDia(n, e.acertou)} ${link}`;
     const situacao = `+${e.pontos} na semana, além das 5 partidas do dia.`;
+    // Casa do [time]: só depois que o dia termina (antes daria pista) e só para clube da Série A.
+    const timeCasa = timePorId(e.secreto?.id);
+    const casa =
+      timeCasa && timeCasa.id !== ID_OUTRO
+        ? `<button class="link-casa" type="button" data-acao="casa">
+            <span class="rotulo">Conheça a Casa ${timeCasa.artigo === 'a' ? 'da' : 'do'} ${esc(timeCasa.nome)}</span>
+            <small>Estádio, troféus, recordes e cores</small>
+          </button>`
+        : '';
 
     elFim.innerHTML = `
       <div class="dia-revelado faixa-tv">
@@ -321,6 +330,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       </div>
       ${frasesFinais[1] ? `<p class="adesivo segundo">${esc(frasesFinais[1])}</p>` : ''}
       <p class="situacao">${esc(situacao)}</p>
+      ${casa}
       ${htmlPosicao(e.desempenho, 'dia')}
       <p class="dia-proximo rotulo">Próximo time em <strong data-relogio>${formatarRelogio(Date.parse(e.proximoEm) - Date.now())}</strong></p>
       <section class="res-compartilhar">
@@ -418,6 +428,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       }
     });
     elFim.querySelector('[data-acao="inicio"]')?.addEventListener('click', () => irPara({ tela: 'inicio' }));
+    elFim.querySelector('[data-acao="casa"]')?.addEventListener('click', () => irPara({ tela: 'casa', id: timeCasa?.id }));
     elFim.querySelector('[data-acao="jogar"]')?.addEventListener('click', () => irPara({ tela: 'partida' }));
   }
 

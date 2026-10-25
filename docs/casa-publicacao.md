@@ -11,7 +11,7 @@
 | Conferência dos dados (segunda sessão) | **Não começou** |
 | Importador, validador e competições (`scripts/casa/`, `src/dados/competicoes.ts`) | Pronto; conferência por script com Gemini (`npm run conferir-casa`) desde 25/10 |
 | Tela, índice e desenhos (`src/telas/casa/`) | Pronto (25/10/2026), testado em 390×844 |
-| Ganchos (Home, Ranking, Time do Dia) | Home e Ranking prontos; Time do Dia falta |
+| Ganchos (Home, Ranking, Time do Dia) | Prontos (25/10/2026); Prova de Boleiro fica para depois |
 
 O upgrade dos pênaltis que travava a Casa fechou (Lances do Jogo no `main`), então **nada impede de começar**.
 
