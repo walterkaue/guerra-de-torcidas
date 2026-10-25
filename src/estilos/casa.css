@@ -1,0 +1,327 @@
+/* Casa do [time] (docs/casa.md). Carregado só quando a Casa abre (import dinâmico). */
+
+.casa-intro {
+  text-align: left;
+}
+
+.casa-indice .cartao-time[disabled] {
+  opacity: 0.55;
+}
+
+.em-breve-casa {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--cal);
+  font-family: var(--fonte-rotulo);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Cabeçalho na faixa de placar do time. */
+.casa-faixa {
+  margin-top: -8px;
+  padding: 14px 16px 18px;
+  border-radius: 14px;
+  background: linear-gradient(to bottom, var(--c1) 0 78%, var(--c3) 78% calc(78% + 3px), var(--c2) calc(78% + 3px) 100%);
+  color: var(--txt);
+}
+.casa-faixa.clara {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+.casa-titulo {
+  font-family: var(--fonte-placar);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.05;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.casa-sub {
+  margin-top: 4px;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+/* Blocos recolhíveis. */
+.bloco-casa {
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.32);
+}
+.bloco-casa > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 16px;
+  font-size: 18px;
+  list-style: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.bloco-casa > summary::-webkit-details-marker {
+  display: none;
+}
+.bloco-casa > summary::after {
+  content: '+';
+  margin-left: auto;
+  font-family: var(--fonte-placar);
+  font-size: 22px;
+  color: var(--amarelo);
+}
+.bloco-casa[open] > summary::after {
+  content: '–';
+}
+.contador {
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--amarelo);
+  color: var(--tinta);
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 16px;
+}
+.bloco-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+.prateleira-rotulo {
+  margin-top: 4px;
+  color: var(--amarelo);
+}
+.nota-pequena {
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+/* A. Estádio */
+.desenho-estadio {
+  width: 100%;
+  max-width: 320px;
+  align-self: center;
+}
+.estadio-nome {
+  font-family: var(--fonte-rotulo);
+  font-size: 20px;
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+.ficha {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  font-size: 15px;
+}
+.ficha dt {
+  color: var(--texto-suave);
+}
+.ficha dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* B. Sala de troféus */
+.prateleira {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.trofeu summary {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 4px 10px 4px 6px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  list-style: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.trofeu summary::-webkit-details-marker {
+  display: none;
+}
+.desenho-taca {
+  width: 40px;
+  height: 44px;
+}
+.trofeu-nome {
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.15;
+}
+.trofeu-total {
+  font-family: var(--fonte-placar);
+  font-size: 26px;
+  color: var(--amarelo);
+}
+.trofeu-anos {
+  padding: 8px 10px 2px 56px;
+  font-family: var(--fonte-rotulo);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.trofeu-nota {
+  padding: 4px 10px 0 56px;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+/* C. Livro de recordes */
+.recordes,
+.goleadas {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.recordes li {
+  display: grid;
+  grid-template-columns: 30px 1fr auto auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.recordes .pos {
+  color: var(--amarelo);
+}
+.recordes .quem {
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.recordes .quanto {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 22px;
+}
+.recordes .un {
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+.goleadas li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.goleadas .placar {
+  font-family: var(--fonte-placar);
+  font-size: 24px;
+  color: var(--amarelo);
+  white-space: nowrap;
+}
+.goleadas .contra {
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.goleadas small {
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+/* D. Cores e manto */
+.manto-principal {
+  align-self: center;
+  width: 180px;
+}
+.desenho-manto {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+}
+.historia {
+  font-size: 15px;
+  line-height: 1.5;
+}
+.apelidos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.apelidos span {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--c1);
+  color: var(--txt);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+.varal {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 10px;
+}
+.varal li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--texto-suave);
+}
+
+/* Rodapé */
+.casa-rodape {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 4px 12px;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+.casa-rodape summary {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  color: var(--cal);
+  font-weight: 700;
+  cursor: pointer;
+}
+.casa-rodape .fontes {
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.casa-rodape a {
+  color: var(--amarelo);
+  overflow-wrap: anywhere;
+}
+.erro-link {
+  margin-top: 4px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+}

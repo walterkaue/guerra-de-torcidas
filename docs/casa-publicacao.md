@@ -9,9 +9,9 @@
 | Desenho e regras (`docs/casa.md`, `jogo.md` 7.4) | Pronto |
 | Dados: 6 CSVs, 20 clubes (`dados/casa/`) | **Rascunho completo**, com buracos e dúvidas em `dados/casa/RELATORIO.md` |
 | Conferência dos dados (segunda sessão) | **Não começou** |
-| Importador, validador e competições (`scripts/casa/`, `src/dados/competicoes.ts`) | Não existe |
-| Tela, índice e desenhos (`src/telas/casa.ts`) | Não existe |
-| Ganchos (Home, Ranking, Time do Dia) | Não existe |
+| Importador, validador e competições (`scripts/casa/`, `src/dados/competicoes.ts`) | Pronto; conferência por script com Gemini (`npm run conferir-casa`) desde 25/10 |
+| Tela, índice e desenhos (`src/telas/casa/`) | Pronto (25/10/2026), testado em 390×844 |
+| Ganchos (Home, Ranking, Time do Dia) | Prontos (25/10/2026); Prova de Boleiro fica para depois |
 
 O upgrade dos pênaltis que travava a Casa fechou (Lances do Jogo no `main`), então **nada impede de começar**.
 

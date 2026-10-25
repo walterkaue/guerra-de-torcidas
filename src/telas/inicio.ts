@@ -123,6 +123,11 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       </section>
       <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
 
+      <button class="link-casa" type="button" data-acao="casa">
+        <span class="rotulo">Casa dos clubes</span>
+        <small>Estádio, troféus, recordes e cores de cada clube</small>
+      </button>
+
       <section class="mini-tabela" aria-label="Ranking da semana" aria-live="polite">
         <header>
           <p class="rotulo">Campeão da semana</p>
@@ -158,6 +163,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     b.addEventListener('click', () => irPara({ tela: 'times', depois: 'inicio' })),
   );
   root.querySelector('[data-acao="ranking"]')?.addEventListener('click', () => irPara({ tela: 'ranking' }));
+  // Casa do [time]: abre a do seu time (se ainda não estiver pronta, a tela mostra o índice).
+  root.querySelector('[data-acao="casa"]')?.addEventListener('click', () =>
+    irPara({ tela: 'casa', id: time && time.id !== ID_OUTRO ? time.id : undefined }),
+  );
   root.querySelector('[data-acao="feedback"]')?.addEventListener('click', () => irPara({ tela: 'feedback', de: 'inicio' }));
   ligarBarraNavegacao(root);
 

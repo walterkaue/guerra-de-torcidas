@@ -34,7 +34,9 @@ export type Rota =
   | { tela: 'prova'; desafio?: string }
   | { tela: 'provaResultado'; dados: DadosResultadoProva }
   | { tela: 'timeDoDia' }
-  | { tela: 'lances'; aba?: 'penaltis' | 'falta' | 'finalizacao' };
+  | { tela: 'lances'; aba?: 'penaltis' | 'falta' | 'finalizacao' }
+  /** Casa do [time]: sem id, o índice dos clubes. */
+  | { tela: 'casa'; id?: string };
 
 type Limpeza = (() => void) | void;
 type Renderizador = (root: HTMLElement, rota: Rota) => Limpeza;
