@@ -19,6 +19,9 @@ const ESBOCO_SUPABASE = `
   create function extensions.unaccent(t text) returns text language sql immutable as $$ select t $$;
   create schema cron;
   create function cron.schedule(a text, b text, c text) returns bigint language sql as $$ select 1::bigint $$;
+  create table cron.job (jobid bigint primary key, jobname text, active boolean default true);
+  create function cron.alter_job(job_id bigint, active boolean) returns void language sql
+    as $$ update cron.job set active = $2 where jobid = $1 $$;
   create publication supabase_realtime;
 `;
 
