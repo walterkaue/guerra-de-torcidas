@@ -23,6 +23,7 @@ import {
 import { jogosDoCrava, meusDadosDoCrava, type Jogo } from '../servidor/crava';
 import { diaBrasilia, msAteZerarSemana, semanaBrasilia } from '../servidor/tempo';
 import { sincronizarTorcedor } from '../servidor/torcedor';
+import { avisosLigados, desligarAvisos } from './convitePush';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 
 export const TETO_DIARIO = 5;
@@ -139,6 +140,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       <button class="link-feedback" type="button" data-acao="feedback">💬 Feedback ou bug? Conta pra gente</button>
 
       <p class="rodape-resenha" role="note">${esc(AVISO_RESENHA)} Jogo 100% grátis.</p>
+      <p class="rodape-push" data-push hidden>🔔 Aviso de domingo ligado · <button type="button" data-acao="desligar-push">desligar</button></p>
 
       ${barraNavegacao('jogar')}
     </main>
@@ -169,6 +171,16 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   );
   root.querySelector('[data-acao="feedback"]')?.addEventListener('click', () => irPara({ tela: 'feedback', de: 'inicio' }));
   ligarBarraNavegacao(root);
+
+  // Aviso de domingo ligado neste aparelho: mostra e deixa desligar.
+  const elPush = root.querySelector<HTMLElement>('[data-push]')!;
+  void avisosLigados().then((ligado) => {
+    if (!saiu && ligado) elPush.hidden = false;
+  });
+  root.querySelector('[data-acao="desligar-push"]')!.addEventListener('click', async () => {
+    await desligarAvisos().catch(() => {});
+    elPush.textContent = 'Aviso de domingo desligado.';
+  });
 
   // ---------- status vivo dos cards ----------
   /** Troca a linha de status; `feito` pinta a linha de verde. */
