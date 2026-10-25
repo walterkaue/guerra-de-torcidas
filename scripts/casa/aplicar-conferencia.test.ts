@@ -48,7 +48,13 @@ describe('aplicar', () => {
     cabMantos.map((c) => `"${(o[c] ?? '').replace(/"/g, '""')}"`).join(',');
 
   it('confirma, corrige, adiciona e apaga só o que a resposta diz', () => {
-    const base = textos();
+    // Base com tudo em rascunho: o teste não depende do andamento da conferência dos CSVs reais.
+    const base = Object.fromEntries(
+      Object.entries(textos()).map(([a, t]) => {
+        const tab = lerTabela(t);
+        return [a, escreverTabela({ ...tab, linhas: tab.linhas.map((l) => ({ ...l, status: 'rascunho' })) })];
+      }),
+    );
     const resposta = lerResposta(
       [
         '=== CORRIGIDAS ===',

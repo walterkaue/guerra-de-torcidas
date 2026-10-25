@@ -38,8 +38,10 @@ describe('dados/casa/', () => {
     const publicados = (e.tabelas.clubes.linhas as Linha[]).filter((l) => l.status === 'revisada' || l.status === 'ativa').map((l) => l.id);
     expect(Object.keys(casas).sort()).toEqual([...publicados].sort());
     // um clube em rascunho nunca aparece; ao revisar só o texto, vem sem títulos
+    // (os títulos voltam a rascunho na cópia: o teste não depende do andamento da conferência)
     const clubes = { ...e.tabelas.clubes, linhas: (e.tabelas.clubes.linhas as Linha[]).map((l) => (l.id === 'flamengo' ? { ...l, status: 'revisada' } : l)) };
-    const flamengo = montarCasas({ ...e.tabelas, clubes }).flamengo;
+    const titulos = { ...e.tabelas.titulos, linhas: (e.tabelas.titulos.linhas as Linha[]).map((l) => (l.clube === 'flamengo' ? { ...l, status: 'rascunho' } : l)) };
+    const flamengo = montarCasas({ ...e.tabelas, clubes, titulos }).flamengo;
     expect(flamengo.titulos).toHaveLength(0);
     expect(flamengo.historiaCores).not.toBe('');
   });

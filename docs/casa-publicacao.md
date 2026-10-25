@@ -32,6 +32,7 @@ O upgrade dos pênaltis que travava a Casa fechou (Lances do Jogo no `main`), en
 
 ### Etapa B. Conferência dos dados (sessão nova, sem o contexto da escrita)
 - **Quem:** sessões de Claude Code, uma por **lote de 5 clubes** (ordem alfabética do id, os mesmos lotes da escrita). Prompt pronto em `dados/casa/conferencia.md`.
+- **Títulos, recordes e goleadas (desde 25/10/2026):** `npm run conferir-casa -- --clube=<id>` (ou `--todos`) confere por script com o Gemini (chave em `GEMINI_API_KEY`, só no ambiente). O script baixa a fonte, o modelo aponta o trecho e o script só marca `revisada` quando o trecho está na página, letra por letra, com o ano, o número ou o placar da linha. O que ele recusa fica em `rascunho` e vai para `dados/casa/conferencia-gemini/<clube>.md`, para a conferência humana. Clubes, estádios e mantos (texto livre) continuam na conferência humana.
 - **O que faz:** abre cada fonte, confere o fato, corrige ou apaga, marca `revisada` com data. Resolve ou escala cada "conferir" da observação. Nas lacunas, tenta achar fonte; se não achar, deixa vazio.
 - **Cuidado:** os CSVs são por tipo e têm todos os clubes. Duas sessões em paralelo mexem nos mesmos arquivos; as linhas são ordenadas por clube, então o merge costuma ser limpo, mas **faça um lote por vez** ou junte as branches com merge conferido.
 - **Pronto quando:** os 5 clubes do lote têm todas as linhas `revisada` (ou apagadas com motivo), `npm test` passa e a tabela de mudanças vem no resumo.

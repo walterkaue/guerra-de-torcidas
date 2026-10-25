@@ -19,7 +19,8 @@
     "importar-clubes-do-dia": "node scripts/importar-clubes-do-dia.mjs",
     "catalogo-lances": "node scripts/lances/catalogo.mjs",
     "importar-casa": "node scripts/casa/importar.mjs",
-    "aplicar-conferencia-casa": "node scripts/casa/aplicar-conferencia.mjs"
+    "aplicar-conferencia-casa": "node scripts/casa/aplicar-conferencia.mjs",
+    "conferir-casa": "node scripts/casa/conferir-gemini.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.10",
