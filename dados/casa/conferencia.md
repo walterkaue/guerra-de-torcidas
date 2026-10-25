@@ -2,6 +2,8 @@
 
 Cole o texto abaixo numa sessão nova do Claude Code, no repositório `guerra-de-torcidas`. Troque os clubes pelo lote da vez (5 por lote, em ordem alfabética do id).
 
+**Títulos, recordes e goleadas:** rode antes `npm run conferir-casa -- --clube=<id>` (Gemini com trecho literal, ver `docs/casa-publicacao.md`, Etapa B). Esta conferência fica para o que o script recusou (`dados/casa/conferencia-gemini/<clube>.md`) e para clubes, estádios e mantos.
+
 **Sem créditos no Claude Code?** Use o pacote para outra IA em `dados/casa/conferencia-outra-ia/` (prompt autônomo, dados de cada lote e script `scripts/casa/aplicar-conferencia.mjs` que aplica a resposta).
 
 Lotes: 1 = athletico-pr, atletico-mg, bahia, botafogo, bragantino. 2 = chapecoense, corinthians, coritiba, cruzeiro, flamengo. 3 = fluminense, gremio, internacional, mirassol, palmeiras. 4 = remo, santos, sao-paulo, vasco, vitoria.
