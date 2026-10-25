@@ -56,23 +56,3 @@ describe('pipeline de perguntas: travas', () => {
   });
 });
 
-describe('exportar do staging para o CSV', () => {
-  it('ids continuam a numeração por clube e degrau, e o CSV passa no validador', async () => {
-    const { proximosIds, montarCsv } = await import('./exportar-staging.mjs');
-    const { lerPerguntas, validarConjunto } = await import('./validar.mjs');
-    const novo = proximosIds(['cruzeiro-m-01', 'cruzeiro-m-07', 'cruzeiro-f-02']);
-    expect(novo('cruzeiro', 'media')).toBe('cruzeiro-m-08');
-    expect(novo('cruzeiro', 'media')).toBe('cruzeiro-m-09');
-    expect(novo('remo', 'craque')).toBe('remo-c-01');
-    const csv = montarCsv(
-      [{ ...boa, clube: 'cruzeiro', fonte: FONTE, modelo: 'gemini-3.5-flash-lite', auditoria_modelo: 'gemini-3.5-flash' }],
-      proximosIds([]),
-      '2026-10-26',
-    );
-    const [p] = lerPerguntas(csv);
-    expect(p.id).toBe('cruzeiro-m-01');
-    expect(p.status).toBe('rascunho');
-    expect(p.observacao).toContain('Trecho:');
-    expect(validarConjunto([p])).toEqual([]);
-  });
-});

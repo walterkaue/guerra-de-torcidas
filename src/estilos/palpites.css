@@ -658,3 +658,42 @@ span.certeza {
 .tb-linha.z4 {
   box-shadow: inset 3px 0 0 var(--caiu);
 }
+
+/* Revisão de perguntas do pipeline com Gemini (adminRevisao.ts). */
+.admin-revisao {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+}
+.admin-revisao textarea,
+.admin-revisao select,
+.admin-revisao input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--cal);
+  font: inherit;
+}
+.admin-revisao textarea {
+  resize: vertical;
+}
+.admin-trecho {
+  margin: 0;
+  padding: 8px 12px;
+  border-left: 4px solid var(--amarelo);
+  background: rgba(233, 199, 90, 0.08);
+  font-size: 14px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.admin-trecho a {
+  display: block;
+  margin-top: 4px;
+  color: var(--amarelo);
+}
