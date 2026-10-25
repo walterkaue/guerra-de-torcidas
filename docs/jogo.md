@@ -13,7 +13,7 @@ Minigames de futebol de 30 segundos em que **cada ponto que você faz vai para o
 1. **Partida curta.** Uma rodada cabe numa fila de padaria (30 s a 1 min).
 2. **Tribal.** Você não joga por você, joga pelo seu time. Ver o rival na frente é o motor.
 3. **Zoeira.** Tom de resenha: narrador exagerado, provocação ao rival, nunca ofensa a pessoas ou grupos.
-4. **Feito para WhatsApp.** O link abre direto no navegador do celular, sem cadastro e sem loja de app. Todo resultado vira um card pronto para mandar no grupo ou postar nos stories.
+4. **Feito para WhatsApp.** O link abre direto no navegador do celular, sem cadastro e sem loja de app. Todo resultado vira um card pronto para mandar no grupo ou postar nos stories. Quem quiser pode instalar o jogo na tela inicial (PWA, desde 25/10/2026): mesmo site, sem loja; notificação só depois, com opt-in.
 5. **Cresce por minigames.** Os minigames mudam; a torcida, o ranking e as ligas ficam e acumulam.
 6. **Zero aposta.** Nenhum minigame envolve dinheiro, prêmio em dinheiro, odds ou qualquer coisa que pareça casa de aposta. Nem anúncio de aposta.
 7. **Justo.** Título se ganha por média, não por tamanho de torcida; ninguém compra vantagem; evento não distorce o ranking.
