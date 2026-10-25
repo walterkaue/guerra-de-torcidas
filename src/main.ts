@@ -19,6 +19,9 @@ import { telaProva } from './telas/prova';
 import { telaProvaResultado } from './telas/provaResultado';
 import { telaTimeDoDia } from './telas/timeDoDia';
 import { telaLances } from './telas/lances';
+import { registrarServiceWorker } from './pwa';
+
+registrarServiceWorker();
 
 registrarTela('inicio', telaInicio);
 registrarTela('times', telaTimes);
