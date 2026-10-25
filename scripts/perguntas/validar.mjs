@@ -56,6 +56,13 @@ export const PALAVRAS_PROIBIDAS = [
   'bolao valendo', 'green', 'red', 'premio', 'premios', 'milhao', 'valendo',
 ];
 
+/** Marcas de terceiros (patrocínio de estádio, competição e camisa, fornecedor, aposta): nem na Casa nem no quiz. */
+export const MARCAS_PROIBIDAS = [
+  'mrv', 'ligga', 'itaipava', 'casa de apostas', 'red bull', 'umbro', 'puma', 'adidas', 'nike', 'topper', 'kappa',
+  'penalty', 'betano', 'sportingbet', 'bet365', 'brahma', 'kyocera', 'neo quimica', 'allianz', 'heineken',
+  'petrobras', 'vivo', 'hapvida', 'caixa', 'banrisul', 'nubank', 'sicredi', 'volt', 'supermercado', 'banco',
+];
+
 /** Temas fora da regra (seção 7.1): tragédia, rebaixamento, vexame, menor de idade… */
 export const TEMAS_PROIBIDOS = [
   'rebaixa', 'queda para a serie', 'tragedia', 'morte', 'morreu', 'faleceu', 'falecimento',

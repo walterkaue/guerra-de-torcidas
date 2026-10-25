@@ -1,272 +1,117 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { negado, temSegredo } from "../_shared/segredo.ts";
+// Gera perguntas da Prova de Boleiro com o Gemini, a partir de UMA página de fonte aceita
+// (staging_gt.fontes_semente). O modelo só propõe; as travas de _shared/perguntas/geracao.mjs
+// decidem: validador do CSV, trecho literal na página e resposta dentro do trecho.
+// Quem passa vira `rascunho` em staging_gt.rascunhos_perguntas; quem não passa fica em recusas_perguntas.
+// Só o cron chama (secret key do projeto). Nada vai ao jogo daqui.
 
-const corsHeaders = { 
-  "Access-Control-Allow-Origin": "*", 
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" 
+import { admin, ErroHttp, lerCorpo, servir } from '../_shared/comum.ts';
+import { baixar, MODELOS_GERADOR, perguntarJson } from '../_shared/gemini.ts';
+import { avaliarPergunta, textoDaPagina } from '../_shared/perguntas/geracao.mjs';
+import { PALAVRAS_PROIBIDAS } from '../_shared/perguntas/validar.mjs';
+import { temSegredo } from '../_shared/segredo.ts';
+
+const LIMITE_PAGINA = 60_000;
+const MAX_POR_RODADA = 8;
+
+const NOMES: Record<string, string> = {
+  'athletico-pr': 'Athletico-PR', 'atletico-mg': 'Atlético-MG', bahia: 'Bahia', botafogo: 'Botafogo',
+  bragantino: 'Bragantino', chapecoense: 'Chapecoense', corinthians: 'Corinthians', coritiba: 'Coritiba',
+  cruzeiro: 'Cruzeiro', flamengo: 'Flamengo', fluminense: 'Fluminense', gremio: 'Grêmio', internacional: 'Internacional',
+  mirassol: 'Mirassol', palmeiras: 'Palmeiras', remo: 'Remo', santos: 'Santos', 'sao-paulo': 'São Paulo',
+  vasco: 'Vasco', vitoria: 'Vitória',
 };
 
-const SYSTEM_PROMPT = `Você é o Agente Criador de Conteúdo do Guerra de Torcidas.
-Sua função é pesquisar na internet fatos reais e históricos sobre clubes de futebol brasileiro e gerar questões do Quiz ou Lances do Jogo em formato JSON estrito e válido.
+const instrucao = (alvo: string, n: number) => `Você escreve perguntas de quiz de futebol em português do Brasil para um jogo gratuito, usando SÓ fatos do TEXTO DA PÁGINA (nada de memória).
+Assunto: ${alvo}.
+Escreva até ${n} perguntas variadas. Regras de cada uma:
+- "pergunta": até 140 caracteres, termina com "?", cita um ano (ou o ano é a resposta). Fato fechado, sem opinião. Tem de fazer sentido sozinha, para quem nunca viu a página: nunca fale em "lista", "página", "matéria", "texto" ou "mencionado".
+- "certa" e "errada1", "errada2", "errada3": até 40 caracteres cada, todas diferentes, do mesmo tipo (anos com anos, clubes com clubes, nomes com nomes). As erradas são plausíveis, mas a página NÃO pode dar nenhuma delas como resposta.
+- "trecho": a frase EXATA da página que prova a resposta certa, copiada sem mudar nenhuma letra, de 20 a 300 caracteres, e que contém a resposta certa.
+- "degrau": facil, media, dificil ou craque. "tema": uma palavra (titulos, idolos, estadio, historia, jogos).
+- Proibido: as palavras ${PALAVRAS_PROIBIDAS.join(', ')}; tragédia, morte, acidente, rebaixamento, vexame, goleada sofrida, polêmica, vida pessoal, opinião sobre pessoa, atleta menor de idade; mascote, escudo, hino, patrocinador ou fornecedor; nome de estádio ou competição com marca de patrocínio (use o nome oficial sem a marca ou o apelido).
+- Nome real de jogador ou técnico só como fato com data, sem adjetivo.
+Se a página não tiver fatos bons para isso, devolva uma lista vazia.`;
 
-REGRA CRÍTICA E INVIOLÁVEL:
-Sua resposta deve conter EXCLUSIVAMENTE o ARRAY ou OBJETO JSON final.
-NUNCA inclua rascunhos, textos de raciocínio, comentários ou caracteres fora do JSON.
+const ESQUEMA = {
+  type: 'ARRAY',
+  items: {
+    type: 'OBJECT',
+    properties: {
+      degrau: { type: 'STRING' }, tema: { type: 'STRING' }, pergunta: { type: 'STRING' }, certa: { type: 'STRING' },
+      errada1: { type: 'STRING' }, errada2: { type: 'STRING' }, errada3: { type: 'STRING' }, trecho: { type: 'STRING' },
+    },
+    required: ['degrau', 'tema', 'pergunta', 'certa', 'errada1', 'errada2', 'errada3', 'trecho'],
+  },
+};
 
-Para perguntas (Quiz), use as colunas exatas:
-- "clube": nome do clube (ex: "Flamengo", "Vasco", "Palmeiras", "Corinthians")
-- "degrau": nível ("facil", "media", "dificil", "craque")
-- "tema": tema ("titulos", "fundacao", "estadios", "craques", "fatos_historicos")
-- "texto": enunciado da pergunta
-- "alternativa_a": texto da alternativa A
-- "alternativa_b": texto da alternativa B
-- "alternativa_c": texto da alternativa C
-- "alternativa_d": texto da alternativa D
-- "correta": ESTRITAMENTE APENAS UMA LETRA MAIÚSCULA: "A", "B", "C" ou "D"
-- "fonte": OBRIGATORIAMENTE a URL exata e completa do artigo, notícia ou site onde você encontrou a informação durante a pesquisa (iniciando com http:// ou https://). É expressamente proibido usar apenas a página inicial (home).
-
-Todos os itens gerados devem ter "status": "pendente_validacao".`;
-
-function extractAndParseJson(rawText: string): any {
-  if (!rawText || typeof rawText !== "string") {
-    throw new Error("Texto bruto retornado pela IA está vazio.");
-  }
-  let clean = rawText.trim();
-  if (clean.startsWith("```")) {
-    const lines = clean.split("\n");
-    if (lines[0].startsWith("```")) lines.shift();
-    if (lines.length > 0 && lines[lines.length - 1].trim().startsWith("```")) lines.pop();
-    clean = lines.join("\n").trim();
-  }
-  try { return JSON.parse(clean); } catch (_) {}
-
-  const lastOpenArray = clean.lastIndexOf("[");
-  const lastCloseArray = clean.lastIndexOf("]");
-  if (lastOpenArray !== -1 && lastCloseArray > lastOpenArray) {
-    const candidate = clean.substring(lastOpenArray, lastCloseArray + 1);
-    try { return JSON.parse(candidate); } catch (_) {}
-  }
-
-  const firstOpenArray = clean.indexOf("[");
-  if (firstOpenArray !== -1 && lastCloseArray > firstOpenArray) {
-    const candidate = clean.substring(firstOpenArray, lastCloseArray + 1);
-    try { return JSON.parse(candidate); } catch (_) {}
-  }
-
-  const lastOpenObj = clean.lastIndexOf("{");
-  const lastCloseObj = clean.lastIndexOf("}");
-  if (lastOpenObj !== -1 && lastCloseObj > lastOpenObj) {
-    const candidate = clean.substring(lastOpenObj, lastCloseObj + 1);
-    try { return JSON.parse(candidate); } catch (_) {}
-  }
-
-  const firstOpenObj = clean.indexOf("{");
-  if (firstOpenObj !== -1 && lastCloseObj > firstOpenObj) {
-    const candidate = clean.substring(firstOpenObj, lastCloseObj + 1);
-    try { return JSON.parse(candidate); } catch (_) {}
-  }
-
-  throw new Error("Não foi possível isolar uma estrutura JSON válida no texto da IA.");
+interface Proposta {
+  degrau: string; tema: string; pergunta: string; certa: string;
+  errada1: string; errada2: string; errada3: string; trecho: string;
 }
 
-function sanitizeCorreta(rawCorreta: any, altA: any, altB: any, altC: any, altD: any): string {
-  if (!rawCorreta) return "A";
-  const str = String(rawCorreta).trim();
-  const lower = str.toLowerCase();
-  
-  const match = str.match(/[A-Da-d]/);
-  if (match) return match[0].toUpperCase();
-  return "A";
-}
+servir(async (req) => {
+  if (!(await temSegredo(req))) throw new ErroHttp(401, 'sem_permissao');
+  const corpo = await lerCorpo(req);
+  const quantidade = Math.max(1, Math.min(MAX_POR_RODADA, Number(corpo.quantidade) || 6));
+  const sb = admin();
+  const stg = sb.schema('staging_gt');
 
-async function insertViaRest(
-  supabaseUrl: string, 
-  serviceKey: string, 
-  table: string, 
-  records: any[], 
-  schema?: string
-): Promise<{ success: boolean; data?: any[]; error?: string }> {
-  try {
-    const url = `${supabaseUrl.replace(/\/+$/, "")}/rest/v1/${table}`;
-    const headers: Record<string, string> = {
-      "apikey": serviceKey,
-      "Authorization": "Bearer " + serviceKey,
-      "Content-Type": "application/json",
-      "Prefer": "return=representation"
-    };
+  // Página menos usada (sorteio entre as 30 de menor uso), até 3 tentativas se a página não abrir.
+  const { data: candidatas, error } = await stg.from('fontes_semente').select('url, clube, usos, falhas').eq('ativa', true).order('usos').limit(30);
+  if (error) throw error;
+  if (!candidatas?.length) return { ok: false, motivo: 'sem fonte-semente ativa' };
+  const sorteadas = [...candidatas].sort(() => Math.random() - 0.5);
 
-    if (schema) {
-      headers["Content-Profile"] = schema;
-      headers["Accept-Profile"] = schema;
+  for (const semente of sorteadas.slice(0, 3)) {
+    const pagina = await baixar(semente.url);
+    const texto = pagina.html ? textoDaPagina(pagina.html) : '';
+    if (pagina.erro || texto.length < 800) {
+      const falhas = semente.falhas + 1;
+      await stg.from('fontes_semente').update({ falhas, ativa: falhas < 3 }).eq('url', semente.url).eq('clube', semente.clube);
+      continue;
     }
 
-    const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(records) });
-    const bodyData = await res.json().catch(() => null);
-
-    if (res.ok) {
-      return { success: true, data: (Array.isArray(bodyData) && bodyData.length > 0) ? bodyData : records };
-    } else {
-      return { success: false, error: bodyData?.message || ("HTTP " + res.status) };
-    }
-  } catch (err: any) {
-    return { success: false, error: err?.message || String(err) };
-  }
-}
-
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
-  // Só o cron (com a secret key do projeto) chama esta função.
-  if (!(await temSegredo(req))) return negado();
-
-  try {
-    const apiKey = Deno.env.get("GEMINI_API_KEY");
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!apiKey || !supabaseUrl || !supabaseServiceKey) {
-      return new Response(JSON.stringify({ error: "Variáveis de ambiente ausentes." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    const body = await req.json().catch(() => ({ tipo: "perguntas", quantidade: 3 }));
-    const isLances = body?.tipo === "lances";
-
-    const apiBase = "https://generativelanguage.googleapis.com/v1beta/models";
-    // Modelos atualizados com capacidade de pesquisa
-	let activeModels: string[] = [];
-    
-    try {
-      // 1. Consulta o Google para descobrir quais modelos sua chave tem acesso
-      const listRes = await fetch(`${apiBase}?key=${apiKey}`);
-      const listData = await listRes.json();
-
-      if (listData?.models && Array.isArray(listData.models)) {
-        activeModels = listData.models
-          .filter((m: any) => 
-            m?.supportedGenerationMethods?.includes("generateContent") && 
-            m?.name?.includes("gemini")
-          )
-          .map((m: any) => m.name.replace("models/", ""));
-      }
-    } catch (err) {
-      console.warn("Falha ao buscar modelos dinamicamente.");
-    }
-
-    // 2. Fallback de segurança caso a listagem falhe
-    if (activeModels.length === 0) {
-      activeModels = ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro"];
-    };
-
-    const responseSchema = isLances ? {
-      type: "ARRAY", items: {
-        type: "OBJECT", properties: {
-          clube: { type: "STRING" }, tipo: { type: "STRING" }, titulo: { type: "STRING" },
-          ficha: { type: "STRING" }, competicao: { type: "STRING" }, fonte: { type: "STRING" }, status: { type: "STRING" }
-        }, required: ["clube", "tipo", "titulo", "ficha", "fonte"]
-      }
-    } : {
-      type: "ARRAY", items: {
-        type: "OBJECT", properties: {
-          clube: { type: "STRING" }, degrau: { type: "STRING" }, tema: { type: "STRING" },
-          texto: { type: "STRING" }, alternativa_a: { type: "STRING" }, alternativa_b: { type: "STRING" },
-          alternativa_c: { type: "STRING" }, alternativa_d: { type: "STRING" }, correta: { type: "STRING" },
-          fonte: { type: "STRING" }, status: { type: "STRING" }
-        }, required: ["clube", "degrau", "tema", "texto", "alternativa_a", "alternativa_b", "alternativa_c", "alternativa_d", "correta", "fonte"]
-      }
-    };
-
-    let generatedText: string | null = null;
-    let lastError = "";
-
-    const userPrompt = `Pesquise na internet fatos históricos e precisos sobre clubes de futebol brasileiro e gere um JSON com ${body?.quantidade || 3} novos itens para ${body?.tipo || "perguntas"}.`;
-
-    for (const model of activeModels) {
-      try {
-        const url = `${apiBase}/${model}:generateContent?key=${apiKey}`;
-        
-        // Corpo da requisição com a ferramenta de busca ativada
-        const requestPayload = {
-          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          tools: [{ googleSearch: {} }], // Ativa a pesquisa web
-          generationConfig: { 
-            responseMimeType: "application/json",
-            responseSchema: responseSchema,
-            temperature: 0.4 // Temperatura otimizada para pesquisa
-          }
-        };
-
-        let res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestPayload)
-        });
-
-        let data = await res.json().catch(() => null);
-
-        // Fallback sem strict schema caso o modelo rejeite a combinação de tools + schema
-        if (data?.error && String(data.error?.message || "").includes("schema")) {
-          delete requestPayload.generationConfig.responseSchema;
-          res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestPayload)
-          });
-          data = await res.json().catch(() => null);
-        }
-
-        const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (candidateText && typeof candidateText === "string" && candidateText.trim().length > 0) {
-          generatedText = candidateText;
-          break;
-        }
-
-        lastError = data?.error ? `[${model}] ${data.error.message}` : `[${model}] Resposta vazia.`;
-      } catch (err: any) {
-        lastError = `[${model}] Falha de rede: ${err?.message}`;
-      }
-    }
-
-    if (!generatedText) {
-      return new Response(JSON.stringify({ error: "Nenhum modelo gerou conteúdo. Detalhes: " + lastError }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    let generatedJson: any = null;
-    try {
-      generatedJson = extractAndParseJson(generatedText);
-    } catch (parseErr: any) {
-      return new Response(JSON.stringify({ error: "Falha ao interpretar JSON. IA gerou: " + generatedText }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    let recordsToInsert = Array.isArray(generatedJson) ? generatedJson : [generatedJson];
-    const now = Date.now();
-
-    recordsToInsert = recordsToInsert.map((item: any, idx: number) => {
-      const { ...rest } = item;
-      if (!isLances) {
-        return {
-          ...rest,
-          correta: sanitizeCorreta(item.correta, item.alternativa_a, item.alternativa_b, item.alternativa_c, item.alternativa_d),
-          clube: String(item.clube || "geral"),
-          id: item.id || ("Q_GEN_" + now + "_" + idx),
-          status: "pendente_validacao"
-        };
-      } else {
-        return { ...rest, id: item.id || ("lance-gen-" + now + "-" + idx), status: "pendente_validacao" };
-      }
-    });
-
-    const table = isLances ? "lances" : "perguntas";
-    // Só no staging_gt. Nunca grava direto nas tabelas do jogo (public).
-    const insertRes = await insertViaRest(supabaseUrl, supabaseServiceKey, table, recordsToInsert, "staging_gt");
-
-    if (!insertRes.success) throw new Error(insertRes.error);
-
-    return new Response(
-      JSON.stringify({ success: true, count: insertRes.data?.length || 0, data: insertRes.data }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    const alvo = semente.clube === 'geral' ? 'futebol brasileiro em geral (seleção, competições, regras e história)' : `o clube ${NOMES[semente.clube] ?? semente.clube}`;
+    const { modelo, dados } = await perguntarJson<Proposta[]>(
+      MODELOS_GERADOR,
+      instrucao(alvo, quantidade),
+      `TEXTO DA PÁGINA (${semente.url}):\n${texto.slice(0, LIMITE_PAGINA)}`,
+      ESQUEMA,
     );
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err?.message || String(err) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    // Perguntas que já existem (staging e jogo), para não repetir.
+    const [{ data: noStaging }, { data: noJogo }] = await Promise.all([
+      stg.from('rascunhos_perguntas').select('pergunta').eq('clube', semente.clube),
+      semente.clube === 'geral' ? sb.from('perguntas').select('texto').is('clube', null) : sb.from('perguntas').select('texto').eq('clube', semente.clube),
+    ]);
+    const existentes = [...(noStaging ?? []).map((x) => x.pergunta), ...(noJogo ?? []).map((x) => x.texto)];
+
+    const aceitas = [];
+    const recusas = [];
+    for (const p of (Array.isArray(dados) ? dados : []).slice(0, quantidade)) {
+      const motivo = avaliarPergunta(p, { clube: semente.clube, fonte: semente.url, pagina: texto, existentes });
+      if (motivo) {
+        recusas.push({ clube: semente.clube, fonte: semente.url, proposta: p, motivo, modelo });
+        continue;
+      }
+      existentes.push(p.pergunta);
+      aceitas.push({
+        clube: semente.clube, degrau: p.degrau, tema: p.tema, pergunta: p.pergunta.trim(), certa: p.certa.trim(),
+        errada1: p.errada1.trim(), errada2: p.errada2.trim(), errada3: p.errada3.trim(), fonte: semente.url,
+        trecho: p.trecho.trim(), modelo,
+      });
+    }
+    if (aceitas.length) {
+      const { error: e1 } = await stg.from('rascunhos_perguntas').insert(aceitas);
+      if (e1) throw e1;
+    }
+    if (recusas.length) await stg.from('recusas_perguntas').insert(recusas);
+    await stg
+      .from('fontes_semente')
+      .update({ usos: semente.usos + 1, falhas: 0, ultimo_uso: new Date().toISOString() })
+      .eq('url', semente.url)
+      .eq('clube', semente.clube);
+    return { ok: true, fonte: semente.url, clube: semente.clube, modelo, propostas: aceitas.length + recusas.length, aceitas: aceitas.length, recusas: recusas.map((r) => r.motivo) };
   }
+  return { ok: false, motivo: 'nenhuma das páginas sorteadas abriu' };
 });

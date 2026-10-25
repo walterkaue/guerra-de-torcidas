@@ -2,7 +2,7 @@
 // Roda em `npm test` (validar.test.ts) e no importador (`npm run importar-casa`).
 
 import { DOMINIOS_ACEITOS } from '../clubes/validar.mjs';
-import { acharPalavras, acharTemas, normalizar } from '../perguntas/validar.mjs';
+import { MARCAS_PROIBIDAS, acharPalavras, acharTemas, normalizar } from '../perguntas/validar.mjs';
 import { ARQUIVOS, CHAVES, colunaClube } from './tabela.mjs';
 
 export const COLUNAS = {
@@ -23,11 +23,8 @@ export const ANO_MAX = 2026;
 export const MAX = { historia_cores: 400, nota: 160, descricao: 160, nome: 60, periodo: 60, adversario: 60, competicao_goleada: 60 };
 
 /** Marcas de terceiros que não podem aparecer em texto nenhum (patrocínio, fornecedor, aposta). */
-export const MARCAS_PROIBIDAS = [
-  'mrv', 'ligga', 'itaipava', 'casa de apostas', 'red bull', 'umbro', 'puma', 'adidas', 'nike', 'topper', 'kappa',
-  'penalty', 'betano', 'sportingbet', 'bet365', 'brahma', 'kyocera', 'neo quimica', 'allianz', 'heineken',
-  'petrobras', 'vivo', 'hapvida', 'caixa', 'banrisul', 'nubank', 'sicredi', 'volt', 'supermercado', 'banco',
-];
+// A lista de marcas mora em scripts/perguntas/validar.mjs (compartilhada com o pipeline de perguntas).
+export { MARCAS_PROIBIDAS };
 
 /** Palavras que o desenho do manto não pode citar (docs/casa.md, seção 5). */
 export const PROIBIDAS_NO_MANTO = ['escudo', 'cruz', 'estrela', 'estrelas', 'numero', 'patrocinio', 'patrocinador', 'fornecedor'];
