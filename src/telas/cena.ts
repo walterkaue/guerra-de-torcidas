@@ -7,6 +7,7 @@ import { GOLEIRO, desenharBoneco, maos, misturar, novaPose, poseGoleiroEsperando
 import { vibrar } from './toque';
 import { qualidade } from './qualidade';
 import { somTrave } from '../jogo/som';
+import { criarPapelPicado } from './papelPicado';
 
 /** Rastro do dedo: [largura, opacidade] do brilho e do traço. */
 const BRILHO_DO_RASTRO = [
@@ -172,6 +173,7 @@ export interface OpcoesCena {
 
 export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido }: OpcoesCena) {
   const c = canvas.getContext('2d')!;
+  const papel = criarPapelPicado([cores[0], cores[1], '#ffd23f']);
 
   // ---------- efeitos ----------
   const efeitos = {
@@ -241,6 +243,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
       return;
     }
     efeitos.rede = { inicio: agora, x, y };
+    papel.soltar(x, y, agora);
     if (!reduzido && qualidade().tremida) {
       efeitos.tremida = agora;
       efeitos.forcaTremida = 1;
@@ -975,6 +978,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
   }
 
   function desenharPontos(agora: number): void {
+    papel.desenhar(c, agora, Math.max(8, g.raio * 0.5));
     efeitos.pontos = desenharPontosEm(c, efeitos.pontos, agora, g.raio * 1.5);
   }
 

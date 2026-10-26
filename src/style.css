@@ -752,3 +752,13 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .replay-vinheta { display: none; }
 }
+
+/* Papel picado fora do canvas (Prova, Time do Dia): por cima de tudo, sem pegar toque. */
+.papel-picado {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 50;
+  pointer-events: none;
+}

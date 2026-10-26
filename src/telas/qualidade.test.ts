@@ -64,3 +64,15 @@ describe('qualidade: veredito dos quadros', () => {
     expect(qualidade().nivel).toBe('media');
   });
 });
+
+describe('papel picado por nível', () => {
+  it('Alta solta 40 peças, Média 24, Leve nenhuma', async () => {
+    const { pecasDoNivel } = await import('./papelPicado');
+    definirQualidade('alta');
+    expect(pecasDoNivel()).toBe(40);
+    definirQualidade('media');
+    expect(pecasDoNivel()).toBe(24);
+    definirQualidade('leve');
+    expect(pecasDoNivel()).toBe(0);
+  });
+});

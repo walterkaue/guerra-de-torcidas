@@ -135,6 +135,12 @@ Amostra aprovada em 26/10 (página "Qualidade Alta, Média e Leve"). Código em 
 - Em dev, `?qualidade=alta|media|leve` força o nível; `/dev/qualidade.html` desenha a amostra dos três.
 - O que vier de efeito novo (partículas, impacto) declara em que nível aparece.
 
+## 4.4 Papel picado
+
+- Explode nas cores do time (cor muito escura vira branco, para aparecer) no **gol** (Pênaltis e Lances) e no **acerto** da Prova de Boleiro e do Time do Dia (no Time do Dia, só na primeira vez que o fim aparece).
+- Retângulos que "viram" (a largura oscila) em vez de girar: um preenchimento por peça, pool fixo, nenhum objeto novo por quadro. Dura 1,4 s e some no fim.
+- **Alta 40 peças, Média 24, Leve nenhuma.** Nada com movimento reduzido. O confete da tela de vitória continua como era.
+
 ## 5. Ajustes encontrados no código
 
 - (18/10, já feitos na etapa 3) Artigo do time, `CLAUDE.md`/`.env.example` com chaves antigas, frases provisórias do narrador.

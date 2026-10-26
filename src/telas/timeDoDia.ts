@@ -31,6 +31,7 @@ import { sincronizarTorcedor } from '../servidor/torcedor';
 import { convidarParaAvisos } from './convitePush';
 import { bolinha, icone } from './icones';
 import { vibrar } from './toque';
+import { papelPicadoNaTela } from './papelPicado';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 /** Quantos clubes a busca mostra de uma vez (a lista inteira tem 60). */
@@ -296,6 +297,8 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     const e = estado!;
     elChutar.hidden = true;
     const n = e.tentativas.length;
+    // Primeira vez que o fim aparece nesta visita (não ao reabrir a tela já jogada).
+    const festejar = !frasesFinais.length && e.acertou;
     if (!frasesFinais.length) {
       vibrar(e.acertou ? 'acerto' : 'erro');
       const f1 = e.acertou
@@ -360,6 +363,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     elFim.hidden = false;
     // Bom momento para oferecer o aviso de domingo: acertou o time do dia.
     if (e.acertou) convidarParaAvisos(elFim.querySelector<HTMLElement>('[data-convite-push]'));
+    if (festejar) papelPicadoNaTela(elFim.querySelector('.dia-placar') ?? elFim, [time.cores[0], time.cores[1], '#ffd23f']);
 
     const elRelogio = elFim.querySelector<HTMLElement>('[data-relogio]')!;
     clearInterval(relogio);
