@@ -1,6 +1,6 @@
 # Ranking de 52 semanas, Galeria de Troféus e Carreira: proposta para decisão
 
-> Rascunho de 26/10/2026, para o Kauê decidir. **Nada aqui está decidido nem construído.** A ideia já foi aprovada em 18/10 (`docs/rankings.md`, seção 4); aqui ficam os pontos em aberto. Quando houver decisão, ela vai para o `docs/jogo.md` (seção 5, "Longo prazo").
+> **Decidido em 26/10/2026: o Kauê aceitou todas as recomendações** (já passadas para o `docs/jogo.md`). Nada construído ainda. Texto original da proposta abaixo. A ideia já foi aprovada em 18/10 (`docs/rankings.md`, seção 4); aqui ficam os pontos em aberto.
 
 ## 1. O que já está decidido
 

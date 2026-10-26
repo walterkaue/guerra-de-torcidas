@@ -1,6 +1,6 @@
 # Cidade como segunda camisa: proposta para decisão
 
-> Rascunho de 26/10/2026, para o Kauê decidir. **Nada aqui está decidido nem construído.** A regra-base já está no `docs/jogo.md` (seção 3, "Cidade") e no `docs/rankings.md` (seção 3); aqui ficam só os pontos em aberto. Hoje o jogo ainda não guarda cidade nenhuma.
+> **Decidido em 26/10/2026: o Kauê aceitou todas as recomendações** (já passadas para o `docs/jogo.md`). Nada construído ainda. Texto original da proposta abaixo. A regra-base já está no `docs/jogo.md` (seção 3, "Cidade") e no `docs/rankings.md` (seção 3); aqui ficam só os pontos em aberto. Hoje o jogo ainda não guarda cidade nenhuma.
 
 ## 1. O que já está decidido
 

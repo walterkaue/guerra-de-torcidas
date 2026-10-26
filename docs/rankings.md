@@ -50,7 +50,7 @@ Uma semana arrasadora não ganha o mês sozinha; regularidade conta.
 
 ## 3. A temporada: Série A e Série B das torcidas
 
-- Os 20 times oficiais são divididos em **Série A (10)** e **Série B (10)**. Na primeira temporada, a divisão sai da primeira semana de jogo. "Outro time" não entra em divisão.
+- Os 20 times oficiais são divididos em **Série A (10)** e **Série B (10)**. Na primeira temporada, a divisão sai do **mês de estreia em série única** (os 20 juntos; do 1º ao 10º vão para a A; decidido em 26/10, ver seção 10). "Outro time" não entra em divisão.
 - A temporada dura um mês (4 ou 5 semanas). Somam-se os pontos de campeonato das semanas.
 - No fim: **os 2 últimos da A caem, os 2 primeiros da B sobem.** O campeão da Série A é o **campeão da temporada**.
 - Rebaixamento é a zoeira mais brasileira que existe: "{o_time} caiu pra Série B do Guerra".
@@ -67,7 +67,7 @@ Uma semana arrasadora não ganha o mês sozinha; regularidade conta.
 
 | O quê | Como funciona | Por que é justo |
 |---|---|---|
-| **Ranking de 52 semanas** (estilo tênis) | Soma dos pontos de campeonato das últimas 52 semanas. A cada segunda, entra a semana nova e sai a mais velha | É de longo prazo, mas quem chegou depois alcança em meses, não em anos |
+| **Ranking de 52 semanas** (estilo tênis) | Soma das últimas 52 semanas pela posição no ranking geral dos 20 (tabela de 20 posições, seção 10), não pelos pontos da divisão. A cada segunda, entra a semana nova e sai a mais velha | É de longo prazo, mas quem chegou depois alcança em meses, não em anos |
 | **Galeria de Troféus** | Todos os títulos para sempre: semanas, temporadas, acessos, copas, títulos de cidade | Memória e zoeira histórica ("o rival tem 3 rebaixamentos") |
 | **Tabela de todos os tempos** | Total de títulos e de pontos de campeonato desde o lançamento | Só vitrine; não decide nada |
 | **Carreira do jogador** | Nível que nunca zera: Estreante, Reserva, Titular, Craque, Ídolo, Lenda | Mede constância, não talento nem dinheiro |
@@ -146,3 +146,13 @@ Tarefa para o Claude Code: **Fable ou Opus, intensidade Extra alta** (revisão d
 Aprovado como estava na proposta: campeão da semana pela média dos 30 melhores; vagas vazias a 80% da média geral; Série A e Série B mensais com 2 sobem e 2 caem; pontos de campeonato estilo Fórmula 1; ranking de 52 semanas, Galeria de Troféus, tabela de todos os tempos e carreira; eventos sem multiplicador; palpites valendo no máximo um dia de minigames, com a pontuação da seção 8; anti-trapaça corrigido antes de divulgar.
 
 Mudou em relação à proposta: troca de time ou cidade **livre** por enquanto; Crava a Rodada **estreia ainda em 2026**.
+
+---
+
+## 10. Decisões de 26/10/2026
+
+Aprovadas as recomendações das propostas em `docs/propostas/` (detalhe no `jogo.md`, seções 3 e 5):
+
+- **Série A e B:** mês de estreia em série única com os 20 times (o 1º leva "Campeão da estreia"; do 1º ao 10º vão para a A); divisões testadas já em novembro, na pré-temporada, zerando junto; a semana é do mês da sua segunda-feira; torcida sem ninguém desempata pela semana anterior.
+- **Cidade:** pedida depois da 1ª partida, com lembrete na Home no máximo 1 vez por semana; só entra no ranking com 5+ jogadores na semana (abaixo disso, conta só para o estado); pontos de antes de escolher não contam; liga na pré-temporada.
+- **Longo prazo:** ordem Carreira → Galeria → 52 semanas (na 1ª temporada). 52 semanas pela tabela de 20 posições do ranking geral: 1º 25, 2º 20, 3º 17, 4º 15, 5º 14, do 6º ao 18º de 13 a 1, 19º e 20º 0. Galeria e Tabela de todos os tempos na aba Conquistas; Maior torcida como "vitrine". Carreira: 10 XP por partida (5 da 6ª à 15ª), níveis 0 / 100 / 1.000 / 5.000 / 15.000 / 30.000, bônus de +100 (1º do dia) e +200 (1º da torcida na semana), e o XP sobrevive ao zerar.

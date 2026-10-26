@@ -1,6 +1,6 @@
 # Série A e Série B das torcidas: proposta para decisão
 
-> Rascunho de 26/10/2026, para o Kauê decidir. **Nada aqui está decidido nem construído.** A regra-base já foi aprovada em 18/10 (`docs/rankings.md`, seção 3); aqui ficam só os pontos em aberto. Quando houver decisão, ela vai para o `docs/jogo.md` (seção 5).
+> **Decidido em 26/10/2026: o Kauê aceitou todas as recomendações** (já passadas para o `docs/jogo.md`). Nada construído ainda. Texto original da proposta abaixo. A regra-base já foi aprovada em 18/10 (`docs/rankings.md`, seção 3); aqui ficam só os pontos em aberto.
 
 ## 1. O que já está decidido
 
