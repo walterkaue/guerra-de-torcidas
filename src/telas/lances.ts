@@ -392,7 +392,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       if (r.desfecho === 'gol') {
         const q = cena.projetar(em(1));
         cena.comemorar(q.x, q.y, r.pontos);
-      }
+      } else if (r.desfecho === 'trave') cena.baterNaTrave();
       somTorcida(r.desfecho === 'gol' ? 'festa' : 'uuuh');
       if (!treino) resultados.push(r);
       atualizarHud();
@@ -531,7 +531,21 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           cena.desenharBatedor(batedor, r.desfecho === 'gol' ? poseComemora(ms, poseBatedor) : poseLamenta(ms, poseBatedor), 1);
           // A bola cai onde parou (na rede, na barreira, na luva) e fica no chão.
           const cai = limitar01(ms / 350);
-          if (r.desfecho !== 'fora') cena.desenharBola3d({ x: fim.x, y: fim.y * (1 - cai), z: r.desfecho === 'gol' ? -0.6 * cai : fim.z });
+          if (r.desfecho === 'trave' || r.desfecho === 'barreira') {
+            // Volta para o campo quicando duas vezes, na direção de onde veio (só desenho).
+            const t = limitar01(ms / 800);
+            const e = facil(t);
+            const volta = r.desfecho === 'trave' ? 4 : 2.5;
+            const d = Math.hypot(l.bola.x - fim.x, l.bola.z - fim.z) || 1;
+            cena.desenharBola3d(
+              {
+                x: fim.x + ((l.bola.x - fim.x) / d) * volta * e,
+                y: fim.y * Math.abs(Math.cos(t * Math.PI * 1.5)) * (1 - t) * (1 - t),
+                z: fim.z + ((l.bola.z - fim.z) / d) * volta * e,
+              },
+              t * 10,
+            );
+          } else if (r.desfecho !== 'fora') cena.desenharBola3d({ x: fim.x, y: fim.y * (1 - cai), z: r.desfecho === 'gol' ? -0.6 * cai : fim.z });
           const comReplay = r.desfecho === 'gol' && !reduzido && qualidade().replay;
           if (comReplay && ms >= DUR_ANTES_DO_REPLAY - ANTES_DO_CORTE) tarja.entrar();
           if (ms >= (comReplay ? DUR_ANTES_DO_REPLAY : DUR_PAUSA)) {

@@ -11,6 +11,7 @@ import {
   COBRANCAS,
   RODADAS_EXTRAS_MAX,
   coluna,
+  linha,
   dificuldadePorDia,
   normalizarCobranca,
   planejarDefesa,
@@ -333,6 +334,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     atualizarHud();
     narrar(narrador.falar(eventoDaCobranca(r), { etiquetas: etiquetasDaCobranca(r) }), legendaDaCobranca(r));
     if (r.desfecho === 'gol') comemorar(telaX(r.x), telaY(r.y), r.pontos, true);
+    else if (r.desfecho === 'trave') cena.baterNaTrave(telaX(r.x), telaY(r.y));
     somTorcida(r.desfecho === 'gol' ? 'festa' : 'uuuh');
     const golaco = r.desfecho === 'gol' && (r.angulo || r.cavadinha || r.raspouTrave);
     if (golaco && !reduzido && qualidade().replay) {
@@ -859,7 +861,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
           const ly = goleiro.luvaY;
           desenharTraves();
           desenharBatedorDepois(batedor(batedoresMaquina, defesas.length - 1), ms, r.desfecho === 'gol');
-          if (pegou) bolaParada(lx, ly);
+          // Bola alta defendida sai espalmada; baixa fica encaixada na luva.
+          if (pegou && linha(r.alvo) === 1) cena.bolaEspalmada(lx, ly, ms);
+          else if (pegou) bolaParada(lx, ly);
           else if (r.desfecho === 'gol') bolaParada(telaX(zonaX(r.alvo)), telaY(zonaY(r.alvo)));
         } else if (cobrancas.length) {
           const r = cobrancas[cobrancas.length - 1];
@@ -869,7 +873,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
           const ly = goleiro.luvaY;
           desenharTraves();
           desenharBatedorDepois(batedor(batedoresJogador, cobrancas.length - 1), ms, r.desfecho === 'gol');
-          if (r.desfecho === 'gol' || r.desfecho === 'trave') bolaParada(telaX(r.x), telaY(r.y));
+          if (r.desfecho === 'gol') bolaParada(telaX(r.x), telaY(r.y));
+          else if (r.desfecho === 'trave') cena.bolaNaTrave(telaX(r.x), telaY(r.y), ms);
+          else if (pegou && linha(r.zonaBola) === 1) cena.bolaEspalmada(lx, ly, ms);
           else if (pegou) bolaParada(lx, ly);
         }
         break;
@@ -883,6 +889,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         break;
       }
     }
+    cena.desenharBatidaNaTrave(agora);
     desenharPontos(agora);
     c.restore();
     if (lenta >= 0) desenharCameraLenta(lenta);
