@@ -30,6 +30,8 @@ servir(async (req) => {
 
   const corpo = await lerCorpo(req);
   const teste = corpo.teste === true;
+  // Diagnóstico: sem conteúdo não há criptografia; o service worker mostra a mensagem padrão.
+  const semCarga = corpo.sem_carga === true;
   const sb = admin();
   const agora = new Date();
 
@@ -46,7 +48,7 @@ servir(async (req) => {
   const linhas: LinhaAviso[] = (ranking ?? []).map((r) => ({ ...r, media30: Number(r.media30) }));
   const horas = horasAteFechar(agora);
 
-  const resultado = { enviados: 0, pulados: 0, apagados: 0, falhas: 0 };
+  const resultado = { enviados: 0, pulados: 0, apagados: 0, falhas: 0, codigos: [] as number[] };
   for (const i of inscricoes) {
     if (!teste && i.ultimo_envio && agora.getTime() - Date.parse(i.ultimo_envio) < INTERVALO_MS) {
       resultado.pulados++;
@@ -55,11 +57,17 @@ servir(async (req) => {
     const aviso = avisoDeDomingo(timeDe.get(i.torcedor_id) ?? 'outro', linhas, horas);
     const carga = JSON.stringify({ titulo: teste ? `[teste] ${aviso.titulo}` : aviso.titulo, corpo: aviso.corpo, url: '/' });
     try {
-      await webpush.sendNotification({ endpoint: i.endpoint, keys: { p256dh: i.p256dh, auth: i.auth } }, carga, { TTL: 6 * 3600, urgency: 'normal' });
+      const resp = await webpush.sendNotification({ endpoint: i.endpoint, keys: { p256dh: i.p256dh, auth: i.auth } }, semCarga ? null : carga, {
+        TTL: 6 * 3600,
+        urgency: 'normal',
+      });
+      resultado.codigos.push(resp.statusCode);
+      console.log(`push ${resp.statusCode} ${new URL(i.endpoint).host}${semCarga ? ' sem conteúdo' : ''}`);
       await sb.from('push_inscricoes').update({ ultimo_envio: agora.toISOString(), falhas: 0 }).eq('endpoint', i.endpoint);
       resultado.enviados++;
     } catch (e) {
       const status = (e as { statusCode?: number }).statusCode;
+      console.error(`push falhou ${status ?? ''} ${new URL(i.endpoint).host}: ${(e as { body?: string }).body ?? (e as Error).message}`);
       if (status === 404 || status === 410 || i.falhas + 1 >= FALHAS_MAX) {
         await sb.from('push_inscricoes').delete().eq('endpoint', i.endpoint);
         resultado.apagados++;
