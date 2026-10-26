@@ -56,18 +56,22 @@ servir(async (req) => {
   const sb = admin();
   const stg = sb.schema('staging_gt');
 
-  // Página menos usada (sorteio entre as 30 de menor uso), até 3 tentativas se a página não abrir.
-  const { data: candidatas, error } = await stg.from('fontes_semente').select('url, clube, usos, falhas').eq('ativa', true).order('usos').limit(30);
+  // Sorteio entre TODAS as páginas de menor uso (antes eram as 30 primeiras, quase só do Athletico).
+  // Página que não abre ou não rende pergunta: tenta outra, até 4 por rodada.
+  const { data: ativas, error } = await stg.from('fontes_semente').select('url, clube, usos, falhas').eq('ativa', true).limit(2000);
   if (error) throw error;
-  if (!candidatas?.length) return { ok: false, motivo: 'sem fonte-semente ativa' };
-  const sorteadas = [...candidatas].sort(() => Math.random() - 0.5);
+  if (!ativas?.length) return { ok: false, motivo: 'sem fonte-semente ativa' };
+  const menorUso = Math.min(...ativas.map((a) => a.usos));
+  const sorteadas = ativas.filter((a) => a.usos === menorUso).sort(() => Math.random() - 0.5);
 
-  for (const semente of sorteadas.slice(0, 3)) {
+  const rodadas = [];
+  for (const semente of sorteadas.slice(0, 4)) {
     const pagina = await baixar(semente.url);
     const texto = pagina.html ? textoDaPagina(pagina.html) : '';
     if (pagina.erro || texto.length < 800) {
       const falhas = semente.falhas + 1;
       await stg.from('fontes_semente').update({ falhas, ativa: falhas < 3 }).eq('url', semente.url).eq('clube', semente.clube);
+      rodadas.push({ fonte: semente.url, clube: semente.clube, erro: pagina.erro ?? 'página sem texto' });
       continue;
     }
 
@@ -75,7 +79,8 @@ servir(async (req) => {
     const { modelo, dados } = await perguntarJson<Proposta[]>(
       MODELOS_GERADOR,
       instrucao(alvo, quantidade),
-      `TEXTO DA PÁGINA (${semente.url}):\n${texto.slice(0, LIMITE_PAGINA)}`,
+      `TEXTO DA PÁGINA (${semente.url}):
+${texto.slice(0, LIMITE_PAGINA)}`,
       ESQUEMA,
     );
 
@@ -111,7 +116,9 @@ servir(async (req) => {
       .update({ usos: semente.usos + 1, falhas: 0, ultimo_uso: new Date().toISOString() })
       .eq('url', semente.url)
       .eq('clube', semente.clube);
-    return { ok: true, fonte: semente.url, clube: semente.clube, modelo, propostas: aceitas.length + recusas.length, aceitas: aceitas.length, recusas: recusas.map((r) => r.motivo) };
+    rodadas.push({ fonte: semente.url, clube: semente.clube, modelo, aceitas: aceitas.length, recusas: recusas.map((r) => r.motivo) });
+    if (aceitas.length) break;
   }
-  return { ok: false, motivo: 'nenhuma das páginas sorteadas abriu' };
+  const aceitas = rodadas.reduce((s, r) => s + (r.aceitas ?? 0), 0);
+  return { ok: true, aceitas, paginas: rodadas };
 });
