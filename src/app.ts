@@ -3,6 +3,7 @@
 import type { Gestos, ResultadoPartida } from './jogo/penaltis';
 import type { DesafioRecebido, FechamentoDoServidor } from './servidor/api';
 import type { DadosResultadoProva } from './telas/prova';
+import { qualidade } from './telas/qualidade';
 
 export interface DadosResultado {
   timeId: string;
@@ -53,11 +54,26 @@ export function iniciarApp(root: HTMLElement): void {
   raiz = root;
 }
 
+let primeiraTela = true;
+
+/**
+ * Troca de tela. Com a transição nativa do navegador (View Transitions), a tela nova entra numa
+ * varrida inclinada, como a tarja de TV (docs/visual.md, seção 4.5); sem ela, na qualidade Leve,
+ * com movimento reduzido ou na primeira tela, troca direto. A troca em si continua igual.
+ */
 export function irPara(rota: Rota): void {
-  if (typeof limparAtual === 'function') limparAtual();
-  raiz.innerHTML = '';
-  window.scrollTo(0, 0);
-  limparAtual = telas.get(rota.tela)?.(raiz, rota);
+  const trocar = () => {
+    if (typeof limparAtual === 'function') limparAtual();
+    raiz.innerHTML = '';
+    window.scrollTo(0, 0);
+    limparAtual = telas.get(rota.tela)?.(raiz, rota);
+  };
+  const doc = document as Document & { startViewTransition?: (fn: () => void) => unknown };
+  const semTransicao =
+    primeiraTela || !doc.startViewTransition || qualidade().nivel === 'leve' || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  primeiraTela = false;
+  if (semTransicao) trocar();
+  else doc.startViewTransition!(trocar);
 }
 
 /** Código de desafio que veio no link (?d=), até ser aceito. */
