@@ -471,7 +471,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Refeito do zero.** Os lotes de ideias de 20/10 servem só de ponto de partida (vários tinham fatos trocados).
 - **Cada lance guarda:** id, clube (ou Seleção), tipo, título, ficha, competição, ano, adversário, cena (bola, barreira, goleiro), zona histórica, faixa, **fontes** (links de notícias públicas), data da verificação e status (rascunho, revisado, ativo).
 - **Mesma cota para todos os clubes:** 2 a 3 lances por clube na estreia; a Seleção Brasileira entra como coleção extra, aberta a todos.
-- **Só lances que celebram o clube:** nada de tragédia, morte ou acidente, vexame ou atleta menor de idade na data do lance. Nada de opinião sobre pessoas ("vacilo do zagueiro").
+- **Só lances que celebram o clube:** nada de tragédia, morte ou acidente, vexame ou atleta menor de idade na data do lance. Nada de opinião sobre pessoas ("vacilo do zagueiro"). **Exceção (decidida em 26/10/2026):** lances da campanha da Chapecoense na Sul-Americana de 2016 podem entrar, desde que a ficha, o título e o narrador não falem do acidente.
 - **Competição e estádio** sem nome de patrocinador.
 - **Como nasce:** como o banco de perguntas (seção 7.1): lotes escritos numa sessão com busca na web, sempre com fonte, e uma segunda sessão, nova, que confere cada fonte.
 
