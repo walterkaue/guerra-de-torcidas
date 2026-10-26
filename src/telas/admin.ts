@@ -1,5 +1,6 @@
 // Painel do administrador (#admin): login com e-mail e senha, só para quem está na tabela
-// administradores. Revisa as perguntas do pipeline com Gemini (adminRevisao.ts). Confirma, corrige ou anula o placar dos jogos do Crava; a distribuição dos
+// administradores. Revisa as perguntas do pipeline com Gemini (adminRevisao.ts) e as partidas sob
+// suspeita (adminSuspeitas.ts). Confirma, corrige ou anula o placar dos jogos do Crava; a distribuição dos
 // pontos é feita no servidor (função confirmar-placar), sem duplicar.
 // Usa uma sessão separada (storageKey próprio): a sessão de jogador do aparelho continua a mesma.
 
@@ -10,6 +11,7 @@ import { ordinalRodada } from '../jogo/crava';
 import { horaDoJogo, rodadaEmFoco } from '../jogo/cravaTela';
 import type { Jogo } from '../servidor/crava';
 import { montarRevisao } from './adminRevisao';
+import { montarSuspeitas } from './adminSuspeitas';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -55,6 +57,7 @@ export function telaAdmin(root: HTMLElement): () => void {
 
   let jogos: Jogo[] = [];
   let limparRevisao: (() => void) | undefined;
+  let limparSuspeitas: (() => void) | undefined;
   let rodada: number | null = null;
 
   const casca = (miolo: string) => {
@@ -116,6 +119,8 @@ export function telaAdmin(root: HTMLElement): () => void {
       o servidor grava só a diferença. Placar confirmado depois de segunda 12h entra na semana atual.</p>
       <h3 class="titulo-placar">Revisão de perguntas</h3>
       <section data-revisao></section>
+      <h3 class="titulo-placar">Partidas sob suspeita</h3>
+      <section data-suspeitas></section>
       <h3 class="titulo-placar">Feedback</h3>
       <section class="lista-jogos" data-feedbacks><p class="nota">Carregando…</p></section>
       <h3 class="titulo-placar">Prova de Boleiro</h3>
@@ -128,6 +133,8 @@ export function telaAdmin(root: HTMLElement): () => void {
     root.querySelector('[data-jogos]')!.addEventListener('click', acaoNoJogo);
     limparRevisao?.();
     limparRevisao = montarRevisao(root.querySelector<HTMLElement>('[data-revisao]')!, sb, () => void carregar());
+    limparSuspeitas?.();
+    limparSuspeitas = montarSuspeitas(root.querySelector<HTMLElement>('[data-suspeitas]')!, sb);
     await carregar();
   }
 
@@ -325,5 +332,6 @@ export function telaAdmin(root: HTMLElement): () => void {
   return () => {
     saiu = true;
     limparRevisao?.();
+    limparSuspeitas?.();
   };
 }
