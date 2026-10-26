@@ -14,8 +14,10 @@ import { telaRanking } from './telas/ranking';
 import { telaFeedback } from './telas/feedback';
 import { telaCarregando, telaSemRede } from './telas/esqueleto';
 import { registrarServiceWorker } from './pwa';
+import { ligarToqueDosBotoes } from './telas/toque';
 
 registrarServiceWorker();
+ligarToqueDosBotoes();
 
 type Tela = Parameters<typeof registrarTela>[1];
 

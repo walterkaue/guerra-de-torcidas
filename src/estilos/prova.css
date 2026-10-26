@@ -182,7 +182,8 @@
   touch-action: manipulation;
 }
 .alt:active:not(:disabled) {
-  transform: translateY(2px);
+  transform: scale(0.97);
+  transition-duration: 0s;
 }
 .alt .letra {
   flex: none;

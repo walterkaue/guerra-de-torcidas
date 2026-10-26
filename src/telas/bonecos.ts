@@ -617,7 +617,7 @@ export function uniformeDeLinha([cor1, cor2]: readonly [string, string]): Unifor
 export const CORES_DA_MAQUINA: readonly [string, string] = ['#f97316', '#1b1b1b'];
 
 /** Diferença mínima entre as camisetas dos dois times em campo (distância de cor, 0 a 441). */
-export { CONTRASTE_ENTRE_TIMES };
+export { CONTRASTE_ENTRE_TIMES } from '../dados/times';
 
 /** Uniforme 1 (cor 1 na camiseta) e uniforme 2 (cores invertidas), os dois lisos. */
 const uniformesDoTime = ([cor1, cor2]: readonly [string, string]): [Uniforme, Uniforme] => [

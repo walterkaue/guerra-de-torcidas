@@ -216,13 +216,13 @@
 .cabo-barra span:first-child {
   flex: var(--fracao, 0.5) 0 0;
   background: var(--cor-eu);
-  transition: flex-grow 400ms ease-out;
+  transition: flex-grow 700ms var(--mola-firme);
 }
 
 .cabo-barra span:last-child {
   flex: calc(1 - var(--fracao, 0.5)) 0 0;
   background: var(--cor-rival);
-  transition: flex-grow 400ms ease-out;
+  transition: flex-grow 700ms var(--mola-firme);
 }
 
 .cabo-valores strong {
@@ -394,8 +394,9 @@
 }
 
 .card-jogo:active {
-  transform: translateY(2px);
+  transform: scale(0.97);
   border-color: var(--amarelo);
+  transition-duration: 0s;
 }
 
 .nome-jogo {

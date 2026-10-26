@@ -39,11 +39,26 @@
   --fonte-rotulo: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
   --fonte-texto: 'Barlow', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --inclinacao: -8deg;
+  /* Movimento (docs/visual.md, seção 4): durações curtas e duas molas. --mola passa ~10% do ponto
+     e volta (pop de adesivo, botão soltando); --mola-firme quase não passa (cards, barras).
+     Navegador sem linear() (Chrome < 113, Safari < 17.2) fica com a cubic-bezier de reserva. */
+  --rapido: 120ms;
+  --medio: 260ms;
+  --lento: 420ms;
+  --mola: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --mola-firme: cubic-bezier(0.22, 1.1, 0.36, 1);
   color-scheme: dark;
   /* A Anton só tem um peso: sem isto, "font-weight: 900" vira negrito falso e as letras grudam (título do Ranking). */
   font-synthesis-weight: none;
   font-family: var(--fonte-texto);
   -webkit-text-size-adjust: 100%;
+}
+
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --mola: linear(0, 0.101, 0.322, 0.568, 0.783, 0.941, 1.038, 1.085, 1.095, 1.083, 1.061, 1.038, 1.018, 1.004, 0.995, 0.992, 0.991, 0.992, 0.995, 0.997, 0.999, 1);
+    --mola-firme: linear(0, 0.139, 0.396, 0.635, 0.81, 0.92, 0.98, 1.006, 1.015, 1.014, 1.011, 1.007, 1.004, 1.002, 1.001, 1);
+  }
 }
 
 * {
@@ -91,6 +106,7 @@ body {
   width: 0.8em;
   height: 0.8em;
   border-radius: 50%;
+  margin: 0 0.12em;
   vertical-align: -0.05em;
   box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.4);
 }
@@ -132,11 +148,14 @@ body {
   gap: 2px;
   box-shadow: 0 6px 0 #b8920f;
   touch-action: manipulation;
+  transition: transform var(--lento) var(--mola), box-shadow var(--lento) var(--mola);
 }
 
+/* Afunda na hora (sem transição) e, ao soltar, volta com a mola. */
 .botao:active:not(:disabled) {
   transform: translateY(4px);
   box-shadow: 0 2px 0 #b8920f;
+  transition-duration: 0s;
 }
 
 .botao:disabled {
@@ -633,4 +652,28 @@ body {
 @keyframes esq-giro { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
   .esq, .esq-bola { animation: none; }
+}
+
+/* ---------- toque e mola (docs/visual.md, seção 4) ---------- */
+/* Botões pequenos e cards: encolhem um pouco ao tocar e voltam com a mola. */
+.voltar, .mudo, .barra-nav button, .cartao-time, .card-jogo, .alt, .ajuda-btn, .link-casa {
+  transition: transform var(--lento) var(--mola);
+}
+.voltar:active, .mudo:active, .barra-nav button:active:not([aria-disabled='true']), .ajuda-btn:active:not(:disabled), .link-casa:active {
+  transform: scale(0.92);
+  transition-duration: 0s;
+}
+.cartao-time:active:not([disabled]) { transform: scale(0.96); transition-duration: 0s; }
+
+/* O adesivo do narrador entra com um pop de mola, já torto. */
+@keyframes adesivo-entra {
+  from { opacity: 0; transform: scale(0.6) rotate(-6deg); }
+  to { opacity: 1; }
+}
+.adesivo:not([hidden]) { animation: adesivo-entra var(--lento) var(--mola) both; }
+.adesivo.segundo:not([hidden]) { animation-delay: 160ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .botao, .voltar, .mudo, .barra-nav button, .cartao-time, .card-jogo, .alt, .ajuda-btn, .link-casa { transition: none; }
+  .adesivo:not([hidden]) { animation: none; }
 }

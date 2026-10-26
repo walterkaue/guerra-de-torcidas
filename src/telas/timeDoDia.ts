@@ -30,6 +30,7 @@ import {
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { convidarParaAvisos } from './convitePush';
 import { bolinha, icone } from './icones';
+import { vibrar } from './toque';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 /** Quantos clubes a busca mostra de uma vez (a lista inteira tem 60). */
@@ -294,6 +295,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     elChutar.hidden = true;
     const n = e.tentativas.length;
     if (!frasesFinais.length) {
+      vibrar(e.acertou ? 'acerto' : 'erro');
       const f1 = e.acertou
         ? n === 1
           ? narrador.falar('dia_acertou_primeira')

@@ -26,6 +26,7 @@ import {
 } from '../servidor/api';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { icone, type NomeIcone } from './icones';
+import { vibrar } from './toque';
 
 export interface DadosResultadoProva {
   timeId: string;
@@ -265,6 +266,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       if (r.desfecho !== 'acertou') botao?.classList.add('errada');
       degraus[i] = r.desfecho === 'acertou' ? (ajudaNaAtual ? 'ajuda' : 'certa') : 'errada';
       pintarEscada(null);
+      vibrar(r.desfecho === 'acertou' ? 'acerto' : 'erro');
       if (r.desfecho === 'acertou') gritar(falar('prova_acertou'));
       else gritar(falar(r.desfecho === 'tempo' ? 'prova_tempo' : 'prova_errou'));
 
