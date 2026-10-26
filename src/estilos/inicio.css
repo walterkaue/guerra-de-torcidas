@@ -104,6 +104,8 @@
   font-family: var(--fonte-placar);
   font-weight: 400;
   font-size: 34px;
+  /* Folga para o acento das maiúsculas (o til de SÃO, o circunflexo de GRÊMIO) não invadir a linha de cima. */
+  margin-top: 6px;
   line-height: 1.05;
   text-transform: uppercase;
   overflow-wrap: anywhere;
