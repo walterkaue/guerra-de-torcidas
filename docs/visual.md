@@ -62,6 +62,7 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 - **Grito do narrador como adesivo:** caixa na cor do time, borda branca, entra com um "pop", e a frase complementar logo abaixo. (Só na partida, que é um momento curto de festa. Fora dela, na Home, no resultado e no Time do Dia, o adesivo é papel claro com faixa na cor do time: a caixa cheia em time vermelho parecia aviso de erro. Decidido em 26/10.)
 - **Rastro da bola** amarelo seguindo o arraste do dedo; "+15" subindo do ponto do gol.
 - Gol: tremida curta da tela (120 ms), rede balançando e vibração no Android (`navigator.vibrate`).
+- **Trave e defesa (26/10):** a bola não para mais no ar. Na trave: anel de brilho no ponto da batida, tremida mais fraca que a do gol, vibração de dois toques e um "plém" metálico; a bola volta quicando para o campo. Defesa em canto alto sai **espalmada** para fora e por cima; defesa baixa fica encaixada na luva. Defesa de quem joga vibra como acerto. Nos Lances, a bola também volta da trave e da barreira. Só desenho e som: o motor e os pontos não mudam.
 - Cavadinha: câmera lenta de 0,5 s antes de entrar.
 - **Bonecos (Silhueta premium, `docs/bonecos.md`):** esqueleto por rotações com poses-chave interpoladas. Batedor: ajeita a bola agachado e recua, mãos na cintura, chute em 4 tempos (pé de apoio, puxada, contato, finalização), cavadinha de toque curto, comemora o gol ou põe as mãos na cabeça. Máquina: corrida de 3 passos e crava o pé de apoio. Goleiro: balança na linha, pulo baixo ou alto para cada lado, de pé no meio, cai no chão depois do pulo, com a bola encaixada no peito quando defende. Bola com gomos girando e rastro de borrão.
 - **Dica da defesa no corpo:** a partir de 55% da corrida aparece no chão, em amarelo, a pegada de onde o pé de apoio vai cravar, com a seta do canto; quando o batedor chega, a chuteira do pé de apoio fica amarela e continua assim no chute.
@@ -134,6 +135,12 @@ Amostra aprovada em 26/10 (página "Qualidade Alta, Média e Leve"). Código em 
 - **Na mão:** botão "Gráficos" no rodapé da Home, toque troca automático → Alta → Média → Leve.
 - Em dev, `?qualidade=alta|media|leve` força o nível; `/dev/qualidade.html` desenha a amostra dos três.
 - O que vier de efeito novo (partículas, impacto) declara em que nível aparece.
+
+## 4.4 Papel picado
+
+- Explode nas cores do time (cor muito escura vira branco, para aparecer) no **gol** (Pênaltis e Lances) e no **acerto** da Prova de Boleiro e do Time do Dia (no Time do Dia, só na primeira vez que o fim aparece).
+- Retângulos que "viram" (a largura oscila) em vez de girar: um preenchimento por peça, pool fixo, nenhum objeto novo por quadro. Dura 1,4 s e some no fim.
+- **Alta 40 peças, Média 24, Leve nenhuma.** Nada com movimento reduzido. O confete da tela de vitória continua como era.
 
 ## 5. Ajustes encontrados no código
 

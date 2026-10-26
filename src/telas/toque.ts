@@ -4,13 +4,15 @@
 
 import { prefs } from '../estado';
 
-export type Toque = 'leve' | 'acerto' | 'erro' | 'gol';
+export type Toque = 'leve' | 'acerto' | 'erro' | 'gol' | 'trave';
 
 const PADROES: Record<Toque, number | number[]> = {
   leve: 8,
   acerto: 22,
   erro: [30, 50, 30],
   gol: [60, 40, 90],
+  /** Dois toques secos: a bola bateu e voltou. */
+  trave: [25, 35, 25],
 };
 
 const reduzido = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
