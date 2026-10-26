@@ -13,6 +13,7 @@
 // cor, nenhum filtro e nenhum objeto novo por quadro (poses e juntas são Float32Array reaproveitados).
 
 import { CONTRASTE_ENTRE_TIMES, distanciaDeCor } from '../dados/times';
+import { qualidade } from './qualidade';
 
 // ---------- medidas (proporção atlética: cabeça pequena, pernas longas) ----------
 const COXA = 24;
@@ -1023,9 +1024,11 @@ const J_TORNOZELO = 26; // E 26, D 28
 interface Degrades {
   ctx: CanvasRenderingContext2D;
   /** Pele do osso de cima (base → meio) e do de baixo (meio → escuro). */
-  peleA: CanvasGradient;
-  peleB: CanvasGradient;
-  calcao: CanvasGradient;
+  /** Qualidade leve: cores lisas no lugar dos degradês. */
+  chapado: boolean;
+  peleA: CanvasGradient | string;
+  peleB: CanvasGradient | string;
+  calcao: CanvasGradient | string;
 }
 
 export interface Boneco {
@@ -1098,12 +1101,18 @@ function degrade(c: CanvasRenderingContext2D, chave: string, de: string, para: s
 }
 
 function prepararDegrades(c: CanvasRenderingContext2D, b: Boneco): Degrades {
-  if (b.degrades?.ctx === c) return b.degrades;
+  if (b.degrades?.ctx === c && b.degrades.chapado === !qualidade().degrade) return b.degrades;
+  // Qualidade leve: cores chapadas (um preenchimento simples custa menos que o degradê).
+  if (!qualidade().degrade) {
+    b.degrades = { ctx: c, chapado: true, peleA: b.aparencia.pele, peleB: b.cor.peleMeio, calcao: b.uniforme.calcao };
+    return b.degrades;
+  }
   const pele = b.aparencia.pele;
   const escura = escurecer(pele, 0.76);
   const calcaoEscuro = escurecer(b.uniforme.calcao, 0.74);
   b.degrades = {
     ctx: c,
+    chapado: false,
     peleA: degrade(c, `pa${pele}`, pele, b.cor.peleMeio, 1),
     peleB: degrade(c, `pb${pele}`, b.cor.peleMeio, escura, 1.3),
     calcao: degrade(c, `c${b.uniforme.calcao}`, b.uniforme.calcao, calcaoEscuro, 14, -3),

@@ -638,3 +638,8 @@
   color: var(--amarelo);
   font-size: 18px;
 }
+
+/* "Gráficos" fica colado no link de feedback, os dois são rodapé. */
+.inicio > .link-graficos {
+  margin-top: -14px;
+}

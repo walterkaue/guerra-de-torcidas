@@ -8,6 +8,7 @@ import { GOLEIRO, desenharBoneco, misturar, novaPose, poseGoleiroEsperando, type
 import { cameraAtrasDaBola, cameraDoReplay, type Camera, type Enquadramento, type NaTela, type Ponto3 } from './camera';
 import { desenharBolaEm, desenharPontosEm, desenharRastroEm, facil, limitar01, suave } from './cena';
 import { vibrar } from './toque';
+import { qualidade } from './qualidade';
 
 const MEIA_GOL = 3.66;
 const ALTURA_GOL = 2.44;
@@ -59,7 +60,7 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
 
   // ---------- montagem ----------
   function medir(): void {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    dpr = Math.min(window.devicePixelRatio || 1, qualidade().dprMax);
     const r = canvas.getBoundingClientRect();
     W = r.width;
     H = r.height;
@@ -485,7 +486,7 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
   function comemorar(x: number, y: number, pontos: number): void {
     const agora = relogio();
     if (pontos > 0) efeitos.pontos.push({ inicio: agora, x, y, texto: `+${pontos}` });
-    if (!reduzido) efeitos.tremida = agora;
+    if (!reduzido && qualidade().tremida) efeitos.tremida = agora;
     vibrar(reduzido ? 'acerto' : 'gol');
   }
 

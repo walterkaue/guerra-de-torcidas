@@ -1,7 +1,8 @@
 # Revisão gráfica — direção "Transmissão de domingo"
 
-> Versão 1.6 · 26/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Versão 1.7 · 26/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
 > Base: o jogo publicado em 18/10/2026 (commit b492b99), testado em 390×844.
+> Mudanças da 1.7: qualidade gráfica automática em três níveis (seção 4.3).
 > Mudanças da 1.6: replay de TV do gol (seção 4.2).
 > Mudanças da 1.5 (revisão de 26/10): adesivo do narrador em papel claro com faixa na cor do time (a caixa cheia vermelha parecia aviso de erro); duelo da Home com cores que se distinguem; ícones em SVG no lugar de emoji; tela de carregando com esqueleto; molas e resposta ao toque (seção 4).
 > Mudanças da 1.4: a Home deixa de lembrar anúncio de aposta (seção 3, Início); amarelo de placar mais fosco `#e9c75a`; selo vermelho "AO VIVO" removido.
@@ -115,6 +116,23 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 - **Por quê é barato:** o lance já foi resolvido pelo motor puro (gesto + semente). O replay só redesenha o caminho da bola (`caminhoDoChute`, em `jogo/lances.ts`) na câmera 3D dos Lances; nos Pênaltis, num canvas 3D por cima da cena de TV, criado no primeiro golaço. Zero rede, ~5 KB gzip a mais no pacote dos jogos, e a arquibancada do outro lado é pré-desenhada uma vez por replay (~16 ms no computador; fica escondida pela vinheta).
 - **Bonecos de costas viram de frente:** cada boneco é recriado do outro lado (`deFrente` trocado) e desenhado espelhado, então o batedor aparece de frente comemorando e o goleiro de costas, voando para o lado certo.
 - Pode virar card ou vídeo para compartilhar depois (fora deste passo).
+
+## 4.3 Qualidade gráfica (Alta, Média, Leve)
+
+Amostra aprovada em 26/10 (página "Qualidade Alta, Média e Leve"). Código em `telas/qualidade.ts`.
+
+| | Alta | Média | Leve |
+|---|---|---|---|
+| Nitidez do canvas | 2× | 1,5× | 1× |
+| Torcida | balança e faz ola no gol | balança, sem ola | parada |
+| Bonecos | degradê na pele e no calção | degradê | cor lisa |
+| Tremida no gol | sim | sim | não |
+| Replay de TV | sim, com a câmera fechando | sim, câmera parada | não |
+
+- **Automático (padrão):** começa em Média. Economia de dados ligada, 4 núcleos ou menos ou 2 GB ou menos: Leve. Durante a partida, a cada 90 quadros: intervalo médio acima de 22 ms (menos de ~45 por segundo) desce um nível na hora e fica gravado no aparelho; intervalo abaixo de 17,5 ms com pouco trabalho por quadro, num aparelho de 6+ núcleos e 4+ GB (ou que não diz), grava Alta para a **próxima** partida. No meio da partida só desce, nunca sobe. Quem caiu para Leve pela medição fica em Leve (sem gangorra entre visitas).
+- **Na mão:** botão "Gráficos" no rodapé da Home, toque troca automático → Alta → Média → Leve.
+- Em dev, `?qualidade=alta|media|leve` força o nível; `/dev/qualidade.html` desenha a amostra dos três.
+- O que vier de efeito novo (partículas, impacto) declara em que nível aparece.
 
 ## 5. Ajustes encontrados no código
 

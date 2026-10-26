@@ -5,6 +5,7 @@
 import { coluna, linha, type GestoCobranca } from '../jogo/penaltis';
 import { GOLEIRO, desenharBoneco, maos, misturar, novaPose, poseGoleiroEsperando, type Boneco, type Pose } from './bonecos';
 import { vibrar } from './toque';
+import { qualidade } from './qualidade';
 
 /** Rastro do dedo: [largura, opacidade] do brilho e do traço. */
 const BRILHO_DO_RASTRO = [
@@ -179,7 +180,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
   const g = { gx: 0, gy: 0, gw: 0, gh: 0, chao: 0, bolaX: 0, bolaY: 0, raio: 0, fugaY: 0, escM: 0 };
 
   function medir(): void {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, qualidade().dprMax);
     const ret = canvas.getBoundingClientRect();
     W = ret.width;
     H = ret.height;
@@ -222,11 +223,11 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
   /** Comemoração de gol ou defesa: ola, "+pontos" subindo e, no gol, tremida, rede e vibração. */
   function comemorar(x: number, y: number, pontos: number, gol: boolean): void {
     const agora = relogio();
-    if (!reduzido) efeitos.ola = agora;
+    if (!reduzido && qualidade().ola) efeitos.ola = agora;
     if (pontos > 0) efeitos.pontos.push({ inicio: agora, x, y, texto: `+${pontos}` });
     if (!gol) return;
     efeitos.rede = { inicio: agora, x, y };
-    if (!reduzido) efeitos.tremida = agora;
+    if (!reduzido && qualidade().tremida) efeitos.tremida = agora;
     vibrar(reduzido ? 'acerto' : 'gol');
   }
 
@@ -480,7 +481,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
   function desenharArquibancada(agora: number): void {
     const fim = fimArquibancada();
     const t = (agora - efeitos.ola) / DUR_OLA;
-    const q = Math.floor(agora / 170) % QUADROS_TORCIDA;
+    const q = qualidade().torcidaViva ? Math.floor(agora / 170) % QUADROS_TORCIDA : 0;
     if (t < 0 || t > 1.4) {
       if (torcida[q]) c.drawImage(torcida[q], 0, 0, W, fim);
       return;
