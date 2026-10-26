@@ -272,7 +272,8 @@
 }
 
 .link-ver {
-  min-height: 40px;
+  min-height: 44px;
+  min-width: 44px;
   border: 0;
   background: none;
   color: var(--amarelo);
