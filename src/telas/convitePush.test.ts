@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { podeConvidar } from './convitePush';
+import { explicacaoDoAviso, podeConvidar } from './convitePush';
 
 const DIA = 24 * 3600_000;
 
@@ -11,5 +11,15 @@ describe('convite para o aviso de domingo', () => {
     expect(podeConvidar(agora, agora - 14 * DIA, 'default')).toBe(true);
     expect(podeConvidar(agora, 0, 'denied')).toBe(false); // recusou: nunca mais insiste
     expect(podeConvidar(agora, 0, 'granted')).toBe(false); // já liberou
+  });
+
+  it('explica o bloqueio no Android pelas duas portas (site e app do navegador)', () => {
+    expect(explicacaoDoAviso('bloqueado', false, true)).toMatch(/Configurações → Apps/);
+    expect(explicacaoDoAviso('bloqueado', false, false)).not.toMatch(/Configurações/);
+  });
+
+  it('app instalado por navegador sem push: reinstalar pelo Chrome', () => {
+    expect(explicacaoDoAviso('sem-suporte', true)).toMatch(/Instalar app/);
+    expect(explicacaoDoAviso('sem-suporte', false)).toMatch(/Abrir no Chrome/);
   });
 });

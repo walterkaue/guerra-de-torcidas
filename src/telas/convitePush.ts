@@ -122,15 +122,26 @@ export async function estadoDoAviso(): Promise<EstadoAviso> {
   return 'pode-ligar';
 }
 
-const EXPLICA: Record<Exclude<EstadoAviso, 'ligado' | 'pode-ligar'>, string> = {
-  'iphone-fora-do-app':
-    'No iPhone, o aviso só chega com o jogo instalado: no Safari, toque em Compartilhar → "Adicionar à Tela de Início" e abra o jogo pelo ícone.',
-  'sem-suporte':
-    'Este navegador não recebe avisos. Se você abriu pelo link do WhatsApp ou do Instagram, abra o site no Chrome (menu ⋮ → "Abrir no Chrome").',
-  bloqueado:
-    'As notificações deste site estão bloqueadas no navegador. Toque no cadeado ao lado do endereço → Notificações → Permitir, e volte aqui.',
-  'sem-chave': 'O aviso ainda não está configurado no servidor.',
-};
+const appInstalado = () => window.matchMedia('(display-mode: standalone)').matches;
+const android = () => /Android/i.test(navigator.userAgent);
+
+/** Explicação de cada caso em que o aparelho não recebe o aviso, com o que fazer. */
+export function explicacaoDoAviso(estado: Exclude<EstadoAviso, 'ligado' | 'pode-ligar'>, instalado = appInstalado(), ehAndroid = android()): string {
+  if (estado === 'iphone-fora-do-app') {
+    return 'No iPhone, o aviso só chega com o jogo instalado: no Safari, toque em Compartilhar → "Adicionar à Tela de Início" e abra o jogo pelo ícone.';
+  }
+  if (estado === 'sem-suporte') {
+    return instalado
+      ? 'Este app foi instalado por um navegador que não recebe avisos (o navegador da Xiaomi, por exemplo). Abra o site no Chrome e instale de novo por lá: menu ⋮ → "Instalar app".'
+      : 'Este navegador não recebe avisos. Se você abriu pelo link do WhatsApp ou do Instagram, abra o site no Chrome (menu ⋮ → "Abrir no Chrome").';
+  }
+  if (estado === 'bloqueado') {
+    return ehAndroid
+      ? 'As notificações estão bloqueadas. Confira as duas: (1) no site, toque no cadeado ao lado do endereço → Notificações → Permitir; (2) no celular, Configurações → Apps → Chrome (ou o navegador que você usa) → Notificações → ligar. Depois volte aqui.'
+      : 'As notificações deste site estão bloqueadas no navegador. Toque no cadeado ao lado do endereço → Notificações → Permitir, e volte aqui.';
+  }
+  return 'O aviso ainda não está configurado no servidor.';
+}
 
 /** Painel do sininho: liga, desliga ou explica por que este aparelho não recebe o aviso. */
 export async function painelDoAviso(el: HTMLElement, aoMudar: (ligado: boolean) => void): Promise<void> {
@@ -151,7 +162,7 @@ export async function painelDoAviso(el: HTMLElement, aoMudar: (ligado: boolean) 
   } else {
     el.innerHTML = `<section class="convite-push" aria-label="Aviso de domingo">
       <p class="rotulo">🔔 Aviso de domingo</p>
-      <p>${EXPLICA[estado]}</p>
+      <p>${explicacaoDoAviso(estado)}</p>
       ${fechar}
     </section>`;
   }
