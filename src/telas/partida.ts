@@ -61,6 +61,7 @@ import {
   type Boneco,
 } from './bonecos';
 import { icone } from './icones';
+import { aoMudarQualidade, medirQuadros, qualidade } from './qualidade';
 
 type Fase =
   | { tipo: 'mirar'; inicio: number }
@@ -334,7 +335,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     if (r.desfecho === 'gol') comemorar(telaX(r.x), telaY(r.y), r.pontos, true);
     somTorcida(r.desfecho === 'gol' ? 'festa' : 'uuuh');
     const golaco = r.desfecho === 'gol' && (r.angulo || r.cavadinha || r.raspouTrave);
-    if (golaco && !reduzido) {
+    if (golaco && !reduzido && qualidade().replay) {
       const gesto = gestosCobranca[gestosCobranca.length - 1];
       window.setTimeout(() => !acabou && tarja.entrar(), DUR_ANTES_DO_REPLAY - ANTES_DO_CORTE);
       depoisDe(DUR_ANTES_DO_REPLAY, () => comecarReplay(r, gesto, comecarDefesa));
@@ -885,12 +886,21 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     desenharPontos(agora);
     c.restore();
     if (lenta >= 0) desenharCameraLenta(lenta);
+    const trabalho = performance.now() - inicioQuadro;
+    medidor.quadro(trabalho);
     if (import.meta.env.DEV) {
-      temposDeQuadro.push(performance.now() - inicioQuadro);
+      temposDeQuadro.push(trabalho);
       if (temposDeQuadro.length > 120) temposDeQuadro.shift();
     }
     raf = proximoQuadro(quadro);
   }
+
+  // Qualidade automática: mede os quadros e, se o nível mudar, refaz os canvas abertos.
+  const medidor = medirQuadros();
+  const pararDeOuvirQualidade = aoMudarQualidade(() => {
+    medir();
+    if (cena3d && telaReplay && !telaReplay.hidden) cena3d.medir();
+  });
 
   // ---------- ligações ----------
   if (import.meta.env.DEV) {
@@ -925,6 +935,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
 
   return () => {
     acabou = true;
+    pararDeOuvirQualidade();
     if (usarTimer) clearTimeout(raf);
     else cancelAnimationFrame(raf);
     window.removeEventListener('resize', aoRedimensionar);

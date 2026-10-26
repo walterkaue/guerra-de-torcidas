@@ -29,6 +29,7 @@ import { facil, limitar01 } from './cena';
 import { criarCena3d } from './cena3d';
 import { ANTES_DO_CORTE, criarReplay, montarTarjaDoReplay, type Replay } from './replay';
 import { icone, type NomeIcone } from './icones';
+import { aoMudarQualidade, medirQuadros, qualidade } from './qualidade';
 
 export const AVISO_EM_TESTE = 'Em teste: Faltas e Cara a cara ainda não valem pontos.';
 
@@ -463,6 +464,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
 
     function quadro(agora: number): void {
       if (acabou) return;
+      const inicioQuadro = performance.now();
       c.save();
       if (fase.tipo === 'replay') {
         const falta = fase.replay.quadro(agora);
@@ -530,7 +532,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           // A bola cai onde parou (na rede, na barreira, na luva) e fica no chão.
           const cai = limitar01(ms / 350);
           if (r.desfecho !== 'fora') cena.desenharBola3d({ x: fim.x, y: fim.y * (1 - cai), z: r.desfecho === 'gol' ? -0.6 * cai : fim.z });
-          const comReplay = r.desfecho === 'gol' && !reduzido;
+          const comReplay = r.desfecho === 'gol' && !reduzido && qualidade().replay;
           if (comReplay && ms >= DUR_ANTES_DO_REPLAY - ANTES_DO_CORTE) tarja.entrar();
           if (ms >= (comReplay ? DUR_ANTES_DO_REPLAY : DUR_PAUSA)) {
             if (comReplay) comecarReplay(r, fase.em, fase.dur);
@@ -541,6 +543,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       }
       cena.desenharPontos(agora);
       c.restore();
+      medidor.quadro(performance.now() - inicioQuadro);
       raf = requestAnimationFrame(() => quadro(relogio()));
     }
 
@@ -591,9 +594,13 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     if (treino) narrar(null, 'Treino: tente quantas vezes quiser');
     else narrar(narrador.falar('lance_abertura'));
     somApito();
+    // Qualidade automática: mede os quadros e, se o nível mudar, refaz o canvas.
+    const medidor = medirQuadros();
+    const pararDeOuvirQualidade = aoMudarQualidade(() => cena.medir());
     let raf = requestAnimationFrame(() => quadro(relogio()));
     limparJogo = () => {
       acabou = true;
+      pararDeOuvirQualidade();
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', aoRedimensionar);
     };

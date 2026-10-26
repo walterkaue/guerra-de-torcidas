@@ -26,6 +26,13 @@ import { sincronizarTorcedor } from '../servidor/torcedor';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
+import { NOME_DO_NIVEL, escolha, escolherQualidade, qualidade } from './qualidade';
+
+/** "Gráficos: automático (Média)" ou "Gráficos: Leve". */
+function rotuloGraficos(): string {
+  const nivel = NOME_DO_NIVEL[qualidade().nivel];
+  return `${icone('grafico')} Gráficos: ${escolha() === 'auto' ? `automático (${nivel})` : nivel}`;
+}
 
 export const TETO_DIARIO = 5;
 // Em desenvolvimento, ?diaFalso usa o Time do Dia de mentira também no card (src/dev/diaFalso.ts).
@@ -144,6 +151,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       </section>
 
       <button class="link-feedback" type="button" data-acao="feedback">${icone('balao')} Feedback ou bug? Conta pra gente</button>
+      <button class="link-feedback link-graficos" type="button" data-acao="graficos" aria-live="polite">${rotuloGraficos()}</button>
 
       <p class="rodape-resenha" role="note">${esc(AVISO_RESENHA)} Jogo 100% grátis.</p>
 
@@ -175,6 +183,13 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     irPara({ tela: 'casa', id: time && time.id !== ID_OUTRO ? time.id : undefined }),
   );
   root.querySelector('[data-acao="feedback"]')?.addEventListener('click', () => irPara({ tela: 'feedback', de: 'inicio' }));
+  // Gráficos: toque troca automático → alta → média → leve → automático (telas/qualidade.ts).
+  const elGraficos = root.querySelector<HTMLButtonElement>('[data-acao="graficos"]')!;
+  elGraficos.addEventListener('click', () => {
+    const ordem = ['auto', 'alta', 'media', 'leve'] as const;
+    escolherQualidade(ordem[(ordem.indexOf(escolha()) + 1) % ordem.length]);
+    elGraficos.innerHTML = rotuloGraficos();
+  });
   ligarBarraNavegacao(root);
 
   // Sininho: liga, desliga ou explica o aviso de domingo (push). Aceso quando o aviso está ligado.

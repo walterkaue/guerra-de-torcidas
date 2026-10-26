@@ -7,6 +7,7 @@ import { criarBoneco, novaPose, poseChute, poseComemora, poseParado, type Boneco
 import type { Enquadramento, Ponto3 } from './camera';
 import { facil, limitar01, suave } from './cena';
 import type { Barreira3d, Cena3d } from './cena3d';
+import { qualidade } from './qualidade';
 
 /** Tudo o que o replay precisa do lance que acabou de acontecer. */
 export interface LanceDoReplay {
@@ -59,7 +60,7 @@ export function criarReplay(cena: Cena3d, l: LanceDoReplay, inicio: number) {
     // A câmera fecha devagar (zoom só no canvas: o fundo pronto não é redesenhado).
     const W = c.canvas.clientWidth;
     const H = c.canvas.clientHeight;
-    const z = 1 + (ZOOM_FINAL - 1) * suave(limitar01(ms / total));
+    const z = qualidade().zoomNoReplay ? 1 + (ZOOM_FINAL - 1) * suave(limitar01(ms / total)) : 1;
     c.translate(W / 2, H / 2);
     c.scale(z, z);
     c.translate(-W / 2, -H / 2);
