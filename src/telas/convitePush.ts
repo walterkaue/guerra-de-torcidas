@@ -82,17 +82,12 @@ export async function desligarAvisos(): Promise<void> {
   }
 }
 
-export async function avisosLigados(): Promise<boolean> {
-  if (!pushDisponivel() || Notification.permission !== 'granted') return false;
-  return !!(await inscricaoAtual());
-}
-
 /** Depois de um bom momento: põe o cartão em `el` (se as regras deixarem). */
 export function convidarParaAvisos(el: HTMLElement | null): void {
   if (!el || !pushDisponivel() || !podeConvidar()) return;
   gravarMemoria();
   el.innerHTML = `<section class="convite-push" aria-label="Aviso de domingo">
-    <p class="rotulo">Quer um toque no domingo?</p>
+    <p class="rotulo">🔔 Quer um toque no domingo?</p>
     <p>Um aviso por semana, umas horas antes de fechar: como tá a sua torcida e o rival. Só isso.</p>
     <div class="dupla">
       <button class="botao" type="button" data-acao="push-sim">Quero o aviso</button>
@@ -106,9 +101,77 @@ export function convidarParaAvisos(el: HTMLElement | null): void {
     const r = await ligarAvisos();
     caixa.innerHTML =
       r === 'ligado'
-        ? '<p class="rotulo">Fechado! Domingo à tarde tem aviso.</p><p class="nota">Dá pra desligar no rodapé da tela inicial.</p>'
+        ? '<p class="rotulo">🔔 Fechado! Domingo à tarde tem aviso.</p><p class="nota">Dá pra desligar no sininho da tela inicial.</p>'
         : r === 'recusado'
           ? '<p class="nota">Tranquilo, sem aviso. Se mudar de ideia, libera as notificações do site no navegador.</p>'
           : '<p class="nota">Não deu pra ligar o aviso agora. Tenta de novo outro dia.</p>';
+  });
+}
+
+// ---------- sininho da tela inicial ----------
+
+export type EstadoAviso = 'ligado' | 'pode-ligar' | 'bloqueado' | 'iphone-fora-do-app' | 'sem-suporte' | 'sem-chave';
+
+/** Situação do aviso neste aparelho (o sininho mostra e explica cada uma). */
+export async function estadoDoAviso(): Promise<EstadoAviso> {
+  if (!CHAVE_VAPID) return 'sem-chave';
+  if (iosForaDoApp()) return 'iphone-fora-do-app';
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'sem-suporte';
+  if (Notification.permission === 'denied') return 'bloqueado';
+  if (Notification.permission === 'granted' && (await inscricaoAtual().catch(() => null))) return 'ligado';
+  return 'pode-ligar';
+}
+
+const EXPLICA: Record<Exclude<EstadoAviso, 'ligado' | 'pode-ligar'>, string> = {
+  'iphone-fora-do-app':
+    'No iPhone, o aviso só chega com o jogo instalado: no Safari, toque em Compartilhar → "Adicionar à Tela de Início" e abra o jogo pelo ícone.',
+  'sem-suporte':
+    'Este navegador não recebe avisos. Se você abriu pelo link do WhatsApp ou do Instagram, abra o site no Chrome (menu ⋮ → "Abrir no Chrome").',
+  bloqueado:
+    'As notificações deste site estão bloqueadas no navegador. Toque no cadeado ao lado do endereço → Notificações → Permitir, e volte aqui.',
+  'sem-chave': 'O aviso ainda não está configurado no servidor.',
+};
+
+/** Painel do sininho: liga, desliga ou explica por que este aparelho não recebe o aviso. */
+export async function painelDoAviso(el: HTMLElement, aoMudar: (ligado: boolean) => void): Promise<void> {
+  const estado = await estadoDoAviso();
+  const fechar = '<button class="botao botao-sec" type="button" data-acao="push-fechar">Fechar</button>';
+  if (estado === 'ligado') {
+    el.innerHTML = `<section class="convite-push" aria-label="Aviso de domingo">
+      <p class="rotulo">🔔 Aviso de domingo ligado</p>
+      <p>Domingo à tarde chega um toque com a situação da sua torcida e do rival. Um por semana.</p>
+      <div class="dupla"><button class="botao botao-sec" type="button" data-acao="push-desligar">Desligar</button>${fechar}</div>
+    </section>`;
+  } else if (estado === 'pode-ligar') {
+    el.innerHTML = `<section class="convite-push" aria-label="Aviso de domingo">
+      <p class="rotulo">🔔 Quer um toque no domingo?</p>
+      <p>Um aviso por semana, umas horas antes de fechar: como tá a sua torcida e o rival. Só isso.</p>
+      <div class="dupla"><button class="botao" type="button" data-acao="push-sim">Quero o aviso</button>${fechar}</div>
+    </section>`;
+  } else {
+    el.innerHTML = `<section class="convite-push" aria-label="Aviso de domingo">
+      <p class="rotulo">🔔 Aviso de domingo</p>
+      <p>${EXPLICA[estado]}</p>
+      ${fechar}
+    </section>`;
+  }
+  el.querySelector('[data-acao="push-fechar"]')?.addEventListener('click', () => (el.innerHTML = ''));
+  el.querySelector('[data-acao="push-desligar"]')?.addEventListener('click', async () => {
+    await desligarAvisos().catch(() => {});
+    aoMudar(false);
+    el.innerHTML = '<section class="convite-push"><p class="nota">Aviso desligado. É só tocar no sininho para ligar de novo.</p></section>';
+  });
+  el.querySelector('[data-acao="push-sim"]')?.addEventListener('click', async () => {
+    el.querySelectorAll('button').forEach((b) => (b.disabled = true));
+    gravarMemoria();
+    const r = await ligarAvisos();
+    if (r === 'ligado') aoMudar(true);
+    el.innerHTML = `<section class="convite-push"><p class="${r === 'ligado' ? 'rotulo' : 'nota'}">${
+      r === 'ligado'
+        ? '🔔 Fechado! Domingo à tarde tem aviso.'
+        : r === 'recusado'
+          ? 'Sem aviso, tranquilo. Se mudar de ideia, libera as notificações do site no navegador.'
+          : 'Não deu pra ligar o aviso agora. Tenta de novo daqui a pouco.'
+    }</p></section>`;
   });
 }

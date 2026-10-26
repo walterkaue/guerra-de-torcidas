@@ -596,20 +596,29 @@
   }
 }
 
-/* Aviso de domingo (push): linha no rodapé com "desligar". */
-.rodape-push {
-  text-align: center;
-  font-size: 13px;
-  color: var(--texto-suave);
+/* Sininho do aviso de domingo (push), no canto do cabeçalho da Home. */
+.inicio .cabecalho {
+  position: relative;
 }
-.rodape-push button {
+.sininho {
+  position: absolute;
+  top: -4px;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
   border: 0;
-  background: none;
-  color: var(--amarelo);
-  font: inherit;
-  text-decoration: underline;
-  min-height: 44px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 22px;
+  line-height: 1;
+  filter: grayscale(1) opacity(0.75);
   touch-action: manipulation;
+}
+.sininho.ligado {
+  filter: none;
+  box-shadow: inset 0 0 0 2px var(--amarelo);
 }
 
 /* Convite para o aviso de domingo, depois de um bom momento. */
