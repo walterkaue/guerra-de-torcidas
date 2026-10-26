@@ -1,7 +1,7 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 21/10/2026, noite (Casa do [time] planejada, com dados em rascunho em dados/casa; Lances do Jogo no lugar dos Pênaltis na Home, com 3 abas; câmera 3D com três distâncias; "A jogada" no cara a cara; antes: tela dos Lances do Jogo em teste, sem valer pontos; novo minigame Lances do Jogo, com medalhas e página Conquistas; Pênaltis vão virar uma sessão dos Lances com disputas históricas; nomes reais na ficha factual dos lances)
+> Última atualização: 26/10/2026 (fase 1.5 decidida pelas propostas em `docs/propostas/`: mês de estreia em série única antes da Série A e B, divisões e cidade testadas já na pré-temporada, cidade pedida depois da 1ª partida e só no ranking com 5+ jogadores, 52 semanas pela tabela de 20 posições do ranking geral, Galeria na aba Conquistas, níveis da Carreira com XP que sobrevive ao zerar). Antes, 21/10/2026, noite (Casa do [time] planejada, com dados em rascunho em dados/casa; Lances do Jogo no lugar dos Pênaltis na Home, com 3 abas; câmera 3D com três distâncias; "A jogada" no cara a cara; antes: tela dos Lances do Jogo em teste, sem valer pontos; novo minigame Lances do Jogo, com medalhas e página Conquistas; Pênaltis vão virar uma sessão dos Lances com disputas históricas; nomes reais na ficha factual dos lances)
 > Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos), `docs/casa.md` (Casa do [time]). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
@@ -56,9 +56,10 @@ Minigames de futebol de 30 segundos em que **cada ponto que você faz vai para o
 (O rival não precisa ser recíproco: o Botafogo provoca o Flamengo, e o Flamengo provoca o Fluminense.)
 
 ### Cidade (a segunda camisa)
-- Junto com o time, o jogador escolhe a **cidade** onde torce. É opcional, mas a tela incentiva ("defende sua cidade também").
+- O jogador escolhe a **cidade** onde torce. É opcional, mas a tela incentiva ("defende sua cidade também?"). **Quando (decidido em 26/10):** depois da 1ª partida, não na escolha do time, para não atrasar a estreia. Quem pulou vê um lembrete na Home, no máximo 1 vez por semana. A escolha fica também no perfil.
 - A cidade sai de uma **lista fechada de municípios do IBGE** (nome + UF), com busca. Nada de texto livre, então não precisa de moderação.
-- Os pontos de cada partida contam **para o time, para a cidade e para o estado da cidade**, em rankings separados.
+- Os pontos de cada partida contam **para o time, para a cidade e para o estado da cidade**, em rankings separados. Pontos feitos antes de escolher a cidade não contam para ela (vale dali em diante, como na troca de time).
+- **Mínimo de 5 jogadores (decidido em 26/10):** uma cidade só aparece no ranking com 5 ou mais jogadores na semana, para ninguém ser identificado pela pontuação. Abaixo disso, os pontos contam só para o estado, e o jogo avisa quantos faltam ("Faltam 2 pra sua cidade entrar no ranking. Chama a galera.").
 - Quem escolheu "Outro time" joga só pela cidade e pelo estado. Assim ninguém fica sem tribo.
 - A cidade do jogador **nunca aparece ao lado do apelido**. Ela só aparece somada, nos rankings de cidades e estados (privacidade, inclusive de menores).
 - **Rival da cidade:** a cidade logo acima no ranking do seu estado (ou logo abaixo, se for a líder).
@@ -138,18 +139,28 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - O **amistoso de 2 semanas** (regras de justiça, abaixo) continua valendo para minigames lançados **depois** do zerar.
 
 ### A temporada
-- Os 20 times oficiais ficam em **Série A (10)** e **Série B (10)**. Na primeira temporada, a divisão sai da primeira semana de jogo. "Outro time" não entra em divisão.
+- Os 20 times oficiais ficam em **Série A (10)** e **Série B (10)**. "Outro time" não entra em divisão.
 - Soma dos pontos de campeonato das semanas do mês. No fim: **2 últimos da A caem, 2 primeiros da B sobem**. O campeão da Série A é o campeão da temporada.
+- **A semana é do mês da sua segunda-feira** (ex.: 30/11 a 6/12 é de novembro). Dezembro e janeiro seguem normais; a Copa de Verão corre em paralelo.
+- **Mês de estreia em série única (decidido em 26/10):** depois do zerar, o primeiro mês tem os 20 times juntos, com pontos pela tabela de 20 posições (abaixo, em Longo prazo). Do 1º ao 10º vão para a Série A; o 1º ganha o troféu **"Campeão da estreia"**. A primeira queda é no 2º mês. (Substitui "a divisão sai da primeira semana de jogo": uma semana só, com a audiência chegando, sortearia a divisão.)
+- **Teste na pré-temporada:** as divisões ligam já em novembro, para os amigos testarem tela, queda e narrador, e zeram junto com a pré-temporada.
+- **Torcida sem ninguém jogando:** fica com as 30 vagas a 80%; o empate entre elas sai pela posição na semana anterior (no 1º dia, pela ordem da tabela). Empate no fim do mês: mais vitórias de semana; depois, melhor última semana.
+- Precisa do **fechamento da semana**: toda segunda às 00h05 o servidor grava a classificação final, que não muda mais. Base também da Galeria e das 52 semanas.
 
 ### Cidades e estados
 - Mesma conta da semana: média das 30 melhores pessoas da cidade (100 no estado), com as mesmas vagas a 80%.
 - Ranking de cidades **por estado**, mais um top nacional. A campeã do estado na semana ganha troféu na Galeria.
+- Só cidades com 5+ jogadores na semana (seção 3). Aba **Cidades** no Ranking (seu estado, top nacional, estados); na Home, "Sua cidade está em 3º em SP". Liga já na pré-temporada e zera junto.
 
 ### Longo prazo
-- **Ranking de 52 semanas** (estilo tênis): soma dos pontos de campeonato das últimas 52 semanas.
-- **Galeria de Troféus** eterna: semanas, temporadas, acessos, rebaixamentos, títulos de cidade.
-- **Tabela de todos os tempos:** só vitrine.
-- **Carreira do jogador:** Estreante, Reserva, Titular, Craque, Ídolo, Lenda. Nunca zera. XP cheio nas 5 primeiras partidas do dia, metade da 6ª à 15ª, zero depois.
+- **Ordem (decidida em 26/10):** Carreira primeiro (não depende de nada), depois a Galeria (com o fechamento da semana), e as 52 semanas quando a 1ª temporada começar.
+- **Ranking de 52 semanas** (estilo tênis): soma das últimas 52 semanas, **pela posição no ranking geral dos 20 times**, não pelos pontos da divisão (senão o 1º da Série B valeria o mesmo que o 1º da A). Tabela de 20 posições (decidida em 26/10; também usada no mês de estreia): 1º 25, 2º 20, 3º 17, 4º 15, 5º 14, do 6º ao 18º de 13 a 1 (um a menos por posição), 19º e 20º 0.
+- **Galeria de Troféus** eterna: campeão da semana, campeão da temporada, campeão da B, acesso, rebaixamento, Campeão da estreia, dérbi, meta coletiva, campeã de estado; a Maior torcida numa prateleira à parte, "vitrine". Fica na **aba Conquistas** (junto das medalhas), não na Casa do [time], para troféu do jogo não parecer título real. A pré-temporada não entra.
+- **Tabela de todos os tempos:** só vitrine, também na aba Conquistas.
+- **Carreira do jogador:** Estreante, Reserva, Titular, Craque, Ídolo, Lenda. **Nunca zera, nem no zerar da pré-temporada** (como as medalhas). Só sua: aparece para você e no card, se quiser; nenhuma lista pública.
+  - XP: 10 por partida válida nas 5 primeiras do dia, 5 da 6ª à 15ª, zero depois. Time do Dia e cada rodada palpitada do Crava contam como 1 partida.
+  - Níveis: Estreante 0 · Reserva 100 · Titular 1.000 · Craque 5.000 · Ídolo 15.000 · Lenda 30.000 (jogando 5 por dia: Titular em ~3 semanas, Lenda em ~1 ano e meio).
+  - Bônus: +100 XP por ser o 1º do dia entre todos; +200 por ser o 1º da sua torcida na semana. Sequência de dias aparece, mas perder não tira nada.
 
 ### Eventos
 - **Evento nunca multiplica pontos do ranking.** Dérbi da semana, metas coletivas, reta final e copas dão **troféu próprio**.
@@ -518,7 +529,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 | Fase | Conteúdo |
 |---|---|
 | **1. MVP** ✅ pênaltis concluído em 19/10, em teste com amigos | Pênaltis com desempate, times oficiais com artigo e rival, ranking da semana (campeão pelos 30 melhores + Maior torcida), desafio por link, card de resultado com placar em emoji, direção visual nova |
-| **1.5 Logo depois do MVP** | Crava a Rodada no ar desde 20/10, somando desde a 32ª na pré-temporada, até a 38ª (2/12). Depois: cidade como segunda camisa, Série A e Série B mensais, ranking de 52 semanas, Galeria, carreira, anti-trapaça completo antes de divulgar. **Casa do [time]** (seção 7.4; plano em `docs/casa-publicacao.md`), liberada com o upgrade dos pênaltis fechado |
+| **1.5 Logo depois do MVP** | Crava a Rodada no ar desde 20/10, somando desde a 32ª na pré-temporada, até a 38ª (2/12). Depois (decidido em 26/10, `docs/propostas/`): carreira; fechamento da semana gravado; cidade como segunda camisa e Série A e Série B mensais, testadas na pré-temporada; Galeria; ranking de 52 semanas na 1ª temporada; anti-trapaça completo antes de divulgar. **Casa do [time]** (seção 7.4; plano em `docs/casa-publicacao.md`), liberada com o upgrade dos pênaltis fechado |
 | **2. Comunidade** | Times criados, ligas e campeonatos combinados (com ranking entre amigos com apelido), moderação, Copa das Torcidas |
 | **3. Mais minigames** | Prova de Boleiro (seção 7.1) e Time do Dia (seção 7.2) construídos em 19–20/10, somando na pré-temporada. Lances do Jogo (seção 7.3) aprovado em 21/10: motor primeiro, depois catálogo com fontes, tela, servidor, Conquistas e, por fim, os Pênaltis como sessão dos Lances. Depois: Embaixadinha (com chinelo, laranja e bola murcha) |
 | **4. Coleção e resenha** | Álbum de figurinhas com jogadores fictícios e trocas, Técnico por Um Jogo, Pelada de Rua |
