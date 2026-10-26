@@ -9,6 +9,7 @@ import { cameraAtrasDaBola, cameraDoReplay, type Camera, type Enquadramento, typ
 import { desenharBolaEm, desenharPontosEm, desenharRastroEm, facil, limitar01, suave } from './cena';
 import { vibrar } from './toque';
 import { qualidade } from './qualidade';
+import { somTrave } from '../jogo/som';
 
 const MEIA_GOL = 3.66;
 const ALTURA_GOL = 2.44;
@@ -490,6 +491,13 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
     vibrar(reduzido ? 'acerto' : 'gol');
   }
 
+  /** Bola na trave: tremida curta e fraca, vibração e o "plém". */
+  function baterNaTrave(): void {
+    if (!reduzido && qualidade().tremida) efeitos.tremida = relogio() - DUR_TREMIDA * 0.5;
+    vibrar('trave');
+    somTrave();
+  }
+
   const desenharRastro = (rastro: readonly { x: number; y: number }[]) => desenharRastroEm(c, rastro);
   function desenharPontos(agora: number): void {
     efeitos.pontos = desenharPontosEm(c, efeitos.pontos, agora, Math.max(28, W * 0.09));
@@ -514,6 +522,7 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
     eixo,
     lerArraste,
     comemorar,
+    baterNaTrave,
     desenharRastro,
     desenharPontos,
   };
