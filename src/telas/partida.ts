@@ -38,6 +38,10 @@ import {
 } from '../servidor/api';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { criarCena, facil, limitar01, suave } from './cena';
+import { criarCena3d, type Cena3d } from './cena3d';
+import { ENQUADRAMENTOS } from './camera';
+import { ANTES_DO_CORTE, criarReplay, montarTarjaDoReplay, type Replay } from './replay';
+import { caminhoDoChute } from '../jogo/lances';
 import { destravarSom, somApito, somChute, somTorcida } from '../jogo/som';
 import {
   DUR_AJEITAR,
@@ -65,6 +69,7 @@ type Fase =
   | { tipo: 'chuteMaquina'; inicio: number; r: ResultadoDefesa; pulouEm: number; dica: number }
   | { tipo: 'pausa'; inicio: number; ate: number; depois: () => void }
   | { tipo: 'parOuImpar' }
+  | { tipo: 'replay'; replay: Replay; depois: () => void }
   | { tipo: 'preparando' };
 
 /** Direção do pé de apoio (a dica) para cada coluna do gol, em radianos a partir da vertical. */
@@ -96,6 +101,9 @@ const DUR_BATIDA = 190;
 
 /** Câmera lenta da cavadinha: 0,5 s a mais no trecho final, antes de a bola entrar. */
 const DUR_CAMERA_LENTA = 500;
+
+/** Golaço (ângulo, cavadinha ou raspando a trave) ganha replay de TV; o replay entra este tempo depois do gol. */
+const DUR_ANTES_DO_REPLAY = 1000;
 
 export const AVISO_SEM_PONTOS = 'Sem internet: essa partida não vale pontos.';
 
@@ -325,7 +333,60 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     narrar(narrador.falar(eventoDaCobranca(r), { etiquetas: etiquetasDaCobranca(r) }), legendaDaCobranca(r));
     if (r.desfecho === 'gol') comemorar(telaX(r.x), telaY(r.y), r.pontos, true);
     somTorcida(r.desfecho === 'gol' ? 'festa' : 'uuuh');
-    depoisDe(1500, comecarDefesa);
+    const golaco = r.desfecho === 'gol' && (r.angulo || r.cavadinha || r.raspouTrave);
+    if (golaco && !reduzido) {
+      const gesto = gestosCobranca[gestosCobranca.length - 1];
+      window.setTimeout(() => !acabou && tarja.entrar(), DUR_ANTES_DO_REPLAY - ANTES_DO_CORTE);
+      depoisDe(DUR_ANTES_DO_REPLAY, () => comecarReplay(r, gesto, comecarDefesa));
+    } else depoisDe(1500, comecarDefesa);
+  }
+
+  // ---------- replay de TV do golaço (telas/replay.ts) ----------
+  // A cena dos pênaltis é a de TV, em 2D; o replay usa a cena 3D dos Lances num canvas por cima,
+  // criado só no primeiro golaço.
+  let cena3d: Cena3d | null = null;
+  let telaReplay: HTMLCanvasElement | null = null;
+  const tarja = montarTarjaDoReplay(root.querySelector<HTMLElement>('main')!);
+
+  function comecarReplay(r: ResultadoCobranca, gesto: GestoCobranca, depois: () => void): void {
+    if (!telaReplay) {
+      telaReplay = document.createElement('canvas');
+      telaReplay.className = 'tela-replay';
+      telaReplay.addEventListener('pointerdown', () => fimDoReplay());
+      canvas.after(telaReplay);
+    }
+    telaReplay.style.top = `${canvas.offsetTop}px`;
+    telaReplay.style.height = `${canvas.offsetHeight}px`;
+    telaReplay.hidden = false;
+    if (!cena3d) cena3d = criarCena3d(telaReplay, { cores: time.cores, relogio, reduzido });
+    cena3d.medir();
+    const bola = { x: 0, z: 11 };
+    const z = centroZona(r.zonaGoleiro);
+    const replay = criarReplay(
+      cena3d,
+      {
+        bola,
+        enquadramento: ENQUADRAMENTOS.penalti,
+        em: caminhoDoChute(bola, gesto, r.x, r.y, r.cavadinha),
+        voo: r.cavadinha ? DUR_CAVADINHA : DUR_CHUTE,
+        cavadinha: r.cavadinha,
+        // No ângulo com o goleiro no canto certo, ele quase chega.
+        goleiro: { x: 0, z: 0.3, alvo: { x: z.x * 3.66, y: z.y * 2.44 }, alcance: r.zonaGoleiro === r.zonaBola ? 0.9 : 0.55 },
+        batedor: batedor(batedoresJogador, cobrancas.length - 1),
+        goleiroBoneco: goleiroMaquina,
+      },
+      relogio(),
+    );
+    fase = { tipo: 'replay', replay, depois };
+  }
+
+  function fimDoReplay(): void {
+    if (fase.tipo !== 'replay') return;
+    const { replay, depois } = fase;
+    replay.encerrar();
+    tarja.sair();
+    if (telaReplay) telaReplay.hidden = true;
+    depois();
   }
 
   function chuteDaMaquina(zona: number, pulouEm: number, dica: number): void {
@@ -703,6 +764,15 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
 
   function quadro(agora: number): void {
     if (acabou) return;
+    if (fase.tipo === 'replay' && cena3d) {
+      cena3d.c.save();
+      const falta = fase.replay.quadro(agora);
+      cena3d.c.restore();
+      if (falta <= ANTES_DO_CORTE) tarja.sair();
+      if (falta <= 0) fimDoReplay();
+      raf = proximoQuadro(quadro);
+      return;
+    }
     const inicioQuadro = performance.now();
     c.save();
     cena.desenharFundo(agora);
