@@ -12,6 +12,8 @@ import { vibrar } from './toque';
 const MEIA_GOL = 3.66;
 const ALTURA_GOL = 2.44;
 const FUNDO_REDE = -2;
+/** Comprimento do campo (m): a linha do gol de lá, que aparece no replay. */
+const FIM_DO_CAMPO = 105;
 /** Metros por unidade do desenho do boneco (100 unidades ≈ 1,95 m, como o goleiro dos pênaltis). */
 const METRO_POR_UNIDADE = 1.95 / 100;
 /** A pelve do boneco, onde ele gira no pulo: 50 unidades acima dos pés. */
@@ -99,7 +101,8 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
     cam = replay ? cameraDoReplay(bola, replay.fimX, W, H) : cameraAtrasDaBola(bola, enquadramento, W, H);
     const [off, o] = novaCamada();
     arquibancada(o, !!replay);
-    gramado(o, replay ? 62 : 90);
+    gramado(o, replay ? FIM_DO_CAMPO + 4 : 90);
+    if (replay) outroLadoDoCampo(o);
     if (replay) {
       const [r, or] = novaCamada();
       rede(or);
@@ -139,11 +142,11 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
     o.fillRect(0, 0, W, H);
     // Degraus subindo atrás do gol, com torcedores nas cores do time (sorteio fixo por lugar).
     // A do outro lado (replay) é mais alta: a câmera do replay fica no alto e enxerga mais degraus.
-    const filas = longe ? 58 : 26;
+    const filas = longe ? 96 : 26;
     for (let fila = 0; fila < filas; fila++) {
       const y = 0.6 + fila * (longe ? 0.75 : 0.55);
-      const z = longe ? 64 + fila * 0.8 : -9 - fila * 0.8;
-      for (let x = -60; x <= 60; x += 0.7) {
+      const z = longe ? FIM_DO_CAMPO + 9 + fila * 0.8 : -9 - fila * 0.8;
+      for (let x = -60; x <= 60; x += longe ? 1 : 0.7) {
         const q = p(x + (fila % 2) * 0.35, y, z);
         if (q.prof <= 1 || q.y < -10 || q.y > H || q.x < -10 || q.x > W + 10) continue;
         const h = hash(x * 3.1, fila);
@@ -154,7 +157,7 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
       }
     }
     // Placas lisas de beira de campo nas cores do time (sem marca, sem texto).
-    const zPlaca = longe ? 62 : -7;
+    const zPlaca = longe ? FIM_DO_CAMPO + 7 : -7;
     for (let i = -10; i < 10; i++) {
       poligono(
         o,
@@ -228,6 +231,61 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
       o.ellipse(marca.x, marca.y, 0.15 * marca.escala, 0.06 * marca.escala, 0, 0, Math.PI * 2);
       o.fill();
     }
+  }
+
+  /**
+   * No replay a câmera olha o campo inteiro: laterais, linha do meio, círculo central, a área e o gol
+   * do outro lado (105 m, como num campo oficial). Tudo pré-desenhado uma vez, no fundo.
+   */
+  function outroLadoDoCampo(o: CanvasRenderingContext2D): void {
+    const F = FIM_DO_CAMPO;
+    const M = F / 2;
+    o.strokeStyle = 'rgba(245,245,240,0.85)';
+    for (const [a, b] of [
+      [{ x: -34, z: 0 }, { x: -34, z: F }],
+      [{ x: 34, z: 0 }, { x: 34, z: F }],
+      [{ x: -34, z: M }, { x: 34, z: M }],
+      [{ x: -34, z: F }, { x: 34, z: F }],
+      [{ x: -20.16, z: F }, { x: -20.16, z: F - 16.5 }],
+      [{ x: -20.16, z: F - 16.5 }, { x: 20.16, z: F - 16.5 }],
+      [{ x: 20.16, z: F - 16.5 }, { x: 20.16, z: F }],
+      [{ x: -9.16, z: F }, { x: -9.16, z: F - 5.5 }],
+      [{ x: -9.16, z: F - 5.5 }, { x: 9.16, z: F - 5.5 }],
+      [{ x: 9.16, z: F - 5.5 }, { x: 9.16, z: F }],
+    ] as const) {
+      linhaNoChao(o, a, b);
+    }
+    const n = 48;
+    for (let i = 0; i < n; i++) {
+      const a0 = (Math.PI * 2 * i) / n;
+      const a1 = (Math.PI * 2 * (i + 1)) / n;
+      linhaNoChao(o, { x: Math.sin(a0) * 9.15, z: M + Math.cos(a0) * 9.15 }, { x: Math.sin(a1) * 9.15, z: M + Math.cos(a1) * 9.15 });
+    }
+    // Gol de lá: rede escura e traves brancas (longe, então finas).
+    poligono(
+      o,
+      [
+        { x: -MEIA_GOL, y: 0, z: F + 2 },
+        { x: MEIA_GOL, y: 0, z: F + 2 },
+        { x: MEIA_GOL, y: ALTURA_GOL * 0.82, z: F + 2 },
+        { x: -MEIA_GOL, y: ALTURA_GOL * 0.82, z: F + 2 },
+      ],
+      'rgba(0,0,0,0.3)',
+    );
+    o.strokeStyle = '#ffffff';
+    o.lineCap = 'round';
+    const trave = (a: Ponto3, b: Ponto3) => {
+      const q0 = p(a.x, a.y, a.z);
+      const q1 = p(b.x, b.y, b.z);
+      o.lineWidth = Math.max(1.5, 0.12 * q0.escala);
+      o.beginPath();
+      o.moveTo(q0.x, q0.y);
+      o.lineTo(q1.x, q1.y);
+      o.stroke();
+    };
+    trave({ x: -MEIA_GOL, y: 0, z: F }, { x: -MEIA_GOL, y: ALTURA_GOL, z: F });
+    trave({ x: MEIA_GOL, y: 0, z: F }, { x: MEIA_GOL, y: ALTURA_GOL, z: F });
+    trave({ x: -MEIA_GOL, y: ALTURA_GOL, z: F }, { x: MEIA_GOL, y: ALTURA_GOL, z: F });
   }
 
   function rede(o: CanvasRenderingContext2D): void {
