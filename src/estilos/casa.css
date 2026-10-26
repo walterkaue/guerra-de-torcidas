@@ -4,8 +4,10 @@
   text-align: left;
 }
 
+/* Cores sempre cheias (docs/visual.md): o clube que ainda não abriu fica com a cor inteira e a
+   etiqueta sólida "em breve", sem transparência por cima. */
 .casa-indice .cartao-time[disabled] {
-  opacity: 0.55;
+  box-shadow: none;
 }
 
 .em-breve-casa {
@@ -14,7 +16,7 @@
   top: 6px;
   padding: 1px 6px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.45);
+  background: #2b2b2b;
   color: var(--cal);
   font-family: var(--fonte-rotulo);
   font-size: 11px;

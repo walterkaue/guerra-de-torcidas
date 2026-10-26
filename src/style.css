@@ -613,3 +613,24 @@ body {
   text-transform: uppercase;
   transform: rotate(var(--inclinacao));
 }
+
+/* ---------- carregando: esqueleto da tela (telas/esqueleto.ts) ---------- */
+.esqueleto { gap: 14px; }
+.esq-cabecalho { display: flex; align-items: center; gap: 10px; }
+.esq {
+  display: block;
+  border-radius: 12px;
+  background: linear-gradient(100deg, rgba(0,0,0,0.28) 30%, rgba(255,255,255,0.08) 50%, rgba(0,0,0,0.28) 70%) 0 0 / 300% 100%;
+  animation: esq-brilho 1.4s linear infinite;
+}
+.esq-voltar { width: 44px; height: 44px; }
+.esq-titulo { width: 55%; height: 26px; }
+.esq-bloco { height: 96px; }
+.esq-bloco.grande { height: 180px; }
+.esq-rotulo { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--texto-suave); font-weight: 700; }
+.esq-bola { display: inline-flex; font-size: 22px; color: var(--cal); animation: esq-giro 0.9s linear infinite; }
+@keyframes esq-brilho { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@keyframes esq-giro { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .esq, .esq-bola { animation: none; }
+}
