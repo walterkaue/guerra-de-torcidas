@@ -151,6 +151,8 @@ export async function painelDoAviso(el: HTMLElement, aoMudar: (ligado: boolean) 
     el.innerHTML = `<section class="convite-push" aria-label="Aviso de domingo">
       <p class="rotulo">🔔 Aviso de domingo ligado</p>
       <p>Domingo à tarde chega um toque com a situação da sua torcida e do rival. Um por semana.</p>
+      <button class="botao botao-sec" type="button" data-acao="push-testar">Testar neste aparelho</button>
+      <p class="nota" data-teste-push hidden></p>
       <div class="dupla"><button class="botao botao-sec" type="button" data-acao="push-desligar">Desligar</button>${fechar}</div>
     </section>`;
   } else if (estado === 'pode-ligar') {
@@ -167,6 +169,23 @@ export async function painelDoAviso(el: HTMLElement, aoMudar: (ligado: boolean) 
     </section>`;
   }
   el.querySelector('[data-acao="push-fechar"]')?.addEventListener('click', () => (el.innerHTML = ''));
+  // Teste local (sem servidor): se esta notificação não aparecer, o bloqueio é do aparelho ou do navegador.
+  el.querySelector('[data-acao="push-testar"]')?.addEventListener('click', async () => {
+    const nota = el.querySelector<HTMLElement>('[data-teste-push]')!;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification('🔔 Teste do aviso de domingo', {
+        body: 'Se você está lendo isto, o aparelho mostra os avisos do jogo.',
+        icon: '/icones/icone-192.png',
+        tag: 'teste-aviso',
+      });
+      nota.textContent =
+        'Mandei uma notificação de teste agora. Não apareceu? Então o aparelho está escondendo: confira as notificações do navegador nas configurações do sistema (no Windows: Configurações → Sistema → Notificações; e o "Não perturbe").';
+    } catch {
+      nota.textContent = 'O navegador não deixou mostrar a notificação de teste.';
+    }
+    nota.hidden = false;
+  });
   el.querySelector('[data-acao="push-desligar"]')?.addEventListener('click', async () => {
     await desligarAvisos().catch(() => {});
     aoMudar(false);
