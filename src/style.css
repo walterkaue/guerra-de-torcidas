@@ -677,3 +677,78 @@ body {
   .botao, .voltar, .mudo, .barra-nav button, .cartao-time, .card-jogo, .alt, .ajuda-btn, .link-casa { transition: none; }
   .adesivo:not([hidden]) { animation: none; }
 }
+
+/* ---------- replay de TV do gol (telas/replay.ts) ---------- */
+/* Nos pênaltis o replay é um canvas 3D por cima do campo (top e altura vêm do campo, no script). */
+.tela-replay {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  z-index: 2;
+  display: block;
+  touch-action: none;
+}
+.replay-tarja {
+  position: absolute;
+  top: calc(72px + env(safe-area-inset-top));
+  left: 12px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.replay-selo {
+  position: relative;
+  isolation: isolate;
+  padding: 4px 12px;
+  color: var(--tinta);
+  font-family: var(--fonte-placar);
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.replay-selo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--amarelo);
+  border-left: 6px solid var(--c1, var(--cal));
+  transform: skewX(var(--inclinacao));
+  border-radius: 3px;
+}
+.replay-tarja small {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--cal);
+  font-size: 12px;
+  font-weight: 700;
+}
+/* Vinheta: faixa inclinada nas cores do time que varre a tela na entrada e na saída. */
+.replay-vinheta {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  overflow: hidden;
+}
+.replay-vinheta::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 0;
+  width: 70%;
+  background: linear-gradient(90deg, var(--c1, var(--amarelo)) 0 78%, var(--amarelo) 78% 100%);
+  transform: translateX(-160%) skewX(var(--inclinacao));
+}
+.replay-vinheta.passa::before { animation: vinheta-passa 480ms cubic-bezier(0.6, 0, 0.4, 1) both; }
+@keyframes vinheta-passa {
+  from { transform: translateX(-160%) skewX(var(--inclinacao)); }
+  to { transform: translateX(260%) skewX(var(--inclinacao)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .replay-vinheta { display: none; }
+}
