@@ -4,6 +4,7 @@
 import { esc, irPara, type Rota } from '../app';
 import { corDeTexto, ID_OUTRO, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
+import { seloNivel } from '../jogo/card';
 import { desenharCardDia } from '../jogo/cardDia';
 import { conviteDia } from '../jogo/convites';
 import { AVISO_PRE_TEMPORADA, htmlPosicao } from '../jogo/posicao';
@@ -28,6 +29,7 @@ import {
   type EstadoDoDia,
 } from '../servidor/api';
 import { sincronizarTorcedor } from '../servidor/torcedor';
+import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { convidarParaAvisos } from './convitePush';
 
 const SITE = 'https://torcida.kauewalter.com.br';
@@ -334,6 +336,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       ${casa}
       <div data-convite-push></div>
       ${htmlPosicao(e.desempenho, 'dia')}
+      <div class="res-carreira" data-carreira hidden></div>
       <p class="dia-proximo rotulo">Próximo time em <strong data-relogio>${formatarRelogio(Date.parse(e.proximoEm) - Date.now())}</strong></p>
       <section class="res-compartilhar">
         <a class="botao botao-zap" target="_blank" rel="noopener"
@@ -367,6 +370,9 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       }
     }, 1000);
 
+    // Carreira: só com o servidor (o XP sai de lá); reabrir o dia já feito não mostra nada (XP igual).
+    if (e.desempenho) mostrarCarreiraNoResultado(elFim.querySelector<HTMLElement>('[data-carreira]'));
+
     // ---------- card ----------
     const img = elFim.querySelector<HTMLImageElement>('.card')!;
     const cardPronto = (async () => {
@@ -385,6 +391,8 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
         novoRecorde,
         link: link.replace('https://', ''),
       });
+      const nivel = await nivelParaCard();
+      if (nivel) seloNivel(canvas, nivel);
       img.src = canvas.toDataURL('image/png');
       return canvas;
     })();

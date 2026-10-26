@@ -341,3 +341,16 @@
   font-size: 22px;
   margin: 4px 0 2px 4px;
 }
+
+/* Carreira no resultado: "+10 XP na carreira · Reserva" ou o selo "Subiu pra Titular!". */
+.res-carreira {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.res-carreira .selo-recorde {
+  font-size: 22px;
+}

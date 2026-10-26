@@ -101,6 +101,29 @@ export function rodapeCard(c: CanvasRenderingContext2D, time: Time, link: string
   rodapePreTemporada(c, cor);
 }
 
+/**
+ * Nível da carreira no card, só quando a pessoa escolhe (docs/jogo.md, seção 5, "Longo prazo"): uma
+ * etiqueta no alto da faixa de baixo, acima do link. Desenha por cima de qualquer card pronto.
+ */
+export function seloNivel(canvas: HTMLCanvasElement, nivel: string): void {
+  const c = canvas.getContext('2d')!;
+  c.save();
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  const texto = `CARREIRA · ${nivel.toUpperCase()}`;
+  c.font = `700 40px ${ROTULO}`;
+  const largura = c.measureText(texto).width + 56;
+  const y = A - ALTURA_FAIXA + 46;
+  c.fillStyle = 'rgba(0,0,0,0.6)';
+  c.beginPath();
+  c.roundRect(L / 2 - largura / 2, y - 34, largura, 68, 34);
+  c.fill();
+  c.fillStyle = '#ffd23f';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText(texto, L / 2, y + 2);
+  c.restore();
+}
+
 export function desenharCard(d: DadosCard): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = L;

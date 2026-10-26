@@ -130,6 +130,72 @@
   font-weight: 700;
 }
 
+/* Carreira do jogador (só a própria): nível, barra até o próximo e a sequência. */
+.carreira {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.carreira-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--texto-suave);
+}
+
+.carreira-xp {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.carreira-nivel {
+  font-family: var(--fonte-placar);
+  font-size: 30px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--amarelo);
+}
+
+.carreira-barra {
+  height: 12px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+  transform: skewX(var(--inclinacao));
+}
+
+.carreira-barra span {
+  display: block;
+  height: 100%;
+  width: calc(var(--enche, 0) * 100%);
+  background: var(--amarelo);
+}
+
+.carreira-falta {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.carreira-linha {
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.carreira-bonus {
+  color: var(--subiu);
+  font-weight: 700;
+}
+
+.carreira-card {
+  font-size: 14px;
+  min-height: 44px;
+}
+
 .link-trocar {
   position: absolute;
   top: 6px;
