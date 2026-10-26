@@ -1,7 +1,8 @@
 # Revisão gráfica — direção "Transmissão de domingo"
 
-> Versão 1.7 · 26/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Versão 1.8 · 26/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
 > Base: o jogo publicado em 18/10/2026 (commit b492b99), testado em 390×844.
+> Mudanças da 1.8: impacto na trave e na defesa (seção 3, Partida), papel picado (4.4) e troca de tela inclinada (4.5).
 > Mudanças da 1.7: qualidade gráfica automática em três níveis (seção 4.3).
 > Mudanças da 1.6: replay de TV do gol (seção 4.2).
 > Mudanças da 1.5 (revisão de 26/10): adesivo do narrador em papel claro com faixa na cor do time (a caixa cheia vermelha parecia aviso de erro); duelo da Home com cores que se distinguem; ícones em SVG no lugar de emoji; tela de carregando com esqueleto; molas e resposta ao toque (seção 4).
@@ -140,6 +141,11 @@ Amostra aprovada em 26/10 (página "Qualidade Alta, Média e Leve"). Código em 
 - Explode nas cores do time (cor muito escura vira branco, para aparecer) no **gol** (Pênaltis e Lances) e no **acerto** da Prova de Boleiro e do Time do Dia (no Time do Dia, só na primeira vez que o fim aparece).
 - Retângulos que "viram" (a largura oscila) em vez de girar: um preenchimento por peça, pool fixo, nenhum objeto novo por quadro. Dura 1,4 s e some no fim.
 - **Alta 40 peças, Média 24, Leve nenhuma.** Nada com movimento reduzido. O confete da tela de vitória continua como era.
+
+## 4.5 Troca de tela
+
+- A tela nova entra por uma **borda inclinada a −8°** (a das tarjas), da esquerda para a direita, em 300 ms; a velha fica parada embaixo. Usa a transição nativa do navegador (View Transitions, em `app.ts`): Chrome e Android de hoje têm; quem não tem troca direto, sem custo.
+- Sem transição na qualidade Leve, com movimento reduzido e na primeira tela.
 
 ## 5. Ajustes encontrados no código
 
