@@ -40,6 +40,8 @@
   --fonte-texto: 'Barlow', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --inclinacao: -8deg;
   color-scheme: dark;
+  /* A Anton só tem um peso: sem isto, "font-weight: 900" vira negrito falso e as letras grudam (título do Ranking). */
+  font-synthesis-weight: none;
   font-family: var(--fonte-texto);
   -webkit-text-size-adjust: 100%;
 }
