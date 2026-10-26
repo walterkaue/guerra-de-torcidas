@@ -56,6 +56,7 @@ import {
   uniformesDaPartida,
   type Boneco,
 } from './bonecos';
+import { icone } from './icones';
 
 type Fase =
   | { tipo: 'mirar'; inicio: number }
@@ -136,10 +137,10 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
           <p class="rotulo cj-faixa faixa-tv">Antes do apito</p>
           <h2 id="cj-titulo" class="cj-titulo">Como jogar</h2>
           <ul class="cj-passos">
-            <li><span class="cj-icone" aria-hidden="true">⚽</span><p><strong>Cobrar.</strong> Arraste o dedo da bola na direção do gol. Arraste longo = chute forte; forte demais vai por cima.</p></li>
-            <li><span class="cj-icone" aria-hidden="true">↪</span><p><strong>Efeito.</strong> Curve o fim do arraste pra bola fazer curva. Arraste curtinho e reto é cavadinha.</p></li>
-            <li><span class="cj-icone" aria-hidden="true">🧤</span><p><strong>Defender.</strong> O batedor corre. Olhe o pé de apoio, em amarelo, e toque no gol onde pular. Ele nem sempre é honesto!</p></li>
-            <li><span class="cj-icone" aria-hidden="true">🏆</span><p><strong>Pontos ${esc(paraTime)}.</strong> Gol 10, ângulo +5, cavadinha +10, defesa 10, vitória +20, 5 de 5 +25.</p></li>
+            <li><span class="cj-icone">${icone('bola')}</span><p><strong>Cobrar.</strong> Arraste o dedo da bola na direção do gol. Arraste longo = chute forte; forte demais vai por cima.</p></li>
+            <li><span class="cj-icone">${icone('curva')}</span><p><strong>Efeito.</strong> Curve o fim do arraste pra bola fazer curva. Arraste curtinho e reto é cavadinha.</p></li>
+            <li><span class="cj-icone">${icone('mao')}</span><p><strong>Defender.</strong> O batedor corre. Olhe o pé de apoio, em amarelo, e toque no gol onde pular. Ele nem sempre é honesto!</p></li>
+            <li><span class="cj-icone">${icone('trofeu')}</span><p><strong>Pontos ${esc(paraTime)}.</strong> Gol 10, ângulo +5, cavadinha +10, defesa 10, vitória +20, 5 de 5 +25.</p></li>
           </ul>
           <p class="cj-nota">5 cobranças e 5 defesas, alternadas. Empatou? Morte súbita.</p>
           <label class="cj-check"><input type="checkbox" data-cj-pular> Não exibir novamente</label>
@@ -234,7 +235,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     root.querySelector('[data-lado="maquina"]')!.innerHTML = bolinhas(
       defesas.map((r) => (r.desfecho === 'gol' ? 'b-gol' : 'b-erro')),
     );
-    elMudo.textContent = prefs.get().mudo ? '🔇' : '🔊';
+    elMudo.innerHTML = icone(prefs.get().mudo ? 'mudo' : 'som');
   }
 
   /** Grito do narrador como adesivo na cor do time, com a frase complementar logo abaixo. */

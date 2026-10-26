@@ -130,7 +130,6 @@
 
 .resultado .adesivo {
   --cor-eu: var(--c1);
-  color: var(--txt);
   text-shadow: none;
   font-size: 17px;
 }

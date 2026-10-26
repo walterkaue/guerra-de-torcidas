@@ -77,6 +77,27 @@ body {
   text-transform: uppercase;
 }
 
+/* Ícones em SVG de traço (telas/icones.ts): mesmo tamanho do texto, cor do texto. */
+.ico {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  vertical-align: -0.14em;
+}
+
+/* Bolinhas das pistas do Time do Dia: as mesmas cores das células (estilos/timeDoDia.css). */
+.bolinha {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 50%;
+  vertical-align: -0.05em;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.4);
+}
+.bolinha.certo { background: #2e9d4f; }
+.bolinha.perto { background: #e3b416; }
+.bolinha.longe { background: #d9d9d4; }
+
 /* Faixa inclinada (tarja de TV): o fundo inclina, o texto fica reto. */
 .faixa-tv {
   position: relative;
@@ -175,7 +196,9 @@ body {
 }
 
 .mudo {
-  font-size: 20px;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
 }
 
 .botao-sec {
@@ -560,7 +583,7 @@ body {
 .cj-titulo { font: 400 34px var(--fonte-placar); text-transform: uppercase; color: var(--amarelo); line-height: 1; }
 .cj-passos { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .cj-passos li { display: flex; gap: 10px; font-size: 15px; line-height: 1.35; }
-.cj-icone { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; background: rgba(255,255,255,0.1); font-size: 18px; }
+.cj-icone { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; background: rgba(255,255,255,0.1); font-size: 18px; color: var(--amarelo); }
 .cj-nota { font-size: 14px; color: var(--texto-suave); }
 .cj-check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 700; }
 .cj-check input { width: 24px; height: 24px; accent-color: var(--amarelo); }

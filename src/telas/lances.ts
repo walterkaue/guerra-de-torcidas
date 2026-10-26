@@ -27,6 +27,7 @@ import { criarBoneco, novaPose, poseChute, poseComemora, poseLamenta, poseParado
 import { ENQUADRAMENTOS } from './camera';
 import { facil, limitar01 } from './cena';
 import { criarCena3d } from './cena3d';
+import { icone, type NomeIcone } from './icones';
 
 export const AVISO_EM_TESTE = 'Em teste: Faltas e Cara a cara ainda não valem pontos.';
 
@@ -74,7 +75,7 @@ function legenda(r: ResultadoLance): string {
   return r.desfecho === 'trave' ? 'Na trave' : 'Pra fora';
 }
 
-const EMOJI: Record<ResultadoLance['desfecho'], string> = { gol: '⚽', defesa: '🧤', barreira: '🧱', trave: '❌', fora: '❌' };
+const ICONE: Record<ResultadoLance['desfecho'], NomeIcone> = { gol: 'bola', defesa: 'mao', barreira: 'barreira', trave: 'xis', fora: 'xis' };
 
 const relogio = () => performance.now();
 
@@ -248,7 +249,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           ${lances
             .map((l, i) => {
               const r = resultados[i];
-              return `<li><span class="emoji" aria-hidden="true">${EMOJI[r.desfecho]}</span>
+              return `<li><span class="emoji">${icone(ICONE[r.desfecho])}</span>
                 <span class="resumo-titulo">${esc(l.titulo)}<small>${esc(legenda(r))}</small></span>
                 <strong>${r.pontos ? `+${r.pontos}` : '0'}</strong></li>`;
             })
@@ -345,7 +346,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     function atualizarHud(): void {
       root.querySelector('[data-contagem]')!.textContent = treino ? `Tentativa ${tentativa + 1}` : `Lance ${indice + 1} de ${lances.length}`;
       if (!treino) root.querySelector('[data-pontos]')!.textContent = `${resultados.reduce((s, r) => s + r.pontos, 0)} pts`;
-      elMudo.textContent = prefs.get().mudo ? '🔇' : '🔊';
+      elMudo.innerHTML = icone(prefs.get().mudo ? 'mudo' : 'som');
     }
 
     /** Começa o lance: câmera do tipo, situação no topo e, no cara a cara, "A jogada" com a bola chegando. */

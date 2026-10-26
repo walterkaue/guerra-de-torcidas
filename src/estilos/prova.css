@@ -255,8 +255,9 @@
   text-transform: uppercase;
   touch-action: manipulation;
 }
-.ajuda-btn span {
-  font-size: 18px;
+.ajuda-btn .ico {
+  font-size: 20px;
+  color: var(--amarelo);
 }
 .ajuda-btn:disabled {
   opacity: 0.35;
