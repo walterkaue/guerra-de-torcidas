@@ -301,7 +301,7 @@
   color: var(--texto-suave);
 }
 .casa-rodape summary {
-  min-height: 36px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   color: var(--cal);
@@ -317,6 +317,10 @@
 .casa-rodape a {
   color: var(--amarelo);
   overflow-wrap: anywhere;
+}
+.casa-rodape .fontes a {
+  display: inline-block;
+  padding: 15px 0;
 }
 .erro-link {
   margin-top: 4px;

@@ -189,6 +189,8 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       `<li class="dia-linha vazia"><p class="dia-chute">${e.tentativas.length + i + 1}º chute</p>
         <div class="dia-celulas">${NOMES_PISTAS.map(() => '<span class="dia-cel"></span>').join('')}</div></li>`);
     elGrade.innerHTML = [...feitas, ...vazias].join('');
+    // Depois do primeiro chute as regras saem da frente (o "?" abre de novo); senão o resultado some lá embaixo.
+    if (e.tentativas.length > 0) $('[data-como]').hidden = true;
   }
 
   // ---------- busca ----------
