@@ -122,6 +122,10 @@ export async function estadoDoAviso(): Promise<EstadoAviso> {
   return 'pode-ligar';
 }
 
+/** Opera (inclusive GX) aceita a inscrição mas não recebe os avisos (testado em 25/10/2026). */
+export const ehOpera = (ua = navigator.userAgent) => /\bOPR\/|\bOpera\b|\bOPX\//.test(ua);
+const NOTA_OPERA = '<p class="nota">No Opera os avisos costumam não chegar. Se não chegar, use o Google Chrome (no celular e no computador).</p>';
+
 const appInstalado = () => window.matchMedia('(display-mode: standalone)').matches;
 const android = () => /Android/i.test(navigator.userAgent);
 
@@ -151,6 +155,7 @@ export async function painelDoAviso(el: HTMLElement, aoMudar: (ligado: boolean) 
     el.innerHTML = `<section class="convite-push" aria-label="Aviso de domingo">
       <p class="rotulo">🔔 Aviso de domingo ligado</p>
       <p>Domingo à tarde chega um toque com a situação da sua torcida e do rival. Um por semana.</p>
+      ${ehOpera() ? NOTA_OPERA : ''}
       <button class="botao botao-sec" type="button" data-acao="push-testar">Testar neste aparelho</button>
       <p class="nota" data-teste-push hidden></p>
       <div class="dupla"><button class="botao botao-sec" type="button" data-acao="push-desligar">Desligar</button>${fechar}</div>
@@ -159,6 +164,7 @@ export async function painelDoAviso(el: HTMLElement, aoMudar: (ligado: boolean) 
     el.innerHTML = `<section class="convite-push" aria-label="Aviso de domingo">
       <p class="rotulo">🔔 Quer um toque no domingo?</p>
       <p>Um aviso por semana, umas horas antes de fechar: como tá a sua torcida e o rival. Só isso.</p>
+      ${ehOpera() ? NOTA_OPERA : ''}
       <div class="dupla"><button class="botao" type="button" data-acao="push-sim">Quero o aviso</button>${fechar}</div>
     </section>`;
   } else {
