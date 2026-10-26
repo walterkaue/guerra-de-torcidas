@@ -4,7 +4,8 @@
 
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { prefs } from '../estado';
-import type { GestoCobranca, Gestos, ResultadoPartida } from '../jogo/penaltis.ts';
+import type { GestoCobranca, Gestos, ResultadoCobranca, ResultadoDefesa, ResultadoPartida } from '../jogo/penaltis.ts';
+import type { Lance, Passo as PassoPenalti } from '../jogo/penaltisLance.ts';
 import type { Ajuda, Degrau, Desfecho, Fim, Passo, PontosProva } from '../jogo/prova.ts';
 import type { Desempenho, PosicaoSemana } from '../jogo/posicao.ts';
 import type { Tentativa } from '../jogo/timeDoDia.ts';
@@ -104,12 +105,17 @@ export interface DesafioRecebido {
   golsJogador: number;
   golsMaquina: number;
   pontos: number;
-  cobrancas: GestoCobranca[];
+  /** Só do servidor antigo: no lance a lance as cobranças gravadas ficam no servidor. */
+  cobrancas?: GestoCobranca[];
 }
 
 export interface PartidaDoServidor {
   partidaId: string;
-  semente: number;
+  /** Servidor antigo (antes do lance a lance): a semente vinha para o celular. */
+  semente?: number;
+  /** Lance a lance: cada lance vai para lancePenalti e o resultado volta de lá. */
+  lanceALance?: boolean;
+  proximo?: PassoPenalti;
   dificuldade: number;
   expiraEm: string;
   desafio: DesafioRecebido | null;
@@ -117,6 +123,17 @@ export interface PartidaDoServidor {
 
 export function novaPartida(desafio?: string): Promise<PartidaDoServidor> {
   return chamar('nova-partida', desafio ? { desafio } : {});
+}
+
+export interface LanceDoServidor {
+  cobranca: ResultadoCobranca | null;
+  defesa: ResultadoDefesa | null;
+  proximo: PassoPenalti;
+}
+
+/** Um lance dos pênaltis: o servidor resolve com a semente que só ele conhece. */
+export function lancePenalti(partidaId: string, lance: Lance): Promise<LanceDoServidor> {
+  return chamar('lance-penalti', { partidaId, lance: lance as unknown as Record<string, unknown> });
 }
 
 export interface PosicaoRanking {
