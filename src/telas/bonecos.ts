@@ -12,6 +12,8 @@
 // 60 quadros por segundo no celular: formas em Path2D criadas uma vez, degradês criados uma vez por
 // cor, nenhum filtro e nenhum objeto novo por quadro (poses e juntas são Float32Array reaproveitados).
 
+import { CONTRASTE_ENTRE_TIMES, distanciaDeCor } from '../dados/times';
+
 // ---------- medidas (proporção atlética: cabeça pequena, pernas longas) ----------
 const COXA = 24;
 const CANELA = 24;
@@ -592,11 +594,7 @@ function misturarCor(a: string, b: string, t: number): string {
   return hex(r1 + (r2 - r1) * t, g1 + (g2 - g1) * t, b1 + (b2 - b1) * t);
 }
 
-function distancia(a: string, b: string): number {
-  const [r1, g1, b1] = rgb(a);
-  const [r2, g2, b2] = rgb(b);
-  return Math.hypot(r1 - r2, g1 - g2, b1 - b2);
-}
+const distancia = distanciaDeCor;
 
 function luminancia(cor: string): number {
   const [r, g, b] = rgb(cor).map((v) => {
@@ -619,7 +617,7 @@ export function uniformeDeLinha([cor1, cor2]: readonly [string, string]): Unifor
 export const CORES_DA_MAQUINA: readonly [string, string] = ['#f97316', '#1b1b1b'];
 
 /** Diferença mínima entre as camisetas dos dois times em campo (distância de cor, 0 a 441). */
-export const CONTRASTE_ENTRE_TIMES = 110;
+export { CONTRASTE_ENTRE_TIMES } from '../dados/times';
 
 /** Uniforme 1 (cor 1 na camiseta) e uniforme 2 (cores invertidas), os dois lisos. */
 const uniformesDoTime = ([cor1, cor2]: readonly [string, string]): [Uniforme, Uniforme] => [

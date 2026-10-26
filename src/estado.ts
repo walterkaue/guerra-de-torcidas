@@ -10,6 +10,8 @@ interface Prefs {
   time?: string;
   apelido?: string;
   mudo?: boolean;
+  /** Desligou a vibração (telas/toque.ts). */
+  semVibracao?: boolean;
   /** Marcou "não exibir novamente" no "Como jogar" antes da partida. */
   semComoJogar?: boolean;
   /** Marcou "não exibir novamente" no "Como cravar" da aba Palpites. */

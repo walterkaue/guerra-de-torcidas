@@ -1,7 +1,8 @@
 # Revisão gráfica — direção "Transmissão de domingo"
 
-> Versão 1.4 · 20/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Versão 1.5 · 26/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
 > Base: o jogo publicado em 18/10/2026 (commit b492b99), testado em 390×844.
+> Mudanças da 1.5 (revisão de 26/10): adesivo do narrador em papel claro com faixa na cor do time (a caixa cheia vermelha parecia aviso de erro); duelo da Home com cores que se distinguem; ícones em SVG no lugar de emoji; tela de carregando com esqueleto; molas e resposta ao toque (seção 4).
 > Mudanças da 1.4: a Home deixa de lembrar anúncio de aposta (seção 3, Início); amarelo de placar mais fosco `#e9c75a`; selo vermelho "AO VIVO" removido.
 > Mudanças da 1.3: cards de time com "faixa de placar" (seção 3, Escolha do time), no lugar das listras diagonais translúcidas; "sua posição" e recorde na Home e nos resultados.
 
@@ -43,7 +44,7 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 ### Início
 - **Cabeçalho jornalístico:** título e, logo abaixo, uma linha com a etiqueta reta cinza "Pré-temporada" e a **contagem regressiva** ("Semana fecha em 5d 03h"). Nada fica solto no canto superior direito (parece botão de fechar anúncio). Sem selo vermelho, sem piscar.
 - Bloco do time nas cores dele, com a cidade embaixo (segunda camisa).
-- **Cabo de guerra contra o rival:** barra dividida nas duas cores, com a frase do narrador do momento (`rival_colado` etc.).
+- **Cabo de guerra contra o rival:** barra dividida nas duas cores, com a frase do narrador do momento (`rival_colado` etc.). Se a cor do rival for parecida com a nossa (Flamengo × Fluminense), o rival entra com a 2ª cor ou um neutro (mesma régua de contraste dos uniformes).
 - Mini tabela da Série A com a sua torcida destacada e a seta de subida ou queda.
 - **Sua posição na semana** (20/10): "Você é o 3º de 14 torcedores na semana", com seta se subiu ou caiu desde a última visita.
 - Botão principal + **"hoje contam mais 2 partidas"** (o teto diário à vista, para ninguém achar que é injusto).
@@ -56,7 +57,7 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 - **Perspectiva:** gol maior e mais baixo, linhas da área convergindo, marca do pênalti com a bola grande perto do dedo.
 - Placar estilo TV inclinado, com bolinhas verdes (gol), pretas (erro) e amarela (ângulo ou cavadinha).
 - Arquibancada nas cores do time atrás do gol, que faz "ola" a cada gol.
-- **Grito do narrador como adesivo:** caixa na cor do time, borda branca, entra com um "pop", e a frase complementar logo abaixo.
+- **Grito do narrador como adesivo:** caixa na cor do time, borda branca, entra com um "pop", e a frase complementar logo abaixo. (Só na partida, que é um momento curto de festa. Fora dela, na Home, no resultado e no Time do Dia, o adesivo é papel claro com faixa na cor do time: a caixa cheia em time vermelho parecia aviso de erro. Decidido em 26/10.)
 - **Rastro da bola** amarelo seguindo o arraste do dedo; "+15" subindo do ponto do gol.
 - Gol: tremida curta da tela (120 ms), rede balançando e vibração no Android (`navigator.vibrate`).
 - Cavadinha: câmera lenta de 0,5 s antes de entrar.
@@ -90,11 +91,21 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 ### Bonecos
 - Estilo "Silhueta premium", aprovado em 19/10: ver `docs/bonecos.md`.
 
-## 4. Movimento (regras)
+## 4. Movimento e toque (regras)
 
 - Tudo curto: 150 a 400 ms; só o grito do narrador e o confete passam disso.
-- Respeitar `prefers-reduced-motion`: sem tremida, sem confete, sem câmera lenta.
+- Respeitar `prefers-reduced-motion`: sem tremida, sem confete, sem câmera lenta, sem mola nos botões, sem vibração leve.
 - Nada pisca mais de 3 vezes por segundo.
+- **Durações e molas** (variáveis em `src/style.css`): `--rapido` 120 ms, `--medio` 260 ms, `--lento` 420 ms; `--mola` passa ~10% do ponto e volta (pop de adesivo, botão soltando), `--mola-firme` quase não passa (barras, cards). Feitas com `linear()` do CSS, sem biblioteca; navegador antigo cai numa `cubic-bezier` parecida. No canvas, a mesma curva é a função `mola()` de `telas/cena.ts` (só desenho, nunca a física).
+- **Todo toque responde na hora:** o botão afunda sem transição e, ao soltar, volta com a mola; cards e botões pequenos encolhem um pouco (0,92 a 0,97).
+- **Vibração (só Android; o iPhone não tem):** `telas/toque.ts`. Leve (8 ms) em botão principal, card de jogo e barra de navegação; acerto (22 ms) na Prova e no Time do Dia; erro (30-50-30); gol (60-40-90). Nada passa de 200 ms. A preferência `semVibracao` desliga tudo (falta a chave na tela).
+- **Fica de fora:** bibliotecas de animação (Framer Motion, GSAP, Lottie, Rive) e WebGL. O peso não cabe no orçamento e o celular simples esquenta.
+
+## 4.1 Ícones e carregando
+
+- **Ícones em SVG de traço** (`telas/icones.ts`), na cor do texto e do tamanho da letra. Emoji muda de desenho em cada marca e os mais novos (🟢, 🧤, 🧱) viram quadradinho em Android antigo. Emoji só no texto que vai para o WhatsApp, que desenha os próprios.
+- As pistas do Time do Dia usam bolinhas desenhadas em CSS, com as mesmas cores das células.
+- **Carregando:** as telas de jogo, a Casa e o painel baixam só quando abrem. Enquanto isso aparece o esqueleto da tela (blocos com brilho passando e a bola girando), nunca um texto solto em tela vazia. Sem rede: "Tentar de novo" e "Voltar pro início". Depois que a Home abre, as telas de jogo baixam por trás (menos com economia de dados ligada).
 
 ## 5. Ajustes encontrados no código
 
@@ -110,3 +121,5 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 5. Cards de time "faixa de placar" (20/10) — **Sonnet + Média**.
 
 7. Home sem cara de anúncio de aposta (20/10, a partir de feedback de teste): selo "AO VIVO" e contador do canto removidos, aviso de resenha no rodapé, amarelo fosco — feito.
+8. Revisão de 26/10, lote 1: adesivo claro, duelo com contraste, ícones SVG, "em breve" da Casa sem transparência, esqueleto de carregando, telas de jogo sob demanda (JS da Home de 80 para ~28 KB gzip), molas e vibração — feito.
+9. Próximos (revisão de 26/10): replay de TV do gol (o lance é recalculado pela semente, então dá para redesenhar de outro ângulo); qualidade automática alta/média/leve (mede os primeiros quadros, núcleos, memória e economia de dados); luz de jogo pré-desenhada pelo horário; prévias dos jogos na Home e no hub dos Lances; enquadramento da falta 3D (batedor menor, gol maior); chave "Vibração".

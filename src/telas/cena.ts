@@ -4,6 +4,7 @@
 
 import { coluna, linha, type GestoCobranca } from '../jogo/penaltis';
 import { GOLEIRO, desenharBoneco, maos, misturar, novaPose, poseGoleiroEsperando, type Boneco, type Pose } from './bonecos';
+import { vibrar } from './toque';
 
 /** Rastro do dedo: [largura, opacidade] do brilho e do traço. */
 const BRILHO_DO_RASTRO = [
@@ -29,6 +30,17 @@ const PROF_REDE = 2;
 export const facil = (t: number) => 1 - (1 - t) * (1 - t);
 export const suave = (t: number) => t * t * (3 - 2 * t);
 export const limitar01 = (t: number) => Math.max(0, Math.min(1, t));
+/**
+ * Mola amortecida (0 → 1 passando ~10% do ponto e voltando), a mesma curva de --mola no CSS.
+ * Para "pop" de número e adesivo; nunca na física, que continua no motor puro.
+ */
+export const mola = (t: number) => {
+  if (t >= 1) return 1;
+  const amort = 0.6;
+  const w = 12;
+  const wd = w * Math.sqrt(1 - amort * amort);
+  return 1 - Math.exp(-amort * w * t) * (Math.cos(wd * t) + (amort / Math.sqrt(1 - amort * amort)) * Math.sin(wd * t));
+};
 
 /** Bola com gomos girando, luz da esfera e sombra no chão em `sombraY`. */
 export function desenharBolaEm(c: CanvasRenderingContext2D, x: number, y: number, r: number, sombraY: number, giro: number, gradBola: CanvasGradient | null): void {
@@ -129,9 +141,13 @@ export function desenharPontosEm(
     c.lineWidth = 5;
     c.strokeStyle = '#111111';
     const y = p.y - 10 - sobe * 46;
-    c.strokeText(p.texto, p.x, y);
+    // Entra com pop de mola (de 40% ao tamanho cheio, passando um pouco) em 450 ms.
+    const escala = 0.4 + 0.6 * mola(Math.min(1, (agora - p.inicio) / 450));
+    c.translate(p.x, y);
+    c.scale(escala, escala);
+    c.strokeText(p.texto, 0, 0);
     c.fillStyle = '#ffd23f';
-    c.fillText(p.texto, p.x, y);
+    c.fillText(p.texto, 0, 0);
     c.restore();
   }
   return vivos;
@@ -211,11 +227,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
     if (!gol) return;
     efeitos.rede = { inicio: agora, x, y };
     if (!reduzido) efeitos.tremida = agora;
-    try {
-      navigator.vibrate?.(reduzido ? 40 : [60, 40, 90]);
-    } catch {
-      // sem vibração (iPhone, desktop): segue sem
-    }
+    vibrar(reduzido ? 'acerto' : 'gol');
   }
 
   /** Converte o arraste em gesto: direção = canto, comprimento = força, curva final = efeito. */

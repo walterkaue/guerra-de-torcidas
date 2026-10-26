@@ -7,6 +7,7 @@ import type { GestoCobranca } from '../jogo/penaltis';
 import { GOLEIRO, desenharBoneco, misturar, novaPose, poseGoleiroEsperando, type Boneco, type Pose } from './bonecos';
 import { cameraAtrasDaBola, type Camera, type Enquadramento, type NaTela, type Ponto3 } from './camera';
 import { desenharBolaEm, desenharPontosEm, desenharRastroEm, facil, limitar01, suave } from './cena';
+import { vibrar } from './toque';
 
 const MEIA_GOL = 3.66;
 const ALTURA_GOL = 2.44;
@@ -453,11 +454,7 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
     const agora = relogio();
     if (pontos > 0) efeitos.pontos.push({ inicio: agora, x, y, texto: `+${pontos}` });
     if (!reduzido) efeitos.tremida = agora;
-    try {
-      navigator.vibrate?.(reduzido ? 40 : [60, 40, 90]);
-    } catch {
-      // sem vibração (iPhone, desktop): segue sem
-    }
+    vibrar(reduzido ? 'acerto' : 'gol');
   }
 
   const desenharRastro = (rastro: readonly { x: number; y: number }[]) => desenharRastroEm(c, rastro);

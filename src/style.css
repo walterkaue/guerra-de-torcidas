@@ -39,11 +39,26 @@
   --fonte-rotulo: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
   --fonte-texto: 'Barlow', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --inclinacao: -8deg;
+  /* Movimento (docs/visual.md, seção 4): durações curtas e duas molas. --mola passa ~10% do ponto
+     e volta (pop de adesivo, botão soltando); --mola-firme quase não passa (cards, barras).
+     Navegador sem linear() (Chrome < 113, Safari < 17.2) fica com a cubic-bezier de reserva. */
+  --rapido: 120ms;
+  --medio: 260ms;
+  --lento: 420ms;
+  --mola: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --mola-firme: cubic-bezier(0.22, 1.1, 0.36, 1);
   color-scheme: dark;
   /* A Anton só tem um peso: sem isto, "font-weight: 900" vira negrito falso e as letras grudam (título do Ranking). */
   font-synthesis-weight: none;
   font-family: var(--fonte-texto);
   -webkit-text-size-adjust: 100%;
+}
+
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --mola: linear(0, 0.101, 0.322, 0.568, 0.783, 0.941, 1.038, 1.085, 1.095, 1.083, 1.061, 1.038, 1.018, 1.004, 0.995, 0.992, 0.991, 0.992, 0.995, 0.997, 0.999, 1);
+    --mola-firme: linear(0, 0.139, 0.396, 0.635, 0.81, 0.92, 0.98, 1.006, 1.015, 1.014, 1.011, 1.007, 1.004, 1.002, 1.001, 1);
+  }
 }
 
 * {
@@ -76,6 +91,28 @@ body {
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+
+/* Ícones em SVG de traço (telas/icones.ts): mesmo tamanho do texto, cor do texto. */
+.ico {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  vertical-align: -0.14em;
+}
+
+/* Bolinhas das pistas do Time do Dia: as mesmas cores das células (estilos/timeDoDia.css). */
+.bolinha {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 50%;
+  margin: 0 0.12em;
+  vertical-align: -0.05em;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.4);
+}
+.bolinha.certo { background: #2e9d4f; }
+.bolinha.perto { background: #e3b416; }
+.bolinha.longe { background: #d9d9d4; }
 
 /* Faixa inclinada (tarja de TV): o fundo inclina, o texto fica reto. */
 .faixa-tv {
@@ -111,11 +148,14 @@ body {
   gap: 2px;
   box-shadow: 0 6px 0 #b8920f;
   touch-action: manipulation;
+  transition: transform var(--lento) var(--mola), box-shadow var(--lento) var(--mola);
 }
 
+/* Afunda na hora (sem transição) e, ao soltar, volta com a mola. */
 .botao:active:not(:disabled) {
   transform: translateY(4px);
   box-shadow: 0 2px 0 #b8920f;
+  transition-duration: 0s;
 }
 
 .botao:disabled {
@@ -175,7 +215,9 @@ body {
 }
 
 .mudo {
-  font-size: 20px;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
 }
 
 .botao-sec {
@@ -560,7 +602,7 @@ body {
 .cj-titulo { font: 400 34px var(--fonte-placar); text-transform: uppercase; color: var(--amarelo); line-height: 1; }
 .cj-passos { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .cj-passos li { display: flex; gap: 10px; font-size: 15px; line-height: 1.35; }
-.cj-icone { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; background: rgba(255,255,255,0.1); font-size: 18px; }
+.cj-icone { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; background: rgba(255,255,255,0.1); font-size: 18px; color: var(--amarelo); }
 .cj-nota { font-size: 14px; color: var(--texto-suave); }
 .cj-check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 700; }
 .cj-check input { width: 24px; height: 24px; accent-color: var(--amarelo); }
@@ -589,4 +631,49 @@ body {
   letter-spacing: 0.02em;
   text-transform: uppercase;
   transform: rotate(var(--inclinacao));
+}
+
+/* ---------- carregando: esqueleto da tela (telas/esqueleto.ts) ---------- */
+.esqueleto { gap: 14px; }
+.esq-cabecalho { display: flex; align-items: center; gap: 10px; }
+.esq {
+  display: block;
+  border-radius: 12px;
+  background: linear-gradient(100deg, rgba(0,0,0,0.28) 30%, rgba(255,255,255,0.08) 50%, rgba(0,0,0,0.28) 70%) 0 0 / 300% 100%;
+  animation: esq-brilho 1.4s linear infinite;
+}
+.esq-voltar { width: 44px; height: 44px; }
+.esq-titulo { width: 55%; height: 26px; }
+.esq-bloco { height: 96px; }
+.esq-bloco.grande { height: 180px; }
+.esq-rotulo { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--texto-suave); font-weight: 700; }
+.esq-bola { display: inline-flex; font-size: 22px; color: var(--cal); animation: esq-giro 0.9s linear infinite; }
+@keyframes esq-brilho { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@keyframes esq-giro { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .esq, .esq-bola { animation: none; }
+}
+
+/* ---------- toque e mola (docs/visual.md, seção 4) ---------- */
+/* Botões pequenos e cards: encolhem um pouco ao tocar e voltam com a mola. */
+.voltar, .mudo, .barra-nav button, .cartao-time, .card-jogo, .alt, .ajuda-btn, .link-casa {
+  transition: transform var(--lento) var(--mola);
+}
+.voltar:active, .mudo:active, .barra-nav button:active:not([aria-disabled='true']), .ajuda-btn:active:not(:disabled), .link-casa:active {
+  transform: scale(0.92);
+  transition-duration: 0s;
+}
+.cartao-time:active:not([disabled]) { transform: scale(0.96); transition-duration: 0s; }
+
+/* O adesivo do narrador entra com um pop de mola, já torto. */
+@keyframes adesivo-entra {
+  from { opacity: 0; transform: scale(0.6) rotate(-6deg); }
+  to { opacity: 1; }
+}
+.adesivo:not([hidden]) { animation: adesivo-entra var(--lento) var(--mola) both; }
+.adesivo.segundo:not([hidden]) { animation-delay: 160ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .botao, .voltar, .mudo, .barra-nav button, .cartao-time, .card-jogo, .alt, .ajuda-btn, .link-casa { transition: none; }
+  .adesivo:not([hidden]) { animation: none; }
 }
