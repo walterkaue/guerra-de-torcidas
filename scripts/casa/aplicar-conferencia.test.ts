@@ -98,7 +98,11 @@ describe('aplicar', () => {
   });
 
   it('pendentes lista o que segue em rascunho', () => {
-    const faltam = pendentes(textos(), ['vasco']);
+    // Não depende dos dados reais: põe a linha do Vasco em rascunho antes.
+    const base = textos();
+    const clubes = lerTabela(base.clubes);
+    for (const l of clubes.linhas) if (l.id === 'vasco') l.status = 'rascunho';
+    const faltam = pendentes({ ...base, clubes: escreverTabela(clubes) }, ['vasco']);
     expect(faltam.some((f) => f.startsWith('clubes: vasco'))).toBe(true);
   });
 });
