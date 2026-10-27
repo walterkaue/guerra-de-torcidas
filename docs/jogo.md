@@ -397,7 +397,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 ### Anti-trapaça
 - O clube do dia fica só no servidor. O celular manda a tentativa e recebe a linha de pistas; a resposta só aparece quando a partida termina.
 - As tentativas ficam gravadas no servidor (apagar o app não recomeça o dia).
-- Risco: criar conta anônima nova para "estudar" o dia. Mitigação: CAPTCHA antes de divulgar e detecção (acerto na 1ª tentativa em 5 de 7 dias → sob suspeita).
+- Risco: criar conta anônima nova para "estudar" o dia. Mitigação: CAPTCHA no login anônimo (seção 12) e detecção (acerto na 1ª tentativa em 5 de 7 dias → sob suspeita).
 - Sequência de dias (T01), sem punição para quem perder.
 
 ### Card
@@ -560,6 +560,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - Chaves: o front-end usa a URL do projeto e a **publishable key** (`sb_publishable_…`). As funções no servidor usam a **secret key** (`sb_secret_…`), só como segredo das funções. As chaves antigas `anon` e `service_role` estão sendo descontinuadas pela Supabase até o fim de 2026: não usar.
 - Como a URL e a publishable key são públicas, ficam versionadas no repositório (o build do GitHub Pages precisa delas). Nada secreto entra no repositório.
 - **Antes de divulgar:** CAPTCHA (Cloudflare Turnstile) no login anônimo, limpeza periódica de usuários anônimos inativos, anti-trapaça completo (inclusive as cobranças do desafio, que hoje chegam ao celular antes da defesa), ranking que aguente muitos jogadores (hoje a semana inteira é recalculada a cada partida fechada; trocar por cálculo incremental ou de minuto em minuto) e decidir sobre o plano Pro (o Free pausa o projeto depois de 1 semana sem uso).
+- **CAPTCHA (decidido em 27/10/2026):** Cloudflare Turnstile no modo escondido, **uma vez por aparelho**: só no primeiro login anônimo (a sessão fica salva) e no login do `#admin`, pelo suporte a CAPTCHA do próprio Supabase. Continua sem cadastro: o login anônimo segue somando pontos. Se a verificação falhar, o jogo roda "sem valer pontos", como sem internet. Liga quando a chave pública do site estiver em `VITE_TURNSTILE_SITE_KEY` (`.env.production`) **e** o CAPTCHA estiver ligado no painel do Supabase, nessa ordem; vazia, fica desligado.
 - **Rotina contra a pausa do plano Free:** um agendamento no GitHub Actions faz uma consulta leve ao banco a cada 2 dias. Enquanto o projeto estiver no Free, isso evita a pausa por 7 dias sem uso. O GitHub desliga agendamentos de repositório público depois de 60 dias sem commit; se isso acontecer, o GitHub avisa por e-mail e basta reativar. Arquivo: `.github/workflows/manter-supabase.yml` (a cada 2 dias às 09h de Brasília e pelo botão "Run workflow"): lê 1 linha do ranking com a publishable key e falha se a resposta não for 200.
 - **Zerar pré-temporada:** `npm run zerar-pre-temporada` apaga partidas, desafios e ranking (mantém times e torcedores; recordes pessoais zeram junto). Mostra as contagens, lembra de rodar o balanço antes e só apaga depois de digitar ZERAR.
 - **Sessão de usuário apagado:** se o login anônimo salvo no aparelho não existir mais no servidor, o jogo sai e faz um login anônimo novo.

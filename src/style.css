@@ -779,3 +779,13 @@ body {
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-new(root) { animation: none; }
 }
+
+/* CAPTCHA (Turnstile): no modo escondido fica vazio; se a Cloudflare pedir um toque, aparece no rodapé. */
+.captcha {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 1000;
+  max-width: calc(100vw - 32px);
+}

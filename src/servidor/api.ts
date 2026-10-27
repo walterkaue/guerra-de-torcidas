@@ -4,6 +4,7 @@
 
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { prefs } from '../estado';
+import { opcoesComCaptcha, tokenCaptcha } from './captcha';
 import type { GestoCobranca, Gestos, ResultadoPartida } from '../jogo/penaltis.ts';
 import type { Ajuda, Degrau, Desfecho, Fim, Passo, PontosProva } from '../jogo/prova.ts';
 import type { Desempenho, PosicaoSemana } from '../jogo/posicao.ts';
@@ -59,7 +60,14 @@ export function garantirSessao(): Promise<string> {
         throw new ErroServidor('sem_conexao');
       }
     }
-    const { data: novo, error } = await comTempoLimite(sb.auth.signInAnonymously());
+    // CAPTCHA (desligado sem a chave do site): só aqui, no primeiro login do aparelho.
+    let token: string | undefined;
+    try {
+      token = await tokenCaptcha();
+    } catch {
+      throw new ErroServidor('captcha');
+    }
+    const { data: novo, error } = await comTempoLimite(sb.auth.signInAnonymously({ options: opcoesComCaptcha(token) }));
     if (error || !novo.user) throw new ErroServidor(error?.code ?? 'login_falhou');
     return novo.user.id;
   })().catch((e) => {
