@@ -2,7 +2,7 @@
 // guerra contra o rival, sua posição na semana, os 4 jogos em grade (com status vivo), mini tabela e feedback.
 
 import { desafioDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
-import { ID_OUTRO, TIMES, corDeTexto, timePorId, type Time } from '../dados/times';
+import { ID_OUTRO, TIMES, corDeTexto, corDoRivalNoDuelo, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { AVISO_RESENHA } from '../jogo/cravaTela';
 import { AVISO_PRE_TEMPORADA, linhaPosicaoSemana, setaDaPosicao } from '../jogo/posicao';
@@ -26,6 +26,14 @@ import { sincronizarTorcedor } from '../servidor/torcedor';
 import { carregarCarreiraHome } from './carreira';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
+import { icone } from './icones';
+import { NOME_DO_NIVEL, escolha, escolherQualidade, qualidade } from './qualidade';
+
+/** "Gráficos: automático (Média)" ou "Gráficos: Leve". */
+function rotuloGraficos(): string {
+  const nivel = NOME_DO_NIVEL[qualidade().nivel];
+  return `${icone('grafico')} Gráficos: ${escolha() === 'auto' ? `automático (${nivel})` : nivel}`;
+}
 
 export const TETO_DIARIO = 5;
 // Em desenvolvimento, ?diaFalso usa o Time do Dia de mentira também no card (src/dev/diaFalso.ts).
@@ -99,7 +107,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       <header class="cabecalho">
         <h1 class="marca-pequena">Guerra <span>de Torcidas</span></h1>
         <button class="sininho" type="button" data-acao="sininho" aria-label="Aviso de domingo" aria-expanded="false">
-          <span aria-hidden="true">🔔</span>
+          ${icone('sino')}
         </button>
         <p class="contagem rotulo"><span class="etiqueta-fase">Pré-temporada</span>Semana fecha em <strong data-contagem>${formatarContagem(msAteZerarSemana())}</strong></p>
       </header>
@@ -145,7 +153,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         <div class="mini-linhas"><p class="vazio">Carregando o ranking…</p></div>
       </section>
 
-      <button class="link-feedback" type="button" data-acao="feedback">💬 Feedback ou bug? Conta pra gente</button>
+      <button class="link-feedback" type="button" data-acao="feedback">${icone('balao')} Feedback ou bug? Conta pra gente</button>
+      <button class="link-feedback link-graficos" type="button" data-acao="graficos" aria-live="polite">${rotuloGraficos()}</button>
 
       <p class="rodape-resenha" role="note">${esc(AVISO_RESENHA)} Jogo 100% grátis.</p>
 
@@ -177,6 +186,13 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     irPara({ tela: 'casa', id: time && time.id !== ID_OUTRO ? time.id : undefined }),
   );
   root.querySelector('[data-acao="feedback"]')?.addEventListener('click', () => irPara({ tela: 'feedback', de: 'inicio' }));
+  // Gráficos: toque troca automático → alta → média → leve → automático (telas/qualidade.ts).
+  const elGraficos = root.querySelector<HTMLButtonElement>('[data-acao="graficos"]')!;
+  elGraficos.addEventListener('click', () => {
+    const ordem = ['auto', 'alta', 'media', 'leve'] as const;
+    escolherQualidade(ordem[(ordem.indexOf(escolha()) + 1) % ordem.length]);
+    elGraficos.innerHTML = rotuloGraficos();
+  });
   ligarBarraNavegacao(root);
 
   // Sininho: liga, desliga ou explica o aviso de domingo (push). Aceso quando o aviso está ligado.
@@ -367,8 +383,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     const total = meu.media30 + rival.media30;
     const fracao = total > 0 ? meu.media30 / total : 0.5;
     elCabo.style.setProperty('--cor-eu', time.cores[0]);
-    elCabo.style.setProperty('--txt-eu', corDeTexto(time.cores[0]));
-    elCabo.style.setProperty('--cor-rival', tRival.cores[0] === time.cores[0] ? tRival.cores[1] : tRival.cores[0]);
+    elCabo.style.setProperty('--cor-rival', corDoRivalNoDuelo(time.cores[0], tRival.cores));
     elCabo.style.setProperty('--fracao', String(Math.min(0.92, Math.max(0.08, fracao))));
     elCabo.querySelector('[data-cabo-eu]')!.textContent = time.nome;
     elCabo.querySelector('[data-cabo-rival]')!.textContent = tRival.nome;

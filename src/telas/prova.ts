@@ -25,6 +25,9 @@ import {
   verDesafioProva,
 } from '../servidor/api';
 import { sincronizarTorcedor } from '../servidor/torcedor';
+import { icone, type NomeIcone } from './icones';
+import { vibrar } from './toque';
+import { papelPicadoNaTela } from './papelPicado';
 
 export interface DadosResultadoProva {
   timeId: string;
@@ -34,10 +37,10 @@ export interface DadosResultadoProva {
 }
 
 const LETRAS = ['A', 'B', 'C', 'D'];
-const AJUDA_INFO: Record<Ajuda, { icone: string; nome: string }> = {
-  tira_duas: { icone: '✂️', nome: 'Tira duas' },
-  arquibancada: { icone: '📣', nome: 'Arquibancada' },
-  troca: { icone: '🔄', nome: 'Troca' },
+const AJUDA_INFO: Record<Ajuda, { icone: NomeIcone; nome: string }> = {
+  tira_duas: { icone: 'tesoura', nome: 'Tira duas' },
+  arquibancada: { icone: 'megafone', nome: 'Arquibancada' },
+  troca: { icone: 'troca', nome: 'Troca' },
 };
 /** Pausa para ver a certa antes de seguir. */
 const PAUSA_RESPOSTA_MS = 1400;
@@ -103,11 +106,11 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
         <p class="adesivo" data-abertura></p>
         <div class="convite-desafio" data-convite hidden></div>
         <ul class="cj-passos" data-regras ${mostrarComo ? '' : 'hidden'}>
-          <li><span class="cj-icone" aria-hidden="true">❓</span><p><strong>8 perguntas, 15 s cada.</strong> 2 fáceis, 2 médias, 2 difíceis e 2 de craque. Toque na alternativa.</p></li>
-          <li><span class="cj-icone" aria-hidden="true">✋</span><p><strong>Parar ou seguir.</strong> Da 3ª em diante, antes de ver a pergunta: para e leva o que juntou, ou arrisca.</p></li>
-          <li><span class="cj-icone" aria-hidden="true">❌</span><p><strong>Errou ou o tempo acabou?</strong> Leva metade do que juntou.</p></li>
-          <li><span class="cj-icone" aria-hidden="true">💡</span><p><strong>3 ajudas, uma de cada:</strong> Tira duas, Arquibancada e Troca. O relógio não para.</p></li>
-          <li><span class="cj-icone" aria-hidden="true">🏆</span><p><strong>Pontos:</strong> 8, 12, 18 e 25 por degrau. 8 de 8 ganha +24.</p></li>
+          <li><span class="cj-icone">${icone('pergunta')}</span><p><strong>8 perguntas, 15 s cada.</strong> 2 fáceis, 2 médias, 2 difíceis e 2 de craque. Toque na alternativa.</p></li>
+          <li><span class="cj-icone">${icone('mao')}</span><p><strong>Parar ou seguir.</strong> Da 3ª em diante, antes de ver a pergunta: para e leva o que juntou, ou arrisca.</p></li>
+          <li><span class="cj-icone">${icone('xis')}</span><p><strong>Errou ou o tempo acabou?</strong> Leva metade do que juntou.</p></li>
+          <li><span class="cj-icone">${icone('lampada')}</span><p><strong>3 ajudas, uma de cada:</strong> Tira duas, Arquibancada e Troca. O relógio não para.</p></li>
+          <li><span class="cj-icone">${icone('trofeu')}</span><p><strong>Pontos:</strong> 8, 12, 18 e 25 por degrau. 8 de 8 ganha +24.</p></li>
         </ul>
         <label class="cj-check" ${mostrarComo ? '' : 'hidden'}><input type="checkbox" data-pular> Não exibir as regras de novo</label>
         <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
@@ -126,7 +129,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
           ${(Object.keys(AJUDA_INFO) as Ajuda[])
             .map(
               (a) => `<button type="button" class="ajuda-btn" data-ajuda="${a}">
-                <span aria-hidden="true">${AJUDA_INFO[a].icone}</span>${AJUDA_INFO[a].nome}</button>`,
+                ${icone(AJUDA_INFO[a].icone)}${AJUDA_INFO[a].nome}</button>`,
             )
             .join('')}
         </div>
@@ -264,7 +267,11 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       if (r.desfecho !== 'acertou') botao?.classList.add('errada');
       degraus[i] = r.desfecho === 'acertou' ? (ajudaNaAtual ? 'ajuda' : 'certa') : 'errada';
       pintarEscada(null);
-      if (r.desfecho === 'acertou') gritar(falar('prova_acertou'));
+      vibrar(r.desfecho === 'acertou' ? 'acerto' : 'erro');
+      if (r.desfecho === 'acertou') {
+        gritar(falar('prova_acertou'));
+        if (botao) papelPicadoNaTela(botao, [time.cores[0], time.cores[1], '#ffd23f']);
+      }
       else gritar(falar(r.desfecho === 'tempo' ? 'prova_tempo' : 'prova_errou'));
 
       pausa = window.setTimeout(() => {

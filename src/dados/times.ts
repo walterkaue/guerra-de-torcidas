@@ -61,6 +61,28 @@ export function rivalDe(t: Time): Time | undefined {
   return t.rival ? timePorId(t.rival) : undefined;
 }
 
+/** Distância entre duas cores (0 a 441). Abaixo de ~110, duas cores lado a lado viram uma só. */
+export function distanciaDeCor(a: string, b: string): number {
+  const x = parseInt(a.slice(1), 16);
+  const y = parseInt(b.slice(1), 16);
+  return Math.hypot(((x >> 16) & 255) - ((y >> 16) & 255), ((x >> 8) & 255) - ((y >> 8) & 255), (x & 255) - (y & 255));
+}
+
+/** Cor mínima entre dois lados (camisetas em campo, metades do duelo da Home). */
+export const CONTRASTE_ENTRE_TIMES = 110;
+
+/** Cores neutras do rival no duelo quando nenhuma das duas cores dele se distingue da nossa. */
+const NEUTROS_DO_DUELO = ['#d9d9d2', '#2b2b2b'] as const;
+
+/**
+ * Cor do rival na barra do duelo: a 1ª cor dele, a 2ª se a 1ª for parecida com a nossa
+ * (Flamengo × Fluminense: vermelho e grená viram uma barra só), ou um neutro (claro ou escuro).
+ */
+export function corDoRivalNoDuelo(minha: string, rival: readonly [string, string]): string {
+  const longe = (c: string) => distanciaDeCor(minha, c) >= CONTRASTE_ENTRE_TIMES;
+  return rival.find(longe) ?? NEUTROS_DO_DUELO.find(longe) ?? NEUTROS_DO_DUELO[0];
+}
+
 /** Cor de texto legível sobre a cor principal do time. */
 export function corDeTexto(fundo: string): string {
   const n = parseInt(fundo.slice(1), 16);

@@ -5,10 +5,10 @@
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { prefs } from '../estado';
 import type { GestoCobranca, Gestos, ResultadoPartida } from '../jogo/penaltis.ts';
-import type { Carreira } from '../jogo/carreira.ts';
 import type { Ajuda, Degrau, Desfecho, Fim, Passo, PontosProva } from '../jogo/prova.ts';
 import type { Desempenho, PosicaoSemana } from '../jogo/posicao.ts';
 import type { Tentativa } from '../jogo/timeDoDia.ts';
+import type { Carreira } from '../jogo/carreira.ts';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;

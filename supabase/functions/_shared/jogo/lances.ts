@@ -193,7 +193,7 @@ export function goleiroAntesDoChute(semente: number, i: number, cena: CenaLance)
  * Caminho da bola em metros, da bola (t = 0) ao ponto final na linha do gol (t = 1): reta até o ponto final,
  * mais a curva do efeito e a altura do arco.
  */
-function caminho(cena: CenaLance, g: GestoCobranca, x: number, y: number, cavadinha: boolean, fraca: boolean) {
+function caminho(cena: Pick<CenaLance, 'bola'>, g: GestoCobranca, x: number, y: number, cavadinha: boolean, fraca: boolean) {
   const bx = cena.bola.x;
   const bz = cena.bola.z;
   const gx = x * MEIA_LARGURA_GOL;
@@ -223,9 +223,23 @@ function caminho(cena: CenaLance, g: GestoCobranca, x: number, y: number, cavadi
 
 /** O caminho de um lance já resolvido, para o desenho: posição da bola (m) em t de 0 a `r.tFim`. */
 export function caminhoDoLance(cena: CenaLance, gestoBruto: GestoCobranca, r: ResultadoLance): (t: number) => { x: number; y: number; z: number } {
+  return caminhoDoChute(cena.bola, gestoBruto, r.x, r.y, r.cavadinha);
+}
+
+/**
+ * O caminho de qualquer chute já resolvido (lance ou pênalti, com a bola em `bola`, m) até o ponto
+ * (x, y) do gol nas unidades do motor. Usado no desenho e no replay de TV do gol.
+ */
+export function caminhoDoChute(
+  bola: { x: number; z: number },
+  gestoBruto: GestoCobranca,
+  x: number,
+  y: number,
+  cavadinha: boolean,
+): (t: number) => { x: number; y: number; z: number } {
   const g = normalizarCobranca(gestoBruto);
-  const fraca = !r.cavadinha && g.forca < 32;
-  const c = caminho(cena, g, r.x, r.y, r.cavadinha, fraca);
+  const fraca = !cavadinha && g.forca < 32;
+  const c = caminho({ bola }, g, x, y, cavadinha, fraca);
   return (t) => {
     const p = c.ponto(t);
     return { x: p.x, y: c.altura(t), z: p.z };

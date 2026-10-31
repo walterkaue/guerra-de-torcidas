@@ -10,6 +10,10 @@ interface Prefs {
   time?: string;
   apelido?: string;
   mudo?: boolean;
+  /** Gráficos: automático (padrão) ou um nível fixo (telas/qualidade.ts). */
+  qualidade?: 'auto' | 'alta' | 'media' | 'leve';
+  /** Desligou a vibração (telas/toque.ts). */
+  semVibracao?: boolean;
   /** Marcou "não exibir novamente" no "Como jogar" antes da partida. */
   semComoJogar?: boolean;
   /** Marcou "não exibir novamente" no "Como cravar" da aba Palpites. */

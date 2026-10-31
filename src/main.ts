@@ -10,57 +10,86 @@ import { prefs } from './estado';
 import { timePorId } from './dados/times';
 import { telaInicio } from './telas/inicio';
 import { telaTimes } from './telas/times';
-import { telaPartida } from './telas/partida';
-import { telaResultado } from './telas/resultado';
 import { telaRanking } from './telas/ranking';
-import { telaPalpites } from './telas/palpites';
 import { telaFeedback } from './telas/feedback';
-import { telaProva } from './telas/prova';
-import { telaProvaResultado } from './telas/provaResultado';
-import { telaTimeDoDia } from './telas/timeDoDia';
-import { telaLances } from './telas/lances';
+import { telaCarregando, telaSemRede } from './telas/esqueleto';
 import { registrarServiceWorker } from './pwa';
+import { ligarToqueDosBotoes } from './telas/toque';
 
 registrarServiceWorker();
+ligarToqueDosBotoes();
+
+type Tela = Parameters<typeof registrarTela>[1];
+
+/**
+ * Tela que só baixa o código quando abre: as telas de jogo (cenas, bonecos, palpites) são mais da
+ * metade do JS, e a Home abre mais rápido no 3G sem elas. Enquanto baixa, mostra o esqueleto da tela;
+ * sem rede, oferece tentar de novo. Depois que a Home abre, `preaquecer` baixa tudo por trás.
+ */
+function sobDemanda(rotulo: string, carregar: () => Promise<Tela>): Tela {
+  return (root, rota) => {
+    let limpar: (() => void) | undefined;
+    let saiu = false;
+    const tentar = () => {
+      root.innerHTML = telaCarregando(rotulo);
+      carregar().then(
+        (tela) => {
+          if (saiu) return;
+          const fim = tela(root, rota);
+          if (typeof fim === 'function') limpar = fim;
+        },
+        () => {
+          if (saiu) return;
+          root.innerHTML = telaSemRede();
+          root.querySelector('[data-tentar]')?.addEventListener('click', tentar);
+          root.querySelector('[data-inicio]')?.addEventListener('click', () => irPara({ tela: 'inicio' }));
+        },
+      );
+    };
+    tentar();
+    return () => {
+      saiu = true;
+      limpar?.();
+    };
+  };
+}
+
+const TELAS_DE_JOGO = {
+  partida: () => import('./telas/partida').then((m) => m.telaPartida as Tela),
+  resultado: () => import('./telas/resultado').then((m) => m.telaResultado as Tela),
+  palpites: () => import('./telas/palpites').then((m) => m.telaPalpites as Tela),
+  prova: () => import('./telas/prova').then((m) => m.telaProva as Tela),
+  provaResultado: () => import('./telas/provaResultado').then((m) => m.telaProvaResultado as Tela),
+  timeDoDia: () => import('./telas/timeDoDia').then((m) => m.telaTimeDoDia as Tela),
+  lances: () => import('./telas/lances').then((m) => m.telaLances as Tela),
+};
 
 registrarTela('inicio', telaInicio);
 registrarTela('times', telaTimes);
-registrarTela('partida', telaPartida);
-registrarTela('resultado', telaResultado);
 registrarTela('ranking', telaRanking);
-registrarTela('palpites', telaPalpites);
 registrarTela('feedback', telaFeedback);
-registrarTela('prova', telaProva);
-registrarTela('provaResultado', telaProvaResultado);
-registrarTela('timeDoDia', telaTimeDoDia);
-registrarTela('lances', telaLances);
-// Painel do administrador: só baixa o código quando alguém abre #admin.
-registrarTela('admin', (root) => {
-  let limpar: (() => void) | undefined;
-  let saiu = false;
-  root.innerHTML = '<main class="tela"><p class="vazio">Carregando o painel…</p></main>';
-  void import('./telas/admin').then((m) => {
-    if (!saiu) limpar = m.telaAdmin(root);
-  });
-  return () => {
-    saiu = true;
-    limpar?.();
-  };
-});
+registrarTela('partida', sobDemanda('Entrando em campo…', TELAS_DE_JOGO.partida));
+registrarTela('resultado', sobDemanda('Fechando o placar…', TELAS_DE_JOGO.resultado));
+registrarTela('palpites', sobDemanda('Abrindo os palpites…', TELAS_DE_JOGO.palpites));
+registrarTela('prova', sobDemanda('Chamando a Prova…', TELAS_DE_JOGO.prova));
+registrarTela('provaResultado', sobDemanda('Fechando o placar…', TELAS_DE_JOGO.provaResultado));
+registrarTela('timeDoDia', sobDemanda('Escondendo o time…', TELAS_DE_JOGO.timeDoDia));
+registrarTela('lances', sobDemanda('Abrindo os Lances…', TELAS_DE_JOGO.lances));
+// Painel do administrador e Casa do [time]: só baixam quando alguém abre (#admin, #casa ou #casa/<id>).
+registrarTela('admin', sobDemanda('Carregando o painel…', () => import('./telas/admin').then((m) => m.telaAdmin as Tela)));
+registrarTela('casa', sobDemanda('Abrindo a Casa…', () => import('./telas/casa/tela').then((m) => m.telaCasa as Tela)));
 
-// Casa do [time]: tela e dados só baixam quando alguém abre (#casa ou #casa/<id>).
-registrarTela('casa', (root, rota) => {
-  let limpar: (() => void) | undefined;
-  let saiu = false;
-  root.innerHTML = '<main class="tela"><p class="vazio">Abrindo a Casa…</p></main>';
-  void import('./telas/casa/tela').then((m) => {
-    if (!saiu) limpar = m.telaCasa(root, rota);
-  });
-  return () => {
-    saiu = true;
-    limpar?.();
-  };
-});
+/**
+ * Baixa as telas de jogo por trás, com o navegador ocioso, para o toque em "Jogar" abrir na hora.
+ * Quem ligou a economia de dados só baixa o que abrir.
+ */
+function preaquecer(): void {
+  const conexao = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+  if (conexao?.saveData) return;
+  const ocioso = (fn: () => void) =>
+    'requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 1500);
+  ocioso(() => Object.values(TELAS_DE_JOGO).forEach((carregar) => void carregar().catch(() => {})));
+}
 
 /** Rota do endereço: #admin, #casa e #casa/<id>. */
 function rotaDoHash(): Rota | undefined {
@@ -87,6 +116,8 @@ if (app) {
           : { tela: 'times', depois: 'timeDoDia' }
         : { tela: 'inicio' }),
   );
+  if (document.readyState === 'complete') preaquecer();
+  else window.addEventListener('load', preaquecer, { once: true });
   window.addEventListener('hashchange', () => {
     const rota = rotaDoHash();
     if (rota) irPara(rota);

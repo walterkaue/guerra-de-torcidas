@@ -182,7 +182,8 @@
   touch-action: manipulation;
 }
 .alt:active:not(:disabled) {
-  transform: translateY(2px);
+  transform: scale(0.97);
+  transition-duration: 0s;
 }
 .alt .letra {
   flex: none;
@@ -255,8 +256,9 @@
   text-transform: uppercase;
   touch-action: manipulation;
 }
-.ajuda-btn span {
-  font-size: 18px;
+.ajuda-btn .ico {
+  font-size: 20px;
+  color: var(--amarelo);
 }
 .ajuda-btn:disabled {
   opacity: 0.35;

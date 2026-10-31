@@ -4,6 +4,10 @@
 
 import { coluna, linha, type GestoCobranca } from '../jogo/penaltis';
 import { GOLEIRO, desenharBoneco, maos, misturar, novaPose, poseGoleiroEsperando, type Boneco, type Pose } from './bonecos';
+import { vibrar } from './toque';
+import { qualidade } from './qualidade';
+import { somTrave } from '../jogo/som';
+import { criarPapelPicado } from './papelPicado';
 
 /** Rastro do dedo: [largura, opacidade] do brilho e do traço. */
 const BRILHO_DO_RASTRO = [
@@ -13,6 +17,12 @@ const BRILHO_DO_RASTRO = [
 
 // Efeitos (docs/visual.md, seção 4): tudo curto; só o grito do narrador passa de 400 ms.
 const DUR_TREMIDA = 120;
+/** Bola que bateu na trave volta quicando para o campo (só desenho). */
+const DUR_REBOTE = 800;
+/** Bola espalmada sai pela linha de fundo, para o lado e para cima. */
+const DUR_ESPALMADA = 520;
+/** Brilho no ponto em que a bola bateu na trave. */
+const DUR_BATIDA_TRAVE = 260;
 const DUR_REDE = 400;
 const DUR_OLA = 400;
 const DUR_PONTOS = 1100;
@@ -29,6 +39,17 @@ const PROF_REDE = 2;
 export const facil = (t: number) => 1 - (1 - t) * (1 - t);
 export const suave = (t: number) => t * t * (3 - 2 * t);
 export const limitar01 = (t: number) => Math.max(0, Math.min(1, t));
+/**
+ * Mola amortecida (0 → 1 passando ~10% do ponto e voltando), a mesma curva de --mola no CSS.
+ * Para "pop" de número e adesivo; nunca na física, que continua no motor puro.
+ */
+export const mola = (t: number) => {
+  if (t >= 1) return 1;
+  const amort = 0.6;
+  const w = 12;
+  const wd = w * Math.sqrt(1 - amort * amort);
+  return 1 - Math.exp(-amort * w * t) * (Math.cos(wd * t) + (amort / Math.sqrt(1 - amort * amort)) * Math.sin(wd * t));
+};
 
 /** Bola com gomos girando, luz da esfera e sombra no chão em `sombraY`. */
 export function desenharBolaEm(c: CanvasRenderingContext2D, x: number, y: number, r: number, sombraY: number, giro: number, gradBola: CanvasGradient | null): void {
@@ -129,9 +150,13 @@ export function desenharPontosEm(
     c.lineWidth = 5;
     c.strokeStyle = '#111111';
     const y = p.y - 10 - sobe * 46;
-    c.strokeText(p.texto, p.x, y);
+    // Entra com pop de mola (de 40% ao tamanho cheio, passando um pouco) em 450 ms.
+    const escala = 0.4 + 0.6 * mola(Math.min(1, (agora - p.inicio) / 450));
+    c.translate(p.x, y);
+    c.scale(escala, escala);
+    c.strokeText(p.texto, 0, 0);
     c.fillStyle = '#ffd23f';
-    c.fillText(p.texto, p.x, y);
+    c.fillText(p.texto, 0, 0);
     c.restore();
   }
   return vivos;
@@ -148,11 +173,15 @@ export interface OpcoesCena {
 
 export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido }: OpcoesCena) {
   const c = canvas.getContext('2d')!;
+  const papel = criarPapelPicado([cores[0], cores[1], '#ffd23f']);
 
   // ---------- efeitos ----------
   const efeitos = {
     tremida: -Infinity,
+    /** Tremida mais fraca (trave): fração da do gol. */
+    forcaTremida: 1,
     ola: -Infinity,
+    trave: { inicio: -Infinity, x: 0, y: 0 },
     rede: { inicio: -Infinity, x: 0, y: 0 },
     pontos: [] as { inicio: number; x: number; y: number; texto: string }[],
   };
@@ -163,7 +192,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
   const g = { gx: 0, gy: 0, gw: 0, gh: 0, chao: 0, bolaX: 0, bolaY: 0, raio: 0, fugaY: 0, escM: 0 };
 
   function medir(): void {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, qualidade().dprMax);
     const ret = canvas.getBoundingClientRect();
     W = ret.width;
     H = ret.height;
@@ -206,16 +235,77 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
   /** Comemoração de gol ou defesa: ola, "+pontos" subindo e, no gol, tremida, rede e vibração. */
   function comemorar(x: number, y: number, pontos: number, gol: boolean): void {
     const agora = relogio();
-    if (!reduzido) efeitos.ola = agora;
+    if (!reduzido && qualidade().ola) efeitos.ola = agora;
     if (pontos > 0) efeitos.pontos.push({ inicio: agora, x, y, texto: `+${pontos}` });
-    if (!gol) return;
-    efeitos.rede = { inicio: agora, x, y };
-    if (!reduzido) efeitos.tremida = agora;
-    try {
-      navigator.vibrate?.(reduzido ? 40 : [60, 40, 90]);
-    } catch {
-      // sem vibração (iPhone, desktop): segue sem
+    if (!gol) {
+      // Defesa de quem joga: um toque de acerto.
+      vibrar('acerto');
+      return;
     }
+    efeitos.rede = { inicio: agora, x, y };
+    papel.soltar(x, y, agora);
+    if (!reduzido && qualidade().tremida) {
+      efeitos.tremida = agora;
+      efeitos.forcaTremida = 1;
+    }
+    vibrar(reduzido ? 'acerto' : 'gol');
+  }
+
+  /** Bola na trave: brilho no ponto da batida, tremida curta e fraca, vibração e o "plém". */
+  function baterNaTrave(x: number, y: number): void {
+    const agora = relogio();
+    efeitos.trave = { inicio: agora, x, y };
+    if (!reduzido && qualidade().tremida) {
+      efeitos.tremida = agora;
+      efeitos.forcaTremida = 0.5;
+    }
+    vibrar('trave');
+    somTrave();
+  }
+
+  /**
+   * Bola que bateu na trave em (x, y), `ms` depois: volta para dentro do campo quicando duas vezes,
+   * crescendo um pouco (vem para perto da câmera), e para no gramado entre o gol e a marca.
+   */
+  function bolaNaTrave(x: number, y: number, ms: number): void {
+    const t = limitar01(ms / DUR_REBOTE);
+    const voltaPara = x < g.gx + g.gw / 2 ? 1 : -1;
+    const e = facil(t);
+    const px = x + voltaPara * g.gw * 0.16 * e;
+    const chaoFim = g.chao + (g.bolaY - g.chao) * 0.3;
+    const chao = g.chao + (chaoFim - g.chao) * e;
+    // Altura sobre o chão: começa onde bateu e quica duas vezes, cada vez mais baixo.
+    const h0 = Math.max(0, g.chao - y);
+    const h = h0 * Math.abs(Math.cos(t * Math.PI * 1.5)) * (1 - t) * (1 - t);
+    desenharBola(px, chao - h - g.raio * 0.5, 0.5 + 0.2 * e, chao, t * 10);
+  }
+
+  /** Bola espalmada da luva em (x, y): sai para o lado de fora do gol e some atrás da linha de fundo. */
+  function bolaEspalmada(x: number, y: number, ms: number): void {
+    const t = limitar01(ms / DUR_ESPALMADA);
+    if (t >= 1) return;
+    const lado = x < g.gx + g.gw / 2 ? -1 : 1;
+    const e = facil(t);
+    const px = x + lado * g.gw * 0.32 * e;
+    const py = y - g.gh * 0.55 * Math.sin(e * Math.PI * 0.8);
+    c.save();
+    c.globalAlpha = 1 - t * t;
+    desenharBola(px, py, 0.5 - 0.15 * e, g.chao - g.raio * 0.5, t * 14);
+    c.restore();
+  }
+
+  /** Brilho curto no ponto da trave em que a bola bateu (um anel que abre e some). */
+  function desenharBatidaNaTrave(agora: number): void {
+    const t = (agora - efeitos.trave.inicio) / DUR_BATIDA_TRAVE;
+    if (t < 0 || t > 1) return;
+    c.save();
+    c.globalAlpha = 1 - t;
+    c.strokeStyle = '#ffffff';
+    c.lineWidth = 3;
+    c.beginPath();
+    c.arc(efeitos.trave.x, efeitos.trave.y, g.raio * (0.4 + 1.4 * t), 0, Math.PI * 2);
+    c.stroke();
+    c.restore();
   }
 
   /** Converte o arraste em gesto: direção = canto, comprimento = força, curva final = efeito. */
@@ -468,7 +558,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
   function desenharArquibancada(agora: number): void {
     const fim = fimArquibancada();
     const t = (agora - efeitos.ola) / DUR_OLA;
-    const q = Math.floor(agora / 170) % QUADROS_TORCIDA;
+    const q = qualidade().torcidaViva ? Math.floor(agora / 170) % QUADROS_TORCIDA : 0;
     if (t < 0 || t > 1.4) {
       if (torcida[q]) c.drawImage(torcida[q], 0, 0, W, fim);
       return;
@@ -888,6 +978,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
   }
 
   function desenharPontos(agora: number): void {
+    papel.desenhar(c, agora, Math.max(8, g.raio * 0.5));
     efeitos.pontos = desenharPontosEm(c, efeitos.pontos, agora, g.raio * 1.5);
   }
 
@@ -900,7 +991,8 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
   function desenharFundo(agora: number): void {
     if (agora - efeitos.tremida < DUR_TREMIDA) {
       const f = 1 - (agora - efeitos.tremida) / DUR_TREMIDA;
-      c.translate((Math.random() * 2 - 1) * 5 * f, (Math.random() * 2 - 1) * 5 * f);
+      const amp = 5 * f * efeitos.forcaTremida;
+      c.translate((Math.random() * 2 - 1) * amp, (Math.random() * 2 - 1) * amp);
     }
     if (campo) c.drawImage(campo, 0, 0, W, H);
     desenharArquibancada(agora);
@@ -921,6 +1013,10 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
     lerArraste,
     zonaTocada,
     comemorar,
+    baterNaTrave,
+    bolaNaTrave,
+    bolaEspalmada,
+    desenharBatidaNaTrave,
     desenharFundo,
     desenharTraves,
     goleiroNoQuadro,

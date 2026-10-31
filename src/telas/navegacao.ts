@@ -2,14 +2,15 @@
 // sem tela vazia; docs/visual.md, "No MVP").
 
 import { irPara } from '../app';
+import { icone, type NomeIcone } from './icones';
 
 type Aba = 'jogar' | 'palpites' | 'ranking';
 
-const ITENS: { id: string; rotulo: string; icone: string; emBreve?: boolean }[] = [
-  { id: 'jogar', rotulo: 'Jogar', icone: '⚽' },
-  { id: 'palpites', rotulo: 'Palpites', icone: '✎' },
-  { id: 'ranking', rotulo: 'Ranking', icone: '▲' },
-  { id: 'carreira', rotulo: 'Carreira', icone: '★', emBreve: true },
+const ITENS: { id: string; rotulo: string; icone: NomeIcone; emBreve?: boolean }[] = [
+  { id: 'jogar', rotulo: 'Jogar', icone: 'bola' },
+  { id: 'palpites', rotulo: 'Palpites', icone: 'lapis' },
+  { id: 'ranking', rotulo: 'Ranking', icone: 'podio' },
+  { id: 'carreira', rotulo: 'Carreira', icone: 'estrela', emBreve: true },
 ];
 
 export function barraNavegacao(ativa: Aba): string {
@@ -17,7 +18,7 @@ export function barraNavegacao(ativa: Aba): string {
     ${ITENS.map(
       (i) => `<button type="button" class="rotulo${i.id === ativa ? ' ativa' : ''}" data-aba="${i.id}"
         ${i.emBreve ? 'aria-disabled="true"' : ''} ${i.id === ativa ? 'aria-current="page"' : ''}>
-        <span class="icone" aria-hidden="true">${i.icone}</span>${i.rotulo}
+        <span class="icone">${icone(i.icone)}</span>${i.rotulo}
         ${i.emBreve ? '<span class="em-breve">em breve</span>' : ''}
       </button>`,
     ).join('')}

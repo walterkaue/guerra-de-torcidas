@@ -1,7 +1,11 @@
 # Revisão gráfica — direção "Transmissão de domingo"
 
-> Versão 1.4 · 20/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Versão 1.8 · 26/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
 > Base: o jogo publicado em 18/10/2026 (commit b492b99), testado em 390×844.
+> Mudanças da 1.8: impacto na trave e na defesa (seção 3, Partida), papel picado (4.4) e troca de tela inclinada (4.5).
+> Mudanças da 1.7: qualidade gráfica automática em três níveis (seção 4.3).
+> Mudanças da 1.6: replay de TV do gol (seção 4.2).
+> Mudanças da 1.5 (revisão de 26/10): adesivo do narrador em papel claro com faixa na cor do time (a caixa cheia vermelha parecia aviso de erro); duelo da Home com cores que se distinguem; ícones em SVG no lugar de emoji; tela de carregando com esqueleto; molas e resposta ao toque (seção 4).
 > Mudanças da 1.4: a Home deixa de lembrar anúncio de aposta (seção 3, Início); amarelo de placar mais fosco `#e9c75a`; selo vermelho "AO VIVO" removido.
 > Mudanças da 1.3: cards de time com "faixa de placar" (seção 3, Escolha do time), no lugar das listras diagonais translúcidas; "sua posição" e recorde na Home e nos resultados.
 
@@ -43,7 +47,7 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 ### Início
 - **Cabeçalho jornalístico:** título e, logo abaixo, uma linha com a etiqueta reta cinza "Pré-temporada" e a **contagem regressiva** ("Semana fecha em 5d 03h"). Nada fica solto no canto superior direito (parece botão de fechar anúncio). Sem selo vermelho, sem piscar.
 - Bloco do time nas cores dele, com a cidade embaixo (segunda camisa).
-- **Cabo de guerra contra o rival:** barra dividida nas duas cores, com a frase do narrador do momento (`rival_colado` etc.).
+- **Cabo de guerra contra o rival:** barra dividida nas duas cores, com a frase do narrador do momento (`rival_colado` etc.). Se a cor do rival for parecida com a nossa (Flamengo × Fluminense), o rival entra com a 2ª cor ou um neutro (mesma régua de contraste dos uniformes).
 - Mini tabela da Série A com a sua torcida destacada e a seta de subida ou queda.
 - **Sua posição na semana** (20/10): "Você é o 3º de 14 torcedores na semana", com seta se subiu ou caiu desde a última visita.
 - Botão principal + **"hoje contam mais 2 partidas"** (o teto diário à vista, para ninguém achar que é injusto).
@@ -56,9 +60,10 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 - **Perspectiva:** gol maior e mais baixo, linhas da área convergindo, marca do pênalti com a bola grande perto do dedo.
 - Placar estilo TV inclinado, com bolinhas verdes (gol), pretas (erro) e amarela (ângulo ou cavadinha).
 - Arquibancada nas cores do time atrás do gol, que faz "ola" a cada gol.
-- **Grito do narrador como adesivo:** caixa na cor do time, borda branca, entra com um "pop", e a frase complementar logo abaixo.
+- **Grito do narrador como adesivo:** caixa na cor do time, borda branca, entra com um "pop", e a frase complementar logo abaixo. (Só na partida, que é um momento curto de festa. Fora dela, na Home, no resultado e no Time do Dia, o adesivo é papel claro com faixa na cor do time: a caixa cheia em time vermelho parecia aviso de erro. Decidido em 26/10.)
 - **Rastro da bola** amarelo seguindo o arraste do dedo; "+15" subindo do ponto do gol.
 - Gol: tremida curta da tela (120 ms), rede balançando e vibração no Android (`navigator.vibrate`).
+- **Trave e defesa (26/10):** a bola não para mais no ar. Na trave: anel de brilho no ponto da batida, tremida mais fraca que a do gol, vibração de dois toques e um "plém" metálico; a bola volta quicando para o campo. Defesa em canto alto sai **espalmada** para fora e por cima; defesa baixa fica encaixada na luva. Defesa de quem joga vibra como acerto. Nos Lances, a bola também volta da trave e da barreira. Só desenho e som: o motor e os pontos não mudam.
 - Cavadinha: câmera lenta de 0,5 s antes de entrar.
 - **Bonecos (Silhueta premium, `docs/bonecos.md`):** esqueleto por rotações com poses-chave interpoladas. Batedor: ajeita a bola agachado e recua, mãos na cintura, chute em 4 tempos (pé de apoio, puxada, contato, finalização), cavadinha de toque curto, comemora o gol ou põe as mãos na cabeça. Máquina: corrida de 3 passos e crava o pé de apoio. Goleiro: balança na linha, pulo baixo ou alto para cada lado, de pé no meio, cai no chão depois do pulo, com a bola encaixada no peito quando defende. Bola com gomos girando e rastro de borrão.
 - **Dica da defesa no corpo:** a partir de 55% da corrida aparece no chão, em amarelo, a pegada de onde o pé de apoio vai cravar, com a seta do canto; quando o batedor chega, a chuteira do pé de apoio fica amarela e continua assim no chute.
@@ -90,11 +95,58 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 ### Bonecos
 - Estilo "Silhueta premium", aprovado em 19/10: ver `docs/bonecos.md`.
 
-## 4. Movimento (regras)
+## 4. Movimento e toque (regras)
 
 - Tudo curto: 150 a 400 ms; só o grito do narrador e o confete passam disso.
-- Respeitar `prefers-reduced-motion`: sem tremida, sem confete, sem câmera lenta.
+- Respeitar `prefers-reduced-motion`: sem tremida, sem confete, sem câmera lenta, sem mola nos botões, sem vibração leve.
 - Nada pisca mais de 3 vezes por segundo.
+- **Durações e molas** (variáveis em `src/style.css`): `--rapido` 120 ms, `--medio` 260 ms, `--lento` 420 ms; `--mola` passa ~10% do ponto e volta (pop de adesivo, botão soltando), `--mola-firme` quase não passa (barras, cards). Feitas com `linear()` do CSS, sem biblioteca; navegador antigo cai numa `cubic-bezier` parecida. No canvas, a mesma curva é a função `mola()` de `telas/cena.ts` (só desenho, nunca a física).
+- **Todo toque responde na hora:** o botão afunda sem transição e, ao soltar, volta com a mola; cards e botões pequenos encolhem um pouco (0,92 a 0,97).
+- **Vibração (só Android; o iPhone não tem):** `telas/toque.ts`. Leve (8 ms) em botão principal, card de jogo e barra de navegação; acerto (22 ms) na Prova e no Time do Dia; erro (30-50-30); gol (60-40-90). Nada passa de 200 ms. A preferência `semVibracao` desliga tudo (falta a chave na tela).
+- **Fica de fora:** bibliotecas de animação (Framer Motion, GSAP, Lottie, Rive) e WebGL. O peso não cabe no orçamento e o celular simples esquenta.
+
+## 4.1 Ícones e carregando
+
+- **Ícones em SVG de traço** (`telas/icones.ts`), na cor do texto e do tamanho da letra. Emoji muda de desenho em cada marca e os mais novos (🟢, 🧤, 🧱) viram quadradinho em Android antigo. Emoji só no texto que vai para o WhatsApp, que desenha os próprios.
+- As pistas do Time do Dia usam bolinhas desenhadas em CSS, com as mesmas cores das células.
+- **Carregando:** as telas de jogo, a Casa e o painel baixam só quando abrem. Enquanto isso aparece o esqueleto da tela (blocos com brilho passando e a bola girando), nunca um texto solto em tela vazia. Sem rede: "Tentar de novo" e "Voltar pro início". Depois que a Home abre, as telas de jogo baixam por trás (menos com economia de dados ligada).
+
+## 4.2 Replay de TV do gol
+
+- **Quando:** nos Lances, todo gol; nos Pênaltis, só golaço de quem cobra (no ângulo, cavadinha ou raspando a trave), para não atrasar as 5 cobranças. Nunca com movimento reduzido.
+- **Como:** ~1 s depois do gol, uma faixa inclinada nas cores do time varre a tela (vinheta) e esconde o corte de câmera. O replay mostra o mesmo chute de **trás do gol**, do alto, com a rede na frente, em câmera lenta (metade da velocidade) e fechando devagar (zoom de 1,0 a 1,1). Tarja amarela "REPLAY" no canto com "toque pra pular". No fim, a vinheta passa de novo e o jogo segue.
+- **Por quê é barato:** o lance já foi resolvido pelo motor puro (gesto + semente). O replay só redesenha o caminho da bola (`caminhoDoChute`, em `jogo/lances.ts`) na câmera 3D dos Lances; nos Pênaltis, num canvas 3D por cima da cena de TV, criado no primeiro golaço. Zero rede, ~5 KB gzip a mais no pacote dos jogos, e a arquibancada do outro lado é pré-desenhada uma vez por replay (~16 ms no computador; fica escondida pela vinheta).
+- **Campo inteiro (26/10, depois do teste):** o replay mostra o outro lado do campo: laterais, linha do meio, círculo central, a grande área e o gol de lá (campo de 105 m), com a torcida atrás.
+- **Bonecos de costas viram de frente:** cada boneco é recriado do outro lado (`deFrente` trocado) e desenhado espelhado, então o batedor aparece de frente comemorando e o goleiro de costas, voando para o lado certo.
+- Pode virar card ou vídeo para compartilhar depois (fora deste passo).
+
+## 4.3 Qualidade gráfica (Alta, Média, Leve)
+
+Amostra aprovada em 26/10 (página "Qualidade Alta, Média e Leve"). Código em `telas/qualidade.ts`.
+
+| | Alta | Média | Leve |
+|---|---|---|---|
+| Nitidez do canvas | 2× | 1,5× | 1× |
+| Torcida | balança e faz ola no gol | balança, sem ola | parada |
+| Bonecos | degradê na pele e no calção | degradê | cor lisa |
+| Tremida no gol | sim | sim | não |
+| Replay de TV | sim, com a câmera fechando | sim, câmera parada | não |
+
+- **Automático (padrão):** começa em Média. Economia de dados ligada, 4 núcleos ou menos ou 2 GB ou menos: Leve. Durante a partida, a cada 90 quadros: intervalo médio acima de 22 ms (menos de ~45 por segundo) desce um nível na hora e fica gravado no aparelho; intervalo abaixo de 17,5 ms com pouco trabalho por quadro, num aparelho de 6+ núcleos e 4+ GB (ou que não diz), grava Alta para a **próxima** partida. No meio da partida só desce, nunca sobe. Quem caiu para Leve pela medição fica em Leve (sem gangorra entre visitas).
+- **Na mão:** botão "Gráficos" no rodapé da Home, toque troca automático → Alta → Média → Leve.
+- Em dev, `?qualidade=alta|media|leve` força o nível; `/dev/qualidade.html` desenha a amostra dos três.
+- O que vier de efeito novo (partículas, impacto) declara em que nível aparece.
+
+## 4.4 Papel picado
+
+- Explode nas cores do time (cor muito escura vira branco, para aparecer) no **gol** (Pênaltis e Lances) e no **acerto** da Prova de Boleiro e do Time do Dia (no Time do Dia, só na primeira vez que o fim aparece).
+- Retângulos que "viram" (a largura oscila) em vez de girar: um preenchimento por peça, pool fixo, nenhum objeto novo por quadro. Dura 1,4 s e some no fim.
+- **Alta 40 peças, Média 24, Leve nenhuma.** Nada com movimento reduzido. O confete da tela de vitória continua como era.
+
+## 4.5 Troca de tela
+
+- A tela nova entra por uma **borda inclinada a −8°** (a das tarjas), da esquerda para a direita, em 300 ms; a velha fica parada embaixo. Usa a transição nativa do navegador (View Transitions, em `app.ts`): Chrome e Android de hoje têm; quem não tem troca direto, sem custo.
+- Sem transição na qualidade Leve, com movimento reduzido e na primeira tela.
 
 ## 5. Ajustes encontrados no código
 
@@ -110,3 +162,6 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 5. Cards de time "faixa de placar" (20/10) — **Sonnet + Média**.
 
 7. Home sem cara de anúncio de aposta (20/10, a partir de feedback de teste): selo "AO VIVO" e contador do canto removidos, aviso de resenha no rodapé, amarelo fosco — feito.
+8. Revisão de 26/10, lote 1: adesivo claro, duelo com contraste, ícones SVG, "em breve" da Casa sem transparência, esqueleto de carregando, telas de jogo sob demanda (JS da Home de 80 para ~28 KB gzip), molas e vibração — feito.
+9. Replay de TV do gol (26/10) — feito (seção 4.2).
+10. Próximos (revisão de 26/10): qualidade automática alta/média/leve (mede os primeiros quadros, núcleos, memória e economia de dados); luz de jogo pré-desenhada pelo horário; prévias dos jogos na Home e no hub dos Lances; enquadramento da falta 3D (batedor menor, gol maior); chave "Vibração".

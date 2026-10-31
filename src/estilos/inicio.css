@@ -282,13 +282,13 @@
 .cabo-barra span:first-child {
   flex: var(--fracao, 0.5) 0 0;
   background: var(--cor-eu);
-  transition: flex-grow 400ms ease-out;
+  transition: flex-grow 700ms var(--mola-firme);
 }
 
 .cabo-barra span:last-child {
   flex: calc(1 - var(--fracao, 0.5)) 0 0;
   background: var(--cor-rival);
-  transition: flex-grow 400ms ease-out;
+  transition: flex-grow 700ms var(--mola-firme);
 }
 
 .cabo-valores strong {
@@ -303,20 +303,19 @@
   color: var(--texto-suave);
 }
 
-/* Grito do narrador como adesivo levemente torto. */
+/* Grito do narrador como adesivo levemente torto: papel claro com faixa na cor do time.
+   Caixa cheia na cor do time parecia aviso de erro nos times vermelhos (revisão de 26/10). */
 .adesivo {
   align-self: flex-start;
   margin-top: 2px;
-  padding: 8px 12px;
-  border: 3px solid #fff;
+  padding: 8px 12px 8px 14px;
+  border-left: 8px solid var(--cor-eu, var(--c1, var(--amarelo)));
   border-radius: 6px;
-  background: var(--cor-eu, var(--c1, var(--amarelo)));
-  /* Texto escuro em time de cor clara (São Paulo, Santos, Bragantino…), branco no resto. */
-  color: var(--txt-eu, var(--txt, #fff));
+  background: var(--cal);
+  color: var(--tinta);
   font-weight: 800;
   line-height: 1.25;
   transform: rotate(-1.5deg);
-  /* Anel escuro: a borda branca continua visível quando a cor do time também é branca. */
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35), 0 4px 0 2px rgba(0, 0, 0, 0.35);
 }
 
@@ -338,7 +337,8 @@
 }
 
 .link-ver {
-  min-height: 40px;
+  min-height: 44px;
+  min-width: 44px;
   border: 0;
   background: none;
   color: var(--amarelo);
@@ -461,8 +461,9 @@
 }
 
 .card-jogo:active {
-  transform: translateY(2px);
+  transform: scale(0.97);
   border-color: var(--amarelo);
+  transition-duration: 0s;
 }
 
 .nome-jogo {
@@ -584,7 +585,7 @@
 }
 
 .barra-nav .icone {
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
 }
 
@@ -679,13 +680,13 @@
   border: 0;
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.3);
+  color: var(--texto-suave);
   font-size: 22px;
   line-height: 1;
-  filter: grayscale(1) opacity(0.75);
   touch-action: manipulation;
 }
 .sininho.ligado {
-  filter: none;
+  color: var(--amarelo);
   box-shadow: inset 0 0 0 2px var(--amarelo);
 }
 
@@ -702,4 +703,9 @@
 .convite-push .rotulo {
   color: var(--amarelo);
   font-size: 18px;
+}
+
+/* "Gráficos" fica colado no link de feedback, os dois são rodapé. */
+.inicio > .link-graficos {
+  margin-top: -14px;
 }

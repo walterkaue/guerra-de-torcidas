@@ -130,7 +130,6 @@
 
 .resultado .adesivo {
   --cor-eu: var(--c1);
-  color: var(--txt);
   text-shadow: none;
   font-size: 17px;
 }
@@ -229,9 +228,10 @@
   margin-bottom: 10px;
 }
 
-.resultado .card {
+.res-card .card {
   width: 100%;
-  aspect-ratio: 1080 / 1350;
+  aspect-ratio: auto 1080 / 1350;
+  height: auto;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }

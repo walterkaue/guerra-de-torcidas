@@ -31,6 +31,9 @@ import {
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { convidarParaAvisos } from './convitePush';
+import { bolinha, icone } from './icones';
+import { vibrar } from './toque';
+import { papelPicadoNaTela } from './papelPicado';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 /** Quantos clubes a busca mostra de uma vez (a lista inteira tem 60). */
@@ -128,11 +131,11 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
 
       <section class="dia-como" data-como ${mostrarComo ? '' : 'hidden'}>
         <ul class="cj-passos">
-          <li><span class="cj-icone" aria-hidden="true">🔎</span><p><strong>Um clube secreto por dia</strong>, o mesmo pra todo mundo. Clubes das Séries A, B e C de 2026. Troca às 00h.</p></li>
-          <li><span class="cj-icone" aria-hidden="true">⚽</span><p><strong>6 chutes.</strong> Escolha um clube na busca e veja as pistas.</p></li>
-          <li><span class="cj-icone" aria-hidden="true">🟢</span><p><strong>🟢 igual, 🟡 perto, ⚪ longe.</strong> Estado (🟡 = mesma região), fundação (🟡 = até 10 anos), títulos do Brasileirão (🟡 = até 2), série, as 2 cores (🟡 = uma igual) e capital ou interior.</p></li>
+          <li><span class="cj-icone">${icone('lupa')}</span><p><strong>Um clube secreto por dia</strong>, o mesmo pra todo mundo. Clubes das Séries A, B e C de 2026. Troca às 00h.</p></li>
+          <li><span class="cj-icone">${icone('bola')}</span><p><strong>6 chutes.</strong> Escolha um clube na busca e veja as pistas.</p></li>
+          <li><span class="cj-icone">${bolinha('certo')}</span><p><strong>${bolinha('certo')} igual, ${bolinha('perto')} perto, ${bolinha('longe')} longe.</strong> Estado (${bolinha('perto')} = mesma região), fundação (${bolinha('perto')} = até 10 anos), títulos do Brasileirão (${bolinha('perto')} = até 2), série, as 2 cores (${bolinha('perto')} = uma igual) e capital ou interior.</p></li>
           <li><span class="cj-icone" aria-hidden="true">↑</span><p><strong>↑ ou ↓</strong> no ano e nos títulos: o secreto tem número maior (fundado depois, mais títulos) ou menor.</p></li>
-          <li><span class="cj-icone" aria-hidden="true">🏆</span><p><strong>Pontos:</strong> 100 de primeira, depois 85, 70, 55, 40 e 25.</p></li>
+          <li><span class="cj-icone">${icone('trofeu')}</span><p><strong>Pontos:</strong> 100 de primeira, depois 85, 70, 55, 40 e 25.</p></li>
         </ul>
         <label class="cj-check"><input type="checkbox" data-pular> Não exibir de novo</label>
       </section>
@@ -191,6 +194,8 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       `<li class="dia-linha vazia"><p class="dia-chute">${e.tentativas.length + i + 1}º chute</p>
         <div class="dia-celulas">${NOMES_PISTAS.map(() => '<span class="dia-cel"></span>').join('')}</div></li>`);
     elGrade.innerHTML = [...feitas, ...vazias].join('');
+    // Depois do primeiro chute as regras saem da frente (o "?" abre de novo); senão o resultado some lá embaixo.
+    if (e.tentativas.length > 0) $('[data-como]').hidden = true;
   }
 
   // ---------- busca ----------
@@ -294,7 +299,10 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     const e = estado!;
     elChutar.hidden = true;
     const n = e.tentativas.length;
+    // Primeira vez que o fim aparece nesta visita (não ao reabrir a tela já jogada).
+    const festejar = !frasesFinais.length && e.acertou;
     if (!frasesFinais.length) {
+      vibrar(e.acertou ? 'acerto' : 'erro');
       const f1 = e.acertou
         ? n === 1
           ? narrador.falar('dia_acertou_primeira')
@@ -329,7 +337,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       </div>
       <div class="dia-placar">
         <strong>${placar}</strong>
-        <span>${e.acertou ? `${e.pontos} pontos` : 'sem pontos hoje'}${e.sequencia > 1 ? ` · 🔥 ${e.sequencia} dias` : ''}</span>
+        <span>${e.acertou ? `${e.pontos} pontos` : 'sem pontos hoje'}${e.sequencia > 1 ? ` · ${icone('fogo')} ${e.sequencia} dias` : ''}</span>
       </div>
       ${frasesFinais[1] ? `<p class="adesivo segundo">${esc(frasesFinais[1])}</p>` : ''}
       <p class="situacao">${esc(situacao)}</p>
@@ -358,6 +366,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     elFim.hidden = false;
     // Bom momento para oferecer o aviso de domingo: acertou o time do dia.
     if (e.acertou) convidarParaAvisos(elFim.querySelector<HTMLElement>('[data-convite-push]'));
+    if (festejar) papelPicadoNaTela(elFim.querySelector('.dia-placar') ?? elFim, [time.cores[0], time.cores[1], '#ffd23f']);
 
     const elRelogio = elFim.querySelector<HTMLElement>('[data-relogio]')!;
     clearInterval(relogio);
