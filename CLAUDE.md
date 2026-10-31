@@ -1,7 +1,15 @@
 # Guerra de Torcidas — instruções para o Claude Code
 
-Leia `docs/jogo.md` antes de qualquer tarefa. Ele é a fonte da verdade sobre regras, tom e escopo.
+Leia `docs/jogo.md` antes de qualquer tarefa. Ele é a fonte da verdade sobre regras, tom e escopo. Exceção: quem recebe uma parte já planejada, com brief, lê só as seções que o brief cita.
 Conforme a tarefa, leia também: `docs/rankings.md` (rankings e justiça), `docs/narrador.md` (frases e regras do narrador), `docs/visual.md` (direção visual), `docs/casa.md` (Casa do [time], a página de história de cada clube). Se um deles discordar do `jogo.md`, vale o `jogo.md`.
+
+## Divisão de trabalho (primordial)
+
+- **Primeira ação de toda tarefa nova:** avaliar a complexidade do todo. Tarefa complexa usa a skill `planejar-tarefa` antes de qualquer outra coisa. O que cabe em cerca de 10 chamadas de ferramenta é feito direto, sem plano.
+- Em tarefa complexa, o Kauê abre a conversa no Opus mais recente em intensidade alta. Essa conversa planeja, distribui e confere; a execução vai para modelos e intensidades mais econômicos, sem perder qualidade.
+- **Plano aprovado autoriza criar as sub-conversas**, cada uma com o modelo e a intensidade da sua parte. Não pergunte de novo.
+- **Rotina repetitiva vai primeiro ao Gemini Flash** (skill `rotina-gemini`), sempre com validador em código ou revisão.
+- Tabela, critérios e modelo de brief: `docs/orquestracao.md`.
 
 ## Limites do projeto (importante)
 
