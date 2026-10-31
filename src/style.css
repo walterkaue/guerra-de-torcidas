@@ -276,6 +276,12 @@ body {
 }
 
 /* ---------- escolha de time ---------- */
+.campo-dica {
+  margin: 0 0 12px;
+  color: var(--amarelo);
+  font-size: 0.95rem;
+}
+
 .grade-times {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

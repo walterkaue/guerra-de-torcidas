@@ -191,6 +191,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
   const pararArquibancada = ligarArquibancada(root.querySelector('canvas')!, dono.cores, luzDoHorario(horaDaLuz()));
 
+  /** Desafio do link já conferido no servidor: o botão grande da home aceita esse X1 em vez de abrir outro jogo. */
+  let desafioAberto: string | undefined;
   const jogar = (desafio?: string) =>
     irPara(time ? { tela: 'partida', desafio } : { tela: 'times', depois: 'partida', desafio });
   const jogarProva = (desafio?: string) =>
@@ -206,7 +208,9 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   root.querySelectorAll<HTMLElement>('[data-jogo]').forEach((b) =>
     b.addEventListener('click', () => abrir[b.dataset.jogo as JogoDaHome]()),
   );
-  root.querySelector('[data-acao="jogar-agora"]')?.addEventListener('click', () => abrir[proximoJogo(situacao)]());
+  root.querySelector('[data-acao="jogar-agora"]')?.addEventListener('click', () =>
+    desafioAberto ? jogar(desafioAberto) : abrir[proximoJogo(situacao)](),
+  );
   root.querySelector('[data-acao="perfil"]')?.addEventListener('click', () => irPara({ tela: 'perfil' }));
   root.querySelectorAll('[data-acao="trocar"]').forEach((b) =>
     b.addEventListener('click', () => irPara({ tela: 'times', depois: 'inicio' })),
@@ -256,7 +260,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   let respostas = time ? 3 : 0;
   const elMotivo = root.querySelector<HTMLElement>('[data-motivo]')!;
   const atualizarBotao = () => {
-    if (respostas === 0) elMotivo.textContent = motivoDoJogo(proximoJogo(situacao), situacao, TETO_DIARIO);
+    if (desafioAberto) elMotivo.textContent = 'Aceitar o X1 que te mandaram';
+    else if (respostas === 0) elMotivo.textContent = motivoDoJogo(proximoJogo(situacao), situacao, TETO_DIARIO);
   };
   const respondeu = () => {
     respostas = Math.max(0, respostas - 1);
@@ -355,21 +360,34 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   // ---------- convite de desafio (link ?d=) ----------
   if (codigoDesafio) {
     const caixa = root.querySelector<HTMLElement>('.convite-desafio')!;
+    // A caixa já nasce na tela, para o convite não empurrar o resto quando a resposta chega
+    // e para ninguém tocar em "Jogar agora" sem saber que foi chamado.
+    caixa.innerHTML = `
+      <p class="rotulo">Te chamaram no X1</p>
+      <p>Buscando o desafio…</p>`;
+    caixa.hidden = false;
     verDesafio(codigoDesafio)
       .then((d) => {
-        if (!d || saiu) return;
+        if (saiu) return;
+        if (!d) {
+          caixa.hidden = true; // código que não existe: segue a home normal
+          return;
+        }
         const t = timePorId(d.time_id);
         const quem = d.apelido ? esc(d.apelido) : 'Alguém';
         caixa.innerHTML = `
           <p class="rotulo">Te chamaram no X1</p>
           <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''} te chamou no X1:
           <strong>${d.pontos} pontos</strong>, ${d.gols_jogador} x ${d.gols_maquina} contra a máquina.</p>
+          <p class="convite-como">Você defende as cobranças dele e bate as suas. Quem fizer mais pontos ganha.</p>
           <button class="botao" type="button" data-acao="desafio">Aceitar o X1</button>`;
-        caixa.hidden = false;
+        desafioAberto = d.id;
+        atualizarBotao();
         caixa.querySelector('[data-acao="desafio"]')!.addEventListener('click', () => jogar(d.id));
       })
       .catch(() => {
         // sem internet: o desafio fica para quando voltar
+        if (!saiu) caixa.hidden = true;
       });
   }
 

@@ -37,7 +37,7 @@ Sem dependência das frentes em andamento.
 
 | Frente | Executor | Resultado esperado |
 |---|---|---|
-| **Funil do desafio por link** (recomendada) | Sonnet, média | Dos 49 desafios enviados, só 3 tiveram alguém jogando. Achar onde a pessoa desiste, com dados e leitura do fluxo, e corrigir o que for pequeno |
+| ~~Funil do desafio por link~~ | Feito | Diagnóstico em `docs/propostas/funil-do-desafio.md`: os 4 aceites são entre os 2 testadores, nenhum de fora; "enviado" é só "gerou link". Correções pequenas no convite; falta contar compartilhamento e abertura do link |
 | **Termos × jogo** | Sonnet, média | Lista do que o texto promete e o jogo não faz, para o Kauê e o advogado. Não altera os Termos |
 | **Calibragem da Prova** | Sonnet, alta | Duas ou três opções simuladas com o balanço de 31/10. Não altera a pontuação |
 
@@ -77,5 +77,5 @@ Divergências já vistas nos Termos (`src/dados/termos.md`):
 - [ ] Plano do Supabase decidido
 - [ ] Termos e jogo batendo, com revisão do advogado
 - [ ] Prova calibrada
-- [ ] Funil do desafio entendido
+- [x] Funil do desafio entendido (mas falta medir envio e abertura do link; ver a proposta)
 - [ ] Balanço rodado e pré-temporada zerada
