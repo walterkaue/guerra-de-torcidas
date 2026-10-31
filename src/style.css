@@ -656,7 +656,7 @@ body {
 
 /* ---------- toque e mola (docs/visual.md, seção 4) ---------- */
 /* Botões pequenos e cards: encolhem um pouco ao tocar e voltam com a mola. */
-.voltar, .mudo, .barra-nav button, .cartao-time, .card-jogo, .alt, .ajuda-btn, .link-casa {
+.voltar, .mudo, .barra-nav button, .cartao-time, .card-jogo, .alt, .ajuda-btn, .link-casa, .casa-home {
   transition: transform var(--lento) var(--mola);
 }
 .voltar:active, .mudo:active, .barra-nav button:active:not([aria-disabled='true']), .ajuda-btn:active:not(:disabled), .link-casa:active {
@@ -674,7 +674,7 @@ body {
 .adesivo.segundo:not([hidden]) { animation-delay: 160ms; }
 
 @media (prefers-reduced-motion: reduce) {
-  .botao, .voltar, .mudo, .barra-nav button, .cartao-time, .card-jogo, .alt, .ajuda-btn, .link-casa { transition: none; }
+  .botao, .voltar, .mudo, .barra-nav button, .cartao-time, .card-jogo, .alt, .ajuda-btn, .link-casa, .casa-home { transition: none; }
   .adesivo:not([hidden]) { animation: none; }
 }
 
