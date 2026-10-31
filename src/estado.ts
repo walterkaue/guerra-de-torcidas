@@ -69,3 +69,21 @@ export function guardarFaixa(faixa: FaixaEtaria): void {
   faixaDaAba = faixa;
   prefs.set({ faixa });
 }
+
+/** Tudo o que o jogo guarda: as chaves gdt, mais a sessão do Supabase (sb-). */
+export function chaveDoJogo(chave: string): boolean {
+  return chave.startsWith('gdt') || chave.startsWith('sb-');
+}
+
+/** "Apagar meus dados": o aparelho volta a ser de quem nunca jogou. */
+export function limparAparelho(): void {
+  faixaDaAba = undefined;
+  for (const armazem of ['localStorage', 'sessionStorage'] as const) {
+    try {
+      const guardado = window[armazem];
+      for (const chave of Object.keys(guardado).filter(chaveDoJogo)) guardado.removeItem(chave);
+    } catch {
+      // armazenamento bloqueado: não há o que limpar
+    }
+  }
+}

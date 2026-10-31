@@ -162,6 +162,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       <button class="link-feedback" type="button" data-acao="feedback">${icone('balao')} Feedback ou bug? Conta pra gente</button>
       <button class="link-feedback link-graficos" type="button" data-acao="graficos" aria-live="polite">${rotuloGraficos()}</button>
       ${htmlBotaoApoio()}
+      <button class="link-feedback" type="button" data-acao="termos">Termos e privacidade</button>
 
       <p class="rodape-resenha" role="note">${esc(AVISO_RESENHA)} Jogo 100% grátis.</p>
 
@@ -193,6 +194,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     irPara({ tela: 'casa', id: time && time.id !== ID_OUTRO ? time.id : undefined }),
   );
   root.querySelector('[data-acao="feedback"]')?.addEventListener('click', () => irPara({ tela: 'feedback', de: 'inicio' }));
+  root.querySelector('[data-acao="termos"]')?.addEventListener('click', () => irPara({ tela: 'termos' }));
   // Gráficos: toque troca automático → alta → média → leve → automático (telas/qualidade.ts).
   const elGraficos = root.querySelector<HTMLButtonElement>('[data-acao="graficos"]')!;
   elGraficos.addEventListener('click', () => {

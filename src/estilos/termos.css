@@ -1,0 +1,56 @@
+/* Termos e privacidade (docs/jogo.md, seção 13): leitura confortável em 390×844. */
+.termos-versao {
+  color: var(--texto-suave);
+  font-size: 13px;
+}
+
+.termos-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 16px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.termos-texto h3 {
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.termos-texto h4 {
+  margin-top: 10px;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.termos-texto h5 {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.termos-texto ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 20px;
+}
+
+.termos-texto a {
+  color: var(--amarelo);
+}
+
+.termos-apagar {
+  margin-top: 12px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.termos-erro {
+  color: var(--amarelo);
+  font-size: 15px;
+  font-weight: 700;
+}

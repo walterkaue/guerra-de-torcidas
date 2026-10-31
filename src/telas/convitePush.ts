@@ -88,6 +88,15 @@ export async function desligarAvisos(): Promise<void> {
   }
 }
 
+/** Tira a inscrição deste navegador; o servidor já apagou a dele com o usuário. */
+export async function cancelarInscricaoDoAparelho(): Promise<void> {
+  try {
+    await (await inscricaoAtual())?.unsubscribe();
+  } catch {
+    // sem service worker ou sem suporte: não há inscrição para cancelar
+  }
+}
+
 /** Depois de um bom momento: põe o cartão em `el` (se as regras deixarem). */
 export function convidarParaAvisos(el: HTMLElement | null): void {
   if (!el || !podeVerPush(faixaDoAparelho()) || !pushDisponivel() || !podeConvidar()) return;

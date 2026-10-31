@@ -33,7 +33,7 @@ function arquivos(pasta: string): string[] {
   return readdirSync(pasta).flatMap((nome) => {
     const caminho = join(pasta, nome);
     if (statSync(caminho).isDirectory()) return arquivos(caminho);
-    return /\.(ts|css|html)$/.test(nome) && !nome.endsWith('.test.ts') ? [caminho] : [];
+    return /\.(ts|css|html|md)$/.test(nome) && !nome.endsWith('.test.ts') ? [caminho] : [];
   });
 }
 
