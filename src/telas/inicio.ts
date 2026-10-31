@@ -3,8 +3,9 @@
 
 import { desafioDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, TIMES, corDeTexto, corDoRivalNoDuelo, timePorId, type Time } from '../dados/times';
-import { prefs } from '../estado';
+import { faixaDoAparelho, prefs } from '../estado';
 import { AVISO_RESENHA } from '../jogo/cravaTela';
+import { podeVerPush } from '../jogo/faixaEtaria';
 import { AVISO_PRE_TEMPORADA, linhaPosicaoSemana, setaDaPosicao } from '../jogo/posicao';
 import { formatarVolta, linhaPenaltis, statusCrava } from '../jogo/statusJogos';
 import { escolherFrase } from '../narrador/escolher';
@@ -107,9 +108,13 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     <main class="inicio">
       <header class="cabecalho">
         <h1 class="marca-pequena">Guerra <span>de Torcidas</span></h1>
-        <button class="sininho" type="button" data-acao="sininho" aria-label="Aviso de domingo" aria-expanded="false">
+        ${
+          podeVerPush(faixaDoAparelho())
+            ? `<button class="sininho" type="button" data-acao="sininho" aria-label="Aviso de domingo" aria-expanded="false">
           ${icone('sino')}
-        </button>
+        </button>`
+            : ''
+        }
         <p class="contagem rotulo"><span class="etiqueta-fase">Pré-temporada</span>Semana fecha em <strong data-contagem>${formatarContagem(msAteZerarSemana())}</strong></p>
       </header>
 
@@ -199,22 +204,24 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   ligarBarraNavegacao(root);
 
   // Sininho: liga, desliga ou explica o aviso de domingo (push). Aceso quando o aviso está ligado.
-  const sininho = root.querySelector<HTMLButtonElement>('[data-acao="sininho"]')!;
-  const painelPush = root.querySelector<HTMLElement>('[data-painel-push]')!;
-  const acender = (ligado: boolean) => {
-    sininho.classList.toggle('ligado', ligado);
-    sininho.setAttribute('aria-label', ligado ? 'Aviso de domingo ligado' : 'Aviso de domingo');
-  };
-  void estadoDoAviso().then((e) => !saiu && acender(e === 'ligado'));
-  sininho.addEventListener('click', () => {
-    if (painelPush.innerHTML.trim()) {
-      painelPush.innerHTML = '';
-      sininho.setAttribute('aria-expanded', 'false');
-      return;
-    }
-    sininho.setAttribute('aria-expanded', 'true');
-    void painelDoAviso(painelPush, acender);
-  });
+  const sininho = root.querySelector<HTMLButtonElement>('[data-acao="sininho"]');
+  if (sininho) {
+    const painelPush = root.querySelector<HTMLElement>('[data-painel-push]')!;
+    const acender = (ligado: boolean) => {
+      sininho.classList.toggle('ligado', ligado);
+      sininho.setAttribute('aria-label', ligado ? 'Aviso de domingo ligado' : 'Aviso de domingo');
+    };
+    void estadoDoAviso().then((e) => !saiu && acender(e === 'ligado'));
+    sininho.addEventListener('click', () => {
+      if (painelPush.innerHTML.trim()) {
+        painelPush.innerHTML = '';
+        sininho.setAttribute('aria-expanded', 'false');
+        return;
+      }
+      sininho.setAttribute('aria-expanded', 'true');
+      void painelDoAviso(painelPush, acender);
+    });
+  }
 
   // ---------- status vivo dos cards ----------
   /** Troca a linha de status; `feito` pinta a linha de verde. */

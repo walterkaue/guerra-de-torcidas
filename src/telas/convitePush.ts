@@ -2,8 +2,12 @@
 // O convite só aparece depois de um bom momento (vitória, acerto), no máximo a cada 14 dias, nunca
 // no iPhone fora do app instalado (lá o navegador não entrega push) e nunca se a pessoa já recusou.
 // Primeiro um cartão nosso; o pedido de permissão do navegador só vem se a pessoa tocar em "Quero".
+// Só para 18+ (seção 13): quem não marcou 18_mais não vê a oferta nem o sininho, e o servidor recusa.
 
+import { faixaDoAparelho } from '../estado';
+import { podeVerPush } from '../jogo/faixaEtaria';
 import { comTempoLimite, garantirSessao, supabase } from '../servidor/api';
+import { sincronizarTorcedor } from '../servidor/torcedor';
 
 const CHAVE_VAPID = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
 const MEMORIA = 'gdt-convite-push';
@@ -61,6 +65,8 @@ export async function ligarAvisos(): Promise<'ligado' | 'recusado' | 'erro'> {
     const insc = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: chaveEmBytes(CHAVE_VAPID!) }));
     const json = insc.toJSON();
     await garantirSessao();
+    // O servidor só aceita a inscrição de quem já tem a faixa gravada lá.
+    await sincronizarTorcedor();
     const sb = await supabase();
     const { error } = await comTempoLimite(sb.rpc('salvar_inscricao_push', { p_endpoint: insc.endpoint, p_p256dh: json.keys?.p256dh, p_auth: json.keys?.auth }));
     if (error) throw error;
@@ -84,11 +90,11 @@ export async function desligarAvisos(): Promise<void> {
 
 /** Depois de um bom momento: põe o cartão em `el` (se as regras deixarem). */
 export function convidarParaAvisos(el: HTMLElement | null): void {
-  if (!el || !pushDisponivel() || !podeConvidar()) return;
+  if (!el || !podeVerPush(faixaDoAparelho()) || !pushDisponivel() || !podeConvidar()) return;
   gravarMemoria();
   el.innerHTML = `<section class="convite-push" aria-label="Aviso de domingo">
     <p class="rotulo">🔔 Quer um toque no domingo?</p>
-    <p>Um aviso por semana, umas horas antes de fechar: como tá a sua torcida e o rival. Só isso.</p>
+    <p>Um aviso por semana, no domingo à tarde: como tá a sua torcida e o rival. Só isso.</p>
     <div class="dupla">
       <button class="botao" type="button" data-acao="push-sim">Quero o aviso</button>
       <button class="botao botao-sec" type="button" data-acao="push-nao">Agora não</button>
@@ -163,7 +169,7 @@ export async function painelDoAviso(el: HTMLElement, aoMudar: (ligado: boolean) 
   } else if (estado === 'pode-ligar') {
     el.innerHTML = `<section class="convite-push" aria-label="Aviso de domingo">
       <p class="rotulo">🔔 Quer um toque no domingo?</p>
-      <p>Um aviso por semana, umas horas antes de fechar: como tá a sua torcida e o rival. Só isso.</p>
+      <p>Um aviso por semana, no domingo à tarde: como tá a sua torcida e o rival. Só isso.</p>
       ${ehOpera() ? NOTA_OPERA : ''}
       <div class="dupla"><button class="botao" type="button" data-acao="push-sim">Quero o aviso</button>${fechar}</div>
     </section>`;
