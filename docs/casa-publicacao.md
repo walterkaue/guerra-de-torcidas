@@ -12,7 +12,7 @@
 | Importador, validador e competições (`scripts/casa/`, `src/dados/competicoes.ts`) | Pronto; conferência por script com Gemini (`npm run conferir-casa`) desde 25/10 |
 | Tela, índice e desenhos (`src/telas/casa/`) | Pronto (25/10/2026), testado em 390×844 |
 | Ganchos (Home, Ranking, Time do Dia) | Prontos (25/10/2026); Prova de Boleiro fica para depois |
-| "Seja sócio" (bloco, `dados/casa/socios.csv`, contagem) | No ar, com as **20 linhas aprovadas pelo Kauê** em 31/10/2026 (curadoria em `docs/casa.md`, seção 8). O Mirassol usa um site que o clube não aponta: confirmar na próxima revisão |
+| "Seja sócio" (bloco, `dados/casa/socios.csv`, contagem) | No ar em **19 clubes**, com as linhas aprovadas pelo Kauê em 31/10/2026 (curadoria em `docs/casa.md`, seção 8). O Mirassol fica sem o bloco: a página do Passaporte do Leão ainda mostra a logo de uma casa de aposta. Volta quando a logo sair e a linha for revisada de novo |
 
 O upgrade dos pênaltis que travava a Casa fechou (Lances do Jogo no `main`), então **nada impede de começar**.
 

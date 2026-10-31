@@ -38,7 +38,6 @@ export const SOCIOS: Readonly<Record<string, SocioDoClube>> = {
   "fluminense": {"programa":"Sócio Futebol","url":"https://nense.com.br/"},
   "gremio": {"programa":"Grêmio Sócio","url":"https://socio.gremio.net/site/"},
   "internacional": {"programa":"Mundo Colorado","url":"https://internacional.com.br/seja-socio"},
-  "mirassol": {"programa":"Fúria do Leão","url":"https://furiadoleao.com.br/"},
   "palmeiras": {"programa":"Avanti","url":"https://www.palmeiras.com.br/avanti/"},
   "remo": {"programa":"Fenômeno Azul","url":"https://fenomenoazul.com.br/"},
   "santos": {"programa":"Sócio Rei","url":"https://sociorei.com/"},
