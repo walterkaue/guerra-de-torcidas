@@ -23,7 +23,8 @@ import { normalizarCobranca, type GestoCobranca } from '../jogo/penaltis';
 import { destravarSom, somApito, somChute, somTorcida } from '../jogo/som';
 import { etiquetasDoLance, eventoDoLance } from '../narrador/lance';
 import { criarNarrador } from '../narrador/sessao';
-import { criarBoneco, novaPose, poseChute, poseComemora, poseLamenta, poseParado, sortearAparencia, uniformesDaPartida } from './bonecos';
+import { coresDoAdversario, roupaDoBatedorGoleiro } from '../dados/coresDosLances';
+import { criarBoneco, novaPose, type Boneco, poseChute, poseComemora, poseLamenta, poseParado, sortearAparencia, uniformesDaPartida } from './bonecos';
 import { ENQUADRAMENTOS } from './camera';
 import { facil, limitar01 } from './cena';
 import { criarCena3d } from './cena3d';
@@ -61,6 +62,16 @@ export function clubeDoLance(clube: string): { nome: string; cores: readonly [st
 }
 
 const distanciaDoLance = (l: Lance) => Math.hypot(l.bola.x, l.bola.z);
+
+/** Batedor nas cores do clube do lance, barreira e goleiro nas do adversário de verdade. */
+function elencoDoLance(l: Lance): { batedor: Boneco; goleiro: Boneco; barreira: Boneco[] } {
+  const u = uniformesDaPartida(clubeDoLance(l.clube).cores, coresDoAdversario(l.adversario), 0);
+  return {
+    batedor: criarBoneco(sortearAparencia(), roupaDoBatedorGoleiro(l.id) ?? u.jogador, false),
+    goleiro: criarBoneco(sortearAparencia(), u.goleiroAdversario, true),
+    barreira: Array.from({ length: 6 }, () => criarBoneco(sortearAparencia(), u.adversario, true)),
+  };
+}
 
 /** Uma linha do que o lance pede: tipo, distância, lado e barreira ou goleiro. */
 export function situacaoDoLance(l: Lance): string {
@@ -305,11 +316,9 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     const { c } = cena;
     const narrador = criarNarrador(time, prefs.get().apelido);
 
-    // Elenco sorteado com o gerador do visual (nunca a semente): você contra a máquina.
-    const u = uniformesDaPartida(time.cores, null, Math.random() < 0.5 ? 0 : 1);
-    const batedor = criarBoneco(sortearAparencia(), u.jogador, false);
-    const goleiro = criarBoneco(sortearAparencia(), u.goleiroAdversario, true);
-    const barreira = Array.from({ length: 6 }, () => criarBoneco(sortearAparencia(), u.adversario, true));
+    // Cada lance veste os dois times dele; os rostos saem do gerador do visual (nunca da semente).
+    let { batedor, goleiro, barreira } = elencoDoLance(lances[0]);
+    let vestido = lances[0].id;
     const poseBatedor = novaPose();
     const poseBarreira = novaPose();
 
@@ -357,6 +366,10 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
 
     /** Começa o lance: câmera do tipo, situação no topo e, no cara a cara, "A jogada" com a bola chegando. */
     function comecarLance(): void {
+      if (atual().id !== vestido) {
+        vestido = atual().id;
+        ({ batedor, goleiro, barreira } = elencoDoLance(atual()));
+      }
       const l = atual();
       cena.definirLance(l.bola, l.tipo === 'falta' ? ENQUADRAMENTOS.falta : ENQUADRAMENTOS.caraACara);
       rastro = [];
