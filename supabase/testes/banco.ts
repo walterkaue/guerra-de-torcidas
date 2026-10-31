@@ -10,7 +10,7 @@ const PASTA = join(import.meta.dirname, '..', 'migrations');
 const ESBOCO_SUPABASE = `
   create role anon; create role authenticated; create role service_role;
   create schema auth;
-  create table auth.users (id uuid primary key);
+  create table auth.users (id uuid primary key, is_anonymous boolean not null default true);
   create function auth.uid() returns uuid language sql stable
     as $$ select nullif(current_setting('teste.uid', true), '')::uuid $$;
   grant usage on schema auth to anon, authenticated, service_role;
