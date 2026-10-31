@@ -12,7 +12,7 @@
 | Importador, validador e competições (`scripts/casa/`, `src/dados/competicoes.ts`) | Pronto; conferência por script com Gemini (`npm run conferir-casa`) desde 25/10 |
 | Tela, índice e desenhos (`src/telas/casa/`) | Pronto (25/10/2026), testado em 390×844 |
 | Ganchos (Home, Ranking, Time do Dia) | Prontos (25/10/2026); Prova de Boleiro fica para depois |
-| "Seja sócio" (bloco, `dados/casa/socios.csv`, contagem) | Código pronto (31/10/2026); **20 linhas em rascunho**, esperando a curadoria do Kauê (`docs/casa.md`, seção 8) |
+| "Seja sócio" (bloco, `dados/casa/socios.csv`, contagem) | No ar, com as **20 linhas aprovadas pelo Kauê** em 31/10/2026 (curadoria em `docs/casa.md`, seção 8). O Mirassol usa um site que o clube não aponta: confirmar na próxima revisão |
 
 O upgrade dos pênaltis que travava a Casa fechou (Lances do Jogo no `main`), então **nada impede de começar**.
 
