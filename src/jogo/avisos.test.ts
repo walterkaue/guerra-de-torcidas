@@ -12,32 +12,46 @@ describe('aviso de domingo (push)', () => {
     expect(rivalDoAviso(timePorId('bragantino')!, ranking)?.id).toBe('santos');
   });
 
-  it('atrás e perto do rival: dá pra virar, com do/da certo', () => {
+  it('atrás do rival: posição e diferença, com do/da certo', () => {
     const a = avisoDeDomingo('flamengo', [linha('fluminense', 410, 1), linha('flamengo', 400, 2)]);
-    expect(a.corpo).toBe('Faltam 6 horas e o Fluminense tá só 10 pontos na frente do Flamengo. Dá pra virar!');
-  });
-
-  it('na frente e perto: o rival tá encostando', () => {
-    const a = avisoDeDomingo('palmeiras', [linha('palmeiras', 400, 1), linha('corinthians', 395, 2)]);
-    expect(a.corpo).toBe('Faltam 6 horas e o Corinthians tá encostando: 5 pontos atrás. Segura essa!');
-  });
-
-  it('sem pontos na semana, longe do rival e "Outro time"', () => {
-    expect(avisoDeDomingo('chapecoense', []).corpo).toBe('Faltam 6 horas e a Chapecoense ainda não pontuou nesta semana. Bora estrear?');
-    expect(avisoDeDomingo('vasco', [linha('vasco', 400, 3), linha('flamengo', 100, 9)]).corpo).toBe(
-      'Faltam 6 horas pra semana fechar. O Vasco tá em 3º. Bora fechar a semana bem?',
+    expect(a.titulo).toBe('Sua torcida na semana');
+    expect(a.corpo).toBe('O Flamengo tá em 2º na semana, 10 pontos atrás do Fluminense.');
+    expect(avisoDeDomingo('bragantino', [linha('chapecoense', 410, 1), linha('bragantino', 409, 2)]).corpo).toBe(
+      'O Bragantino tá em 2º na semana, 1 ponto atrás da Chapecoense.',
     );
-    expect(avisoDeDomingo('outro', []).corpo).toMatch(/Bora somar/);
   });
+
+  it('na frente do rival e empate', () => {
+    expect(avisoDeDomingo('palmeiras', [linha('palmeiras', 400, 1), linha('corinthians', 395, 2)]).corpo).toBe(
+      'O Palmeiras tá em 1º na semana, 5 pontos na frente do Corinthians.',
+    );
+    expect(avisoDeDomingo('palmeiras', [linha('palmeiras', 400.2, 1), linha('corinthians', 400, 2)]).corpo).toBe(
+      'O Palmeiras tá em 1º na semana, no empate com o Corinthians.',
+    );
+  });
+
+  it('sem pontos na semana, rival sem pontos e "Outro time"', () => {
+    expect(avisoDeDomingo('chapecoense', []).corpo).toBe('A Chapecoense ainda não pontuou nesta semana.');
+    expect(avisoDeDomingo('vasco', [linha('vasco', 400, 3), linha('flamengo', 0, 9, 0)]).corpo).toBe('O Vasco tá em 3º na semana.');
+    expect(avisoDeDomingo('outro', []).corpo).toBe('O placar da semana tá atualizado no jogo.');
+  });
+
+  const casos = [
+    avisoDeDomingo('flamengo', [linha('fluminense', 410, 1), linha('flamengo', 400, 2)]),
+    avisoDeDomingo('flamengo', [linha('fluminense', 900, 1), linha('flamengo', 400, 2)]),
+    avisoDeDomingo('palmeiras', [linha('palmeiras', 400, 1), linha('corinthians', 395, 2)]),
+    avisoDeDomingo('palmeiras', [linha('palmeiras', 400, 1), linha('corinthians', 400, 2)]),
+    avisoDeDomingo('vasco', [linha('vasco', 400, 3), linha('flamengo', 0, 9, 0)]),
+    avisoDeDomingo('chapecoense', []),
+    avisoDeDomingo('outro', []),
+  ];
 
   it('nenhum texto possível usa palavra proibida', () => {
-    const casos = [
-      avisoDeDomingo('flamengo', [linha('fluminense', 410, 1), linha('flamengo', 400, 2)]),
-      avisoDeDomingo('flamengo', [linha('fluminense', 900, 1), linha('flamengo', 400, 2)]),
-      avisoDeDomingo('palmeiras', [linha('palmeiras', 400, 1), linha('corinthians', 395, 2)]),
-      avisoDeDomingo('chapecoense', []),
-      avisoDeDomingo('outro', []),
-    ];
     for (const a of casos) expect(acharPalavras(`${a.titulo} ${a.corpo}`)).toEqual([]);
+  });
+
+  it('nenhum texto possível tem urgência ou pressão para voltar', () => {
+    const pressao = /falta|hora|meia-noite|fecha|acaba|corre|bora|vem |volta|joga|vai deixar|segura|dá pra|ainda dá|agora|hoje|último|última|[!?]/i;
+    for (const a of casos) expect(`${a.titulo} ${a.corpo}`).not.toMatch(pressao);
   });
 });

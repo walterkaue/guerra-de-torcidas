@@ -1,6 +1,7 @@
 # Banco do narrador — pênaltis, palpites, quiz, Time do Dia e Lances
 
-> Versão 1.6 · 21/10/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Versão 1.7 · 31/10/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Mudanças da 1.7: seção 13, **aviso de domingo** (push sem urgência).
 > Mudanças da 1.6: seção 12, **Lances do Jogo** (abertura, barreira, lance recriado e fim); nas jogadas, os Lances reaproveitam as frases da seção 3 que não falam de pênalti.
 > Mudanças da 1.5: 7 frases de tiozão trocadas (fila do banco, manchete, capa de jornal, picolé, primeira pedra, caneta, doutorado); glossário novo ("Pênaltis", "Chamar no X1", "em teste"): frases de X1 sem "duvido" e "desafio", e o convite do link virou texto fixo (sai `desafio_convite`).
 > Mudanças da 1.4: seções 10 (**Prova de Boleiro**) e 11 (**Time do Dia**); frases de `prova_ajuda` com a etiqueta da ajuda usada (`[tira_duas]`, `[arquibancada]`, `[troca]`).
@@ -672,3 +673,15 @@ Nas jogadas, os Lances usam as frases da seção 3 que servem para qualquer chut
 - Fechou com {pontos}! Escolhe outros lances e vai de novo.
 - Acabou a sessão de história! {pontos} pontos no placar.
 
+## 13. Aviso de domingo (push)
+
+Só informa (docs/jogo.md, seção 13). Texto em `src/jogo/avisos.ts`, não neste banco: o `npm run frases` não lê esta seção. Passa pelo checklist da seção 1, com um cuidado a mais: **nada de contagem de horas, "vai deixar?", convite para jogar ou qualquer pressão para voltar**. As frases de `reta_final` (seção 7) nunca viram push.
+
+Título: Sua torcida na semana
+
+- {O_time} tá em {posicao} na semana, {dif} atrás {do_rival}.
+- {O_time} tá em {posicao} na semana, {dif} na frente {do_rival}.
+- {O_time} tá em {posicao} na semana, no empate com {o_rival}.
+- {O_time} tá em {posicao} na semana. (sem rival com pontos)
+- {O_time} ainda não pontuou nesta semana.
+- O placar da semana tá atualizado no jogo. ("Outro time")
