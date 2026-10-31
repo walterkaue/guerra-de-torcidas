@@ -171,7 +171,7 @@ async function principal() {
   writeFileSync(a.saida, r.texto);
 
   const hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
-  const raiz = raizDoCheckout(dirname(CSV_NO_WORKTREE));
+  const raiz = raizDoCheckout(dirname(fileURLToPath(import.meta.url)));
   const CSV = raiz ? join(raiz, 'relatorios', 'ia-uso.csv') : CSV_NO_WORKTREE;
   mkdirSync(dirname(CSV), { recursive: true });
   let novo = false;
