@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { anosNaPagina, dataPorExtenso, fatoDe, motivoCampo, linksAceitos, motivoChave, numerosDe, observacaoConfirmada, textoDaPagina, trechoNaPagina } from './conferir-gemini.mjs';
+import { anosNaPagina, classificarLink, dataPorExtenso, fatoDe, linksAceitos, linksMd, motivoCampo, motivoChave, numerosDe, observacaoConfirmada, textoDaPagina, trechoNaPagina } from './conferir-gemini.mjs';
 
 describe('conferir-gemini (partes puras)', () => {
   it('tira tags e decodifica entidades da página', () => {
@@ -80,5 +80,34 @@ describe('conferir-gemini (partes puras)', () => {
     );
     const obs = observacaoConfirmada('Lista do Lance.', 'Cruzeiro "38" 1928', 'lance.com.br', 'gemini-3.5-flash-lite', '2026-10-25');
     expect(obs).toBe(`Lista do Lance. Conferido em 25/10/2026 por script (gemini-3.5-flash-lite, trecho literal em lance.com.br): "Cruzeiro '38' 1928".`);
+  });
+});
+
+describe('conferir-casa --links', () => {
+  const url = 'https://sociorei.com/';
+
+  it('separa página que abre, quebrada e bloqueio de robô', () => {
+    expect(classificarLink(url, { status: 200, final: url }, 'santos').estado).toBe('ok');
+    expect(classificarLink(url, { status: 404, final: url }, 'santos')).toEqual({ estado: 'quebrado', motivo: 'HTTP 404' });
+    expect(classificarLink(url, { status: 500, final: url }, 'santos').estado).toBe('quebrado');
+    expect(classificarLink(url, { erro: 'ENOTFOUND' }, 'santos')).toEqual({ estado: 'quebrado', motivo: 'não abriu (ENOTFOUND)' });
+    expect(classificarLink(url, { status: 403, final: url }, 'santos').estado).toBe('conferir');
+    expect(classificarLink(url, { erro: 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY' }, 'santos').estado).toBe('conferir');
+  });
+
+  it('avisa quando a página troca de domínio ou cai na home do clube', () => {
+    expect(classificarLink(url, { status: 200, final: 'https://outro.com.br/' }, 'santos').estado).toBe('mudou');
+    expect(classificarLink(url, { status: 200, final: 'https://www.santosfc.com.br/' }, 'santos')).toEqual({
+      estado: 'mudou',
+      motivo: 'caiu na home do clube (https://www.santosfc.com.br/)',
+    });
+    expect(classificarLink('https://socios.chapecoense.com/', { status: 200, final: 'https://socios.chapecoense.com/Login.aspx' }, 'chapecoense').estado).toBe('ok');
+  });
+
+  it('monta o relatório', () => {
+    const md = linksMd([{ id: 'santos', url, estado: 'ok', motivo: 'HTTP 200' }, { id: 'mirassol', url: '', estado: 'sem link', motivo: 'linha sem url' }], '2026-10-31');
+    expect(md).toContain('Rodada de 31/10/2026');
+    expect(md).toContain(`| santos | ok | ${url} | HTTP 200 |`);
+    expect(md).toContain('| mirassol | sem link | — | linha sem url |');
   });
 });

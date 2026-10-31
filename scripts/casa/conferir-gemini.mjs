@@ -10,6 +10,7 @@
 //   npm run conferir-casa -- --clube=santos --buscar     títulos cuja fonte saiu do ar: procura fonte nova
 //                                     (--candidatos=6 testa mais páginas candidatas; padrão 3)
 //   npm run conferir-casa -- --campos                    fatos de clubes e estádios + dados/casa/revisao-textos.md
+//   npm run conferir-casa -- --links                     links quebrados em dados/casa/socios.csv (sem chave, sem IA)
 // Opções: --arquivos=titulos,recordes,goleadas (padrão: os três) --modelo=gemini-3.5-flash-lite
 //
 // Clubes, estádios e mantos têm texto livre (história, descrição): o --campos prova os fatos deles e
@@ -18,7 +19,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { DOMINIOS_ACEITOS } from '../clubes/validar.mjs';
-import { colunaClube, escreverTabela, lerTabela } from './tabela.mjs';
+import { SITE_DO_CLUBE, colunaClube, escreverTabela, lerTabela } from './tabela.mjs';
 
 const PASTA = new URL('../../dados/casa/', import.meta.url);
 const RELATORIOS = new URL('../../dados/casa/conferencia-gemini/', import.meta.url);
@@ -49,17 +50,6 @@ export const NOMES = {
   'sao-paulo': ['sao paulo', 'spfc'],
   vasco: ['vasco'],
   vitoria: ['vitoria'],
-};
-
-/** Site oficial de cada clube: na página do próprio clube o trecho pode não repetir o nome. */
-const SITE_DO_CLUBE = {
-  'athletico-pr': 'athletico.com.br', 'atletico-mg': 'atletico.com.br', bahia: 'esporteclubebahia.com.br',
-  botafogo: 'botafogo.com.br', bragantino: 'redbullbragantino.com.br', chapecoense: 'chapecoense.com',
-  corinthians: 'corinthians.com.br', coritiba: 'coritiba.com.br', cruzeiro: 'cruzeiro.com.br',
-  flamengo: 'flamengo.com.br', fluminense: 'fluminense.com.br', gremio: 'gremio.net',
-  internacional: 'internacional.com.br', mirassol: 'mirassolfc.com.br', palmeiras: 'palmeiras.com.br',
-  remo: 'clubedoremo.com.br', santos: 'santosfc.com.br', 'sao-paulo': 'saopaulofc.net',
-  vasco: 'vasco.com.br', vitoria: 'ecvitoria.com.br',
 };
 
 const NOME_COMPETICAO = {
@@ -562,6 +552,66 @@ export function revisaoMd(clubes, { tabelas, resultado }, mantos, hoje) {
   return linhas.join('\n');
 }
 
+// ---------------------------------------------------------------------------
+// Modo --links: páginas de sócio (dados/casa/socios.csv) que saíram do ar ou mudaram de lugar
+// ---------------------------------------------------------------------------
+// Não precisa de chave nem muda status: só avisa. Só `quebrado` faz o comando sair com erro.
+
+const CODIGOS_DE_CERTIFICADO = /CERT|SSL|TLS/;
+
+/** O que fazer com o link: `quebrado`, `mudou`, `conferir` (o robô não decide) ou `ok`. */
+export function classificarLink(url, { status, final, erro }, clube) {
+  if (erro) {
+    if (CODIGOS_DE_CERTIFICADO.test(erro)) return { estado: 'conferir', motivo: `certificado recusado aqui (${erro}): abrir no navegador` };
+    return { estado: 'quebrado', motivo: `não abriu (${erro})` };
+  }
+  // 401, 403, 429 e 503 costumam ser bloqueio de robô: quem decide é o navegador.
+  if ([401, 403, 429, 503].includes(status)) return { estado: 'conferir', motivo: `HTTP ${status}: abrir no navegador` };
+  if (status >= 400) return { estado: 'quebrado', motivo: `HTTP ${status}` };
+  const site = SITE_DO_CLUBE[clube];
+  const destino = new URL(final);
+  const dominioFinal = dominioDe(final);
+  if ((dominioFinal === site || dominioFinal === `www.${site}`) && destino.pathname.replace(/\/+$/, '') === '') {
+    return { estado: 'mudou', motivo: `caiu na home do clube (${final})` };
+  }
+  if (dominioFinal !== dominioDe(url)) return { estado: 'mudou', motivo: `redireciona para ${final}` };
+  return { estado: 'ok', motivo: `HTTP ${status}` };
+}
+
+async function abrirLink(url) {
+  try {
+    const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }, signal: AbortSignal.timeout(30_000) });
+    return { status: r.status, final: r.url };
+  } catch (e) {
+    return { erro: e.name === 'TimeoutError' ? 'não respondeu em 30 s' : (e.cause?.code ?? e.name) };
+  }
+}
+
+export function linksMd(resultados, hoje) {
+  const linhas = [
+    '# Links do "Seja sócio"',
+    '',
+    `Rodada de ${hoje.split('-').reverse().join('/')} (\`npm run conferir-casa -- --links\`). O robô só testa se a página abre; a curadoria segue no celular.`,
+    '',
+    '| Clube | Situação | Link | Detalhe |',
+    '|---|---|---|---|',
+  ];
+  for (const r of resultados) linhas.push(`| ${r.id} | ${r.estado} | ${r.url || '—'} | ${r.motivo} |`);
+  return `${linhas.join('\n')}\n`;
+}
+
+export async function conferirLinks(abrir = abrirLink) {
+  const resultados = [];
+  for (const l of ler('socios').linhas) {
+    if (!l.url) {
+      resultados.push({ id: l.id, url: '', estado: 'sem link', motivo: 'linha sem url' });
+      continue;
+    }
+    resultados.push({ id: l.id, url: l.url, ...classificarLink(l.url, await abrir(l.url), l.id) });
+  }
+  return resultados;
+}
+
 export function relatorioMd(r, hoje) {
   const linhas = [
     `# Conferência por script: ${r.clube}`,
@@ -592,8 +642,20 @@ async function principal() {
   const arquivos = (opcao('arquivos') ?? ARQUIVOS_OBJETIVOS.join(',')).split(',').filter(Boolean);
   for (const a of arquivos) if (!ARQUIVOS_OBJETIVOS.includes(a)) throw new Error(`--arquivos só aceita ${ARQUIVOS_OBJETIVOS.join(', ')}`);
   const modelos = opcao('modelo') ? [opcao('modelo')] : MODELOS;
-  if (!process.env.GEMINI_API_KEY) throw new Error('Falta a variável de ambiente GEMINI_API_KEY.');
   const hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+
+  if (args.includes('--links')) {
+    const resultados = await conferirLinks();
+    for (const r of resultados) console.log(`${r.estado.padEnd(9)} ${r.id}: ${r.motivo}`);
+    if (!seco) {
+      mkdirSync(RELATORIOS, { recursive: true });
+      writeFileSync(new URL('socios-links.md', RELATORIOS), linksMd(resultados, hoje));
+    }
+    if (resultados.some((r) => r.estado === 'quebrado')) process.exitCode = 1;
+    return;
+  }
+
+  if (!process.env.GEMINI_API_KEY) throw new Error('Falta a variável de ambiente GEMINI_API_KEY.');
 
   if (args.includes('--campos')) {
     const mantos = ler('mantos');

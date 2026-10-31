@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { IDS_COMPETICAO } from '../../src/dados/competicoes';
 import { TIMES } from '../../src/dados/times';
-import { gerarModulo, lerEntradas, montarCasas } from './importar.mjs';
+import { gerarModulo, lerEntradas, montarCasas, montarSocios } from './importar.mjs';
 import { idsDeTimes, validarCasa } from './validar.mjs';
 
 type Linha = Record<string, string>;
@@ -140,5 +140,77 @@ describe('validarCasa', () => {
     const e = copia();
     linha(e, 'clubes', (l) => l.id === 'santos').fundacao = '1913-04-14';
     expect(erros(e).join('\n')).toMatch(/fundação 1913-04-14 não bate/);
+  });
+});
+
+describe('socios.csv', () => {
+  const socio = (e: ReturnType<typeof copia>, id: string) => linha(e, 'socios', (l) => l.id === id);
+  const revisar = (l: Linha) => Object.assign(l, { status: 'revisada', aposta_na_pagina: 'não', programa: 'Programa', url: 'https://socio.exemplo.com.br/planos' });
+
+  it('tem uma linha para cada um dos 20 clubes', () => {
+    const e = copia();
+    expect((e.tabelas.socios.linhas as Linha[]).map((l) => l.id)).toEqual(e.ctx.times);
+    e.tabelas.socios.linhas = (e.tabelas.socios.linhas as Linha[]).filter((l) => l.id !== 'vasco');
+    expect(erros(e).join('\n')).toMatch(/socios: falta o clube vasco/);
+  });
+
+  it('só entra linha revisada com aposta_na_pagina = não', () => {
+    const e = copia();
+    revisar(socio(e, 'santos'));
+    expect(erros(e)).toEqual([]);
+    expect(montarSocios(e.tabelas)).toEqual({ santos: { programa: 'Programa', url: 'https://socio.exemplo.com.br/planos' } });
+    for (const status of ['rascunho', 'aposentada', 'ativa']) {
+      socio(e, 'santos').status = status;
+      expect(montarSocios(e.tabelas)).toEqual({});
+    }
+    socio(e, 'santos').status = 'revisada';
+    for (const aposta of ['sim', 'não_sei']) {
+      socio(e, 'santos').aposta_na_pagina = aposta;
+      expect(montarSocios(e.tabelas)).toEqual({});
+      expect(erros(e).join('\n')).toMatch(/só vai ao ar com "não"/);
+    }
+  });
+
+  it('a linha revisada precisa de programa e link, e ativa não vale', () => {
+    const e = copia();
+    Object.assign(revisar(socio(e, 'santos')), { programa: '', url: '' });
+    socio(e, 'vasco').status = 'ativa';
+    const r = erros(e).join('\n');
+    expect(r).toMatch(/revisada sem programa/);
+    expect(r).toMatch(/revisada sem url/);
+    expect(r).toMatch(/ativa não vale aqui/);
+  });
+
+  it('barra link da home do clube, sem https, de aposta, de afiliado e com utm', () => {
+    const e = copia();
+    socio(e, 'flamengo').url = 'https://www.flamengo.com.br/';
+    socio(e, 'vasco').url = 'http://sociogigante.com/';
+    socio(e, 'remo').url = 'https://fenomenoazul.com.br/bet-do-dia';
+    socio(e, 'santos').url = 'https://sociorei.com/?ref=guerra';
+    socio(e, 'bahia').url = 'https://socioesquadrao.com.br/?utm_source=x';
+    const r = erros(e).join('\n');
+    expect(r).toMatch(/flamengo: url aponta para a home do clube/);
+    expect(r).toMatch(/vasco: url deve ser um link https/);
+    expect(r).toMatch(/remo: link de aposta/);
+    expect(r).toMatch(/santos: url com parâmetro de afiliado/);
+    expect(r).toMatch(/bahia: url com parâmetro de afiliado/);
+  });
+
+  it('aceita a página do programa no domínio do clube ou no próprio', () => {
+    const e = copia();
+    socio(e, 'internacional').url = 'https://internacional.com.br/seja-socio';
+    socio(e, 'palmeiras').url = 'https://www.palmeiras.com.br/avanti/';
+    socio(e, 'corinthians').url = 'https://www.fieltorcedor.com.br/';
+    socio(e, 'gremio').url = 'https://socio.gremio.net/site/';
+    expect(erros(e)).toEqual([]);
+  });
+
+  it('barra resposta fora da lista e palavra proibida no programa', () => {
+    const e = copia();
+    socio(e, 'santos').aposta_na_pagina = 'talvez';
+    socio(e, 'bragantino').programa = 'Sócio Red';
+    const r = erros(e).join('\n');
+    expect(r).toMatch(/aposta_na_pagina deve ser sim, não ou não_sei/);
+    expect(r).toMatch(/palavra proibida/);
   });
 });
