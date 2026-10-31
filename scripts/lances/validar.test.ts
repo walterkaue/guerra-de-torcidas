@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { calibrar, validarCena } from '../../src/jogo/lances';
-import { gerarCatalogo, lerTodos } from './catalogo.mjs';
+import { gerarCatalogo, gerarResumo, lerTodos } from './catalogo.mjs';
 import { CANTOS, cenaDoLance, lerLances, validarConjunto, validarLance } from './validar.mjs';
 
 const boa = {
@@ -113,6 +113,18 @@ describe('catálogo em dados/lances', () => {
   it('src/dados/lances.ts está em dia com os CSVs (rode npm run catalogo-lances)', () => {
     const gerado = readFileSync(new URL('../../src/dados/lances.ts', import.meta.url), 'utf8');
     expect(gerado).toBe(gerarCatalogo(lerTodos()));
+  });
+
+  it('src/dados/lancesResumo.ts está em dia com os CSVs (rode npm run catalogo-lances)', () => {
+    const gerado = readFileSync(new URL('../../src/dados/lancesResumo.ts', import.meta.url), 'utf8');
+    expect(gerado).toBe(gerarResumo(lerTodos()));
+  });
+
+  it('o resumo conta só lance revisado ou ativo, por clube', () => {
+    const [a] = lances;
+    const texto = gerarResumo([a, { ...a, id: 'outro' }, { ...a, id: 'rascunho', status: 'rascunho' }]);
+    expect(texto).toContain('TOTAL_LANCES = 2;');
+    expect(texto).toContain(`{"${a.clube}":2}`);
   });
 
   it('o catálogo publica só lance revisado ou ativo', () => {

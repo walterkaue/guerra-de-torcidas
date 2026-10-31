@@ -2,6 +2,7 @@
 // rival com a sua posição, "Jogar agora", cards dos jogos com desenho e estado vivo, e o giro da semana.
 
 import { desafioDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
+import { LANCES_POR_CLUBE } from '../dados/lancesResumo';
 import { ID_OUTRO, TIMES, corDeTexto, corDoRivalNoDuelo, timePorId, type Time } from '../dados/times';
 import { faixaDoAparelho, prefs } from '../estado';
 import { AVISO_RESENHA } from '../jogo/cravaTela';
@@ -11,6 +12,7 @@ import {
   fechaSemPalpite,
   frasesDoGiro,
   linhaDoDia,
+  linhaDosLances,
   luzDoHorario,
   motivoDoJogo,
   placarCravado,
@@ -166,7 +168,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       <button class="botao botao-jogar" type="button" data-acao="jogar-agora">Jogar agora<small data-motivo>&nbsp;</small></button>
 
       <section class="grade-jogos" aria-label="Jogos"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>
-        ${htmlDosCards(linhaPenaltis(null, TETO_DIARIO))}
+        ${htmlDosCards(esc(linhaDosLances(time, LANCES_POR_CLUBE)), linhaPenaltis(null, TETO_DIARIO))}
       </section>
 
       <button class="giro faixa-tv" type="button" data-acao="ranking" aria-label="Ver o ranking da semana" hidden>

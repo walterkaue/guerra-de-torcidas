@@ -1,6 +1,7 @@
 // Cards dos jogos na Home (docs/visual.md, seção 3): nome, uma linha do que é, o desenho em SVG inline e o
 // estado vivo. Desenhos leves, na paleta do jogo; as cores ficam em estilos/inicio.css.
 
+import { TOTAL_LANCES } from '../dados/lancesResumo';
 import { PERGUNTAS } from '../jogo/prova';
 import { TENTATIVAS, type Tom } from '../jogo/timeDoDia';
 import type { JogoDaHome } from '../jogo/home';
@@ -93,9 +94,16 @@ function card(id: JogoDaHome, nome: string, oQueE: string, arte: string, classe:
 }
 
 /** Os quatro cards, em tamanhos diferentes: Lances e Crava largos, Prova e Time do Dia lado a lado. */
-export function htmlDosCards(linhaLances: string): string {
+export function htmlDosCards(oQueELances: string, linhaLances: string): string {
   return [
-    card('penaltis', 'Lances do Jogo', 'Pênaltis, faltas e cara a cara', ARTE_LANCES, 'largo', linhaLances),
+    card(
+      'penaltis',
+      'Lances do Jogo',
+      oQueELances,
+      `${ARTE_LANCES}<span class="tarja-lances faixa-tv">${TOTAL_LANCES} lances</span>`,
+      'largo',
+      linhaLances,
+    ),
     card('prova', 'Prova de Boleiro', '8 perguntas, para quando quiser', arteEscada(0), 'metade', ''),
     card('dia', 'Time do Dia', 'O clube secreto em 6 chutes', arteGrade([]), 'metade', ''),
     card(

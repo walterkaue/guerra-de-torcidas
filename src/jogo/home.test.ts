@@ -6,6 +6,7 @@ import {
   fechaSemPalpite,
   frasesDoGiro,
   linhaDoDia,
+  linhaDosLances,
   luzDoHorario,
   motivoDoJogo,
   placarCravado,
@@ -15,6 +16,20 @@ import {
   type LinhaDoGiro,
 } from './home';
 import type { Pistas } from './timeDoDia';
+
+describe('linhaDosLances', () => {
+  const porClube = { flamengo: 3, chapecoense: 1 };
+
+  it('conta os lances do time, com artigo e singular', () => {
+    expect(linhaDosLances(timePorId('flamengo'), porClube)).toBe('Pênaltis, faltas e cara a cara\n3 lances históricos do Flamengo');
+    expect(linhaDosLances(timePorId('chapecoense'), porClube)).toBe('Pênaltis, faltas e cara a cara\n1 lance histórico da Chapecoense');
+  });
+
+  it('sem time, ou sem lance do time, fica só o que o jogo tem', () => {
+    expect(linhaDosLances(undefined, porClube)).toBe('Pênaltis, faltas e cara a cara');
+    expect(linhaDosLances(timePorId('santos'), porClube)).toBe('Pênaltis, faltas e cara a cara');
+  });
+});
 
 describe('tituloDaCasa', () => {
   it('usa o artigo do time', () => {

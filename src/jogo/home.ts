@@ -16,6 +16,15 @@ export function tituloDaCasa(time: Pick<Time, 'id' | 'nome' | 'artigo'> | undefi
   return `Casa ${time.artigo === 'a' ? 'da' : 'do'} ${time.nome}`;
 }
 
+// ---------- card dos Lances ----------
+
+/** Texto do card: os tipos de lance e, numa segunda linha, quantos são do time, se ele tiver lance no catálogo. */
+export function linhaDosLances(time: Pick<Time, 'id' | 'nome' | 'artigo'> | undefined, porClube: Readonly<Record<string, number>>): string {
+  const n = time ? (porClube[time.id] ?? 0) : 0;
+  if (!time || !n) return 'Pênaltis, faltas e cara a cara';
+  return `Pênaltis, faltas e cara a cara\n${n} ${n === 1 ? 'lance histórico' : 'lances históricos'} ${time.artigo === 'a' ? 'da' : 'do'} ${time.nome}`;
+}
+
 // ---------- luz da arquibancada ----------
 
 export type Luz = 'dia' | 'entardecer' | 'noite';
