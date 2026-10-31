@@ -2,10 +2,13 @@
 // pelo relógio do servidor e o número secreto do narrador para um eventual par ou ímpar.
 // A semente e as cobranças gravadas do desafio NÃO saem daqui: a partida é jogada lance a lance
 // pela função lance-penalti (anti-trapaça antes de divulgar; jogo.md, seção 6).
-// Corpo: { desafio?: string }  (código do desafio por link)
+// Corpo: { desafio?: string, disputa?: string }  (código do desafio por link; id da disputa histórica)
 
 import { admin, configDeteccao, ErroHttp, lerCorpo, servir, sortear, usuario } from '../_shared/comum.ts';
 import { dificuldadeAgora } from '../_shared/tempo.ts';
+
+/** Disputa histórica é só cenário (jogo.md, seção 6): id fora do formato vira partida livre, sem erro. */
+const disputaDoCorpo = (v: unknown): string | null => (typeof v === 'string' && /^[a-z0-9-]{5,80}$/.test(v) ? v : null);
 
 servir(async (req) => {
   const sb = admin();
@@ -39,6 +42,8 @@ servir(async (req) => {
     desafio = data;
   }
 
+  const disputa = desafio ? null : disputaDoCorpo(corpo.disputa);
+
   const agora = new Date();
   const semente = sortear(0x1_0000_0000);
   const dificuldade = dificuldadeAgora(agora);
@@ -50,6 +55,8 @@ servir(async (req) => {
       torcedor_id: uid,
       modo: desafio ? 'desafio' : 'normal',
       desafio_id: desafio?.id ?? null,
+      // Só quando há disputa: assim a função nova não depende da migração para a partida de sempre.
+      ...(disputa ? { disputa_id: disputa } : {}),
       semente,
       dificuldade,
       criada_em: agora.toISOString(),

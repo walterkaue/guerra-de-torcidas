@@ -162,8 +162,9 @@ export interface PartidaDoServidor {
   desafio: DesafioRecebido | null;
 }
 
-export function novaPartida(desafio?: string): Promise<PartidaDoServidor> {
-  return chamar('nova-partida', desafio ? { desafio } : {});
+/** `disputa`: id da disputa histórica escolhida; só marca a partida, não muda nada do jogo. */
+export function novaPartida(desafio?: string, disputa?: string): Promise<PartidaDoServidor> {
+  return chamar('nova-partida', { ...(desafio ? { desafio } : {}), ...(disputa ? { disputa } : {}) });
 }
 
 export interface LanceDoServidor {
