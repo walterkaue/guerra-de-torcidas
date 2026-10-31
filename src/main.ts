@@ -99,7 +99,11 @@ function preaquecer(): void {
 /** Rota do endereço: #admin, #apoie, #casa e #casa/<id>. */
 function rotaDoHash(): Rota | undefined {
   if (location.hash === '#admin') return { tela: 'admin' };
-  if (location.hash === '#apoie') return apoioDisponivel(APOIO) ? { tela: 'apoie' } : { tela: 'inicio' };
+  if (location.hash === '#apoie') {
+    if (apoioDisponivel(APOIO)) return { tela: 'apoie' };
+    history.replaceState(null, '', `${location.pathname}${location.search}`);
+    return { tela: 'inicio' };
+  }
   const casa = /^#casa(?:\/([a-z-]+))?$/.exec(location.hash);
   if (casa) return { tela: 'casa', id: casa[1] };
   return undefined;
