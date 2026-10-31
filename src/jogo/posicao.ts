@@ -31,14 +31,14 @@ const ONDE: Record<Minigame, string> = {
 
 const pontos = (n: number) => `${n.toLocaleString('pt-BR')} ${n === 1 ? 'ponto' : 'pontos'}`;
 
-/** Home: posição geral da semana, somando todos os jogos e todos os times. */
+/** Home: posição geral da semana, somando todos os jogos e todos os times ("Você: 3º de 14 na semana"). */
 export function linhaPosicaoSemana(p: PosicaoSemana): string {
   if (p.posicao === null) {
     return p.total
       ? `${p.total} ${p.total === 1 ? 'pessoa já pontuou' : 'pessoas já pontuaram'} na semana. Joga uma e entra na disputa!`
       : 'Ninguém pontuou ainda nesta semana. Sai na frente!';
   }
-  return `Sua posição: ${p.posicao}º de ${p.total} na semana · ${pontos(p.pontos)}`;
+  return `Você: ${p.posicao}º de ${p.total} na semana`;
 }
 
 /** Resultado: "Sua posição: 3º de 14 nos pênaltis na semana". Null quando a partida não entrou. */

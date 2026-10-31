@@ -1,7 +1,8 @@
 # Revisão gráfica — direção "Transmissão de domingo"
 
-> Versão 1.8 · 26/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Versão 1.9 · 31/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
 > Base: o jogo publicado em 18/10/2026 (commit b492b99), testado em 390×844.
+> Mudanças da 1.9: Home nova: arquibancada do time, cabo de guerra com nó e sua posição, Jogar agora, cards com desenho, giro (seção 3), e aba Perfil (seção 3.1).
 > Mudanças da 1.8: impacto na trave e na defesa (seção 3, Partida), papel picado (4.4) e troca de tela inclinada (4.5).
 > Mudanças da 1.7: qualidade gráfica automática em três níveis (seção 4.3).
 > Mudanças da 1.6: replay de TV do gol (seção 4.2).
@@ -45,16 +46,24 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 - Mesmo desenho reaproveitado onde o time aparece em bloco (Home, ranking, Crava), sem mudar o que já usa a divisão `c1/c2`.
 
 ### Início
-- **Cabeçalho jornalístico:** título e, logo abaixo, uma linha com a etiqueta reta cinza "Pré-temporada" e a **contagem regressiva** ("Semana fecha em 5d 03h"). Nada fica solto no canto superior direito (parece botão de fechar anúncio). Sem selo vermelho, sem piscar.
-- Bloco do time nas cores dele, com a cidade embaixo (segunda camisa).
-- **Cabo de guerra contra o rival:** barra dividida nas duas cores, com a frase do narrador do momento (`rival_colado` etc.). Se a cor do rival for parecida com a nossa (Flamengo × Fluminense), o rival entra com a 2ª cor ou um neutro (mesma régua de contraste dos uniformes).
-- Mini tabela da Série A com a sua torcida destacada e a seta de subida ou queda.
-- **Sua posição na semana** (20/10): "Você é o 3º de 14 torcedores na semana", com seta se subiu ou caiu desde a última visita.
-- Botão principal + **"hoje contam mais 2 partidas"** (o teto diário à vista, para ninguém achar que é injusto).
-- Aviso único da **pré-temporada** ("tudo vale ponto, mas zera antes do lançamento") no lugar dos selos "Em teste" e "Ensaio".
-- **Rodapé da Home:** "Aqui é só resenha: sem aposta, sem dinheiro, sem prêmio em dinheiro. Nunca. Jogo 100% grátis.", em texto pequeno e opaco (a frase é a mesma `AVISO_RESENHA` do Crava).
-- Convite de desafio com borda neutra fina, não amarela.
-- Barra de navegação: Jogar, Ranking, Palpites, Carreira.
+Home nova, decidida em 31/10/2026. De cima para baixo:
+
+1. **Cabeçalho:** avatar à esquerda (círculo na cor 1 do time, borda branca, ícone de pessoa em SVG, alvo de 44 px), que abre a aba Perfil; título no meio; sininho à direita (só para 18+). Embaixo, a etiqueta reta cinza "Pré-temporada" e a **contagem regressiva** ("Semana fecha em 5d 03h"). Nada novo no canto superior direito, sem selo vermelho, sem piscar.
+2. **Arquibancada do time:** faixa de ~150 px de ponta a ponta com a torcida da partida nas cores do time, pré-desenhada uma vez (`telas/arquibancada.ts`, com os torcedores em `telas/torcida.ts`). Luz pelo horário de Brasília: **dia** das 6h às 17h, **entardecer** até 19h e **noite** com os refletores acesos. Por cima, a tarja inclinada (−8°) "VOCÊ JOGA PELO / [TIME]" (com o artigo certo) e o "trocar". Qualidade Alta e Média: a torcida balança de leve (troca de quadro a cada 340 ms). Leve e movimento reduzido: parada. Sem escudo, sem camisa, sem pessoa reconhecível. Sem time, a tarja pergunta "Qual é a sua torcida?".
+3. **Cabo de guerra:** números em Anton dos dois lados, barra nas duas cores (se a cor do rival for parecida com a nossa, ele entra com a 2ª cor ou um neutro: a mesma régua de contraste dos uniformes) e um **nó** amarelo `#e9c75a`, inclinado, na posição da diferença, que anda com `--mola-firme` quando muda. Adesivo do narrador embaixo (`rival_colado` etc.). Última linha do bloco: "Você: 3º de 4 na semana", com seta verde ou vermelha desde a última visita. "Outro time" não tem duelo: fica só a linha da posição.
+4. **Botão "Jogar agora"** (amarelo, o único botão principal da tela). Abre, nesta ordem: **Crava**, se a rodada aberta fecha em menos de 24 h e a pessoa ainda não palpitou nela; **Time do Dia**, se ainda não jogou hoje; **Lances do Jogo**, se ainda faltam partidas que contam hoje; senão **Prova de Boleiro**. "Fecha" é a hora em que o próximo palpite tranca, a mesma do card; um palpite em qualquer jogo da rodada já conta. A linha de baixo diz o motivo em tom informativo, sem pressão ("Time do Dia: ainda não jogou hoje"). Sem time, vale a mesma ordem, com a escolha do time na frente.
+5. **Cards dos jogos** com desenho em SVG inline, na paleta do jogo, e estado vivo, em tamanhos diferentes (`telas/cardsJogos.ts`). Toque com a resposta de hoje: encolhe e volta com a mola, vibração leve.
+   - **Lances do Jogo:** largo, com um gol com rede e o rastro amarelo de uma bola; estado = partidas que contam hoje.
+   - **Prova de Boleiro** e **Time do Dia** lado a lado: a escada de 8 degraus (acende até onde o recorde alcança; estado = recorde) e a grade de bolinhas de pista nas cores das células (estado = chutes usados hoje, ou o resultado se já terminou).
+   - **Crava a Rodada:** largo, com o placar cravado numa tarja inclinada ("? x ?" enquanto não há palpite); estado = "Cravado" ou quando a rodada fecha.
+6. **Giro da semana:** uma linha estilo tarja de TV com frases de posição das torcidas, a partir do ranking já carregado ("Flamengo subiu pro 2º", "Corinthians a 12 do Palmeiras"), trocando a cada 5 s com esmaecer, sem rolar e sem piscar. Só torcidas, nunca apelido, com o artigo certo do time. Movimento reduzido ou Leve: uma frase fixa. Tocar abre o Ranking, que substitui a mini tabela que ficava aqui.
+7. **Continuam:** aviso único da pré-temporada ("tudo vale ponto, mas zera antes do lançamento"), Casa dos clubes e o rodapé "Aqui é só resenha: sem aposta, sem dinheiro, sem prêmio em dinheiro. Nunca. Jogo 100% grátis." (a frase é a mesma `AVISO_RESENHA` do Crava), além dos links de feedback, de apoio e de Termos.
+8. **Saem da Home e vão para o Perfil:** o bloco "Sua carreira", a caixa "Mostrar meu nível nos cards" e o botão "Gráficos".
+
+**Fora, de propósito:** banner de evento, pop-up, selo "AO VIVO", qualquer coisa piscando, sequência de dias.
+
+- Convite de desafio com borda neutra fina, não amarela. É a única exceção ao botão principal único: só aparece para quem chegou por um link de X1.
+- Barra de navegação: Jogar, Palpites, Ranking, Perfil.
 
 ### Partida
 - **Perspectiva:** gol maior e mais baixo, linhas da área convergindo, marca do pênalti com a bola grande perto do dedo.
@@ -89,11 +98,21 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 ### No MVP (até a fase 1.5 chegar)
 - **Sem divisões ainda:** onde está "Série A", mostrar o ranking geral da semana com os 20 times (Campeão da semana, com a Maior torcida como segunda aba). Sem faixa de rebaixamento.
 - **Sem cidade ainda:** o bloco do time não mostra cidade.
-- **Abas Palpites e Carreira:** aparecem com selo "em breve", sem tela vazia. Ranking mostra só a aba Semana.
+- **Ranking** mostra só a aba Semana.
 - **Ranking público só de torcidas:** nenhum apelido aparece em ranking; cada pessoa vê só a própria posição.
 
 ### Bonecos
 - Estilo "Silhueta premium", aprovado em 19/10: ver `docs/bonecos.md`.
+
+## 3.1 Perfil
+
+Decidido em 31/10/2026. A aba "Carreira" da barra (que era "em breve") vira **Perfil**, e o avatar do cabeçalho da Home abre a mesma tela. Baixa sob demanda, com o esqueleto de carregando de sempre. **Só a própria pessoa vê:** nenhuma lista de outras pessoas e nenhum dado novo no servidor; tudo vem do que já é calculado lá (`minha_carreira`, `minha_posicao_semana`, `minha_posicao_minigame`, `minha_posicao_crava`, `meus_recordes`).
+
+- **Crachá:** avatar, apelido (sem apelido: "Torcedor do [time]" com o artigo certo, e o botão "Escolher apelido", que leva ao campo e ao filtro de sempre, na escolha do time), time com "trocar", nível da Carreira com barra, quanto falta e quanto vale a próxima partida de hoje. Não mostra sequência de dias.
+- **Na semana:** posição geral e posição em cada minigame (pênaltis, Prova e Time do Dia pelo que o servidor já calcula; Crava pela rodada em foco).
+- **Recordes:** um por minigame.
+- **Conquistas:** atalho com selo "em breve" até o servidor dos Lances existir.
+- **Ajustes:** Gráficos (toque troca automático → Alta → Média → Leve), Vibração (a preferência `semVibracao`), Mostrar meu nível nos cards, Aviso de domingo (só para quem marcou 18+ na triagem; abre o mesmo painel do sininho), Termos e privacidade e Apagar meus dados.
 
 ## 4. Movimento e toque (regras)
 
@@ -102,7 +121,7 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 - Nada pisca mais de 3 vezes por segundo.
 - **Durações e molas** (variáveis em `src/style.css`): `--rapido` 120 ms, `--medio` 260 ms, `--lento` 420 ms; `--mola` passa ~10% do ponto e volta (pop de adesivo, botão soltando), `--mola-firme` quase não passa (barras, cards). Feitas com `linear()` do CSS, sem biblioteca; navegador antigo cai numa `cubic-bezier` parecida. No canvas, a mesma curva é a função `mola()` de `telas/cena.ts` (só desenho, nunca a física).
 - **Todo toque responde na hora:** o botão afunda sem transição e, ao soltar, volta com a mola; cards e botões pequenos encolhem um pouco (0,92 a 0,97).
-- **Vibração (só Android; o iPhone não tem):** `telas/toque.ts`. Leve (8 ms) em botão principal, card de jogo e barra de navegação; acerto (22 ms) na Prova e no Time do Dia; erro (30-50-30); gol (60-40-90). Nada passa de 200 ms. A preferência `semVibracao` desliga tudo (falta a chave na tela).
+- **Vibração (só Android; o iPhone não tem):** `telas/toque.ts`. Leve (8 ms) em botão principal, card de jogo e barra de navegação; acerto (22 ms) na Prova e no Time do Dia; erro (30-50-30); gol (60-40-90). Nada passa de 200 ms. A chave Vibração, nos ajustes do Perfil, desliga tudo (preferência `semVibracao`).
 - **Fica de fora:** bibliotecas de animação (Framer Motion, GSAP, Lottie, Rive) e WebGL. O peso não cabe no orçamento e o celular simples esquenta.
 
 ## 4.1 Ícones e carregando
@@ -133,7 +152,7 @@ Amostra aprovada em 26/10 (página "Qualidade Alta, Média e Leve"). Código em 
 | Replay de TV | sim, com a câmera fechando | sim, câmera parada | não |
 
 - **Automático (padrão):** começa em Média. Economia de dados ligada, 4 núcleos ou menos ou 2 GB ou menos: Leve. Durante a partida, a cada 90 quadros: intervalo médio acima de 22 ms (menos de ~45 por segundo) desce um nível na hora e fica gravado no aparelho; intervalo abaixo de 17,5 ms com pouco trabalho por quadro, num aparelho de 6+ núcleos e 4+ GB (ou que não diz), grava Alta para a **próxima** partida. No meio da partida só desce, nunca sobe. Quem caiu para Leve pela medição fica em Leve (sem gangorra entre visitas).
-- **Na mão:** botão "Gráficos" no rodapé da Home, toque troca automático → Alta → Média → Leve.
+- **Na mão:** ajuste "Gráficos" no Perfil, toque troca automático → Alta → Média → Leve.
 - Em dev, `?qualidade=alta|media|leve` força o nível; `/dev/qualidade.html` desenha a amostra dos três.
 - O que vier de efeito novo (partículas, impacto) declara em que nível aparece.
 
@@ -164,4 +183,4 @@ Amostra aprovada em 26/10 (página "Qualidade Alta, Média e Leve"). Código em 
 7. Home sem cara de anúncio de aposta (20/10, a partir de feedback de teste): selo "AO VIVO" e contador do canto removidos, aviso de resenha no rodapé, amarelo fosco — feito.
 8. Revisão de 26/10, lote 1: adesivo claro, duelo com contraste, ícones SVG, "em breve" da Casa sem transparência, esqueleto de carregando, telas de jogo sob demanda (JS da Home de 80 para ~28 KB gzip), molas e vibração — feito.
 9. Replay de TV do gol (26/10) — feito (seção 4.2).
-10. Próximos (revisão de 26/10): qualidade automática alta/média/leve (mede os primeiros quadros, núcleos, memória e economia de dados); luz de jogo pré-desenhada pelo horário; prévias dos jogos na Home e no hub dos Lances; enquadramento da falta 3D (batedor menor, gol maior); chave "Vibração".
+10. Próximos (revisão de 26/10): qualidade automática alta/média/leve (mede os primeiros quadros, núcleos, memória e economia de dados) — feito; luz de jogo pelo horário — feito (31/10, na arquibancada da Home; na partida a luz continua fixa); prévias dos jogos na Home — feito (31/10); prévias no hub dos Lances; enquadramento da falta 3D (batedor menor, gol maior); chave "Vibração" — feito (31/10, no Perfil).

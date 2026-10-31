@@ -83,7 +83,8 @@ registrarTela('timeDoDia', sobDemanda('Escondendo o time…', TELAS_DE_JOGO.time
 registrarTela('lances', sobDemanda('Abrindo os Lances…', TELAS_DE_JOGO.lances));
 // Painel do administrador e Casa do [time]: só baixam quando alguém abre (#admin, #casa ou #casa/<id>).
 registrarTela('admin', sobDemanda('Carregando o painel…', () => import('./telas/admin').then((m) => m.telaAdmin as Tela)));
-// Termos e privacidade (#termos): só baixa quando alguém abre.
+// Aba Perfil e Termos e privacidade (#termos): só baixam quando alguém abre.
+registrarTela('perfil', sobDemanda('Abrindo seu perfil…', () => import('./telas/perfil').then((m) => m.telaPerfil as Tela)));
 registrarTela('termos', sobDemanda('Abrindo os termos…', () => import('./telas/termos').then((m) => m.telaTermos as Tela)));
 // Apoie o jogo (#apoie): atrás do interruptor de src/config/apoio.ts e só para 18+.
 registrarTela('apoie', telaApoio);

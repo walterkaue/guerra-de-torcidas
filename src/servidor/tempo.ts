@@ -27,3 +27,8 @@ export function msAteZerarSemana(d = new Date()): number {
 export function diaDaSemanaBrasilia(d = new Date()): number {
   return emBrasilia(d).getUTCDay();
 }
+
+/** Hora em Brasília (0 a 23): a luz da arquibancada da Home. */
+export function horaBrasilia(d = new Date()): number {
+  return emBrasilia(d).getUTCHours();
+}

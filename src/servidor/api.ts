@@ -408,6 +408,26 @@ export async function minhaPosicaoSemana(semana: string): Promise<PosicaoSemana 
   return ((data ?? []) as PosicaoSemana[])[0] ?? null;
 }
 
+export type MinigameDoRecorde = 'penaltis' | 'prova' | 'dia' | 'crava';
+
+/** Meus recordes pessoais, um por minigame (null antes da primeira partida que vale). */
+export async function meusRecordes(): Promise<Partial<Record<MinigameDoRecorde, number | null>>> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('meus_recordes'));
+  if (error) throw new ErroServidor('falha');
+  return Object.fromEntries(((data ?? []) as { minigame: MinigameDoRecorde; recorde: number | null }[]).map((l) => [l.minigame, l.recorde]));
+}
+
+/** Minha posição num minigame: pênaltis e Prova na semana de hoje, Time do Dia no dia de hoje. */
+export async function minhaPosicaoMinigame(minigame: 'penaltis' | 'prova' | 'dia'): Promise<PosicaoSemana | null> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('minha_posicao_minigame', { p_minigame: minigame }));
+  if (error) throw new ErroServidor('falha');
+  return ((data ?? []) as PosicaoSemana[])[0] ?? null;
+}
+
 /** Minha carreira (XP, partidas de hoje e bônus recente). Só a própria. */
 export async function minhaCarreira(): Promise<Carreira | null> {
   await garantirSessao();

@@ -1,4 +1,4 @@
-// Carreira do jogador na tela (docs/jogo.md, seção 5, "Longo prazo"): nível e barra na Home, "subiu pra
+// Carreira do jogador na tela (docs/jogo.md, seção 5, "Longo prazo"): nível e barra no Perfil, "subiu pra
 // Titular!" no resultado e, se a pessoa quiser, o nível no card. Só a própria: nada de lista nem apelido.
 // O XP vem do servidor (minha_carreira); o aparelho só lembra o último XP visto, para saber o que mudou.
 
@@ -32,31 +32,30 @@ function buscar(): Promise<Carreira | null> {
   return ultima;
 }
 
-/** Bloco da Home: nível, barra até o próximo, quanto vale a próxima partida e bônus. */
-export function carregarCarreiraHome(el: HTMLElement, saiu: () => boolean): void {
-  void buscar().then((c) => {
+/** A Home só anota o XP de agora: é dele que o resultado conta o "+10 XP" da próxima partida. */
+export function anotarCarreira(): void {
+  void buscar().then((c) => c && xpVisto(c.xp));
+}
+
+/** Bloco do Perfil: nível, barra até o próximo, quanto vale a próxima partida e bônus. */
+export function carregarCarreiraPerfil(el: HTMLElement, saiu: () => boolean, ler: () => Promise<Carreira | null> = buscar): void {
+  void ler().then((c) => {
     if (!c || saiu()) return;
     xpVisto(c.xp);
     const n = nivelDe(c.xp);
     const bonus = linhaBonus(c.bonus);
     el.innerHTML = `
       <div class="carreira-topo">
-        <p class="rotulo">Sua carreira</p>
+        <p class="carreira-nivel">${n.nome}</p>
         <p class="carreira-xp">${c.xp.toLocaleString('pt-BR')} XP</p>
       </div>
-      <p class="carreira-nivel">${n.nome}</p>
       <div class="carreira-barra" role="progressbar" aria-label="${linhaFalta(n)}"
         aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(n.fracao * 100)}">
         <span style="--enche:${n.fracao}"></span>
       </div>
       <p class="carreira-falta">${linhaFalta(n)}</p>
       <p class="carreira-linha">${linhaHoje(c.partidasHoje)}</p>
-      ${bonus ? `<p class="carreira-linha carreira-bonus">${bonus}</p>` : ''}
-      <label class="cj-check carreira-card"><input type="checkbox" data-nivel-card${prefs.get().nivelNoCard ? ' checked' : ''}>
-        Mostrar meu nível nos cards</label>`;
-    el.querySelector<HTMLInputElement>('[data-nivel-card]')!.addEventListener('change', (e) =>
-      prefs.set({ nivelNoCard: (e.target as HTMLInputElement).checked }),
-    );
+      ${bonus ? `<p class="carreira-linha carreira-bonus">${bonus}</p>` : ''}`;
     el.hidden = false;
   });
 }

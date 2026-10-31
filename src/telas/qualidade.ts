@@ -3,7 +3,7 @@
 //
 // Automático por padrão: começa em Média; o aparelho fraco (ou com economia de dados) começa em Leve;
 // o forte sobe para Alta depois de provar que aguenta (quadros rápidos numa partida). No meio da partida
-// o nível só desce, nunca sobe, para não ficar piscando. Quem quiser escolhe na Home ("Gráficos").
+// o nível só desce, nunca sobe, para não ficar piscando. Quem quiser escolhe no Perfil ("Gráficos").
 
 import { prefs } from '../estado';
 
@@ -130,7 +130,7 @@ export function definirQualidade(n: Nivel): void {
   ouvintes.forEach((fn) => fn());
 }
 
-/** Escolha da pessoa na Home: automático ou um nível fixo. */
+/** Escolha da pessoa no Perfil: automático ou um nível fixo. */
 export function escolherQualidade(e: Escolha): void {
   prefs.set({ qualidade: e });
   definirQualidade(e === 'auto' ? nivelAutomatico() : e);

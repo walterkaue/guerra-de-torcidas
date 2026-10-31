@@ -29,14 +29,16 @@ export type Rota =
   | { tela: 'inicio' }
   | { tela: 'ranking' }
   | { tela: 'palpites' }
+  | { tela: 'perfil' }
   | { tela: 'admin' }
   | { tela: 'apoie' }
   /** Faixa etária (docs/jogo.md, seção 13): depois de responder, segue para `depois`. */
   | { tela: 'triagem'; depois: Rota }
-  /** Termos e privacidade: `de` é para onde o voltar leva (sem ela, a Home). */
-  | { tela: 'termos'; de?: Rota }
+  /** Termos e privacidade: `de` é para onde o voltar leva (sem ela, a Home); `apagar` abre já em "Apagar meus dados". */
+  | { tela: 'termos'; de?: Rota; apagar?: boolean }
   | { tela: 'feedback'; de?: string }
-  | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia' | 'lances'; desafio?: string }
+  /** `apelido` já leva ao campo do apelido (Perfil, "Escolher apelido"). */
+  | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia' | 'lances' | 'perfil'; desafio?: string; apelido?: boolean }
   | { tela: 'partida'; desafio?: string }
   | { tela: 'resultado'; dados: DadosResultado }
   | { tela: 'prova'; desafio?: string }
