@@ -510,10 +510,6 @@ export const FRASES = {
     { t: "Seis chutes e nada! O secreto se escondeu bem." },
     { t: "Hoje o time venceu. Revanche amanhã, 00h." },
   ],
-  dia_sequencia: [
-    { t: "{dias} dias seguidos! Isso é torcida fiel." },
-    { t: "Sequência de {dias} dias! Não para agora." },
-  ],
   lance_abertura: [
     { t: "Três lances, três chances de fazer história {pro_time}!" },
     { t: "A história tá aí de novo. Agora a perna é sua!" },

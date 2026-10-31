@@ -1,7 +1,7 @@
 # Banco do narrador — pênaltis, palpites, quiz, Time do Dia e Lances
 
 > Versão 1.7 · 31/10/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
-> Mudanças da 1.7: seção 13, **aviso de domingo** (push sem urgência).
+> Mudanças da 1.7: seção 13, **aviso de domingo** (push sem urgência); sai `dia_sequencia` do Time do Dia (sem sequência de dias, `jogo.md` seção 13).
 > Mudanças da 1.6: seção 12, **Lances do Jogo** (abertura, barreira, lance recriado e fim); nas jogadas, os Lances reaproveitam as frases da seção 3 que não falam de pênalti.
 > Mudanças da 1.5: 7 frases de tiozão trocadas (fila do banco, manchete, capa de jornal, picolé, primeira pedra, caneta, doutorado); glossário novo ("Pênaltis", "Chamar no X1", "em teste"): frases de X1 sem "duvido" e "desafio", e o convite do link virou texto fixo (sai `desafio_convite`).
 > Mudanças da 1.4: seções 10 (**Prova de Boleiro**) e 11 (**Time do Dia**); frases de `prova_ajuda` com a etiqueta da ajuda usada (`[tira_duas]`, `[arquibancada]`, `[troca]`).
@@ -605,7 +605,6 @@ Cuidado extra: o narrador nunca dá dica do clube secreto nem fala o nome dele a
 | Variável | Exemplo |
 |---|---|
 | `{tentativas}` | tentativas usadas (1 a 6) |
-| `{dias}` | sequência de dias jogando |
 
 ### `dia_abertura`
 - Tem um time escondido aí. Seis chutes pra achar!
@@ -638,9 +637,6 @@ Cuidado extra: o narrador nunca dá dica do clube secreto nem fala o nome dele a
 - Seis chutes e nada! O secreto se escondeu bem.
 - Hoje o time venceu. Revanche amanhã, 00h.
 
-### `dia_sequencia`
-- {dias} dias seguidos! Isso é torcida fiel.
-- Sequência de {dias} dias! Não para agora.
 
 ## 12. Lances do Jogo
 

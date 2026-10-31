@@ -27,7 +27,6 @@ const TRACOS = {
   megafone: '<path d="M3 10v4h3l9 5V5l-9 5zm15-1a4 4 0 010 6M7 14l1 5h3l-1-4"/>',
   troca: '<path d="M4 8h13l-3-3m6 11H7l3 3"/>',
   barreira: '<path d="M3 6h18v12H3zm0 6h18M9 6v6m6-6v6m-9 0v6m6-6v6m6-6v6"/>',
-  fogo: '<path d="M12 21a6 6 0 006-6c0-4-3-6-3-9-2 1-3 3-3 5-1-1-2-2-2-3-2 2-4 4-4 7a6 6 0 006 6z"/>',
 } as const;
 
 export type NomeIcone = keyof typeof TRACOS;

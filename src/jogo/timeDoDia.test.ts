@@ -13,7 +13,6 @@ import {
   proximoClube,
   quantasCertas,
   REGIAO_DA_UF,
-  sequenciaDeDias,
   suspeitoNoDia,
   tentar,
   type ClubeDoDia,
@@ -118,9 +117,9 @@ describe('pontos e card', () => {
   it('linha do card', () => {
     expect(placarDoDia(4, true)).toBe('4/6');
     expect(placarDoDia(6, false)).toBe('X/6');
-    expect(linhaDoCard(34, '4/6', 5)).toBe('Time do Dia #34 · 4/6 · 🔥 5 dias');
-    expect(linhaDoCard(1, 'X/6', 1)).toBe('Time do Dia #1 · X/6');
-    expect(linhaDoCard(2, '2/6', 2, true)).toBe('Time do Dia #2 · 2/6 · 🔥 2 dias · NOVO RECORDE!');
+    expect(linhaDoCard(34, '4/6')).toBe('Time do Dia #34 · 4/6');
+    expect(linhaDoCard(1, 'X/6')).toBe('Time do Dia #1 · X/6');
+    expect(linhaDoCard(2, '2/6', true)).toBe('Time do Dia #2 · 2/6 · NOVO RECORDE!');
   });
 });
 
@@ -143,14 +142,6 @@ describe('dias', () => {
     expect(diaAnterior('2027-01-01')).toBe('2026-12-31');
   });
 
-  it('sequência conta dias jogados seguidos, até hoje ou até ontem', () => {
-    const jogados = ['2026-10-18', '2026-10-19', '2026-10-20', '2026-10-21'];
-    expect(sequenciaDeDias(jogados, '2026-10-21')).toBe(4);
-    expect(sequenciaDeDias(jogados, '2026-10-22')).toBe(4);
-    expect(sequenciaDeDias(jogados, '2026-10-23')).toBe(0);
-    expect(sequenciaDeDias(['2026-10-15', '2026-10-17'], '2026-10-17')).toBe(1);
-    expect(sequenciaDeDias([], '2026-10-17')).toBe(0);
-  });
 });
 
 describe('sorteio do clube do dia', () => {

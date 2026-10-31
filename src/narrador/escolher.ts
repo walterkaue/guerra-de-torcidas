@@ -37,9 +37,8 @@ export interface ContextoNarrador {
   jogos?: number;
   /** Prova de Boleiro: pontos garantidos se parar agora. */
   levar?: number;
-  /** Time do Dia: tentativas usadas e sequência de dias. */
+  /** Time do Dia: tentativas usadas. */
   tentativas?: number;
-  dias?: number;
   /** Frases (texto original) já usadas nesta partida: nunca repetem. */
   usadas?: ReadonlySet<string>;
   /** Últimas ~30 frases vistas neste aparelho: evitadas enquanto houver outra opção. */
@@ -93,7 +92,7 @@ export const VARIAVEIS = [
   'o_rival', 'do_rival', 'pro_rival', 'no_rival',
   'apelido', 'desafiante', 'placar', 'pontos', 'dif', 'horas', 'posicao',
   'cidade', 'cidade_rival', 'uf', 'numero',
-  'rodada', 'acertos', 'jogos', 'levar', 'tentativas', 'dias',
+  'rodada', 'acertos', 'jogos', 'levar', 'tentativas',
 ] as const;
 
 type Variavel = (typeof VARIAVEIS)[number];
@@ -132,7 +131,6 @@ function valores(ctx: ContextoNarrador): Partial<Record<Variavel, string>> {
   if (ctx.jogos !== undefined) v.jogos = String(ctx.jogos);
   if (ctx.levar !== undefined) v.levar = String(ctx.levar);
   if (ctx.tentativas !== undefined) v.tentativas = String(ctx.tentativas);
-  if (ctx.dias !== undefined) v.dias = String(ctx.dias);
   return v;
 }
 
