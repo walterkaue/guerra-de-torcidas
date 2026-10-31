@@ -4,7 +4,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 /** Motor do jogo: src/jogo → _shared/jogo. */
-export const ARQUIVOS = ['aleatorio.ts', 'penaltis.ts', 'penaltisLance.ts', 'deteccao.ts', 'crava.ts', 'footballData.ts', 'prova.ts', 'timeDoDia.ts', 'lances.ts', 'avisos.ts'];
+export const ARQUIVOS = ['aleatorio.ts', 'penaltis.ts', 'penaltisLance.ts', 'deteccao.ts', 'crava.ts', 'footballData.ts', 'prova.ts', 'timeDoDia.ts', 'lances.ts', 'avisos.ts', 'faixaEtaria.ts'];
 export const CABECALHO =
   '// CÓPIA GERADA de src/jogo por scripts/compartilhar.mjs. Não edite aqui: mude em src/jogo e rode `npm run compartilhar`.\n';
 

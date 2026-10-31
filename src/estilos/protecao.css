@@ -1,0 +1,61 @@
+/* Proteção de menores (docs/jogo.md, seção 13): triagem e folhas de confirmação. */
+.triagem {
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+}
+
+.triagem-pergunta {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.triagem-pergunta h2 {
+  text-align: center;
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.triagem-pergunta .botao {
+  min-height: 72px;
+  font-size: 22px;
+}
+
+/* Folha que sobe do rodapé: aviso de saída e confirmações. */
+.folha {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.folha[hidden] {
+  display: none;
+}
+
+.folha-caixa {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  border-radius: 18px 18px 0 0;
+  background: #0b2a16;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 0;
+}
+
+.folha-caixa .botao {
+  text-align: center;
+  text-decoration: none;
+}
+
+.folha-caixa p {
+  overflow-wrap: anywhere;
+}

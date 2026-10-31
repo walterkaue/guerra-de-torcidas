@@ -11,6 +11,7 @@ import type { Ajuda, Degrau, Desfecho, Fim, Passo, PontosProva } from '../jogo/p
 import type { Desempenho, PosicaoSemana } from '../jogo/posicao.ts';
 import type { Tentativa } from '../jogo/timeDoDia.ts';
 import type { Carreira } from '../jogo/carreira.ts';
+import type { FaixaEtaria } from '../jogo/faixaEtaria.ts';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -57,7 +58,7 @@ export function garantirSessao(): Promise<string> {
       // Sessão salva de um usuário que não existe mais: limpa e entra de novo.
       if (error && error.status && error.status >= 400 && error.status < 500) {
         await sb.auth.signOut({ scope: 'local' });
-        prefs.set({ sincronizado: undefined });
+        prefs.set({ sincronizado: undefined, faixaSincronizada: undefined });
       } else {
         throw new ErroServidor('sem_conexao');
       }
@@ -88,6 +89,15 @@ export async function salvarTorcedor(timeId: string, apelido?: string): Promise<
     const codigo = ['apelido_bloqueado', 'apelido_longo', 'time_invalido'].find((c) => error.message.includes(c));
     throw new ErroServidor(codigo ?? 'falha');
   }
+}
+
+/** Grava a faixa da triagem. False quando o torcedor ainda não existe (falta escolher o time). */
+export async function salvarFaixaEtaria(faixa: FaixaEtaria): Promise<boolean> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('salvar_faixa_etaria', { p_faixa: faixa }));
+  if (error) throw new ErroServidor('falha');
+  return data === true;
 }
 
 /** Conta um clique no "Seja sócio", sem login e sem esperar resposta: nunca segura a saída para o site. */

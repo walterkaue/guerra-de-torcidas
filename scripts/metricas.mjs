@@ -104,6 +104,13 @@ const secoes = [
      group by rollup (clube)
      order by grouping(clube), total desc, clube`,
   ],
+  [
+    'Faixa etária (só a contagem por faixa, nunca por pessoa)',
+    `select coalesce(faixa_etaria, 'sem resposta') as faixa, count(*) as torcedores
+     from public.torcedores
+     group by faixa_etaria
+     order by faixa_etaria nulls last`,
+  ],
 ];
 
 console.log('Métricas do Guerra de Torcidas (só leitura)');

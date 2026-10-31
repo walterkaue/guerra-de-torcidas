@@ -5,13 +5,15 @@ import './estilos/palpites.css';
 import './estilos/prova.css';
 import './estilos/timeDoDia.css';
 import './estilos/lances.css';
+import './estilos/protecao.css';
 import { iniciarApp, irPara, linkDoTimeDoDia, registrarTela, type Rota } from './app';
-import { prefs } from './estado';
+import { faixaDoAparelho, prefs } from './estado';
 import { timePorId } from './dados/times';
 import { APOIO } from './config/apoio';
 import { apoioDisponivel } from './jogo/apoio';
 import { telaApoio } from './telas/apoio';
 import { telaInicio } from './telas/inicio';
+import { telaTriagem } from './telas/triagem';
 import { telaTimes } from './telas/times';
 import { telaRanking } from './telas/ranking';
 import { telaFeedback } from './telas/feedback';
@@ -71,6 +73,7 @@ registrarTela('inicio', telaInicio);
 registrarTela('times', telaTimes);
 registrarTela('ranking', telaRanking);
 registrarTela('feedback', telaFeedback);
+registrarTela('triagem', telaTriagem);
 registrarTela('partida', sobDemanda('Entrando em campo…', TELAS_DE_JOGO.partida));
 registrarTela('resultado', sobDemanda('Fechando o placar…', TELAS_DE_JOGO.resultado));
 registrarTela('palpites', sobDemanda('Abrindo os palpites…', TELAS_DE_JOGO.palpites));
@@ -109,6 +112,8 @@ function rotaDoHash(): Rota | undefined {
   return undefined;
 }
 
+// Quem já jogava antes da triagem responde nesta visita; quem chegou agora, antes da 1ª partida (app.ts).
+const jaJoga = !!prefs.get().time;
 // Link compartilhado com ?time=flamengo já sugere o time de quem mandou.
 const timeDoLink = new URLSearchParams(location.search).get('time');
 if (!prefs.get().time && timePorId(timeDoLink)) prefs.set({ time: timeDoLink! });
@@ -118,14 +123,14 @@ if (app) {
   iniciarApp(app);
   // ?dia (link do card do Time do Dia) abre direto no jogo; sem time escolhido, passa antes pela escolha.
   const dia = linkDoTimeDoDia() || (import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso'));
-  irPara(
+  const entrada: Rota =
     rotaDoHash() ??
-      (dia
-        ? prefs.get().time
-          ? { tela: 'timeDoDia' }
-          : { tela: 'times', depois: 'timeDoDia' }
-        : { tela: 'inicio' }),
-  );
+    (dia
+      ? prefs.get().time
+        ? { tela: 'timeDoDia' }
+        : { tela: 'times', depois: 'timeDoDia' }
+      : { tela: 'inicio' });
+  irPara(jaJoga && !faixaDoAparelho() && entrada.tela !== 'admin' ? { tela: 'triagem', depois: entrada } : entrada);
   if (document.readyState === 'complete') preaquecer();
   else window.addEventListener('load', preaquecer, { once: true });
   window.addEventListener('hashchange', () => {
