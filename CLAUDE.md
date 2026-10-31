@@ -2,6 +2,7 @@
 
 Leia `docs/jogo.md` antes de qualquer tarefa. Ele é a fonte da verdade sobre regras, tom e escopo. Exceção: quem recebe uma parte já planejada, com brief, lê só as seções que o brief cita.
 Conforme a tarefa, leia também: `docs/rankings.md` (rankings e justiça), `docs/narrador.md` (frases e regras do narrador), `docs/visual.md` (direção visual), `docs/casa.md` (Casa do [time], a página de história de cada clube). Se um deles discordar do `jogo.md`, vale o `jogo.md`.
+Para saber onde o projeto está e o que vem a seguir, leia `docs/proximos-passos.md`.
 
 ## Divisão de trabalho (primordial)
 
