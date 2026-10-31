@@ -1,6 +1,7 @@
 // Zero aposta (docs/jogo.md, seção 7): nenhuma palavra proibida em nenhum texto do jogo.
 // Varre todo o código do navegador (telas, frases, cards), o index.html e as funções do servidor.
-// A única exceção é o aviso fixo do Crava, que nomeia a aposta justamente para negá-la.
+// As exceções nomeiam a aposta justamente para negá-la: o aviso fixo do Crava e, só com a palavra
+// "aposta", os Termos (src/dados/termos.md), que são o texto legal e precisam dizê-la.
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -33,7 +34,7 @@ function arquivos(pasta: string): string[] {
   return readdirSync(pasta).flatMap((nome) => {
     const caminho = join(pasta, nome);
     if (statSync(caminho).isDirectory()) return arquivos(caminho);
-    return /\.(ts|css|html)$/.test(nome) && !nome.endsWith('.test.ts') ? [caminho] : [];
+    return /\.(ts|css|html|md)$/.test(nome) && !nome.endsWith('.test.ts') ? [caminho] : [];
   });
 }
 
@@ -53,8 +54,9 @@ describe('palavras proibidas (zero aposta)', () => {
     // Na Casa do [time], os links de fonte não são texto do jogo (o slug de uma matéria pode ter "red-bull-bragantino");
     // o validador da Casa (scripts/casa/validar.mjs) barra link de aposta.
     const semLinks = (a: string, t: string) => (a.replace(/\\/g, '/').endsWith('dados/casa/dados.gerado.ts') ? t.replace(/https?:\/\/[^"\s]+/g, ' ') : t);
+    const proibidas = (a: string) => (a.replace(/\\/g, '/').endsWith('dados/termos.md') ? PROIBIDAS.filter((p) => p !== 'aposta') : PROIBIDAS);
     const achados = lista.flatMap((a) =>
-      achar(semLinks(a, readFileSync(a, 'utf8')), PROIBIDAS).map((p) => `${relative(RAIZ, a)}: "${p}"`),
+      achar(semLinks(a, readFileSync(a, 'utf8')), proibidas(a)).map((p) => `${relative(RAIZ, a)}: "${p}"`),
     );
     expect(achados).toEqual([]);
   });

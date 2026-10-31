@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { linhaBonus, linhaFalta, linhaHoje, linhaResultado, linhaSequencia, nivelDe, subiuPara, xpDaProxima, xpDoDia } from './carreira';
+import { linhaBonus, linhaFalta, linhaHoje, linhaResultado, nivelDe, subiuPara, xpDaProxima, xpDoDia } from './carreira';
 
 describe('XP do dia', () => {
   it('10 nas 5 primeiras, 5 da 6ª à 15ª, zero depois', () => {
@@ -60,8 +60,6 @@ describe('textos', () => {
     expect(linhaFalta(nivelDe(770))).toBe('Faltam 230 XP pra Titular');
     expect(linhaFalta(nivelDe(31_000))).toBe('Lenda: topo da carreira.');
     expect(linhaFalta(nivelDe(0))).toBe('Faltam 100 XP pra Reserva');
-    expect(linhaSequencia(1)).toBeNull();
-    expect(linhaSequencia(4)).toBe('4 dias seguidos jogando');
     expect(linhaHoje(2)).toBe('Próxima partida de hoje: +10 XP');
     expect(linhaHoje(15)).toBe('XP de hoje completo. Amanhã tem mais.');
     expect(linhaFalta(nivelDe(1_000)).includes('4.000')).toBe(true);

@@ -11,6 +11,7 @@ import type { Ajuda, Degrau, Desfecho, Fim, Passo, PontosProva } from '../jogo/p
 import type { Desempenho, PosicaoSemana } from '../jogo/posicao.ts';
 import type { Tentativa } from '../jogo/timeDoDia.ts';
 import type { Carreira } from '../jogo/carreira.ts';
+import type { FaixaEtaria } from '../jogo/faixaEtaria.ts';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -57,7 +58,7 @@ export function garantirSessao(): Promise<string> {
       // Sessão salva de um usuário que não existe mais: limpa e entra de novo.
       if (error && error.status && error.status >= 400 && error.status < 500) {
         await sb.auth.signOut({ scope: 'local' });
-        prefs.set({ sincronizado: undefined });
+        prefs.set({ sincronizado: undefined, faixaSincronizada: undefined });
       } else {
         throw new ErroServidor('sem_conexao');
       }
@@ -88,6 +89,30 @@ export async function salvarTorcedor(timeId: string, apelido?: string): Promise<
     const codigo = ['apelido_bloqueado', 'apelido_longo', 'time_invalido'].find((c) => error.message.includes(c));
     throw new ErroServidor(codigo ?? 'falha');
   }
+}
+
+/** Grava a faixa da triagem. False quando o torcedor ainda não existe (falta escolher o time). */
+export async function salvarFaixaEtaria(faixa: FaixaEtaria): Promise<boolean> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('salvar_faixa_etaria', { p_faixa: faixa }));
+  if (error) throw new ErroServidor('falha');
+  return data === true;
+}
+
+/**
+ * Apaga o usuário anônimo e tudo ligado a ele (docs/jogo.md, seção 13). Sem sessão no aparelho não há
+ * nada no servidor, e não cria login só para isso. A limpeza do aparelho fica com a tela.
+ */
+export async function apagarMeusDados(): Promise<void> {
+  const sb = await supabase();
+  const { data } = await comTempoLimite(sb.auth.getSession());
+  if (data.session) {
+    const { error } = await comTempoLimite(sb.rpc('apagar_meus_dados'));
+    if (error) throw new ErroServidor(error.message.includes('conta_nao_anonima') ? 'conta_nao_anonima' : 'falha');
+    await sb.auth.signOut({ scope: 'local' });
+  }
+  sessaoConferida = null;
 }
 
 /** Conta um clique no "Seja sócio", sem login e sem esperar resposta: nunca segura a saída para o site. */
@@ -384,7 +409,7 @@ export async function minhaPosicaoSemana(semana: string): Promise<PosicaoSemana 
   return ((data ?? []) as PosicaoSemana[])[0] ?? null;
 }
 
-/** Minha carreira (XP, partidas de hoje, sequência e bônus recente). Só a própria. */
+/** Minha carreira (XP, partidas de hoje e bônus recente). Só a própria. */
 export async function minhaCarreira(): Promise<Carreira | null> {
   await garantirSessao();
   const sb = await supabase();
@@ -393,7 +418,6 @@ export async function minhaCarreira(): Promise<Carreira | null> {
   const l = ((data ?? []) as {
     xp: number;
     partidas_hoje: number;
-    sequencia: number;
     bonus_tipo: 'dia' | 'semana' | null;
     bonus_referencia: string | null;
   }[])[0];
@@ -401,7 +425,6 @@ export async function minhaCarreira(): Promise<Carreira | null> {
   return {
     xp: l.xp,
     partidasHoje: l.partidas_hoje,
-    sequencia: l.sequencia,
     bonus: l.bonus_tipo && l.bonus_referencia ? { tipo: l.bonus_tipo, referencia: l.bonus_referencia } : null,
   };
 }

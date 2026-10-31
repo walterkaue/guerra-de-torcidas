@@ -1,24 +1,18 @@
 // Aviso de domingo por push (cron: domingo 18h de Brasília). Para cada aparelho inscrito, monta o
 // texto com a situação da torcida dele (src/jogo/avisos.ts, o mesmo do celular) e envia pelo Web Push.
 // Inscrição que o navegador diz não existir mais (404/410) é apagada. Um aviso por aparelho a cada 20 h.
+// Só 18+ recebe (docs/jogo.md, seção 13): outra faixa é desinscrita; sem resposta, espera a triagem.
 // Só o cron chama (secret key do projeto). Segredos: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT.
 
 import webpush from 'npm:web-push@3.6.7';
 import { admin, ErroHttp, lerCorpo, servir } from '../_shared/comum.ts';
 import { avisoDeDomingo, type LinhaAviso } from '../_shared/jogo/avisos.ts';
+import { destinoDaInscricao } from '../_shared/jogo/faixaEtaria.ts';
 import { temSegredo } from '../_shared/segredo.ts';
 import { semanaBrasilia } from '../_shared/tempo.ts';
 
 const INTERVALO_MS = 20 * 3600_000;
 const FALHAS_MAX = 5;
-
-/** Horas até a semana fechar (segunda 0h de Brasília), entre 1 e 6 para o texto. */
-function horasAteFechar(agora: Date): number {
-  const brasilia = new Date(agora.getTime() - 3 * 3600_000);
-  const diasAteSegunda = (8 - brasilia.getUTCDay()) % 7 || 7;
-  const segunda = Date.UTC(brasilia.getUTCFullYear(), brasilia.getUTCMonth(), brasilia.getUTCDate() + diasAteSegunda) + 3 * 3600_000;
-  return Math.max(1, Math.min(6, Math.round((segunda - agora.getTime()) / 3600_000)));
-}
 
 servir(async (req) => {
   if (!(await temSegredo(req))) throw new ErroHttp(401, 'sem_permissao');
@@ -41,20 +35,30 @@ servir(async (req) => {
 
   const ids = [...new Set(inscricoes.map((i) => i.torcedor_id))];
   const [{ data: torcedores }, { data: ranking }] = await Promise.all([
-    sb.from('torcedores').select('id, time_id').in('id', ids),
+    sb.from('torcedores').select('id, time_id, faixa_etaria').in('id', ids),
     sb.from('ranking_semana').select('time_id, ativos, media30, posicao_campeao').eq('semana', semanaBrasilia(agora)),
   ]);
   const timeDe = new Map((torcedores ?? []).map((t) => [t.id, t.time_id as string]));
+  const faixaDe = new Map((torcedores ?? []).map((t) => [t.id, t.faixa_etaria as string | null]));
   const linhas: LinhaAviso[] = (ranking ?? []).map((r) => ({ ...r, media30: Number(r.media30) }));
-  const horas = horasAteFechar(agora);
 
   const resultado = { enviados: 0, pulados: 0, apagados: 0, falhas: 0, codigos: [] as number[] };
   for (const i of inscricoes) {
+    const destino = destinoDaInscricao(faixaDe.get(i.torcedor_id));
+    if (destino !== 'enviar') {
+      if (destino === 'desinscrever') {
+        await sb.from('push_inscricoes').delete().eq('endpoint', i.endpoint);
+        resultado.apagados++;
+      } else {
+        resultado.pulados++;
+      }
+      continue;
+    }
     if (!teste && i.ultimo_envio && agora.getTime() - Date.parse(i.ultimo_envio) < INTERVALO_MS) {
       resultado.pulados++;
       continue;
     }
-    const aviso = avisoDeDomingo(timeDe.get(i.torcedor_id) ?? 'outro', linhas, horas);
+    const aviso = avisoDeDomingo(timeDe.get(i.torcedor_id) ?? 'outro', linhas);
     const carga = JSON.stringify({ titulo: teste ? `[teste] ${aviso.titulo}` : aviso.titulo, corpo: aviso.corpo, url: '/' });
     try {
       const resp = await webpush.sendNotification({ endpoint: i.endpoint, keys: { p256dh: i.p256dh, auth: i.auth } }, semCarga ? null : carga, {

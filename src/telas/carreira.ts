@@ -8,7 +8,6 @@ import {
   linhaFalta,
   linhaHoje,
   linhaResultado,
-  linhaSequencia,
   nivelDe,
   type Carreira,
 } from '../jogo/carreira';
@@ -33,13 +32,12 @@ function buscar(): Promise<Carreira | null> {
   return ultima;
 }
 
-/** Bloco da Home: nível, barra até o próximo, quanto vale a próxima partida, sequência e bônus. */
+/** Bloco da Home: nível, barra até o próximo, quanto vale a próxima partida e bônus. */
 export function carregarCarreiraHome(el: HTMLElement, saiu: () => boolean): void {
   void buscar().then((c) => {
     if (!c || saiu()) return;
     xpVisto(c.xp);
     const n = nivelDe(c.xp);
-    const sequencia = linhaSequencia(c.sequencia);
     const bonus = linhaBonus(c.bonus);
     el.innerHTML = `
       <div class="carreira-topo">
@@ -52,7 +50,7 @@ export function carregarCarreiraHome(el: HTMLElement, saiu: () => boolean): void
         <span style="--enche:${n.fracao}"></span>
       </div>
       <p class="carreira-falta">${linhaFalta(n)}</p>
-      <p class="carreira-linha">${linhaHoje(c.partidasHoje)}${sequencia ? ` · ${sequencia}` : ''}</p>
+      <p class="carreira-linha">${linhaHoje(c.partidasHoje)}</p>
       ${bonus ? `<p class="carreira-linha carreira-bonus">${bonus}</p>` : ''}
       <label class="cj-check carreira-card"><input type="checkbox" data-nivel-card${prefs.get().nivelNoCard ? ' checked' : ''}>
         Mostrar meu nível nos cards</label>`;

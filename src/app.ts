@@ -3,6 +3,8 @@
 import type { Gestos, ResultadoPartida } from './jogo/penaltis';
 import type { DesafioRecebido, FechamentoDoServidor } from './servidor/api';
 import type { DadosResultadoProva } from './telas/prova';
+import { faixaDoAparelho } from './estado';
+import { precisaDaTriagem } from './jogo/faixaEtaria';
 import { qualidade } from './telas/qualidade';
 
 export interface DadosResultado {
@@ -29,6 +31,10 @@ export type Rota =
   | { tela: 'palpites' }
   | { tela: 'admin' }
   | { tela: 'apoie' }
+  /** Faixa etária (docs/jogo.md, seção 13): depois de responder, segue para `depois`. */
+  | { tela: 'triagem'; depois: Rota }
+  /** Termos e privacidade: `de` é para onde o voltar leva (sem ela, a Home). */
+  | { tela: 'termos'; de?: Rota }
   | { tela: 'feedback'; de?: string }
   | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia' | 'lances'; desafio?: string }
   | { tela: 'partida'; desafio?: string }
@@ -61,8 +67,10 @@ let primeiraTela = true;
  * Troca de tela. Com a transição nativa do navegador (View Transitions), a tela nova entra numa
  * varrida inclinada, como a tarja de TV (docs/visual.md, seção 4.5); sem ela, na qualidade Leve,
  * com movimento reduzido ou na primeira tela, troca direto. A troca em si continua igual.
+ * Toda entrada em jogo passa por aqui, então é aqui que a triagem de faixa etária segura a 1ª partida.
  */
-export function irPara(rota: Rota): void {
+export function irPara(pedida: Rota): void {
+  const rota: Rota = precisaDaTriagem(pedida.tela, faixaDoAparelho()) ? { tela: 'triagem', depois: pedida } : pedida;
   const trocar = () => {
     if (typeof limparAtual === 'function') limparAtual();
     raiz.innerHTML = '';

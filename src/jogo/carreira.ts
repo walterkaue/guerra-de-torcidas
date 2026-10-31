@@ -73,8 +73,6 @@ export interface Carreira {
   xp: number;
   /** Partidas válidas de hoje (Brasília) que já entraram na carreira. */
   partidasHoje: number;
-  /** Dias seguidos jogando, até hoje ou ontem. Perder não tira nada. */
-  sequencia: number;
   /** Bônus mais recente dos últimos 7 dias, se houver. */
   bonus: { tipo: 'dia' | 'semana'; referencia: string } | null;
 }
@@ -84,11 +82,6 @@ const xp = (n: number) => `${n.toLocaleString('pt-BR')} XP`;
 /** "Faltam 230 XP pra Titular" (ou o recado da Lenda). */
 export function linhaFalta(n: Nivel): string {
   return n.proximo ? `Faltam ${xp(n.faltam)} pra ${n.proximo}` : 'Lenda: topo da carreira.';
-}
-
-export function linhaSequencia(dias: number): string | null {
-  if (dias < 2) return null;
-  return `${dias} dias seguidos jogando`;
 }
 
 /** Recado do dia: quanto a próxima partida ainda vale. */

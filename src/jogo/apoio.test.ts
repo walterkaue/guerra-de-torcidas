@@ -2,14 +2,30 @@ import { describe, expect, it } from 'vitest';
 import { APOIO } from '../config/apoio';
 import {
   INTERVALO_APOIO_MS,
+  VALIDADE_CONFIRMACAO_MS,
   apoioDisponivel,
   bomMomentoDoDia,
   bomMomentoDosLances,
+  confirmacaoValida,
   linkSeguro,
   passouUmaSemana,
 } from './apoio';
 
 const ligado = { apoio_ligado: true, linkApoioMensal: 'https://apoia.se/jogo', chavePix: 'jogo@exemplo.com' };
+
+describe('"Sou maior de 18 ou responsável"', () => {
+  const agora = 1_800_000_000_000;
+  it('vale por 30 dias', () => {
+    expect(VALIDADE_CONFIRMACAO_MS).toBe(30 * 24 * 3600 * 1000);
+    expect(confirmacaoValida(agora - VALIDADE_CONFIRMACAO_MS + 1, agora)).toBe(true);
+    expect(confirmacaoValida(agora - VALIDADE_CONFIRMACAO_MS, agora)).toBe(false);
+  });
+  it('sem confirmação, com valor estranho ou data no futuro, pergunta de novo', () => {
+    expect(confirmacaoValida(null, agora)).toBe(false);
+    expect(confirmacaoValida(Number.NaN, agora)).toBe(false);
+    expect(confirmacaoValida(agora + 1, agora)).toBe(false);
+  });
+});
 
 describe('apoioDisponivel', () => {
   it('a configuração que vai no repositório começa desligada', () => {

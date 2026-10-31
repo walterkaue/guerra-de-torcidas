@@ -1,6 +1,8 @@
 // Preferências do jogador guardadas só neste aparelho (time, apelido, som).
 // Nada aqui é obrigatório; tudo tem valor padrão.
 
+import { ehFaixa, type FaixaEtaria } from './jogo/faixaEtaria';
+
 const CHAVE = 'gdt:prefs';
 
 /** Tamanho máximo do apelido (seção 3 do jogo.md). */
@@ -26,6 +28,10 @@ interface Prefs {
   nivelNoCard?: boolean;
   /** "time|apelido" que o servidor já tem (para não regravar à toa). */
   sincronizado?: string;
+  /** Resposta da triagem (docs/jogo.md, seção 13). Nunca aparece na tela nem no card. */
+  faixa?: FaixaEtaria;
+  /** Faixa que o servidor já tem (para não regravar à toa). */
+  faixaSincronizada?: FaixaEtaria;
 }
 
 function ler(): Prefs {
@@ -50,3 +56,34 @@ export const prefs = {
     gravar({ ...ler(), ...parcial });
   },
 };
+
+// Sem armazenamento no aparelho, a resposta vale até fechar a aba (senão a triagem voltaria a cada tela).
+let faixaDaAba: FaixaEtaria | undefined;
+
+export function faixaDoAparelho(): FaixaEtaria | undefined {
+  const faixa = ler().faixa;
+  return ehFaixa(faixa) ? faixa : faixaDaAba;
+}
+
+export function guardarFaixa(faixa: FaixaEtaria): void {
+  faixaDaAba = faixa;
+  prefs.set({ faixa });
+}
+
+/** Tudo o que o jogo guarda: as chaves gdt, mais a sessão do Supabase (sb-). */
+export function chaveDoJogo(chave: string): boolean {
+  return chave.startsWith('gdt') || chave.startsWith('sb-');
+}
+
+/** "Apagar meus dados": o aparelho volta a ser de quem nunca jogou. */
+export function limparAparelho(): void {
+  faixaDaAba = undefined;
+  for (const armazem of ['localStorage', 'sessionStorage'] as const) {
+    try {
+      const guardado = window[armazem];
+      for (const chave of Object.keys(guardado).filter(chaveDoJogo)) guardado.removeItem(chave);
+    } catch {
+      // armazenamento bloqueado: não há o que limpar
+    }
+  }
+}

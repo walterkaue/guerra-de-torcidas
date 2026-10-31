@@ -60,7 +60,7 @@ async function timeDoDia(db: PGlite, quem: string, pontos: number, o: { dia?: st
 }
 
 async function carreira(db: PGlite, quem: string) {
-  const { rows } = await db.query<{ xp: number; partidas_hoje: number; sequencia: number; bonus_tipo: string | null }>(
+  const { rows } = await db.query<{ xp: number; partidas_hoje: number; bonus_tipo: string | null }>(
     'select * from public.carreira_de($1)',
     [quem],
   );
@@ -162,18 +162,15 @@ describe('sequência de dias', () => {
       ),
     );
 
-  it('conta os dias seguidos até hoje ou ontem; perder não tira XP', async () => {
+  it('sem sequência de dias (docs/jogo.md, seção 13): o XP é o mesmo, com dias seguidos ou não', async () => {
     const a = await torcedor(db, 'bahia');
-    await marcar(a, [0, 1, 2, 4]);
-    expect((await carreira(db, a)).sequencia).toBe(3);
+    await marcar(a, [0, 1, 2]);
     const b = await torcedor(db, 'bahia');
-    await marcar(b, [1, 2]);
-    expect((await carreira(db, b)).sequencia).toBe(2);
-    const c = await torcedor(db, 'bahia');
-    await marcar(c, [2, 3, 4]);
-    const cc = await carreira(db, c);
-    expect(cc.sequencia).toBe(0);
-    expect(cc.xp).toBe(30);
+    await marcar(b, [0, 5, 9]);
+    const [ca, cb] = [await carreira(db, a), await carreira(db, b)];
+    expect(ca.xp).toBe(30);
+    expect(cb.xp).toBe(30);
+    expect(ca).not.toHaveProperty('sequencia');
   });
 });
 

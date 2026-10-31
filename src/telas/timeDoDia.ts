@@ -350,7 +350,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       <div class="res-carreira" data-carreira hidden></div>
       <p class="dia-proximo rotulo">Próximo time em <strong data-relogio>${formatarRelogio(Date.parse(e.proximoEm) - Date.now())}</strong></p>
       <section class="res-compartilhar">
-        <a class="botao botao-zap" target="_blank" rel="noopener"
+        <a class="botao botao-zap" data-sem-aviso target="_blank" rel="noopener"
           href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Mandar no grupo</a>
         <div class="trio">
           <button class="botao botao-sec" type="button" data-acao="share">Stories</button>

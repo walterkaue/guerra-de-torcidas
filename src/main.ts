@@ -5,13 +5,14 @@ import './estilos/palpites.css';
 import './estilos/prova.css';
 import './estilos/timeDoDia.css';
 import './estilos/lances.css';
+import './estilos/protecao.css';
 import { iniciarApp, irPara, linkDoTimeDoDia, registrarTela, type Rota } from './app';
-import { prefs } from './estado';
+import { faixaDoAparelho, prefs } from './estado';
 import { timePorId } from './dados/times';
-import { APOIO } from './config/apoio';
-import { apoioDisponivel } from './jogo/apoio';
-import { telaApoio } from './telas/apoio';
+import { apoioLiberado, telaApoio } from './telas/apoio';
 import { telaInicio } from './telas/inicio';
+import { ligarAvisoDeSaida } from './telas/saida';
+import { telaTriagem } from './telas/triagem';
 import { telaTimes } from './telas/times';
 import { telaRanking } from './telas/ranking';
 import { telaFeedback } from './telas/feedback';
@@ -21,6 +22,7 @@ import { ligarToqueDosBotoes } from './telas/toque';
 
 registrarServiceWorker();
 ligarToqueDosBotoes();
+ligarAvisoDeSaida();
 
 type Tela = Parameters<typeof registrarTela>[1];
 
@@ -71,6 +73,7 @@ registrarTela('inicio', telaInicio);
 registrarTela('times', telaTimes);
 registrarTela('ranking', telaRanking);
 registrarTela('feedback', telaFeedback);
+registrarTela('triagem', telaTriagem);
 registrarTela('partida', sobDemanda('Entrando em campo…', TELAS_DE_JOGO.partida));
 registrarTela('resultado', sobDemanda('Fechando o placar…', TELAS_DE_JOGO.resultado));
 registrarTela('palpites', sobDemanda('Abrindo os palpites…', TELAS_DE_JOGO.palpites));
@@ -80,7 +83,9 @@ registrarTela('timeDoDia', sobDemanda('Escondendo o time…', TELAS_DE_JOGO.time
 registrarTela('lances', sobDemanda('Abrindo os Lances…', TELAS_DE_JOGO.lances));
 // Painel do administrador e Casa do [time]: só baixam quando alguém abre (#admin, #casa ou #casa/<id>).
 registrarTela('admin', sobDemanda('Carregando o painel…', () => import('./telas/admin').then((m) => m.telaAdmin as Tela)));
-// Apoie o jogo (#apoie): atrás do interruptor de src/config/apoio.ts.
+// Termos e privacidade (#termos): só baixa quando alguém abre.
+registrarTela('termos', sobDemanda('Abrindo os termos…', () => import('./telas/termos').then((m) => m.telaTermos as Tela)));
+// Apoie o jogo (#apoie): atrás do interruptor de src/config/apoio.ts e só para 18+.
 registrarTela('apoie', telaApoio);
 registrarTela('casa', sobDemanda('Abrindo a Casa…', () => import('./telas/casa/tela').then((m) => m.telaCasa as Tela)));
 
@@ -96,11 +101,12 @@ function preaquecer(): void {
   ocioso(() => Object.values(TELAS_DE_JOGO).forEach((carregar) => void carregar().catch(() => {})));
 }
 
-/** Rota do endereço: #admin, #apoie, #casa e #casa/<id>. */
+/** Rota do endereço: #admin, #apoie, #termos, #casa e #casa/<id>. */
 function rotaDoHash(): Rota | undefined {
   if (location.hash === '#admin') return { tela: 'admin' };
+  if (location.hash === '#termos') return { tela: 'termos' };
   if (location.hash === '#apoie') {
-    if (apoioDisponivel(APOIO)) return { tela: 'apoie' };
+    if (apoioLiberado()) return { tela: 'apoie' };
     history.replaceState(null, '', `${location.pathname}${location.search}`);
     return { tela: 'inicio' };
   }
@@ -109,6 +115,8 @@ function rotaDoHash(): Rota | undefined {
   return undefined;
 }
 
+// Quem já jogava antes da triagem responde nesta visita; quem chegou agora, antes da 1ª partida (app.ts).
+const jaJoga = !!prefs.get().time;
 // Link compartilhado com ?time=flamengo já sugere o time de quem mandou.
 const timeDoLink = new URLSearchParams(location.search).get('time');
 if (!prefs.get().time && timePorId(timeDoLink)) prefs.set({ time: timeDoLink! });
@@ -118,14 +126,15 @@ if (app) {
   iniciarApp(app);
   // ?dia (link do card do Time do Dia) abre direto no jogo; sem time escolhido, passa antes pela escolha.
   const dia = linkDoTimeDoDia() || (import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso'));
-  irPara(
+  const entrada: Rota =
     rotaDoHash() ??
-      (dia
-        ? prefs.get().time
-          ? { tela: 'timeDoDia' }
-          : { tela: 'times', depois: 'timeDoDia' }
-        : { tela: 'inicio' }),
-  );
+    (dia
+      ? prefs.get().time
+        ? { tela: 'timeDoDia' }
+        : { tela: 'times', depois: 'timeDoDia' }
+      : { tela: 'inicio' });
+  const semTriagem = entrada.tela === 'admin' || entrada.tela === 'termos';
+  irPara(jaJoga && !faixaDoAparelho() && !semTriagem ? { tela: 'triagem', depois: entrada } : entrada);
   if (document.readyState === 'complete') preaquecer();
   else window.addEventListener('load', preaquecer, { once: true });
   window.addEventListener('hashchange', () => {

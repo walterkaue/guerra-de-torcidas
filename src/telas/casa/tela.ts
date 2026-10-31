@@ -111,7 +111,7 @@ function blocoSocio(socio: SocioDoClube, time: Time): string {
     <div class="socio-folha" data-socio-folha role="dialog" aria-modal="true" aria-describedby="socio-saida" aria-label="Saída do jogo" hidden>
       <div class="socio-caixa">
         <p id="socio-saida">${esc(textos.saida)}</p>
-        <a class="botao" data-socio-ir href="${esc(linkDoSocio(socio.url))}" target="_blank" rel="noopener noreferrer">Ir para o site</a>
+        <a class="botao" data-socio-ir data-sem-aviso href="${esc(linkDoSocio(socio.url))}" target="_blank" rel="noopener noreferrer">Ir para o site</a>
         <button class="botao botao-sec" type="button" data-socio-ficar>Ficar no jogo</button>
       </div>
     </div>
