@@ -19,12 +19,13 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { DOMINIOS_ACEITOS } from '../clubes/validar.mjs';
+import { MODELOS } from '../ia/modelos.mjs';
 import { SITE_DO_CLUBE, colunaClube, escreverTabela, lerTabela } from './tabela.mjs';
 
 const PASTA = new URL('../../dados/casa/', import.meta.url);
 const RELATORIOS = new URL('../../dados/casa/conferencia-gemini/', import.meta.url);
 export const ARQUIVOS_OBJETIVOS = ['titulos', 'recordes', 'goleadas'];
-export const MODELOS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash'];
+export { MODELOS };
 const LIMITE_PAGINA = 80_000; // caracteres de texto mandados ao modelo (cerca de 20 mil tokens)
 const PAUSA_MS = 4_500; // entre chamadas, para caber na cota gratuita por minuto
 
