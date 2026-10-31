@@ -25,15 +25,13 @@ import {
   type GestoCobranca,
   type Paridade,
   type ResultadoParOuImpar,
-  type PlanoDefesa,
   type ResultadoCobranca,
   type ResultadoDefesa,
 } from '../jogo/penaltis';
 import { pedirNumeroDoNarrador } from '../jogo/numeroNarrador';
+import * as SERVIDOR from '../servidor/api';
 import {
   ErroServidor,
-  fecharPartida,
-  novaPartida,
   type DesafioRecebido,
   type FechamentoDoServidor,
 } from '../servidor/api';
@@ -66,9 +64,10 @@ import { aoMudarQualidade, medirQuadros, qualidade } from './qualidade';
 
 type Fase =
   | { tipo: 'mirar'; inicio: number }
-  | { tipo: 'chute'; inicio: number; r: ResultadoCobranca; gesto: GestoCobranca }
-  | { tipo: 'corrida'; inicio: number; plano: PlanoDefesa; zona: number | null; pulouEm: number | null }
-  | { tipo: 'chuteMaquina'; inicio: number; r: ResultadoDefesa; pulouEm: number; dica: number }
+  // r nulo: esperando o servidor resolver o lance (lance a lance).
+  | { tipo: 'chute'; inicio: number; r: ResultadoCobranca | null; gesto: GestoCobranca }
+  | { tipo: 'corrida'; inicio: number; dica: number; zona: number | null; pulouEm: number | null }
+  | { tipo: 'chuteMaquina'; inicio: number; r: ResultadoDefesa | null; zona: number; pulouEm: number; dica: number }
   | { tipo: 'pausa'; inicio: number; ate: number; depois: () => void }
   | { tipo: 'parOuImpar' }
   | { tipo: 'replay'; replay: Replay; depois: () => void }
@@ -91,6 +90,10 @@ const parametros = new URLSearchParams(location.search);
 const usarTimer = import.meta.env.DEV && parametros.has('relogio');
 const escalaTempo = import.meta.env.DEV ? Math.max(1, Number(parametros.get('lento')) || 1) : 1;
 const relogio = () => performance.now() / escalaTempo;
+// ?penaltiFalso troca o servidor por um de mentira, lance a lance (src/dev/penaltiFalso.ts).
+const FALSO = import.meta.env.DEV && parametros.has('penaltiFalso');
+const servidor = (): Promise<Pick<typeof SERVIDOR, 'novaPartida' | 'lancePenalti' | 'fecharPartida'>> =>
+  FALSO ? import('../dev/penaltiFalso') : Promise.resolve(SERVIDOR);
 const proximoQuadro = (fn: (t: number) => void): number =>
   usarTimer ? window.setTimeout(() => fn(relogio()), 16) : requestAnimationFrame(() => fn(relogio()));
 
@@ -108,6 +111,7 @@ const DUR_CAMERA_LENTA = 500;
 const DUR_ANTES_DO_REPLAY = 1000;
 
 export const AVISO_SEM_PONTOS = 'Sem internet: essa partida não vale pontos.';
+export const AVISO_CAIU = 'Caiu a conexão: essa partida não vale mais pontos.';
 
 export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   const time: Time = timePorId(prefs.get().time) ?? TIMES[TIMES.length - 1];
@@ -116,6 +120,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   let semente = sementeNova();
   let dificuldade = dificuldadePorDia(diaEmBrasilia());
   let partidaId: string | null = null;
+  // Lance a lance: a semente fica no servidor, que resolve cada lance e manda a dica da próxima defesa.
+  let lanceALance = false;
+  let dicaDoServidor: number | null = null;
   let desafio: DesafioRecebido | null = null;
   let aviso: string | null = null;
   let fechamento: Promise<FechamentoDoServidor> | null = null;
@@ -300,8 +307,12 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   }
 
   function comecarDefesa(): void {
-    const plano = planejarDefesa(semente, rodada, dificuldade, desafio?.cobrancas[rodada]);
-    fase = { tipo: 'corrida', inicio: relogio(), plano, zona: null, pulouEm: null };
+    const dica =
+      emLanceALance() && dicaDoServidor !== null
+        ? dicaDoServidor
+        : planejarDefesa(semente, rodada, dificuldade, desafio?.cobrancas?.[rodada]).dica;
+    dicaDoServidor = null;
+    fase = { tipo: 'corrida', inicio: relogio(), dica, zona: null, pulouEm: null };
     instruir('Sua vez de defender! Olhe o pé de apoio e toque onde pular.');
     if (defesaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['defesa']) }));
   }
@@ -311,14 +322,57 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     fase = { tipo: 'pausa', inicio: agora, ate: agora + ms, depois: fn };
   }
 
+  const emLanceALance = () => lanceALance && !!partidaId && !aviso;
+
+  /** O servidor não respondeu um lance: a partida segue no celular, sem valer pontos. */
+  function caiuALigacao(e?: unknown): void {
+    if (e) console.warn('Lance sem servidor:', e instanceof ErroServidor ? e.codigo : e);
+    if (!aviso) mostrarAviso(AVISO_CAIU);
+  }
+
+  async function resultadoDaCobranca(gq: GestoCobranca, i: number): Promise<ResultadoCobranca> {
+    if (emLanceALance()) {
+      try {
+        const resp = await (await servidor()).lancePenalti(partidaId!, { tipo: 'cobranca', gesto: gq });
+        if (resp.cobranca) {
+          dicaDoServidor = resp.proximo.tipo === 'defesa' ? resp.proximo.dica : null;
+          return resp.cobranca;
+        }
+      } catch (e) {
+        caiuALigacao(e);
+      }
+      caiuALigacao();
+    }
+    return resolverCobranca(semente, i, gq, dificuldade);
+  }
+
+  async function resultadoDaDefesa(zona: number, i: number): Promise<ResultadoDefesa> {
+    if (emLanceALance()) {
+      try {
+        const resp = await (await servidor()).lancePenalti(partidaId!, { tipo: 'defesa', zona });
+        if (resp.defesa) return resp.defesa;
+      } catch (e) {
+        caiuALigacao(e);
+      }
+      caiuALigacao();
+    }
+    return resolverDefesa(semente, i, zona, dificuldade, desafio?.cobrancas?.[i]);
+  }
+
   function chutar(gesto: GestoCobranca): void {
     const gq = normalizarCobranca(gesto);
-    const r = resolverCobranca(semente, rodada, gq, dificuldade);
     gestosCobranca.push(gq);
     if (fase.tipo === 'mirar') pertoNoChute = pertoDaBola(relogio() - fase.inicio);
-    fase = { tipo: 'chute', inicio: relogio(), r, gesto: gq };
+    const chute: Fase & { tipo: 'chute' } = { tipo: 'chute', inicio: relogio(), r: null, gesto: gq };
+    fase = chute;
     instruir('');
     somChute();
+    void resultadoDaCobranca(gq, rodada).then((r) => {
+      if (acabou || fase !== chute) return;
+      chute.r = r;
+      // A bola sai assim que o resultado chega (o pé já está na bola).
+      chute.inicio = Math.min(chute.inicio, relogio() - DUR_BATIDA);
+    });
   }
 
   function legendaDaCobranca(r: ResultadoCobranca): string {
@@ -393,17 +447,21 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   }
 
   function chuteDaMaquina(zona: number, pulouEm: number, dica: number): void {
-    const r = resolverDefesa(semente, rodada, zona, dificuldade, desafio?.cobrancas[rodada]);
     gestosDefesa.push(zona);
-    fase = { tipo: 'chuteMaquina', inicio: relogio(), r, pulouEm, dica };
+    const chute: Fase & { tipo: 'chuteMaquina' } = { tipo: 'chuteMaquina', inicio: relogio(), r: null, zona, pulouEm, dica };
+    fase = chute;
     instruir('');
-    somChute();
+    void resultadoDaDefesa(zona, rodada).then((r) => {
+      if (acabou || fase !== chute) return;
+      chute.r = r;
+      chute.inicio = relogio();
+      somChute();
+    });
   }
 
-  function fimDaDefesa(r: ResultadoDefesa): void {
+  function fimDaDefesa(r: ResultadoDefesa, dica: number): void {
     defesas.push(r);
     atualizarHud();
-    const { dica } = planejarDefesa(semente, rodada, dificuldade, desafio?.cobrancas[rodada]);
     const legenda =
       r.desfecho === 'defesa' ? (r.pontos ? `Defesa · +${r.pontos}` : 'Defesa') : r.desfecho === 'gol' ? 'Gol do adversário' : 'Pra fora';
     narrar(narrador.falar(eventoDaDefesa(r), { etiquetas: etiquetasDaDefesa(r, dica) }), legenda);
@@ -521,13 +579,14 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     try {
       // Time e apelido precisam estar no servidor; sessão nova (aparelho limpo) regrava.
       const pedir = async (codigo?: string) => {
+        if (FALSO) return (await servidor()).novaPartida(codigo);
         await sincronizarTorcedor();
         try {
-          return await novaPartida(codigo);
+          return await SERVIDOR.novaPartida(codigo);
         } catch (e) {
           if (!(e instanceof ErroServidor) || e.codigo !== 'sem_time') throw e;
           await sincronizarTorcedor(true);
-          return novaPartida(codigo);
+          return SERVIDOR.novaPartida(codigo);
         }
       };
       let p;
@@ -538,7 +597,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         // Link do próprio desafio ou link quebrado: vira partida normal, valendo.
         p = await pedir();
       }
-      semente = p.semente;
+      // Servidor antigo manda a semente; no lance a lance ela fica lá (a local só serve se cair a conexão).
+      if (typeof p.semente === 'number') semente = p.semente;
+      lanceALance = !!p.lanceALance;
       dificuldade = p.dificuldade;
       partidaId = p.partidaId;
       desafio = p.desafio;
@@ -568,7 +629,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   /** Fecha no servidor uma vez só (o par ou ímpar e o fim da partida usam a mesma resposta). */
   function fecharNoServidor(escolha?: EscolhaParOuImpar): Promise<FechamentoDoServidor> | null {
     if (!partidaId || aviso) return null;
-    fechamento ??= fecharPartida(partidaId, gestosAtuais(escolha));
+    fechamento ??= servidor().then((s) => s.fecharPartida(partidaId!, gestosAtuais(escolha)));
     return fechamento;
   }
 
@@ -798,6 +859,14 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       case 'chute': {
         const { r, gesto } = fase;
         const ms = agora - fase.inicio;
+        if (!r) {
+          // Esperando o servidor: o pé chega na bola e a bola espera.
+          desenharGoleiroNoQuadro(goleiroMaquina, null, 0, agora);
+          desenharTraves();
+          desenharBatedorChutando(Math.min(ms, DUR_BATIDA), false);
+          desenharBola(g.bolaX, g.bolaY);
+          break;
+        }
         const dur = r.cavadinha ? DUR_CAVADINHA : DUR_CHUTE;
         // A bola só sai quando o pé encontra a bola.
         const t = limitar01(progressoDoChute(r, ms - DUR_BATIDA));
@@ -824,15 +893,23 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         const tPulo = fase.pulouEm === null ? 0 : (agora - fase.pulouEm) / DUR_PULO;
         desenharGoleiroNoQuadro(goleiroJogador, fase.zona, tPulo, agora);
         desenharTraves();
-        if (ms >= DUR_CORRIDA * 0.55) desenharDica(fase.plano.dica);
+        if (ms >= DUR_CORRIDA * 0.55) desenharDica(fase.dica);
         desenharBola(g.bolaX, g.bolaY);
-        desenharMaquinaCorrendo(ms, agora, fase.plano.dica);
-        if (ms >= DUR_CORRIDA + janela) chuteDaMaquina(fase.zona ?? -1, fase.pulouEm ?? agora, fase.plano.dica);
+        desenharMaquinaCorrendo(ms, agora, fase.dica);
+        if (ms >= DUR_CORRIDA + janela) chuteDaMaquina(fase.zona ?? -1, fase.pulouEm ?? agora, fase.dica);
         break;
       }
       case 'chuteMaquina': {
         const { r } = fase;
         const ms = agora - fase.inicio;
+        if (!r) {
+          // Esperando o servidor: o goleiro já pulou e o batedor está na bola.
+          desenharGoleiroNoQuadro(goleiroJogador, fase.zona < 0 ? null : fase.zona, Math.max((agora - fase.pulouEm) / DUR_PULO, 0), agora);
+          desenharTraves();
+          desenharMaquinaChutando(0, fase.dica);
+          desenharBola(g.bolaX, g.bolaY);
+          break;
+        }
         const t = limitar01((ms - DUR_BATIDA) / DUR_CHUTE);
         const tPulo = (agora - fase.pulouEm) / DUR_PULO;
         desenharGoleiroNoQuadro(goleiroJogador, r.zonaGoleiro, Math.max(tPulo, 0), agora);
@@ -847,7 +924,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         const ay = r.desfecho === 'fora' ? telaY(1.35) : r.desfecho === 'defesa' ? luva.luvaY : telaY(zonaY(r.alvo));
         desenharMaquinaChutando(ms, fase.dica);
         desenharBolaEmVoo((tt) => trajetoria(ax, ay, 0, facil(tt), false), t);
-        if (t >= 1) fimDaDefesa(r);
+        if (t >= 1) fimDaDefesa(r, fase.dica);
         break;
       }
       case 'pausa': {

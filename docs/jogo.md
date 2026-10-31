@@ -233,10 +233,13 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - O servidor sorteia a semente da partida (e guarda a dificuldade do dia). O cliente manda só os **gestos** (direção, força, efeito, zona escolhida).
 - O servidor recalcula o resultado com a mesma física determinística e é ele que grava os pontos.
 - Limite de partidas por minuto por jogador. Cada semente vale para uma partida só e expira.
-- **Risco conhecido:** hoje o celular recebe a semente antes de jogar, então quem ler o código consegue prever o canto do goleiro e se a dica do pé de apoio é verdadeira.
-  - Já no ranking: o servidor marca partidas estatisticamente impossíveis e congela os pontos até revisão.
-  - **Antes de divulgar:** a decisão do goleiro e do batedor passa a usar um segredo que só o servidor conhece; o celular manda o gesto de cada lance e recebe o resultado, um lance por vez.
-  - O mesmo vale para o desafio por link: quem aceita recebe as cobranças gravadas antes de defender.
+- **Lance a lance (27/10/2026, fecha o risco da semente):** até aqui o celular recebia a semente antes de jogar, e quem lesse o código previa o canto do goleiro e se a dica do pé de apoio era verdadeira. Agora a semente é segredo do servidor:
+  - O celular manda o gesto de **um lance** para a função `lance-penalti` e recebe o resultado daquele lance. Depois de cada cobrança vem só a **dica** da próxima defesa; o canto do batedor e o "erra" só saem depois que o jogador escolhe a zona. A espera cabe no pé encontrando a bola (a bola só sai quando o resultado chega).
+  - Os gestos ficam guardados no servidor (`partidas_segredo`), um lance por vez, na ordem da regra (lance repetido ou fora de ordem é recusado). No fechamento valem os gestos guardados; do celular só entra a escolha do par ou ímpar.
+  - **Desafio por link:** as cobranças gravadas de quem desafiou também ficam no servidor (antes chegavam ao celular de quem aceitava).
+  - O celular não lê mais a coluna da semente na tabela de partidas.
+  - **Caiu a conexão no meio:** a partida continua no celular, com um sorteio próprio, e fica **sem valer pontos** ("Caiu a conexão: essa partida não vale mais pontos.").
+  - A detecção de partidas impossíveis (abaixo) continua ligada.
 
 ### Como está no servidor (bloco B, 19/10/2026)
 - **Limites:** 3 partidas criadas por minuto por torcedor; a semente expira em 15 minutos. Ajustáveis na tabela `config_deteccao`.
@@ -472,7 +475,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 ### Anti-trapaça
 - Como nos pênaltis: o servidor sorteia a semente, recebe os 3 lances e os 3 gestos, recalcula e grava. O limite de partidas valendo por dia é contado no servidor.
 - O treino não passa pelo servidor e não conta para nada.
-- Risco conhecido: o celular recebe a semente antes de jogar (o mesmo risco dos pênaltis, com a mesma solução antes de divulgar).
+- Quando o servidor dos Lances nascer, já nasce **lance a lance**, como os pênaltis (seção 6): a semente nunca vai para o celular. Enquanto não há servidor, os Lances não valem pontos e não há o que trapacear.
 
 ### Catálogo
 - **Refeito do zero.** Os lotes de ideias de 20/10 servem só de ponto de partida (vários tinham fatos trocados).
@@ -565,7 +568,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - Supabase: projeto `guerra-de-torcidas` (ref `ybfeqykdnqmnufrgtnoc`), região São Paulo, plano Free durante o desenvolvimento.
 - Chaves: o front-end usa a URL do projeto e a **publishable key** (`sb_publishable_…`). As funções no servidor usam a **secret key** (`sb_secret_…`), só como segredo das funções. As chaves antigas `anon` e `service_role` estão sendo descontinuadas pela Supabase até o fim de 2026: não usar.
 - Como a URL e a publishable key são públicas, ficam versionadas no repositório (o build do GitHub Pages precisa delas). Nada secreto entra no repositório.
-- **Antes de divulgar:** CAPTCHA (Cloudflare Turnstile) no login anônimo, limpeza periódica de usuários anônimos inativos, anti-trapaça completo (inclusive as cobranças do desafio, que hoje chegam ao celular antes da defesa), ranking que aguente muitos jogadores (hoje a semana inteira é recalculada a cada partida fechada; trocar por cálculo incremental ou de minuto em minuto) e decidir sobre o plano Pro (o Free pausa o projeto depois de 1 semana sem uso).
+- **Antes de divulgar:** CAPTCHA (Cloudflare Turnstile) no login anônimo, limpeza periódica de usuários anônimos inativos, anti-trapaça completo (pênaltis lance a lance desde 27/10, com as cobranças do desafio no servidor), ranking que aguente muitos jogadores (hoje a semana inteira é recalculada a cada partida fechada; trocar por cálculo incremental ou de minuto em minuto) e decidir sobre o plano Pro (o Free pausa o projeto depois de 1 semana sem uso).
 - **Rotina contra a pausa do plano Free:** um agendamento no GitHub Actions faz uma consulta leve ao banco a cada 2 dias. Enquanto o projeto estiver no Free, isso evita a pausa por 7 dias sem uso. O GitHub desliga agendamentos de repositório público depois de 60 dias sem commit; se isso acontecer, o GitHub avisa por e-mail e basta reativar. Arquivo: `.github/workflows/manter-supabase.yml` (a cada 2 dias às 09h de Brasília e pelo botão "Run workflow"): lê 1 linha do ranking com a publishable key e falha se a resposta não for 200.
 - **Zerar pré-temporada:** `npm run zerar-pre-temporada` apaga partidas, desafios e ranking (mantém times e torcedores; recordes pessoais zeram junto). Mostra as contagens, lembra de rodar o balanço antes e só apaga depois de digitar ZERAR.
 - **Sessão de usuário apagado:** se o login anônimo salvo no aparelho não existir mais no servidor, o jogo sai e faz um login anônimo novo.

@@ -422,6 +422,9 @@ verify_jwt = true
 [functions.fechar-partida]
 verify_jwt = true
 
+[functions.lance-penalti]
+verify_jwt = true
+
 # Chamada pelo agendamento do banco (pg_cron), sem sessão. A própria função segura o intervalo
 # mínimo entre chamadas e não aceita nada além de { origem }.
 [functions.sincronizar-jogos]
