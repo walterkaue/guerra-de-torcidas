@@ -307,7 +307,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 
 ### Linha vermelha: nada que pareça aposta
 - **Aviso fixo** no topo da tela do minigame e no card: **"Aqui é só resenha: sem aposta, sem dinheiro, sem prêmio em dinheiro. Nunca."**
-- Palavras proibidas em todo o jogo: aposta, apostar, bet, odd, cotação, banca, bolão valendo, "green", "red" (gírias de aposta).
+- Palavras proibidas em todo o jogo: aposta, apostar, bet, odd, cotação, banca, bolão valendo, "green", "red" (gírias de aposta). Só duas exceções nomeiam a aposta para negá-la: o aviso fixo acima e os Termos (`src/dados/termos.md`, seção 13), que é o texto legal.
 - Nenhum anúncio, link ou patrocínio de casa de aposta em nenhuma tela. Se um dia houver anúncio, a categoria apostas fica bloqueada.
 - A porcentagem da torcida aparece só depois que o palpite fecha, nunca como "cotação".
 
@@ -606,7 +606,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - **Regra 18+:** uma só, `soPara18Mais` em `src/jogo/faixaEtaria.ts`, com `podeVerPush`, `podeVerApoio` e `podeVerOferecidoPor` (esta já pronta para o selo). No servidor, `salvar_inscricao_push` recusa quem não é `18_mais`.
 - **Barreira do apoio:** a `#apoie` só mostra o texto, o Pix e o link depois de "Confirmar" em "Sou maior de 18 ou responsável". Vale 30 dias por aparelho (`gdt:apoio-confirmado`); sem armazenamento, pergunta de novo a cada visita. Em desenvolvimento, `?apoioFalso` liga o apoio com dados de mentira.
 - **Aviso de saída:** um só, `src/telas/saida.ts`, pega o toque em qualquer link para outro site, inclusive nos que forem criados depois. Ficam de fora, com `data-sem-aviso`: compartilhar no WhatsApp (é o compartilhar do próprio jogador, como o Stories, e fica no caminho do desafio), as fontes do painel `#admin` e o "Seja sócio", que já tem folha própria.
-- **Termos:** página `#termos` (`src/telas/termos.ts`), que só baixa quando abre, com "Versão em revisão" e a data no topo. O texto mora em `src/dados/termos.md`; um teste recusa os trechos "Para o advogado revisar" e "a definir". Link no rodapé da Home e na triagem.
+- **Termos:** página `#termos` (`src/telas/termos.ts`), que só baixa quando abre, com "Versão em revisão" e a data no topo. O texto mora em `src/dados/termos.md`, sem os trechos para o advogado; um teste recusa "Para o advogado revisar" e "a definir". A tabela da Política vira fichas, para caber em 390×844 sem rolar para o lado. Link no rodapé da Home e na triagem.
 - **Apagar meus dados:** o botão na `#termos` pede confirmação e chama `apagar_meus_dados` (função no banco, numa transação). Apaga o usuário anônimo e, em cascata, torcedor, partidas, desafios, palpites, Time do Dia, Prova, carreira e push; os feedbacks ficam sem o usuário. Depois limpa o aparelho (chaves `gdt` e a sessão) e volta à escolha do time. **Os pontos ficam no placar:** como o ranking é recalculado das partidas, antes de apagar o total de cada semana e time vai para `pontos_apagados`, sem id da pessoa, e o ranking soma essas linhas como um torcedor anônimo (o zerar da pré-temporada leva junto). Conta com login de verdade, como a do `#admin`, é recusada.
 - **Trocar a faixa:** a tela não oferece. Vale pelo aparelho: limpar os dados do site ou "Apagar meus dados" faz a triagem voltar.
 - **Envio do push:** só `18_mais` recebe. Outra faixa é desinscrita (na triagem e no envio). Quem se inscreveu antes da triagem e ainda não respondeu fica sem receber, mas não é desinscrito: se responder 18+, volta a receber sem precisar ligar de novo.
