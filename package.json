@@ -20,7 +20,8 @@
     "catalogo-lances": "node scripts/lances/catalogo.mjs",
     "importar-casa": "node scripts/casa/importar.mjs",
     "aplicar-conferencia-casa": "node scripts/casa/aplicar-conferencia.mjs",
-    "conferir-casa": "node scripts/casa/conferir-gemini.mjs"
+    "conferir-casa": "node scripts/casa/conferir-gemini.mjs",
+    "gemini": "node scripts/ia/gemini.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.10",
