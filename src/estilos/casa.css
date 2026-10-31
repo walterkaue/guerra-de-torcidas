@@ -293,6 +293,52 @@
   color: var(--texto-suave);
 }
 
+/* Seja sócio */
+.casa-socio {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 16px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.32);
+}
+.casa-socio h3 {
+  font-size: 18px;
+  line-height: 1.15;
+}
+.casa-socio p {
+  font-size: 15px;
+  line-height: 1.4;
+}
+.socio-folha {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+}
+.socio-folha[hidden] {
+  display: none;
+}
+.socio-caixa {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  border-radius: 18px 18px 0 0;
+  background: #0b2a16;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 0;
+}
+.socio-caixa .botao {
+  text-align: center;
+  text-decoration: none;
+}
+
 /* Rodapé */
 .casa-rodape {
   display: flex;

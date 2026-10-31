@@ -95,6 +95,15 @@ const secoes = [
        group by e.torcedor_id
      ) x group by convidados order by convidados`,
   ],
+  [
+    'Seja sócio (cliques por clube; o aparelho conta no máximo 1 por clube por dia)',
+    `select coalesce(clube, 'TODOS') as clube,
+       coalesce(sum(cliques) filter (where dia >= public.semana_de(public.hoje_brasilia())), 0) as na_semana,
+       coalesce(sum(cliques), 0) as total
+     from public.socio_cliques
+     group by rollup (clube)
+     order by grouping(clube), total desc, clube`,
+  ],
 ];
 
 console.log('Métricas do Guerra de Torcidas (só leitura)');
@@ -105,6 +114,5 @@ for (const [titulo, sql] of secoes) {
 
 rmSync(pasta, { recursive: true, force: true });
 
-console.log('
-## Balanço entre minigames');
+console.log('\n## Balanço entre minigames');
 rodarBalanco();
