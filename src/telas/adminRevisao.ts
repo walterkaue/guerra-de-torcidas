@@ -110,7 +110,7 @@ export function montarRevisao(el: HTMLElement, sb: SupabaseClient, aoPublicar: (
         ${campo('tema', 'Tema', r.tema, 30)}
       </div>
       <blockquote class="admin-trecho">“${esc(r.trecho)}”
-        <a href="${esc(r.fonte)}" target="_blank" rel="noopener noreferrer">${esc(dominio(r.fonte))}</a></blockquote>
+        <a data-sem-aviso href="${esc(r.fonte)}" target="_blank" rel="noopener noreferrer">${esc(dominio(r.fonte))}</a></blockquote>
       ${r.auditoria_trecho && r.auditoria_trecho !== r.trecho ? `<p class="nota"><small>Auditor (${esc(r.auditoria_modelo ?? '')}): “${esc(r.auditoria_trecho)}”</small></p>` : ''}
       <p class="erro-campo" role="alert" hidden></p>
       <div class="dupla">

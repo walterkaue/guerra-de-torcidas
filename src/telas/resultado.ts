@@ -186,7 +186,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
       ${blocoDesafio}
 
       <section class="res-compartilhar">
-        <a class="botao botao-zap" target="_blank" rel="noopener"
+        <a class="botao botao-zap" data-sem-aviso target="_blank" rel="noopener"
           href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Chamar no X1</a>
         <div class="trio">
           <button class="botao botao-sec" type="button" data-acao="share">Stories</button>

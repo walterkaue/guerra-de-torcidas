@@ -9,10 +9,9 @@ import './estilos/protecao.css';
 import { iniciarApp, irPara, linkDoTimeDoDia, registrarTela, type Rota } from './app';
 import { faixaDoAparelho, prefs } from './estado';
 import { timePorId } from './dados/times';
-import { APOIO } from './config/apoio';
-import { apoioDisponivel } from './jogo/apoio';
-import { telaApoio } from './telas/apoio';
+import { apoioLiberado, telaApoio } from './telas/apoio';
 import { telaInicio } from './telas/inicio';
+import { ligarAvisoDeSaida } from './telas/saida';
 import { telaTriagem } from './telas/triagem';
 import { telaTimes } from './telas/times';
 import { telaRanking } from './telas/ranking';
@@ -23,6 +22,7 @@ import { ligarToqueDosBotoes } from './telas/toque';
 
 registrarServiceWorker();
 ligarToqueDosBotoes();
+ligarAvisoDeSaida();
 
 type Tela = Parameters<typeof registrarTela>[1];
 
@@ -83,7 +83,7 @@ registrarTela('timeDoDia', sobDemanda('Escondendo o time…', TELAS_DE_JOGO.time
 registrarTela('lances', sobDemanda('Abrindo os Lances…', TELAS_DE_JOGO.lances));
 // Painel do administrador e Casa do [time]: só baixam quando alguém abre (#admin, #casa ou #casa/<id>).
 registrarTela('admin', sobDemanda('Carregando o painel…', () => import('./telas/admin').then((m) => m.telaAdmin as Tela)));
-// Apoie o jogo (#apoie): atrás do interruptor de src/config/apoio.ts.
+// Apoie o jogo (#apoie): atrás do interruptor de src/config/apoio.ts e só para 18+.
 registrarTela('apoie', telaApoio);
 registrarTela('casa', sobDemanda('Abrindo a Casa…', () => import('./telas/casa/tela').then((m) => m.telaCasa as Tela)));
 
@@ -99,11 +99,11 @@ function preaquecer(): void {
   ocioso(() => Object.values(TELAS_DE_JOGO).forEach((carregar) => void carregar().catch(() => {})));
 }
 
-/** Rota do endereço: #admin, #apoie, #casa e #casa/<id>. */
+/** Rota do endereço: #admin, #apoie, #termos, #casa e #casa/<id>. */
 function rotaDoHash(): Rota | undefined {
   if (location.hash === '#admin') return { tela: 'admin' };
   if (location.hash === '#apoie') {
-    if (apoioDisponivel(APOIO)) return { tela: 'apoie' };
+    if (apoioLiberado()) return { tela: 'apoie' };
     history.replaceState(null, '', `${location.pathname}${location.search}`);
     return { tela: 'inicio' };
   }
@@ -130,7 +130,8 @@ if (app) {
         ? { tela: 'timeDoDia' }
         : { tela: 'times', depois: 'timeDoDia' }
       : { tela: 'inicio' });
-  irPara(jaJoga && !faixaDoAparelho() && entrada.tela !== 'admin' ? { tela: 'triagem', depois: entrada } : entrada);
+  const semTriagem = entrada.tela === 'admin' || entrada.tela === 'termos';
+  irPara(jaJoga && !faixaDoAparelho() && !semTriagem ? { tela: 'triagem', depois: entrada } : entrada);
   if (document.readyState === 'complete') preaquecer();
   else window.addEventListener('load', preaquecer, { once: true });
   window.addEventListener('hashchange', () => {
