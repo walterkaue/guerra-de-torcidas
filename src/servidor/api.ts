@@ -100,6 +100,21 @@ export async function salvarFaixaEtaria(faixa: FaixaEtaria): Promise<boolean> {
   return data === true;
 }
 
+/**
+ * Apaga o usuário anônimo e tudo ligado a ele (docs/jogo.md, seção 13). Sem sessão no aparelho não há
+ * nada no servidor, e não cria login só para isso. A limpeza do aparelho fica com a tela.
+ */
+export async function apagarMeusDados(): Promise<void> {
+  const sb = await supabase();
+  const { data } = await comTempoLimite(sb.auth.getSession());
+  if (data.session) {
+    const { error } = await comTempoLimite(sb.rpc('apagar_meus_dados'));
+    if (error) throw new ErroServidor(error.message.includes('conta_nao_anonima') ? 'conta_nao_anonima' : 'falha');
+    await sb.auth.signOut({ scope: 'local' });
+  }
+  sessaoConferida = null;
+}
+
 /** Conta um clique no "Seja sócio", sem login e sem esperar resposta: nunca segura a saída para o site. */
 export function contarCliqueSocio(clube: string): void {
   supabase()
@@ -394,7 +409,7 @@ export async function minhaPosicaoSemana(semana: string): Promise<PosicaoSemana 
   return ((data ?? []) as PosicaoSemana[])[0] ?? null;
 }
 
-/** Minha carreira (XP, partidas de hoje, sequência e bônus recente). Só a própria. */
+/** Minha carreira (XP, partidas de hoje e bônus recente). Só a própria. */
 export async function minhaCarreira(): Promise<Carreira | null> {
   await garantirSessao();
   const sb = await supabase();
@@ -403,7 +418,6 @@ export async function minhaCarreira(): Promise<Carreira | null> {
   const l = ((data ?? []) as {
     xp: number;
     partidas_hoje: number;
-    sequencia: number;
     bonus_tipo: 'dia' | 'semana' | null;
     bonus_referencia: string | null;
   }[])[0];
@@ -411,7 +425,6 @@ export async function minhaCarreira(): Promise<Carreira | null> {
   return {
     xp: l.xp,
     partidasHoje: l.partidas_hoje,
-    sequencia: l.sequencia,
     bonus: l.bonus_tipo && l.bonus_referencia ? { tipo: l.bonus_tipo, referencia: l.bonus_referencia } : null,
   };
 }
