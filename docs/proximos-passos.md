@@ -39,7 +39,7 @@ Sem dependência das frentes em andamento.
 |---|---|---|
 | **Funil do desafio por link** (recomendada) | Sonnet, média | Dos 49 desafios enviados, só 3 tiveram alguém jogando. Achar onde a pessoa desiste, com dados e leitura do fluxo, e corrigir o que for pequeno |
 | **Termos × jogo** | Sonnet, média | Lista do que o texto promete e o jogo não faz, para o Kauê e o advogado. Não altera os Termos |
-| **Calibragem da Prova** | Sonnet, alta | Duas ou três opções simuladas com o balanço de 31/10. Não altera a pontuação |
+| ~~Calibragem da Prova~~ | feita em 31/10 | Proposta com três opções em `docs/propostas/calibragem-prova.md`; falta o Kauê decidir (abaixo) |
 
 Divergências já vistas nos Termos (`src/dados/termos.md`):
 - Ranking de cidades, que ainda não existe.
@@ -56,7 +56,7 @@ Divergências já vistas nos Termos (`src/dados/termos.md`):
 3. Ligar o CAPTCHA no painel do Supabase com a chave **secreta**, que fica só no painel.
 
 **Decisões:**
-- Calibragem da Prova: mediana de 4 pontos contra alvo de 45 a 75; 31 de 33 partidas acabam em erro.
+- **Calibragem da Prova** (mediana de 4 contra alvo de 45 a 75; 31 de 33 partidas acabam em erro): escolher entre A (segunda chance), B (três erros e fora, **recomendada**) e C (prova inteira), e dizer se o alvo de 45 a 75 vale para a Prova. A causa é a regra do primeiro erro, não a tabela. Detalhes e contas em `docs/propostas/calibragem-prova.md` (`npm run calibragem-prova`). Depois da escolha: implementar na virada da semana e rodar o balanço com 20 partidas novas; rever em paralelo as perguntas fáceis de clube (43% de acerto).
 - Prazo para apagar contas anônimas paradas.
 - Supabase Pro antes de divulgar.
 - Data do zerar da pré-temporada. A Crava termina em 2/12, e o balanço roda antes de zerar.
