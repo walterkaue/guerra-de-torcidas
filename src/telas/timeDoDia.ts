@@ -30,6 +30,8 @@ import {
 } from '../servidor/api';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
+import { bomMomentoDoDia } from '../jogo/apoio';
+import { oferecerApoio } from './apoio';
 import { convidarParaAvisos } from './convitePush';
 import { bolinha, icone } from './icones';
 import { vibrar } from './toque';
@@ -343,6 +345,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       <p class="situacao">${esc(situacao)}</p>
       ${casa}
       <div data-convite-push></div>
+      <div class="res-apoio" data-apoio></div>
       ${htmlPosicao(e.desempenho, 'dia')}
       <div class="res-carreira" data-carreira hidden></div>
       <p class="dia-proximo rotulo">Próximo time em <strong data-relogio>${formatarRelogio(Date.parse(e.proximoEm) - Date.now())}</strong></p>
@@ -366,6 +369,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     elFim.hidden = false;
     // Bom momento para oferecer o aviso de domingo: acertou o time do dia.
     if (e.acertou) convidarParaAvisos(elFim.querySelector<HTMLElement>('[data-convite-push]'));
+    oferecerApoio(elFim.querySelector<HTMLElement>('[data-apoio]'), bomMomentoDoDia({ acertou: e.acertou }));
     if (festejar) papelPicadoNaTela(elFim.querySelector('.dia-placar') ?? elFim, [time.cores[0], time.cores[1], '#ffd23f']);
 
     const elRelogio = elFim.querySelector<HTMLElement>('[data-relogio]')!;

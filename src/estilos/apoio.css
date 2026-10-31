@@ -1,0 +1,38 @@
+/* Apoie o jogo (docs/jogo.md, seção 7.5). */
+.apoio {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.apoio .botao {
+  min-height: 48px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.apoio-pix {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 2px dashed rgba(233, 199, 90, 0.55);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.apoio-chave {
+  display: block;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  font-size: 16px;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.res-apoio,
+.dia-fim .res-apoio {
+  display: flex;
+  justify-content: center;
+}

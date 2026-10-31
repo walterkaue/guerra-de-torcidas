@@ -12,6 +12,8 @@ import { escolherFrase } from '../narrador/escolher';
 import { contextoDoTime } from '../narrador/sessao';
 import { rankingDaSemana } from '../servidor/api';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
+import { bomMomentoDosLances } from '../jogo/apoio';
+import { oferecerApoio } from './apoio';
 import { convidarParaAvisos } from './convitePush';
 
 const SITE = 'https://torcida.kauewalter.com.br';
@@ -199,6 +201,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
       </details>
 
       <div data-convite-push></div>
+      <div class="res-apoio" data-apoio></div>
 
       <div class="res-acoes">
         <button class="botao botao-sec" type="button" data-acao="inicio">Início</button>
@@ -212,6 +215,10 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   if (d.servidor) mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]'));
   // Bom momento para oferecer o aviso de domingo: vitória que valeu pra torcida.
   if (r.venceu && d.valendo) convidarParaAvisos(root.querySelector<HTMLElement>('[data-convite-push]'));
+  oferecerApoio(
+    root.querySelector<HTMLElement>('[data-apoio]'),
+    bomMomentoDosLances({ venceu: r.venceu, valendo: d.valendo, novoRecorde: !!d.servidor?.desempenho?.novoRecorde }),
+  );
   const elConfete = root.querySelector<HTMLCanvasElement>('.confete');
   if (elConfete) confete(elConfete, [time.cores[0], time.cores[1], '#ffd23f']);
 

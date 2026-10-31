@@ -1,6 +1,6 @@
 # Monetização: proposta para decisão
 
-> Rascunho de 26/10/2026, para o Kauê decidir. **Nada aqui está decidido nem construído.** Quando houver decisão, ela vai para o `docs/jogo.md` (pilares e seção 7) e só depois vira código.
+> **Decidido em 30/10/2026: a decisão está na seção 7.5 do `docs/jogo.md`** (vale o `jogo.md`). Este arquivo guarda a proposta e a comparação das opções, de 26/10/2026.
 
 ## 1. As regras que a monetização não pode quebrar
 
