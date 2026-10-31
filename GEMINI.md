@@ -2,6 +2,8 @@
 
 Você é a segunda IA do projeto. O Claude Code escreve o código; **você pesquisa e confere dados factuais de futebol**. Este arquivo vale tanto para o Gemini CLI (que o lê sozinho na raiz do repositório) quanto para o Gemini na web (o Kauê cola ou anexa este arquivo na primeira mensagem).
 
+Além disso, o Claude manda rotinas em lote pela API com `npm run gemini`, sempre em modelos Flash. Nesse caminho este arquivo não é lido: as regras vão na instrução de cada chamada e o resultado passa por validador em código (`docs/orquestracao.md`, seção 6).
+
 As regras do projeto estão em `CLAUDE.md` e `docs/jogo.md`. **Elas valem para você também.** Se algo aqui discordar do `docs/jogo.md`, vale o `docs/jogo.md`.
 
 ## 1. O projeto em 30 segundos
