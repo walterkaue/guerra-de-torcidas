@@ -10,6 +10,15 @@ export interface ConfigApoio {
 /** No resultado, o botão aparece no máximo uma vez por semana por aparelho. */
 export const INTERVALO_APOIO_MS = 7 * 24 * 60 * 60 * 1000;
 
+/** "Sou maior de 18 ou responsável" (docs/jogo.md, seção 13) vale por 30 dias neste aparelho. */
+export const VALIDADE_CONFIRMACAO_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** `quando` é o instante (ms) da confirmação. Data no futuro não vale: na dúvida, pergunta de novo. */
+export function confirmacaoValida(quando: number | null, agora: number): boolean {
+  if (quando === null || !Number.isFinite(quando) || quando > agora) return false;
+  return agora - quando < VALIDADE_CONFIRMACAO_MS;
+}
+
 /** Só link https:// vira botão; qualquer outra coisa é ignorada. */
 export function linkSeguro(link: string): string {
   const l = link.trim();
