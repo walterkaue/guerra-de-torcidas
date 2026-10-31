@@ -4,9 +4,11 @@
 
 import '../../estilos/casa.css';
 import { esc, irPara, type Rota } from '../../app';
-import { CASAS } from '../../dados/casa/dados.gerado';
-import type { CasaDoClube } from '../../dados/casa/tipos';
+import { CASAS, SOCIOS } from '../../dados/casa/dados.gerado';
+import type { CasaDoClube, SocioDoClube } from '../../dados/casa/tipos';
 import { ID_OUTRO, TIMES, corDeTexto, timePorId, type Time } from '../../dados/times';
+import { contarCliqueSocio } from '../../servidor/api';
+import { diaBrasilia } from '../../servidor/tempo';
 import { svgEstadio, svgManto, svgTaca } from './desenhos';
 import {
   dataBR,
@@ -19,6 +21,7 @@ import {
   separarMantos,
   totalDeTitulos,
 } from './logica';
+import { linkDoSocio, primeiroCliqueDoDia, textosDoSocio } from './socio';
 
 const EMAIL_ERRO = 'contato@kauewalter.com.br';
 const NOTA_CURTA =
@@ -80,6 +83,7 @@ function paginaDoClube(root: HTMLElement, casa: CasaDoClube, time: Time): void {
   const blocos = [blocoEstadio(casa, c1, c2), blocoTrofeus(casa, c1, c2), blocoRecordes(casa), blocoCores(casa, time)].filter(Boolean);
   // Só o primeiro bloco nasce aberto.
   const html = blocos.map((b, i) => (i === 0 ? b.replace('<details class="bloco-casa"', '<details class="bloco-casa" open') : b)).join('');
+  const socio = SOCIOS[casa.id];
 
   root.innerHTML = `
     <main class="tela casa" style="${coresDoTime(time)}">
@@ -91,9 +95,53 @@ function paginaDoClube(root: HTMLElement, casa: CasaDoClube, time: Time): void {
         <p class="casa-sub">Fundad${time.artigo === 'a' ? 'a' : 'o'} em ${dataBR(casa.fundacao)} · ${esc(casa.cidade)} (${esc(casa.uf)})</p>
       </div>
       ${html}
+      ${socio ? blocoSocio(socio, time) : ''}
       ${rodape(casa, time)}
     </main>`;
   root.querySelector('.voltar')!.addEventListener('click', () => irPara({ tela: 'casa' }));
+  if (socio) ligarSocio(root, casa.id);
+}
+
+function blocoSocio(socio: SocioDoClube, time: Time): string {
+  const textos = textosDoSocio(time, socio.programa);
+  return `<section class="casa-socio" aria-labelledby="socio-titulo">
+    <h3 id="socio-titulo" class="rotulo">${esc(textos.titulo)}</h3>
+    <p>${esc(textos.linha)}</p>
+    <button class="botao botao-sec" type="button" data-socio-abrir aria-haspopup="dialog">Conhecer o programa</button>
+    <div class="socio-folha" data-socio-folha role="dialog" aria-modal="true" aria-describedby="socio-saida" aria-label="Saída do jogo" hidden>
+      <div class="socio-caixa">
+        <p id="socio-saida">${esc(textos.saida)}</p>
+        <a class="botao" data-socio-ir href="${esc(linkDoSocio(socio.url))}" target="_blank" rel="noopener noreferrer">Ir para o site</a>
+        <button class="botao botao-sec" type="button" data-socio-ficar>Ficar no jogo</button>
+      </div>
+    </div>
+  </section>`;
+}
+
+function ligarSocio(root: HTMLElement, clube: string): void {
+  const abrir = root.querySelector<HTMLButtonElement>('[data-socio-abrir]')!;
+  const folha = root.querySelector<HTMLElement>('[data-socio-folha]')!;
+  const ir = root.querySelector<HTMLAnchorElement>('[data-socio-ir]')!;
+  const fechar = () => {
+    folha.hidden = true;
+    abrir.focus();
+  };
+  abrir.addEventListener('click', () => {
+    folha.hidden = false;
+    ir.focus();
+  });
+  root.querySelector('[data-socio-ficar]')!.addEventListener('click', fechar);
+  folha.addEventListener('click', (e) => {
+    if (e.target === folha) fechar();
+  });
+  folha.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') fechar();
+  });
+  // O link é um <a> de verdade: abre na hora, e a contagem corre por fora, sem segurar nada.
+  ir.addEventListener('click', () => {
+    fechar();
+    if (primeiroCliqueDoDia(clube, diaBrasilia())) contarCliqueSocio(clube);
+  });
 }
 
 function blocoEstadio(casa: CasaDoClube, c1: string, c2: string): string {

@@ -90,6 +90,13 @@ export async function salvarTorcedor(timeId: string, apelido?: string): Promise<
   }
 }
 
+/** Conta um clique no "Seja sócio", sem login e sem esperar resposta: nunca segura a saída para o site. */
+export function contarCliqueSocio(clube: string): void {
+  supabase()
+    .then((sb) => comTempoLimite(sb.rpc('contar_clique_socio', { p_clube: clube })))
+    .catch(() => undefined);
+}
+
 async function chamar<T>(funcao: string, corpo: Record<string, unknown>): Promise<T> {
   await garantirSessao();
   const sb = await supabase();
