@@ -23,6 +23,7 @@ import {
 import { jogosDoCrava, meusDadosDoCrava, type Jogo } from '../servidor/crava';
 import { diaBrasilia, msAteZerarSemana, semanaBrasilia } from '../servidor/tempo';
 import { sincronizarTorcedor } from '../servidor/torcedor';
+import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
 import { carregarCarreiraHome } from './carreira';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
@@ -155,6 +156,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
       <button class="link-feedback" type="button" data-acao="feedback">${icone('balao')} Feedback ou bug? Conta pra gente</button>
       <button class="link-feedback link-graficos" type="button" data-acao="graficos" aria-live="polite">${rotuloGraficos()}</button>
+      ${htmlBotaoApoio()}
 
       <p class="rodape-resenha" role="note">${esc(AVISO_RESENHA)} Jogo 100% grátis.</p>
 
@@ -193,6 +195,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     escolherQualidade(ordem[(ordem.indexOf(escolha()) + 1) % ordem.length]);
     elGraficos.innerHTML = rotuloGraficos();
   });
+  ligarBotaoApoio(root);
   ligarBarraNavegacao(root);
 
   // Sininho: liga, desliga ou explica o aviso de domingo (push). Aceso quando o aviso está ligado.
