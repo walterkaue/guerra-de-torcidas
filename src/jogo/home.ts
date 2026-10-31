@@ -2,11 +2,28 @@
 // estado dos cards e frases do giro da semana. Puro: sem DOM nem relógio.
 // Só torcidas, nunca apelido. Textos neutros de gênero, com do/da e no/na pelo artigo do time.
 
-import { type Artigo } from '../dados/times';
+import { ID_OUTRO, type Artigo, type Time } from '../dados/times';
 import { faseDoJogo, rodadaEmFoco, type JogoBasico } from './cravaTela';
 import { PERGUNTAS, levar } from './prova';
 import { formatarFecha, formatarVolta, linhaPenaltis } from './statusJogos';
 import { NOMES_PISTAS, TENTATIVAS, type Pistas, type Tom } from './timeDoDia';
+
+// ---------- Casa ----------
+
+/** Título da seção da Casa: a do seu time; sem time, ou em "Outro time", o índice dos clubes. */
+export function tituloDaCasa(time: Pick<Time, 'id' | 'nome' | 'artigo'> | undefined): string {
+  if (!time || time.id === ID_OUTRO) return 'Casa dos clubes';
+  return `Casa ${time.artigo === 'a' ? 'da' : 'do'} ${time.nome}`;
+}
+
+// ---------- card dos Lances ----------
+
+/** Texto do card: os tipos de lance e, numa segunda linha, quantos são do time, se ele tiver lance no catálogo. */
+export function linhaDosLances(time: Pick<Time, 'id' | 'nome' | 'artigo'> | undefined, porClube: Readonly<Record<string, number>>): string {
+  const n = time ? (porClube[time.id] ?? 0) : 0;
+  if (!time || !n) return 'Pênaltis, faltas e cara a cara';
+  return `Pênaltis, faltas e cara a cara\n${n} ${n === 1 ? 'lance histórico' : 'lances históricos'} ${time.artigo === 'a' ? 'da' : 'do'} ${time.nome}`;
+}
 
 // ---------- luz da arquibancada ----------
 

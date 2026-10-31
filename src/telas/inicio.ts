@@ -2,6 +2,7 @@
 // rival com a sua posição, "Jogar agora", cards dos jogos com desenho e estado vivo, e o giro da semana.
 
 import { desafioDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
+import { LANCES_POR_CLUBE } from '../dados/lancesResumo';
 import { ID_OUTRO, TIMES, corDeTexto, corDoRivalNoDuelo, timePorId, type Time } from '../dados/times';
 import { faixaDoAparelho, prefs } from '../estado';
 import { AVISO_RESENHA } from '../jogo/cravaTela';
@@ -11,10 +12,12 @@ import {
   fechaSemPalpite,
   frasesDoGiro,
   linhaDoDia,
+  linhaDosLances,
   luzDoHorario,
   motivoDoJogo,
   placarCravado,
   proximoJogo,
+  tituloDaCasa,
   tonsDosChutes,
   type JogoDaHome,
   type SituacaoDoDia,
@@ -41,7 +44,7 @@ import { sincronizarTorcedor } from '../servidor/torcedor';
 import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
 import { ligarArquibancada } from './arquibancada';
 import { anotarCarreira } from './carreira';
-import { arteEscada, arteGrade, htmlDosCards } from './cardsJogos';
+import { arteEscada, arteGrade, htmlDaCasa, htmlDosCards } from './cardsJogos';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
@@ -165,19 +168,16 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       <button class="botao botao-jogar" type="button" data-acao="jogar-agora">Jogar agora<small data-motivo>&nbsp;</small></button>
 
       <section class="grade-jogos" aria-label="Jogos"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>
-        ${htmlDosCards(linhaPenaltis(null, TETO_DIARIO))}
+        ${htmlDosCards(esc(linhaDosLances(time, LANCES_POR_CLUBE)), linhaPenaltis(null, TETO_DIARIO))}
       </section>
 
       <button class="giro faixa-tv" type="button" data-acao="ranking" aria-label="Ver o ranking da semana" hidden>
         <span class="giro-selo rotulo">Giro</span><span class="giro-frase" data-giro></span>
       </button>
 
-      <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
+      <div class="casa-secao"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>${htmlDaCasa(esc(tituloDaCasa(time)))}</div>
 
-      <button class="link-casa" type="button" data-acao="casa">
-        <span class="rotulo">Casa dos clubes</span>
-        <small>Estádio, troféus, recordes e cores de cada clube</small>
-      </button>
+      <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
 
       <button class="link-feedback" type="button" data-acao="feedback">${icone('balao')} Feedback ou bug? Conta pra gente</button>
       ${htmlBotaoApoio()}

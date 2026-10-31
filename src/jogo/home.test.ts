@@ -6,14 +6,42 @@ import {
   fechaSemPalpite,
   frasesDoGiro,
   linhaDoDia,
+  linhaDosLances,
   luzDoHorario,
   motivoDoJogo,
   placarCravado,
   proximoJogo,
+  tituloDaCasa,
   tonsDosChutes,
   type LinhaDoGiro,
 } from './home';
 import type { Pistas } from './timeDoDia';
+
+describe('linhaDosLances', () => {
+  const porClube = { flamengo: 3, chapecoense: 1 };
+
+  it('conta os lances do time, com artigo e singular', () => {
+    expect(linhaDosLances(timePorId('flamengo'), porClube)).toBe('Pênaltis, faltas e cara a cara\n3 lances históricos do Flamengo');
+    expect(linhaDosLances(timePorId('chapecoense'), porClube)).toBe('Pênaltis, faltas e cara a cara\n1 lance histórico da Chapecoense');
+  });
+
+  it('sem time, ou sem lance do time, fica só o que o jogo tem', () => {
+    expect(linhaDosLances(undefined, porClube)).toBe('Pênaltis, faltas e cara a cara');
+    expect(linhaDosLances(timePorId('santos'), porClube)).toBe('Pênaltis, faltas e cara a cara');
+  });
+});
+
+describe('tituloDaCasa', () => {
+  it('usa o artigo do time', () => {
+    expect(tituloDaCasa(timePorId('flamengo'))).toBe('Casa do Flamengo');
+    expect(tituloDaCasa(timePorId('chapecoense'))).toBe('Casa da Chapecoense');
+  });
+
+  it('sem time ou em Outro time, fica o índice dos clubes', () => {
+    expect(tituloDaCasa(undefined)).toBe('Casa dos clubes');
+    expect(tituloDaCasa(timePorId('outro'))).toBe('Casa dos clubes');
+  });
+});
 
 const agora = new Date('2026-10-23T12:00:00Z');
 const jogo = (id: string, rodada: number, horas: number): JogoBasico => ({

@@ -490,6 +490,21 @@
   white-space: nowrap;
 }
 
+/* Quantos lances o catálogo tem, por cima do gol. */
+.card-arte .tarja-lances {
+  --fundo-faixa: var(--cal);
+  position: absolute;
+  right: -2px;
+  bottom: -8px;
+  padding: 2px 10px;
+  color: var(--tinta);
+  font-family: var(--fonte-placar);
+  font-size: 17px;
+  line-height: 1.25;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 /* ---------- giro da semana ---------- */
 /* Tarja de TV de uma linha: troca de frase com um esmaecer, sem rolar e sem piscar. */
 .giro {
@@ -578,6 +593,7 @@
   font-size: 13px;
   line-height: 1.3;
   color: var(--texto-suave);
+  white-space: pre-line;
 }
 
 .status-jogo {
@@ -601,7 +617,90 @@
   align-self: center;
 }
 
-/* Entrada da Casa dos clubes (docs/casa.md, seção 3). */
+/* Seção da Casa na Home: estádio e troféus em cena de noite (telas/cardsJogos.ts). */
+.casa-home {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0 0 12px;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  background: #0a1626;
+  color: var(--cal);
+  font: inherit;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.casa-home:active {
+  transform: scale(0.97);
+  border-color: var(--amarelo);
+  transition-duration: 0s;
+}
+
+.casa-arte {
+  display: block;
+  height: 150px;
+  background: linear-gradient(180deg, #0a1626, #1a3350);
+}
+
+.casa-rodape {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: -22px;
+  padding: 0 14px;
+}
+
+.casa-rodape small {
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.casa-titulo {
+  --fundo-faixa: var(--c1, var(--amarelo));
+  max-width: 100%;
+  padding: 6px 18px 5px 12px;
+  color: var(--txt, var(--tinta));
+  font-family: var(--fonte-placar);
+  font-size: 26px;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.casa-titulo::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  right: -4px;
+  bottom: -4px;
+  height: 4px;
+  z-index: -1;
+  background: var(--c2, var(--cal));
+  transform: skewX(var(--inclinacao));
+}
+
+.casa-chao { fill: #0a1626; }
+.casa-brilho { fill: url(#casa-luz); }
+.casa-poste { fill: none; stroke: #5d6b7a; stroke-width: 3; }
+.casa-refletor { fill: #fff4c8; }
+.casa-parede { fill: #2b3a4c; }
+.casa-janelas { fill: none; stroke: var(--c1, var(--amarelo)); stroke-width: 15; stroke-dasharray: 8 6; }
+.casa-teto { fill: #d9dde0; }
+.casa-anel1 { fill: var(--c1, var(--amarelo)); }
+.casa-povo { fill: none; stroke: var(--txt, var(--tinta)); stroke-opacity: 0.45; stroke-width: 3; stroke-dasharray: 2 5; }
+.casa-anel2 { fill: var(--c2, var(--cal)); }
+.casa-gramado { fill: #2e8b4a; }
+.casa-linhas { fill: none; stroke: var(--cal); stroke-width: 1.2; }
+.casa-placa-trofeu { fill: url(#casa-ouro); }
+.casa-placa-miolo { fill: none; stroke: #a47d28; stroke-width: 2; }
+
+/* Entrada da Casa nas outras telas (docs/casa.md, seção 3). */
 .link-casa {
   display: flex;
   flex-direction: column;
@@ -609,9 +708,9 @@
   gap: 2px;
   min-height: 56px;
   padding: 10px 16px;
-  border: 2px dashed rgba(233, 199, 90, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.16);
   border-radius: 14px;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.38);
   color: var(--cal);
   font: inherit;
   text-align: left;

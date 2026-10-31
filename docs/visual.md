@@ -1,7 +1,8 @@
 # Revisão gráfica — direção "Transmissão de domingo"
 
-> Versão 1.9 · 31/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Versão 1.10 · 31/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
 > Base: o jogo publicado em 18/10/2026 (commit b492b99), testado em 390×844.
+> Mudanças da 1.10: seção da Casa na Home, com estádio e troféus (seção 3, item 7), e total de lances no card dos Lances (seção 3, item 5).
 > Mudanças da 1.9: Home nova: arquibancada do time, cabo de guerra com nó e sua posição, Jogar agora, cards com desenho, giro (seção 3), e aba Perfil (seção 3.1).
 > Mudanças da 1.8: impacto na trave e na defesa (seção 3, Partida), papel picado (4.4) e troca de tela inclinada (4.5).
 > Mudanças da 1.7: qualidade gráfica automática em três níveis (seção 4.3).
@@ -53,12 +54,13 @@ Home nova, decidida em 31/10/2026. De cima para baixo:
 3. **Cabo de guerra:** números em Anton dos dois lados, barra nas duas cores (se a cor do rival for parecida com a nossa, ele entra com a 2ª cor ou um neutro: a mesma régua de contraste dos uniformes) e um **nó** amarelo `#e9c75a`, inclinado, na posição da diferença, que anda com `--mola-firme` quando muda. Adesivo do narrador embaixo (`rival_colado` etc.). Última linha do bloco: "Você: 3º de 4 na semana", com seta verde ou vermelha desde a última visita. "Outro time" não tem duelo: fica só a linha da posição.
 4. **Botão "Jogar agora"** (amarelo, o único botão principal da tela). Abre, nesta ordem: **Crava**, se a rodada aberta fecha em menos de 24 h e a pessoa ainda não palpitou nela; **Time do Dia**, se ainda não jogou hoje; **Lances do Jogo**, se ainda faltam partidas que contam hoje; senão **Prova de Boleiro**. "Fecha" é a hora em que o próximo palpite tranca, a mesma do card; um palpite em qualquer jogo da rodada já conta. A linha de baixo diz o motivo em tom informativo, sem pressão ("Time do Dia: ainda não jogou hoje"). Sem time, vale a mesma ordem, com a escolha do time na frente.
 5. **Cards dos jogos** com desenho em SVG inline, na paleta do jogo, e estado vivo, em tamanhos diferentes (`telas/cardsJogos.ts`). Toque com a resposta de hoje: encolhe e volta com a mola, vibração leve.
-   - **Lances do Jogo:** largo, com um gol com rede e o rastro amarelo de uma bola; estado = partidas que contam hoje.
+   - **Lances do Jogo:** largo, com um gol com rede e o rastro amarelo de uma bola, a tarja com o total do catálogo ("51 lances") e, na descrição, quantos são do seu time; estado = partidas que contam hoje.
    - **Prova de Boleiro** e **Time do Dia** lado a lado: a escada de 8 degraus (acende até onde o recorde alcança; estado = recorde) e a grade de bolinhas de pista nas cores das células (estado = chutes usados hoje, ou o resultado se já terminou).
    - **Crava a Rodada:** largo, com o placar cravado numa tarja inclinada ("? x ?" enquanto não há palpite); estado = "Cravado" ou quando a rodada fecha.
 6. **Giro da semana:** uma linha estilo tarja de TV com frases de posição das torcidas, a partir do ranking já carregado ("Flamengo subiu pro 2º", "Corinthians a 12 do Palmeiras"), trocando a cada 5 s com esmaecer, sem rolar e sem piscar. Só torcidas, nunca apelido, com o artigo certo do time. Movimento reduzido ou Leve: uma frase fixa. Tocar abre o Ranking, que substitui a mini tabela que ficava aqui.
-7. **Continuam:** aviso único da pré-temporada ("tudo vale ponto, mas zera antes do lançamento"), Casa dos clubes e o rodapé "Aqui é só resenha: sem aposta, sem dinheiro, sem prêmio em dinheiro. Nunca. Jogo 100% grátis." (a frase é a mesma `AVISO_RESENHA` do Crava), além dos links de feedback, de apoio e de Termos.
-8. **Saem da Home e vão para o Perfil:** o bloco "Sua carreira", a caixa "Mostrar meu nível nos cards" e o botão "Gráficos".
+7. **Casa do [time]:** seção larga com uma cena de noite em SVG inline (`telas/cardsJogos.ts`): estádio com as arquibancadas nas duas cores do time, refletores e troféus inventados em ouro e prata (nenhum imita taça de verdade), com a tarja "Casa do Flamengo" por cima. Abre a Casa do seu time; sem time ou em "Outro time", o título é "Casa dos clubes" e abre o índice, com a cena em amarelo e branco.
+8. **Continuam:** aviso único da pré-temporada ("tudo vale ponto, mas zera antes do lançamento") e o rodapé "Aqui é só resenha: sem aposta, sem dinheiro, sem prêmio em dinheiro. Nunca. Jogo 100% grátis." (a frase é a mesma `AVISO_RESENHA` do Crava), além dos links de feedback, de apoio e de Termos.
+9. **Saem da Home e vão para o Perfil:** o bloco "Sua carreira", a caixa "Mostrar meu nível nos cards" e o botão "Gráficos".
 
 **Fora, de propósito:** banner de evento, pop-up, selo "AO VIVO", qualquer coisa piscando, sequência de dias.
 
