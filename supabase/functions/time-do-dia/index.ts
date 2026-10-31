@@ -2,7 +2,7 @@
 // (tabela dia_sorteio, que o celular não lê). O celular manda o clube chutado e recebe a linha de
 // pistas; o nome do secreto só sai quando a partida termina. Uma partida por dia por torcedor.
 // Corpo: { acao, ... }
-//   estado {}                       o dia de hoje: número, lista de clubes, minhas tentativas, sequência
+//   estado {}                       o dia de hoje: número, lista de clubes, minhas tentativas
 //   tentar { dia, clube }           grava a tentativa e devolve o estado com a linha nova
 
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
@@ -14,7 +14,6 @@ import {
   numeroDoDia,
   pontosDoDia,
   proximoClube,
-  sequenciaDeDias,
   suspeitoNoDia,
   tentar as compararTentativa,
   type ClubeDoDia,
@@ -133,7 +132,7 @@ async function minhaPartida(sb: SupabaseClient, uid: string, dia: string): Promi
   return (data as Partida | null) ?? null;
 }
 
-/** Dias jogados até o fim (para a sequência e a detecção), do mais recente para trás. */
+/** Dias jogados até o fim (para a detecção), do mais recente para trás. */
 async function meusDias(sb: SupabaseClient, uid: string): Promise<{ dia: string; acertouNa: number | null }[]> {
   const { data, error } = await sb
     .from('dia_partidas')
@@ -169,7 +168,6 @@ async function montarEstado(
   if (!secreto) throw new Error(`clube do dia ${secretoId} não está em dia_clubes`);
   const fim = !!partida?.fechada_em;
   const primeiro = (await primeiroDia(sb)) ?? dia;
-  const dias = await meusDias(sb, uid);
   return {
     pronto: true,
     dia,
@@ -184,10 +182,6 @@ async function montarEstado(
     secreto: fim ? { id: secreto.id, nome: secreto.nome } : null,
     // Posição no Time do Dia daquele dia e recorde pessoal, só depois do fim.
     desempenho: fim ? await lerDesempenho(sb, 'desempenho_dia', { p_torcedor: uid, p_dia: dia }) : null,
-    sequencia: sequenciaDeDias(
-      dias.map((d) => d.dia),
-      diaBrasilia(new Date()),
-    ),
     proximoEm: new Date(inicioDoDia(diaBrasilia(new Date())) + DIA_MS).toISOString(),
   };
 }

@@ -310,8 +310,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
           ? narrador.falar('dia_acertou_primeira')
           : narrador.falar('dia_acertou', { tentativas: n })
         : narrador.falar('dia_errou');
-      const f2 = e.sequencia > 1 ? narrador.falar('dia_sequencia', { dias: e.sequencia }) : null;
-      frasesFinais = [f1, f2].filter((f): f is string => !!f);
+      frasesFinais = f1 ? [f1] : [];
     }
     if (frasesFinais[0]) gritar(frasesFinais[0]);
 
@@ -319,7 +318,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     const grade = gradeEmoji(e.tentativas.map((t) => t.pistas));
     const link = `${SITE}/?dia`;
     const novoRecorde = !!e.desempenho?.novoRecorde;
-    const linha = linhaDoCard(e.numero, placar, e.sequencia, novoRecorde);
+    const linha = linhaDoCard(e.numero, placar, novoRecorde);
     const textoShare = `${linha}\n${grade}\n${conviteDia(n, e.acertou)} ${link}`;
     const situacao = `+${e.pontos} na semana, além das 5 partidas do dia.`;
     // Casa do [time]: só depois que o dia termina (antes daria pista) e só para clube da Série A.
@@ -339,9 +338,8 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       </div>
       <div class="dia-placar">
         <strong>${placar}</strong>
-        <span>${e.acertou ? `${e.pontos} pontos` : 'sem pontos hoje'}${e.sequencia > 1 ? ` · ${icone('fogo')} ${e.sequencia} dias` : ''}</span>
+        <span>${e.acertou ? `${e.pontos} pontos` : 'sem pontos hoje'}</span>
       </div>
-      ${frasesFinais[1] ? `<p class="adesivo segundo">${esc(frasesFinais[1])}</p>` : ''}
       <p class="situacao">${esc(situacao)}</p>
       ${casa}
       <div data-convite-push></div>
@@ -398,7 +396,6 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
         time,
         numero: e.numero,
         placar,
-        dias: e.sequencia,
         grade,
         frase: frasesFinais[0] ?? '',
         novoRecorde,

@@ -56,7 +56,6 @@ function montar(): EstadoDoDia {
     pontos: acertou ? pontosDoDia(tentativas.length) : 0,
     secreto: fim ? { id: secreto.id, nome: secreto.nome } : null,
     desempenho: fim ? { posicao: 3, total: 14, recorde: acertou ? pontosDoDia(tentativas.length) : 85, novoRecorde: acertou } : null,
-    sequencia: fim ? 3 : 2,
     proximoEm: amanha.toISOString(),
   };
 }

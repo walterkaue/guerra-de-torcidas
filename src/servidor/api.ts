@@ -351,7 +351,6 @@ export interface EstadoDoDia {
   secreto: { id: string; nome: string } | null;
   /** Posição no Time do Dia daquele dia e recorde pessoal; só depois do fim. */
   desempenho: Desempenho | null;
-  sequencia: number;
   /** Hora (ISO) em que entra o próximo clube. */
   proximoEm: string;
   /** Só na ação "estado". */

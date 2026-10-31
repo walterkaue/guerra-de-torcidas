@@ -1,7 +1,7 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 31/10/2026 (proteção de menores do ECA Digital, seção 13: triagem de faixa etária, push e apoio só para 18+, push sem urgência, Carreira sem sequência, página de termos e "Apagar meus dados"). Antes, 31/10/2026 (uniformes dos Lances: cada lance veste os dois times dele, e o batedor vai de goleiro no Gol 100, exceção à regra dos bonecos; seção 3). Antes, 31/10/2026 (bloco "Seja sócio" na Casa de cada clube, decidido em 30/10: link para o programa oficial, sem pontos, com aviso de saída e cliques contados no servidor sem dado pessoal; ver seção 7.4). Antes, 26/10/2026 (Carreira do jogador no ar: XP no servidor, bloco na Home, linha no resultado e nível opcional no card). Antes, 26/10/2026 (qualidade gráfica automática Alta/Média/Leve, com botão "Gráficos" no rodapé da Home; só visual, ver `docs/visual.md` 4.3). Antes, 26/10/2026 (replay de TV do gol: todo gol dos Lances e os golaços dos Pênaltis, só visual). Antes, 26/10/2026 (fase 1.5 decidida pelas propostas em `docs/propostas/`: mês de estreia em série única antes da Série A e B, divisões e cidade testadas já na pré-temporada, cidade pedida depois da 1ª partida e só no ranking com 5+ jogadores, 52 semanas pela tabela de 20 posições do ranking geral, Galeria na aba Conquistas, níveis da Carreira com XP que sobrevive ao zerar). Antes, 21/10/2026, noite (Casa do [time] planejada, com dados em rascunho em dados/casa; Lances do Jogo no lugar dos Pênaltis na Home, com 3 abas; câmera 3D com três distâncias; "A jogada" no cara a cara; antes: tela dos Lances do Jogo em teste, sem valer pontos; novo minigame Lances do Jogo, com medalhas e página Conquistas; Pênaltis vão virar uma sessão dos Lances com disputas históricas; nomes reais na ficha factual dos lances)
+> Última atualização: 31/10/2026 (Time do Dia também sem sequência de dias: sai da tela, do card e do narrador; seção 13). Antes, 31/10/2026 (proteção de menores do ECA Digital, seção 13: triagem de faixa etária, push e apoio só para 18+, push sem urgência, Carreira sem sequência, página de termos e "Apagar meus dados"). Antes, 31/10/2026 (uniformes dos Lances: cada lance veste os dois times dele, e o batedor vai de goleiro no Gol 100, exceção à regra dos bonecos; seção 3). Antes, 31/10/2026 (bloco "Seja sócio" na Casa de cada clube, decidido em 30/10: link para o programa oficial, sem pontos, com aviso de saída e cliques contados no servidor sem dado pessoal; ver seção 7.4). Antes, 26/10/2026 (Carreira do jogador no ar: XP no servidor, bloco na Home, linha no resultado e nível opcional no card). Antes, 26/10/2026 (qualidade gráfica automática Alta/Média/Leve, com botão "Gráficos" no rodapé da Home; só visual, ver `docs/visual.md` 4.3). Antes, 26/10/2026 (replay de TV do gol: todo gol dos Lances e os golaços dos Pênaltis, só visual). Antes, 26/10/2026 (fase 1.5 decidida pelas propostas em `docs/propostas/`: mês de estreia em série única antes da Série A e B, divisões e cidade testadas já na pré-temporada, cidade pedida depois da 1ª partida e só no ranking com 5+ jogadores, 52 semanas pela tabela de 20 posições do ranking geral, Galeria na aba Conquistas, níveis da Carreira com XP que sobrevive ao zerar). Antes, 21/10/2026, noite (Casa do [time] planejada, com dados em rascunho em dados/casa; Lances do Jogo no lugar dos Pênaltis na Home, com 3 abas; câmera 3D com três distâncias; "A jogada" no cara a cara; antes: tela dos Lances do Jogo em teste, sem valer pontos; novo minigame Lances do Jogo, com medalhas e página Conquistas; Pênaltis vão virar uma sessão dos Lances com disputas históricas; nomes reais na ficha factual dos lances)
 > Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos), `docs/casa.md` (Casa do [time]). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
@@ -408,10 +408,10 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - O clube do dia fica só no servidor. O celular manda a tentativa e recebe a linha de pistas; a resposta só aparece quando a partida termina.
 - As tentativas ficam gravadas no servidor (apagar o app não recomeça o dia).
 - Risco: criar conta anônima nova para "estudar" o dia. Mitigação: CAPTCHA no login anônimo (seção 12) e detecção (acerto na 1ª tentativa em 5 de 7 dias → sob suspeita).
-- Sequência de dias (T01), sem punição para quem perder.
+- Sem sequência de dias (seção 13).
 
 ### Card
-- "Time do Dia #34 · 4/6 · 🔥 5 dias" + a grade de emoji (uma linha por tentativa), **sem nome de clube** (nada de spoiler) e com o link para jogar.
+- "Time do Dia #34 · 4/6" + a grade de emoji (uma linha por tentativa), **sem nome de clube** (nada de spoiler) e com o link para jogar.
 
 ### Regras comuns aos jogos de conhecimento
 - Na pré-temporada, os dois **somam no ranking** (decidido em 20/10); a calibragem sai do balanço da pré-temporada (seção 11), não de um amistoso.
@@ -596,7 +596,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - **Triagem de faixa etária:** uma vez por aparelho, antes da 1ª partida, neutra, com três botões (menos de 16, 16 ou 17, 18 ou mais). Guarda só a faixa e não usa para mais nada.
 - **Só para 18+:** oferta de push, "Apoie o jogo" e "Oferecido por".
 - **Push sem urgência:** o aviso de domingo só informa a situação da torcida e do rival na semana.
-- **Sem sequência de dias na Carreira.**
+- **Sem sequência de dias:** nem na Carreira, nem no Time do Dia, em nenhuma tela, card ou frase do narrador.
 - **"Sou maior de 18 ou responsável"** antes do Pix e do link de apoio.
 - **Aviso de saída em todo link externo.**
 - **Página `#termos` e botão "Apagar meus dados".**
