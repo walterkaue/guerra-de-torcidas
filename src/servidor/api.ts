@@ -8,6 +8,7 @@ import type { GestoCobranca, Gestos, ResultadoPartida } from '../jogo/penaltis.t
 import type { Ajuda, Degrau, Desfecho, Fim, Passo, PontosProva } from '../jogo/prova.ts';
 import type { Desempenho, PosicaoSemana } from '../jogo/posicao.ts';
 import type { Tentativa } from '../jogo/timeDoDia.ts';
+import type { Carreira } from '../jogo/carreira.ts';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -349,6 +350,28 @@ export async function minhaPosicaoSemana(semana: string): Promise<PosicaoSemana 
   const { data, error } = await comTempoLimite(sb.rpc('minha_posicao_semana', { p_semana: semana }));
   if (error) throw new ErroServidor('falha');
   return ((data ?? []) as PosicaoSemana[])[0] ?? null;
+}
+
+/** Minha carreira (XP, partidas de hoje, sequência e bônus recente). Só a própria. */
+export async function minhaCarreira(): Promise<Carreira | null> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('minha_carreira'));
+  if (error) throw new ErroServidor('falha');
+  const l = ((data ?? []) as {
+    xp: number;
+    partidas_hoje: number;
+    sequencia: number;
+    bonus_tipo: 'dia' | 'semana' | null;
+    bonus_referencia: string | null;
+  }[])[0];
+  if (!l) return null;
+  return {
+    xp: l.xp,
+    partidasHoje: l.partidas_hoje,
+    sequencia: l.sequencia,
+    bonus: l.bonus_tipo && l.bonus_referencia ? { tipo: l.bonus_tipo, referencia: l.bonus_referencia } : null,
+  };
 }
 
 /** Quantas partidas fechei hoje, somando os minigames de partida (para o "hoje contam mais N partidas"). */

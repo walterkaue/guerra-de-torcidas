@@ -2,6 +2,8 @@
 -- Os recordes pessoais saem dessas tabelas (recorde_pessoal), então zeram junto.
 -- Mantém times, torcedores (e os logins), palpites e certezas, perguntas e respostas da Prova,
 -- clubes e sorteio do Time do Dia (o número do dia continua), palavras bloqueadas e configurações.
+-- A carreira (carreira_partidas e carreira_bonus) nunca zera: não tem chave para as tabelas apagadas
+-- aqui, então fica inteira. Não acrescente delete nela (docs/jogo.md, seção 5, "Longo prazo").
 -- NÃO rode direto: use `npm run zerar-pre-temporada`, que lembra do balanço, mostra o que vai sumir
 -- e pede confirmação.
 
@@ -22,6 +24,7 @@ select
   (select count(*) from public.dia_partidas) as dias_restantes,
   (select count(*) from public.crava_pontos) as pontos_do_crava_restantes,
   (select count(*) from public.ranking_semana) as linhas_de_ranking_restantes,
-  (select count(*) from public.torcedores) as torcedores_mantidos;
+  (select count(*) from public.torcedores) as torcedores_mantidos,
+  (select count(*) from public.carreira_partidas) as partidas_da_carreira_mantidas;
 
 commit;

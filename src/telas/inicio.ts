@@ -23,6 +23,7 @@ import {
 import { jogosDoCrava, meusDadosDoCrava, type Jogo } from '../servidor/crava';
 import { diaBrasilia, msAteZerarSemana, semanaBrasilia } from '../servidor/tempo';
 import { sincronizarTorcedor } from '../servidor/torcedor';
+import { carregarCarreiraHome } from './carreira';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
@@ -136,6 +137,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         ${cardJogo('crava', 'Crava a Rodada', 'Palpita o placar do Brasileirão')}
       </section>
       <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
+
+      <section class="carreira" data-carreira aria-label="Sua carreira" hidden></section>
 
       <button class="link-casa" type="button" data-acao="casa">
         <span class="rotulo">Casa dos clubes</span>
@@ -428,6 +431,9 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         // sem internet: fica sem a linha
       });
   };
+
+  // ---------- carreira (só a própria; sem time ainda, não cria login só para isso) ----------
+  if (time) carregarCarreiraHome(root.querySelector<HTMLElement>('[data-carreira]')!, () => saiu);
 
   const carregar = () => {
     carregarMinhaPosicao();

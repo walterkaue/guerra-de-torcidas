@@ -4,13 +4,14 @@
 import { esc, irPara, type DadosResultado, type Rota } from '../app';
 import { ID_OUTRO, corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
 import { prefs } from '../estado';
-import { desenharCard } from '../jogo/card';
+import { desenharCard, seloNivel } from '../jogo/card';
 import { conviteX1Penaltis } from '../jogo/convites';
 import { placarEmoji } from '../jogo/emoji';
 import { htmlPosicao } from '../jogo/posicao';
 import { escolherFrase } from '../narrador/escolher';
 import { contextoDoTime } from '../narrador/sessao';
 import { rankingDaSemana } from '../servidor/api';
+import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { convidarParaAvisos } from './convitePush';
 
 const SITE = 'https://torcida.kauewalter.com.br';
@@ -178,6 +179,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
       </section>
 
       ${htmlPosicao(d.servidor?.desempenho ?? null, 'penaltis')}
+      <div class="res-carreira" data-carreira hidden></div>
 
       ${blocoDesafio}
 
@@ -206,6 +208,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   `;
 
   contar(root.querySelector<HTMLElement>('[data-contador]')!, p.total);
+  // Carreira: só quando o servidor fechou a partida (o XP sai de lá).
+  if (d.servidor) mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]'));
   // Bom momento para oferecer o aviso de domingo: vitória que valeu pra torcida.
   if (r.venceu && d.valendo) convidarParaAvisos(root.querySelector<HTMLElement>('[data-convite-push]'));
   const elConfete = root.querySelector<HTMLCanvasElement>('.confete');
@@ -274,6 +278,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
       novoRecorde: !!d.servidor?.desempenho?.novoRecorde,
       link: link.replace('https://', ''),
     });
+    const nivel = await nivelParaCard();
+    if (nivel) seloNivel(canvas, nivel);
     img.src = canvas.toDataURL('image/png');
     return canvas;
   })();

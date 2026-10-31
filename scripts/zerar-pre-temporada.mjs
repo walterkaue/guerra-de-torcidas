@@ -36,7 +36,8 @@ console.log(
        (select count(*) from public.dia_partidas) as dias_do_time_do_dia,
        (select count(*) from public.crava_pontos) as pontos_do_crava,
        (select count(*) from public.ranking_semana) as linhas_de_ranking,
-       (select count(*) from public.torcedores) as torcedores_que_ficam`,
+       (select count(*) from public.torcedores) as torcedores_que_ficam,
+       (select count(*) from public.carreira_partidas) as partidas_da_carreira_que_ficam`,
   ]),
 );
 console.log('Os recordes pessoais saem dessas partidas, dias e pontos do Crava: zeram junto.');
@@ -53,5 +54,5 @@ if (resposta.trim() !== 'ZERAR') {
 }
 
 console.log(consulta(['-o', 'table', '-f', 'scripts/zerar-pre-temporada.sql']));
-console.log('Pronto: pré-temporada zerada (recordes junto). Times, torcedores e palpites mantidos.');
+console.log('Pronto: pré-temporada zerada (recordes junto). Times, torcedores, carreira e palpites mantidos.');
 console.log('Não confirme de novo, no #admin, placar de rodada que já tinha fechado antes do zerar: os pontos voltariam.');

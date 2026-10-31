@@ -2,11 +2,13 @@
 // compartilhar (sem o texto das perguntas) e Mais uma / Revanche.
 
 import { esc, irPara, type Rota } from '../app';
+import { seloNivel } from '../jogo/card';
 import { ID_OUTRO, corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
 import { prefs } from '../estado';
 import { desenharCardProva, linhaDoCard } from '../jogo/cardProva';
 import { conviteX1Prova } from '../jogo/convites';
 import { htmlPosicao } from '../jogo/posicao';
+import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 const maiuscula = (s: string) => s.charAt(0).toLocaleUpperCase('pt-BR') + s.slice(1);
@@ -73,6 +75,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
       <section class="res-efeito"><p class="situacao">${esc(situacao)}</p></section>
 
       ${htmlPosicao(fim.desempenho, 'prova')}
+      <div class="res-carreira" data-carreira hidden></div>
 
       ${blocoDesafio}
 
@@ -98,6 +101,9 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
     </main>
   `;
 
+  // Carreira: só quando o servidor fechou a prova (o XP sai de lá).
+  if (fim.desempenho) mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]'));
+
   // ---------- card ----------
   const img = root.querySelector<HTMLImageElement>('.card')!;
   const cardPronto = (async () => {
@@ -117,6 +123,8 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
       novoRecorde,
       link: link.replace('https://', ''),
     });
+    const nivel = await nivelParaCard();
+    if (nivel) seloNivel(canvas, nivel);
     img.src = canvas.toDataURL('image/png');
     return canvas;
   })();

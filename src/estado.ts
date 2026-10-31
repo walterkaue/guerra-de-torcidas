@@ -22,6 +22,8 @@ interface Prefs {
   semComoProva?: boolean;
   /** Marcou "não exibir de novo" no "Como jogar" do Time do Dia. */
   semComoDia?: boolean;
+  /** Escolheu mostrar o nível da carreira nos cards. */
+  nivelNoCard?: boolean;
   /** "time|apelido" que o servidor já tem (para não regravar à toa). */
   sincronizado?: string;
 }
