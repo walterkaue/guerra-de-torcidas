@@ -41,5 +41,6 @@ Faça aqui o que é de arquitetura e decisão, sem esperar as sessões.
 
 - Não acompanhe sessão por sessão: espere o aviso de cada uma.
 - O aviso é um relato, não prova. Confira o diff e os testes antes de dizer que terminou.
+- Prove em worktree novo: pasta fora do git que sobrou no worktree do executor pode esconder falha.
 - Parte de servidor, ranking ou pontuação passa pelo `revisor`.
 - Ao fechar, compare o uso com o início e ajuste `docs/orquestracao.md` se uma faixa deu retrabalho.
