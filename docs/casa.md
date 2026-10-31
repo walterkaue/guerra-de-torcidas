@@ -28,11 +28,11 @@ Por que existe: os minigames dão motivo para jogar 30 segundos; a Casa dá orgu
 - **Rota:** `#casa/<id do time>` (ex.: `#casa/sao-paulo`), com os mesmos ids do `src/dados/times.ts`.
 - **Índice:** grade dos 20 clubes com o card "faixa de placar" (`#casa`).
 - **Ganchos (só navegação):**
-  - **Home:** tocar no bloco do seu time abre a sua Casa.
+  - **Home:** seção com o estádio e os troféus (`docs/visual.md`, seção 3); tocar abre a Casa do seu time.
   - **Ranking:** tocar numa torcida abre a Casa dela.
   - **Time do Dia:** depois que o dia termina (acertou ou não), "Conheça a Casa do [clube]" quando o clube secreto for da Série A. Nunca antes, para não dar pista.
   - **Prova de Boleiro (depois):** no resultado, link para a Casa dos clubes que caíram na partida. O texto das perguntas continua sem aparecer.
-- **Barra de navegação:** não ganha item novo (Jogar, Palpites, Ranking, Carreira ficam). O índice entra pela Home ("Casa dos clubes") e pelo Ranking.
+- **Barra de navegação:** não ganha item novo (Jogar, Palpites, Ranking, Perfil ficam). O índice entra pela Home, para quem não tem time, e pelo Ranking.
 - "Outro time" não tem Casa.
 
 ## 4. Conteúdo da página

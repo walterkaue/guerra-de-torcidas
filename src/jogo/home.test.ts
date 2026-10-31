@@ -10,10 +10,23 @@ import {
   motivoDoJogo,
   placarCravado,
   proximoJogo,
+  tituloDaCasa,
   tonsDosChutes,
   type LinhaDoGiro,
 } from './home';
 import type { Pistas } from './timeDoDia';
+
+describe('tituloDaCasa', () => {
+  it('usa o artigo do time', () => {
+    expect(tituloDaCasa(timePorId('flamengo'))).toBe('Casa do Flamengo');
+    expect(tituloDaCasa(timePorId('chapecoense'))).toBe('Casa da Chapecoense');
+  });
+
+  it('sem time ou em Outro time, fica o índice dos clubes', () => {
+    expect(tituloDaCasa(undefined)).toBe('Casa dos clubes');
+    expect(tituloDaCasa(timePorId('outro'))).toBe('Casa dos clubes');
+  });
+});
 
 const agora = new Date('2026-10-23T12:00:00Z');
 const jogo = (id: string, rodada: number, horas: number): JogoBasico => ({

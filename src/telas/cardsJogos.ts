@@ -15,6 +15,51 @@ const ARTE_LANCES = `<svg ${ARTE} viewBox="0 0 150 96">
   <circle class="arte-bola" cx="114" cy="31" r="6"/>
 </svg>`;
 
+/** Estádio com as arquibancadas nas cores do time e a estante de troféus. Troféus inventados: nenhum imita taça de verdade. */
+const ARTE_CASA = `<svg ${ARTE} viewBox="0 0 360 150" preserveAspectRatio="xMinYMax slice">
+  <defs>
+    <linearGradient id="casa-ouro"><stop offset="0" stop-color="#f8e7a6"/><stop offset=".5" stop-color="#e9c75a"/><stop offset="1" stop-color="#a47d28"/></linearGradient>
+    <linearGradient id="casa-prata"><stop offset="0" stop-color="#f5f5f0"/><stop offset=".55" stop-color="#b8bcc0"/><stop offset="1" stop-color="#777c82"/></linearGradient>
+    <radialGradient id="casa-luz"><stop offset="0" stop-color="#fff4c8" stop-opacity=".75"/><stop offset="1" stop-color="#fff4c8" stop-opacity="0"/></radialGradient>
+    <g id="casa-taca">
+      <path stroke-width="0" d="M-24-104h48c0 28-8 46-24 50-16-4-24-22-24-50z"/>
+      <rect stroke-width="0" x="-28" y="-108" width="56" height="6" rx="3"/>
+      <path fill="none" stroke-width="5" stroke-linecap="round" d="M-24-97c-17 0-17 27 7 33M24-97c17 0 17 27-7 33"/>
+      <path stroke-width="0" d="M-4-54h8l3 18h-14zM-17-36h34l4 12h-42z"/>
+      <path stroke-width="0" fill="#fff" fill-opacity=".45" d="M-17-98h6c0 16 2 28 7 36-8-6-13-20-13-36z"/>
+    </g>
+  </defs>
+  <rect class="casa-chao" y="122" width="360" height="28"/>
+  <circle class="casa-brilho" cx="146" cy="16" r="40"/>
+  <circle class="casa-brilho" cx="332" cy="16" r="40"/>
+  <path class="casa-poste" d="M146 66V16M332 66V16"/>
+  <path class="casa-refletor" d="M134 8h24v9h-24zM320 8h24v9h-24z"/>
+  <path class="casa-parede" d="M118 70v36a120 38 0 0 0 240 0V70z"/>
+  <path class="casa-janelas" d="M125 88a113 35 0 0 0 226 0"/>
+  <ellipse class="casa-teto" cx="238" cy="70" rx="120" ry="38"/>
+  <ellipse class="casa-anel1" cx="238" cy="71" rx="113" ry="33"/>
+  <ellipse class="casa-povo" cx="238" cy="71" rx="105" ry="30"/>
+  <ellipse class="casa-anel2" cx="238" cy="72" rx="95" ry="25"/>
+  <ellipse class="casa-gramado" cx="238" cy="73" rx="79" ry="19"/>
+  <path class="casa-linhas" d="M190 62h96l16 22H174zM238 62v22"/>
+  <ellipse class="casa-linhas" cx="238" cy="73" rx="10" ry="4"/>
+  <circle class="casa-placa-trofeu" cx="24" cy="100" r="21"/>
+  <circle class="casa-placa-miolo" cx="24" cy="100" r="13"/>
+  <use href="#casa-taca" transform="translate(112 146) scale(.64)" fill="url(#casa-prata)" stroke="url(#casa-prata)"/>
+  <use href="#casa-taca" transform="translate(68 154)" fill="url(#casa-ouro)" stroke="url(#casa-ouro)"/>
+</svg>`;
+
+/** Seção da Casa na Home: abre a Casa do seu time, ou o índice de quem ainda não tem. */
+export function htmlDaCasa(titulo: string): string {
+  return `<button class="casa-home" type="button" data-acao="casa">
+    <span class="casa-arte">${ARTE_CASA}</span>
+    <span class="casa-rodape">
+      <span class="casa-titulo faixa-tv">${titulo}</span>
+      <small>Estádio, troféus, recordes e manto</small>
+    </span>
+  </button>`;
+}
+
 /** Escada de 8 degraus: os que o recorde já alcançou ficam acesos. */
 export function arteEscada(acesos: number): string {
   const degraus = Array.from({ length: PERGUNTAS }, (_, i) => {
