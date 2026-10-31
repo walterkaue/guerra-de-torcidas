@@ -156,6 +156,8 @@ describe('socios.csv', () => {
 
   it('só entra linha revisada com aposta_na_pagina = não', () => {
     const e = copia();
+    // todas voltam a rascunho na cópia: o teste não depende do andamento da curadoria
+    for (const l of e.tabelas.socios.linhas as Linha[]) l.status = 'rascunho';
     revisar(socio(e, 'santos'));
     expect(erros(e)).toEqual([]);
     expect(montarSocios(e.tabelas)).toEqual({ santos: { programa: 'Programa', url: 'https://socio.exemplo.com.br/planos' } });

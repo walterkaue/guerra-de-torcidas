@@ -25,4 +25,24 @@ export const CASAS: Readonly<Record<string, CasaDoClube>> = {
 };
 
 export const SOCIOS: Readonly<Record<string, SocioDoClube>> = {
+  "athletico-pr": {"programa":"Sócio Furacão","url":"https://socio.athletico.com.br/"},
+  "atletico-mg": {"programa":"Galo Na Veia","url":"https://galonaveia.atletico.com.br/"},
+  "bahia": {"programa":"Sócio Esquadrão","url":"https://socioesquadrao.com.br/"},
+  "botafogo": {"programa":"Camisa 7","url":"https://camisa7.botafogo.com.br/"},
+  "bragantino": {"programa":"Massa Bruta","url":"https://www.massabruta.com.br/"},
+  "chapecoense": {"programa":"Sócio Condá","url":"https://chapecoense.com/socio-conda/"},
+  "corinthians": {"programa":"Fiel Torcedor","url":"https://www.fieltorcedor.com.br/"},
+  "coritiba": {"programa":"Sócio Coxa","url":"https://sociocoxa.com.br/"},
+  "cruzeiro": {"programa":"Sócio 5 Estrelas","url":"https://socio.cruzeiro.com.br/"},
+  "flamengo": {"programa":"Nação","url":"https://nacao.flamengo.com.br/"},
+  "fluminense": {"programa":"Sócio Futebol","url":"https://nense.com.br/"},
+  "gremio": {"programa":"Grêmio Sócio","url":"https://socio.gremio.net/site/"},
+  "internacional": {"programa":"Mundo Colorado","url":"https://internacional.com.br/seja-socio"},
+  "mirassol": {"programa":"Fúria do Leão","url":"https://furiadoleao.com.br/"},
+  "palmeiras": {"programa":"Avanti","url":"https://www.palmeiras.com.br/avanti/"},
+  "remo": {"programa":"Fenômeno Azul","url":"https://fenomenoazul.com.br/"},
+  "santos": {"programa":"Sócio Rei","url":"https://sociorei.com/"},
+  "sao-paulo": {"programa":"Sócio Torcedor SPFC","url":"https://sociotorcedor.com.br/"},
+  "vasco": {"programa":"Sócio Gigante","url":"https://sociogigante.com/"},
+  "vitoria": {"programa":"Sou Mais Vitória","url":"https://soumaisvitoria.com.br/"},
 };
