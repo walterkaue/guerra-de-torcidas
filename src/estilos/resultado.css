@@ -56,6 +56,13 @@
   min-width: 0;
 }
 
+/* Disputa histórica: o placar de verdade logo abaixo do de hoje. */
+.res-disputa {
+  margin-top: -8px;
+  text-align: center;
+  color: var(--texto-suave);
+}
+
 .res-placar .rotulo {
   overflow: hidden;
   text-overflow: ellipsis;

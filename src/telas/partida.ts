@@ -2,9 +2,11 @@
 // Toda decisão de resultado vem do motor puro (jogo/penaltis.ts); aqui é só gesto e desenho.
 
 import { esc, irPara, type Rota } from '../app';
+import { SELECAO, coresDoAdversario } from '../dados/adversarios';
 import { corDeTexto, proTime, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { sementeNova } from '../jogo/aleatorio';
+import { ID_SELECAO, chamadaDaDisputa } from '../jogo/disputas';
 import { etiquetasDaCobranca, etiquetasDaDefesa, eventoDaCobranca, eventoDaDefesa, eventosDoFim } from '../narrador/lance';
 import { criarNarrador } from '../narrador/sessao';
 import {
@@ -117,6 +119,11 @@ export const AVISO_CAIU = 'Caiu a conexão: essa partida não vale mais pontos.'
 export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   const time: Time = timePorId(prefs.get().time) ?? TIMES[TIMES.length - 1];
   const codigoDesafio = rota.tela === 'partida' ? rota.desafio : undefined;
+  // Disputa histórica: só cenário (adversário e chamada). O resto é a partida de sempre; desafio por link não tem cenário.
+  const disputa = rota.tela === 'partida' && !codigoDesafio ? rota.disputa : undefined;
+  const pelaSelecao = disputa?.clube === ID_SELECAO;
+  const nomeDoLado = pelaSelecao ? SELECAO.nome : time.nome;
+  const coresDoLado = pelaSelecao ? SELECAO.cores : time.cores;
   // Valores locais (partida sem valer pontos); trocados pelos do servidor quando ele responde.
   let semente = sementeNova();
   let dificuldade = dificuldadePorDia(diaEmBrasilia());
@@ -136,9 +143,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       <header class="hud">
         <button class="voltar" type="button" aria-label="Sair da partida">‹</button>
         <div class="placar-jogo">
-          <div class="lado lado-jogador"><span class="sigla">${esc(time.nome)}</span><span class="bolinhas" data-lado="jogador"></span></div>
+          <div class="lado lado-jogador"><span class="sigla">${esc(nomeDoLado)}</span><span class="bolinhas" data-lado="jogador"></span></div>
           <strong class="gols"><span data-gols="jogador">0</span><em>x</em><span data-gols="maquina">0</span></strong>
-          <div class="lado lado-maquina"><span class="sigla">Máquina</span><span class="bolinhas" data-lado="maquina"></span></div>
+          <div class="lado lado-maquina"><span class="sigla">${esc(disputa?.adversario ?? 'Máquina')}</span><span class="bolinhas" data-lado="maquina"></span></div>
         </div>
         <button class="ajuda" type="button" aria-label="Como jogar">?</button>
         <button class="mudo" type="button" aria-label="Som"></button>
@@ -230,13 +237,13 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   let goleiroMaquina!: Boneco;
   /** Veste todo mundo para enfrentar a máquina (null) ou o time de quem desafiou. */
   function vestir(coresAdversario: readonly [string, string] | null): void {
-    const u = uniformesDaPartida(time.cores, coresAdversario, uniformePreferido);
+    const u = uniformesDaPartida(coresDoLado, coresAdversario, uniformePreferido);
     batedoresJogador = elenco.jogador.map((a) => criarBoneco(a, u.jogador, false));
     goleiroJogador = criarBoneco(elenco.goleiroJogador, u.goleiroJogador, true);
     batedoresMaquina = elenco.maquina.map((a) => criarBoneco(a, u.adversario, false));
     goleiroMaquina = criarBoneco(elenco.goleiroMaquina, u.goleiroAdversario, true);
   }
-  vestir(null);
+  vestir(disputa ? coresDoAdversario(disputa.adversario) : null);
   /** O batedor da cobrança (ou da defesa) i. */
   const batedor = (lista: Boneco[], i: number) => lista[Math.max(0, i) % lista.length];
 
@@ -302,7 +309,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
           ? `${extra === 1 ? 'Empatou! ' : ''}Morte súbita: rodada extra ${extra} de ${RODADAS_EXTRAS_MAX}.`
           : `Cobrança ${rodada + 1} de ${COBRANCAS}. Arraste para chutar.`,
     );
-    if (rodada === 0) narrar(narrador.falar('abertura'));
+    if (rodada === 0) narrar(narrador.falar('abertura'), disputa && chamadaDaDisputa(disputa));
     else if (rodada === COBRANCAS) narrar(narrador.falar('morte_subita', { placar: placarAtual() }));
     else if (cobrancaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['cobranca']) }));
   }
@@ -587,11 +594,11 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         if (FALSO) return (await servidor()).novaPartida(codigo);
         await sincronizarTorcedor();
         try {
-          return await SERVIDOR.novaPartida(codigo);
+          return await SERVIDOR.novaPartida(codigo, disputa?.id);
         } catch (e) {
           if (!(e instanceof ErroServidor) || e.codigo !== 'sem_time') throw e;
           await sincronizarTorcedor(true);
-          return SERVIDOR.novaPartida(codigo);
+          return SERVIDOR.novaPartida(codigo, disputa?.id);
         }
       };
       let p;
@@ -681,6 +688,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         aviso: aviso ?? undefined,
         servidor,
         desafio: desafio ?? undefined,
+        disputa,
         resultado,
         frasesFinais: eventosDoFim(resultado)
           .map((ev) =>
