@@ -8,7 +8,9 @@ import { simularPartida, type Gestos } from '../jogo/penaltis';
 import { jogarLance, type Lance } from '../jogo/penaltisLance';
 import { ErroServidor, type FechamentoDoServidor, type LanceDoServidor, type PartidaDoServidor } from '../servidor/api';
 
-const espera = () => new Promise((ok) => setTimeout(ok, 180));
+// ?latencia=800 imita o servidor real, que costuma demorar mais que o pé para chegar na bola.
+const latencia = Number(new URLSearchParams(location.search).get('latencia')) || 180;
+const espera = () => new Promise((ok) => setTimeout(ok, latencia));
 const caiNoLance = Number(new URLSearchParams(location.search).get('caiNoLance')) || 0;
 
 let estado: { semente: number; dificuldade: number; gestos: Gestos; lances: number } | null = null;
