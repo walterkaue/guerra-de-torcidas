@@ -1,5 +1,5 @@
 // Lances do Jogo (docs/jogo.md, seção 7.3): hub com três abas. Pênaltis abre o jogo de sempre (telas/partida.ts,
-// valendo pontos); Faltas e Cara a cara têm o álbum (filtro de clube, ficha, partida de 3 e treino), em teste e
+// valendo pontos), livre ou com o cenário de uma disputa histórica (seção 6); Faltas e Cara a cara têm o álbum (filtro de clube, ficha, partida de 3 e treino), em teste e
 // ainda sem valer pontos. Quem decide o lance é o motor puro (jogo/lances.ts); aqui é escolha, gesto e desenho,
 // na cena 3D (telas/cena3d.ts) com a câmera de cada tipo (telas/camera.ts).
 
@@ -23,7 +23,10 @@ import { normalizarCobranca, type GestoCobranca } from '../jogo/penaltis';
 import { destravarSom, somApito, somChute, somTorcida } from '../jogo/som';
 import { etiquetasDoLance, eventoDoLance } from '../narrador/lance';
 import { criarNarrador } from '../narrador/sessao';
-import { coresDoAdversario, roupaDoBatedorGoleiro } from '../dados/coresDosLances';
+import { SELECAO, coresDoAdversario, roupaDoBatedorGoleiro } from '../dados/coresDosLances';
+import { contraAdversario } from '../dados/adversarios';
+import { DISPUTAS } from '../dados/disputas';
+import { chamadaDaDisputa, disputasDoTorcedor, type Disputa } from '../jogo/disputas';
 import { criarBoneco, novaPose, type Boneco, poseChute, poseComemora, poseLamenta, poseParado, sortearAparencia, uniformesDaPartida } from './bonecos';
 import { ENQUADRAMENTOS } from './camera';
 import { facil, limitar01 } from './cena';
@@ -41,8 +44,6 @@ const ABAS: { id: AbaLances; rotulo: string; nota: string }[] = [
   { id: 'finalizacao', rotulo: 'Cara a cara', nota: 'em teste' },
 ];
 
-/** A Seleção entra como coleção extra, aberta a todos (só nome e cores). */
-const SELECAO = { nome: 'Seleção', cores: ['#ffd200', '#00843d'] as [string, string] };
 const ROTULO_FAIXA: Record<Faixa, string> = { facil: 'Fácil', media: 'Média', dificil: 'Difícil', craque: 'Craque' };
 
 const DUR_BATIDA = 190;
@@ -101,6 +102,31 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   let escolhidos: Lance[] = [];
   let filtroClube = LANCES.some((l) => l.clube === time.id) ? time.id : 'todos';
   let limparJogo: (() => void) | null = null;
+  // ?disputasFalsas enche a lista em desenvolvimento, enquanto o catálogo está em rascunho (src/dev/disputasFalsas.ts).
+  let catalogoDisputas: readonly Disputa[] = DISPUTAS;
+  if (import.meta.env.DEV && new URLSearchParams(location.search).has('disputasFalsas')) {
+    void import('../dev/disputasFalsas').then((m) => {
+      catalogoDisputas = m.DISPUTAS_FALSAS;
+      if (aba === 'penaltis' && root.querySelector('.lances-conteudo')) conteudo();
+    });
+  }
+
+  /** Uma disputa da lista: tocar abre a ficha e o botão de jogar, como no álbum. */
+  function itemDaDisputa(d: Disputa): string {
+    const clube = clubeDoLance(d.clube);
+    return `<li class="lance" style="${estilo(clube.cores)}">
+      <button type="button" class="lance-topo" aria-expanded="false">
+        <span class="lance-titulo">${esc(d.titulo)}</span>
+        <span class="lance-meta">${esc(contraAdversario(d.adversario))} · ${d.data.slice(0, 4)}</span>
+        <span class="lance-pontos disputa-placar">${esc(d.placar)}</span>
+      </button>
+      <div class="lance-ficha" hidden>
+        <p>${esc(d.ficha)}</p>
+        <p class="lance-situacao rotulo">${esc(chamadaDaDisputa(d))}</p>
+        <button type="button" class="botao" data-disputa="${esc(d.id)}">Jogar essa disputa</button>
+      </div>
+    </li>`;
+  }
 
   // ---------- hub ----------
   function hub(): void {
@@ -133,19 +159,40 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   function conteudo(): void {
     const el = root.querySelector<HTMLElement>('.lances-conteudo')!;
     if (aba === 'penaltis') {
+      const { doTime, daSelecao } = disputasDoTorcedor(catalogoDisputas, time.id);
+      const secao = (rotulo: string, lista: Disputa[]) =>
+        lista.length ? `<p class="rotulo lances-secao">${esc(rotulo)}</p><ul class="lista-lances">${lista.map(itemDaDisputa).join('')}</ul>` : '';
+      const historicas =
+        secao(`Disputas históricas ${time.artigo === 'a' ? 'da' : 'do'} ${time.nome}`, doTime) + secao('Disputas históricas da Seleção', daSelecao);
       el.innerHTML = `
         <p class="lances-aviso rotulo" role="note">Pênaltis valem pontos como sempre</p>
         <button type="button" class="lance-card" data-acao="disputa-livre">
           <span class="lance-titulo">Disputa livre</span>
           <span class="lance-meta">Bate 5, pega 5, contra a máquina. Empatou? Morte súbita.</span>
         </button>
-        <p class="rotulo lances-secao">Disputas históricas</p>
-        <p class="lance-card lance-card-breve">
-          <span class="lance-titulo">Em breve</span>
-          <span class="lance-meta">Disputas de pênaltis que o seu time venceu, contra o adversário de verdade, e as da Seleção.</span>
-        </p>
+        ${
+          historicas ||
+          `<p class="rotulo lances-secao">Disputas históricas</p>
+          <p class="lance-card lance-card-breve">
+            <span class="lance-titulo">Em breve</span>
+            <span class="lance-meta">Disputas de pênaltis que o seu time venceu, contra o adversário de verdade, e as da Seleção.</span>
+          </p>`
+        }
         <button class="botao" type="button" data-acao="disputa-livre">Bater a disputa livre</button>`;
       el.querySelectorAll('[data-acao="disputa-livre"]').forEach((b) => b.addEventListener('click', () => irPara({ tela: 'partida' })));
+      el.querySelectorAll<HTMLButtonElement>('.lance-topo').forEach((b) =>
+        b.addEventListener('click', () => {
+          const aberto = b.getAttribute('aria-expanded') === 'true';
+          b.setAttribute('aria-expanded', String(!aberto));
+          b.nextElementSibling?.toggleAttribute('hidden', aberto);
+        }),
+      );
+      el.querySelectorAll<HTMLButtonElement>('[data-disputa]').forEach((b) =>
+        b.addEventListener('click', () => {
+          const disputa = catalogoDisputas.find((d) => d.id === b.dataset.disputa);
+          if (disputa) irPara({ tela: 'partida', disputa });
+        }),
+      );
       return;
     }
     const tipo = aba;

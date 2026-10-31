@@ -1,5 +1,6 @@
 // Troca de telas. Cada tela desenha no #app e devolve uma função de limpeza.
 
+import type { Disputa } from './jogo/disputas';
 import type { Gestos, ResultadoPartida } from './jogo/penaltis';
 import type { DesafioRecebido, FechamentoDoServidor } from './servidor/api';
 import type { DadosResultadoProva } from './telas/prova';
@@ -21,6 +22,8 @@ export interface DadosResultado {
   servidor?: FechamentoDoServidor;
   /** Partida de desafio por link: dados de quem desafiou. */
   desafio?: DesafioRecebido;
+  /** Disputa histórica jogada (só cenário). */
+  disputa?: Disputa;
   /** Até 2 frases do narrador para a tela final (5 de 5, depois o resultado). */
   frasesFinais: string[];
 }
@@ -39,7 +42,8 @@ export type Rota =
   | { tela: 'feedback'; de?: string }
   /** `apelido` já leva ao campo do apelido (Perfil, "Escolher apelido"). */
   | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia' | 'lances' | 'perfil'; desafio?: string; apelido?: boolean }
-  | { tela: 'partida'; desafio?: string }
+  /** `disputa`: disputa histórica escolhida na aba Pênaltis (só cenário; sem ela, a disputa livre). */
+  | { tela: 'partida'; desafio?: string; disputa?: Disputa }
   | { tela: 'resultado'; dados: DadosResultado }
   | { tela: 'prova'; desafio?: string }
   | { tela: 'provaResultado'; dados: DadosResultadoProva }

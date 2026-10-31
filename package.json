@@ -18,6 +18,7 @@
     "importar-perguntas": "node scripts/importar-perguntas.mjs",
     "importar-clubes-do-dia": "node scripts/importar-clubes-do-dia.mjs",
     "catalogo-lances": "node scripts/lances/catalogo.mjs",
+    "catalogo-disputas": "node scripts/disputas/catalogo.mjs",
     "importar-casa": "node scripts/casa/importar.mjs",
     "aplicar-conferencia-casa": "node scripts/casa/aplicar-conferencia.mjs",
     "conferir-casa": "node scripts/casa/conferir-gemini.mjs"
