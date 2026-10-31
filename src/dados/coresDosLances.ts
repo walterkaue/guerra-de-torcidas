@@ -30,12 +30,27 @@ const OUTROS_ADVERSARIOS: Record<string, Cores> = {
   'Sporting Cristal': ['#6cc4ee', '#ffffff'],
 };
 
-/** Lances em que quem bateu foi o goleiro: o batedor vai de goleiro (exceção do jogo.md, seção 3). */
-const BATEDOR_DE_GOLEIRO: readonly string[] = ['sao-paulo-2011-gol-100'];
+/** Roupa lisa de um batedor de goleiro: só as cores, sem desenho nem marca. */
+export interface RoupaDeGoleiro {
+  camisa: string;
+  calcao: string;
+  meiao: string;
+  chuteira: string;
+  luva: string;
+}
+
+/**
+ * Lances em que quem bateu foi o goleiro: o batedor vai de goleiro, nas cores do dia (exceção do
+ * jogo.md, seção 3). Gol 100: camisa dourada, calção preto e meião branco (foto do jogo, enviada
+ * pelo Kauê em 31/10/2026).
+ */
+const BATEDOR_DE_GOLEIRO: Record<string, RoupaDeGoleiro> = {
+  'sao-paulo-2011-gol-100': { camisa: '#d9a520', calcao: '#111111', meiao: '#ffffff', chuteira: '#161616', luva: '#ecebe6' },
+};
 
 /** Cores do adversário de um lance, ou null se não houver cadastro (aí joga de máquina). */
 export function coresDoAdversario(nome: string): Cores | null {
   return TIMES.find((t) => t.nome === nome)?.cores ?? OUTROS_ADVERSARIOS[nome] ?? null;
 }
 
-export const batedorDeGoleiro = (idDoLance: string): boolean => BATEDOR_DE_GOLEIRO.includes(idDoLance);
+export const roupaDoBatedorGoleiro = (idDoLance: string): RoupaDeGoleiro | null => BATEDOR_DE_GOLEIRO[idDoLance] ?? null;

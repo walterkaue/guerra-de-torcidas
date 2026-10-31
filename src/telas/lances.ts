@@ -23,7 +23,7 @@ import { normalizarCobranca, type GestoCobranca } from '../jogo/penaltis';
 import { destravarSom, somApito, somChute, somTorcida } from '../jogo/som';
 import { etiquetasDoLance, eventoDoLance } from '../narrador/lance';
 import { criarNarrador } from '../narrador/sessao';
-import { batedorDeGoleiro, coresDoAdversario } from '../dados/coresDosLances';
+import { coresDoAdversario, roupaDoBatedorGoleiro } from '../dados/coresDosLances';
 import { criarBoneco, novaPose, type Boneco, poseChute, poseComemora, poseLamenta, poseParado, sortearAparencia, uniformesDaPartida } from './bonecos';
 import { ENQUADRAMENTOS } from './camera';
 import { facil, limitar01 } from './cena';
@@ -67,7 +67,7 @@ const distanciaDoLance = (l: Lance) => Math.hypot(l.bola.x, l.bola.z);
 function elencoDoLance(l: Lance): { batedor: Boneco; goleiro: Boneco; barreira: Boneco[] } {
   const u = uniformesDaPartida(clubeDoLance(l.clube).cores, coresDoAdversario(l.adversario), 0);
   return {
-    batedor: criarBoneco(sortearAparencia(), batedorDeGoleiro(l.id) ? u.goleiroJogador : u.jogador, false),
+    batedor: criarBoneco(sortearAparencia(), roupaDoBatedorGoleiro(l.id) ?? u.jogador, false),
     goleiro: criarBoneco(sortearAparencia(), u.goleiroAdversario, true),
     barreira: Array.from({ length: 6 }, () => criarBoneco(sortearAparencia(), u.adversario, true)),
   };
