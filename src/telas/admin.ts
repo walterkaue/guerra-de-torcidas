@@ -10,6 +10,7 @@ import { timePorId } from '../dados/times';
 import { ordinalRodada } from '../jogo/crava';
 import { horaDoJogo, rodadaEmFoco } from '../jogo/cravaTela';
 import type { Jogo } from '../servidor/crava';
+import { opcoesComCaptcha, tokenCaptcha } from '../servidor/captcha';
 import { montarRevisao } from './adminRevisao';
 import { montarSuspeitas } from './adminSuspeitas';
 
@@ -81,9 +82,18 @@ export function telaAdmin(root: HTMLElement): () => void {
       const dados = new FormData(form);
       const botao = form.querySelector<HTMLButtonElement>('button')!;
       botao.disabled = true;
+      // Com o CAPTCHA ligado no Supabase, o login por senha também precisa do token.
+      let token: string | undefined;
+      try {
+        token = await tokenCaptcha();
+      } catch {
+        if (!saiu) telaLogin('Não deu pra passar na verificação. Tente de novo.');
+        return;
+      }
       const { error } = await sb.auth.signInWithPassword({
         email: String(dados.get('email') ?? ''),
         password: String(dados.get('senha') ?? ''),
+        options: opcoesComCaptcha(token),
       });
       if (saiu) return;
       if (error) telaLogin('E-mail ou senha não conferem.');

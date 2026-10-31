@@ -3,6 +3,7 @@
 // Sem internet ou com o Supabase fora do ar, tudo aqui falha rápido e o jogo segue "sem valer pontos".
 
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
+import { opcoesComCaptcha, tokenCaptcha } from './captcha';
 import { prefs } from '../estado';
 import type { GestoCobranca, Gestos, ResultadoCobranca, ResultadoDefesa, ResultadoPartida } from '../jogo/penaltis.ts';
 import type { Lance, Passo as PassoPenalti } from '../jogo/penaltisLance.ts';
@@ -61,7 +62,14 @@ export function garantirSessao(): Promise<string> {
         throw new ErroServidor('sem_conexao');
       }
     }
-    const { data: novo, error } = await comTempoLimite(sb.auth.signInAnonymously());
+    // CAPTCHA (desligado sem a chave do site): só aqui, no primeiro login do aparelho.
+    let token: string | undefined;
+    try {
+      token = await tokenCaptcha();
+    } catch {
+      throw new ErroServidor('captcha');
+    }
+    const { data: novo, error } = await comTempoLimite(sb.auth.signInAnonymously({ options: opcoesComCaptcha(token) }));
     if (error || !novo.user) throw new ErroServidor(error?.code ?? 'login_falhou');
     return novo.user.id;
   })().catch((e) => {
