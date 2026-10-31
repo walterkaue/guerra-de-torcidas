@@ -1,4 +1,5 @@
-// Gera src/dados/casa/dados.gerado.ts a partir de dados/casa/*.csv: só entra linha "revisada" ou "ativa".
+// Gera src/dados/casa/dados.gerado.ts a partir de dados/casa/*.csv: só entra linha "revisada" ou "ativa"
+// (em socios.csv, só "revisada" com aposta_na_pagina = não).
 // Uso: npm run importar-casa   (rode sempre que mudar um CSV; o teste avisa se esquecer)
 //      npm run importar-casa -- --seco   só valida e mostra o resumo
 
@@ -6,13 +7,13 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { lerCsv } from '../perguntas/validar.mjs';
 import { ARQUIVOS, lerTabela } from './tabela.mjs';
-import { PUBLICADOS, idsDeTimes, validarCasa } from './validar.mjs';
+import { PUBLICADOS, idsDeTimes, socioPublicado, validarCasa } from './validar.mjs';
 
 const RAIZ = new URL('../../', import.meta.url);
 const PASTA = new URL('dados/casa/', RAIZ);
 const DESTINO = new URL('src/dados/casa/dados.gerado.ts', RAIZ);
 
-/** Lê os seis CSVs, os ids de times, as competições e o clubes-do-dia. */
+/** Lê os CSVs da Casa, os ids de times, as competições e o clubes-do-dia. */
 export function lerEntradas() {
   const tabelas = Object.fromEntries(ARQUIVOS.map((a) => [a, lerTabela(readFileSync(new URL(`${a}.csv`, PASTA), 'utf8'))]));
   const times = idsDeTimes(readFileSync(new URL('src/dados/times.ts', RAIZ), 'utf8'));
@@ -79,16 +80,26 @@ export function montarCasas(tabelas) {
   return casas;
 }
 
+/** Programa de sócio de cada clube com linha publicada (docs/jogo.md 7.4). */
+export function montarSocios(tabelas) {
+  return Object.fromEntries(tabelas.socios.linhas.filter(socioPublicado).map((l) => [l.id, { programa: l.programa, url: l.url }]));
+}
+
 /** Texto do módulo gerado (uma linha por clube, para o diff do git ficar legível). */
 export function gerarModulo(tabelas) {
   const casas = montarCasas(tabelas);
   const ids = Object.keys(casas).sort();
+  const socios = montarSocios(tabelas);
   return [
     '// GERADO por scripts/casa/importar.mjs a partir de dados/casa/*.csv. Não edite aqui: mude o CSV e rode `npm run importar-casa`.',
-    "import type { CasaDoClube } from './tipos';",
+    "import type { CasaDoClube, SocioDoClube } from './tipos';",
     '',
     'export const CASAS: Readonly<Record<string, CasaDoClube>> = {',
     ...ids.map((id) => `  ${JSON.stringify(id)}: ${JSON.stringify(casas[id])},`),
+    '};',
+    '',
+    'export const SOCIOS: Readonly<Record<string, SocioDoClube>> = {',
+    ...Object.keys(socios).sort().map((id) => `  ${JSON.stringify(id)}: ${JSON.stringify(socios[id])},`),
     '};',
     '',
   ].join('\n');
@@ -103,7 +114,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     process.exit(1);
   }
   const casas = montarCasas(tabelas);
-  const por = (arq) => tabelas[arq].linhas.filter(publicada).length;
+  const por = (arq) => tabelas[arq].linhas.filter(arq === 'socios' ? socioPublicado : publicada).length;
   console.log(`Clubes publicados: ${Object.keys(casas).length}/${ctx.times.length}. Linhas publicadas: ${ARQUIVOS.map((a) => `${a} ${por(a)}/${tabelas[a].linhas.length}`).join(', ')}.`);
   if (process.argv.includes('--seco')) process.exit(0);
   writeFileSync(DESTINO, gerarModulo(tabelas));
