@@ -12,6 +12,7 @@
 | Importador, validador e competições (`scripts/casa/`, `src/dados/competicoes.ts`) | Pronto; conferência por script com Gemini (`npm run conferir-casa`) desde 25/10 |
 | Tela, índice e desenhos (`src/telas/casa/`) | Pronto (25/10/2026), testado em 390×844 |
 | Ganchos (Home, Ranking, Time do Dia) | Prontos (25/10/2026); Prova de Boleiro fica para depois |
+| "Seja sócio" (bloco, `dados/casa/socios.csv`, contagem) | Código pronto (31/10/2026); **20 linhas em rascunho**, esperando a curadoria do Kauê (`docs/casa.md`, seção 8) |
 
 O upgrade dos pênaltis que travava a Casa fechou (Lances do Jogo no `main`), então **nada impede de começar**.
 
@@ -64,7 +65,7 @@ Arquivos de contato: `inicio.ts` (bloco do time), `ranking.ts` (torcida), `timeD
 2. **Conferência humana por amostra:** o Kauê abre as Casas dos clubes que mais conhece no celular e confere de olho dois ou três fatos.
 3. **Divulgação** só quando os 20 estiverem revisados: card/stories da sala de troféus fica para depois (item 5 da ordem de construção do `docs/casa.md`).
 4. **Medir:** se o `scripts/metricas.mjs` já conta aberturas de tela, registrar aberturas por Casa; se não, só entra se for barato (a Casa não tem servidor).
-- **Pronto quando:** `main` com a Casa, deploy normal do projeto, sem migração nem segredo.
+- **Pronto quando:** `main` com a Casa, deploy normal do projeto, sem segredo. A única migração é a da contagem do "Seja sócio".
 
 ### Etapa G. Manutenção
 | Quando | O que |
@@ -72,6 +73,7 @@ Arquivos de contato: `inicio.ts` (bloco do time), `ranking.ts` (torcida), `timeD
 | **Dezembro de 2026** | Rodada de escrita + conferência com os títulos de 2026 (Libertadores, Copa do Brasil, Brasileirão até 2/12, estaduais de 2026 já entraram) e recordes que mudam (ex.: jogos do Cássio, gols dos jogadores em atividade). Rodapé passa a "Dados até 31/12/2026". |
 | **2027** | Atualização completa com a nova Série A (clubes que sobem e descem). |
 | **Sempre** | Erro apontado pelo botão: corrige no CSV, marca nova `verificada_em`, rodar `npm run importar-casa`. |
+| **Todo mês** | `npm run conferir-casa -- --links` e, para cada `revisada`, uma olhada na página de sócio: se passou a promover aposta, `aposta_na_pagina` = `sim` e `status` = `aposentada`. |
 
 ## 4. Quem faz o quê
 
