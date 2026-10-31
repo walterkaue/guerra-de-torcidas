@@ -80,5 +80,12 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
     irPara(depois === 'partida' ? { tela: 'partida', desafio } : depois === 'prova' ? { tela: 'prova', desafio } : { tela: depois });
   });
 
-  root.querySelector('.voltar')?.addEventListener('click', () => irPara({ tela: depois === 'palpites' ? 'palpites' : 'inicio' }));
+  root.querySelector('.voltar')?.addEventListener('click', () =>
+    irPara({ tela: depois === 'palpites' || depois === 'perfil' ? depois : 'inicio' }),
+  );
+
+  if (rota.tela === 'times' && rota.apelido) {
+    input.scrollIntoView({ block: 'center' });
+    input.focus({ preventScroll: true });
+  }
 }

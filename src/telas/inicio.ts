@@ -1,18 +1,32 @@
-// Tela inicial (docs/jogo.md, seção 9, "Home"): título com a contagem da semana, bloco do time com o cabo de
-// guerra contra o rival, sua posição na semana, os 4 jogos em grade (com status vivo), mini tabela e feedback.
+// Tela inicial (docs/visual.md, seção 3): cabeçalho com avatar, arquibancada do time, cabo de guerra contra o
+// rival com a sua posição, "Jogar agora", cards dos jogos com desenho e estado vivo, e o giro da semana.
 
 import { desafioDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, TIMES, corDeTexto, corDoRivalNoDuelo, timePorId, type Time } from '../dados/times';
 import { faixaDoAparelho, prefs } from '../estado';
 import { AVISO_RESENHA } from '../jogo/cravaTela';
 import { podeVerPush } from '../jogo/faixaEtaria';
-import { AVISO_PRE_TEMPORADA, linhaPosicaoSemana, setaDaPosicao } from '../jogo/posicao';
-import { formatarVolta, linhaPenaltis, statusCrava } from '../jogo/statusJogos';
+import {
+  degrausDoRecorde,
+  fechaSemPalpite,
+  frasesDoGiro,
+  linhaDoDia,
+  luzDoHorario,
+  motivoDoJogo,
+  placarCravado,
+  proximoJogo,
+  tonsDosChutes,
+  type JogoDaHome,
+  type SituacaoDoDia,
+} from '../jogo/home';
+import { AVISO_PRE_TEMPORADA, linhaPosicaoSemana, linhaRecorde, setaDaPosicao } from '../jogo/posicao';
+import { linhaPenaltis, statusCrava } from '../jogo/statusJogos';
 import { escolherFrase } from '../narrador/escolher';
 import { rivalDaSemana, situacaoDoDuelo } from '../narrador/rival';
 import { contextoDoTime } from '../narrador/sessao';
 import {
   estadoDoDia,
+  meusRecordes,
   minhaPosicaoSemana,
   ouvirRanking,
   partidasFechadasHoje,
@@ -22,38 +36,36 @@ import {
   type LinhaRanking,
 } from '../servidor/api';
 import { jogosDoCrava, meusDadosDoCrava, type Jogo } from '../servidor/crava';
-import { diaBrasilia, msAteZerarSemana, semanaBrasilia } from '../servidor/tempo';
+import { diaBrasilia, horaBrasilia, msAteZerarSemana, semanaBrasilia } from '../servidor/tempo';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
-import { carregarCarreiraHome } from './carreira';
+import { ligarArquibancada } from './arquibancada';
+import { anotarCarreira } from './carreira';
+import { arteEscada, arteGrade, htmlDosCards } from './cardsJogos';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
-import { NOME_DO_NIVEL, escolha, escolherQualidade, qualidade } from './qualidade';
-
-/** "Gráficos: automático (Média)" ou "Gráficos: Leve". */
-function rotuloGraficos(): string {
-  const nivel = NOME_DO_NIVEL[qualidade().nivel];
-  return `${icone('grafico')} Gráficos: ${escolha() === 'auto' ? `automático (${nivel})` : nivel}`;
-}
+import { qualidade } from './qualidade';
 
 export const TETO_DIARIO = 5;
-// Em desenvolvimento, ?diaFalso usa o Time do Dia de mentira também no card (src/dev/diaFalso.ts).
+const SERVIDOR = { rankingDaSemana, minhaPosicaoSemana, partidasFechadasHoje, estadoDoDia, jogosDoCrava, meusDadosDoCrava, meusRecordes };
+// Em desenvolvimento, ?homeFalsa troca o servidor por um de mentira (src/dev/homeFalsa.ts) e ?diaFalso
+// usa o Time do Dia de mentira também no card (src/dev/diaFalso.ts).
+const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
 const FALSA_DIA = import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso');
+const servidor = async (): Promise<typeof SERVIDOR> => {
+  if (FALSA) return import('../dev/homeFalsa');
+  return FALSA_DIA ? { ...SERVIDOR, estadoDoDia: (await import('../dev/diaFalso')).estadoDoDia } : SERVIDOR;
+};
+/** Em desenvolvimento, ?hora=20 escolhe a luz da arquibancada. */
+const horaDaLuz = () => (import.meta.env.DEV && Number(new URLSearchParams(location.search).get('hora'))) || horaBrasilia();
 
-type JogoDaHome = 'penaltis' | 'prova' | 'dia' | 'crava';
-
-/** Card da grade: nome, uma linha do que é e a linha de status (preenchida depois). */
-function cardJogo(id: JogoDaHome, nome: string, oQueE: string, linha = ''): string {
-  return `<button class="card-jogo" type="button" data-jogo="${id}">
-    <span class="nome-jogo">${nome}</span>
-    <span class="o-que-e">${oQueE}</span>
-    <span class="status-jogo rotulo" aria-live="polite">${linha}</span>
-  </button>`;
-}
 const CHAVE_DUELO = 'gdt:duelo';
 const CHAVE_POSICOES = 'gdt:posicoes';
 const CHAVE_MINHA_POSICAO = 'gdt:minha-posicao';
+/** O giro troca de frase a cada 5 s, com um esmaecer curto. */
+const GIRO_SEGUNDOS = 5;
+const GIRO_ESMAECER_MS = 260;
 
 /** Lê/grava um pedacinho de memória do aparelho (sempre com try/catch). */
 function memoria<T>(chave: string, valor?: T): T | null {
@@ -79,6 +91,22 @@ export function formatarContagem(ms: number): string {
 const numero = (n: number) => Math.round(n).toLocaleString('pt-BR');
 const pelo = (t: Time) => (t.artigo === 'a' ? 'pela' : 'pelo');
 
+/** Tarja da arquibancada: o time de quem joga, ou a pergunta de quem ainda não escolheu. */
+function tarjaDoTime(time: Time | undefined): string {
+  if (!time) {
+    return `<div class="bloco-time-faixa faixa-tv sem-time">
+        <p class="rotulo">Sem cadastro. Abre e joga.</p>
+        <h2>Qual é a sua torcida?</h2>
+      </div>
+      <button class="link-trocar" type="button" data-acao="trocar">Escolher meu time</button>`;
+  }
+  return `<div class="bloco-time-faixa faixa-tv">
+        <p class="rotulo">${time.id === ID_OUTRO ? 'Você joga pelo' : `Você joga ${pelo(time)}`}</p>
+        <h2>${esc(time.id === ID_OUTRO ? 'Seu time' : time.nome)}</h2>
+      </div>
+      <button class="link-trocar" type="button" data-acao="trocar">trocar</button>`;
+}
+
 export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const time = timePorId(prefs.get().time);
   const codigoDesafio = desafioDoLink();
@@ -89,32 +117,22 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
   const estiloTime = (t: Time) => `--c1:${t.cores[0]};--c2:${t.cores[1]};--txt:${corDeTexto(t.cores[0])}`;
 
-  const blocoTime = time
-    ? `<section class="bloco-time" style="${estiloTime(time)}">
-        <div class="bloco-time-faixa faixa-tv">
-          <p class="rotulo">${time.id === ID_OUTRO ? 'Você joga pelo' : `Você joga ${pelo(time)}`}</p>
-          <h2>${esc(time.id === ID_OUTRO ? 'Seu time' : time.nome)}</h2>
-        </div>
-        <p class="bloco-time-pos" data-minha-posicao>${time.id === ID_OUTRO ? 'Quem joga por "Outro time" fica fora do ranking das torcidas.' : 'Carregando a posição…'}</p>
-        <button class="link-trocar" type="button" data-acao="trocar">trocar</button>
-      </section>`
-    : `<section class="bloco-time sem-time">
-        <p class="rotulo">Qual é a sua torcida?</p>
-        <p class="sem-time-nota">Sem cadastro. Abre e joga.</p>
-        <button class="botao botao-sec" type="button" data-acao="trocar">Escolher meu time</button>
-      </section>`;
+  const dono = time ?? timePorId(ID_OUTRO)!;
 
   root.innerHTML = `
     <main class="inicio">
       <header class="cabecalho">
-        <h1 class="marca-pequena">Guerra <span>de Torcidas</span></h1>
-        ${
-          podeVerPush(faixaDoAparelho())
-            ? `<button class="sininho" type="button" data-acao="sininho" aria-label="Aviso de domingo" aria-expanded="false">
-          ${icone('sino')}
-        </button>`
-            : ''
-        }
+        <div class="cabecalho-linha">
+          <button class="avatar" type="button" data-acao="perfil" aria-label="Abrir meu perfil" style="${estiloTime(dono)}">${icone('pessoa')}</button>
+          <h1 class="marca-pequena">Guerra <span>de Torcidas</span></h1>
+          ${
+            podeVerPush(faixaDoAparelho())
+              ? `<button class="sininho" type="button" data-acao="sininho" aria-label="Aviso de domingo" aria-expanded="false">
+            ${icone('sino')}
+          </button>`
+              : ''
+          }
+        </div>
         <p class="contagem rotulo"><span class="etiqueta-fase">Pré-temporada</span>Semana fecha em <strong data-contagem>${formatarContagem(msAteZerarSemana())}</strong></p>
       </header>
 
@@ -122,45 +140,46 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
       <section class="convite-desafio" hidden></section>
 
-      ${blocoTime}
-
-      <section class="cabo" hidden aria-label="Duelo com o rival">
-        <p class="rotulo cabo-titulo">Duelo com o rival</p>
-        <div class="cabo-nomes">
-          <span><strong data-cabo-v-eu></strong><span data-cabo-eu></span></span>
-          <span><span data-cabo-rival></span><strong data-cabo-v-rival></strong></span>
-        </div>
-        <div class="cabo-barra"><span data-cabo-lado="eu"></span><span data-cabo-lado="rival"></span></div>
-        <p class="adesivo" data-frase-rival hidden></p>
+      <section class="arquibancada" style="${estiloTime(dono)}" aria-label="Sua torcida">
+        <canvas class="arquibancada-tela" aria-hidden="true"></canvas>
+        ${tarjaDoTime(time)}
       </section>
 
-      <p class="minha-posicao" data-posicao-semana aria-live="polite" hidden></p>
+      <section class="cabo" aria-label="Duelo com o rival"${time?.id === ID_OUTRO ? '' : ' hidden'}>
+        <div class="cabo-duelo" data-duelo hidden>
+          <p class="rotulo cabo-titulo">Duelo com o rival</p>
+          <div class="cabo-nomes">
+            <p><strong data-cabo-v-eu></strong><span data-cabo-eu></span></p>
+            <p><strong data-cabo-v-rival></strong><span data-cabo-rival></span></p>
+          </div>
+          <div class="cabo-corda">
+            <div class="cabo-barra"><span data-cabo-lado="eu"></span><span data-cabo-lado="rival"></span></div>
+            <span class="cabo-no" aria-hidden="true"></span>
+          </div>
+          <p class="adesivo" data-frase-rival hidden></p>
+        </div>
+        ${time?.id === ID_OUTRO ? '<p class="cabo-nota">Quem joga por "Outro time" fica fora do ranking das torcidas.</p>' : ''}
+        <p class="cabo-voce" data-posicao-semana aria-live="polite" hidden></p>
+      </section>
+
+      <button class="botao botao-jogar" type="button" data-acao="jogar-agora">Jogar agora<small data-motivo>&nbsp;</small></button>
 
       <section class="grade-jogos" aria-label="Jogos"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>
-        ${cardJogo('penaltis', 'Lances do Jogo', 'Pênaltis, faltas e cara a cara', linhaPenaltis(null, TETO_DIARIO))}
-        ${cardJogo('prova', 'Prova de Boleiro', '8 perguntas · para quando quiser')}
-        ${cardJogo('dia', 'Time do Dia', 'Adivinha o clube em 6 chutes')}
-        ${cardJogo('crava', 'Crava a Rodada', 'Palpita o placar do Brasileirão')}
+        ${htmlDosCards(linhaPenaltis(null, TETO_DIARIO))}
       </section>
-      <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
 
-      <section class="carreira" data-carreira aria-label="Sua carreira" hidden></section>
+      <button class="giro faixa-tv" type="button" data-acao="ranking" aria-label="Ver o ranking da semana" hidden>
+        <span class="giro-selo rotulo">Giro</span><span class="giro-frase" data-giro></span>
+      </button>
+
+      <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
 
       <button class="link-casa" type="button" data-acao="casa">
         <span class="rotulo">Casa dos clubes</span>
         <small>Estádio, troféus, recordes e cores de cada clube</small>
       </button>
 
-      <section class="mini-tabela" aria-label="Ranking da semana" aria-live="polite">
-        <header>
-          <p class="rotulo">Campeão da semana</p>
-          <button class="rotulo link-ver" type="button" data-acao="ranking">Ver tudo</button>
-        </header>
-        <div class="mini-linhas"><p class="vazio">Carregando o ranking…</p></div>
-      </section>
-
       <button class="link-feedback" type="button" data-acao="feedback">${icone('balao')} Feedback ou bug? Conta pra gente</button>
-      <button class="link-feedback link-graficos" type="button" data-acao="graficos" aria-live="polite">${rotuloGraficos()}</button>
       ${htmlBotaoApoio()}
       <button class="link-feedback" type="button" data-acao="termos">Termos e privacidade</button>
 
@@ -169,6 +188,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       ${barraNavegacao('jogar')}
     </main>
   `;
+
+  const pararArquibancada = ligarArquibancada(root.querySelector('canvas')!, dono.cores, luzDoHorario(horaDaLuz()));
 
   const jogar = (desafio?: string) =>
     irPara(time ? { tela: 'partida', desafio } : { tela: 'times', depois: 'partida', desafio });
@@ -185,6 +206,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   root.querySelectorAll<HTMLElement>('[data-jogo]').forEach((b) =>
     b.addEventListener('click', () => abrir[b.dataset.jogo as JogoDaHome]()),
   );
+  root.querySelector('[data-acao="jogar-agora"]')?.addEventListener('click', () => abrir[proximoJogo(situacao)]());
+  root.querySelector('[data-acao="perfil"]')?.addEventListener('click', () => irPara({ tela: 'perfil' }));
   root.querySelectorAll('[data-acao="trocar"]').forEach((b) =>
     b.addEventListener('click', () => irPara({ tela: 'times', depois: 'inicio' })),
   );
@@ -195,13 +218,6 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   );
   root.querySelector('[data-acao="feedback"]')?.addEventListener('click', () => irPara({ tela: 'feedback', de: 'inicio' }));
   root.querySelector('[data-acao="termos"]')?.addEventListener('click', () => irPara({ tela: 'termos' }));
-  // Gráficos: toque troca automático → alta → média → leve → automático (telas/qualidade.ts).
-  const elGraficos = root.querySelector<HTMLButtonElement>('[data-acao="graficos"]')!;
-  elGraficos.addEventListener('click', () => {
-    const ordem = ['auto', 'alta', 'media', 'leve'] as const;
-    escolherQualidade(ordem[(ordem.indexOf(escolha()) + 1) % ordem.length]);
-    elGraficos.innerHTML = rotuloGraficos();
-  });
   ligarBotaoApoio(root);
   ligarBarraNavegacao(root);
 
@@ -225,23 +241,45 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     });
   }
 
-  // ---------- status vivo dos cards ----------
+  // ---------- status vivo dos cards e "Jogar agora" ----------
+  const elCard = (jogo: JogoDaHome) => root.querySelector<HTMLElement>(`[data-jogo="${jogo}"]`)!;
   /** Troca a linha de status; `feito` pinta a linha de verde. */
   const status = (jogo: JogoDaHome, linha?: string, feito = false) => {
-    const card = root.querySelector<HTMLElement>(`[data-jogo="${jogo}"]`)!;
-    if (linha !== undefined) card.querySelector<HTMLElement>('.status-jogo')!.textContent = linha;
-    card.classList.toggle('feito', feito);
+    if (linha !== undefined) elCard(jogo).querySelector<HTMLElement>('.status-jogo')!.textContent = linha;
+    elCard(jogo).classList.toggle('feito', feito);
   };
-  let voltaDoDia: number | null = null;
-  let crava: { jogos: Jogo[]; palpites: Set<string> | null } | null = null;
+  const arte = (jogo: JogoDaHome, html: string) => (elCard(jogo).querySelector<HTMLElement>('[data-arte]')!.innerHTML = html);
+
+  // Sem time ainda, ninguém jogou nada: vale a ordem normal, com a escolha do time na frente.
+  const situacao: SituacaoDoDia = { cravaFechaEm: null, chutesDoDia: time ? null : 0, faltamPartidas: time ? null : TETO_DIARIO };
+  // A linha do botão só aparece com as respostas na mão, para não trocar de jogo diante dos olhos.
+  let respostas = time ? 3 : 0;
+  const elMotivo = root.querySelector<HTMLElement>('[data-motivo]')!;
+  const atualizarBotao = () => {
+    if (respostas === 0) elMotivo.textContent = motivoDoJogo(proximoJogo(situacao), situacao, TETO_DIARIO);
+  };
+  const respondeu = () => {
+    respostas = Math.max(0, respostas - 1);
+    atualizarRelogios();
+  };
+
+  let dia: { chutes: number; fim: boolean; acertou: boolean; volta: number } | null = null;
+  let crava: { jogos: Jogo[]; palpites: ReadonlyMap<string, { m: number; v: number }> | null } | null = null;
 
   function atualizarRelogios(): void {
-    if (voltaDoDia !== null) status('dia', `Feito ✓ · volta em ${formatarVolta(voltaDoDia - Date.now())}`, true);
+    if (dia) status('dia', linhaDoDia(dia, dia.volta - Date.now()), dia.fim);
     if (crava) {
-      const s = statusCrava(crava.jogos, crava.palpites, new Date());
+      const agora = new Date();
+      const palpites = crava.palpites && new Set(crava.palpites.keys());
+      const s = statusCrava(crava.jogos, palpites, agora);
       if (s) status('crava', s.linha, s.cravado);
+      situacao.cravaFechaEm = fechaSemPalpite(crava.jogos, palpites, agora);
+      const placar = placarCravado(crava.jogos, crava.palpites, agora);
+      if (placar) root.querySelector<HTMLElement>('[data-placar]')!.textContent = `${placar.m} x ${placar.v}`;
     }
+    atualizarBotao();
   }
+  atualizarBotao();
 
   // ---------- contagem até zerar a semana ----------
   const elContagem = root.querySelector<HTMLElement>('[data-contagem]')!;
@@ -249,46 +287,70 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const relogio = window.setInterval(() => {
     elContagem.textContent = formatarContagem(msAteZerarSemana());
     if (++tique % 20 === 0) atualizarRelogios();
+    if (tique % GIRO_SEGUNDOS === 0) girar();
   }, 1000);
 
-  // Pênaltis: o teto do dia (somado com a Prova).
+  // Lances: o teto do dia (somado com a Prova).
   if (time) {
-    partidasFechadasHoje(diaBrasilia())
-      .then((n) => !saiu && status('penaltis', linhaPenaltis(TETO_DIARIO - n, TETO_DIARIO)))
+    servidor()
+      .then((api) => api.partidasFechadasHoje(diaBrasilia()))
+      .then((n) => {
+        if (saiu) return;
+        situacao.faltamPartidas = TETO_DIARIO - n;
+        status('penaltis', linhaPenaltis(TETO_DIARIO - n, TETO_DIARIO));
+      })
       .catch(() => {
         // sem internet: fica a regra geral
-      });
+      })
+      .finally(() => !saiu && respondeu());
   }
 
-  // Time do Dia: feito hoje? (precisa do time, como o próprio jogo)
+  // Time do Dia: chutes de hoje ou o resultado (precisa do time, como o próprio jogo).
   if (time) {
     (async () => {
-      const api = FALSA_DIA ? await import('../dev/diaFalso') : { estadoDoDia };
-      if (!FALSA_DIA) await sincronizarTorcedor();
+      const api = await servidor();
+      if (!FALSA && !FALSA_DIA) await sincronizarTorcedor();
       const e = await api.estadoDoDia();
       if (saiu || !e.pronto) return;
-      if (e.fim) {
-        voltaDoDia = Date.parse(e.proximoEm);
-        atualizarRelogios();
-      }
-    })().catch(() => {
-      // sem internet: fica só o que é
-    });
+      dia = { chutes: e.tentativas.length, fim: e.fim, acertou: e.acertou, volta: Date.parse(e.proximoEm) };
+      situacao.chutesDoDia = e.fim ? null : e.tentativas.length;
+      arte('dia', arteGrade(tonsDosChutes(e.tentativas)));
+    })()
+      .catch(() => {
+        // sem internet: fica só o que é
+      })
+      .finally(() => !saiu && respondeu());
   }
 
   // Crava a Rodada: rodada em foco, quanto falta pro próximo palpite trancar e se já cravou tudo.
-  Promise.all([
-    jogosDoCrava(),
-    time ? meusDadosDoCrava().then((m) => new Set(m.palpites.keys())).catch(() => null) : Promise.resolve(null),
-  ])
+  servidor()
+    .then((api) =>
+      Promise.all([api.jogosDoCrava(), time ? api.meusDadosDoCrava().then((m) => m.palpites).catch(() => null) : Promise.resolve(null)]),
+    )
     .then(([jogos, palpites]) => {
-      if (saiu) return;
-      crava = { jogos, palpites };
-      atualizarRelogios();
+      if (!saiu) crava = { jogos, palpites };
     })
     .catch(() => {
       // sem internet: fica sem a rodada
-    });
+    })
+    .finally(() => !saiu && respondeu());
+
+  // Prova de Boleiro: o recorde acende a escada.
+  if (time) {
+    servidor()
+      .then((api) => api.meusRecordes())
+      .then((r) => {
+        if (saiu) return;
+        const recorde = r.prova ?? null;
+        status('prova', linhaRecorde(recorde) ?? 'Sem recorde ainda');
+        arte('prova', arteEscada(degrausDoRecorde(recorde)));
+      })
+      .catch(() => {
+        // sem internet: a escada fica apagada
+      });
+    // O resultado da próxima partida conta o "+10 XP" a partir daqui.
+    if (!FALSA) anotarCarreira();
+  }
 
   // ---------- convite de desafio (link ?d=) ----------
   if (codigoDesafio) {
@@ -334,74 +396,69 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   }
 
   // ---------- ranking ao vivo ----------
-  const elLinhas = root.querySelector<HTMLElement>('.mini-linhas')!;
   const elCabo = root.querySelector<HTMLElement>('.cabo')!;
-  const elPos = root.querySelector<HTMLElement>('[data-minha-posicao]');
+  const elDuelo = root.querySelector<HTMLElement>('[data-duelo]')!;
+  const elMinha = root.querySelector<HTMLElement>('[data-posicao-semana]')!;
+  /** O bloco aparece com o duelo, com a sua posição ou com as duas coisas. */
+  const mostrarCabo = () => {
+    if (time?.id !== ID_OUTRO) elCabo.hidden = elDuelo.hidden && elMinha.hidden;
+  };
+
+  // ---------- giro da semana ----------
+  const elGiro = root.querySelector<HTMLElement>('.giro')!;
+  const elFraseGiro = root.querySelector<HTMLElement>('[data-giro]')!;
+  // Movimento reduzido ou Leve: fica uma frase parada.
+  const giroVivo = qualidade().nivel !== 'leve' && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let frasesGiro: string[] = [];
+  let fraseAtual = 0;
+
+  function girar(): void {
+    if (!giroVivo || frasesGiro.length < 2 || document.hidden) return;
+    elFraseGiro.classList.add('esmaecida');
+    setTimeout(() => {
+      if (saiu) return;
+      fraseAtual = (fraseAtual + 1) % frasesGiro.length;
+      elFraseGiro.textContent = frasesGiro[fraseAtual];
+      elFraseGiro.classList.remove('esmaecida');
+    }, GIRO_ESMAECER_MS);
+  }
+
+  // Posições de cada torcida na última visita desta semana (lidas uma vez, ao abrir a Home).
+  const vistas = memoria<{ semana: string; pos: Record<string, number> }>(CHAVE_POSICOES);
+  const posicoesAntes = vistas?.semana === semana ? vistas.pos : {};
 
   function desenhar(linhas: LinhaRanking[]): void {
-    // Setas: comparam com a posição que o aparelho viu da última vez nesta semana.
-    const vistas = memoria<{ semana: string; pos: Record<string, number> }>(CHAVE_POSICOES);
-    const antes = vistas?.semana === semana ? vistas.pos : {};
     memoria(CHAVE_POSICOES, { semana, pos: Object.fromEntries(linhas.map((l) => [l.time_id, l.posicao_campeao])) });
 
-    const jogando = linhas.filter((l) => l.ativos > 0);
+    frasesGiro = frasesDoGiro(linhas, posicoesAntes, timePorId, time?.id);
+    fraseAtual = Math.min(fraseAtual, Math.max(0, frasesGiro.length - 1));
+    elFraseGiro.textContent = frasesGiro[fraseAtual] ?? '';
+    elGiro.hidden = !frasesGiro.length;
+
     const meu = time ? linhas.find((l) => l.time_id === time.id) : undefined;
     const rivalId = time && time.id !== ID_OUTRO ? rivalDaSemana(time.id, time.rival, linhas) : null;
-
-    if (elPos && meu) {
-      elPos.innerHTML =
-        meu.ativos > 0
-          ? `<strong>${meu.posicao_campeao}º</strong> na semana · <strong>${numero(meu.media30)}</strong> de média`
-          : 'Ninguém da sua torcida jogou ainda nesta semana. Abre o placar!';
-    }
-
-    if (!jogando.length) {
-      elLinhas.innerHTML = '<p class="vazio">Ninguém jogou ainda nesta semana. Abre o placar!</p>';
-    } else {
-      const visiveis = linhas.filter(
-        (l) => (l.posicao_campeao <= 5 && l.ativos > 0) || l.time_id === meu?.time_id || l.time_id === rivalId,
-      );
-      elLinhas.innerHTML = visiveis
-        .map((l) => {
-          const t = timePorId(l.time_id);
-          const anterior = antes[l.time_id];
-          const seta =
-            anterior === undefined || anterior === l.posicao_campeao
-              ? '<span class="seta" aria-hidden="true"></span>'
-              : anterior > l.posicao_campeao
-                ? '<span class="seta subiu" title="Subiu">▲</span>'
-                : '<span class="seta caiu" title="Caiu">▼</span>';
-          const classes = ['mini-linha'];
-          if (l.posicao_campeao === 1 && l.ativos > 0) classes.push('lider');
-          if (l.time_id === meu?.time_id) classes.push('meu');
-          if (l.time_id === rivalId) classes.push('rival');
-          return `<div class="${classes.join(' ')}">
-            <span class="pos">${l.posicao_campeao}º</span>${seta}
-            <span class="cor" style="--c1:${t?.cores[0] ?? '#666'};--c2:${t?.cores[1] ?? '#999'}"></span>
-            <span class="nome">${esc(t?.nome ?? l.time_id)}${l.time_id === rivalId ? '<small> rival</small>' : ''}</span>
-            <span class="valor">${numero(l.media30)}</span>
-          </div>`;
-        })
-        .join('');
-    }
 
     // Cabo de guerra + frase do narrador do momento.
     const rival = rivalId ? linhas.find((l) => l.time_id === rivalId) : undefined;
     const tRival = rivalId ? timePorId(rivalId) : undefined;
     if (!time || !meu || !rival || !tRival) {
-      elCabo.hidden = true;
+      elDuelo.hidden = true;
+      mostrarCabo();
       return;
     }
     const total = meu.media30 + rival.media30;
     const fracao = total > 0 ? meu.media30 / total : 0.5;
     elCabo.style.setProperty('--cor-eu', time.cores[0]);
     elCabo.style.setProperty('--cor-rival', corDoRivalNoDuelo(time.cores[0], tRival.cores));
+    // Faixa do adesivo: em time de cor 1 clara (São Paulo, Santos), a cor 2, para não sumir no papel.
+    elCabo.style.setProperty('--cor-faixa', corDeTexto(time.cores[0]) === '#111111' ? time.cores[1] : time.cores[0]);
     elCabo.style.setProperty('--fracao', String(Math.min(0.92, Math.max(0.08, fracao))));
     elCabo.querySelector('[data-cabo-eu]')!.textContent = time.nome;
     elCabo.querySelector('[data-cabo-rival]')!.textContent = tRival.nome;
     elCabo.querySelector('[data-cabo-v-eu]')!.textContent = numero(meu.media30);
     elCabo.querySelector('[data-cabo-v-rival]')!.textContent = numero(rival.media30);
-    elCabo.hidden = false;
+    elDuelo.hidden = false;
+    mostrarCabo();
 
     const elFrase = elCabo.querySelector<HTMLElement>('[data-frase-rival]')!;
     const chave = `${time.id}>${rival.time_id}`;
@@ -419,14 +476,14 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   }
 
   // ---------- sua posição na semana (só a própria, entre todos os torcedores) ----------
-  const elMinha = root.querySelector<HTMLElement>('[data-posicao-semana]')!;
   // Seta: compara com a posição da última visita nesta semana (lida uma vez, ao abrir a Home).
   const vista = memoria<{ semana: string; posicao: number | null }>(CHAVE_MINHA_POSICAO);
   const posicaoAntes = vista?.semana === semana ? vista.posicao : null;
   const carregarMinhaPosicao = () => {
     // Sem time ainda, não cria login só para isso.
     if (!time) return;
-    minhaPosicaoSemana(semana)
+    servidor()
+      .then((api) => api.minhaPosicaoSemana(semana))
       .then((p) => {
         if (saiu || !p) return;
         memoria(CHAVE_MINHA_POSICAO, { semana, posicao: p.posicao });
@@ -438,36 +495,40 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
               ? '<span class="seta caiu" title="Caiu">▼</span> '
               : '') + esc(linhaPosicaoSemana(p));
         elMinha.hidden = false;
+        mostrarCabo();
       })
       .catch(() => {
         // sem internet: fica sem a linha
       });
   };
 
-  // ---------- carreira (só a própria; sem time ainda, não cria login só para isso) ----------
-  if (time) carregarCarreiraHome(root.querySelector<HTMLElement>('[data-carreira]')!, () => saiu);
-
   const carregar = () => {
     carregarMinhaPosicao();
-    return rankingDaSemana(semana)
+    return servidor()
+      .then((api) => api.rankingDaSemana(semana))
       .then((l) => !saiu && desenhar(l.length ? l : TIMES.filter((t) => t.id !== ID_OUTRO).map((t, i) => ({
         time_id: t.id, ativos: 0, soma: 0, media30: 0, posicao_campeao: i + 1, posicao_soma: i + 1,
       }))))
       .catch(() => {
-        if (!saiu) elLinhas.innerHTML = '<p class="vazio">Sem conexão com o placar agora. Dá pra jogar mesmo assim.</p>';
-        if (elPos && !saiu) elPos.textContent = 'Sem conexão com o placar agora.';
+        if (saiu) return;
+        elMinha.textContent = 'Sem conexão com o placar agora. Dá pra jogar mesmo assim.';
+        elMinha.hidden = false;
+        mostrarCabo();
       });
   };
   void carregar();
-  ouvirRanking(semana, () => void carregar())
-    .then((f) => (saiu ? f() : (pararRanking = f)))
-    .catch(() => {
-      // sem Realtime: fica a foto do momento
-    });
+  if (!FALSA) {
+    ouvirRanking(semana, () => void carregar())
+      .then((f) => (saiu ? f() : (pararRanking = f)))
+      .catch(() => {
+        // sem Realtime: fica a foto do momento
+      });
+  }
 
   return () => {
     saiu = true;
     clearInterval(relogio);
+    pararArquibancada();
     pararRanking?.();
   };
 }

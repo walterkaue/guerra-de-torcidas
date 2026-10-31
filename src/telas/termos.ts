@@ -47,6 +47,8 @@ export function telaTermos(root: HTMLElement, rota: Rota): void {
   const ficar = root.querySelector<HTMLButtonElement>('[data-acao="ficar"]')!;
   const erro = root.querySelector<HTMLElement>('.termos-erro')!;
 
+  if (rota.tela === 'termos' && rota.apagar) abrir.scrollIntoView({ block: 'center' });
+
   const fechar = () => {
     folha.hidden = true;
     erro.hidden = true;

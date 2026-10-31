@@ -10,13 +10,45 @@
   gap: 12px;
 }
 
+[data-painel-push]:empty {
+  display: none;
+}
+
 /* ---------- cabeçalho ---------- */
-/* Título e contagem na mesma coluna; nada flutua no canto superior direito (parece botão de fechar).
+/* Avatar, título no meio e sininho numa linha; embaixo, a contagem. Nada novo no canto superior direito.
    Só na Home: nas outras telas o .cabecalho do style.css deixa o voltar ao lado do título. */
 .inicio .cabecalho {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 6px;
+}
+
+.cabecalho-linha {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+}
+
+.cabecalho-linha .marca-pequena {
+  grid-column: 2;
+  text-align: center;
+}
+
+/* Círculo na cor 1 do time com borda branca (Home e Perfil). */
+.avatar {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: var(--c1);
+  color: var(--txt);
+  font-size: 24px;
+  touch-action: manipulation;
 }
 
 .contagem {
@@ -66,20 +98,45 @@
   color: var(--amarelo);
 }
 
-/* ---------- bloco do time ---------- */
-.bloco-time {
+/* ---------- arquibancada do time ---------- */
+/* Faixa de ponta a ponta com a torcida pré-desenhada (telas/arquibancada.ts) e a tarja por cima. */
+.arquibancada {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  isolation: isolate;
+  height: 150px;
+  margin: 0 -16px;
+  overflow: hidden;
+}
+
+.arquibancada-tela {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #0d2b18;
 }
 
 .bloco-time-faixa {
   --fundo-faixa: var(--c1);
-  align-self: flex-start;
-  max-width: 100%;
-  padding: 8px 22px 10px 16px;
+  position: absolute;
+  left: 22px;
+  bottom: 18px;
+  max-width: calc(100% - 118px);
+  padding: 6px 22px 8px 16px;
   color: var(--txt);
+}
+
+.bloco-time-faixa.sem-time {
+  --fundo-faixa: var(--tinta);
+  max-width: calc(100% - 44px);
+  bottom: 62px;
+  color: var(--cal);
+}
+
+.bloco-time-faixa.sem-time h2 {
+  font-size: 24px;
 }
 
 .bloco-time-faixa::after {
@@ -111,110 +168,21 @@
   overflow-wrap: anywhere;
 }
 
-.bloco-time-pos {
-  font-size: 15px;
-  color: var(--texto-suave);
-}
-
-.bloco-time-pos strong {
-  color: var(--cal);
-}
-
-/* Sua posição entre todos os torcedores na semana (só a própria, nunca a lista). */
-.minha-posicao {
-  padding: 10px 14px;
-  border-left: 4px solid var(--amarelo);
-  border-radius: 0 12px 12px 0;
-  background: rgba(0, 0, 0, 0.3);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-/* Carreira do jogador (só a própria): nível, barra até o próximo e a sequência. */
-.carreira {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.carreira-topo {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-  color: var(--texto-suave);
-}
-
-.carreira-xp {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.carreira-nivel {
-  font-family: var(--fonte-placar);
-  font-size: 30px;
-  line-height: 1.1;
-  text-transform: uppercase;
-  color: var(--amarelo);
-}
-
-.carreira-barra {
-  height: 12px;
-  border-radius: 3px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.12);
-  transform: skewX(var(--inclinacao));
-}
-
-.carreira-barra span {
-  display: block;
-  height: 100%;
-  width: calc(var(--enche, 0) * 100%);
-  background: var(--amarelo);
-}
-
-.carreira-falta {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.carreira-linha {
-  font-size: 14px;
-  color: var(--texto-suave);
-}
-
-.carreira-bonus {
-  color: var(--subiu);
-  font-weight: 700;
-}
-
-.carreira-card {
-  font-size: 14px;
-  min-height: 44px;
-}
-
+/* Em cima da torcida precisa de fundo próprio para ser lido em qualquer luz. */
 .link-trocar {
   position: absolute;
-  top: 6px;
-  right: 0;
+  right: 16px;
+  bottom: 12px;
   min-height: 44px;
-  padding: 0 4px;
+  padding: 0 12px;
   border: 0;
-  background: none;
-  color: var(--texto-suave);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.72);
+  color: var(--cal);
   font: inherit;
   font-size: 14px;
   text-decoration: underline;
   touch-action: manipulation;
-}
-
-.sem-time {
-  padding: 14px;
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.3);
 }
 
 /* ---------- cabo de guerra ---------- */
@@ -231,43 +199,52 @@
   color: var(--texto-suave);
 }
 
-.cabo-titulo small {
-  font-family: var(--fonte-texto);
-  font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
+.cabo-duelo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.cabo-nomes > span {
+.cabo-nomes {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cabo-nomes p {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+}
+
+.cabo-nomes p:last-child {
+  align-items: flex-end;
+  text-align: right;
 }
 
 .cabo-nomes strong {
   font-family: var(--fonte-placar);
   font-weight: 400;
-  font-size: 26px;
+  font-size: 32px;
+  line-height: 1.05;
   color: var(--amarelo);
+  font-variant-numeric: tabular-nums;
 }
 
-.cabo-nomes,
-.cabo-valores {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.cabo-nomes span span {
+.cabo-nomes span {
+  max-width: 100%;
   font-family: var(--fonte-rotulo);
   font-weight: 700;
-  font-size: 18px;
+  font-size: 16px;
   text-transform: uppercase;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.cabo-corda {
+  position: relative;
+  margin: 6px 0;
 }
 
 .cabo-barra {
@@ -291,16 +268,31 @@
   transition: flex-grow 700ms var(--mola-firme);
 }
 
-.cabo-valores strong {
-  font-family: var(--fonte-placar);
-  font-weight: 400;
-  font-size: 26px;
-  color: var(--amarelo);
+/* O nó da corda fica na posição da diferença e anda com a mola quando o placar muda.
+   O contorno escuro separa o amarelo de um lado branco (São Paulo, Santos). */
+.cabo-no {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  left: calc(var(--fracao, 0.5) * 100%);
+  width: 16px;
+  margin-left: -8px;
+  border-radius: 3px;
+  background: #e9c75a;
+  box-shadow: 0 0 0 2px var(--tinta);
+  transform: skewX(var(--inclinacao));
+  transition: left 700ms var(--mola-firme);
 }
 
-.cabo-valores small {
-  font-size: 12px;
+.cabo-nota {
+  font-size: 14px;
   color: var(--texto-suave);
+}
+
+/* Sua posição entre todos os torcedores na semana (só a própria, nunca a lista). */
+.cabo-voce {
+  font-size: 15px;
+  font-weight: 700;
 }
 
 /* Grito do narrador como adesivo levemente torto: papel claro com faixa na cor do time.
@@ -309,7 +301,7 @@
   align-self: flex-start;
   margin-top: 2px;
   padding: 8px 12px 8px 14px;
-  border-left: 8px solid var(--cor-eu, var(--c1, var(--amarelo)));
+  border-left: 8px solid var(--cor-faixa, var(--cor-eu, var(--c1, var(--amarelo))));
   border-radius: 6px;
   background: var(--cal);
   color: var(--tinta);
@@ -319,32 +311,7 @@
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35), 0 4px 0 2px rgba(0, 0, 0, 0.35);
 }
 
-/* ---------- mini tabela / ranking ---------- */
-.mini-tabela {
-  padding: 6px 14px 8px;
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.35);
-}
-
-.mini-tabela header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.mini-tabela header .rotulo {
-  color: var(--texto-suave);
-}
-
-.link-ver {
-  min-height: 44px;
-  min-width: 44px;
-  border: 0;
-  background: none;
-  color: var(--amarelo);
-  touch-action: manipulation;
-}
-
+/* ---------- linha do ranking ---------- */
 .vazio {
   padding: 10px 0;
   color: var(--texto-suave);
@@ -419,12 +386,145 @@
   background: rgba(255, 210, 63, 0.16);
 }
 
-/* ---------- grade de jogos (2×2, cards iguais) ---------- */
+/* Cards em tamanhos diferentes: Lances e Crava largos, Prova e Time do Dia lado a lado. */
 .grade-jogos {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: 1fr;
   gap: 10px;
+}
+
+.card-jogo.largo {
+  grid-column: 1 / -1;
+  min-height: 118px;
+  padding-right: 136px;
+}
+
+/* Desenho dos cards (telas/cardsJogos.ts): SVG leve, na paleta do jogo. */
+.card-arte {
+  display: flex;
+}
+
+.largo .card-arte {
+  position: absolute;
+  z-index: -1;
+  right: 10px;
+  top: 50%;
+  width: 118px;
+  justify-content: center;
+  transform: translateY(-50%);
+}
+
+.metade .card-arte {
+  order: 3;
+  height: 60px;
+  margin-top: 6px;
+}
+
+.metade .status-jogo {
+  order: 4;
+  margin-top: 0;
+}
+
+.arte {
+  height: 100%;
+  width: 100%;
+  overflow: visible;
+}
+
+.arte-rede {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.32);
+  stroke-width: 1;
+}
+
+.arte-trave {
+  fill: none;
+  stroke: var(--cal);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.arte-rastro {
+  fill: none;
+  stroke: var(--amarelo);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.arte-bola {
+  fill: var(--cal);
+}
+
+.arte-degrau {
+  fill: rgba(255, 255, 255, 0.14);
+}
+
+.arte-degrau.aceso {
+  fill: var(--amarelo);
+}
+
+.arte-pista {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.24);
+  stroke-width: 1.5;
+}
+
+.arte-pista.certo,
+.arte-pista.perto,
+.arte-pista.longe {
+  stroke: none;
+}
+
+.arte-pista.certo { fill: #2e9d4f; }
+.arte-pista.perto { fill: #e3b416; }
+.arte-pista.longe { fill: #d9d9d4; }
+
+.tarja-placar {
+  --fundo-faixa: var(--cal);
+  padding: 4px 14px;
+  color: var(--tinta);
+  font-family: var(--fonte-placar);
+  font-size: 28px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* ---------- giro da semana ---------- */
+/* Tarja de TV de uma linha: troca de frase com um esmaecer, sem rolar e sem piscar. */
+.giro {
+  --fundo-faixa: var(--tinta);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  background: none;
+  color: var(--cal);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.giro-selo {
+  flex: none;
+  color: var(--amarelo);
+}
+
+.giro-frase {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: opacity var(--medio);
+}
+
+.giro-frase.esmaecida {
+  opacity: 0;
 }
 
 .card-jogo {
@@ -435,8 +535,8 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
-  min-height: 150px;
-  padding: 18px 12px 12px;
+  min-height: 190px;
+  padding: 16px 12px 12px;
   border: 2px solid rgba(255, 255, 255, 0.16);
   border-radius: 14px;
   background: rgba(0, 0, 0, 0.38);
@@ -444,7 +544,6 @@
   font: inherit;
   text-align: left;
   touch-action: manipulation;
-  transition: transform 150ms ease-out;
 }
 
 /* Tarja de transmissão nas cores do time (amarelo de placar sem time). */
@@ -496,11 +595,6 @@
 
 .card-jogo.feito .status-jogo {
   color: var(--subiu);
-}
-
-.sem-time-nota {
-  font-size: 14px;
-  color: var(--texto-suave);
 }
 
 .inicio > .link-feedback {
@@ -593,22 +687,6 @@
   color: var(--amarelo);
 }
 
-.barra-nav [aria-disabled='true'] {
-  opacity: 0.6;
-}
-
-.em-breve {
-  position: absolute;
-  top: 2px;
-  right: 4px;
-  padding: 1px 5px;
-  border-radius: 3px;
-  background: var(--amarelo);
-  color: var(--tinta);
-  font-size: 9px;
-  letter-spacing: 0.02em;
-}
-
 /* ---------- tela de ranking ---------- */
 .ranking {
   padding-bottom: calc(88px + env(safe-area-inset-bottom));
@@ -656,23 +734,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ao-vivo i {
-    animation: none;
-  }
   .cabo-barra span,
-  .card-jogo {
+  .cabo-no,
+  .card-jogo,
+  .giro-frase {
     transition: none;
   }
 }
 
 /* Sininho do aviso de domingo (push), no canto do cabeçalho da Home. */
-.inicio .cabecalho {
-  position: relative;
-}
 .sininho {
-  position: absolute;
-  top: -4px;
-  right: 0;
+  grid-column: 3;
   width: 44px;
   height: 44px;
   display: grid;
@@ -703,9 +775,4 @@
 .convite-push .rotulo {
   color: var(--amarelo);
   font-size: 18px;
-}
-
-/* "Gráficos" fica colado no link de feedback, os dois são rodapé. */
-.inicio > .link-graficos {
-  margin-top: -14px;
 }
