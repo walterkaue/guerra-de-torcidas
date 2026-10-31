@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { acharSegredo, estimarTokens, lerArgumentos, lerResposta, linhaCsv, montarCorpo } from './gemini.mjs';
+import { acharSegredo, estimarTokens, lerArgumentos, lerResposta, linhaCsv, montarCorpo, raizDoCheckout, segredoEm } from './gemini.mjs';
 import { MODELOS } from './modelos.mjs';
 
 describe('gemini (partes puras)', () => {
@@ -34,6 +34,28 @@ describe('gemini (partes puras)', () => {
     expect(() => lerResposta({ candidates: [{ content: { parts: [{ text: 'oi' }] } }] }, { type: 'ARRAY' })).toThrow('JSON');
     expect(lerResposta({ candidates: [{ content: { parts: [{ text: 'oi' }] } }] }).texto).toBe('oi');
     expect(() => lerResposta({})).toThrow('vazia');
+  });
+  it('trata resposta cortada como erro', () => {
+    const base = (finishReason?: string) => ({ candidates: [{ finishReason, content: { parts: [{ text: 'oi' }] } }] });
+    expect(lerResposta(base('STOP')).texto).toBe('oi');
+    expect(lerResposta(base()).texto).toBe('oi');
+    expect(() => lerResposta(base('MAX_TOKENS'))).toThrow('resposta incompleta: MAX_TOKENS');
+  });
+  it('soma os tokens de raciocínio na saída', () => {
+    const d = { candidates: [{ content: { parts: [{ text: 'x' }] } }], usageMetadata: { promptTokenCount: 5, candidatesTokenCount: 3, thoughtsTokenCount: 40 } };
+    expect(lerResposta(d).tokensSaida).toBe(43);
+  });
+  it('acha a chave real do ambiente e o segredo no esquema', () => {
+    const chave = 'k'.repeat(53);
+    expect(segredoEm(['a', `x ${chave} y`], chave)).toBe('GEMINI_API_KEY');
+    expect(segredoEm(['a', 'b'], chave)).toBeNull();
+    expect(segredoEm(['a', 'b'], undefined)).toBeNull();
+    expect(segredoEm(['a', '{"d":"sb_secret_1"}'], chave)).toBe('sb_secret_');
+  });
+  it('acha a raiz do checkout principal', () => {
+    const raiz = raizDoCheckout(process.cwd());
+    expect(raiz).toBeTruthy();
+    expect(raizDoCheckout('/caminho/que/nao/existe')).toBeNull();
   });
   it('estima tokens e monta a linha do CSV sem conteúdo', () => {
     expect(estimarTokens('abcd', 'efgh')).toBe(2);

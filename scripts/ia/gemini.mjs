@@ -6,12 +6,13 @@
 //   npm run gemini -- --instrucao=<arq> --entrada=<arq> --saida=<arq> [--esquema=<arq.json>] [--modelos=a,b] [--seco]
 
 import { appendFileSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { basename, dirname } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MODELOS } from './modelos.mjs';
 
 const BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-const CSV = new URL('../../relatorios/ia-uso.csv', import.meta.url);
+const CSV_NO_WORKTREE = fileURLToPath(new URL('../../relatorios/ia-uso.csv', import.meta.url));
 const CABECALHO_CSV = 'data,modelo,tokens_entrada,tokens_saida,arquivo_saida';
 const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -56,6 +57,8 @@ export function montarCorpo(instrucao, entrada, esquema) {
 
 /** Texto e tokens da resposta; com `esquema`, o texto precisa ser JSON válido. */
 export function lerResposta(d, esquema) {
+  const fim = d?.candidates?.[0]?.finishReason;
+  if (fim && fim !== 'STOP') throw new Error(`resposta incompleta: ${fim}`);
   const texto = (d?.candidates?.[0]?.content?.parts ?? []).filter((p) => typeof p?.text === 'string').map((p) => p.text).join('');
   if (!texto) throw new Error('resposta vazia');
   if (esquema) {
@@ -65,7 +68,26 @@ export function lerResposta(d, esquema) {
       throw new Error('resposta não é JSON válido');
     }
   }
-  return { texto, tokensEntrada: d?.usageMetadata?.promptTokenCount ?? 0, tokensSaida: d?.usageMetadata?.candidatesTokenCount ?? 0 };
+  return { texto, tokensEntrada: d?.usageMetadata?.promptTokenCount ?? 0, tokensSaida: (d?.usageMetadata?.candidatesTokenCount ?? 0) + (d?.usageMetadata?.thoughtsTokenCount ?? 0) };
+}
+
+/** Raiz do checkout principal (o pai do .git comum), ou null se o git falhar. */
+export function raizDoCheckout(cwd) {
+  try {
+    const comum = execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    return comum ? dirname(comum) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Segredo no texto ou, se a chave real estiver no ambiente, ela mesma. Devolve só o tipo. */
+export function segredoEm(textos, chave) {
+  for (const t of textos) {
+    const s = acharSegredo(t) ?? (chave && t.includes(chave) ? 'GEMINI_API_KEY' : null);
+    if (s) return s;
+  }
+  return null;
 }
 
 /** Estimativa grosseira (cerca de 4 caracteres por token). */
@@ -121,15 +143,16 @@ async function principal() {
   const instrucao = ler(a.instrucao, '--instrucao');
   const entrada = ler(a.entrada, '--entrada');
   let esquema;
+  let brutoEsquema = '';
   if (a.esquema) {
-    const bruto = ler(a.esquema, '--esquema');
+    brutoEsquema = ler(a.esquema, '--esquema');
     try {
-      esquema = JSON.parse(bruto);
+      esquema = JSON.parse(brutoEsquema);
     } catch {
       throw new Error(`--esquema não é JSON válido: ${a.esquema}`);
     }
   }
-  const segredo = acharSegredo(instrucao) ?? acharSegredo(entrada);
+  const segredo = segredoEm([instrucao, entrada, brutoEsquema], process.env.GEMINI_API_KEY);
   if (segredo) throw new Error(`entrada recusada: contém ${segredo} (nada foi enviado)`);
 
   const modelos = a.modelos ? a.modelos.split(',').map((m) => m.trim()).filter(Boolean) : MODELOS;
@@ -148,7 +171,9 @@ async function principal() {
   writeFileSync(a.saida, r.texto);
 
   const hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
-  mkdirSync(new URL('./', CSV), { recursive: true });
+  const raiz = raizDoCheckout(dirname(CSV_NO_WORKTREE));
+  const CSV = raiz ? join(raiz, 'relatorios', 'ia-uso.csv') : CSV_NO_WORKTREE;
+  mkdirSync(dirname(CSV), { recursive: true });
   let novo = false;
   try {
     statSync(CSV);
