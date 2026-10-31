@@ -20,7 +20,7 @@ Só entram disputas que o clube **venceu**. A disputa é só cenário: o advers�
 | `placar_disputa` | `4 x 3`, com o clube primeiro. O teste recusa derrota, empate e placar impossível. |
 | `fonte`, `fonte2` | links de notícias públicas, dos domínios aceitos em `scripts/perguntas/validar.mjs` (Wikipédia só como `fonte2`) |
 | `verificada_em`, `status` | `rascunho` → `revisada` (conferido) → `ativa`; `aposentada` tira do jogo |
-| `observacao` | os trechos literais das fontes, entre aspas, e o que ficou para conferir (marcado `CONFERIR`) |
+| `observacao` | os trechos literais das fontes, entre aspas, o que ficou para conferir (marcado `CONFERIR`) e o que espera decisão do Kauê (marcado `PENDENTE`; a linha segue em `rascunho`) |
 
 ## Conferência (segunda sessão, nova)
 
