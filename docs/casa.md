@@ -64,6 +64,12 @@ Cabeçalho na **faixa de placar** do time: "CASA DO FLAMENGO", fundação e cida
 - O manto tradicional desenhado (seção 5) e, quando houver fonte, um "varal" com 2 a 4 padrões históricos (ex.: Santos de listras azuis e brancas em 1912).
 - Apelido aparece como texto (Galo, Raposa, Peixe). **Mascote nunca vira desenho.**
 
+### Seja sócio (decidido em 30/10/2026; regra em `jogo.md` 7.4)
+- Bloco fixo, fora dos recolhíveis, logo antes do rodapé. Mesmo texto para todos os clubes, com o artigo certo: título "Apoie [o/a] [time] fora do jogo", linha "O programa oficial de sócio torcedor é o [programa]." e botão "Conhecer o programa".
+- Toque abre uma folha: "Você vai para o site oficial [do/da] [time]. O Guerra de Torcidas não tem ligação com o clube.", com "Ir para o site" (nova aba) e "Ficar no jogo".
+- Nome do programa só como texto; nenhuma imagem. Tom neutro, sem cobrança. Não dá pontos, XP nem selo.
+- Clube sem linha publicada em `socios.csv` não mostra o bloco.
+
 ### Rodapé
 - "Dados até DD/MM/AAAA" e fontes ("ver fontes" abre a lista de links).
 - Nota curta: **"Projeto independente e gratuito, sem vínculo com clubes, atletas ou entidades. Nomes e números são fatos históricos, com fonte. Marcas e símbolos oficiais pertencem aos donos."** Um toque em "nota completa" mostra o texto longo da proposta original (seção 10).
@@ -136,8 +142,16 @@ CSV em `dados/casa/`, uma linha por fato, para revisar fato a fato (mesmo espír
 | `recordes.csv` | jogador por lista | clube, lista (gols/jogos), posicao, nome, valor, data_referencia, fonte |
 | `goleadas.csv` | goleada | clube, placar, adversario, data, competicao, fonte |
 | `mantos.csv` | padrão | clube, ordem, periodo, padrao, cores, listras, descricao, fonte |
+| `socios.csv` | clube | id, programa, url, aposta_na_pagina (sim/não/não_sei) |
 
 Todas com `verificada_em`, `status` (rascunho, revisada, aposentada) e `observacao`. **A quantidade de títulos nunca é digitada:** sai da contagem de linhas.
+
+### Curadoria do `socios.csv`
+1. Abra o `url` da linha no celular e veja a página inteira, até o rodapé: logos de parceiros, banners e fotos.
+2. Sem promoção de aposta: `aposta_na_pagina` = `não`, `status` = `revisada`, `verificada_em` = a data de hoje. Com promoção: `aposta_na_pagina` = `sim` e `status` = `aposentada`, e o clube fica sem o bloco até a página mudar.
+3. `npm run importar-casa` e `npm test`.
+
+Só entra na tela a linha `revisada` com `aposta_na_pagina` = `não` (`ativa` não vale aqui). O validador recusa linha `revisada` sem programa, sem link, com aposta diferente de `não`, apontando para a home do clube ou com parâmetro de afiliado ou de campanha no endereço. `npm run conferir-casa -- --links` testa os links; não precisa de chave e nunca muda status.
 
 ### Como os dados nascem (igual ao quiz)
 1. **Sessão de escrita** (Code com busca na web): preenche os CSVs dos 20 clubes, status `rascunho`, sempre com fonte. Pode partir da proposta "Galeria dos Clubes" (21/10) só como roteiro: os números dela **não valem**, porque têm erros conferidos (títulos parados em 2024, Botafogo sem os títulos de 2024, recorde do Morumbi de um jogo do Corinthians, contexto de goleada errado, rankings fora de ordem, gramados todos iguais, nomes sem fonte).
@@ -161,7 +175,7 @@ Todas com `verificada_em`, `status` (rascunho, revisada, aposentada) e `observac
 
 ## 9. Técnica
 
-- **Sem servidor:** é conteúdo estático, sem pontos e sem segredo. Nenhuma migração.
+- **Sem servidor:** é conteúdo estático, sem pontos e sem segredo. Única exceção: os cliques do "Seja sócio", contados por clube e por dia em `public.socio_cliques`, sem id de usuário, só pela função `contar_clique_socio`. O aparelho conta no máximo 1 clique por clube por dia, e a contagem sai depois de o link abrir, sem esperar resposta. Relatório: `npm run metricas`.
 - **Fora do bundle inicial:** a tela e os dados entram por `import()` dinâmico (o Vite separa o arquivo). Estimativa: ~20 KB gzip para os 20 clubes.
 - Tela em `src/telas/casa.ts`, CSS próprio em `src/estilos/casa.css`, desenhos (estádio, taça, manto) como SVG gerado em código, sem imagem.
 - Tipos em `src/dados/casa/tipos.ts`; competições em `src/dados/competicoes.ts`; cores do clube vêm do `times.ts` (nunca duplicadas).

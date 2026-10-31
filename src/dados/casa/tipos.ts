@@ -65,6 +65,12 @@ export interface MantoCasa {
   fonte: string;
 }
 
+/** Programa oficial de sócio torcedor ("Seja sócio", docs/jogo.md 7.4). */
+export interface SocioDoClube {
+  programa: string;
+  url: string;
+}
+
 export interface CasaDoClube {
   id: string;
   /** AAAA-MM-DD */

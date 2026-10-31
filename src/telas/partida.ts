@@ -39,6 +39,7 @@ import { sincronizarTorcedor } from '../servidor/torcedor';
 import { criarCena, facil, limitar01, suave } from './cena';
 import { criarCena3d, type Cena3d } from './cena3d';
 import { ENQUADRAMENTOS } from './camera';
+import { inicioDoVoo, latenciaInicial, novaLatencia, tempoDaBatida } from './tempoDoChute';
 import { ANTES_DO_CORTE, criarReplay, montarTarjaDoReplay, type Replay } from './replay';
 import { caminhoDoChute } from '../jogo/lances';
 import { destravarSom, somApito, somChute, somTorcida } from '../jogo/som';
@@ -359,6 +360,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     return resolverDefesa(semente, i, zona, dificuldade, desafio?.cobrancas?.[i]);
   }
 
+  let latencia = latenciaInicial();
+
   function chutar(gesto: GestoCobranca): void {
     const gq = normalizarCobranca(gesto);
     gestosCobranca.push(gq);
@@ -366,12 +369,14 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     const chute: Fase & { tipo: 'chute' } = { tipo: 'chute', inicio: relogio(), r: null, gesto: gq };
     fase = chute;
     instruir('');
-    somChute();
     void resultadoDaCobranca(gq, rodada).then((r) => {
       if (acabou || fase !== chute) return;
+      const agora = relogio();
+      latencia = novaLatencia(latencia, agora - chute.inicio);
       chute.r = r;
-      // A bola sai assim que o resultado chega (o pé já está na bola).
-      chute.inicio = Math.min(chute.inicio, relogio() - DUR_BATIDA);
+      // A bola sai assim que o resultado chega (o pé já está na bola), e o som sai com ela.
+      chute.inicio = inicioDoVoo(chute.inicio, agora, DUR_BATIDA);
+      window.setTimeout(() => !acabou && somChute(), Math.max(0, chute.inicio + DUR_BATIDA - agora));
     });
   }
 
@@ -863,7 +868,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
           // Esperando o servidor: o pé chega na bola e a bola espera.
           desenharGoleiroNoQuadro(goleiroMaquina, null, 0, agora);
           desenharTraves();
-          desenharBatedorChutando(Math.min(ms, DUR_BATIDA), false);
+          desenharBatedorChutando(tempoDaBatida(ms, latencia, DUR_BATIDA), false);
           desenharBola(g.bolaX, g.bolaY);
           break;
         }
