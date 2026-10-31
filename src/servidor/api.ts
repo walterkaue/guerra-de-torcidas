@@ -3,8 +3,8 @@
 // Sem internet ou com o Supabase fora do ar, tudo aqui falha rápido e o jogo segue "sem valer pontos".
 
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
-import { prefs } from '../estado';
 import { opcoesComCaptcha, tokenCaptcha } from './captcha';
+import { prefs } from '../estado';
 import type { GestoCobranca, Gestos, ResultadoPartida } from '../jogo/penaltis.ts';
 import type { Ajuda, Degrau, Desfecho, Fim, Passo, PontosProva } from '../jogo/prova.ts';
 import type { Desempenho, PosicaoSemana } from '../jogo/posicao.ts';
