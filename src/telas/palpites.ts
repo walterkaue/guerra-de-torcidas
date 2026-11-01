@@ -6,6 +6,7 @@
 import { esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, TIMES, corDeTexto, proTime, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
+import { prontoParaDesenhar } from '../jogo/card';
 import { desenharCardCrava, type DadosCardCrava } from '../jogo/cardCrava';
 import {
   GOLS_MAX,
@@ -600,11 +601,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
 
   async function compartilhar(botao: HTMLElement, dados: DadosCardCrava, texto: string): Promise<void> {
     try {
-      try {
-        await Promise.all([document.fonts.load('400 100px Anton'), document.fonts.load('700 40px Barlow')]);
-      } catch {
-        // segue com a fonte que tiver
-      }
+      await prontoParaDesenhar();
       const canvas = desenharCardCrava(dados);
       const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, 'image/png'));
       const arquivo = blob ? new File([blob], 'crava-a-rodada.png', { type: 'image/png' }) : null;
@@ -631,7 +628,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     if (!linhas.length) return;
     void compartilhar(
       ev.currentTarget as HTMLElement,
-      { tipo: 'meus', time: timeDoCard(), rodada, linhas, link: link().replace('https://', '') },
+      { tipo: 'meus', time: timeDoCard(), paraTime, rodada, linhas, link: link().replace('https://', '') },
       textoMeusPalpites(rodada, linhas, link()),
     );
   });
@@ -646,10 +643,11 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       {
         tipo: 'resultado',
         time: timeDoCard(),
+        apelido: prefs.get().apelido,
         rodada,
         pontos,
         paraTime,
-        emoji: linhaEmoji(resultados),
+        resultados,
         novoRecorde: recordeCrava(pontosPorRodada(), rodada).novo,
         frase: elAdesivo.hidden ? '' : (elAdesivo.textContent ?? ''),
         link: link().replace('https://', ''),

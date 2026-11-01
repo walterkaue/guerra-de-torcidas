@@ -2,9 +2,9 @@
 // chute. O secreto fica só no servidor; aqui é a lista com busca, a grade e o resultado (com o card).
 
 import { esc, irPara, type Rota } from '../app';
-import { corDeTexto, ID_OUTRO, timePorId, TIMES, type Time } from '../dados/times';
+import { corDeTexto, ID_OUTRO, proTime, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
-import { seloNivel } from '../jogo/card';
+import { mostrarCard, prontoParaDesenhar, seloNivel } from '../jogo/card';
 import { desenharCardDia } from '../jogo/cardDia';
 import { conviteDia } from '../jogo/convites';
 import { AVISO_PRE_TEMPORADA, htmlPosicao } from '../jogo/posicao';
@@ -387,23 +387,22 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     // ---------- card ----------
     const img = elFim.querySelector<HTMLImageElement>('.card')!;
     const cardPronto = (async () => {
-      try {
-        await Promise.all([document.fonts.load('400 100px Anton'), document.fonts.load('700 40px Barlow')]);
-      } catch {
-        // segue com a fonte que tiver
-      }
+      await prontoParaDesenhar();
       const canvas = desenharCardDia({
         time,
+        apelido: prefs.get().apelido,
+        paraTime: proTime(time),
         numero: e.numero,
         placar,
-        grade,
+        pistas: e.tentativas.map((t) => t.pistas),
+        pontos: e.pontos,
         frase: frasesFinais[0] ?? '',
         novoRecorde,
         link: link.replace('https://', ''),
       });
       const nivel = await nivelParaCard();
       if (nivel) seloNivel(canvas, nivel);
-      img.src = canvas.toDataURL('image/png');
+      await mostrarCard(img, canvas);
       return canvas;
     })();
 

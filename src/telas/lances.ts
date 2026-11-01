@@ -23,7 +23,7 @@ import { normalizarCobranca, type GestoCobranca } from '../jogo/penaltis';
 import { destravarSom, somApito, somChute, somTorcida } from '../jogo/som';
 import { etiquetasDoLance, eventoDoLance } from '../narrador/lance';
 import { criarNarrador } from '../narrador/sessao';
-import { SELECAO, coresDoAdversario, roupaDoBatedorGoleiro } from '../dados/coresDosLances';
+import { SELECAO, TORCIDA_SELECAO, coresDoAdversario, roupaDoBatedorGoleiro } from '../dados/coresDosLances';
 import { contraAdversario } from '../dados/adversarios';
 import { DISPUTAS } from '../dados/disputas';
 import { chamadaDaDisputa, disputasDoTorcedor, type Disputa } from '../jogo/disputas';
@@ -418,6 +418,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         ({ batedor, goleiro, barreira } = elencoDoLance(atual()));
       }
       const l = atual();
+      cena.trocarTorcida(l.clube === 'selecao' ? TORCIDA_SELECAO : undefined);
       cena.definirLance(l.bola, l.tipo === 'falta' ? ENQUADRAMENTOS.falta : ENQUADRAMENTOS.caraACara);
       rastro = [];
       elInstrucao.textContent = `${l.titulo} · ${situacaoDoLance(l)}`;

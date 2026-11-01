@@ -18,17 +18,28 @@ export interface Lugar {
   h: number;
 }
 
+/** Quem veste o quê na arquibancada: as 2 cores principais e as que completam (22% dos lugares). */
+export interface Torcida {
+  cores: readonly [string, string];
+  outros: readonly string[];
+}
+
+const NEUTROS = ['#2c4a37', '#3a3f4a', '#4a3a2e'];
+
+/** A cor de um lugar pelo sorteio fixo dele. A partida, a Home, o card e a cena 3D repartem do mesmo jeito. */
+export function corDaTorcida(h: number, cores: readonly [string, string], outros: readonly string[]): string {
+  return h < 0.42 ? cores[0] : h < 0.78 ? cores[1] : outros[Math.floor(h * 30) % outros.length];
+}
+
 /** Lugares da arquibancada (posição, cor e quem segura bandeira), do alto até `fim`. */
-export function lugaresDaTorcida(W: number, fim: number, cores: readonly [string, string]): Lugar[] {
+export function lugaresDaTorcida(W: number, fim: number, cores: readonly [string, string], outros: readonly string[] = NEUTROS): Lugar[] {
   const lista = [];
-  const neutros = ['#2c4a37', '#3a3f4a', '#4a3a2e'];
   let fila = 0;
   for (let y = 9; y < fim - 4; y += 10, fila++) {
     const r = 2.8 + (y / fim) * 1.6;
     for (let x = fila % 2 ? 3 : 9; x < W + 6; x += 11) {
       const h = hash(x, y);
-      const cor = h < 0.42 ? cores[0] : h < 0.78 ? cores[1] : neutros[Math.floor(h * 30) % 3];
-      lista.push({ x: x + (h - 0.5) * 3, y, r, cor, bandeira: h > 0.965, h });
+      lista.push({ x: x + (h - 0.5) * 3, y, r, cor: corDaTorcida(h, cores, outros), bandeira: h > 0.965, h });
     }
   }
   return lista;

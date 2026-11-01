@@ -1,7 +1,8 @@
 # Revisão gráfica — direção "Transmissão de domingo"
 
-> Versão 1.10 · 31/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Versão 1.11 · 31/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
 > Base: o jogo publicado em 18/10/2026 (commit b492b99), testado em 390×844.
+> Mudanças da 1.11: card de compartilhamento "Telão do estádio" (seção 3).
 > Mudanças da 1.10: seção da Casa na Home, com estádio e troféus (seção 3, item 7), e total de lances no card dos Lances (seção 3, item 5).
 > Mudanças da 1.9: Home nova: arquibancada do time, cabo de guerra com nó e sua posição, Jogar agora, cards com desenho, giro (seção 3), e aba Perfil (seção 3.1).
 > Mudanças da 1.8: impacto na trave e na defesa (seção 3, Partida), papel picado (4.4) e troca de tela inclinada (4.5).
@@ -87,6 +88,9 @@ Home nova, decidida em 31/10/2026. De cima para baixo:
 - **O efeito na torcida:** "subiu de 5º pra 3º na Série A" com barra enchendo, e quanto falta para o próximo.
 - **Sua posição naquele minigame** na semana e o **recorde pessoal**; quando bate o recorde, selo "NOVO RECORDE!" (que entra no card).
 - Botões: "Chamar no X1" (WhatsApp, o maior), Stories, Placar em emoji, Copiar link, e "Revanche" como ação principal.
+
+### Card de compartilhamento
+Card 'Telão do estádio' (decidido em 31/10/2026): arquibancada do clube no alto com a luz pelo horário da Home; telão pendurado com o resultado de cada jogo (placar nos Lances, escada na Prova, bolinhas sem revelar o clube no Time do Dia, palpites ou acertos no Crava); '+pontos pro time' em Anton amarelo como protagonista; adesivo do narrador; gramado e rodapé com selo da Carreira, link e aviso da pré-temporada. Sem escudo, camisa ou pessoa; legível na miniatura do WhatsApp. A arquibancada do card é sempre a do clube, mesmo em lance da seleção. Todo minigame novo usa este modelo, com seu conteúdo dentro do telão.
 
 ### Ranking
 - Abas: Semana, Temporada, 52 semanas, Cidades.

@@ -6,7 +6,7 @@ import { coluna, linha, type GestoCobranca } from '../jogo/penaltis';
 import { GOLEIRO, desenharBoneco, maos, misturar, novaPose, poseGoleiroEsperando, type Boneco, type Pose } from './bonecos';
 import { vibrar } from './toque';
 import { qualidade } from './qualidade';
-import { QUADROS_TORCIDA, desenharTorcedor, hash, lugaresDaTorcida, type Lugar } from './torcida';
+import { QUADROS_TORCIDA, desenharTorcedor, hash, lugaresDaTorcida, type Lugar, type Torcida } from './torcida';
 import { somTrave } from '../jogo/som';
 import { criarPapelPicado } from './papelPicado';
 
@@ -164,17 +164,20 @@ export function desenharPontosEm(
 }
 
 export interface OpcoesCena {
-  /** Cores do time: torcida, bandeiras e placas de beira de campo. */
+  /** Cores do time: papel picado e, sem `torcida`, a arquibancada. */
   cores: readonly [string, string];
+  /** Arquibancada de outra paleta (lance da Seleção): torcida, bandeiras e placas de beira de campo. */
+  torcida?: Torcida;
   /** Relógio da tela (o mesmo do quadro). */
   relogio: () => number;
   /** prefers-reduced-motion: sem ola nem tremida. */
   reduzido: boolean;
 }
 
-export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido }: OpcoesCena) {
+export function criarCena(canvas: HTMLCanvasElement, { cores, torcida: daPartida, relogio, reduzido }: OpcoesCena) {
   const c = canvas.getContext('2d')!;
   const papel = criarPapelPicado([cores[0], cores[1], '#ffd23f']);
+  const coresDaArquibancada = daPartida?.cores ?? cores;
 
   // ---------- efeitos ----------
   const efeitos = {
@@ -373,7 +376,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
 
   function prepararCenario(dpr: number): void {
     const fim = fimArquibancada();
-    gente = lugaresDaTorcida(W, fim - 12, cores);
+    gente = lugaresDaTorcida(W, fim - 12, coresDaArquibancada, daPartida?.outros);
     levantou = new Float32Array(gente.length);
     deslocado = new Float32Array(gente.length);
     coresDaTorcida = [...new Set(gente.map((l) => l.cor))];
@@ -385,7 +388,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
     torcida = Array.from({ length: QUADROS_TORCIDA }, (_, q) => {
       const [off, o] = novoCanvas(dpr, W, fim);
       fundoDaArquibancada(o, fim);
-      for (const l of gente) desenharTorcedor(o, cores, l.x, l.y, l.r, l.cor, l.h, 0, q, l.bandeira);
+      for (const l of gente) desenharTorcedor(o, coresDaArquibancada, l.x, l.y, l.r, l.cor, l.h, 0, q, l.bandeira);
       placas(o, fim);
       return off;
     });
@@ -415,7 +418,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
     const larg = 64;
     for (let x = 0, i = 0; x < W; x += larg, i++) {
       const grad = o.createLinearGradient(0, y, 0, y + alt);
-      const cor = i % 2 ? cores[0] : cores[1];
+      const cor = i % 2 ? coresDaArquibancada[0] : coresDaArquibancada[1];
       grad.addColorStop(0, cor);
       grad.addColorStop(1, 'rgba(0,0,0,0.35)');
       o.fillStyle = cor;
@@ -484,7 +487,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
     // Bandeiras são poucas: uma a uma, pelo desenho de sempre.
     for (let i = 0; i < gente.length; i++) {
       const l = gente[i];
-      if (l.bandeira) desenharTorcedor(c, cores, l.x, l.y, l.r, l.cor, l.h, levantou[i], q, true);
+      if (l.bandeira) desenharTorcedor(c, coresDaArquibancada, l.x, l.y, l.r, l.cor, l.h, levantou[i], q, true);
     }
   }
 

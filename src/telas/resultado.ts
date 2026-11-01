@@ -5,7 +5,7 @@ import { esc, irPara, type DadosResultado, type Rota } from '../app';
 import { SELECAO } from '../dados/adversarios';
 import { ID_OUTRO, corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
 import { prefs } from '../estado';
-import { desenharCard, seloNivel } from '../jogo/card';
+import { desenharCard, mostrarCard, prontoParaDesenhar, seloNivel } from '../jogo/card';
 import { conviteX1Penaltis } from '../jogo/convites';
 import { ID_SELECAO, lembrancaDaDisputa } from '../jogo/disputas';
 import { placarEmoji } from '../jogo/emoji';
@@ -273,12 +273,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   // ---------- card ----------
   const img = root.querySelector<HTMLImageElement>('.card')!;
   const cardPronto = (async () => {
-    // O card usa Anton e Barlow: espera as fontes para não sair com a fonte do sistema.
-    try {
-      await Promise.all([document.fonts.load('400 100px Anton'), document.fonts.load('700 40px Barlow')]);
-    } catch {
-      // segue com a fonte que tiver
-    }
+    await prontoParaDesenhar();
     const canvas = desenharCard({
       time,
       apelido,
@@ -292,7 +287,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
     });
     const nivel = await nivelParaCard();
     if (nivel) seloNivel(canvas, nivel);
-    img.src = canvas.toDataURL('image/png');
+    await mostrarCard(img, canvas);
     return canvas;
   })();
 
