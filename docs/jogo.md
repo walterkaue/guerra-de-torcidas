@@ -584,7 +584,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - **Convites por jogador:** quantos amigos cada um traz (meta: mais de 1).
 - **Volta no dia seguinte e em 7 dias.**
 - **Partidas por visita.**
-- **Desafios aceitos / desafios enviados.**
+- **Desafios aceitos / desafios enviados.** Cuidado: o desafio nasce sozinho a cada partida, então "enviado" ainda é "gerado". Só vira envio de verdade quando o toque em compartilhar for contado (proposta em `docs/propostas/funil-do-desafio.md`).
 - Enquanto não houver ferramenta de métricas, os números saem do próprio banco (partidas, desafios e torcedores), por um relatório simples: `npm run metricas` (só leitura; jogador = quem fechou ao menos 1 partida; "voltou em 7 dias" = jogou em algum dos 7 dias seguintes à estreia; "entrou por link" = a 1ª partida foi desafio de outra pessoa).
 
 ### Balanço entre minigames (decidido em 20/10)

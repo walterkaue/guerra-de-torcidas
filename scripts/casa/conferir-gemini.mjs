@@ -103,7 +103,7 @@ export const dominioAceito = (d) => !!d && DOMINIOS_ACEITOS.some((x) => d === x 
 export const trechoNaPagina = (trecho, pagina) => normalizar(trecho).length >= 8 && normalizar(pagina).includes(normalizar(trecho));
 
 const temPalavra = (texto, termo) => ` ${normalizar(texto)} `.includes(` ${normalizar(termo)} `);
-const citaClube = (clube, trecho, dominio) =>
+export const citaClube = (clube, trecho, dominio) =>
   (NOMES[clube] ?? [clube]).some((n) => temPalavra(trecho, n)) || dominio === SITE_DO_CLUBE[clube] || dominio?.endsWith(`.${SITE_DO_CLUBE[clube]}`);
 
 /** O trecho traz o dado-chave da linha? Devolve o motivo quando não traz. */

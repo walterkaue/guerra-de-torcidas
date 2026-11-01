@@ -42,16 +42,10 @@ Sem dependência das frentes em andamento.
 
 | Frente | Executor | Resultado esperado |
 |---|---|---|
-| **Funil do desafio por link** (recomendada) | Sonnet, média | Dos 49 desafios enviados, só 3 tiveram alguém jogando. Achar onde a pessoa desiste, com dados e leitura do fluxo, e corrigir o que for pequeno |
-| **Termos × jogo** | Sonnet, média | Lista do que o texto promete e o jogo não faz, para o Kauê e o advogado. Não altera os Termos |
-| **Calibragem da Prova** | Sonnet, alta | Duas ou três opções simuladas com o balanço de 31/10. Não altera a pontuação |
+| ~~Funil do desafio por link~~ | Feito | Diagnóstico em `docs/propostas/funil-do-desafio.md`: os 4 aceites são entre os 2 testadores, nenhum de fora; "enviado" é só "gerou link". Correções pequenas no convite; falta contar compartilhamento e abertura do link |
+| ~~Calibragem da Prova~~ | feita em 31/10 | Proposta com três opções em `docs/propostas/calibragem-prova.md`; falta o Kauê decidir (abaixo) |
 
-Divergências já vistas nos Termos (`src/dados/termos.md`):
-- Ranking de cidades, que ainda não existe.
-- Checagem da Cloudflare, ainda desligada.
-- Apagar contas paradas, sem rotina nem prazo.
-- Aviso de mudança na tela inicial, ainda não existe.
-- "Só você lê os seus", mas o administrador lê feedbacks e suspeitas.
+**Termos × jogo (feito em 31/10/2026):** a lista está em `docs/termos-x-jogo.md`, para o Kauê e o advogado. Além das divergências já vistas (cidades, Cloudflare, contas paradas, aviso de mudança, "só você lê os seus", o que fica ao apagar), achou: "ver meus dados" não existe, "zerar pontos de trapaceiro" e "apagar apelido" não têm ação no `#admin`, o aviso de saída não cobre o WhatsApp e o feedback leva tela e navegador sem o texto dizer. Cada item traz as saídas (mudar o jogo ou o texto). Falta o Kauê decidir; o texto só muda com ele.
 
 ## Só o Kauê faz
 
@@ -61,8 +55,9 @@ Divergências já vistas nos Termos (`src/dados/termos.md`):
 3. Ligar o CAPTCHA no painel do Supabase com a chave **secreta**, que fica só no painel.
 
 **Decisões:**
-- Calibragem da Prova: mediana de 4 pontos contra alvo de 45 a 75; 31 de 33 partidas acabam em erro.
+- **Calibragem da Prova** (mediana de 4 contra alvo de 45 a 75; 31 de 33 partidas acabam em erro): escolher entre A (segunda chance), B (três erros e fora, **recomendada**) e C (prova inteira), e dizer se o alvo de 45 a 75 vale para a Prova. A causa é a regra do primeiro erro, não a tabela. Detalhes e contas em `docs/propostas/calibragem-prova.md` (`npm run calibragem-prova`). Depois da escolha: implementar na virada da semana e rodar o balanço com 20 partidas novas; rever em paralelo as perguntas fáceis de clube (43% de acerto).
 - Prazo para apagar contas anônimas paradas.
+- Itens de `docs/termos-x-jogo.md` (mudar o jogo ou o texto, um por um).
 - Supabase Pro antes de divulgar.
 - Data do zerar da pré-temporada. A Crava termina em 2/12, e o balanço roda antes de zerar.
 - Texto final dos Termos, com o advogado.
@@ -84,5 +79,5 @@ Divergências já vistas nos Termos (`src/dados/termos.md`):
 - [ ] Plano do Supabase decidido
 - [ ] Termos e jogo batendo, com revisão do advogado
 - [ ] Prova calibrada
-- [ ] Funil do desafio entendido
+- [x] Funil do desafio entendido (mas falta medir envio e abertura do link; ver a proposta)
 - [ ] Balanço rodado e pré-temporada zerada
