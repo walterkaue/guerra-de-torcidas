@@ -36,6 +36,7 @@ console.log(
        (select count(*) from public.dia_partidas) as dias_do_time_do_dia,
        (select count(*) from public.crava_pontos) as pontos_do_crava,
        (select count(*) from public.ranking_semana) as linhas_de_ranking,
+       (select count(*) from public.fechamento_semana) as linhas_de_fechamento,
        (select count(*) from public.torcedores) as torcedores_que_ficam,
        (select count(*) from public.carreira_partidas) as partidas_da_carreira_que_ficam`,
   ]),
@@ -45,7 +46,7 @@ console.log('Ficam: times, torcedores, palpites, perguntas e respostas da Prova,
 
 const rl = createInterface({ input: process.stdin, output: process.stdout });
 const resposta = await rl.question(
-  'Apagar TODAS as partidas, desafios, dias do Time do Dia, pontos do Crava, recordes e o ranking? Digite ZERAR para confirmar: ',
+  'Apagar TODAS as partidas, desafios, dias do Time do Dia, pontos do Crava, recordes, o ranking e os fechamentos de semana? Digite ZERAR para confirmar: ',
 );
 rl.close();
 if (resposta.trim() !== 'ZERAR') {

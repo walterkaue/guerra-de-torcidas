@@ -153,6 +153,12 @@ Mudou em relação à proposta: troca de time ou cidade **livre** por enquanto; 
 
 Aprovadas as recomendações das propostas em `docs/propostas/` (detalhe no `jogo.md`, seções 3 e 5):
 
-- **Série A e B:** mês de estreia em série única com os 20 times (o 1º leva "Campeão da estreia"; do 1º ao 10º vão para a A); divisões testadas já em novembro, na pré-temporada, zerando junto; a semana é do mês da sua segunda-feira; torcida sem ninguém desempata pela semana anterior.
+- **Série A e B:** mês de estreia em série única com os 20 times (o 1º leva "Campeão da estreia"; do 1º ao 10º vão para a A); teste na pré-temporada em série única em novembro e Série A e B em dezembro, zerando junto; a semana é do mês da sua segunda-feira; torcida sem ninguém desempata pela semana anterior.
 - **Cidade:** pedida depois da 1ª partida, com lembrete na Home no máximo 1 vez por semana; só entra no ranking com 5+ jogadores na semana (abaixo disso, conta só para o estado); pontos de antes de escolher não contam; liga na pré-temporada.
 - **Longo prazo:** ordem Carreira → Galeria → 52 semanas (na 1ª temporada). 52 semanas pela tabela de 20 posições do ranking geral: 1º 25, 2º 20, 3º 17, 4º 15, 5º 14, do 6º ao 18º de 13 a 1, 19º e 20º 0. Galeria e Tabela de todos os tempos na aba Conquistas; Maior torcida como "vitrine". Carreira: 10 XP por partida (5 da 6ª à 15ª), níveis 0 / 100 / 1.000 / 5.000 / 15.000 / 30.000, bônus de +100 (1º do dia) e +200 (1º da torcida na semana), e o XP sobrevive ao zerar.
+
+---
+
+## 11. Decisão de 31/10/2026
+
+**Fechamento da semana em duas etapas:** provisória na segunda 00h05 e travada na segunda 12h, quando o Crava para de somar na semana que fechou. Detalhe no `jogo.md`, seção 5, "Fechamento da semana".
