@@ -53,6 +53,7 @@ Uma semana arrasadora não ganha o mês sozinha; regularidade conta.
 - Os 20 times oficiais são divididos em **Série A (10)** e **Série B (10)**. Na primeira temporada, a divisão sai do **mês de estreia em série única** (os 20 juntos; do 1º ao 10º vão para a A; decidido em 26/10, ver seção 10). "Outro time" não entra em divisão.
 - A temporada dura um mês (4 ou 5 semanas). Somam-se os pontos de campeonato das semanas.
 - No fim: **os 2 últimos da A caem, os 2 primeiros da B sobem.** O campeão da Série A é o **campeão da temporada**.
+- Semana em que ninguém do time jogou vale 0 ponto de campeonato e nenhuma vitória, seja qual for a posição (`jogo.md`, seção 5).
 - Rebaixamento é a zoeira mais brasileira que existe: "{o_time} caiu pra Série B do Guerra".
 - Times criados (fase 2) ganham divisões próprias por liga, com a mesma regra.
 
