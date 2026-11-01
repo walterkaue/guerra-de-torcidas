@@ -77,14 +77,26 @@ export const normalizar = (s) =>
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase();
 
-const regex = (p, inteira) => new RegExp(`(^|[^a-z0-9])${p.replace(/ /g, '\\s+')}${inteira ? '($|[^a-z0-9])' : ''}`);
+// Cada regex é compilada uma vez: a Casa passa milhares de campos por estas listas.
+const compiladas = new Map();
+const regex = (p, inteira) => {
+  const chave = `${inteira}:${p}`;
+  if (!compiladas.has(chave)) compiladas.set(chave, new RegExp(`(^|[^a-z0-9])${p.replace(/ /g, '\\s+')}${inteira ? '($|[^a-z0-9])' : ''}`));
+  return compiladas.get(chave);
+};
 const limpar = (texto) => normalizar(texto).replace(/morte subita/g, ' ');
 
 /** Palavras proibidas: só palavra inteira ("red" pega "Red Bull", não "redondo"). */
-export const acharPalavras = (texto) => PALAVRAS_PROIBIDAS.filter((p) => regex(p, true).test(limpar(texto)));
+export const acharPalavras = (texto) => {
+  const t = limpar(texto);
+  return PALAVRAS_PROIBIDAS.filter((p) => regex(p, true).test(t));
+};
 
 /** Temas: começo de palavra ("rebaixa" pega "rebaixamento"); "morte súbita" é regra do jogo e passa. */
-export const acharTemas = (texto) => TEMAS_PROIBIDOS.filter((p) => regex(p, false).test(limpar(texto)));
+export const acharTemas = (texto) => {
+  const t = limpar(texto);
+  return TEMAS_PROIBIDOS.filter((p) => regex(p, false).test(t));
+};
 
 /** Parser de CSV (RFC 4180): aspas, aspas dobradas, vírgula e quebra de linha dentro do campo, BOM. */
 export function lerCsv(texto) {

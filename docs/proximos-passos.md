@@ -9,7 +9,7 @@
 |---|---|
 | Código | `main` limpa, sem PR ou issue abertos, testes e build passando |
 | Publicação | Site no ar, 24 migrações sincronizadas, 11 funções publicadas |
-| Rotinas | Sem falhas em 7 dias, exceto a dúvida da `carreira-fechar` (abaixo) |
+| Rotinas | Sem falhas em 7 dias; `carreira-fechar` rodou com sucesso em 01/11 |
 | Tamanho | 216 KB gzip somando todo o JS e CSS (limite do bundle inicial: ~300 KB) |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
 | Uso | 7 jogadores, 4 na semana, 87 partidas. Pênaltis trazem 82% dos pontos. Amostra pequena |
@@ -20,13 +20,7 @@ Nenhuma sessão aberta. As frentes de 31/10/2026 terminaram nos PRs #61 a #65.
 
 ## Conferir primeiro
 
-**`carreira-fechar`:** a rotina não tinha nenhuma execução registrada em 31/10, e todos os bônus nasceram juntos às 08:44 daquele dia. A primeira execução deveria sair às 00h15 de 01/11. Se a contagem abaixo seguir zerada depois disso, é bug. A consulta é só leitura.
-
-```sql
-select count(*) from cron.job_run_details r join cron.job j using (jobid) where j.jobname = 'carreira-fechar';
-```
-
-**Fechamento da semana:** a migração `20261031300000_fechamento_semana.sql` foi aplicada em 31/10/2026. Em 02/11, depois das 12h, confira as rotinas `fechar-semana-virada` e `fechar-semana-confirma` e se a semana passada tem 20 linhas travadas. A consulta é só leitura.
+**Fechamento da semana:** a migração `20261031300000_fechamento_semana.sql` foi aplicada em 01/11/2026. Em 02/11, depois das 12h, confira as rotinas `fechar-semana-virada` e `fechar-semana-confirma` e se a semana passada tem 20 linhas travadas. A consulta é só leitura.
 
 ```sql
 select semana, count(*), count(confirmada_em) as travadas from public.fechamento_semana group by 1 order by 1 desc;
