@@ -15,6 +15,7 @@
     "zerar-pre-temporada": "node scripts/zerar-pre-temporada.mjs",
     "metricas": "node scripts/metricas.mjs",
     "balanco": "node scripts/balanco/balanco.mjs",
+    "calibragem-prova": "node scripts/balanco/calibragem-prova.mjs",
     "importar-perguntas": "node scripts/importar-perguntas.mjs",
     "importar-clubes-do-dia": "node scripts/importar-clubes-do-dia.mjs",
     "catalogo-lances": "node scripts/lances/catalogo.mjs",
