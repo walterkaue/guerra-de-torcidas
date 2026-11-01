@@ -1,7 +1,7 @@
 // Roupa de quem aparece nos Lances do Jogo: camiseta lisa, nunca a camisa do dia.
 // Nome, artigo e cores dos adversários ficam em adversarios.ts.
 
-export { SELECAO, coresDoAdversario } from './adversarios';
+export { SELECAO, TORCIDA_SELECAO, coresDoAdversario } from './adversarios';
 
 /** Roupa lisa de um batedor de goleiro: só as cores, sem desenho nem marca. */
 export interface RoupaDeGoleiro {

@@ -2,7 +2,7 @@
 // compartilhar (sem o texto das perguntas) e Mais uma / Revanche.
 
 import { esc, irPara, type Rota } from '../app';
-import { seloNivel } from '../jogo/card';
+import { mostrarCard, prontoParaDesenhar, seloNivel } from '../jogo/card';
 import { ID_OUTRO, corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
 import { prefs } from '../estado';
 import { desenharCardProva, linhaDoCard } from '../jogo/cardProva';
@@ -107,11 +107,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
   // ---------- card ----------
   const img = root.querySelector<HTMLImageElement>('.card')!;
   const cardPronto = (async () => {
-    try {
-      await Promise.all([document.fonts.load('400 100px Anton'), document.fonts.load('700 40px Barlow')]);
-    } catch {
-      // segue com a fonte que tiver
-    }
+    await prontoParaDesenhar();
     const canvas = desenharCardProva({
       time,
       apelido,
@@ -125,7 +121,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
     });
     const nivel = await nivelParaCard();
     if (nivel) seloNivel(canvas, nivel);
-    img.src = canvas.toDataURL('image/png');
+    await mostrarCard(img, canvas);
     return canvas;
   })();
 

@@ -13,6 +13,9 @@ export interface Adversario {
 /** A Seleção entra como coleção extra, aberta a todos (só nome e cores). */
 export const SELECAO = { nome: 'Seleção', cores: ['#ffd200', '#00843d'] as const };
 
+/** Arquibancada nos lances da Seleção: verde e amarelo com um toque de azul e branco. Só cores, sem brasão nem escudo. */
+export const TORCIDA_SELECAO = { cores: ['#00843d', '#ffd200'] as const, outros: ['#1d4fa8', '#ffffff', '#00843d', '#ffd200'] } as const;
+
 const OUTROS_ADVERSARIOS: Record<string, Adversario> = {
   Alemanha: { artigo: 'a', cores: ['#ffffff', '#111111'] },
   Argentina: { artigo: 'a', cores: ['#6cace4', '#ffffff'] },

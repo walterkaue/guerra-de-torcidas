@@ -2,7 +2,7 @@
 // Toda decisão de resultado vem do motor puro (jogo/penaltis.ts); aqui é só gesto e desenho.
 
 import { esc, irPara, type Rota } from '../app';
-import { SELECAO, coresDoAdversario } from '../dados/adversarios';
+import { SELECAO, TORCIDA_SELECAO, coresDoAdversario } from '../dados/adversarios';
 import { corDeTexto, proTime, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { sementeNova } from '../jogo/aleatorio';
@@ -176,7 +176,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   `;
 
   const canvas = root.querySelector<HTMLCanvasElement>('canvas')!;
-  const cena = criarCena(canvas, { cores: time.cores, relogio, reduzido });
+  const torcidaDaPartida = pelaSelecao ? TORCIDA_SELECAO : undefined;
+  const cena = criarCena(canvas, { cores: time.cores, torcida: torcidaDaPartida, relogio, reduzido });
   const {
     c,
     g,
@@ -427,7 +428,10 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     telaReplay.style.top = `${canvas.offsetTop}px`;
     telaReplay.style.height = `${canvas.offsetHeight}px`;
     telaReplay.hidden = false;
-    if (!cena3d) cena3d = criarCena3d(telaReplay, { cores: time.cores, relogio, reduzido });
+    if (!cena3d) {
+      cena3d = criarCena3d(telaReplay, { cores: time.cores, relogio, reduzido });
+      cena3d.trocarTorcida(torcidaDaPartida);
+    }
     cena3d.medir();
     const bola = { x: 0, z: 11 };
     const z = centroZona(r.zonaGoleiro);

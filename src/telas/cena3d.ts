@@ -11,6 +11,7 @@ import { vibrar } from './toque';
 import { qualidade } from './qualidade';
 import { somTrave } from '../jogo/som';
 import { criarPapelPicado } from './papelPicado';
+import { corDaTorcida, type Torcida } from './torcida';
 
 const MEIA_GOL = 3.66;
 const ALTURA_GOL = 2.44;
@@ -55,6 +56,9 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
   let fundo: HTMLCanvasElement | null = null;
   /** Replay de TV (telas/replay.ts): câmera atrás do gol, rede desenhada na frente e bonecos espelhados. */
   let replay: { fimX: number; rede: HTMLCanvasElement | null } | null = null;
+  const torcidaDoTime: Torcida = { cores, outros: ['#3a3f4a'] };
+  /** Muda por lance: uma partida pode misturar lance de clube e da Seleção. */
+  let torcida = torcidaDoTime;
   let gradBola: CanvasGradient | null = null;
   const efeitos = {
     tremida: -Infinity,
@@ -77,6 +81,11 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
     gradBola.addColorStop(0.5, 'rgba(255,255,255,0)');
     gradBola.addColorStop(1, 'rgba(0,0,0,0.38)');
     montar();
+  }
+
+  /** A arquibancada que o próximo `definirLance` desenha. Sem paleta, a do time. */
+  function trocarTorcida(t?: Torcida): void {
+    torcida = t ?? torcidaDoTime;
   }
 
   /** Troca o lance: posição da bola (m) e o enquadramento da câmera. */
@@ -154,7 +163,7 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
         const q = p(x + (fila % 2) * 0.35, y, z);
         if (q.prof <= 1 || q.y < -10 || q.y > H || q.x < -10 || q.x > W + 10) continue;
         const h = hash(x * 3.1, fila);
-        o.fillStyle = h < 0.42 ? cores[0] : h < 0.78 ? cores[1] : '#3a3f4a';
+        o.fillStyle = corDaTorcida(h, torcida.cores, torcida.outros);
         o.beginPath();
         o.arc(q.x, q.y, Math.max(0.8, 0.24 * q.escala), 0, Math.PI * 2);
         o.fill();
@@ -171,7 +180,7 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
           { x: i * 6 + 5.8, y: 0.9, z: zPlaca },
           { x: i * 6, y: 0.9, z: zPlaca },
         ],
-        i % 2 ? cores[0] : cores[1],
+        i % 2 ? torcida.cores[0] : torcida.cores[1],
       );
     }
   }
@@ -568,6 +577,7 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
   return {
     c,
     medir,
+    trocarTorcida,
     definirLance,
     modoReplay,
     desenharFundo,
