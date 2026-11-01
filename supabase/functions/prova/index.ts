@@ -260,10 +260,12 @@ async function fechar(sb: SupabaseClient, uid: string, partida: Partida, est: Es
 async function encerrarLargada(sb: SupabaseClient, uid: string, partida: Partida, est: Estado, cfg: Cfg) {
   if (est.fase === 'respondendo') {
     const vaga = est.escada[est.atual];
+    const comTempo = [...est.passos, { degrau: vaga.degrau, desfecho: 'tempo' as const, ajuda: est.ajuda_na_atual, ms: cfg.limiteMs }];
+    // Só vira erro se for o 3º; antes disso a pessoa simplesmente parou na pergunta anterior.
     await salvar(sb, est, {
       fase: 'fim',
       alternativas: null,
-      passos: [...est.passos, { degrau: vaga.degrau, desfecho: 'tempo', ajuda: est.ajuda_na_atual, ms: cfg.limiteMs }],
+      passos: fimDosPassos(comTempo) ? comTempo : est.passos,
     });
   } else if (est.fase === 'aguardando') {
     await salvar(sb, est, { fase: 'fim' });

@@ -285,7 +285,8 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
         gritar(falar('prova_acertou'));
         if (botao) papelPicadoNaTela(botao, [time.cores[0], time.cores[1], '#ffd23f']);
       }
-      else gritar(falar(r.desfecho === 'tempo' ? 'prova_tempo' : 'prova_errou'));
+      // No 3º erro a partida acaba: o grito de "segue" não cabe, quem fala é o fim da prova.
+      else if (!r.fim) gritar(falar(r.desfecho === 'tempo' ? 'prova_tempo' : 'prova_errou'));
 
       pausa = window.setTimeout(() => {
         if (saiu) return;
