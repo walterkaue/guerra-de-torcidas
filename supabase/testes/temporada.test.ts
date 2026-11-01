@@ -304,6 +304,30 @@ describe('caminho de verdade', () => {
     expect((await series(db, DEZEMBRO)).remo.serie).toBe('a');
   }, TEMPO);
 
+  it('crons parados o mês todo: a semana do meio trava antes da foto, e a pontuação dela conta', async () => {
+    const db = await bancoDeTeste();
+    const id = '00000000-0000-4000-8000-000000000002';
+    await db.query('insert into auth.users (id) values ($1)', [id]);
+    await db.query(`insert into public.torcedores (id, time_id) values ($1, 'remo')`, [id]);
+    const { rows } = await db.query<{ id: string }>(
+      `insert into public.partidas (torcedor_id, modo, semente, dificuldade, expira_em)
+       values ($1, 'normal', 1, 0.5, now() + interval '15 minutes') returning id`,
+      [id],
+    );
+    await db.query('select * from public.fechar_partida($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)', [
+      rows[0].id, id, 'remo', '{}', '{}', 80, '2026-11-18', SEMANAS_NOVEMBRO[2], '2026-11-18T12:00:00-03:00', null, null, null,
+    ]);
+
+    await fechar(db, '2026-12-07T12:01:00-03:00');
+    const { rows: linhas } = await db.query<{ semana: string; n: number; travadas: number }>(
+      `select semana::text, count(*)::integer as n, count(confirmada_em)::integer as travadas
+       from public.fechamento_semana group by 1 order by 1`,
+    );
+    expect(linhas).toEqual(SEMANAS_NOVEMBRO.map((semana) => ({ semana, n: 20, travadas: 20 })));
+    expect((await series(db, NOVEMBRO)).remo.posicao_final).toBe(1);
+    expect((await classificacao(db, NOVEMBRO)).remo.pontos).toBe(25);
+  }, TEMPO);
+
   it('última semana sem linha e mais de uma semana de crons perdidos: o mês fecha assim mesmo', async () => {
     const db = await bancoDeTeste();
     await semana(db, SEMANAS_NOVEMBRO[3], ['remo']);

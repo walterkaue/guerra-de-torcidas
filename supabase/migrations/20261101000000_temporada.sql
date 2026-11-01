@@ -125,9 +125,10 @@ begin
 end;
 $$;
 
--- Fecha quando a última semana do mês travou, e abre o mês seguinte com o destino de cada time.
--- Quem decide é o registro da trava, não o relógio. fechar_semanas só vê a última semana e as que têm
--- ranking: se ninguém jogou e os crons caíram, a trava sai daqui, ou o mês nunca fecharia.
+-- Fecha quando todas as semanas do mês travaram, e abre o mês seguinte com o destino de cada time.
+-- Quem decide é o registro da trava, não o relógio. As semanas passam por fechar_semana, da mais velha
+-- para a mais nova, porque fechar_semanas só vê a última e as que têm ranking: se os crons caírem, a
+-- foto não pode sair sem uma semana do meio, nem o mês pode ficar aberto para sempre.
 -- p_agora existe para os testes.
 create function public.fechar_temporada(p_mes date, p_agora timestamptz default now())
 returns void
@@ -138,6 +139,7 @@ as $$
 declare
   v_proximo date := (p_mes + interval '1 month')::date;
   v_ultima date := public.semana_de(v_proximo - 1);
+  v_semana date;
   v_pre_temporada boolean;
 begin
   select t.pre_temporada into v_pre_temporada
@@ -149,10 +151,15 @@ begin
     return;
   end if;
 
-  perform public.fechar_semana(v_ultima, p_agora);
-  if not public.semana_travada(v_ultima) then
-    return;
-  end if;
+  for v_semana in
+    select s::date
+    from generate_series(public.semana_de(p_mes + 6)::timestamp, v_ultima::timestamp, interval '7 days') s
+  loop
+    perform public.fechar_semana(v_semana, p_agora);
+    if not public.semana_travada(v_semana) then
+      return;
+    end if;
+  end loop;
 
   update public.temporada_serie s set
     posicao_final = c.posicao,
