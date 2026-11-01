@@ -37,7 +37,11 @@ const DATA = /^\d{4}-\d{2}-\d{2}$/;
 const DATA_FLEX = /^\d{4}(-\d{2}(-\d{2})?)?$/;
 const HEX = /^#[0-9a-f]{6}$/i;
 
-const palavraInteira = (norm, p) => new RegExp(`(^|[^a-z0-9])${p.replace(/ /g, '\\s+')}($|[^a-z0-9])`).test(norm);
+const compiladas = new Map();
+const palavraInteira = (norm, p) => {
+  if (!compiladas.has(p)) compiladas.set(p, new RegExp(`(^|[^a-z0-9])${p.replace(/ /g, '\\s+')}($|[^a-z0-9])`));
+  return compiladas.get(p).test(norm);
+};
 
 /** Domínio do link, sem "www.". */
 export function dominioDe(url) {
