@@ -746,6 +746,11 @@
   color: var(--amarelo);
 }
 
+.convite-desafio .convite-como {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
 /* ---------- barra de navegação ---------- */
 .barra-nav {
   position: fixed;

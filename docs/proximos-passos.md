@@ -37,7 +37,7 @@ Sem dependência das frentes em andamento.
 
 | Frente | Executor | Resultado esperado |
 |---|---|---|
-| **Funil do desafio por link** (recomendada) | Sonnet, média | Dos 49 desafios enviados, só 3 tiveram alguém jogando. Achar onde a pessoa desiste, com dados e leitura do fluxo, e corrigir o que for pequeno |
+| ~~Funil do desafio por link~~ | Feito | Diagnóstico em `docs/propostas/funil-do-desafio.md`: os 4 aceites são entre os 2 testadores, nenhum de fora; "enviado" é só "gerou link". Correções pequenas no convite; falta contar compartilhamento e abertura do link |
 | **Calibragem da Prova** | Sonnet, alta | Duas ou três opções simuladas com o balanço de 31/10. Não altera a pontuação |
 
 **Termos × jogo (feito em 31/10/2026):** a lista está em `docs/termos-x-jogo.md`, para o Kauê e o advogado. Além das divergências já vistas (cidades, Cloudflare, contas paradas, aviso de mudança, "só você lê os seus", o que fica ao apagar), achou: "ver meus dados" não existe, "zerar pontos de trapaceiro" e "apagar apelido" não têm ação no `#admin`, o aviso de saída não cobre o WhatsApp e o feedback leva tela e navegador sem o texto dizer. Cada item traz as saídas (mudar o jogo ou o texto). Falta o Kauê decidir; o texto só muda com ele.
@@ -72,5 +72,5 @@ Sem dependência das frentes em andamento.
 - [ ] Plano do Supabase decidido
 - [ ] Termos e jogo batendo, com revisão do advogado
 - [ ] Prova calibrada
-- [ ] Funil do desafio entendido
+- [x] Funil do desafio entendido (mas falta medir envio e abertura do link; ver a proposta)
 - [ ] Balanço rodado e pré-temporada zerada
