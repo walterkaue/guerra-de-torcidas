@@ -7,7 +7,7 @@
 
 | Área | Estado em 31/10/2026 |
 |---|---|
-| Código | `main` limpa, sem PR ou issue abertos, 1506 testes e build passando |
+| Código | `main` limpa, sem PR ou issue abertos, testes e build passando |
 | Publicação | Site no ar, 24 migrações sincronizadas, 11 funções publicadas |
 | Rotinas | Sem falhas em 7 dias, exceto a dúvida da `carreira-fechar` (abaixo) |
 | Tamanho | 216 KB gzip somando todo o JS e CSS (limite do bundle inicial: ~300 KB) |
@@ -16,11 +16,7 @@
 
 ## Em andamento
 
-Uma sessão aberta em 31/10/2026. Veja o PR dela antes de mexer nessa área.
-
-| Frente | Entrega | Não mexer em paralelo |
-|---|---|---|
-| Piloto das perguntas do staging | PR com lote de amostra em `rascunho`, relatório e consumo | `dados/perguntas/`, `docs/orquestracao.md` |
+Nenhuma sessão aberta. As frentes de 31/10/2026 terminaram nos PRs #61 a #65.
 
 ## Conferir primeiro
 
@@ -30,7 +26,7 @@ Uma sessão aberta em 31/10/2026. Veja o PR dela antes de mexer nessa área.
 select count(*) from cron.job_run_details r join cron.job j using (jobid) where j.jobname = 'carreira-fechar';
 ```
 
-**Fechamento da semana:** a migração `20261031300000_fechamento_semana.sql` precisa de `db push` depois do merge. Na segunda seguinte, depois das 12h, confira as rotinas `fechar-semana-virada` e `fechar-semana-confirma` e se a semana passada tem 20 linhas travadas. A consulta é só leitura.
+**Fechamento da semana:** a migração `20261031300000_fechamento_semana.sql` foi aplicada em 31/10/2026. Em 02/11, depois das 12h, confira as rotinas `fechar-semana-virada` e `fechar-semana-confirma` e se a semana passada tem 20 linhas travadas. A consulta é só leitura.
 
 ```sql
 select semana, count(*), count(confirmada_em) as travadas from public.fechamento_semana group by 1 order by 1 desc;
@@ -38,7 +34,12 @@ select semana, count(*), count(confirmada_em) as travadas from public.fechamento
 
 ## Pode começar já
 
-Sem dependência das frentes em andamento.
+Uma de cada vez, porque as duas mexem perto do ranking.
+
+1. **Servidor das divisões:** seguir o plano do PR #62, com novembro em série única e Série A e B em dezembro. A primeira semana de novembro trava em 09/11 às 12h.
+2. **Ranking incremental:** `fechamento_semana` copia `ranking_semana`, e as duas tabelas têm de continuar batendo.
+
+## Feito em 31/10/2026
 
 | Frente | Executor | Resultado esperado |
 |---|---|---|
@@ -61,15 +62,14 @@ Sem dependência das frentes em andamento.
 - Supabase Pro antes de divulgar.
 - Data do zerar da pré-temporada. A Crava termina em 2/12, e o balanço roda antes de zerar.
 - Texto final dos Termos, com o advogado.
-- Torcida sem ninguém jogando: fica com 0, como a seção 6 do `jogo.md` e o código, ou com as 30 vagas a 80%, como a seção 5? Decidir antes das divisões. Com 80%, ela pode passar um time que tem gente jogando mal.
-- Divisões em novembro: o teste começa em série única, como o mês de estreia, ou já em Série A e B? A seção 5 não diz de onde sai a divisão inicial do teste.
+- Importar as 2 perguntas de `dados/perguntas/lote-02.csv` e dizer se tema de guerra entra na lista de proibidos (`dados/perguntas/piloto-lote-02.md`).
+- Propostas de `docs/propostas/funil-do-desafio.md`.
 
-## Depois do que está em andamento
+## Depois
 
-1. **Ranking incremental:** o fechamento já está pronto, então pode começar. `fechamento_semana` copia `ranking_semana`, e as duas tabelas têm de continuar batendo.
-2. **Divisões e cidade:** dependem das duas decisões acima. O plano das divisões está no PR do fechamento da semana. Galeria e 52 semanas vêm depois.
-3. **Perguntas:** seguir para as outras do staging só se o piloto recomendar. A importação continua com o Kauê.
-4. **Limpeza de anônimos:** depois do prazo decidido. Tem de guardar os pontos da semana aberta em `pontos_apagados`.
+1. **Telas das divisões, cidade, Galeria e 52 semanas:** nessa ordem, depois do servidor das divisões.
+2. **Perguntas:** o piloto recomendou parar nas 529 sem fonte do staging. A meta de 800 precisa de perguntas nascidas de páginas reais. A importação continua com o Kauê.
+3. **Limpeza de anônimos:** depois do prazo decidido. Tem de guardar os pontos da semana aberta em `pontos_apagados`.
 
 ## Antes de divulgar
 
