@@ -23,7 +23,20 @@ import {
 const RAIZ = fileURLToPath(new URL('../..', import.meta.url));
 const NOMES = { penaltis: 'Pênaltis', prova: 'Prova de Boleiro', dia: 'Time do Dia', crava: 'Crava' };
 
+// A Prova de Boleiro passou a acabar no 3º erro (e levar 75%) na virada da semana de 02/11/2026
+// (docs/propostas/calibragem-prova.md). O balanço só conta Prova com a regra nova, para não misturar as duas:
+// partidas criadas a partir desta data (meia-noite de Brasília). Mude com PROVA_DESDE=AAAA-MM-DDTHH:MM:SSZ se
+// a publicação atrasar; com --prova-antes sai a Prova da regra antiga (criada antes da data).
+export const PROVA_TRES_ERROS_DESDE = process.env.PROVA_DESDE ?? '2026-11-02T03:00:00Z';
+const PROVA_ANTES = process.argv.includes('--prova-antes');
+
 // Tudo numa consulta só (cada chamada ao CLI leva uns segundos). Sem partida sob suspeita.
+export const montarSql = (desde = PROVA_TRES_ERROS_DESDE, antes = false) => {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(desde)) throw new Error(`data inválida: ${desde}`);
+  const filtroProva = `(p.minigame <> 'prova' or p.criada_em ${antes ? '<' : '>='} timestamptz '${desde}')`;
+  return SQL.replace('/*FILTRO_PROVA*/', filtroProva);
+};
+
 const SQL = `
 select json_build_object(
   'partidas', (
@@ -32,7 +45,7 @@ select json_build_object(
       'fim', case when p.minigame = 'prova' then p.resultado ->> 'fim' end,
       'chegou', case when p.minigame = 'prova' then jsonb_array_length(coalesce(p.resultado -> 'passos', '[]')) end
     )), '[]')
-    from public.partidas p where p.fechada_em is not null and not p.sob_suspeita),
+    from public.partidas p where p.fechada_em is not null and not p.sob_suspeita and /*FILTRO_PROVA*/),
   'dias', (
     select coalesce(json_agg(json_build_object(
       'pessoa', d.torcedor_id, 'pontos', d.pontos, 'acertou', d.acertou, 'tentativas', cardinality(d.tentativas)
@@ -58,7 +71,7 @@ export function lerDados() {
   const pasta = mkdtempSync(join(tmpdir(), 'balanco-'));
   try {
     const arquivo = join(pasta, 'balanco.sql');
-    writeFileSync(arquivo, SQL);
+    writeFileSync(arquivo, montarSql(PROVA_TRES_ERROS_DESDE, PROVA_ANTES));
     const saida = execFileSync(npx, ['supabase', 'db', 'query', '--linked', '-o', 'json', '-f', arquivo], {
       encoding: 'utf8',
       shell: process.platform === 'win32',
@@ -122,7 +135,8 @@ export function montarBalanco(dados) {
   // 2. Peso de cada minigame na semana (só o que contou no ranking).
   const peso = pesoNaSemana(dados.semana, ['penaltis', 'prova', 'dia', 'crava']);
   texto.push(
-    '\nPeso de cada minigame na semana (só pontos que contaram no ranking; "por pessoa" = cada pessoa em cada semana)',
+    '\nPeso de cada minigame na semana (só pontos que contaram no ranking; "por pessoa" = cada pessoa em cada semana; ' +
+      'a Prova aqui inclui as semanas com a regra antiga: só vale depois de uma semana inteira de 3 erros)',
     tabelaTexto(
       ['Minigame', 'Pontos', '% do total', 'Mediana por pessoa', 'Fatia mediana por pessoa'],
       peso.map((p) => [NOMES[p.minigame], p.pontos, pct(p.fatia), p.medianaPorPessoa ?? '', pct(p.medianaFatia)]),
@@ -171,6 +185,11 @@ export function rodarBalanco() {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  console.log('Balanço entre minigames (só leitura)\n');
+  console.log('Balanço entre minigames (só leitura)');
+  console.log(
+    PROVA_ANTES
+      ? `Prova: só partidas criadas antes de ${PROVA_TRES_ERROS_DESDE} (regra antiga: o 1º erro encerra)\n`
+      : `Prova: só partidas criadas a partir de ${PROVA_TRES_ERROS_DESDE} (regra nova: 3 erros e fora)\n`,
+  );
   rodarBalanco();
 }

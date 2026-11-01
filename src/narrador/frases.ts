@@ -453,14 +453,10 @@ export const FRASES = {
     { t: "Pé no freio na hora certa. Pontos no bolso!" },
   ],
   prova_errou: [
-    { t: "Errou! Leva metade, mas leva." },
-    { t: "Não foi essa! Metade dos pontos vai {pro_time} mesmo assim." },
-    { t: "Escorregou no degrau! Revanche tá a um toque." },
     { t: "Errou com tanta certeza que até o narrador duvidou.", rara: true },
   ],
   prova_tempo: [
     { t: "O tempo acabou! O relógio não perdoa." },
-    { t: "Quinze segundos voam, hein! Leva metade." },
     { t: "Pensou tanto que o apito soou!" },
   ],
   prova_ajuda: [
