@@ -96,6 +96,25 @@
 }
 
 /* ---------- relógio ---------- */
+.prova-erros {
+  margin: 0;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.prova-erros .bola {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin: 0 0.15em;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  vertical-align: -0.05em;
+}
+.prova-erros .bola.gasta {
+  background: currentColor;
+  opacity: 0.35;
+}
 .relogio {
   position: relative;
   height: 28px;

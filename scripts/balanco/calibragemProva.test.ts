@@ -17,18 +17,19 @@ import {
   taxasPorPosicao,
   wilson,
 } from './calibragemProva.mjs';
-import { calcularPontos } from '../../src/jogo/prova';
+import { calcularPontos, levar } from '../../src/jogo/prova';
+import { montarSql, PROVA_TRES_ERROS_DESDE } from './balanco.mjs';
 
 const acerta = (n: number) => Array.from({ length: n }, () => ({ desfecho: 'acertou' as const }));
 const regras = [REGRA_ATUAL, ...OPCOES];
 
-describe('regra de hoje reproduz src/jogo/prova.ts', () => {
-  it('mesmos pontos em todas as partidas possíveis (acertos seguidos e depois um erro, parada ou 8 de 8)', () => {
+describe('a regra antiga (REGRA_ATUAL, até 01/11/2026) e a nova em src/jogo/prova.ts', () => {
+  it('antiga: acertos seguidos e depois um erro levam metade; parada ou 8 de 8 batem com o jogo', () => {
     for (let acertos = 0; acertos <= 8; acertos++) {
       const certos = acerta(acertos).map((p) => ({ ...p, ajuda: false }));
       if (acertos < 8) {
         const comErro = [...certos, { desfecho: 'errou' as const, ajuda: false }];
-        expect(pontosDaPartidaJogada(comErro, REGRA_ATUAL)).toBe(calcularPontos(comErro).total);
+        expect(pontosDaPartidaJogada(comErro, REGRA_ATUAL)).toBe(Math.ceil(levar(acertos) / 2));
       }
       if (acertos > 0) expect(pontosDaPartidaJogada(certos, REGRA_ATUAL)).toBe(calcularPontos(certos).total);
     }
@@ -148,5 +149,20 @@ describe('relatório', () => {
     expect(d.partidas[0].pessoa).toBe('j1');
     expect(d.respostas.map((r: { pessoa: string }) => r.pessoa)).toEqual(['j2', 'j1']);
     expect(d.partidas[0].passos[0]).not.toHaveProperty('extra');
+  });
+});
+
+describe('balanço filtra a Prova pela data da regra nova', () => {
+  it('só Prova criada a partir da data; --prova-antes inverte; os outros minigames não são filtrados', () => {
+    const nova = montarSql(PROVA_TRES_ERROS_DESDE, false);
+    expect(nova).toContain(`(p.minigame <> 'prova' or p.criada_em >= timestamptz '${PROVA_TRES_ERROS_DESDE}')`);
+    expect(montarSql(PROVA_TRES_ERROS_DESDE, true)).toContain("p.criada_em < timestamptz");
+    expect(() => montarSql("2026-11-02'; drop table x;--")).toThrow();
+  });
+
+  it('o jogo e o balanço usam a mesma regra: 3º erro leva 75%', () => {
+    const e = { desfecho: 'errou' as const, ajuda: false };
+    const c = { desfecho: 'acertou' as const, ajuda: false };
+    expect(calcularPontos([c, c, c, c, c, e, e, e]).total).toBe(Math.ceil(58 * 0.75));
   });
 });

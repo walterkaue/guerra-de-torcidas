@@ -572,14 +572,14 @@ Cuidado extra: o narrador **nunca** fala da pessoa real da pergunta (nem elogio,
 - Pé no freio na hora certa. Pontos no bolso!
 
 ### `prova_errou`
-- Errou! Leva metade, mas leva.
-- Não foi essa! Metade dos pontos vai {pro_time} mesmo assim.
+- Errou! Dói, mas a prova continua.
+- Não foi essa! Respira e vai pra próxima.
 - Escorregou no degrau! Revanche tá a um toque.
 - ⭐ Errou com tanta certeza que até o narrador duvidou.
 
 ### `prova_tempo`
 - O tempo acabou! O relógio não perdoa.
-- Quinze segundos voam, hein! Leva metade.
+- Quinze segundos voam, hein! Conta como erro.
 - Pensou tanto que o apito soou!
 
 ### `prova_ajuda` — etiqueta com a ajuda usada: `[tira_duas]`, `[arquibancada]` ou `[troca]`

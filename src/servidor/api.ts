@@ -239,6 +239,8 @@ export interface PerguntaProva {
   segundos: number;
   /** Pontos garantidos antes desta pergunta. */
   levar: number;
+  /** Erros e tempos esgotados até aqui (o 3º encerra). */
+  erros: number;
   ajudasUsadas: Ajuda[];
 }
 
@@ -276,6 +278,7 @@ export interface RespostaProva {
   certa: string;
   escolhida: string | null;
   levar: number;
+  erros: number;
   proxima: { numero: number; decidir: boolean } | null;
   fim: FimProva | null;
 }

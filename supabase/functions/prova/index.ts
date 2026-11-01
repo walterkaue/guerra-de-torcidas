@@ -16,13 +16,14 @@ import {
   SEGUNDOS,
   TOLERANCIA_SEGUNDOS,
   calcularPontos,
+  contarErros,
   embaralhar,
   escadaEmoji,
   escolherPergunta,
   fimDosPassos,
-  levar,
   montarEscada,
   motivoSuspeitaProva,
+  pontosDosPassos,
   porcentagens,
   precisaDecidir,
   quantasTirar,
@@ -169,7 +170,8 @@ async function enviar(sb: SupabaseClient, uid: string, est: Estado, cfg: Cfg, ex
     texto: p.texto as string,
     alternativas: alternativas.map((a) => ({ id: a.id, texto: textos[a.idx] })),
     segundos: cfg.segundos,
-    levar: levar(est.atual),
+    levar: pontosDosPassos(est.passos),
+    erros: contarErros(est.passos),
     ajudasUsadas: AJUDAS.filter((a) => est.ajudas[a] !== undefined),
   };
 }
@@ -464,7 +466,8 @@ async function responder(sb: SupabaseClient, uid: string, corpo: Record<string, 
   const desfecho: Desfecho = tempo ? 'tempo' : acertou ? 'acertou' : 'errou';
   const vaga = est.escada[est.atual];
   const passos = [...est.passos, { degrau: vaga.degrau, desfecho, ajuda: est.ajuda_na_atual, ms: Math.min(ms, cfg.limiteMs) }];
-  const acabou = desfecho !== 'acertou' || passos.length >= PERGUNTAS;
+  // Acaba no 3º erro (ou tempo) ou depois da 8ª pergunta; um erro só não encerra.
+  const acabou = fimDosPassos(passos) !== null;
   const certa = est.alternativas.find((a) => a.idx === 0)!.id;
   const ajuda = est.ajuda_na_atual;
 
@@ -493,7 +496,8 @@ async function responder(sb: SupabaseClient, uid: string, corpo: Record<string, 
     desfecho,
     certa,
     escolhida: typeof corpo.alternativa === 'string' ? corpo.alternativa : null,
-    levar: levar(passos.filter((p) => p.desfecho === 'acertou').length),
+    levar: pontosDosPassos(passos),
+    erros: contarErros(passos),
     proxima: acabou ? null : { numero: est.atual + 1, decidir: precisaDecidir(est.atual) },
     fim: acabou ? await fechar(sb, uid, partida, est, null, cfg) : null,
   };

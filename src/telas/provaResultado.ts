@@ -46,7 +46,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
       </section>`
     : '';
 
-  const titulo = fim.fim === 'perfeita' ? '8 de 8' : fim.fim === 'parou' ? 'Parou na hora' : 'Fim da prova';
+  const titulo = fim.fim === 'perfeita' ? '8 de 8' : fim.fim === 'parou' ? 'Parou na hora' : fim.fim === 'completa' ? 'Prova completa' : 'Fim da prova';
 
   root.innerHTML = `
     <main class="tela resultado prova-resultado ${fim.fim === 'perfeita' || cmp?.venceu ? 'venceu' : ''}"
@@ -66,7 +66,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
         <ul class="etiquetas">
           ${fim.pontos.acertos ? `<li class="rotulo">${fim.pontos.acertos} ${fim.pontos.acertos === 1 ? 'certa' : 'certas'} <b>${fim.pontos.base}</b></li>` : ''}
           ${fim.pontos.bonus ? `<li class="rotulo">8 de 8 <b>+${fim.pontos.bonus}</b></li>` : ''}
-          ${(fim.fim === 'errou' || fim.fim === 'tempo') && fim.pontos.base ? '<li class="rotulo">Leva metade</li>' : ''}
+          ${(fim.fim === 'errou' || fim.fim === 'tempo') && fim.pontos.base ? '<li class="rotulo">3 erros: leva 75%</li>' : ''}
         </ul>
       </section>
 
