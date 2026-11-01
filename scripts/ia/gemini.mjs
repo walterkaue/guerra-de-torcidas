@@ -131,6 +131,21 @@ export async function chamar(modelos, corpo, esquema, chave) {
   throw new Error(`nenhum modelo respondeu (${ultimo})`);
 }
 
+/** Soma a chamada em relatorios/ia-uso.csv, no checkout principal, para os worktrees não perderem a conta. */
+export function registrarUso(modelo, tokensEntrada, tokensSaida, arquivoSaida) {
+  const hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+  const raiz = raizDoCheckout(dirname(fileURLToPath(import.meta.url)));
+  const CSV = raiz ? join(raiz, 'relatorios', 'ia-uso.csv') : CSV_NO_WORKTREE;
+  mkdirSync(dirname(CSV), { recursive: true });
+  let novo = false;
+  try {
+    statSync(CSV);
+  } catch {
+    novo = true;
+  }
+  appendFileSync(CSV, `${novo ? `${CABECALHO_CSV}\n` : ''}${linhaCsv(hoje, modelo, tokensEntrada, tokensSaida, arquivoSaida)}\n`);
+}
+
 async function principal() {
   const a = lerArgumentos(process.argv.slice(2));
   const ler = (caminho, rotulo) => {
@@ -170,17 +185,7 @@ async function principal() {
   mkdirSync(dirname(a.saida), { recursive: true });
   writeFileSync(a.saida, r.texto);
 
-  const hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
-  const raiz = raizDoCheckout(dirname(fileURLToPath(import.meta.url)));
-  const CSV = raiz ? join(raiz, 'relatorios', 'ia-uso.csv') : CSV_NO_WORKTREE;
-  mkdirSync(dirname(CSV), { recursive: true });
-  let novo = false;
-  try {
-    statSync(CSV);
-  } catch {
-    novo = true;
-  }
-  appendFileSync(CSV, `${novo ? `${CABECALHO_CSV}\n` : ''}${linhaCsv(hoje, r.modelo, r.tokensEntrada, r.tokensSaida, a.saida)}\n`);
+  registrarUso(r.modelo, r.tokensEntrada, r.tokensSaida, a.saida);
 
   console.log(`${r.modelo}: ${r.tokensEntrada} tokens de entrada, ${r.tokensSaida} de saída; gravado em ${a.saida} (${statSync(a.saida).size} bytes)`);
 }
