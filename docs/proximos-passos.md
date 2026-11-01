@@ -1,6 +1,6 @@
 # Próximos passos
 
-> Retrato do projeto em 31/10/2026, para retomar em qualquer conversa. Regras e decisões continuam no `docs/jogo.md`; aqui só fica o que vem a seguir.
+> Retrato do projeto em 01/11/2026, para retomar em qualquer conversa. Regras e decisões continuam no `docs/jogo.md`; aqui só fica o que vem a seguir.
 > Ao fechar um item, atualize este arquivo no mesmo PR. Para começar, siga a divisão de trabalho do `CLAUDE.md`.
 
 ## Onde estamos
@@ -16,7 +16,7 @@
 
 ## Em andamento
 
-Nenhuma sessão aberta. As frentes de 31/10/2026 terminaram nos PRs #61 a #65.
+**Servidor das divisões:** em PR, com a migração `20261101000000_temporada.sql` ainda sem `db push`. Tem de entrar antes de 07/12, quando novembro fecha; quanto antes entrar, antes a `classificacao_temporada` fica disponível para as telas. As semanas travadas antes do push contam do mesmo jeito.
 
 ## Conferir primeiro
 
@@ -26,12 +26,16 @@ Nenhuma sessão aberta. As frentes de 31/10/2026 terminaram nos PRs #61 a #65.
 select semana, count(*), count(confirmada_em) as travadas from public.fechamento_semana group by 1 order by 1 desc;
 ```
 
+**Fechamento do mês:** em 09/11, depois das 12h, a semana de 02/11 tem de aparecer nos pontos. Em 07/12, depois das 12h01, novembro tem de estar fechado e dezembro aberto com 10 times em cada série. Só leitura.
+
+```sql
+select mes, serie, count(*) from public.temporada_serie group by 1, 2 order by 1, 2;
+select * from public.classificacao_temporada where mes = '2026-11-01' order by posicao;
+```
+
 ## Pode começar já
 
-Uma de cada vez, porque as duas mexem perto do ranking.
-
-1. **Servidor das divisões:** seguir o plano do PR #62, com novembro em série única e Série A e B em dezembro. A primeira semana de novembro trava em 09/11 às 12h.
-2. **Ranking incremental:** `fechamento_semana` copia `ranking_semana`, e as duas tabelas têm de continuar batendo.
+1. **Ranking incremental:** `fechamento_semana` copia `ranking_semana`, e as duas tabelas têm de continuar batendo.
 
 ## Feito em 31/10/2026
 
@@ -51,6 +55,7 @@ Uma de cada vez, porque as duas mexem perto do ranking.
 
 **Decisões:**
 - **Calibragem da Prova** (mediana de 4 contra alvo de 45 a 75; 31 de 33 partidas acabam em erro): escolher entre A (segunda chance), B (três erros e fora, **recomendada**) e C (prova inteira), e dizer se o alvo de 45 a 75 vale para a Prova. A causa é a regra do primeiro erro, não a tabela. Detalhes e contas em `docs/propostas/calibragem-prova.md` (`npm run calibragem-prova`). Depois da escolha: implementar na virada da semana e rodar o balanço com 20 partidas novas; rever em paralelo as perguntas fáceis de clube (43% de acerto).
+- **Torcida sem ninguém na temporada:** semana com `ativos` 0 vale 0 ponto de campeonato, mesmo com posição. Foi decisão da sessão do servidor, para ninguém ser campeão sem jogar (`docs/jogo.md`, seção 5). Vetar é mudar uma linha da view, e dá para mudar até novembro fechar. Se a regra vale também para as 52 semanas fica para decidir antes da tela delas.
 - Prazo para apagar contas anônimas paradas.
 - Itens de `docs/termos-x-jogo.md` (mudar o jogo ou o texto, um por um).
 - Supabase Pro antes de divulgar.
@@ -61,7 +66,7 @@ Uma de cada vez, porque as duas mexem perto do ranking.
 
 ## Depois
 
-1. **Telas das divisões, cidade, Galeria e 52 semanas:** nessa ordem, depois do servidor das divisões.
+1. **Telas das divisões, cidade, Galeria e 52 semanas:** nessa ordem, depois do servidor das divisões. As telas leem `temporada_serie` e `classificacao_temporada`.
 2. **Perguntas:** o piloto recomendou parar nas 529 sem fonte do staging. A meta de 800 precisa de perguntas nascidas de páginas reais. A importação continua com o Kauê.
 3. **Limpeza de anônimos:** depois do prazo decidido. Tem de guardar os pontos da semana aberta em `pontos_apagados`.
 

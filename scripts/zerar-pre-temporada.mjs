@@ -37,6 +37,7 @@ console.log(
        (select count(*) from public.crava_pontos) as pontos_do_crava,
        (select count(*) from public.ranking_semana) as linhas_de_ranking,
        (select count(*) from public.fechamento_semana) as linhas_de_fechamento,
+       (select count(*) from public.temporada) as temporadas,
        (select count(*) from public.torcedores) as torcedores_que_ficam,
        (select count(*) from public.carreira_partidas) as partidas_da_carreira_que_ficam`,
   ]),
@@ -46,7 +47,7 @@ console.log('Ficam: times, torcedores, palpites, perguntas e respostas da Prova,
 
 const rl = createInterface({ input: process.stdin, output: process.stdout });
 const resposta = await rl.question(
-  'Apagar TODAS as partidas, desafios, dias do Time do Dia, pontos do Crava, recordes, o ranking e os fechamentos de semana? Digite ZERAR para confirmar: ',
+  'Apagar TODAS as partidas, desafios, dias do Time do Dia, pontos do Crava, recordes, o ranking, os fechamentos de semana e as temporadas? Digite ZERAR para confirmar: ',
 );
 rl.close();
 if (resposta.trim() !== 'ZERAR') {
@@ -56,4 +57,5 @@ if (resposta.trim() !== 'ZERAR') {
 
 console.log(consulta(['-o', 'table', '-f', 'scripts/zerar-pre-temporada.sql']));
 console.log('Pronto: pré-temporada zerada (recordes junto). Times, torcedores, carreira e palpites mantidos.');
+console.log('O mês de estreia já abriu: é o mês seguinte ao da semana de hoje (mes_de_estreia, acima).');
 console.log('Não confirme de novo, no #admin, placar de rodada que já tinha fechado antes do zerar: os pontos voltariam.');

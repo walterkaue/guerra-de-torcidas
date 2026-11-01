@@ -1,4 +1,4 @@
--- Zerar pré-temporada: apaga partidas, desafios, dias do Time do Dia, pontos do Crava, ranking e fechamentos.
+-- Zerar pré-temporada: apaga partidas, desafios, dias do Time do Dia, pontos do Crava, ranking, fechamentos e temporadas.
 -- Os recordes pessoais saem dessas tabelas (recorde_pessoal), então zeram junto.
 -- Mantém times, torcedores (e os logins), palpites e certezas, perguntas e respostas da Prova,
 -- clubes e sorteio do Time do Dia (o número do dia continua), palavras bloqueadas e configurações.
@@ -21,6 +21,10 @@ delete from public.pontos_apagados;
 delete from public.ranking_semana;
 -- O fechamento gravado (seção 5): a base da Série, da Galeria e das 52 semanas nasce limpa.
 delete from public.fechamento_semana;
+-- As temporadas de teste levam temporada_serie junto (on delete cascade). A estreia de verdade abre
+-- aqui, pelo dia do zerar: é o mês seguinte ao da semana atual (seção 5, "A temporada").
+delete from public.temporada;
+select public.abrir_estreia();
 
 select
   (select count(*) from public.partidas) as partidas_restantes,
@@ -29,6 +33,8 @@ select
   (select count(*) from public.crava_pontos) as pontos_do_crava_restantes,
   (select count(*) from public.ranking_semana) as linhas_de_ranking_restantes,
   (select count(*) from public.fechamento_semana) as linhas_de_fechamento_restantes,
+  (select count(*) from public.temporada where pre_temporada) as temporadas_de_teste_restantes,
+  (select min(mes) from public.temporada) as mes_de_estreia,
   (select count(*) from public.torcedores) as torcedores_mantidos,
   (select count(*) from public.carreira_partidas) as partidas_da_carreira_mantidas;
 
