@@ -353,7 +353,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **8 perguntas**, 4 alternativas, **15 s** cada (cerca de 1 minuto por partida).
 - Escada de 4 degraus: 2 fáceis, 2 médias, 2 difíceis, 2 de craque.
 - A partir da 3ª pergunta, antes de ela aparecer: **"Parar e levar X"** ou **"Seguir"**.
-- Errou ou estourou o tempo: a partida acaba e leva **metade** dos pontos acumulados (arredondada para cima).
+- **Três erros e fora (decidido em 01/11/2026, opção B de `docs/propostas/calibragem-prova.md`):** pergunta errada ou com tempo estourado vale 0 e a partida **segue**; o **3º erro** encerra a partida, que leva **75%** dos pontos acumulados (arredondado para cima). A tela mostra as 3 vidas. Parar continua levando tudo o que acumulou. Vale a partir da semana de 02/11; partidas já fechadas não mudam.
 - **3 ajudas**, uma de cada por partida, sem custo em pontos (o relógio não para):
   - **Tira duas:** some com duas alternativas erradas.
   - **Arquibancada:** mostra como quem já respondeu aquela pergunta escolheu; com menos de 30 respostas, vira "tira uma".
@@ -367,9 +367,9 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 | Média | 3 e 4 | 12 |
 | Difícil | 5 e 6 | 18 |
 | Craque | 7 e 8 | 25 |
-| **8 de 8** | | **+24** |
+| **8 de 8 (sem nenhum erro)** | | **+24** |
 
-- Máximo: 150. Pessoa mediana (chega à 5ª e para, ou erra por ali): ~40 a 70. O ajuste fino sai do balanço da pré-temporada.
+- Máximo: 150. Pessoa mediana: estimativa ~29 com o banco de hoje, ~35 com as fáceis recalibradas e ~57 para quem manda bem; alvo continua 45 a 75; se o balanço com 20 partidas novas ficar abaixo, a próxima alavanca é 4 erros.
 - Conta dentro do teto diário (5 melhores partidas do dia, somando com os pênaltis).
 
 ### Anti-trapaça

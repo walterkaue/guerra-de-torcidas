@@ -20,6 +20,8 @@
 
 ## Conferir primeiro
 
+**Prova de Boleiro com três erros e fora (decidido em 01/11/2026, PR da calibragem):** a função `prova` e o site saem juntos na virada de 02/11 (`npm run deploy:funcoes`, depois o merge). Sem migração. Depois de 20 partidas novas, rode `npm run balanco` (ele já filtra a Prova pela data da regra nova; `-- --prova-antes` mostra a antiga). Se a mediana ficar abaixo de 45, a próxima alavanca é `ERROS_QUE_ENCERRAM = 4`. Pendente: rever as fáceis de clube (`docs/propostas/faceis-de-clube-prova.md`, sugestão sem aplicar).
+
 **Fechamento da semana:** a migração `20261031300000_fechamento_semana.sql` foi aplicada em 01/11/2026. Em 02/11, depois das 12h, confira as rotinas `fechar-semana-virada` e `fechar-semana-confirma` e se a semana passada tem 20 linhas travadas. A consulta é só leitura.
 
 ```sql

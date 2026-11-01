@@ -5,7 +5,7 @@
 import { esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, corDeTexto, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
-import { DEGRAU_DA_POSICAO, NOME_DEGRAU, PERGUNTAS, PONTOS_DO_DEGRAU, levar, type Ajuda, type Degrau } from '../jogo/prova';
+import { DEGRAU_DA_POSICAO, NOME_DEGRAU, PERGUNTAS, PONTOS_DO_DEGRAU, ERROS_QUE_ENCERRAM, type Ajuda, type Degrau } from '../jogo/prova';
 import { AVISO_PRE_TEMPORADA } from '../jogo/posicao';
 
 /** Nome do degrau na tela: "Média" sozinho parecia média de pontos. */
@@ -84,6 +84,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   let estouro = 0;
   let pausa = 0;
   let inicioPergunta = 0;
+  let errosFeitos = 0;
 
   const mostrarComo = !prefs.get().semComoProva;
 
@@ -108,9 +109,9 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
         <ul class="cj-passos" data-regras ${mostrarComo ? '' : 'hidden'}>
           <li><span class="cj-icone">${icone('pergunta')}</span><p><strong>8 perguntas, 15 s cada.</strong> 2 fáceis, 2 médias, 2 difíceis e 2 de craque. Toque na alternativa.</p></li>
           <li><span class="cj-icone">${icone('mao')}</span><p><strong>Parar ou seguir.</strong> Da 3ª em diante, antes de ver a pergunta: para e leva o que juntou, ou arrisca.</p></li>
-          <li><span class="cj-icone">${icone('xis')}</span><p><strong>Errou ou o tempo acabou?</strong> Leva metade do que juntou.</p></li>
+          <li><span class="cj-icone">${icone('xis')}</span><p><strong>Três erros e fora.</strong> Errar ou estourar o tempo conta um erro e a prova segue. No 3º, acaba e leva 75% do que juntou.</p></li>
           <li><span class="cj-icone">${icone('lampada')}</span><p><strong>3 ajudas, uma de cada:</strong> Tira duas, Arquibancada e Troca. O relógio não para.</p></li>
-          <li><span class="cj-icone">${icone('trofeu')}</span><p><strong>Pontos:</strong> 8, 12, 18 e 25 por degrau. 8 de 8 ganha +24.</p></li>
+          <li><span class="cj-icone">${icone('trofeu')}</span><p><strong>Pontos:</strong> 8, 12, 18 e 25 por degrau. 8 de 8 sem errar ganha +24.</p></li>
         </ul>
         <label class="cj-check" ${mostrarComo ? '' : 'hidden'}><input type="checkbox" data-pular> Não exibir as regras de novo</label>
         <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
@@ -119,6 +120,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       </section>
 
       <section class="prova-jogo" data-jogo hidden>
+        <p class="prova-erros" data-erros aria-live="polite"></p>
         <div class="relogio" aria-hidden="true"><span class="relogio-barra"></span><strong data-segundos></strong></div>
         <article class="cartao-pergunta">
           <p class="rotulo cartao-rotulo" data-rotulo></p>
@@ -157,6 +159,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   const elRotulo = $('[data-rotulo]');
   const elAlts = $('[data-alternativas]');
   const elGrito = $('[data-grito]');
+  const elErros = $('[data-erros]');
   const elSeg = $('[data-segundos]');
   const elRelogio = $('.relogio');
   const elDecisao = $('[data-decisao]');
@@ -213,9 +216,18 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
     estouro = window.setTimeout(() => void responder(null), segundos * 1000);
   }
 
+  // ---------- erros restantes ----------
+  function mostrarErros(feitos: number): void {
+    errosFeitos = feitos;
+    const restam = Math.max(0, ERROS_QUE_ENCERRAM - feitos);
+    const bolas = Array.from({ length: ERROS_QUE_ENCERRAM }, (_, k) => `<span class="bola${k < feitos ? ' gasta' : ''}"></span>`).join('');
+    elErros.innerHTML = `${bolas} ${restam === 1 ? 'Mais 1 erro e acaba' : `${restam} erros restantes`}`;
+  }
+
   // ---------- pergunta ----------
   function mostrarPergunta(p: PerguntaProva): void {
     pergunta = p;
+    mostrarErros(p.erros ?? 0);
     ajudaNaAtual = false;
     const i = p.numero - 1;
     elRotulo.textContent = `Pergunta ${p.numero} · ${ROTULO_DEGRAU[p.degrau]} · ${nomeOrigem(p.clube)}`;
@@ -266,13 +278,15 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       elAlts.querySelector(`[data-alt="${CSS.escape(r.certa)}"]`)?.classList.add('certa');
       if (r.desfecho !== 'acertou') botao?.classList.add('errada');
       degraus[i] = r.desfecho === 'acertou' ? (ajudaNaAtual ? 'ajuda' : 'certa') : 'errada';
+      mostrarErros(r.erros ?? errosFeitos + (r.desfecho === 'acertou' ? 0 : 1));
       pintarEscada(null);
       vibrar(r.desfecho === 'acertou' ? 'acerto' : 'erro');
       if (r.desfecho === 'acertou') {
         gritar(falar('prova_acertou'));
         if (botao) papelPicadoNaTela(botao, [time.cores[0], time.cores[1], '#ffd23f']);
       }
-      else gritar(falar(r.desfecho === 'tempo' ? 'prova_tempo' : 'prova_errou'));
+      // No 3º erro a partida acaba: o grito de "segue" não cabe, quem fala é o fim da prova.
+      else if (!r.fim) gritar(falar(r.desfecho === 'tempo' ? 'prova_tempo' : 'prova_errou'));
 
       pausa = window.setTimeout(() => {
         if (saiu) return;
@@ -292,7 +306,8 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
     $('[data-decisao-degrau]').textContent = `Pergunta ${numero} · ${ROTULO_DEGRAU[d]} · vale ${PONTOS_DO_DEGRAU[d]}`;
     $('[data-decisao-titulo]').textContent = 'Para ou segue?';
     $('[data-decisao-frase]').textContent = falar('prova_decisao', { levar: garantidos, numero }) ?? '';
-    $('[data-seguir]').innerHTML = `Seguir<small>se errar, leva ${Math.ceil(garantidos / 2)}</small>`;
+    const restam = Math.max(0, ERROS_QUE_ENCERRAM - errosFeitos);
+    $('[data-seguir]').innerHTML = `Seguir<small>${restam === 1 ? 'mais 1 erro e acaba' : `${restam} erros restantes`}</small>`;
     $('[data-parar]').innerHTML = `Parar e levar ${garantidos}`;
     elDecisao.hidden = false;
     pintarEscada(numero - 1);
@@ -305,8 +320,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       const r = await (await servidor()).proximaPergunta(partidaId, decisao);
       if (saiu) return;
       if (r.fim) {
-        const garantidos = levar(r.fim.pontos.acertos);
-        terminar(r.fim, r.fim.fim === 'parou' ? falar('prova_parou', { levar: garantidos }) : null);
+        terminar(r.fim, r.fim.fim === 'parou' ? falar('prova_parou', { levar: r.fim.pontos.base }) : null);
       } else if (r.pergunta) mostrarPergunta(r.pergunta);
     } catch (e) {
       if (!saiu) mostrarFalha(e);

@@ -17,7 +17,11 @@ export const DEGRAU_DA_POSICAO: readonly Degrau[] = [1, 1, 2, 2, 3, 3, 4, 4];
 export const PONTOS_DO_DEGRAU: Record<Degrau, number> = { 1: 8, 2: 12, 3: 18, 4: 25 };
 
 export type Desfecho = 'acertou' | 'errou' | 'tempo';
-export type Fim = 'parou' | 'errou' | 'tempo' | 'perfeita';
+/** Calibragem de 01/11/2026 (docs/propostas/calibragem-prova.md, opção B): o 3º erro encerra e leva 75%. */
+export const ERROS_QUE_ENCERRAM = 3;
+export const FRACAO_AO_ERRAR = 0.75;
+/** Fim 'completa' = as 8 perguntas respondidas, mas com 1 ou 2 erros pelo caminho (sem bônus). */
+export type Fim = 'parou' | 'errou' | 'tempo' | 'perfeita' | 'completa';
 export type Ajuda = 'tira_duas' | 'arquibancada' | 'troca';
 export const AJUDAS: readonly Ajuda[] = ['tira_duas', 'arquibancada', 'troca'];
 
@@ -28,12 +32,14 @@ export interface Passo {
 }
 
 export interface PontosProva {
-  /** Perguntas certas em sequência. */
+  /** Perguntas certas (a partida segue depois de um erro, até o 3º). */
   acertos: number;
+  /** Erros e tempos esgotados. */
+  erros: number;
   /** Soma dos degraus acertados. */
   base: number;
   bonus: number;
-  /** Errou ou estourou o tempo: leva metade, arredondada para cima. */
+  /** No 3º erro leva 75% da base, arredondado para cima; parando ou completando, leva a base. */
   total: number;
 }
 
@@ -46,23 +52,37 @@ export function levar(acertos: number): number {
   return soma;
 }
 
+export const contarErros = (passos: readonly Passo[]) => passos.filter((p) => p.desfecho !== 'acertou').length;
+
+/** Pontos já juntos: cada acerto vale o degrau da sua posição (o "Parar e levar X"). */
+export function pontosDosPassos(passos: readonly Passo[]): number {
+  let soma = 0;
+  passos.forEach((p, i) => {
+    if (p.desfecho === 'acertou' && i < PERGUNTAS) soma += PONTOS_DO_DEGRAU[DEGRAU_DA_POSICAO[i]];
+  });
+  return soma;
+}
+
 /** Como a partida acabou, a partir dos passos (null = ainda não acabou, pode parar ou seguir). */
 export function fimDosPassos(passos: readonly Passo[]): Fim | null {
   const ultimo = passos[passos.length - 1];
-  if (ultimo?.desfecho === 'errou') return 'errou';
-  if (ultimo?.desfecho === 'tempo') return 'tempo';
-  return passos.length >= PERGUNTAS ? 'perfeita' : null;
+  if (ultimo && ultimo.desfecho !== 'acertou' && contarErros(passos) >= ERROS_QUE_ENCERRAM) {
+    return ultimo.desfecho === 'tempo' ? 'tempo' : 'errou';
+  }
+  if (passos.length < PERGUNTAS) return null;
+  return contarErros(passos) === 0 ? 'perfeita' : 'completa';
 }
 
 export function calcularPontos(passos: readonly Passo[]): PontosProva {
   if (passos.length > PERGUNTAS) throw new Error('passos demais');
-  const i = passos.findIndex((p) => p.desfecho !== 'acertou');
-  if (i >= 0 && i !== passos.length - 1) throw new Error('a partida acaba no primeiro erro');
-  const acertos = i < 0 ? passos.length : i;
-  const base = levar(acertos);
-  if (i >= 0) return { acertos, base, bonus: 0, total: Math.ceil(base / 2) };
+  const erros = contarErros(passos);
+  const i = passos.findIndex((_, k) => contarErros(passos.slice(0, k + 1)) >= ERROS_QUE_ENCERRAM);
+  if (i >= 0 && i !== passos.length - 1) throw new Error('a partida acaba no 3º erro');
+  const acertos = passos.length - erros;
+  const base = pontosDosPassos(passos);
+  if (i >= 0) return { acertos, erros, base, bonus: 0, total: Math.ceil(base * FRACAO_AO_ERRAR) };
   const bonus = acertos === PERGUNTAS ? BONUS_PERFEITA : 0;
-  return { acertos, base, bonus, total: base + bonus };
+  return { acertos, erros, base, bonus, total: base + bonus };
 }
 
 // ---------------------------------------------------------------------------
@@ -82,12 +102,14 @@ export function resumoDaProva(passos: readonly Passo[], fim: Fim): string {
   switch (fim) {
     case 'perfeita':
       return 'fiz 8 de 8';
+    case 'completa':
+      return `fiz ${n - contarErros(passos)} de 8`;
     case 'parou':
       return n === 0 ? 'parei antes da 1ª' : `cheguei na ${n + 1}ª e parei`;
     case 'errou':
-      return `errei na ${n}ª`;
+      return `errei a 3ª vez na ${n}ª`;
     case 'tempo':
-      return `o tempo acabou na ${n}ª`;
+      return `o tempo acabou na ${n}ª, o 3º erro`;
   }
 }
 
