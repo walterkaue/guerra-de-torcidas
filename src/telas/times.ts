@@ -14,6 +14,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
         <button class="voltar" type="button" aria-label="Voltar">‹</button>
         <h2>Qual é a sua torcida?</h2>
       </header>
+      ${rota.tela === 'times' && rota.desafio ? '<p class="campo-dica">É só escolher o time: o X1 que te mandaram começa em seguida.</p>' : ''}
 
       <div class="grade-times" role="radiogroup" aria-label="Times">
         ${TIMES.map(
