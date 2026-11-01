@@ -13,7 +13,7 @@
 | 1 | Apagar contas paradas | Não cumpre | Criar a rotina, ou tirar a frase |
 | 2 | Aviso de mudança na tela inicial | Não cumpre | Criar o aviso, ou dizer onde a mudança fica |
 | 3 | Ranking de cidades | Não cumpre | Tirar a cidade do texto agora, ou construir a cidade |
-| 4 | Checagem da Cloudflare | Não cumpre hoje | Ligar o CAPTCHA (passos do Kauê), ou tirar a frase |
+| 4 | Checagem da Cloudflare | Não cumpre hoje (passo 2 de 3 feito em 01/11: chave pública no site; falta ligar no painel do Supabase) | Ligar o CAPTCHA (passo 3 do Kauê), ou tirar a frase |
 | 5 | "Só você lê os seus" | Cumpre em parte | Reescrever a frase, ou separar o que o administrador lê |
 | 6 | Depois de "Apagar meus dados" | Cumpre em parte | Dizer o que fica, ou mudar o que fica |
 | 7 | Direito de "ver" os dados | Não cumpre | Criar um "ver meus dados", ou dizer que só existe apagar |

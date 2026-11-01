@@ -45,9 +45,9 @@ Uma de cada vez, porque as duas mexem perto do ranking.
 ## Só o Kauê faz
 
 **Ligar o CAPTCHA (o código já está pronto), nesta ordem:**
-1. Criar o site na Cloudflare Turnstile para `torcida.kauewalter.com.br`, no modo invisível.
-2. Passar a chave **pública** para `VITE_TURNSTILE_SITE_KEY` no `.env.production`, em um PR. Esperar a publicação.
-3. Ligar o CAPTCHA no painel do Supabase com a chave **secreta**, que fica só no painel.
+1. ~~Criar o site na Cloudflare Turnstile para `torcida.kauewalter.com.br`, no modo invisível.~~ Feito.
+2. ~~Passar a chave **pública** para `VITE_TURNSTILE_SITE_KEY` no `.env.production`, em um PR. Esperar a publicação.~~ Feito em 01/11/2026 (passo 2 de 3); falta só a publicação no ar.
+3. **Falta:** ligar o CAPTCHA no painel do Supabase com a chave **secreta**, que fica só no painel.
 
 **Decisões:**
 - **Calibragem da Prova** (mediana de 4 contra alvo de 45 a 75; 31 de 33 partidas acabam em erro): escolher entre A (segunda chance), B (três erros e fora, **recomendada**) e C (prova inteira), e dizer se o alvo de 45 a 75 vale para a Prova. A causa é a regra do primeiro erro, não a tabela. Detalhes e contas em `docs/propostas/calibragem-prova.md` (`npm run calibragem-prova`). Depois da escolha: implementar na virada da semana e rodar o balanço com 20 partidas novas; rever em paralelo as perguntas fáceis de clube (43% de acerto).
