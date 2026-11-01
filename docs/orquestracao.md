@@ -78,3 +78,15 @@ Quem planeja cita as seções dos docs; quem executa lê só elas. As regras de 
 ## 8. Medir
 
 Compare o uso do plano antes e depois de uma tarefa (`get_usage`). O consumo do Gemini fica em `relatorios/ia-uso.csv`. Se uma faixa da tabela der retrabalho, suba um nível e registre aqui. Se sobrar qualidade, desça.
+
+## 9. O que o piloto ensinou
+
+Piloto de 31/10/2026 com as perguntas do staging: 105 perguntas, 56 chamadas ao Gemini (cerca de 110 mil tokens de entrada, de graça), 7 pontos da semana do Claude e 2 perguntas aproveitadas. Relatório em `dados/perguntas/piloto-lote-02.md`.
+
+- **Meça o funil antes de chamar o modelo.** Uma rodada só com código mostrou que 493 das 634 perguntas não tinham fonte, e isso mudou a amostra. Das 105, 89 caíram sem gastar token.
+- **Filtro de graça vem primeiro.** Regra, repetição e link morto saem por código, e o Gemini só vê o que pode passar.
+- **Status do staging não prova nada.** `revisada` lá dentro é só um rótulo: o que vale é a página aberta.
+- **Trecho literal e resposta às cegas não bastam.** Provam que a página diz aquilo, mas não enxergam fato repetido com outras palavras nem tema sensível. Dos 6 aprovados pelo código, 4 caíram na leitura de um Claude. Mantenha uma leitura curta antes de `rascunho` virar lote.
+- **Gemini Flash reescreve bem a partir do trecho.** O código aceitou 7 de 7 reescritas, e todas passaram às cegas. Reescrita com validador segue no Gemini.
+- **Teste o relatório antes de gastar cota.** Um erro no fim do script perdeu 29 chamadas. Script que paga por rede grava o resultado antes de formatar, ou tem teste da parte final.
+- **O grosso do gasto do Claude é montar a rotina, não rodá-la.** O piloto mediu a montagem. Para comparar de verdade, meça a segunda rodada do mesmo script.

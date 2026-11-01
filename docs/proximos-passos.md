@@ -38,15 +38,9 @@ Sem dependência das frentes em andamento.
 | Frente | Executor | Resultado esperado |
 |---|---|---|
 | ~~Funil do desafio por link~~ | Feito | Diagnóstico em `docs/propostas/funil-do-desafio.md`: os 4 aceites são entre os 2 testadores, nenhum de fora; "enviado" é só "gerou link". Correções pequenas no convite; falta contar compartilhamento e abertura do link |
-| **Termos × jogo** | Sonnet, média | Lista do que o texto promete e o jogo não faz, para o Kauê e o advogado. Não altera os Termos |
 | **Calibragem da Prova** | Sonnet, alta | Duas ou três opções simuladas com o balanço de 31/10. Não altera a pontuação |
 
-Divergências já vistas nos Termos (`src/dados/termos.md`):
-- Ranking de cidades, que ainda não existe.
-- Checagem da Cloudflare, ainda desligada.
-- Apagar contas paradas, sem rotina nem prazo.
-- Aviso de mudança na tela inicial, ainda não existe.
-- "Só você lê os seus", mas o administrador lê feedbacks e suspeitas.
+**Termos × jogo (feito em 31/10/2026):** a lista está em `docs/termos-x-jogo.md`, para o Kauê e o advogado. Além das divergências já vistas (cidades, Cloudflare, contas paradas, aviso de mudança, "só você lê os seus", o que fica ao apagar), achou: "ver meus dados" não existe, "zerar pontos de trapaceiro" e "apagar apelido" não têm ação no `#admin`, o aviso de saída não cobre o WhatsApp e o feedback leva tela e navegador sem o texto dizer. Cada item traz as saídas (mudar o jogo ou o texto). Falta o Kauê decidir; o texto só muda com ele.
 
 ## Só o Kauê faz
 
@@ -58,6 +52,7 @@ Divergências já vistas nos Termos (`src/dados/termos.md`):
 **Decisões:**
 - Calibragem da Prova: mediana de 4 pontos contra alvo de 45 a 75; 31 de 33 partidas acabam em erro.
 - Prazo para apagar contas anônimas paradas.
+- Itens de `docs/termos-x-jogo.md` (mudar o jogo ou o texto, um por um).
 - Supabase Pro antes de divulgar.
 - Data do zerar da pré-temporada. A Crava termina em 2/12, e o balanço roda antes de zerar.
 - Texto final dos Termos, com o advogado.
