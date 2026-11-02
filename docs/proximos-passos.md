@@ -28,12 +28,11 @@ Nada disso tem lembrete automático.
 
 **3. Prova de Boleiro com três erros e fora:** no ar desde 01/11/2026, com as frases novas do narrador (PRs #69 e #71). Falta jogar uma partida real errando de propósito. O balanço conta a partir de 02/11: depois de 20 partidas novas, rode `npm run balanco` (ele já filtra a Prova pela data da regra nova; `-- --prova-antes` mostra a antiga). Se a mediana ficar abaixo de 45, a próxima alavanca é `ERROS_QUE_ENCERRAM = 4`.
 
-**4. Disputa histórica:** ainda não confirmada.
-- Em 31/10, duas disputas da Seleção fecharam com `disputa_id`, pontos e sem suspeita (55 e 85).
-- A tentativa de 02/11 de manhã, numa disputa do Bragantino, não chegou ao servidor. A conta anônima nasceu às 9h17, com o time Bragantino e 18+, mas não tem nenhuma partida. Ninguém criou partida em 02/11.
-- O site joga sem pontos quando `nova-partida` falha e mostra o aviso "não vale pontos".
-- Em 02/11, depois das 12h, as funções `nova-partida`, `lance-penalti` e `fechar-partida` respondiam 401 sem login, o que é o certo.
-- Falta ver no painel, em Edge Functions → `nova-partida` → Logs, o que ela respondeu por volta das 9h17. Depois, jogar de novo uma disputa até o fim.
+**4. ~~Disputa histórica~~:** conferida em 02/11/2026.
+- Às 12h44 o Kauê jogou no celular a disputa `selecao-2016-olimpiada`, pelo São Paulo. Ela fechou às 12h45 com `disputa_id`, 110 pontos e sem suspeita.
+- A tentativa das 9h17, numa janela anônima pelo Bragantino, não gravou partida. A conta nasceu e passou pelo CAPTCHA, mas a `nova-partida` não recebeu nenhuma chamada nas 24 horas dos logs.
+- Não deu para repetir: o CAPTCHA recusa o navegador do Claude (erro 600010).
+- Se voltar a acontecer, a pista é a janela anônima. O site joga "sem valer pontos" quando o pedido falha antes de chegar ao servidor, e o motivo fica só no console do navegador.
 
 **5. Fechamento do mês:** em 09/11, depois das 12h, a semana de 02/11 tem de aparecer nos pontos. Em 07/12, depois das 12h01, novembro tem de estar fechado e dezembro aberto com 10 times em cada série. Só leitura.
 
