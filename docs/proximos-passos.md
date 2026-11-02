@@ -22,13 +22,18 @@ Nenhuma sessão aberta. As conversas e branches sem pendência foram fechadas em
 
 Nada disso tem lembrete automático.
 
-**1. ~~Fechamento da semana~~:** conferido em 02/11/2026. A `fechar-semana-virada` rodou à 0h05 e a `fechar-semana-confirma` às 12h00: a semana de 26/10 tem 20 linhas, todas travadas. As de 12/10 e 19/10 também.
+**1. ~~Fechamento da semana~~:** conferido em 02/11/2026. A `fechar-semana-virada` rodou à 0h05 e a `fechar-semana-confirma` às 12h00: a semana de 26/10 tem 20 linhas, todas travadas. As de 12/10 e 19/10 também. A semana de 26/10 bate com a `ranking_semana` time a time (ativos, soma, média 30 e posição), nos 20 times. Só São Paulo (4 ativos, 1019) e Flamengo (1, 80) pontuaram.
 
 **2. ~~Migração da temporada~~:** aplicada pelo Kauê em 02/11/2026, depois da trava, e conferida no banco. A `termos_x_jogo` (`20261102000100`) entrou antes, à mão, com `migration repair`. Novembro está aberto como pré-temporada, com 20 times na série única. `classificacao_temporada` responde com 20 times e 0 ponto, o esperado até a semana de 02/11 fechar. A rotina `fechar-temporada` (12h01 todo dia) e o RLS das duas tabelas estão ligados. Nenhuma migração pendente.
 
 **3. Prova de Boleiro com três erros e fora:** no ar desde 01/11/2026, com as frases novas do narrador (PRs #69 e #71). Falta jogar uma partida real errando de propósito. O balanço conta a partir de 02/11: depois de 20 partidas novas, rode `npm run balanco` (ele já filtra a Prova pela data da regra nova; `-- --prova-antes` mostra a antiga). Se a mediana ficar abaixo de 45, a próxima alavanca é `ERROS_QUE_ENCERRAM = 4`.
 
-**4. Disputa histórica:** a gravação no banco de produção ainda não foi testada. No celular, abra Lances do Jogo, aba Pênaltis, e jogue uma até o fim. Se a partida fechar e os pontos entrarem, está certo.
+**4. Disputa histórica:** ainda não confirmada.
+- Em 31/10, duas disputas da Seleção fecharam com `disputa_id`, pontos e sem suspeita (55 e 85).
+- A tentativa de 02/11 de manhã, numa disputa do Bragantino, não chegou ao servidor. A conta anônima nasceu às 9h17, com o time Bragantino e 18+, mas não tem nenhuma partida. Ninguém criou partida em 02/11.
+- O site joga sem pontos quando `nova-partida` falha e mostra o aviso "não vale pontos".
+- Em 02/11, depois das 12h, as funções `nova-partida`, `lance-penalti` e `fechar-partida` respondiam 401 sem login, o que é o certo.
+- Falta ver no painel, em Edge Functions → `nova-partida` → Logs, o que ela respondeu por volta das 9h17. Depois, jogar de novo uma disputa até o fim.
 
 **5. Fechamento do mês:** em 09/11, depois das 12h, a semana de 02/11 tem de aparecer nos pontos. Em 07/12, depois das 12h01, novembro tem de estar fechado e dezembro aberto com 10 times em cada série. Só leitura.
 
@@ -67,6 +72,11 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 1. ~~Criar o site na Cloudflare Turnstile para `torcida.kauewalter.com.br`, no modo invisível.~~ Feito.
 2. ~~Passar a chave **pública** para `VITE_TURNSTILE_SITE_KEY` no `.env.production`, em um PR. Esperar a publicação.~~ Feito em 01/11/2026 (PR #68).
 3. **Falta confirmar:** ligar o CAPTCHA no painel do Supabase com a chave **secreta**, que fica só no painel.
+   - Em 02/11 não deu para ver pelo Code: a configuração do Auth e os logs dele só aparecem no painel.
+   - O login anônimo das 9h17 de 02/11 funcionou. Então ou o CAPTCHA está desligado, ou o token passou. Não dá para saber qual dos dois.
+   - Onde olhar:
+     - Authentication → Attack Protection → "Enable Captcha protection", com o provedor Turnstile.
+     - Logs → Auth, por volta das 9h17 (12h17 UTC): a chamada `/signup` com 200. Se aparecer "captcha protection: request disallowed", o token falhou.
 
 **Decisões:**
 - ~~**Fáceis de clube:**~~ decidido e aplicado em 02/11/2026: 27 rebaixadas para média, 18 médias subiram a fácil (CSV e banco, só `degrau`, partidas fechadas intactas). **Faltam 9 fáceis novas** para o pipeline do Gemini: athletico-pr 2, chapecoense 2, bahia 1, bragantino 1, coritiba 1, remo 1, vasco 1 (com fonte e revisão no `#admin`). Até lá esses clubes têm 1 ou 2 fáceis e sobra de média; quando cada fácil nova for aprovada no `#admin`, aposentar a média que sobra desse clube (a de menor acerto ou a mais parecida com outra), para manter 3 fáceis, 3 médias, 2 difíceis e 2 de craque (decidido em 02/11/2026). O id guarda o degrau de nascimento (o validador só exige o clube no começo).
