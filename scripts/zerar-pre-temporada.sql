@@ -19,6 +19,9 @@ delete from public.dia_partidas;
 delete from public.crava_pontos;
 delete from public.pontos_apagados;
 delete from public.ranking_semana;
+-- A fila e o aviso do ranking de minuto em minuto: sem eles, a rotina refaria semanas de teste.
+delete from public.ranking_fila;
+delete from public.ranking_aviso;
 -- O fechamento gravado (seção 5): a base da Série, da Galeria e das 52 semanas nasce limpa.
 delete from public.fechamento_semana;
 -- As temporadas de teste levam temporada_serie junto (on delete cascade). A estreia de verdade abre

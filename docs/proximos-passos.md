@@ -44,7 +44,7 @@ select * from public.classificacao_temporada where mes = '2026-11-01' order by p
 ## Pode começar já
 
 1. ~~**Telas das divisões:**~~ feito em 02/11/2026: aba Temporada no Ranking (só leitura de `temporada`, `classificacao_temporada`, `temporada_serie` e `fechamento_semana`). Ficaram para depois: a linha na Home ("9º na Série A, 4 pontos da zona"), as frases do narrador no fechamento do mês e o card de fim de temporada. Conferir no celular em 09/11 depois das 12h (1ª semana de novembro com pontos) e em 07/12 (dezembro com A e B, novembro em "Mês passado").
-2. **Ranking incremental:** `fechamento_semana` copia `ranking_semana`, e as duas tabelas têm de continuar batendo.
+2. ~~**Ranking incremental:**~~ feito em 02/11/2026 (migração `20261102100000_ranking_por_minuto`): fila + rotina `ranking-minuto`. Falta o Kauê aplicar a migração, publicar a `fechar-partida` e o site (PR #82).
 
 ## Feito em 31/10/2026
 
@@ -65,7 +65,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 
 ## Só o Kauê faz
 
-**Robôs do Gemini: publicados em 02/11/2026** (funções `gerar-conteudo` e `auditar-conteudo`, tabela `uso_gemini` e os 5+5 crons; PR dos robôs ainda sem merge, e o código publicado vem do branch dele). A migração `20261102000000` foi aplicada à mão e registrada com `migration repair`, para não arrastar a da temporada. A `termos_x_jogo` do PR #74 tinha o mesmo número `20261102000000` e foi renumerada para `20261102000100` (PR #76). As duas e a da temporada estão no banco desde 02/11.
+**Robôs do Gemini: publicados em 02/11/2026** (funções `gerar-conteudo` e `auditar-conteudo`, tabela `uso_gemini` e os 5+5 crons; o PR dos robôs, #75, já entrou). A migração `20261102000000` foi aplicada à mão e registrada com `migration repair`, para não arrastar a da temporada. A `termos_x_jogo` do PR #74 tinha o mesmo número `20261102000000` e foi renumerada para `20261102000100` (PR #76). As duas e a da temporada estão no banco desde 02/11.
 
 **Ligar o CAPTCHA (o código já está pronto), nesta ordem:**
 1. ~~Criar o site na Cloudflare Turnstile para `torcida.kauewalter.com.br`, no modo invisível.~~ Feito.
@@ -78,25 +78,24 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 - ~~**Fáceis de clube:**~~ decidido e aplicado em 02/11/2026: 27 rebaixadas para média, 18 médias subiram a fácil (CSV e banco, só `degrau`, partidas fechadas intactas). **Faltam 9 fáceis novas** para o pipeline do Gemini: athletico-pr 2, chapecoense 2, bahia 1, bragantino 1, coritiba 1, remo 1, vasco 1 (com fonte e revisão no `#admin`). Até lá esses clubes têm 1 ou 2 fáceis e sobra de média; quando cada fácil nova for aprovada no `#admin`, aposentar a média que sobra desse clube (a de menor acerto ou a mais parecida com outra), para manter 3 fáceis, 3 médias, 2 difíceis e 2 de craque (decidido em 02/11/2026). O id guarda o degrau de nascimento (o validador só exige o clube no começo).
 - **Data do zerar da pré-temporada:** até 06/12 para estrear em dezembro. A Crava termina em 2/12, e o balanço roda antes de zerar.
 - ~~**Torcida sem ninguém nas 52 semanas:**~~ decidido em 02/11/2026: vale 0 ponto também lá. Implementar na tela das 52 semanas.
-- Prazo para apagar contas anônimas paradas.
-- Itens de `docs/termos-x-jogo.md` (mudar o jogo ou o texto, um por um).
+- ~~**Prazo para apagar contas anônimas paradas:**~~ decidido em 02/11/2026 com o parecer: 6 meses sem jogar, rotina mensal (PR #84).
+- ~~Itens de `docs/termos-x-jogo.md`~~: os 10 resolvidos em 02/11/2026 (PRs #74 e #84).
 - Supabase Pro antes de divulgar.
-- Texto final dos Termos, com o advogado.
+- **Termos:** versão de 02/11/2026 com o parecer (PR #84). Antes de divulgar, confirmar com advogado os pontos 4 (triagem autodeclarada × art. 9º do ECA Digital) e 5 (DPO × exceção de alto risco da Res. CD/ANPD 2/2022); o parecer veio sem OAB.
 - Importar as 2 perguntas de `dados/perguntas/lote-02.csv` e dizer se tema de guerra entra na lista de proibidos (`dados/perguntas/piloto-lote-02.md`).
 - Propostas de `docs/propostas/funil-do-desafio.md`.
-- **Três branches guardadas:** têm conteúdo que não está na `main`. Olhar antes de apagar: `claude/wizardly-noether-zic2d2` (rascunho do lote 3 dos Lances, sem PR), `gemini/casa-lote-02` (conferência da Casa do Cruzeiro, sem PR) e `claude/intelligent-euler-p44s4r` (último ajuste do importador da conferência da Casa, depois do PR #7).
 
 ## Depois
 
 1. **Cidade, Galeria e 52 semanas:** nessa ordem, depois das telas das divisões.
 2. **Perguntas:** o piloto recomendou parar nas 529 sem fonte do staging. A meta de 800 precisa de perguntas nascidas de páginas reais. A importação continua com o Kauê.
-3. **Limpeza de anônimos:** depois do prazo decidido. Tem de guardar os pontos da semana aberta em `pontos_apagados`.
+3. ~~**Limpeza de anônimos:**~~ feita no PR #84 (`20261103000000_contas_paradas.sql`), guardando os pontos em `pontos_apagados`. Fica no ar quando o Kauê aplicar a migração.
 
 ## Antes de divulgar
 
 - [x] CAPTCHA ligado (conferido em 02/11/2026)
 - [ ] Limpeza de anônimos no ar
-- [ ] Ranking incremental
+- [x] Ranking de minuto em minuto (falta aplicar no banco)
 - [ ] Plano do Supabase decidido
 - [ ] Termos e jogo batendo, com revisão do advogado
 - [ ] Prova calibrada

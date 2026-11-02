@@ -75,6 +75,13 @@ describe('regras de conteúdo', () => {
     expect(validarPergunta({ ...boa, pergunta: 'Desde 2016, a morte súbita vale em que fase do redondo torneio?' })).toEqual([]);
   });
 
+  it('guerra é tema proibido; o nome do jogo e apelido de partida passam (02/11/2026)', () => {
+    expect(validarPergunta({ ...boa, pergunta: 'Em 1942, por causa da guerra, qual nome o clube adotou?' }).join(' ')).toMatch(/guerra/);
+    expect(validarPergunta({ ...boa, pergunta: 'Em 1932, que estádio sofreu bombardeio na revolução?' }).join(' ')).toMatch(/bombard/);
+    expect(validarPergunta({ ...boa, pergunta: 'Em 2005, como ficou conhecido o jogo de 26 de novembro entre Grêmio e Náutico?' })).toEqual([]);
+    expect(validarPergunta({ ...boa, pergunta: 'Em 2026, que torneio da Guerra de Torcidas começou em novembro?' })).toEqual([]);
+  });
+
   it('id bate com o clube (a letra é o degrau de nascimento); alternativas diferentes e curtas', () => {
     expect(validarPergunta({ ...boa, id: 'vasco-f-01' }).join(' ')).toMatch(/não bate/);
     expect(validarPergunta({ ...boa, id: 'flamengo-c-01' })).toEqual([]);

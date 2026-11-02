@@ -140,7 +140,7 @@ servir(async (req) => {
     },
   );
 
-  // Grava, refaz o teto e o ranking e cria o X1 (toda partida normal vira um desafio por link com as
+  // Grava, refaz o teto, anota o ranking e cria o X1 (toda partida normal vira um desafio por link com as
   // cobranças gravadas) numa transação só: ou entra tudo, ou a partida continua aberta.
   // Nenhuma linha = alguém fechou antes (duas abas, clique duplo).
   const { data: fechamento, error: eF } = await sb.rpc('fechar_partida', {
@@ -166,6 +166,8 @@ servir(async (req) => {
   const codigo = estado.codigo;
 
   // Daqui para baixo a partida já está gravada: leitura que falhar só tira o bloco da tela.
+  // O ranking sai na rotina do minuto: a tela espera um aviso calculado depois desta hora.
+  const confirmadaEm = new Date().toISOString();
   const rankingDepois = await posicao();
   const desempenho = await lerDesempenho(sb, 'desempenho_partida', { p_partida: partida.id });
 
@@ -176,6 +178,7 @@ servir(async (req) => {
     contaNoRanking: estado.teto && !estado.suspeita,
     sobSuspeita: estado.suspeita,
     ranking: { antes: rankingAntes, depois: rankingDepois },
+    confirmadaEm,
     desempenho,
     desafio: codigo ? { codigo } : null,
     // Desafio: mais pontos vence; empate em pontos fica com quem desafiou (chegou primeiro).
