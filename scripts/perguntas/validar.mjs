@@ -62,9 +62,10 @@ export const MARCAS_PROIBIDAS = [
   'petrobras', 'vivo', 'hapvida', 'caixa', 'banrisul', 'nubank', 'sicredi', 'volt', 'supermercado', 'banco',
 ];
 
-/** Temas fora da regra (seção 7.1): tragédia, rebaixamento, vexame, menor de idade… */
+/** Temas fora da regra (seção 7.1): tragédia, guerra, rebaixamento, vexame, menor de idade… */
 export const TEMAS_PROIBIDOS = [
-  'rebaixa', 'queda para a serie', 'tragedia', 'morte', 'morreu', 'faleceu', 'falecimento',
+  'rebaixa', 'queda para a serie', 'tragedia', 'morte', 'morreu', 'faleceu', 'falecimento', 'obito', 'assassin',
+  'homicid', 'guerra', 'bombard', 'ditadura',
   'acidente', 'vexame', 'humilha', 'mais jovem', 'mais novo', 'sub-15', 'sub-17', 'sub-20', 'categorias de base',
   'doping', 'preso', 'prisao', 'processo', 'policia', 'briga', 'agressao', 'cerveja', 'bebida', 'polemica',
 ];
@@ -82,7 +83,8 @@ const regex = (p, inteira) => {
   if (!compiladas.has(chave)) compiladas.set(chave, new RegExp(`(^|[^a-z0-9])${p.replace(/ /g, '\\s+')}${inteira ? '($|[^a-z0-9])' : ''}`));
   return compiladas.get(chave);
 };
-const limpar = (texto) => normalizar(texto).replace(/morte subita/g, ' ');
+// "Morte súbita" é regra do jogo e "Guerra de Torcidas" é o nome dele: os dois passam.
+const limpar = (texto) => normalizar(texto).replace(/morte subita|guerra de torcidas/g, ' ');
 
 /** Palavras proibidas: só palavra inteira ("red" pega "Red Bull", não "redondo"). */
 export const acharPalavras = (texto) => {
