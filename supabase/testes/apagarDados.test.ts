@@ -150,7 +150,7 @@ describe('apagar meus dados', () => {
     expect(rows[0].soma).toBe(195);
   }, TEMPO);
 
-  it('a mensagem do "Achei um erro" some junto, texto e tudo (20261102000000)', async () => {
+  it('a mensagem do "Achei um erro" some junto, texto e tudo (20261102000100)', async () => {
     const { rows } = await db.query<{ n: number }>(`select count(*)::integer as n from public.feedbacks where texto = 'gostei do jogo'`);
     expect(rows[0].n).toBe(0);
   }, TEMPO);

@@ -28,10 +28,10 @@ Nada disso tem lembrete automático: para retomar, abra uma conversa depois de 0
 select semana, count(*), count(confirmada_em) as travadas from public.fechamento_semana group by 1 order by 1 desc;
 ```
 
-**2. Migração da temporada:** com o fechamento certo, o Kauê roda na pasta principal, com a `main` atualizada, o comando abaixo. A simulação mostrou só `20261101000000_temporada.sql`. Depois, conferir no banco. Até lá nada muda no site, as semanas travadas contam do mesmo jeito e o `zerar-pre-temporada` falha sem apagar nada. Tem de entrar antes de 07/12, quando novembro fecha.
+**2. Migração da temporada:** com o fechamento certo, o Kauê roda na pasta principal, com a `main` atualizada, o comando abaixo. Entram `20261101000000_temporada.sql` e, se ainda não tiver entrado à mão, `20261102000100_termos_x_jogo.sql` (Termos × jogo, PR #74). O `--include-all` é necessário porque a temporada é mais velha que a última migração do banco (a dos robôs). Simule antes com `--dry-run`. Depois, conferir no banco. Até lá nada muda no site, as semanas travadas contam do mesmo jeito e o `zerar-pre-temporada` falha sem apagar nada. Tem de entrar antes de 07/12, quando novembro fecha.
 
 ```bash
-npx.cmd supabase db push --linked --yes
+npx.cmd supabase db push --linked --include-all
 ```
 
 **3. Prova de Boleiro com três erros e fora:** no ar desde 01/11/2026, com as frases novas do narrador (PRs #69 e #71). Falta jogar uma partida real errando de propósito. O balanço conta a partir de 02/11: depois de 20 partidas novas, rode `npm run balanco` (ele já filtra a Prova pela data da regra nova; `-- --prova-antes` mostra a antiga). Se a mediana ficar abaixo de 45, a próxima alavanca é `ERROS_QUE_ENCERRAM = 4`.
@@ -69,7 +69,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 
 ## Só o Kauê faz
 
-**Robôs do Gemini: publicados em 02/11/2026** (funções `gerar-conteudo` e `auditar-conteudo`, tabela `uso_gemini` e os 5+5 crons; PR dos robôs ainda sem merge, e o código publicado vem do branch dele). A migração `20261102000000` foi aplicada à mão e registrada com `migration repair`, para não arrastar a da temporada. **Por isso o `db push` da temporada (item 2) agora precisa de `--include-all`:** `npx supabase db push --include-all`, depois de conferir o fechamento (item 1).
+**Robôs do Gemini: publicados em 02/11/2026** (funções `gerar-conteudo` e `auditar-conteudo`, tabela `uso_gemini` e os 5+5 crons; PR dos robôs ainda sem merge, e o código publicado vem do branch dele). A migração `20261102000000` foi aplicada à mão e registrada com `migration repair`, para não arrastar a da temporada. **Por isso o `db push` da temporada (item 2) agora precisa de `--include-all`:** `npx supabase db push --include-all`, depois de conferir o fechamento (item 1). A `termos_x_jogo` do PR #74 tinha o mesmo número `20261102000000` e foi renumerada para `20261102000100`: o número no banco é o dos robôs, e a dos Termos ainda não entrou.
 
 **Ligar o CAPTCHA (o código já está pronto), nesta ordem:**
 1. ~~Criar o site na Cloudflare Turnstile para `torcida.kauewalter.com.br`, no modo invisível.~~ Feito.
