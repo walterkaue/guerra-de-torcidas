@@ -9,7 +9,7 @@ export const CABECALHO =
   '// CÓPIA GERADA de src/jogo por scripts/compartilhar.mjs. Não edite aqui: mude em src/jogo e rode `npm run compartilhar`.\n';
 
 /** Validador e travas das perguntas: scripts/perguntas → _shared/perguntas (pipeline do Gemini). */
-export const ARQUIVOS_PERGUNTAS = ['validar.mjs', 'geracao.mjs'];
+export const ARQUIVOS_PERGUNTAS = ['validar.mjs', 'geracao.mjs', 'reposicao.mjs'];
 export const CABECALHO_PERGUNTAS =
   '// CÓPIA GERADA de scripts/perguntas por scripts/compartilhar.mjs. Não edite aqui: mude lá e rode `npm run compartilhar`.\n';
 
