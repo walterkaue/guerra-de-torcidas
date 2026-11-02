@@ -36,8 +36,11 @@ async function partida(quem: string, time: string, pontos: number, dia: string, 
   return id;
 }
 
-const soma = async (time: string, sem = semana) =>
-  (await db.query<{ soma: number }>('select soma from public.ranking_semana where semana = $1 and time_id = $2', [sem, time])).rows[0]?.soma ?? 0;
+// O ranking sai na rotina do minuto (atualizar_rankings): aqui ela roda antes de cada leitura.
+async function soma(time: string, sem = semana) {
+  await db.query('select public.atualizar_rankings()');
+  return (await db.query<{ soma: number }>('select soma from public.ranking_semana where semana = $1 and time_id = $2', [sem, time])).rows[0]?.soma ?? 0;
+}
 
 async function comoAdmin<T>(fn: () => Promise<T>, uid = admin): Promise<T> {
   await db.query(`select set_config('teste.uid', $1, false)`, [uid]);
@@ -110,6 +113,8 @@ describe('revisão das suspeitas', () => {
     const antiga = '2026-09-01';
     const semanaAntiga = (await db.query<{ d: string }>(`select public.semana_de($1::date)::text as d`, [antiga])).rows[0].d;
     const p = await partida(a, 'santos', 80, antiga, 'defesas: 27 de 30');
+    // A rotina do minuto passa antes de alguém revisar: a anotação do fechamento já saiu da fila.
+    await db.query('select public.atualizar_rankings()');
     await decidir('penaltis', p, true);
     expect(await soma('santos', semanaAntiga)).toBe(0);
     const r = await db.query<{ conta_no_teto: boolean }>('select conta_no_teto from public.partidas where id = $1', [p]);

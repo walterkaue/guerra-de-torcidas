@@ -207,6 +207,8 @@ export interface FechamentoDoServidor {
   contaNoRanking: boolean;
   sobSuspeita: boolean;
   ranking: { antes: PosicaoRanking | null; depois: PosicaoRanking | null };
+  /** Hora do servidor logo depois de gravar (o ranking da semana sai na rotina do minuto). */
+  confirmadaEm?: string;
   /** Posição nos pênaltis na semana e recorde pessoal (null se o servidor não conseguiu ler). */
   desempenho: Desempenho | null;
   desafio: { codigo: string } | null;
@@ -448,14 +450,29 @@ export async function semanasFechadasDoMes(mes: string): Promise<number> {
   return new Set(((data ?? []) as { semana: string }[]).map((l) => l.semana)).size;
 }
 
-/** Avisa quando o ranking da semana muda (Realtime). Devolve a função para parar de ouvir. */
-export async function ouvirRanking(semana: string, aoMudar: () => void): Promise<() => void> {
+/**
+ * Avisa quando o ranking da semana muda (Realtime). O servidor refaz o ranking a cada minuto e manda
+ * um aviso só (ranking_aviso), não um por time. Devolve a função para parar de ouvir.
+ */
+export async function ouvirRanking(semana: string, aoMudar: () => void, aoEntrar?: () => void): Promise<() => void> {
   const sb = await supabase();
   const canal: RealtimeChannel = sb
     .channel(`ranking-${semana}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'ranking_semana', filter: `semana=eq.${semana}` }, aoMudar)
-    .subscribe();
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'ranking_aviso', filter: `semana=eq.${semana}` }, aoMudar)
+    .subscribe((estado) => {
+      if (estado === 'SUBSCRIBED') aoEntrar?.();
+    });
   return () => void sb.removeChannel(canal);
+}
+
+/** Quando o ranking da semana foi recalculado pela última vez (null antes da primeira conta). */
+export async function rankingCalculadoEm(semana: string): Promise<string | null> {
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(
+    sb.from('ranking_aviso').select('atualizado_em').eq('semana', semana).maybeSingle(),
+  );
+  if (error) throw new ErroServidor('falha');
+  return (data as { atualizado_em: string } | null)?.atualizado_em ?? null;
 }
 
 /** Minha posição geral na semana, somando todos os jogos e todos os times ("3º de 14"). */

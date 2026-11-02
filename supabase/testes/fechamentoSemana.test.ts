@@ -141,6 +141,7 @@ describe('segunda-feira da virada', () => {
     );
     expect(rows[0].semana).toBe(rows[0].atual);
     expect((await fechamento(db)).bahia.soma).toBe(100);
+    await db.query('select public.atualizar_rankings()');
     const { rows: atual } = await db.query<{ soma: number }>(
       `select soma from public.ranking_semana where semana = $1 and time_id = 'bahia'`,
       [rows[0].atual],

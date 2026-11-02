@@ -44,7 +44,7 @@ select * from public.classificacao_temporada where mes = '2026-11-01' order by p
 ## Pode começar já
 
 1. ~~**Telas das divisões:**~~ feito em 02/11/2026: aba Temporada no Ranking (só leitura de `temporada`, `classificacao_temporada`, `temporada_serie` e `fechamento_semana`). Ficaram para depois: a linha na Home ("9º na Série A, 4 pontos da zona"), as frases do narrador no fechamento do mês e o card de fim de temporada. Conferir no celular em 09/11 depois das 12h (1ª semana de novembro com pontos) e em 07/12 (dezembro com A e B, novembro em "Mês passado").
-2. **Ranking incremental:** `fechamento_semana` copia `ranking_semana`, e as duas tabelas têm de continuar batendo.
+2. ~~**Ranking incremental:**~~ feito em 02/11/2026 (migração `20261102100000_ranking_por_minuto`): fila + rotina `ranking-minuto`. Falta o Kauê aplicar a migração, publicar a `fechar-partida` e o site (PR #82).
 
 ## Feito em 31/10/2026
 
@@ -65,7 +65,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 
 ## Só o Kauê faz
 
-**Robôs do Gemini: publicados em 02/11/2026** (funções `gerar-conteudo` e `auditar-conteudo`, tabela `uso_gemini` e os 5+5 crons; PR dos robôs ainda sem merge, e o código publicado vem do branch dele). A migração `20261102000000` foi aplicada à mão e registrada com `migration repair`, para não arrastar a da temporada. A `termos_x_jogo` do PR #74 tinha o mesmo número `20261102000000` e foi renumerada para `20261102000100` (PR #76). As duas e a da temporada estão no banco desde 02/11.
+**Robôs do Gemini: publicados em 02/11/2026** (funções `gerar-conteudo` e `auditar-conteudo`, tabela `uso_gemini` e os 5+5 crons; o PR dos robôs, #75, já entrou). A migração `20261102000000` foi aplicada à mão e registrada com `migration repair`, para não arrastar a da temporada. A `termos_x_jogo` do PR #74 tinha o mesmo número `20261102000000` e foi renumerada para `20261102000100` (PR #76). As duas e a da temporada estão no banco desde 02/11.
 
 **Ligar o CAPTCHA (o código já está pronto), nesta ordem:**
 1. ~~Criar o site na Cloudflare Turnstile para `torcida.kauewalter.com.br`, no modo invisível.~~ Feito.
@@ -84,7 +84,6 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 - Texto final dos Termos, com o advogado.
 - Importar as 2 perguntas de `dados/perguntas/lote-02.csv` e dizer se tema de guerra entra na lista de proibidos (`dados/perguntas/piloto-lote-02.md`).
 - Propostas de `docs/propostas/funil-do-desafio.md`.
-- **Três branches guardadas:** têm conteúdo que não está na `main`. Olhar antes de apagar: `claude/wizardly-noether-zic2d2` (rascunho do lote 3 dos Lances, sem PR), `gemini/casa-lote-02` (conferência da Casa do Cruzeiro, sem PR) e `claude/intelligent-euler-p44s4r` (último ajuste do importador da conferência da Casa, depois do PR #7).
 
 ## Depois
 
@@ -96,7 +95,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 
 - [x] CAPTCHA ligado (conferido em 02/11/2026)
 - [ ] Limpeza de anônimos no ar
-- [ ] Ranking incremental
+- [x] Ranking de minuto em minuto (falta aplicar no banco)
 - [ ] Plano do Supabase decidido
 - [ ] Termos e jogo batendo, com revisão do advogado
 - [ ] Prova calibrada
