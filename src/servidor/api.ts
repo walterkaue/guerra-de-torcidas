@@ -13,6 +13,7 @@ import type { Tentativa } from '../jogo/timeDoDia.ts';
 import type { Carreira } from '../jogo/carreira.ts';
 import type { FaixaEtaria } from '../jogo/faixaEtaria.ts';
 import type { MeusDados } from '../jogo/meusDados.ts';
+import { mesSeguinte, type LinhaTemporada, type Temporada } from '../jogo/temporada.ts';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -405,6 +406,46 @@ export async function rankingDaSemana(semana: string): Promise<LinhaRanking[]> {
   );
   if (error) throw new ErroServidor('falha');
   return ((data ?? []) as LinhaRanking[]).map((l) => ({ ...l, media30: Number(l.media30) }));
+}
+
+/** Os dois meses mais recentes da temporada (o primeiro é o "este mês"). Só leitura. */
+export async function temporadasRecentes(): Promise<Temporada[]> {
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(
+    sb.from('temporada').select('mes, pre_temporada, fechada_em, campeao_estreia_id').order('mes', { ascending: false }).limit(2),
+  );
+  if (error) throw new ErroServidor('falha');
+  return (data ?? []) as Temporada[];
+}
+
+/** Classificação do mês: pontos e posição (view) com a posição final e o destino (fechamento). */
+export async function classificacaoDoMes(mes: string): Promise<LinhaTemporada[]> {
+  const sb = await supabase();
+  const [classificacao, series] = await Promise.all([
+    comTempoLimite(
+      sb.from('classificacao_temporada').select('time_id, serie, posicao, pontos, vitorias, ultima_posicao').eq('mes', mes),
+    ),
+    comTempoLimite(sb.from('temporada_serie').select('time_id, posicao_final, destino').eq('mes', mes)),
+  ]);
+  if (classificacao.error || series.error) throw new ErroServidor('falha');
+  const fim = new Map(
+    ((series.data ?? []) as { time_id: string; posicao_final: number | null; destino: 'a' | 'b' | null }[]).map((s) => [s.time_id, s]),
+  );
+  return ((classificacao.data ?? []) as Omit<LinhaTemporada, 'posicao_final' | 'destino'>[]).map((l) => ({
+    ...l,
+    posicao_final: fim.get(l.time_id)?.posicao_final ?? null,
+    destino: fim.get(l.time_id)?.destino ?? null,
+  }));
+}
+
+/** Quantas semanas do mês já travaram (as `semana` distintas confirmadas em fechamento_semana). */
+export async function semanasFechadasDoMes(mes: string): Promise<number> {
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(
+    sb.from('fechamento_semana').select('semana').gte('semana', mes).lt('semana', mesSeguinte(mes)).not('confirmada_em', 'is', null),
+  );
+  if (error) throw new ErroServidor('falha');
+  return new Set(((data ?? []) as { semana: string }[]).map((l) => l.semana)).size;
 }
 
 /** Avisa quando o ranking da semana muda (Realtime). Devolve a função para parar de ouvir. */

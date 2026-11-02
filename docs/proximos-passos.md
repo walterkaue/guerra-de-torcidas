@@ -47,7 +47,7 @@ select * from public.classificacao_temporada where mes = '2026-11-01' order by p
 
 ## Pode começar já
 
-1. **Telas das divisões:** em sessão própria, depois da migração da temporada. As telas leem `temporada_serie` e `classificacao_temporada`.
+1. ~~**Telas das divisões:**~~ feito em 02/11/2026: aba Temporada no Ranking (só leitura de `temporada`, `classificacao_temporada`, `temporada_serie` e `fechamento_semana`). Ficaram para depois: a linha na Home ("9º na Série A, 4 pontos da zona"), as frases do narrador no fechamento do mês e o card de fim de temporada. Conferir no celular em 09/11 depois das 12h (1ª semana de novembro com pontos) e em 07/12 (dezembro com A e B, novembro em "Mês passado").
 2. **Ranking incremental:** `fechamento_semana` copia `ranking_semana`, e as duas tabelas têm de continuar batendo.
 
 ## Feito em 31/10/2026

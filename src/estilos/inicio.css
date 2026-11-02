@@ -819,6 +819,104 @@
   padding-bottom: calc(88px + env(safe-area-inset-bottom));
 }
 
+.painel-ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.painel-ranking[hidden] {
+  display: none;
+}
+
+/* ---------- ranking: aba Temporada ---------- */
+.temporada-topo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.temporada-titulo {
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 22px;
+  text-transform: uppercase;
+}
+
+.frase-meu-time {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 210, 63, 0.16);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.botao-tentar {
+  min-height: 46px;
+  padding: 0 18px;
+  border: 2px solid var(--amarelo);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--cal);
+  touch-action: manipulation;
+}
+
+.temporada-topo + .abas,
+.abas + .abas {
+  margin-top: -8px;
+}
+
+[data-painel='temporada'] .mini-linha .nome small {
+  display: block;
+  font-size: 13px;
+}
+
+.mini-linha.zona-queda {
+  box-shadow: inset 4px 0 0 var(--caiu);
+}
+
+.mini-linha.zona-acesso {
+  box-shadow: inset 4px 0 0 var(--subiu);
+}
+
+.mini-linha.lider.zona-acesso {
+  box-shadow: inset 4px 0 0 var(--subiu);
+}
+
+.mini-linha .valor .selo-destino {
+  margin-right: 8px;
+  font-family: var(--fonte-rotulo);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.mini-linha .valor .selo-destino.sobe {
+  color: var(--subiu);
+}
+
+.mini-linha .valor .selo-destino.desce {
+  color: var(--caiu);
+}
+
+.divisor-serie {
+  margin: 6px 0;
+  padding: 4px 0;
+  border-top: 2px dashed var(--amarelo);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--amarelo);
+}
+
+.legenda-zona {
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
 .titulo-placar {
   font-family: var(--fonte-placar);
   font-weight: 400;

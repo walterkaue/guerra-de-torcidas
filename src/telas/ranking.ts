@@ -10,6 +10,7 @@ import { ouvirRanking, rankingDaSemana, type LinhaRanking } from '../servidor/ap
 import { semanaConfirmadaEm } from '../jogo/crava';
 import { semanaBrasilia } from '../servidor/tempo';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
+import { desenharTemporada } from './temporada';
 
 type Modo = 'campeao' | 'soma';
 
@@ -26,22 +27,45 @@ export function telaRanking(root: HTMLElement, _rota: Rota): () => void {
   root.innerHTML = `
     <main class="tela ranking">
       <header class="cabecalho"><h2 class="titulo-placar">Ranking</h2></header>
-      <div class="abas abas-semana" role="tablist">
-        <button role="tab" class="rotulo" aria-selected="true" data-semana="atual">Esta semana</button>
-        <button role="tab" class="rotulo" aria-selected="false" data-semana="passada">Semana passada</button>
+      <div class="abas abas-ranking" role="tablist">
+        <button role="tab" class="rotulo" aria-selected="true" data-ranking="semana">Semana</button>
+        <button role="tab" class="rotulo" aria-selected="false" data-ranking="temporada">Temporada</button>
       </div>
-      <p class="selo-semana" data-selo hidden></p>
-      <div class="abas" role="tablist">
-        <button role="tab" class="rotulo" aria-selected="true" data-modo="campeao">Campeão da semana</button>
-        <button role="tab" class="rotulo" aria-selected="false" data-modo="soma">Maior torcida</button>
+      <div class="painel-ranking" data-painel="semana">
+        <div class="abas abas-semana" role="tablist">
+          <button role="tab" class="rotulo" aria-selected="true" data-semana="atual">Esta semana</button>
+          <button role="tab" class="rotulo" aria-selected="false" data-semana="passada">Semana passada</button>
+        </div>
+        <p class="selo-semana" data-selo hidden></p>
+        <div class="abas" role="tablist">
+          <button role="tab" class="rotulo" aria-selected="true" data-modo="campeao">Campeão da semana</button>
+          <button role="tab" class="rotulo" aria-selected="false" data-modo="soma">Maior torcida</button>
+        </div>
+        <div class="tabela" data-tabela-semana aria-live="polite"><p class="vazio">Carregando…</p></div>
+        <p class="explica" data-explica></p>
       </div>
-      <div class="tabela" aria-live="polite"><p class="vazio">Carregando…</p></div>
-      <p class="explica" data-explica></p>
+      <div class="painel-ranking" data-painel="temporada" hidden></div>
       ${barraNavegacao('ranking')}
     </main>`;
   ligarBarraNavegacao(root);
 
-  const elTabela = root.querySelector<HTMLElement>('.tabela')!;
+  // A aba Temporada só carrega quando é aberta, e a cada abertura começa do zero.
+  const painelSemana = root.querySelector<HTMLElement>('[data-painel="semana"]')!;
+  const painelTemporada = root.querySelector<HTMLElement>('[data-painel="temporada"]')!;
+  let limparTemporada: (() => void) | null = null;
+  root.querySelectorAll<HTMLButtonElement>('[data-ranking]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const temporada = b.dataset.ranking === 'temporada';
+      if (temporada === !painelTemporada.hidden) return;
+      root.querySelectorAll('[data-ranking]').forEach((o) => o.setAttribute('aria-selected', String(o === b)));
+      painelSemana.hidden = temporada;
+      painelTemporada.hidden = !temporada;
+      limparTemporada?.();
+      limparTemporada = temporada ? desenharTemporada(painelTemporada) : null;
+    }),
+  );
+
+  const elTabela = root.querySelector<HTMLElement>('[data-tabela-semana]')!;
   const elExplica = root.querySelector<HTMLElement>('[data-explica]')!;
 
   const elSelo = root.querySelector<HTMLElement>('[data-selo]')!;
@@ -140,5 +164,6 @@ export function telaRanking(root: HTMLElement, _rota: Rota): () => void {
   return () => {
     saiu = true;
     parar?.();
+    limparTemporada?.();
   };
 }
