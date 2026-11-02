@@ -36,7 +36,9 @@ npx.cmd supabase db push --linked --yes
 
 **3. Prova de Boleiro com três erros e fora:** no ar desde 01/11/2026, com as frases novas do narrador (PRs #69 e #71). Falta jogar uma partida real errando de propósito. O balanço conta a partir de 02/11: depois de 20 partidas novas, rode `npm run balanco` (ele já filtra a Prova pela data da regra nova; `-- --prova-antes` mostra a antiga). Se a mediana ficar abaixo de 45, a próxima alavanca é `ERROS_QUE_ENCERRAM = 4`.
 
-**4. Fechamento do mês:** em 09/11, depois das 12h, a semana de 02/11 tem de aparecer nos pontos. Em 07/12, depois das 12h01, novembro tem de estar fechado e dezembro aberto com 10 times em cada série. Só leitura.
+**4. Disputa histórica:** a gravação no banco de produção ainda não foi testada. No celular, abra Lances do Jogo, aba Pênaltis, e jogue uma até o fim. Se a partida fechar e os pontos entrarem, está certo.
+
+**5. Fechamento do mês:** em 09/11, depois das 12h, a semana de 02/11 tem de aparecer nos pontos. Em 07/12, depois das 12h01, novembro tem de estar fechado e dezembro aberto com 10 times em cada série. Só leitura.
 
 ```sql
 select mes, serie, count(*) from public.temporada_serie group by 1, 2 order by 1, 2;
