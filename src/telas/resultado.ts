@@ -12,7 +12,8 @@ import { placarEmoji } from '../jogo/emoji';
 import { htmlPosicao } from '../jogo/posicao';
 import { escolherFrase } from '../narrador/escolher';
 import { contextoDoTime } from '../narrador/sessao';
-import { ouvirRanking, rankingDaSemana, type LinhaRanking } from '../servidor/api';
+import { ouvirRanking, rankingCalculadoEm, rankingDaSemana, type LinhaRanking } from '../servidor/api';
+import { ESPERA_RANKING_MS, tabelaIncluiPartida } from '../jogo/rankingMinuto';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { bomMomentoDosLances } from '../jogo/apoio';
 import { oferecerApoio } from './apoio';
@@ -229,11 +230,13 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
 
   // ---------- efeito no ranking ("subiu de 5º pra 3º") ----------
   // O servidor refaz o ranking a cada minuto: a tela compara a foto de antes da partida com a primeira
-  // tabela nova que chegar (já pronta ao abrir, ou pelo aviso do Realtime) e só então conta o efeito.
+  // tabela calculada depois que a partida foi gravada (já pronta ao abrir, ou pelo aviso do Realtime).
+  // Partida que não mexe em nada não gera aviso: passado o minuto, fica só o "contou pro ranking".
   const elEfeito = root.querySelector<HTMLElement>('.res-efeito')!;
   const rk = d.servidor?.ranking;
   let saiu = false;
   let pararRanking: (() => void) | null = null;
+  let espera: ReturnType<typeof setTimeout> | undefined;
   const mostrarEfeito = (linhas: LinhaRanking[]) => {
     const meu = linhas.find((l) => l.time_id === time.id);
     if (!meu) return;
@@ -267,33 +270,41 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     const n = Math.max(1, Math.ceil(acima.media30 - meu.media30));
     falta.textContent = `Mais ${n} de média e passa ${tAcima.artigo} ${tAcima.nome} (${acima.posicao_campeao}º).`;
   };
-  if (!situacao) {
-    elEfeito.innerHTML = `<p class="situacao">Contou pro ranking da semana${paraTime ? ` ${esc(paraTime)}` : ''}.${
-      d.servidor && !outro ? ' A tabela mexe em até 1 minuto.' : ''
+  const contou = (aguardando: boolean) =>
+    `<p class="situacao">Contou pro ranking da semana${paraTime ? ` ${esc(paraTime)}` : ''}.${
+      aguardando ? ' A tabela mexe em até 1 minuto.' : ''
     }</p>`;
-  }
+  if (!situacao) elEfeito.innerHTML = contou(!!d.servidor && !outro);
   if (!situacao && d.servidor && !outro) {
     const semana = d.servidor.semana;
+    const confirmadaEm = d.servidor.confirmadaEm;
     let pronto = false;
-    // aviso: a rotina rodou depois desta partida, então a tabela já a inclui, mesmo sem mudar nada.
+    const encerrar = () => {
+      pronto = true;
+      clearTimeout(espera);
+      pararRanking?.();
+    };
+    // aviso: sem a hora da partida (servidor antigo), o aviso que chega depois de abrir a tela basta.
     const conferir = (aviso: boolean) =>
-      rankingDaSemana(semana)
-        .then((linhas) => {
+      Promise.all([rankingCalculadoEm(semana), rankingDaSemana(semana)])
+        .then(([calculadoEm, linhas]) => {
           if (saiu || pronto) return;
-          const meu = linhas.find((l) => l.time_id === time.id);
-          const mudou = !!meu && (!rk?.antes || meu.soma !== rk.antes.soma || meu.media30 !== Number(rk.antes.media30));
-          if (!aviso && !mudou) return;
-          pronto = true;
-          pararRanking?.();
+          if (!tabelaIncluiPartida(calculadoEm, confirmadaEm) && !(aviso && !confirmadaEm)) return;
+          encerrar();
           mostrarEfeito(linhas);
         })
         .catch(() => {});
     void conferir(false);
-    ouvirRanking(semana, () => void conferir(true))
+    ouvirRanking(semana, () => void conferir(true), () => void conferir(false))
       .then((f) => (saiu || pronto ? f() : (pararRanking = f)))
       .catch(() => {
-        // sem Realtime: fica o "contou pro ranking"
+        // sem Realtime: a espera abaixo encerra
       });
+    espera = setTimeout(() => {
+      if (saiu || pronto) return;
+      encerrar();
+      elEfeito.innerHTML = contou(false);
+    }, ESPERA_RANKING_MS);
   }
 
   // ---------- card ----------
@@ -374,6 +385,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
 
   return () => {
     saiu = true;
+    clearTimeout(espera);
     pararRanking?.();
   };
 }

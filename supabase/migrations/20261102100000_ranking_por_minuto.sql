@@ -1,4 +1,4 @@
--- Ranking da semana de minuto em minuto (docs/jogo.md, seção 5, "Ranking da semana ao vivo"). Só
+-- Ranking da semana de minuto em minuto (docs/jogo.md, seção 5, "A semana", e seção 12, "Antes de divulgar"). Só
 -- acrescenta: nenhuma coluna ou tabela é apagada ou renomeada, e a conta do ranking não muda.
 --
 -- Antes, cada partida fechada (e cada Time do Dia, ponto do Crava e suspeita liberada) recalculava a
@@ -29,7 +29,9 @@ create policy "ninguém pelo cliente" on public.ranking_fila
   as restrictive for all to anon, authenticated using (false) with check (false);
 
 -- Aviso para as telas (Realtime): uma linha por semana, que muda quando alguma linha do ranking mudou.
--- Uma mensagem por tela a cada minuto com mudança, em vez de 20 a cada partida.
+-- Uma mensagem por tela a cada minuto com mudança, em vez de 20 a cada partida. atualizado_em é o
+-- início da transação que recalculou, anterior à leitura da fila: a tela de resultado só confia na
+-- tabela quando ele passa da hora em que a partida dela já estava gravada.
 create table public.ranking_aviso (
   semana date primary key,
   versao bigint not null default 1,
@@ -135,8 +137,10 @@ begin
 end;
 $$;
 
--- A rotina do minuto: refaz cada semana anotada, da mais velha para a mais nova. Semana travada não
--- muda (recalcular_ranking já não grava nela); a anotação só sai da fila. Devolve quantas refez.
+-- A rotina do minuto: refaz cada semana anotada, da mais velha para a mais nova, uma por vez (a
+-- mesma ordem de fechar_semanas, para as duas nunca esperarem uma pela outra). Semana travada não muda
+-- (recalcular_ranking já não grava nela); a anotação só sai da fila. Semana que dá erro volta inteira
+-- para a fila, com aviso no log, sem segurar as outras. Devolve quantas refez.
 create or replace function public.atualizar_rankings()
 returns integer
 language plpgsql
@@ -144,16 +148,19 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_semanas date[];
   v_semana date;
+  v_feitas integer := 0;
 begin
-  with feitas as (delete from public.ranking_fila returning semana)
-  select coalesce(array_agg(distinct f.semana order by f.semana), '{}') into v_semanas from feitas f;
-
-  foreach v_semana in array v_semanas loop
-    perform public.recalcular_ranking(v_semana);
+  for v_semana in select distinct f.semana from public.ranking_fila f order by 1 loop
+    begin
+      delete from public.ranking_fila f where f.semana = v_semana;
+      perform public.recalcular_ranking(v_semana);
+      v_feitas := v_feitas + 1;
+    exception when others then
+      raise warning 'ranking da semana % não refez: %', v_semana, sqlerrm;
+    end;
   end loop;
-  return cardinality(v_semanas);
+  return v_feitas;
 end;
 $$;
 

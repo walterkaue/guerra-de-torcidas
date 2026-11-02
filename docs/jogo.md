@@ -116,6 +116,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 | **Maior torcida da semana** | Soma de todo mundo | Não, é vitrine |
 
 - Torcida com menos de 30 torcedores ativos: as vagas vazias contam como **80% da média geral da semana**.
+- **A tabela mexe em até 1 minuto** (desde 02/11/2026): o servidor refaz o ranking a cada minuto, com a mesma conta. A tela de resultado mostra "Subiu de 5º pra 3º" quando chega a tabela calculada depois da partida; se nada mudar em cerca de 1 minuto, fica "Contou pro ranking da semana".
 - **Pontos de campeonato** pela posição na divisão, estilo Fórmula 1: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1.
 - **Teto diário:** só as 5 melhores partidas do dia de cada jogador contam, **somando todos os minigames de partida** (pênaltis, quiz). O desafio diário (uma vez por dia), o Crava a Rodada (teto próprio por rodada) e os Lances do Jogo (vale a melhor partida do dia, teto 120; seção 7.3) ficam por fora (decidido em 19/10; Lances em 21/10).
 
