@@ -1,6 +1,6 @@
 # Robôs do Gemini para as perguntas: foco, paralelo e reposição (proposta, sem aplicar)
 
-> Escrito em 02/11/2026. Origem: faltam 9 fáceis de clube na Prova (`docs/propostas/faceis-de-clube-prova.md`) e o pipeline entrega pouco. **Nada foi alterado em função, cron ou banco.** Depende da aprovação do Kauê.
+> Escrito em 02/11/2026. Origem: faltam 9 fáceis de clube na Prova (`docs/propostas/faceis-de-clube-prova.md`) e o pipeline entrega pouco. **Decidido pelo Kauê em 02/11/2026:** modo reposição com **5 execuções por dia** (em vez das 3 da seção 3.3), reavaliação **domingo 08/11 às 17h** (seção 3.5) e auditor ajustado ao novo volume (20 por execução, também 5 vezes por dia). Implementado em `supabase/functions/gerar-conteudo`, `auditar-conteudo`, `scripts/perguntas/reposicao.mjs` e na migração `20261102000000_robos_gemini.sql`; ainda não publicado.
 
 ## 1. Onde o pipeline está (medido em 02/11)
 
@@ -38,9 +38,9 @@ Com `{"modo": "reposicao"}`, a função calcula o déficit de cada clube × degr
 - Conta rascunhos pendentes para não gerar a 10ª pergunta de uma vaga já preenchida.
 - Quando a meta subir para 30 por clube, só muda a tabela de cotas.
 
-### 3.3 Paralelo: 3 execuções por dia, não 20 robôs
+### 3.3 Paralelo: 5 execuções por dia, não 20 robôs
 
-Três jobs de cron no modo reposição (9h, 13h e 17h, no fuso do banco), em vez de um job por clube. Um rodízio por déficit já distribui por clube e usa menos cota que 20 jobs com horário fixo. Os horários do cron seguem o fuso do banco; conferir antes.
+Cinco jobs de cron no modo reposição (6h, 9h, 12h, 15h e 18h de Brasília; 09, 12, 15, 18 e 21 UTC no banco; o auditor roda uma hora depois de cada um), em vez de um job por clube. Um rodízio por déficit já distribui por clube e usa menos cota que 20 jobs com horário fixo. O cron do banco é UTC (conferido: 09 UTC = 6h de Brasília).
 
 - **Por clube:** já vem do modo reposição. Se o Kauê preferir um job por clube, o parâmetro `clube` da seção 3.1 permite, sem código a mais.
 - **Por tema:** só no prompt (parâmetro opcional `tema`). As fontes não têm tema, então só rende se a página tiver esse tipo de fato. Não recomendo agora.

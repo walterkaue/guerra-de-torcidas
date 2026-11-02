@@ -59,7 +59,17 @@ select * from public.classificacao_temporada where mes = '2026-11-01' order by p
 
 **Termos × jogo (feito em 31/10/2026):** a lista está em `docs/termos-x-jogo.md`, para o Kauê e o advogado. Além das divergências já vistas (cidades, Cloudflare, contas paradas, aviso de mudança, "só você lê os seus", o que fica ao apagar), achou: "ver meus dados" não existe, "zerar pontos de trapaceiro" e "apagar apelido" não têm ação no `#admin`, o aviso de saída não cobre o WhatsApp e o feedback leva tela e navegador sem o texto dizer. Cada item traz as saídas (mudar o jogo ou o texto). Falta o Kauê decidir; o texto só muda com ele.
 
+**6. Reavaliar os robôs do Gemini (domingo 08/11/2026, 17h):** os 5 crons por dia de `gerar-conteudo` e de `auditar-conteudo` (decidido em 02/11, `docs/propostas/robos-gemini-perguntas.md`) já têm medida em `staging_gt.uso_gemini`. Olhar chamadas, tokens e erros 429/503 por dia e por função, quantos rascunhos nasceram, quantos passaram na auditoria e quantas das 9 fáceis já foram preenchidas. Decidir: manter 5, subir ou descer `paginas` e `quantidade`, ou ligar a cobrança do Google AI Studio. Consulta:
+
+```sql
+select criada_em::date dia, funcao, sum(chamadas) chamadas, sum(falhas) falhas, sum(entrada) entrada, sum(saida) saida
+from staging_gt.uso_gemini group by 1, 2 order by 1, 2;
+select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2026-11-03' group by 1;
+```
+
 ## Só o Kauê faz
+
+**Publicar os robôs do Gemini** (código no PR dos robôs; a simulação do `db push` lista também a migração da temporada, item 2 acima): `npm run deploy:funcoes` (publica `gerar-conteudo` e `auditar-conteudo`) e depois `supabase db push`, que cria `uso_gemini` e agenda os 5+5 crons. Funções primeiro: o corpo novo dos jobs é ignorado pela função antiga.
 
 **Ligar o CAPTCHA (o código já está pronto), nesta ordem:**
 1. ~~Criar o site na Cloudflare Turnstile para `torcida.kauewalter.com.br`, no modo invisível.~~ Feito.
