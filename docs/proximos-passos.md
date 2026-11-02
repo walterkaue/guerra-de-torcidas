@@ -8,7 +8,7 @@
 | Área | Estado em 01/11/2026 |
 |---|---|
 | Código | `main` limpa, sem PR aberto, testes e build passando |
-| Publicação | Site no ar, 25 migrações aplicadas (falta a da temporada), 11 funções publicadas |
+| Publicação | Site no ar, as 28 migrações aplicadas (02/11), 11 funções publicadas |
 | Rotinas | Sem falhas em 7 dias; `carreira-fechar` rodou com sucesso em 01/11 |
 | Tamanho | 216 KB gzip somando todo o JS e CSS (limite do bundle inicial: ~300 KB) |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
@@ -20,23 +20,19 @@ Nenhuma sessão aberta. As conversas e branches sem pendência foram fechadas em
 
 ## Conferir primeiro
 
-Nada disso tem lembrete automático: para retomar, abra uma conversa depois de 02/11 às 12h e peça "confira o fechamento da semana e retome as divisões".
+Nada disso tem lembrete automático.
 
-**1. Fechamento da semana:** em 02/11, depois das 12h, confira as rotinas `fechar-semana-virada` e `fechar-semana-confirma` e se a semana passada tem 20 linhas travadas. A consulta é só leitura.
+**1. ~~Fechamento da semana~~:** conferido em 02/11/2026. A `fechar-semana-virada` rodou à 0h05 e a `fechar-semana-confirma` às 12h00: a semana de 26/10 tem 20 linhas, todas travadas. As de 12/10 e 19/10 também. A semana de 26/10 bate com a `ranking_semana` time a time (ativos, soma, média 30 e posição), nos 20 times. Só São Paulo (4 ativos, 1019) e Flamengo (1, 80) pontuaram.
 
-```sql
-select semana, count(*), count(confirmada_em) as travadas from public.fechamento_semana group by 1 order by 1 desc;
-```
-
-**2. Migração da temporada:** com o fechamento certo, o Kauê roda na pasta principal, com a `main` atualizada, o comando abaixo. Entram `20261101000000_temporada.sql` e, se ainda não tiver entrado à mão, `20261102000100_termos_x_jogo.sql` (Termos × jogo, PR #74). O `--include-all` é necessário porque a temporada é mais velha que a última migração do banco (a dos robôs). Simule antes com `--dry-run`. Depois, conferir no banco. Até lá nada muda no site, as semanas travadas contam do mesmo jeito e o `zerar-pre-temporada` falha sem apagar nada. Tem de entrar antes de 07/12, quando novembro fecha.
-
-```bash
-npx.cmd supabase db push --linked --include-all
-```
+**2. ~~Migração da temporada~~:** aplicada pelo Kauê em 02/11/2026, depois da trava, e conferida no banco. A `termos_x_jogo` (`20261102000100`) entrou antes, à mão, com `migration repair`. Novembro está aberto como pré-temporada, com 20 times na série única. `classificacao_temporada` responde com 20 times e 0 ponto, o esperado até a semana de 02/11 fechar. A rotina `fechar-temporada` (12h01 todo dia) e o RLS das duas tabelas estão ligados. Nenhuma migração pendente.
 
 **3. Prova de Boleiro com três erros e fora:** no ar desde 01/11/2026, com as frases novas do narrador (PRs #69 e #71). Falta jogar uma partida real errando de propósito. O balanço conta a partir de 02/11: depois de 20 partidas novas, rode `npm run balanco` (ele já filtra a Prova pela data da regra nova; `-- --prova-antes` mostra a antiga). Se a mediana ficar abaixo de 45, a próxima alavanca é `ERROS_QUE_ENCERRAM = 4`.
 
-**4. Disputa histórica:** a gravação no banco de produção ainda não foi testada. No celular, abra Lances do Jogo, aba Pênaltis, e jogue uma até o fim. Se a partida fechar e os pontos entrarem, está certo.
+**4. ~~Disputa histórica~~:** conferida em 02/11/2026.
+- Às 12h44 o Kauê jogou no celular a disputa `selecao-2016-olimpiada`, pelo São Paulo. Ela fechou às 12h45 com `disputa_id`, 110 pontos e sem suspeita.
+- A tentativa das 9h17, numa janela anônima pelo Bragantino, não gravou partida. A conta nasceu e passou pelo CAPTCHA, mas a `nova-partida` não recebeu nenhuma chamada nas 24 horas dos logs.
+- Não deu para repetir: o CAPTCHA recusa o navegador do Claude (erro 600010).
+- Se voltar a acontecer, a pista é a janela anônima. O site joga "sem valer pontos" quando o pedido falha antes de chegar ao servidor, e o motivo fica só no console do navegador.
 
 **5. Fechamento do mês:** em 09/11, depois das 12h, a semana de 02/11 tem de aparecer nos pontos. Em 07/12, depois das 12h01, novembro tem de estar fechado e dezembro aberto com 10 times em cada série. Só leitura.
 
@@ -47,7 +43,7 @@ select * from public.classificacao_temporada where mes = '2026-11-01' order by p
 
 ## Pode começar já
 
-1. **Telas das divisões:** em sessão própria, depois da migração da temporada. As telas leem `temporada_serie` e `classificacao_temporada`.
+1. **Telas das divisões:** em sessão própria; a migração da temporada já está no banco. As telas leem `temporada_serie` e `classificacao_temporada`.
 2. **Ranking incremental:** `fechamento_semana` copia `ranking_semana`, e as duas tabelas têm de continuar batendo.
 
 ## Feito em 31/10/2026
@@ -69,12 +65,14 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 
 ## Só o Kauê faz
 
-**Robôs do Gemini: publicados em 02/11/2026** (funções `gerar-conteudo` e `auditar-conteudo`, tabela `uso_gemini` e os 5+5 crons; PR dos robôs ainda sem merge, e o código publicado vem do branch dele). A migração `20261102000000` foi aplicada à mão e registrada com `migration repair`, para não arrastar a da temporada. **Por isso o `db push` da temporada (item 2) agora precisa de `--include-all`:** `npx supabase db push --include-all`, depois de conferir o fechamento (item 1). A `termos_x_jogo` do PR #74 tinha o mesmo número `20261102000000` e foi renumerada para `20261102000100`: o número no banco é o dos robôs, e a dos Termos ainda não entrou.
+**Robôs do Gemini: publicados em 02/11/2026** (funções `gerar-conteudo` e `auditar-conteudo`, tabela `uso_gemini` e os 5+5 crons; PR dos robôs ainda sem merge, e o código publicado vem do branch dele). A migração `20261102000000` foi aplicada à mão e registrada com `migration repair`, para não arrastar a da temporada. A `termos_x_jogo` do PR #74 tinha o mesmo número `20261102000000` e foi renumerada para `20261102000100` (PR #76). As duas e a da temporada estão no banco desde 02/11.
 
 **Ligar o CAPTCHA (o código já está pronto), nesta ordem:**
 1. ~~Criar o site na Cloudflare Turnstile para `torcida.kauewalter.com.br`, no modo invisível.~~ Feito.
 2. ~~Passar a chave **pública** para `VITE_TURNSTILE_SITE_KEY` no `.env.production`, em um PR. Esperar a publicação.~~ Feito em 01/11/2026 (PR #68).
-3. **Falta confirmar:** ligar o CAPTCHA no painel do Supabase com a chave **secreta**, que fica só no painel.
+3. ~~Ligar o CAPTCHA no painel do Supabase com a chave **secreta**, que fica só no painel.~~ Conferido em 02/11/2026 pelos prints do Kauê:
+   - Em Authentication → Attack Protection, "Enable Captcha protection" está ligado, com o Turnstile e o secret preenchido.
+   - Em Logs → Auth, o `/signup` anônimo das 9h17min53s respondeu 200, e não houve nenhum 4xx ou 5xx em 24 horas. Ou seja, o token passou pela checagem.
 
 **Decisões:**
 - ~~**Fáceis de clube:**~~ decidido e aplicado em 02/11/2026: 27 rebaixadas para média, 18 médias subiram a fácil (CSV e banco, só `degrau`, partidas fechadas intactas). **Faltam 9 fáceis novas** para o pipeline do Gemini: athletico-pr 2, chapecoense 2, bahia 1, bragantino 1, coritiba 1, remo 1, vasco 1 (com fonte e revisão no `#admin`). Até lá esses clubes têm 1 ou 2 fáceis e sobra de média; quando cada fácil nova for aprovada no `#admin`, aposentar a média que sobra desse clube (a de menor acerto ou a mais parecida com outra), para manter 3 fáceis, 3 médias, 2 difíceis e 2 de craque (decidido em 02/11/2026). O id guarda o degrau de nascimento (o validador só exige o clube no começo).
@@ -96,7 +94,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 
 ## Antes de divulgar
 
-- [ ] CAPTCHA ligado
+- [x] CAPTCHA ligado (conferido em 02/11/2026)
 - [ ] Limpeza de anônimos no ar
 - [ ] Ranking incremental
 - [ ] Plano do Supabase decidido
