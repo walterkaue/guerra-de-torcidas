@@ -71,12 +71,9 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 **Ligar o CAPTCHA (o código já está pronto), nesta ordem:**
 1. ~~Criar o site na Cloudflare Turnstile para `torcida.kauewalter.com.br`, no modo invisível.~~ Feito.
 2. ~~Passar a chave **pública** para `VITE_TURNSTILE_SITE_KEY` no `.env.production`, em um PR. Esperar a publicação.~~ Feito em 01/11/2026 (PR #68).
-3. **Falta confirmar:** ligar o CAPTCHA no painel do Supabase com a chave **secreta**, que fica só no painel.
-   - Em 02/11 não deu para ver pelo Code: a configuração do Auth e os logs dele só aparecem no painel.
-   - O login anônimo das 9h17 de 02/11 funcionou. Então ou o CAPTCHA está desligado, ou o token passou. Não dá para saber qual dos dois.
-   - Onde olhar:
-     - Authentication → Attack Protection → "Enable Captcha protection", com o provedor Turnstile.
-     - Logs → Auth, por volta das 9h17 (12h17 UTC): a chamada `/signup` com 200. Se aparecer "captcha protection: request disallowed", o token falhou.
+3. ~~Ligar o CAPTCHA no painel do Supabase com a chave **secreta**, que fica só no painel.~~ Conferido em 02/11/2026 pelos prints do Kauê:
+   - Em Authentication → Attack Protection, "Enable Captcha protection" está ligado, com o Turnstile e o secret preenchido.
+   - Em Logs → Auth, o `/signup` anônimo das 9h17min53s respondeu 200, e não houve nenhum 4xx ou 5xx em 24 horas. Ou seja, o token passou pela checagem.
 
 **Decisões:**
 - ~~**Fáceis de clube:**~~ decidido e aplicado em 02/11/2026: 27 rebaixadas para média, 18 médias subiram a fácil (CSV e banco, só `degrau`, partidas fechadas intactas). **Faltam 9 fáceis novas** para o pipeline do Gemini: athletico-pr 2, chapecoense 2, bahia 1, bragantino 1, coritiba 1, remo 1, vasco 1 (com fonte e revisão no `#admin`). Até lá esses clubes têm 1 ou 2 fáceis e sobra de média; quando cada fácil nova for aprovada no `#admin`, aposentar a média que sobra desse clube (a de menor acerto ou a mais parecida com outra), para manter 3 fáceis, 3 médias, 2 difíceis e 2 de craque (decidido em 02/11/2026). O id guarda o degrau de nascimento (o validador só exige o clube no começo).
@@ -98,7 +95,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 
 ## Antes de divulgar
 
-- [ ] CAPTCHA ligado
+- [x] CAPTCHA ligado (conferido em 02/11/2026)
 - [ ] Limpeza de anônimos no ar
 - [ ] Ranking incremental
 - [ ] Plano do Supabase decidido
