@@ -36,6 +36,20 @@ describe('lerResposta', () => {
     expect(r.confirmadas).toHaveLength(2);
   });
 
+  it('aceita título de bloco sem "####" e troca de arquivo no meio', () => {
+    const r = lerResposta(['=== CORRIGIDAS ===', 'estadios.csv', '"clube","nome"', '"vasco","X"', 'recordes.csv', '"clube","lista"', '"vasco","gols"'].join('\n'));
+    expect(Object.keys(r.corrigidas)).toEqual(['estadios', 'recordes']);
+    expect(r.corrigidas.recordes).toEqual(['"clube","lista"', '"vasco","gols"']);
+  });
+
+  it('título com texto depois do nome vale; título que não é de arquivo não engole a linha seguinte', () => {
+    const r = lerResposta(['=== CORRIGIDAS ===', '#### titulos.csv (1 linha)', '"clube","nome"'].join('\n'));
+    expect(r.corrigidas.titulos).toEqual(['"clube","nome"']);
+    expect(() => lerResposta(['=== CORRIGIDAS ===', '#### titulos.csv', '"a","b"', '#### Observação', '"c","d"'].join('\n'))).toThrow(
+      /sem arquivo/,
+    );
+  });
+
   it('recusa linha CSV sem arquivo', () => {
     expect(() => lerResposta('=== CORRIGIDAS ===\n"a","b"')).toThrow(/sem arquivo/);
   });

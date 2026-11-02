@@ -30,19 +30,19 @@ export function lerResposta(texto) {
     }
     if (!secao || secao === 'RESUMO' || linha === '' || linha.startsWith('```')) continue;
     if (secao === 'CORRIGIDAS') {
+      // "#### titulos.csv (3 linhas)": troca o arquivo; título que não é de arquivo zera, e a linha CSV seguinte é recusada
       const titulo = linha.match(/^#+\s*(.+)$/);
       if (titulo) {
         arquivo = nomeArquivo(titulo[1]);
         continue;
       }
-      if (!arquivo) {
-        const solto = nomeArquivo(linha);
-        if (solto && !linha.includes('"')) {
-          arquivo = solto;
-          continue;
-        }
-        throw new Error(`linha CSV sem arquivo antes: ${linha.slice(0, 60)}`);
+      // título solto ("estadios.csv", "**recordes.csv**"), também no meio do bloco; linha CSV sempre tem aspas
+      const solto = !linha.includes('"') && nomeArquivo(linha);
+      if (solto) {
+        arquivo = solto;
+        continue;
       }
+      if (!arquivo) throw new Error(`linha CSV sem arquivo antes: ${linha.slice(0, 60)}`);
       (r.corrigidas[arquivo] ??= []).push(linha);
     } else {
       const campos = linha.replace(/^[-*•\d.)\s]+(?=\w+(\.csv)?\s*\|)/, '').split('|').map((c) => c.trim());
