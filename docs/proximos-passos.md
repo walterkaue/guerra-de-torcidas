@@ -7,8 +7,8 @@
 
 | Área | Estado em 02/11/2026 |
 |---|---|
-| Código | `main` com 76 arquivos e 1.673 testes passando; PR #86 (travas da limpeza e do fechamento) aberto |
-| Publicação | Site no ar (`main` de 02/11, 15h47), as 30 migrações aplicadas (02/11, 15h24), 11 funções publicadas (`fechar-partida` v18). Falta a 31ª, do PR #86 |
+| Código | `main` com 76 arquivos e 1.673 testes passando; PR #86 (travas da limpeza e do fechamento, 77 arquivos e 1.676 testes) aberto |
+| Publicação | Site no ar (`main` de 02/11, 15h47), as 31 migrações aplicadas (a 31ª, do PR #86, em 02/11 à noite, antes do merge), 11 funções publicadas (`fechar-partida` v18) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
 | Tamanho | 216 KB gzip somando todo o JS e CSS (limite do bundle inicial: ~300 KB) |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
@@ -34,11 +34,17 @@ Nada disso tem lembrete automático.
 - Não deu para repetir: o CAPTCHA recusa o navegador do Claude (erro 600010).
 - Se voltar a acontecer, a pista é a janela anônima. O site joga "sem valer pontos" quando o pedido falha antes de chegar ao servidor, e o motivo fica só no console do navegador.
 
-**5. Travas da limpeza e do fechamento (PR #86):** revisão de segurança de 02/11/2026. As duas migrações de 02/11 já estavam no ar e passaram na conferência só de leitura (detalhe no PR). A revisão achou duas brechas:
+**5. ~~Travas da limpeza e do fechamento~~ (PR #86):** revisão de segurança de 02/11/2026. As duas migrações de 02/11 já estavam no ar e passaram na conferência só de leitura (detalhe no PR). A revisão achou duas brechas:
 - a limpeza aceitava prazo de 0 mês ou data no futuro, o que apagaria todas as contas anônimas, e a chave secreta das funções podia chamá-la;
 - o fechamento de segunda 12h copiava o ranking sem travar a semana.
 
-Depois do merge, aplicar `20261103000100_travas_limpeza_e_fechamento.sql` (só `create or replace` e `revoke`) e conferir que `has_function_privilege('service_role', 'public.apagar_contas_paradas(integer, timestamptz)', 'execute')` dá `false`.
+A `20261103000100_travas_limpeza_e_fechamento.sql` (só `create or replace` e `revoke`) foi aplicada em 02/11/2026, com o ok do Kauê e antes do merge, e conferida no banco:
+- 31 migrações, a última é a `20261103000100`;
+- `apagar_contas_paradas` fechada para `service_role`, `authenticated` e `anon`, e a rotina mensal continua ligada;
+- o texto de `apagar_contas_paradas` e `fechar_semana` no banco é idêntico ao do arquivo;
+- `ranking-minuto` sem falha nos 5 minutos seguintes.
+
+Falta só o merge do PR.
 
 **6. Fechamento do mês:** em 09/11, depois das 12h, a semana de 02/11 tem de aparecer nos pontos. Em 07/12, depois das 12h01, novembro tem de estar fechado e dezembro aberto com 10 times em cada série. Só leitura.
 
@@ -98,12 +104,12 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 
 1. **Cidade, Galeria e 52 semanas:** nessa ordem, depois das telas das divisões.
 2. **Perguntas:** o piloto recomendou parar nas 529 sem fonte do staging. A meta de 800 precisa de perguntas nascidas de páginas reais. A importação continua com o Kauê.
-3. ~~**Limpeza de anônimos:**~~ feita no PR #84 (`20261103000000_contas_paradas.sql`), guardando os pontos em `pontos_apagados`. No ar desde 02/11/2026 (rotina `apagar-contas-paradas`, dia 1º às 4h). Na simulação de 02/11, 0 conta sairia: a anônima mais antiga é de 19/10/2026, então a primeira limpeza possível é em 1º/05/2027. As travas do PR #86 ficam para aplicar.
+3. ~~**Limpeza de anônimos:**~~ feita no PR #84 (`20261103000000_contas_paradas.sql`), guardando os pontos em `pontos_apagados`. No ar desde 02/11/2026 (rotina `apagar-contas-paradas`, dia 1º às 4h). Na simulação de 02/11, 0 conta sairia: a anônima mais antiga é de 19/10/2026, então a primeira limpeza possível é em 1º/05/2027. As travas do PR #86 estão no ar desde 02/11/2026.
 
 ## Antes de divulgar
 
 - [x] CAPTCHA ligado (conferido em 02/11/2026)
-- [x] Limpeza de anônimos no ar (02/11/2026; travas do PR #86 a aplicar)
+- [x] Limpeza de anônimos no ar (02/11/2026, com as travas do PR #86)
 - [x] Ranking de minuto em minuto (no ar e conferido em 02/11/2026)
 - [ ] Plano do Supabase decidido
 - [ ] Termos e jogo batendo, com revisão do advogado
