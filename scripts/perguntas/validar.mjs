@@ -13,7 +13,6 @@ export const CLUBES = [
 ];
 
 export const DEGRAUS = { facil: 1, media: 2, dificil: 3, craque: 4 };
-const LETRA_DO_DEGRAU = { facil: 'f', media: 'm', dificil: 'd', craque: 'c' };
 export const STATUS = ['rascunho', 'revisada', 'ativa', 'aposentada'];
 
 export const MAX_PERGUNTA = 140;
@@ -167,8 +166,9 @@ export function validarPergunta(p) {
   if (!clubeOk) erros.push(`clube "${p.clube}" não é um dos 20 nem "geral"`);
   if (!(p.degrau in DEGRAUS)) erros.push(`degrau "${p.degrau}" (use facil, media, dificil ou craque)`);
   if (!/^[a-z0-9-]+-[fmdc]-\d{2,3}$/.test(p.id)) erros.push(`id "${p.id}" fora do formato clube-f-01`);
-  else if (clubeOk && p.degrau in DEGRAUS && !p.id.startsWith(`${p.clube}-${LETRA_DO_DEGRAU[p.degrau]}-`)) {
-    erros.push(`id "${p.id}" não bate com clube/degrau (${p.clube}-${LETRA_DO_DEGRAU[p.degrau]}-NN)`);
+  else if (clubeOk && !p.id.startsWith(`${p.clube}-`)) {
+    // A letra do id é o degrau de nascimento: a pergunta pode mudar de degrau (rebaixe, calibragem) sem trocar o id.
+    erros.push(`id "${p.id}" não bate com o clube (${p.clube}-x-NN)`);
   }
   if (!p.tema || p.tema.length > 30) erros.push('tema vazio ou longo');
 

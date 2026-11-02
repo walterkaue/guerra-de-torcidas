@@ -75,8 +75,9 @@ describe('regras de conteúdo', () => {
     expect(validarPergunta({ ...boa, pergunta: 'Desde 2016, a morte súbita vale em que fase do redondo torneio?' })).toEqual([]);
   });
 
-  it('id bate com clube e degrau; alternativas diferentes e curtas', () => {
-    expect(validarPergunta({ ...boa, id: 'flamengo-c-01' }).join(' ')).toMatch(/não bate/);
+  it('id bate com o clube (a letra é o degrau de nascimento); alternativas diferentes e curtas', () => {
+    expect(validarPergunta({ ...boa, id: 'vasco-f-01' }).join(' ')).toMatch(/não bate/);
+    expect(validarPergunta({ ...boa, id: 'flamengo-c-01' })).toEqual([]);
     expect(validarPergunta({ ...boa, clube: 'outro' }).join(' ')).toMatch(/não é um dos 20/);
     expect(validarPergunta({ ...boa, errada1: 'libertadores' }).join(' ')).toMatch(/repetidas/);
     expect(validarPergunta({ ...boa, errada2: 'x'.repeat(41) }).join(' ')).toMatch(/máx/);
