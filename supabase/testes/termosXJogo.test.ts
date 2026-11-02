@@ -53,8 +53,17 @@ beforeAll(async () => {
 
   const p = await partida(ana, 'penaltis');
   await partida(ana, 'penaltis');
-  await partida(ana, 'prova');
+  const prova = await partida(ana, 'prova');
   await partida(bia, 'penaltis');
+  await db.query(
+    `insert into public.prova_desafios (id, partida_id, torcedor_id, time_id, apelido, perguntas, pontos, escada, resumo)
+     values ('prova123', $1, $2, 'bahia', 'Ana Gol', array['a','b','c','d','e','f','g','h'], 70, 'x', 'parei na 6ª')`,
+    [prova, ana],
+  );
+  const { rows: jogo } = await db.query<{ id: string }>(
+    `insert into public.jogos (rodada, mandante_id, visitante_id, inicio) values (33, 'bahia', 'remo', now() + interval '1 day') returning id`,
+  );
+  await db.query('insert into public.palpites (torcedor_id, jogo_id, gols_mandante, gols_visitante) values ($1, $2, 1, 0)', [ana, jogo[0].id]);
   await db.query(
     `insert into public.desafios (id, partida_id, torcedor_id, time_id, apelido, cobrancas, gols_jogador, gols_maquina, pontos)
      values ('abcd1234', $1, $2, 'bahia', 'Ana Gol', '[]', 3, 2, 80)`,
@@ -83,8 +92,8 @@ describe('ver meus dados', () => {
       torcedor: { time_id: 'bahia', apelido: 'Ana Gol', faixa_etaria: '16_17' },
       partidas: { penaltis: 2, prova: 1 },
       time_do_dia: 1,
-      desafios: 1,
-      palpites: 0,
+      desafios: 2,
+      palpites: 1,
       avisos: 1,
       mensagens: [{ tipo: 'bug', texto: 'o card cortou', tela: 'inicio', aparelho: 'Firefox' }],
     });
@@ -93,7 +102,7 @@ describe('ver meus dados', () => {
 
   it('nunca mostra o de outra pessoa', async () => {
     const d = await meusDados(bia);
-    expect(d).toMatchObject({ partidas: { penaltis: 1 }, time_do_dia: 0, desafios: 0, avisos: 0 });
+    expect(d).toMatchObject({ partidas: { penaltis: 1 }, time_do_dia: 0, desafios: 0, palpites: 0, avisos: 0 });
     expect(d!.mensagens).toEqual([expect.objectContaining({ texto: 'segredo da Bia' })]);
     expect(JSON.stringify(d)).not.toContain('o card cortou');
   }, TEMPO);
@@ -120,6 +129,8 @@ describe('apagar apelido no #admin', () => {
     await expect(contar(ana, 'Ana Gol')).rejects.toThrow(/sem_permissao/);
     await expect(apagar(ana, 'Ana Gol')).rejects.toThrow(/sem_permissao/);
     await expect(como(null, 'anon', `select public.apelido_contar('x')`)).rejects.toThrow(/permission denied/);
+    await expect(como(null, 'anon', `select public.apelido_apagar('x')`)).rejects.toThrow(/permission denied/);
+    await expect(como(admin, 'authenticated', `select public.apelido_normalizado('x')`)).rejects.toThrow(/permission denied/);
   }, TEMPO);
 
   it('conta pelo apelido exato (só ajeita os espaços)', async () => {
@@ -134,8 +145,10 @@ describe('apagar apelido no #admin', () => {
     expect(await apagar(admin, 'Ana Gol')).toBe(2);
     const { rows } = await db.query<{ apelido: string | null }>('select apelido from public.torcedores where id in ($1, $2)', [ana, bia]);
     expect(rows).toEqual([{ apelido: null }, { apelido: null }]);
-    const { rows: desafio } = await db.query<{ apelido: string | null }>(`select apelido from public.desafios where id = 'abcd1234'`);
-    expect(desafio).toEqual([{ apelido: null }]);
+    const { rows: desafio } = await db.query<{ apelido: string | null }>(
+      `select apelido from public.desafios where id = 'abcd1234' union all select apelido from public.prova_desafios where id = 'prova123'`,
+    );
+    expect(desafio).toEqual([{ apelido: null }, { apelido: null }]);
     expect(await contar(admin, 'ana gol')).toBe(1);
 
     const { rows: registro } = await db.query<Record<string, unknown>>('select * from public.apelidos_apagados');
