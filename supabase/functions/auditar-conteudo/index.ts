@@ -4,13 +4,16 @@
 // Nunca aprova "de memória". Nada vira `revisada` aqui: isso é da revisão humana, no CSV.
 // Só o cron chama (secret key do projeto).
 
-import { admin, ErroHttp, servir } from '../_shared/comum.ts';
-import { baixar, MODELOS_AUDITOR, perguntarJson } from '../_shared/gemini.ts';
+import { admin, ErroHttp, lerCorpo, servir } from '../_shared/comum.ts';
+import { baixar, MODELOS_AUDITOR, perguntarJson, registrarUso, usoVazio } from '../_shared/gemini.ts';
 import { alternativasEmbaralhadas, avaliarPergunta, textoDaPagina, vereditoAuditoria } from '../_shared/perguntas/geracao.mjs';
 import { temSegredo } from '../_shared/segredo.ts';
 
 const LIMITE_PAGINA = 60_000;
-const POR_RODADA = 10;
+const POR_RODADA = 20;
+const MAX_POR_RODADA = 30;
+/** O cron espera 120 s: o que sobrar fica como rascunho para a próxima execução. */
+const ORCAMENTO_MS = 100_000;
 const DIAS_PARA_DESISTIR = 7;
 
 const INSTRUCAO = `Você confere uma pergunta de quiz contra o TEXTO DA PÁGINA, e só contra ele (nada de memória).
@@ -26,19 +29,27 @@ const ESQUEMA = {
 
 servir(async (req) => {
   if (!(await temSegredo(req))) throw new ErroHttp(401, 'sem_permissao');
-  const stg = admin().schema('staging_gt');
+  const corpo = await lerCorpo(req);
+  const porRodada = Math.max(1, Math.min(MAX_POR_RODADA, Number(corpo.quantidade) || POR_RODADA));
+  const inicio = Date.now();
+  const sb = admin();
+  const stg = sb.schema('staging_gt');
   const { data: fila, error } = await stg
     .from('rascunhos_perguntas')
     .select('id, clube, degrau, tema, pergunta, certa, errada1, errada2, errada3, fonte, trecho, criada_em')
     .eq('status', 'rascunho')
     .order('criada_em')
-    .limit(POR_RODADA);
+    .limit(porRodada);
   if (error) throw error;
   if (!fila?.length) return { ok: true, auditadas: 0 };
 
   const paginas = new Map<string, string | null>();
   const resultado = { aprovadas: 0, reprovadas: 0, adiadas: 0, motivos: [] as string[] };
   for (const p of fila) {
+    if (Date.now() - inicio > ORCAMENTO_MS) {
+      resultado.adiadas++;
+      continue;
+    }
     if (!paginas.has(p.fonte)) {
       const b = await baixar(p.fonte);
       const t = b.html ? textoDaPagina(b.html) : '';
@@ -63,10 +74,13 @@ servir(async (req) => {
     const alts = alternativasEmbaralhadas(p);
     let motivo: string | null;
     let auditoria: { modelo: string; dados: { escolhida: string; trecho: string; outraTambemCerta: boolean } } | null = null;
+    const uso = usoVazio();
     try {
-      auditoria = await perguntarJson(MODELOS_AUDITOR, INSTRUCAO, `PERGUNTA: ${p.pergunta}\nALTERNATIVAS:\n${alts.map((a) => `- ${a}`).join('\n')}\n\nTEXTO DA PÁGINA:\n${pagina.slice(0, LIMITE_PAGINA)}`, ESQUEMA);
+      auditoria = await perguntarJson(MODELOS_AUDITOR, INSTRUCAO, `PERGUNTA: ${p.pergunta}\nALTERNATIVAS:\n${alts.map((a) => `- ${a}`).join('\n')}\n\nTEXTO DA PÁGINA:\n${pagina.slice(0, LIMITE_PAGINA)}`, ESQUEMA, uso);
+      await registrarUso(sb, { funcao: 'auditar-conteudo', modelo: auditoria.modelo, clube: p.clube, degrau: p.degrau }, uso);
       motivo = vereditoAuditoria(p, auditoria.dados, pagina);
     } catch (e) {
+      await registrarUso(sb, { funcao: 'auditar-conteudo', modelo: null, clube: p.clube, degrau: p.degrau }, uso);
       resultado.adiadas++;
       resultado.motivos.push(String((e as Error).message));
       continue;
