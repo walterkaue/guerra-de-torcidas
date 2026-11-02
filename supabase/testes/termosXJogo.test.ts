@@ -1,4 +1,4 @@
-// Termos × jogo (20261102000000): "Ver meus dados" devolve só o que é de quem chama, e o #admin apaga um
+// Termos × jogo (20261102000100): "Ver meus dados" devolve só o que é de quem chama, e o #admin apaga um
 // apelido exato sem guardar o apelido. Roda o SQL de verdade (PGlite).
 
 import type { PGlite } from '@electric-sql/pglite';
