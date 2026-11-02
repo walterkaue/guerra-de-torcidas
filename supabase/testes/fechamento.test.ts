@@ -59,8 +59,11 @@ async function fechar(db: PGlite, partida: string, quem: string, f: Fechar) {
   return rows;
 }
 
-const soma = async (db: PGlite, time: string) =>
-  (await db.query<{ soma: number }>('select soma from public.ranking_semana where semana = $1 and time_id = $2', [SEMANA, time])).rows[0]?.soma ?? 0;
+// O ranking sai na rotina do minuto (atualizar_rankings): aqui ela roda antes de cada leitura.
+async function soma(db: PGlite, time: string) {
+  await db.query('select public.atualizar_rankings()');
+  return (await db.query<{ soma: number }>('select soma from public.ranking_semana where semana = $1 and time_id = $2', [SEMANA, time])).rows[0]?.soma ?? 0;
+}
 
 const estado = async (db: PGlite, id: string) =>
   (await db.query<{ fechada_em: Date | null; conta_no_teto: boolean; sob_suspeita: boolean; motivo_suspeita: string | null; pontos: number | null }>(

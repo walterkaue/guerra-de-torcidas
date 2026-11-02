@@ -12,7 +12,7 @@ import { placarEmoji } from '../jogo/emoji';
 import { htmlPosicao } from '../jogo/posicao';
 import { escolherFrase } from '../narrador/escolher';
 import { contextoDoTime } from '../narrador/sessao';
-import { rankingDaSemana } from '../servidor/api';
+import { ouvirRanking, rankingDaSemana, type LinhaRanking } from '../servidor/api';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { bomMomentoDosLances } from '../jogo/apoio';
 import { oferecerApoio } from './apoio';
@@ -87,7 +87,7 @@ const doTime = (id: string) => {
 /** "226 pontos de média" / "1 ponto de média" */
 const pontosDeMedia = (n: number) => `${n} ${n === 1 ? 'ponto' : 'pontos'} de média`;
 
-export function telaResultado(root: HTMLElement, rota: Rota): void {
+export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | void {
   if (rota.tela !== 'resultado') return;
   const d: DadosResultado = rota.dados;
   const time = timePorId(d.timeId) ?? TIMES[TIMES.length - 1];
@@ -228,11 +228,17 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   if (elConfete) confete(elConfete, [time.cores[0], time.cores[1], '#ffd23f']);
 
   // ---------- efeito no ranking ("subiu de 5º pra 3º") ----------
+  // O servidor refaz o ranking a cada minuto: a tela compara a foto de antes da partida com a primeira
+  // tabela nova que chegar (já pronta ao abrir, ou pelo aviso do Realtime) e só então conta o efeito.
   const elEfeito = root.querySelector<HTMLElement>('.res-efeito')!;
   const rk = d.servidor?.ranking;
-  if (!situacao && d.servidor && rk?.depois && !outro) {
-    const depois = rk.depois.posicao_campeao;
-    const antes = rk.antes && rk.antes.media30 > 0 ? rk.antes.posicao_campeao : undefined;
+  let saiu = false;
+  let pararRanking: (() => void) | null = null;
+  const mostrarEfeito = (linhas: LinhaRanking[]) => {
+    const meu = linhas.find((l) => l.time_id === time.id);
+    if (!meu) return;
+    const depois = meu.posicao_campeao;
+    const antes = rk?.antes && Number(rk.antes.media30) > 0 ? rk.antes.posicao_campeao : undefined;
     const frase =
       antes === undefined
         ? `Entrou em <strong>${depois}º</strong> na semana`
@@ -244,30 +250,50 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
     elEfeito.innerHTML = `<p class="efeito-texto">${frase}</p>
       <div class="efeito-barra"><span></span></div>
       <p class="efeito-falta"></p>`;
-    rankingDaSemana(d.servidor.semana)
-      .then((linhas) => {
-        const meu = linhas.find((l) => l.time_id === time.id);
-        if (!meu) return;
-        const barra = elEfeito.querySelector<HTMLElement>('.efeito-barra span')!;
-        const falta = elEfeito.querySelector<HTMLElement>('.efeito-falta')!;
-        if (meu.posicao_campeao === 1) {
-          const segundo = linhas.find((l) => l.posicao_campeao === 2);
-          barra.style.setProperty('--enche', '1');
-          falta.textContent = segundo
-            ? `Na liderança, ${pontosDeMedia(Math.round(meu.media30 - segundo.media30))} na frente ${doTime(segundo.time_id)}.`
-            : 'Na liderança!';
-          return;
-        }
-        const acima = linhas.find((l) => l.posicao_campeao === meu.posicao_campeao - 1);
-        const tAcima = acima && timePorId(acima.time_id);
-        if (!acima || !tAcima) return;
-        barra.style.setProperty('--enche', String(acima.media30 > 0 ? Math.min(1, meu.media30 / acima.media30) : 1));
-        const n = Math.max(1, Math.ceil(acima.media30 - meu.media30));
-        falta.textContent = `Mais ${n} de média e passa ${tAcima.artigo} ${tAcima.nome} (${acima.posicao_campeao}º).`;
-      })
-      .catch(() => {});
-  } else if (!situacao) {
-    elEfeito.innerHTML = `<p class="situacao">Contou pro ranking da semana${paraTime ? ` ${esc(paraTime)}` : ''}.</p>`;
+    const barra = elEfeito.querySelector<HTMLElement>('.efeito-barra span')!;
+    const falta = elEfeito.querySelector<HTMLElement>('.efeito-falta')!;
+    if (meu.posicao_campeao === 1) {
+      const segundo = linhas.find((l) => l.posicao_campeao === 2);
+      barra.style.setProperty('--enche', '1');
+      falta.textContent = segundo
+        ? `Na liderança, ${pontosDeMedia(Math.round(meu.media30 - segundo.media30))} na frente ${doTime(segundo.time_id)}.`
+        : 'Na liderança!';
+      return;
+    }
+    const acima = linhas.find((l) => l.posicao_campeao === meu.posicao_campeao - 1);
+    const tAcima = acima && timePorId(acima.time_id);
+    if (!acima || !tAcima) return;
+    barra.style.setProperty('--enche', String(acima.media30 > 0 ? Math.min(1, meu.media30 / acima.media30) : 1));
+    const n = Math.max(1, Math.ceil(acima.media30 - meu.media30));
+    falta.textContent = `Mais ${n} de média e passa ${tAcima.artigo} ${tAcima.nome} (${acima.posicao_campeao}º).`;
+  };
+  if (!situacao) {
+    elEfeito.innerHTML = `<p class="situacao">Contou pro ranking da semana${paraTime ? ` ${esc(paraTime)}` : ''}.${
+      d.servidor && !outro ? ' A tabela mexe em até 1 minuto.' : ''
+    }</p>`;
+  }
+  if (!situacao && d.servidor && !outro) {
+    const semana = d.servidor.semana;
+    let pronto = false;
+    // aviso: a rotina rodou depois desta partida, então a tabela já a inclui, mesmo sem mudar nada.
+    const conferir = (aviso: boolean) =>
+      rankingDaSemana(semana)
+        .then((linhas) => {
+          if (saiu || pronto) return;
+          const meu = linhas.find((l) => l.time_id === time.id);
+          const mudou = !!meu && (!rk?.antes || meu.soma !== rk.antes.soma || meu.media30 !== Number(rk.antes.media30));
+          if (!aviso && !mudou) return;
+          pronto = true;
+          pararRanking?.();
+          mostrarEfeito(linhas);
+        })
+        .catch(() => {});
+    void conferir(false);
+    ouvirRanking(semana, () => void conferir(true))
+      .then((f) => (saiu || pronto ? f() : (pararRanking = f)))
+      .catch(() => {
+        // sem Realtime: fica o "contou pro ranking"
+      });
   }
 
   // ---------- card ----------
@@ -345,4 +371,9 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
     irPara({ tela: 'partida', desafio: d.desafio?.id, disputa: d.disputa }),
   );
   root.querySelector('[data-acao="inicio"]')?.addEventListener('click', () => irPara({ tela: 'inicio' }));
+
+  return () => {
+    saiu = true;
+    pararRanking?.();
+  };
 }

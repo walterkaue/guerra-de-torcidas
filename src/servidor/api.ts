@@ -448,12 +448,15 @@ export async function semanasFechadasDoMes(mes: string): Promise<number> {
   return new Set(((data ?? []) as { semana: string }[]).map((l) => l.semana)).size;
 }
 
-/** Avisa quando o ranking da semana muda (Realtime). Devolve a função para parar de ouvir. */
+/**
+ * Avisa quando o ranking da semana muda (Realtime). O servidor refaz o ranking a cada minuto e manda
+ * um aviso só (ranking_aviso), não um por time. Devolve a função para parar de ouvir.
+ */
 export async function ouvirRanking(semana: string, aoMudar: () => void): Promise<() => void> {
   const sb = await supabase();
   const canal: RealtimeChannel = sb
     .channel(`ranking-${semana}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'ranking_semana', filter: `semana=eq.${semana}` }, aoMudar)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'ranking_aviso', filter: `semana=eq.${semana}` }, aoMudar)
     .subscribe();
   return () => void sb.removeChannel(canal);
 }
