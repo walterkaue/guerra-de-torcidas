@@ -298,9 +298,13 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 14px 16px 16px;
+  /* Respiro antes e depois: é um convite para fora do jogo, não mais um bloco da Casa. */
+  margin: 8px 0 6px;
+  padding: 16px;
   border-radius: 14px;
-  background: rgba(0, 0, 0, 0.32);
+  /* Cor cheia (docs/visual.md): sem a transparência dos blocos, as listras do gramado não cortam o texto ao meio. */
+  background: #0a2a15;
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 .casa-socio h3 {
   font-size: 18px;
@@ -344,7 +348,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 4px 4px 12px;
+  padding: 10px 4px 12px;
   font-size: 13px;
   color: var(--texto-suave);
 }
