@@ -1,11 +1,13 @@
 // Travas da revisão de 02/11/2026 na limpeza de contas paradas (20261103000100): prazo inválido não apaga
-// nada, a chave secreta das funções não chama, e várias contas na mesma semana viram um total cada, com o
-// placar igual. Roda o SQL de verdade (PGlite).
+// nada e a chave secreta das funções perde o acesso. O insert dos pontos passou a rodar uma vez por semana:
+// o último caso confere que ele continua dando um total por conta e time, com o placar igual. Roda o SQL
+// de verdade (PGlite).
 
 import type { PGlite } from '@electric-sql/pglite';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { bancoDeTeste } from './banco';
+import { aplicarMigracao, bancoDeTeste } from './banco';
 
+const TRAVAS = '20261103000100_travas_limpeza_e_fechamento.sql';
 const AGORA = '2026-11-02T12:00:00-03:00';
 const ANTIGA = '2026-03-01T12:00:00-03:00'; // 8 meses antes
 const SEMANA_A = '2026-03-30';
@@ -86,12 +88,17 @@ describe('travas da limpeza de contas paradas', () => {
     expect(await contas()).toBe(antes);
   }, TEMPO);
 
-  it('a chave secreta das funções não chama a limpeza', async () => {
-    await db.exec('set role service_role');
+  it('a chave secreta das funções perde a limpeza, que em produção ela chamava pelo padrão da Supabase', async () => {
+    const antes = await bancoDeTeste(TRAVAS);
     try {
-      await expect(db.query('select public.apagar_contas_paradas()')).rejects.toThrow(/permission denied/);
+      await antes.exec('grant execute on function public.apagar_contas_paradas(integer, timestamptz) to service_role');
+      await aplicarMigracao(antes, TRAVAS);
+      const { rows } = await antes.query<{ pode: boolean }>(
+        `select has_function_privilege('service_role', 'public.apagar_contas_paradas(integer, timestamptz)', 'execute') as pode`,
+      );
+      expect(rows[0].pode).toBe(false);
     } finally {
-      await db.exec('reset role');
+      await antes.close();
     }
   }, TEMPO);
 
