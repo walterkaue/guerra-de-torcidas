@@ -12,16 +12,20 @@
 
 | # | Divergência | Situação | Saídas |
 |---|---|---|---|
-| 1 | Apagar contas paradas | Não cumpre | Criar a rotina, ou tirar a frase |
+| 1 | Apagar contas paradas | **Passou a cumprir** (02/11/2026, PR do parecer) | Feito: rotina mensal de 6 meses e prazo no texto |
 | 2 | Aviso de mudança na tela inicial | **Passou a cumprir** (02/11/2026) | Feito: faixa na Home |
-| 3 | Ranking de cidades | Não cumpre | Tirar a cidade do texto agora, ou construir a cidade |
-| 4 | Checagem da Cloudflare | Não cumpre hoje (passo 2 de 3 feito em 01/11: chave pública no site; falta ligar no painel do Supabase) | Ligar o CAPTCHA (passo 3 do Kauê), ou tirar a frase |
-| 5 | "Só você lê os seus" | Cumpre em parte | Reescrever a frase, ou separar o que o administrador lê |
-| 6 | Depois de "Apagar meus dados" | Cumpre em parte (melhorou em 02/11/2026: o texto das mensagens some junto) | Fica só o total de pontos da semana, sem id: dizer isso no texto |
+| 3 | Ranking de cidades | **Resolvido no texto** (02/11/2026) | A linha saiu da Política até a cidade existir |
+| 4 | Checagem da Cloudflare | **Cumpre** (CAPTCHA ligado e conferido em 02/11/2026) | O texto fica |
+| 5 | "Só você lê os seus" | **Resolvido no texto** (02/11/2026) | O texto diz o que o administrador lê |
+| 6 | Depois de "Apagar meus dados" | **Resolvido no texto** (02/11/2026) | O texto diz que ficam só totais anônimos |
 | 7 | Direito de "ver" os dados | **Passou a cumprir** (02/11/2026) | Feito: "Ver meus dados" na `#termos` |
-| 8 | Trapaça "pode ter os pontos zerados" | Não cumpre | Criar a ação no `#admin`, ou mudar a frase |
+| 8 | Trapaça "pode ter os pontos zerados" | **Resolvido no texto** (02/11/2026) | O texto diz só que a partida fica fora do ranking |
 | 9 | Apelido ofensivo "apagado" | **Passou a cumprir** (02/11/2026) | Feito: "Apagar apelido" no `#admin` |
-| 10 | "Antes de sair, o jogo avisa" | Cumpre em parte | Avisar também no WhatsApp, ou dizer a exceção |
+| 10 | "Antes de sair, o jogo avisa" | **Resolvido no texto** (02/11/2026) | O texto diz a exceção do botão de compartilhar |
+
+**Parecer jurídico de 02/11/2026:** as respostas aos 12 pontos do [documento para o advogado](https://claude.ai/artifact/LLy4urtae5AGABECQ13d5P) foram aplicadas na versão de 02/11/2026 de `src/dados/termos.md`. Também entraram: controlador sem encarregado, serviços que recebem o IP (com a transferência para fora do país), o feedback com tela e navegador e o link de sócio como informativo. **A confirmar antes de divulgar:**
+- **Ponto 4:** o parecer cita o ECA Digital como a Lei 8.069/1990 e não analisa o art. 9º da Lei 15.211/2025. Esse artigo proíbe a autodeclaração para conteúdo impróprio a menores.
+- **Ponto 5:** o parecer não trata a exceção de alto risco (art. 3º da Res. CD/ANPD 2/2022), que pesa com dados de menores em larga escala.
 
 ## Resumo em 30 segundos
 
