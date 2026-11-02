@@ -28,9 +28,10 @@
 /* Cabeçalho na faixa de placar do time. */
 .casa-faixa {
   margin-top: -8px;
-  padding: 14px 16px 18px;
+  /* Embaixo, uma tira fixa de 22px (filete + cor de apoio): o texto nunca encosta nela, em qualquer largura. */
+  padding: 14px 16px 30px;
   border-radius: 14px;
-  background: linear-gradient(to bottom, var(--c1) 0 78%, var(--c3) 78% calc(78% + 3px), var(--c2) calc(78% + 3px) 100%);
+  background: linear-gradient(to bottom, var(--c1) 0 calc(100% - 22px), var(--c3) calc(100% - 22px) calc(100% - 19px), var(--c2) calc(100% - 19px) 100%);
   color: var(--txt);
 }
 .casa-faixa.clara {
@@ -348,7 +349,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 4px 12px;
+  padding: 4px 4px 12px;
   font-size: 13px;
   color: var(--texto-suave);
 }
