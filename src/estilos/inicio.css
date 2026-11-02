@@ -640,7 +640,9 @@
   text-underline-offset: 3px;
 }
 
-/* Seção da Casa na Home: estádio e troféus em cena de noite (telas/cardsJogos.ts). */
+/* Seção da Casa na Home: estádio e troféus em cena de noite (telas/cardsJogos.ts).
+   Os filhos (.casa-rodape, .casa-titulo) ficam presos ao .casa-home: a página da Casa (casa.css) usa os
+   mesmos nomes de classe, e sem isso o ::after absoluto do título virava uma linha vermelha solta. */
 .casa-home {
   position: relative;
   isolation: isolate;
@@ -670,7 +672,7 @@
   background: linear-gradient(180deg, #0a1626, #1a3350);
 }
 
-.casa-rodape {
+.casa-home .casa-rodape {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -680,12 +682,12 @@
   padding: 0 14px;
 }
 
-.casa-rodape small {
+.casa-home .casa-rodape small {
   font-size: 14px;
   color: var(--texto-suave);
 }
 
-.casa-titulo {
+.casa-home .casa-titulo {
   --fundo-faixa: var(--c1, var(--amarelo));
   max-width: 100%;
   padding: 6px 18px 5px 12px;
@@ -696,7 +698,7 @@
   text-transform: uppercase;
 }
 
-.casa-titulo::after {
+.casa-home .casa-titulo::after {
   content: '';
   position: absolute;
   left: 6px;
