@@ -7,6 +7,7 @@ import { esc, irPara, type Rota } from '../../app';
 import { CASAS, SOCIOS } from '../../dados/casa/dados.gerado';
 import type { CasaDoClube, SocioDoClube } from '../../dados/casa/tipos';
 import { ID_OUTRO, TIMES, corDeTexto, timePorId, type Time } from '../../dados/times';
+import { faixaDoAparelho } from '../../estado';
 import { contarCliqueSocio } from '../../servidor/api';
 import { diaBrasilia } from '../../servidor/tempo';
 import { svgEstadio, svgManto, svgTaca } from './desenhos';
@@ -21,7 +22,7 @@ import {
   separarMantos,
   totalDeTitulos,
 } from './logica';
-import { linkDoSocio, primeiroCliqueDoDia, textosDoSocio } from './socio';
+import { linkDoSocio, primeiroCliqueDoDia, socioParaMostrar, textosDoSocio } from './socio';
 
 const EMAIL_ERRO = 'contato@kauewalter.com.br';
 const NOTA_CURTA =
@@ -83,7 +84,7 @@ function paginaDoClube(root: HTMLElement, casa: CasaDoClube, time: Time): void {
   const blocos = [blocoEstadio(casa, c1, c2), blocoTrofeus(casa, c1, c2), blocoRecordes(casa), blocoCores(casa, time)].filter(Boolean);
   // Só o primeiro bloco nasce aberto.
   const html = blocos.map((b, i) => (i === 0 ? b.replace('<details class="bloco-casa"', '<details class="bloco-casa" open') : b)).join('');
-  const socio = SOCIOS[casa.id];
+  const socio = socioParaMostrar(SOCIOS[casa.id], faixaDoAparelho());
 
   root.innerHTML = `
     <main class="tela casa" style="${coresDoTime(time)}">

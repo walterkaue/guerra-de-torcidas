@@ -1,6 +1,6 @@
 // Faixa etária (docs/jogo.md, seção 13). Puro: sem DOM nem relógio. Copiado para as funções do
 // servidor por `npm run compartilhar`. A faixa só decide o que é para 18+: nunca aparece na tela, no
-// card nem nas métricas por pessoa.
+// card nem nas métricas por pessoa. Única exceção: o "Ver meus dados" da própria pessoa (jogo/meusDados.ts).
 
 export const FAIXAS = ['menos_16', '16_17', '18_mais'] as const;
 
@@ -21,6 +21,8 @@ export const podeVerPush = soPara18Mais;
 export const podeVerApoio = soPara18Mais;
 /** "Oferecido por" (seção 7.5): quando o selo existir, ele passa por aqui. */
 export const podeVerOferecidoPor = soPara18Mais;
+/** "Seja sócio" na Casa do [time] (seção 7.4): leva a programa pago, então segue a regra do apoio. */
+export const podeVerSocio = soPara18Mais;
 
 /** Telas de jogo: a triagem vem antes de qualquer uma delas, inclusive pelo link de desafio. */
 const TELAS_DE_JOGO: readonly string[] = ['partida', 'prova', 'timeDoDia', 'lances', 'palpites'];

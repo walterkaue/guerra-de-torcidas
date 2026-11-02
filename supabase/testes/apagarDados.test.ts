@@ -105,6 +105,7 @@ beforeAll(async () => {
   await partida(db, bia, 25, { desafio: chave });
 
   await db.query(`insert into public.feedbacks (usuario_id, tipo, texto) values ($1, 'ideia', 'gostei do jogo')`, [ana]);
+  await db.query(`insert into public.feedbacks (usuario_id, tipo, texto) values ($1, 'bug', 'achei um bug')`, [bia]);
   await db.query(
     `insert into public.push_inscricoes (endpoint, p256dh, auth, torcedor_id) values ('https://fcm.googleapis.com/a', $1, $2, $3)`,
     ['B'.repeat(87), 'a'.repeat(22), ana],
@@ -149,9 +150,14 @@ describe('apagar meus dados', () => {
     expect(rows[0].soma).toBe(195);
   }, TEMPO);
 
-  it('o feedback fica, sem o usuário', async () => {
-    const { rows } = await db.query<{ usuario_id: string | null }>(`select usuario_id from public.feedbacks where texto = 'gostei do jogo'`);
-    expect(rows).toEqual([{ usuario_id: null }]);
+  it('a mensagem do "Achei um erro" some junto, texto e tudo (20261102000000)', async () => {
+    const { rows } = await db.query<{ n: number }>(`select count(*)::integer as n from public.feedbacks where texto = 'gostei do jogo'`);
+    expect(rows[0].n).toBe(0);
+  }, TEMPO);
+
+  it('a mensagem de outra pessoa fica', async () => {
+    const { rows } = await db.query<{ usuario_id: string }>(`select usuario_id from public.feedbacks where texto = 'achei um bug'`);
+    expect(rows).toEqual([{ usuario_id: bia }]);
   }, TEMPO);
 
   it('a outra pessoa não perde nada: a partida do desafio fica, sem o vínculo', async () => {

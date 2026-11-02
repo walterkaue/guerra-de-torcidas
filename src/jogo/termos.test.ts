@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { MARCAS_DE_RASCUNHO, termosEmHtml } from './termos';
+import { avisoDosTermos, DATA_DA_VERSAO, MARCAS_DE_RASCUNHO, termosEmHtml } from './termos';
 
 describe('texto dos termos', () => {
   it('títulos, parágrafos e listas', () => {
@@ -43,5 +43,16 @@ describe('texto dos termos', () => {
     expect(html.match(/<ol>.*?<\/ol>/)?.[0].match(/<li>/g)).toHaveLength(11);
     expect(html.match(/<dt>/g)).toHaveLength(8);
     expect(html).not.toMatch(/\*\*|\|/);
+  });
+});
+
+describe('aviso "Os Termos mudaram" na Home', () => {
+  it('aparelho que nunca guardou versão guarda a de agora, sem faixa', () => {
+    expect(avisoDosTermos(undefined)).toBe('guardar');
+    expect(avisoDosTermos('')).toBe('guardar');
+  });
+  it('mesma versão: nada; versão anterior: faixa até abrir #termos', () => {
+    expect(avisoDosTermos(DATA_DA_VERSAO)).toBe('nada');
+    expect(avisoDosTermos('31/10/2026', '15/12/2026')).toBe('mostrar');
   });
 });

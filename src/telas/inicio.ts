@@ -7,6 +7,7 @@ import { ID_OUTRO, TIMES, corDeTexto, corDoRivalNoDuelo, timePorId, type Time } 
 import { faixaDoAparelho, prefs } from '../estado';
 import { AVISO_RESENHA } from '../jogo/cravaTela';
 import { podeVerPush } from '../jogo/faixaEtaria';
+import { avisoDosTermos, DATA_DA_VERSAO } from '../jogo/termos';
 import {
   degrausDoRecorde,
   fechaSemPalpite,
@@ -122,6 +123,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
   const dono = time ?? timePorId(ID_OUTRO)!;
 
+  // Termos mudaram desde a última visita: faixa discreta até abrir #termos, sem bloquear o jogo.
+  const termos = avisoDosTermos(prefs.get().termosVistos);
+  if (termos === 'guardar') prefs.set({ termosVistos: DATA_DA_VERSAO });
+
   root.innerHTML = `
     <main class="inicio">
       <header class="cabecalho">
@@ -138,6 +143,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         </div>
         <p class="contagem rotulo"><span class="etiqueta-fase">Pré-temporada</span>Semana fecha em <strong data-contagem>${formatarContagem(msAteZerarSemana())}</strong></p>
       </header>
+
+      ${termos === 'mostrar' ? '<button class="faixa-termos" type="button" data-acao="termos">Os Termos mudaram <span>Ler</span></button>' : ''}
 
       <div data-painel-push></div>
 
@@ -221,7 +228,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     irPara({ tela: 'casa', id: time && time.id !== ID_OUTRO ? time.id : undefined }),
   );
   root.querySelector('[data-acao="feedback"]')?.addEventListener('click', () => irPara({ tela: 'feedback', de: 'inicio' }));
-  root.querySelector('[data-acao="termos"]')?.addEventListener('click', () => irPara({ tela: 'termos' }));
+  root.querySelectorAll('[data-acao="termos"]').forEach((b) => b.addEventListener('click', () => irPara({ tela: 'termos' })));
   ligarBotaoApoio(root);
   ligarBarraNavegacao(root);
 

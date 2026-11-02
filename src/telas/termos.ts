@@ -1,12 +1,31 @@
-// Termos e privacidade (#termos, docs/jogo.md, seção 13): texto em revisão e o botão "Apagar meus dados".
+// Termos e privacidade (#termos, docs/jogo.md, seção 13): texto em revisão e os botões "Ver meus dados" e
+// "Apagar meus dados".
 
 import '../estilos/termos.css';
-import { irPara, type Rota } from '../app';
+import { esc, irPara, type Rota } from '../app';
+import { timePorId } from '../dados/times';
 import texto from '../dados/termos.md?raw';
-import { limparAparelho } from '../estado';
+import { limparAparelho, prefs } from '../estado';
+import { linhasDosMeusDados, NADA_GUARDADO, resumoDaMensagem, type MeusDados } from '../jogo/meusDados';
 import { DATA_DA_VERSAO, termosEmHtml } from '../jogo/termos';
-import { apagarMeusDados, ErroServidor } from '../servidor/api';
+import { apagarMeusDados, ErroServidor, verMeusDados } from '../servidor/api';
 import { cancelarInscricaoDoAparelho } from './convitePush';
+
+/** Ficha do "Ver meus dados": só leitura, do que o servidor devolveu. */
+function htmlDosMeusDados(d: MeusDados | null): string {
+  const linhas = linhasDosMeusDados(d, (id) => timePorId(id)?.nome ?? id);
+  if (!linhas.length) return `<p>${NADA_GUARDADO}</p>`;
+  const mensagens = (d?.mensagens ?? []).map(resumoDaMensagem);
+  return `<p>O que o servidor guarda deste aparelho:</p>
+    <dl class="termos-fichas">${linhas.map((l) => `<div><dt>${esc(l.rotulo)}</dt><dd>${esc(l.valor)}</dd></div>`).join('')}</dl>
+    ${mensagens
+      .map(
+        (m) =>
+          `<div class="termos-mensagem"><p class="rotulo">${esc(m.cabeca)}</p><p>${esc(m.texto)}</p>${m.junto ? `<p><small>${esc(m.junto)}</small></p>` : ''}</div>`,
+      )
+      .join('')}
+    <p><small>As escolhas deste aparelho (som, gráficos, o que já viu) ficam só nele e não vão para o servidor.</small></p>`;
+}
 
 const AVISO_APAGAR =
   'Isso apaga seus pontos, partidas e preferências deste aparelho. Os pontos que já foram para a torcida na semana continuam no placar.';
@@ -14,6 +33,8 @@ const AVISO_APAGAR =
 export function telaTermos(root: HTMLElement, rota: Rota): void {
   if (location.hash !== '#termos') history.replaceState(null, '', `${location.pathname}${location.search}#termos`);
   const limparEndereco = () => history.replaceState(null, '', `${location.pathname}${location.search}`);
+  // Abriu a página: a faixa "Os Termos mudaram" da Home some.
+  prefs.set({ termosVistos: DATA_DA_VERSAO });
 
   root.innerHTML = `
     <main class="tela termos">
@@ -24,7 +45,11 @@ export function telaTermos(root: HTMLElement, rota: Rota): void {
       <p class="termos-versao rotulo">Versão em revisão · ${DATA_DA_VERSAO}</p>
       <article class="termos-texto">${termosEmHtml(texto)}</article>
       <section class="termos-apagar" aria-label="Seus dados">
-        <button class="botao botao-sec" type="button" data-acao="apagar" aria-haspopup="dialog">Apagar meus dados</button>
+        <div class="dupla">
+          <button class="botao botao-sec" type="button" data-acao="ver" aria-expanded="false" aria-controls="meus-dados">Ver meus dados</button>
+          <button class="botao botao-sec" type="button" data-acao="apagar" aria-haspopup="dialog">Apagar meus dados</button>
+        </div>
+        <div class="termos-dados" id="meus-dados" aria-live="polite" hidden></div>
       </section>
       <div class="folha" data-folha role="dialog" aria-modal="true" aria-describedby="apagar-aviso" aria-label="Apagar meus dados" hidden>
         <div class="folha-caixa">
@@ -48,6 +73,26 @@ export function telaTermos(root: HTMLElement, rota: Rota): void {
   const erro = root.querySelector<HTMLElement>('.termos-erro')!;
 
   if (rota.tela === 'termos' && rota.apagar) abrir.scrollIntoView({ block: 'center' });
+
+  const ver = root.querySelector<HTMLButtonElement>('[data-acao="ver"]')!;
+  const dados = root.querySelector<HTMLElement>('.termos-dados')!;
+  ver.addEventListener('click', async () => {
+    if (!dados.hidden) {
+      dados.hidden = true;
+      ver.setAttribute('aria-expanded', 'false');
+      return;
+    }
+    dados.hidden = false;
+    ver.setAttribute('aria-expanded', 'true');
+    ver.disabled = true;
+    dados.innerHTML = '<p>Buscando no servidor…</p>';
+    try {
+      dados.innerHTML = htmlDosMeusDados(await verMeusDados());
+    } catch {
+      dados.innerHTML = '<p class="termos-erro">Não deu pra buscar agora. Confere a internet e tenta de novo.</p>';
+    }
+    ver.disabled = false;
+  });
 
   const fechar = () => {
     folha.hidden = true;
