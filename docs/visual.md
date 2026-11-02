@@ -104,7 +104,7 @@ Card 'Telão do estádio' (decidido em 31/10/2026): arquibancada do clube no alt
 ### No MVP (até a fase 1.5 chegar)
 - **Sem divisões ainda:** onde está "Série A", mostrar o ranking geral da semana com os 20 times (Campeão da semana, com a Maior torcida como segunda aba). Sem faixa de rebaixamento.
 - **Sem cidade ainda:** o bloco do time não mostra cidade.
-- **Ranking** mostra só a aba Semana.
+- **Ranking** mostra as abas Semana e Temporada (desde 02/11/2026); 52 semanas e Cidades ainda não.
 - **Ranking público só de torcidas:** nenhum apelido aparece em ranking; cada pessoa vê só a própria posição.
 
 ### Bonecos
