@@ -18,7 +18,7 @@ import {
   type TimeNarrado,
 } from './escolher';
 import { FRASES, type EventoNarrador, type Frase } from './frases';
-import { etiquetasDaCobranca, etiquetasDaDefesa, eventoDaCobranca, eventoDaDefesa } from './lance';
+import { etiquetasDaCobranca, etiquetasDaDefesa, eventoDaCobranca, eventoDaDefesa, eventoDoErroNaProva } from './lance';
 import {
   coluna,
   planejarDefesa,
@@ -390,5 +390,12 @@ describe('situação do lance', () => {
     expect(eventoDaCobranca({ ...base, desfecho: 'trave' })).toBe('trave');
     expect(eventoDaCobranca({ ...base, desfecho: 'fora', y: 1.3 })).toBe('fora_cima');
     expect(eventoDaCobranca({ ...base, desfecho: 'fora', x: 1.3, y: 0.4 })).toBe('fora_lado');
+  });
+
+  it('Prova: o 1º erro diz o motivo e o 2º avisa da última vida', () => {
+    expect(eventoDoErroNaProva('errou', 1)).toBe('prova_errou');
+    expect(eventoDoErroNaProva('tempo', 1)).toBe('prova_tempo');
+    expect(eventoDoErroNaProva('errou', 2)).toBe('prova_ultima_vida');
+    expect(eventoDoErroNaProva('tempo', 2)).toBe('prova_ultima_vida');
   });
 });

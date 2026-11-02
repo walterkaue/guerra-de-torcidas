@@ -453,11 +453,19 @@ export const FRASES = {
     { t: "Pé no freio na hora certa. Pontos no bolso!" },
   ],
   prova_errou: [
+    { t: "Errou, mas a prova segue! Ainda tem vida." },
+    { t: "Escorregou, mas não caiu! Próxima pergunta." },
+    { t: "Essa a bola levou. Vai pra próxima, ainda dá!" },
     { t: "Errou com tanta certeza que até o narrador duvidou.", rara: true },
   ],
   prova_tempo: [
     { t: "O tempo acabou! O relógio não perdoa." },
     { t: "Pensou tanto que o apito soou!" },
+  ],
+  prova_ultima_vida: [
+    { t: "Última vida! A próxima pede cabeça fria." },
+    { t: "Mais um erro e o apito final soa. Respira!" },
+    { t: "Tá na bacia das almas: um erro e acaba." },
   ],
   prova_ajuda: [
     { t: "Pediu ajuda! Sem vergonha nenhuma, é estratégia." },

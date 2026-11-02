@@ -1,6 +1,7 @@
 # Banco do narrador — pênaltis, palpites, quiz, Time do Dia e Lances
 
-> Versão 1.7 · 31/10/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Versão 1.8 · 01/11/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Mudanças da 1.8: três erros e fora na Prova: 3 frases comuns em `prova_errou` e situação nova `prova_ultima_vida` (aprovadas pelo Kauê em 01/11/2026).
 > Mudanças da 1.7: seção 13, **aviso de domingo** (push sem urgência); sai `dia_sequencia` do Time do Dia (sem sequência de dias, `jogo.md` seção 13).
 > Mudanças da 1.6: seção 12, **Lances do Jogo** (abertura, barreira, lance recriado e fim); nas jogadas, os Lances reaproveitam as frases da seção 3 que não falam de pênalti.
 > Mudanças da 1.5: 7 frases de tiozão trocadas (fila do banco, manchete, capa de jornal, picolé, primeira pedra, caneta, doutorado); glossário novo ("Pênaltis", "Chamar no X1", "em teste"): frases de X1 sem "duvido" e "desafio", e o convite do link virou texto fixo (sai `desafio_convite`).
@@ -547,6 +548,8 @@ Cuidado extra: o narrador **nunca** fala da pessoa real da pergunta (nem elogio,
 | `{numero}` | número da pergunta (1 a 8) |
 | `{levar}` | pontos garantidos se parar agora |
 
+Só uma frase por erro. O 3º erro não tem grito: a partida acaba e quem fala é `prova_fim`. O mesmo vale para o 2º erro na pergunta 8, sem nada pela frente.
+
 ### `prova_abertura`
 - Prova de Boleiro! Oito perguntas, quinze segundos cada.
 - Hora de mostrar que entende de bola, não só de grito.
@@ -571,12 +574,20 @@ Cuidado extra: o narrador **nunca** fala da pessoa real da pergunta (nem elogio,
 - Garantiu {levar} {pro_time}. Jogo inteligente!
 - Pé no freio na hora certa. Pontos no bolso!
 
-### `prova_errou`
+### `prova_errou` — 1º erro, a prova segue
+- Errou, mas a prova segue! Ainda tem vida.
+- Escorregou, mas não caiu! Próxima pergunta.
+- Essa a bola levou. Vai pra próxima, ainda dá!
 - ⭐ Errou com tanta certeza que até o narrador duvidou.
 
-### `prova_tempo`
+### `prova_tempo` — 1º erro, por tempo
 - O tempo acabou! O relógio não perdoa.
 - Pensou tanto que o apito soou!
+
+### `prova_ultima_vida` — 2º erro, por resposta ou por tempo, com pergunta pela frente
+- Última vida! A próxima pede cabeça fria.
+- Mais um erro e o apito final soa. Respira!
+- Tá na bacia das almas: um erro e acaba.
 
 ### `prova_ajuda` — etiqueta com a ajuda usada: `[tira_duas]`, `[arquibancada]` ou `[troca]`
 - Pediu ajuda! Sem vergonha nenhuma, é estratégia.

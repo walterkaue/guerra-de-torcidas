@@ -11,6 +11,7 @@ import { AVISO_PRE_TEMPORADA } from '../jogo/posicao';
 /** Nome do degrau na tela: "Média" sozinho parecia média de pontos. */
 const ROTULO_DEGRAU: Record<Degrau, string> = { ...NOME_DEGRAU, 2: 'Nível médio' };
 import { criarNarrador } from '../narrador/sessao';
+import { eventoDoErroNaProva } from '../narrador/lance';
 import type { ContextoNarrador } from '../narrador/escolher';
 import type { EventoNarrador } from '../narrador/frases';
 import {
@@ -286,7 +287,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
         if (botao) papelPicadoNaTela(botao, [time.cores[0], time.cores[1], '#ffd23f']);
       }
       // No 3º erro a partida acaba: o grito de "segue" não cabe, quem fala é o fim da prova.
-      else if (!r.fim) gritar(falar(r.desfecho === 'tempo' ? 'prova_tempo' : 'prova_errou'));
+      else if (!r.fim) gritar(falar(eventoDoErroNaProva(r.desfecho, errosFeitos)));
 
       pausa = window.setTimeout(() => {
         if (saiu) return;
