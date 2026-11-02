@@ -191,12 +191,14 @@ export async function painelDoAviso(el: HTMLElement, aoMudar: (ligado: boolean) 
   }
   el.querySelector('[data-acao="push-fechar"]')?.addEventListener('click', () => (el.innerHTML = ''));
   // Teste local (sem servidor): se esta notificação não aparecer, o bloqueio é do aparelho ou do navegador.
+  // Texto com cara de jogo, sem falar do "aparelho" nem de "teste": o filtro anti-spam do Chrome
+  // no Android marca como suspeita a notificação que imita alerta do sistema.
   el.querySelector('[data-acao="push-testar"]')?.addEventListener('click', async () => {
     const nota = el.querySelector<HTMLElement>('[data-teste-push]')!;
     try {
       const reg = await navigator.serviceWorker.ready;
-      await reg.showNotification('🔔 Teste do aviso de domingo', {
-        body: 'Se você está lendo isto, o aparelho mostra os avisos do jogo.',
+      await reg.showNotification('Guerra de Torcidas', {
+        body: 'Aviso de domingo ligado. É por aqui que chega o placar da sua torcida na semana.',
         icon: '/icones/icone-192.png',
         tag: 'teste-aviso',
       });
