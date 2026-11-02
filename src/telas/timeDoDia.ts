@@ -2,8 +2,9 @@
 // chute. O secreto fica só no servidor; aqui é a lista com busca, a grade e o resultado (com o card).
 
 import { esc, irPara, type Rota } from '../app';
-import { corDeTexto, timePorId, TIMES, type Time } from '../dados/times';
+import { corDeTexto, ID_OUTRO, proTime, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
+import { mostrarCard, prontoParaDesenhar, seloNivel } from '../jogo/card';
 import { desenharCardDia } from '../jogo/cardDia';
 import { conviteDia } from '../jogo/convites';
 import { AVISO_PRE_TEMPORADA, htmlPosicao } from '../jogo/posicao';
@@ -28,6 +29,13 @@ import {
   type EstadoDoDia,
 } from '../servidor/api';
 import { sincronizarTorcedor } from '../servidor/torcedor';
+import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
+import { bomMomentoDoDia } from '../jogo/apoio';
+import { oferecerApoio } from './apoio';
+import { convidarParaAvisos } from './convitePush';
+import { bolinha, icone } from './icones';
+import { vibrar } from './toque';
+import { papelPicadoNaTela } from './papelPicado';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 /** Quantos clubes a busca mostra de uma vez (a lista inteira tem 60). */
@@ -125,11 +133,11 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
 
       <section class="dia-como" data-como ${mostrarComo ? '' : 'hidden'}>
         <ul class="cj-passos">
-          <li><span class="cj-icone" aria-hidden="true">🔎</span><p><strong>Um clube secreto por dia</strong>, o mesmo pra todo mundo. Clubes das Séries A, B e C de 2026. Troca às 00h.</p></li>
-          <li><span class="cj-icone" aria-hidden="true">⚽</span><p><strong>6 chutes.</strong> Escolha um clube na busca e veja as pistas.</p></li>
-          <li><span class="cj-icone" aria-hidden="true">🟢</span><p><strong>🟢 igual, 🟡 perto, ⚪ longe.</strong> Estado (🟡 = mesma região), fundação (🟡 = até 10 anos), títulos do Brasileirão (🟡 = até 2), série, as 2 cores (🟡 = uma igual) e capital ou interior.</p></li>
+          <li><span class="cj-icone">${icone('lupa')}</span><p><strong>Um clube secreto por dia</strong>, o mesmo pra todo mundo. Clubes das Séries A, B e C de 2026. Troca às 00h.</p></li>
+          <li><span class="cj-icone">${icone('bola')}</span><p><strong>6 chutes.</strong> Escolha um clube na busca e veja as pistas.</p></li>
+          <li><span class="cj-icone">${bolinha('certo')}</span><p><strong>${bolinha('certo')} igual, ${bolinha('perto')} perto, ${bolinha('longe')} longe.</strong> Estado (${bolinha('perto')} = mesma região), fundação (${bolinha('perto')} = até 10 anos), títulos do Brasileirão (${bolinha('perto')} = até 2), série, as 2 cores (${bolinha('perto')} = uma igual) e capital ou interior.</p></li>
           <li><span class="cj-icone" aria-hidden="true">↑</span><p><strong>↑ ou ↓</strong> no ano e nos títulos: o secreto tem número maior (fundado depois, mais títulos) ou menor.</p></li>
-          <li><span class="cj-icone" aria-hidden="true">🏆</span><p><strong>Pontos:</strong> 100 de primeira, depois 85, 70, 55, 40 e 25.</p></li>
+          <li><span class="cj-icone">${icone('trofeu')}</span><p><strong>Pontos:</strong> 100 de primeira, depois 85, 70, 55, 40 e 25.</p></li>
         </ul>
         <label class="cj-check"><input type="checkbox" data-pular> Não exibir de novo</label>
       </section>
@@ -188,6 +196,8 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       `<li class="dia-linha vazia"><p class="dia-chute">${e.tentativas.length + i + 1}º chute</p>
         <div class="dia-celulas">${NOMES_PISTAS.map(() => '<span class="dia-cel"></span>').join('')}</div></li>`);
     elGrade.innerHTML = [...feitas, ...vazias].join('');
+    // Depois do primeiro chute as regras saem da frente (o "?" abre de novo); senão o resultado some lá embaixo.
+    if (e.tentativas.length > 0) $('[data-como]').hidden = true;
   }
 
   // ---------- busca ----------
@@ -291,14 +301,16 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     const e = estado!;
     elChutar.hidden = true;
     const n = e.tentativas.length;
+    // Primeira vez que o fim aparece nesta visita (não ao reabrir a tela já jogada).
+    const festejar = !frasesFinais.length && e.acertou;
     if (!frasesFinais.length) {
+      vibrar(e.acertou ? 'acerto' : 'erro');
       const f1 = e.acertou
         ? n === 1
           ? narrador.falar('dia_acertou_primeira')
           : narrador.falar('dia_acertou', { tentativas: n })
         : narrador.falar('dia_errou');
-      const f2 = e.sequencia > 1 ? narrador.falar('dia_sequencia', { dias: e.sequencia }) : null;
-      frasesFinais = [f1, f2].filter((f): f is string => !!f);
+      frasesFinais = f1 ? [f1] : [];
     }
     if (frasesFinais[0]) gritar(frasesFinais[0]);
 
@@ -306,9 +318,18 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     const grade = gradeEmoji(e.tentativas.map((t) => t.pistas));
     const link = `${SITE}/?dia`;
     const novoRecorde = !!e.desempenho?.novoRecorde;
-    const linha = linhaDoCard(e.numero, placar, e.sequencia, novoRecorde);
+    const linha = linhaDoCard(e.numero, placar, novoRecorde);
     const textoShare = `${linha}\n${grade}\n${conviteDia(n, e.acertou)} ${link}`;
     const situacao = `+${e.pontos} na semana, além das 5 partidas do dia.`;
+    // Casa do [time]: só depois que o dia termina (antes daria pista) e só para clube da Série A.
+    const timeCasa = timePorId(e.secreto?.id);
+    const casa =
+      timeCasa && timeCasa.id !== ID_OUTRO
+        ? `<button class="link-casa" type="button" data-acao="casa">
+            <span class="rotulo">Conheça a Casa ${timeCasa.artigo === 'a' ? 'da' : 'do'} ${esc(timeCasa.nome)}</span>
+            <small>Estádio, troféus, recordes e cores</small>
+          </button>`
+        : '';
 
     elFim.innerHTML = `
       <div class="dia-revelado faixa-tv">
@@ -317,14 +338,17 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       </div>
       <div class="dia-placar">
         <strong>${placar}</strong>
-        <span>${e.acertou ? `${e.pontos} pontos` : 'sem pontos hoje'}${e.sequencia > 1 ? ` · 🔥 ${e.sequencia} dias` : ''}</span>
+        <span>${e.acertou ? `${e.pontos} pontos` : 'sem pontos hoje'}</span>
       </div>
-      ${frasesFinais[1] ? `<p class="adesivo segundo">${esc(frasesFinais[1])}</p>` : ''}
       <p class="situacao">${esc(situacao)}</p>
+      ${casa}
+      <div data-convite-push></div>
+      <div class="res-apoio" data-apoio></div>
       ${htmlPosicao(e.desempenho, 'dia')}
+      <div class="res-carreira" data-carreira hidden></div>
       <p class="dia-proximo rotulo">Próximo time em <strong data-relogio>${formatarRelogio(Date.parse(e.proximoEm) - Date.now())}</strong></p>
       <section class="res-compartilhar">
-        <a class="botao botao-zap" target="_blank" rel="noopener"
+        <a class="botao botao-zap" data-sem-aviso target="_blank" rel="noopener"
           href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Mandar no grupo</a>
         <div class="trio">
           <button class="botao botao-sec" type="button" data-acao="share">Stories</button>
@@ -341,6 +365,10 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
         <button class="botao" type="button" data-acao="jogar">Pênaltis<small>bora jogar mais</small></button>
       </div>`;
     elFim.hidden = false;
+    // Bom momento para oferecer o aviso de domingo: acertou o time do dia.
+    if (e.acertou) convidarParaAvisos(elFim.querySelector<HTMLElement>('[data-convite-push]'));
+    oferecerApoio(elFim.querySelector<HTMLElement>('[data-apoio]'), bomMomentoDoDia({ acertou: e.acertou }));
+    if (festejar) papelPicadoNaTela(elFim.querySelector('.dia-placar') ?? elFim, [time.cores[0], time.cores[1], '#ffd23f']);
 
     const elRelogio = elFim.querySelector<HTMLElement>('[data-relogio]')!;
     clearInterval(relogio);
@@ -353,25 +381,28 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       }
     }, 1000);
 
+    // Carreira: só com o servidor (o XP sai de lá); reabrir o dia já feito não mostra nada (XP igual).
+    if (e.desempenho) mostrarCarreiraNoResultado(elFim.querySelector<HTMLElement>('[data-carreira]'));
+
     // ---------- card ----------
     const img = elFim.querySelector<HTMLImageElement>('.card')!;
     const cardPronto = (async () => {
-      try {
-        await Promise.all([document.fonts.load('400 100px Anton'), document.fonts.load('700 40px Barlow')]);
-      } catch {
-        // segue com a fonte que tiver
-      }
+      await prontoParaDesenhar();
       const canvas = desenharCardDia({
         time,
+        apelido: prefs.get().apelido,
+        paraTime: proTime(time),
         numero: e.numero,
         placar,
-        dias: e.sequencia,
-        grade,
+        pistas: e.tentativas.map((t) => t.pistas),
+        pontos: e.pontos,
         frase: frasesFinais[0] ?? '',
         novoRecorde,
         link: link.replace('https://', ''),
       });
-      img.src = canvas.toDataURL('image/png');
+      const nivel = await nivelParaCard();
+      if (nivel) seloNivel(canvas, nivel);
+      await mostrarCard(img, canvas);
       return canvas;
     })();
 
@@ -418,6 +449,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       }
     });
     elFim.querySelector('[data-acao="inicio"]')?.addEventListener('click', () => irPara({ tela: 'inicio' }));
+    elFim.querySelector('[data-acao="casa"]')?.addEventListener('click', () => irPara({ tela: 'casa', id: timeCasa?.id }));
     elFim.querySelector('[data-acao="jogar"]')?.addEventListener('click', () => irPara({ tela: 'partida' }));
   }
 

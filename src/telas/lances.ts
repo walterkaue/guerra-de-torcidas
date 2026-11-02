@@ -1,5 +1,5 @@
 // Lances do Jogo (docs/jogo.md, seção 7.3): hub com três abas. Pênaltis abre o jogo de sempre (telas/partida.ts,
-// valendo pontos); Faltas e Cara a cara têm o álbum (filtro de clube, ficha, partida de 3 e treino), em teste e
+// valendo pontos), livre ou com o cenário de uma disputa histórica (seção 6); Faltas e Cara a cara têm o álbum (filtro de clube, ficha, partida de 3 e treino), em teste e
 // ainda sem valer pontos. Quem decide o lance é o motor puro (jogo/lances.ts); aqui é escolha, gesto e desenho,
 // na cena 3D (telas/cena3d.ts) com a câmera de cada tipo (telas/camera.ts).
 
@@ -23,10 +23,17 @@ import { normalizarCobranca, type GestoCobranca } from '../jogo/penaltis';
 import { destravarSom, somApito, somChute, somTorcida } from '../jogo/som';
 import { etiquetasDoLance, eventoDoLance } from '../narrador/lance';
 import { criarNarrador } from '../narrador/sessao';
-import { criarBoneco, novaPose, poseChute, poseComemora, poseLamenta, poseParado, sortearAparencia, uniformesDaPartida } from './bonecos';
+import { SELECAO, TORCIDA_SELECAO, coresDoAdversario, roupaDoBatedorGoleiro } from '../dados/coresDosLances';
+import { contraAdversario } from '../dados/adversarios';
+import { DISPUTAS } from '../dados/disputas';
+import { chamadaDaDisputa, disputasDoTorcedor, type Disputa } from '../jogo/disputas';
+import { criarBoneco, novaPose, type Boneco, poseChute, poseComemora, poseLamenta, poseParado, sortearAparencia, uniformesDaPartida } from './bonecos';
 import { ENQUADRAMENTOS } from './camera';
 import { facil, limitar01 } from './cena';
 import { criarCena3d } from './cena3d';
+import { ANTES_DO_CORTE, criarReplay, montarTarjaDoReplay, type Replay } from './replay';
+import { icone, type NomeIcone } from './icones';
+import { aoMudarQualidade, medirQuadros, qualidade } from './qualidade';
 
 export const AVISO_EM_TESTE = 'Em teste: Faltas e Cara a cara ainda não valem pontos.';
 
@@ -37,8 +44,6 @@ const ABAS: { id: AbaLances; rotulo: string; nota: string }[] = [
   { id: 'finalizacao', rotulo: 'Cara a cara', nota: 'em teste' },
 ];
 
-/** A Seleção entra como coleção extra, aberta a todos (só nome e cores). */
-const SELECAO = { nome: 'Seleção', cores: ['#ffd200', '#00843d'] as [string, string] };
 const ROTULO_FAIXA: Record<Faixa, string> = { facil: 'Fácil', media: 'Média', dificil: 'Difícil', craque: 'Craque' };
 
 const DUR_BATIDA = 190;
@@ -46,6 +51,8 @@ const DUR_BATIDA = 190;
 const METROS_POR_MS = 0.026;
 const DUR_PULO = 420;
 const DUR_PAUSA = 1800;
+/** Depois de um gol, o replay de TV entra antes (a frase do narrador continua por cima). */
+const DUR_ANTES_DO_REPLAY = 1100;
 /** "A jogada" no cara a cara: a bola chega até o pé antes do chute. */
 const DUR_CHEGADA = 1300;
 
@@ -56,6 +63,16 @@ export function clubeDoLance(clube: string): { nome: string; cores: readonly [st
 }
 
 const distanciaDoLance = (l: Lance) => Math.hypot(l.bola.x, l.bola.z);
+
+/** Batedor nas cores do clube do lance, barreira e goleiro nas do adversário de verdade. */
+function elencoDoLance(l: Lance): { batedor: Boneco; goleiro: Boneco; barreira: Boneco[] } {
+  const u = uniformesDaPartida(clubeDoLance(l.clube).cores, coresDoAdversario(l.adversario), 0);
+  return {
+    batedor: criarBoneco(sortearAparencia(), roupaDoBatedorGoleiro(l.id) ?? u.jogador, false),
+    goleiro: criarBoneco(sortearAparencia(), u.goleiroAdversario, true),
+    barreira: Array.from({ length: 6 }, () => criarBoneco(sortearAparencia(), u.adversario, true)),
+  };
+}
 
 /** Uma linha do que o lance pede: tipo, distância, lado e barreira ou goleiro. */
 export function situacaoDoLance(l: Lance): string {
@@ -74,7 +91,7 @@ function legenda(r: ResultadoLance): string {
   return r.desfecho === 'trave' ? 'Na trave' : 'Pra fora';
 }
 
-const EMOJI: Record<ResultadoLance['desfecho'], string> = { gol: '⚽', defesa: '🧤', barreira: '🧱', trave: '❌', fora: '❌' };
+const ICONE: Record<ResultadoLance['desfecho'], NomeIcone> = { gol: 'bola', defesa: 'mao', barreira: 'barreira', trave: 'xis', fora: 'xis' };
 
 const relogio = () => performance.now();
 
@@ -85,6 +102,31 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   let escolhidos: Lance[] = [];
   let filtroClube = LANCES.some((l) => l.clube === time.id) ? time.id : 'todos';
   let limparJogo: (() => void) | null = null;
+  // ?disputasFalsas enche a lista em desenvolvimento, enquanto o catálogo está em rascunho (src/dev/disputasFalsas.ts).
+  let catalogoDisputas: readonly Disputa[] = DISPUTAS;
+  if (import.meta.env.DEV && new URLSearchParams(location.search).has('disputasFalsas')) {
+    void import('../dev/disputasFalsas').then((m) => {
+      catalogoDisputas = m.DISPUTAS_FALSAS;
+      if (aba === 'penaltis' && root.querySelector('.lances-conteudo')) conteudo();
+    });
+  }
+
+  /** Uma disputa da lista: tocar abre a ficha e o botão de jogar, como no álbum. */
+  function itemDaDisputa(d: Disputa): string {
+    const clube = clubeDoLance(d.clube);
+    return `<li class="lance" style="${estilo(clube.cores)}">
+      <button type="button" class="lance-topo" aria-expanded="false">
+        <span class="lance-titulo">${esc(d.titulo)}</span>
+        <span class="lance-meta">${esc(contraAdversario(d.adversario))} · ${d.data.slice(0, 4)}</span>
+        <span class="lance-pontos disputa-placar">${esc(d.placar)}</span>
+      </button>
+      <div class="lance-ficha" hidden>
+        <p>${esc(d.ficha)}</p>
+        <p class="lance-situacao rotulo">${esc(chamadaDaDisputa(d))}</p>
+        <button type="button" class="botao" data-disputa="${esc(d.id)}">Jogar essa disputa</button>
+      </div>
+    </li>`;
+  }
 
   // ---------- hub ----------
   function hub(): void {
@@ -117,19 +159,40 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   function conteudo(): void {
     const el = root.querySelector<HTMLElement>('.lances-conteudo')!;
     if (aba === 'penaltis') {
+      const { doTime, daSelecao } = disputasDoTorcedor(catalogoDisputas, time.id);
+      const secao = (rotulo: string, lista: Disputa[]) =>
+        lista.length ? `<p class="rotulo lances-secao">${esc(rotulo)}</p><ul class="lista-lances">${lista.map(itemDaDisputa).join('')}</ul>` : '';
+      const historicas =
+        secao(`Disputas históricas ${time.artigo === 'a' ? 'da' : 'do'} ${time.nome}`, doTime) + secao('Disputas históricas da Seleção', daSelecao);
       el.innerHTML = `
         <p class="lances-aviso rotulo" role="note">Pênaltis valem pontos como sempre</p>
         <button type="button" class="lance-card" data-acao="disputa-livre">
           <span class="lance-titulo">Disputa livre</span>
           <span class="lance-meta">Bate 5, pega 5, contra a máquina. Empatou? Morte súbita.</span>
         </button>
-        <p class="rotulo lances-secao">Disputas históricas</p>
-        <p class="lance-card lance-card-breve">
-          <span class="lance-titulo">Em breve</span>
-          <span class="lance-meta">Disputas de pênaltis que o seu time venceu, contra o adversário de verdade, e as da Seleção.</span>
-        </p>
+        ${
+          historicas ||
+          `<p class="rotulo lances-secao">Disputas históricas</p>
+          <p class="lance-card lance-card-breve">
+            <span class="lance-titulo">Em breve</span>
+            <span class="lance-meta">Disputas de pênaltis que o seu time venceu, contra o adversário de verdade, e as da Seleção.</span>
+          </p>`
+        }
         <button class="botao" type="button" data-acao="disputa-livre">Bater a disputa livre</button>`;
       el.querySelectorAll('[data-acao="disputa-livre"]').forEach((b) => b.addEventListener('click', () => irPara({ tela: 'partida' })));
+      el.querySelectorAll<HTMLButtonElement>('.lance-topo').forEach((b) =>
+        b.addEventListener('click', () => {
+          const aberto = b.getAttribute('aria-expanded') === 'true';
+          b.setAttribute('aria-expanded', String(!aberto));
+          b.nextElementSibling?.toggleAttribute('hidden', aberto);
+        }),
+      );
+      el.querySelectorAll<HTMLButtonElement>('[data-disputa]').forEach((b) =>
+        b.addEventListener('click', () => {
+          const disputa = catalogoDisputas.find((d) => d.id === b.dataset.disputa);
+          if (disputa) irPara({ tela: 'partida', disputa });
+        }),
+      );
       return;
     }
     const tipo = aba;
@@ -248,7 +311,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           ${lances
             .map((l, i) => {
               const r = resultados[i];
-              return `<li><span class="emoji" aria-hidden="true">${EMOJI[r.desfecho]}</span>
+              return `<li><span class="emoji">${icone(ICONE[r.desfecho])}</span>
                 <span class="resumo-titulo">${esc(l.titulo)}<small>${esc(legenda(r))}</small></span>
                 <strong>${r.pontos ? `+${r.pontos}` : '0'}</strong></li>`;
             })
@@ -296,14 +359,13 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     const elMudo = root.querySelector<HTMLButtonElement>('.mudo')!;
     const reduzido = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const cena = criarCena3d(canvas, { cores: time.cores, relogio, reduzido });
+    const tarja = montarTarjaDoReplay(root.querySelector<HTMLElement>('main')!);
     const { c } = cena;
     const narrador = criarNarrador(time, prefs.get().apelido);
 
-    // Elenco sorteado com o gerador do visual (nunca a semente): você contra a máquina.
-    const u = uniformesDaPartida(time.cores, null, Math.random() < 0.5 ? 0 : 1);
-    const batedor = criarBoneco(sortearAparencia(), u.jogador, false);
-    const goleiro = criarBoneco(sortearAparencia(), u.goleiroAdversario, true);
-    const barreira = Array.from({ length: 6 }, () => criarBoneco(sortearAparencia(), u.adversario, true));
+    // Cada lance veste os dois times dele; os rostos saem do gerador do visual (nunca da semente).
+    let { batedor, goleiro, barreira } = elencoDoLance(lances[0]);
+    let vestido = lances[0].id;
     const poseBatedor = novaPose();
     const poseBarreira = novaPose();
 
@@ -315,7 +377,8 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       | { tipo: 'chegada'; inicio: number }
       | { tipo: 'mirar'; inicio: number }
       | { tipo: 'chute'; inicio: number; r: ResultadoLance; em: (t: number) => { x: number; y: number; z: number }; dur: number }
-      | { tipo: 'pausa'; inicio: number; r: ResultadoLance; em: (t: number) => { x: number; y: number; z: number } };
+      | { tipo: 'pausa'; inicio: number; r: ResultadoLance; em: (t: number) => { x: number; y: number; z: number }; dur: number }
+      | { tipo: 'replay'; replay: Replay };
     let fase: Fase = { tipo: 'mirar', inicio: relogio() };
     let rastro: { x: number; y: number }[] = [];
     let acabou = false;
@@ -345,12 +408,17 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     function atualizarHud(): void {
       root.querySelector('[data-contagem]')!.textContent = treino ? `Tentativa ${tentativa + 1}` : `Lance ${indice + 1} de ${lances.length}`;
       if (!treino) root.querySelector('[data-pontos]')!.textContent = `${resultados.reduce((s, r) => s + r.pontos, 0)} pts`;
-      elMudo.textContent = prefs.get().mudo ? '🔇' : '🔊';
+      elMudo.innerHTML = icone(prefs.get().mudo ? 'mudo' : 'som');
     }
 
     /** Começa o lance: câmera do tipo, situação no topo e, no cara a cara, "A jogada" com a bola chegando. */
     function comecarLance(): void {
+      if (atual().id !== vestido) {
+        vestido = atual().id;
+        ({ batedor, goleiro, barreira } = elencoDoLance(atual()));
+      }
       const l = atual();
+      cena.trocarTorcida(l.clube === 'selecao' ? TORCIDA_SELECAO : undefined);
       cena.definirLance(l.bola, l.tipo === 'falta' ? ENQUADRAMENTOS.falta : ENQUADRAMENTOS.caraACara);
       rastro = [];
       elInstrucao.textContent = `${l.titulo} · ${situacaoDoLance(l)}`;
@@ -379,16 +447,47 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       somChute();
     }
 
-    function fimDoChute(r: ResultadoLance, em: (t: number) => { x: number; y: number; z: number }): void {
-      fase = { tipo: 'pausa', inicio: relogio(), r, em };
+    function fimDoChute(r: ResultadoLance, em: (t: number) => { x: number; y: number; z: number }, dur: number): void {
+      fase = { tipo: 'pausa', inicio: relogio(), r, em, dur };
       narrar(narrador.falar(eventoDoLance(r), { etiquetas: etiquetasDoLance(r) }), legenda(r));
       if (r.desfecho === 'gol') {
         const q = cena.projetar(em(1));
         cena.comemorar(q.x, q.y, r.pontos);
-      }
+      } else if (r.desfecho === 'trave') cena.baterNaTrave();
       somTorcida(r.desfecho === 'gol' ? 'festa' : 'uuuh');
       if (!treino) resultados.push(r);
       atualizarHud();
+    }
+
+    /** Replay de TV do gol: o mesmo chute, de trás do gol e em câmera lenta (telas/replay.ts). */
+    function comecarReplay(r: ResultadoLance, em: (t: number) => { x: number; y: number; z: number }, dur: number): void {
+      const l = atual();
+      const k = posicaoDoGoleiro(r.goleiroX);
+      const fim = em(r.tFim);
+      const replay = criarReplay(
+        cena,
+        {
+          bola: l.bola,
+          enquadramento: l.tipo === 'falta' ? ENQUADRAMENTOS.falta : ENQUADRAMENTOS.caraACara,
+          em: (t) => em(t * r.tFim),
+          voo: dur,
+          cavadinha: r.cavadinha,
+          goleiro: { x: k.x, z: k.z, alvo: { x: fim.x, y: fim.y }, alcance: 0.55 },
+          barreira: l.barreira,
+          batedor,
+          goleiroBoneco: goleiro,
+          bonecosDaBarreira: barreira,
+        },
+        relogio(),
+      );
+      fase = { tipo: 'replay', replay };
+    }
+
+    function fimDoReplay(): void {
+      if (fase.tipo !== 'replay') return;
+      fase.replay.encerrar();
+      tarja.sair();
+      proximo();
     }
 
     function proximo(): void {
@@ -426,7 +525,16 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
 
     function quadro(agora: number): void {
       if (acabou) return;
+      const inicioQuadro = performance.now();
       c.save();
+      if (fase.tipo === 'replay') {
+        const falta = fase.replay.quadro(agora);
+        c.restore();
+        if (falta <= ANTES_DO_CORTE) tarja.sair();
+        if (falta <= 0) fimDoReplay();
+        raf = requestAnimationFrame(() => quadro(relogio()));
+        return;
+      }
       cena.desenharFundo(agora);
       const l = atual();
       const x0 = goleiroAntesDoChute(semente, indiceDoSorteio(), l);
@@ -469,7 +577,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           cena.desenharBatedor(batedor, poseChute(ms, r.cavadinha, poseBatedor), avanco);
           const bola = em(t * r.tFim);
           cena.desenharBola3d(bola, t * 14);
-          if (t >= 1) fimDoChute(r, em);
+          if (t >= 1) fimDoChute(r, em, dur);
           break;
         }
         case 'pausa': {
@@ -484,13 +592,33 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           cena.desenharBatedor(batedor, r.desfecho === 'gol' ? poseComemora(ms, poseBatedor) : poseLamenta(ms, poseBatedor), 1);
           // A bola cai onde parou (na rede, na barreira, na luva) e fica no chão.
           const cai = limitar01(ms / 350);
-          if (r.desfecho !== 'fora') cena.desenharBola3d({ x: fim.x, y: fim.y * (1 - cai), z: r.desfecho === 'gol' ? -0.6 * cai : fim.z });
-          if (ms >= DUR_PAUSA) proximo();
+          if (r.desfecho === 'trave' || r.desfecho === 'barreira') {
+            // Volta para o campo quicando duas vezes, na direção de onde veio (só desenho).
+            const t = limitar01(ms / 800);
+            const e = facil(t);
+            const volta = r.desfecho === 'trave' ? 4 : 2.5;
+            const d = Math.hypot(l.bola.x - fim.x, l.bola.z - fim.z) || 1;
+            cena.desenharBola3d(
+              {
+                x: fim.x + ((l.bola.x - fim.x) / d) * volta * e,
+                y: fim.y * Math.abs(Math.cos(t * Math.PI * 1.5)) * (1 - t) * (1 - t),
+                z: fim.z + ((l.bola.z - fim.z) / d) * volta * e,
+              },
+              t * 10,
+            );
+          } else if (r.desfecho !== 'fora') cena.desenharBola3d({ x: fim.x, y: fim.y * (1 - cai), z: r.desfecho === 'gol' ? -0.6 * cai : fim.z });
+          const comReplay = r.desfecho === 'gol' && !reduzido && qualidade().replay;
+          if (comReplay && ms >= DUR_ANTES_DO_REPLAY - ANTES_DO_CORTE) tarja.entrar();
+          if (ms >= (comReplay ? DUR_ANTES_DO_REPLAY : DUR_PAUSA)) {
+            if (comReplay) comecarReplay(r, fase.em, fase.dur);
+            else proximo();
+          }
           break;
         }
       }
       cena.desenharPontos(agora);
       c.restore();
+      medidor.quadro(performance.now() - inicioQuadro);
       raf = requestAnimationFrame(() => quadro(relogio()));
     }
 
@@ -501,6 +629,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     };
     canvas.addEventListener('pointerdown', (e) => {
       destravarSom();
+      if (fase.tipo === 'replay') return fimDoReplay();
       if (fase.tipo !== 'mirar') return;
       try {
         canvas.setPointerCapture(e.pointerId);
@@ -540,9 +669,13 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     if (treino) narrar(null, 'Treino: tente quantas vezes quiser');
     else narrar(narrador.falar('lance_abertura'));
     somApito();
+    // Qualidade automática: mede os quadros e, se o nível mudar, refaz o canvas.
+    const medidor = medirQuadros();
+    const pararDeOuvirQualidade = aoMudarQualidade(() => cena.medir());
     let raf = requestAnimationFrame(() => quadro(relogio()));
     limparJogo = () => {
       acabou = true;
+      pararDeOuvirQualidade();
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', aoRedimensionar);
     };

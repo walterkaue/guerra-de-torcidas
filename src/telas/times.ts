@@ -14,6 +14,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
         <button class="voltar" type="button" aria-label="Voltar">‹</button>
         <h2>Qual é a sua torcida?</h2>
       </header>
+      ${rota.tela === 'times' && rota.desafio ? '<p class="campo-dica">É só escolher o time: o X1 que te mandaram começa em seguida.</p>' : ''}
 
       <div class="grade-times" role="radiogroup" aria-label="Times">
         ${TIMES.map(
@@ -80,5 +81,12 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
     irPara(depois === 'partida' ? { tela: 'partida', desafio } : depois === 'prova' ? { tela: 'prova', desafio } : { tela: depois });
   });
 
-  root.querySelector('.voltar')?.addEventListener('click', () => irPara({ tela: depois === 'palpites' ? 'palpites' : 'inicio' }));
+  root.querySelector('.voltar')?.addEventListener('click', () =>
+    irPara({ tela: depois === 'palpites' || depois === 'perfil' ? depois : 'inicio' }),
+  );
+
+  if (rota.tela === 'times' && rota.apelido) {
+    input.scrollIntoView({ block: 'center' });
+    input.focus({ preventScroll: true });
+  }
 }

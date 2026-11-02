@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ENQUADRAMENTOS, cameraAtrasDaBola } from './camera';
+import { ENQUADRAMENTOS, cameraAtrasDaBola, cameraDoReplay } from './camera';
 
 const W = 390;
 const H = 844;
@@ -53,3 +53,37 @@ describe('câmera dos Lances', () => {
     expect(cam.projetar({ x: 0, y: 0, z: 40 }).prof).toBeLessThan(0);
   });
 });
+
+describe('câmera do replay (atrás do gol)', () => {
+  // Pênalti, falta pela direita e pela esquerda, cara a cara; bola entrando nos dois cantos de cima.
+  const lances = [
+    { x: 0, z: 11 },
+    { x: 6, z: 24 },
+    { x: -7, z: 22 },
+    { x: 3, z: 8 },
+  ];
+  for (const bola of lances) {
+    for (const canto of [-0.85, 0.85]) {
+      it(`bola em (${bola.x}, ${bola.z}) entrando em x = ${canto}: o canto e a bola ficam no quadro`, () => {
+        const cam = cameraDoReplay(bola, canto * 3.66, W, H);
+        const fim = cam.projetar({ x: canto * 3.66, y: 0.85 * 2.44, z: 0 });
+        const inicio = cam.projetar({ x: bola.x, y: 0, z: bola.z });
+        for (const q of [fim, inicio]) {
+          expect(q.prof).toBeGreaterThan(0);
+          expect(q.x).toBeGreaterThan(0);
+          expect(q.x).toBeLessThan(W);
+          expect(q.y).toBeGreaterThan(0);
+          expect(q.y).toBeLessThan(H);
+        }
+        // De trás do gol, o gol fica embaixo e a bola mais para cima.
+        expect(fim.y).toBeGreaterThan(inicio.y);
+      });
+    }
+  }
+
+  it('vê o lado de cá do campo espelhado: a trave da direita de quem bate fica à esquerda da tela', () => {
+    const cam = cameraDoReplay({ x: 0, z: 11 }, 0, W, H);
+    expect(cam.projetar({ x: 3.66, y: 0, z: 0 }).x).toBeLessThan(cam.projetar({ x: -3.66, y: 0, z: 0 }).x);
+  });
+});
+

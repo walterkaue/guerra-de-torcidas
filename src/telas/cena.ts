@@ -4,6 +4,11 @@
 
 import { coluna, linha, type GestoCobranca } from '../jogo/penaltis';
 import { GOLEIRO, desenharBoneco, maos, misturar, novaPose, poseGoleiroEsperando, type Boneco, type Pose } from './bonecos';
+import { vibrar } from './toque';
+import { qualidade } from './qualidade';
+import { QUADROS_TORCIDA, desenharTorcedor, hash, lugaresDaTorcida, type Lugar, type Torcida } from './torcida';
+import { somTrave } from '../jogo/som';
+import { criarPapelPicado } from './papelPicado';
 
 /** Rastro do dedo: [largura, opacidade] do brilho e do traço. */
 const BRILHO_DO_RASTRO = [
@@ -13,6 +18,12 @@ const BRILHO_DO_RASTRO = [
 
 // Efeitos (docs/visual.md, seção 4): tudo curto; só o grito do narrador passa de 400 ms.
 const DUR_TREMIDA = 120;
+/** Bola que bateu na trave volta quicando para o campo (só desenho). */
+const DUR_REBOTE = 800;
+/** Bola espalmada sai pela linha de fundo, para o lado e para cima. */
+const DUR_ESPALMADA = 520;
+/** Brilho no ponto em que a bola bateu na trave. */
+const DUR_BATIDA_TRAVE = 260;
 const DUR_REDE = 400;
 const DUR_OLA = 400;
 const DUR_PONTOS = 1100;
@@ -29,6 +40,17 @@ const PROF_REDE = 2;
 export const facil = (t: number) => 1 - (1 - t) * (1 - t);
 export const suave = (t: number) => t * t * (3 - 2 * t);
 export const limitar01 = (t: number) => Math.max(0, Math.min(1, t));
+/**
+ * Mola amortecida (0 → 1 passando ~10% do ponto e voltando), a mesma curva de --mola no CSS.
+ * Para "pop" de número e adesivo; nunca na física, que continua no motor puro.
+ */
+export const mola = (t: number) => {
+  if (t >= 1) return 1;
+  const amort = 0.6;
+  const w = 12;
+  const wd = w * Math.sqrt(1 - amort * amort);
+  return 1 - Math.exp(-amort * w * t) * (Math.cos(wd * t) + (amort / Math.sqrt(1 - amort * amort)) * Math.sin(wd * t));
+};
 
 /** Bola com gomos girando, luz da esfera e sombra no chão em `sombraY`. */
 export function desenharBolaEm(c: CanvasRenderingContext2D, x: number, y: number, r: number, sombraY: number, giro: number, gradBola: CanvasGradient | null): void {
@@ -129,30 +151,41 @@ export function desenharPontosEm(
     c.lineWidth = 5;
     c.strokeStyle = '#111111';
     const y = p.y - 10 - sobe * 46;
-    c.strokeText(p.texto, p.x, y);
+    // Entra com pop de mola (de 40% ao tamanho cheio, passando um pouco) em 450 ms.
+    const escala = 0.4 + 0.6 * mola(Math.min(1, (agora - p.inicio) / 450));
+    c.translate(p.x, y);
+    c.scale(escala, escala);
+    c.strokeText(p.texto, 0, 0);
     c.fillStyle = '#ffd23f';
-    c.fillText(p.texto, p.x, y);
+    c.fillText(p.texto, 0, 0);
     c.restore();
   }
   return vivos;
 }
 
 export interface OpcoesCena {
-  /** Cores do time: torcida, bandeiras e placas de beira de campo. */
+  /** Cores do time: papel picado e, sem `torcida`, a arquibancada. */
   cores: readonly [string, string];
+  /** Arquibancada de outra paleta (lance da Seleção): torcida, bandeiras e placas de beira de campo. */
+  torcida?: Torcida;
   /** Relógio da tela (o mesmo do quadro). */
   relogio: () => number;
   /** prefers-reduced-motion: sem ola nem tremida. */
   reduzido: boolean;
 }
 
-export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido }: OpcoesCena) {
+export function criarCena(canvas: HTMLCanvasElement, { cores, torcida: daPartida, relogio, reduzido }: OpcoesCena) {
   const c = canvas.getContext('2d')!;
+  const papel = criarPapelPicado([cores[0], cores[1], '#ffd23f']);
+  const coresDaArquibancada = daPartida?.cores ?? cores;
 
   // ---------- efeitos ----------
   const efeitos = {
     tremida: -Infinity,
+    /** Tremida mais fraca (trave): fração da do gol. */
+    forcaTremida: 1,
     ola: -Infinity,
+    trave: { inicio: -Infinity, x: 0, y: 0 },
     rede: { inicio: -Infinity, x: 0, y: 0 },
     pontos: [] as { inicio: number; x: number; y: number; texto: string }[],
   };
@@ -163,7 +196,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
   const g = { gx: 0, gy: 0, gw: 0, gh: 0, chao: 0, bolaX: 0, bolaY: 0, raio: 0, fugaY: 0, escM: 0 };
 
   function medir(): void {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, qualidade().dprMax);
     const ret = canvas.getBoundingClientRect();
     W = ret.width;
     H = ret.height;
@@ -206,16 +239,77 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
   /** Comemoração de gol ou defesa: ola, "+pontos" subindo e, no gol, tremida, rede e vibração. */
   function comemorar(x: number, y: number, pontos: number, gol: boolean): void {
     const agora = relogio();
-    if (!reduzido) efeitos.ola = agora;
+    if (!reduzido && qualidade().ola) efeitos.ola = agora;
     if (pontos > 0) efeitos.pontos.push({ inicio: agora, x, y, texto: `+${pontos}` });
-    if (!gol) return;
-    efeitos.rede = { inicio: agora, x, y };
-    if (!reduzido) efeitos.tremida = agora;
-    try {
-      navigator.vibrate?.(reduzido ? 40 : [60, 40, 90]);
-    } catch {
-      // sem vibração (iPhone, desktop): segue sem
+    if (!gol) {
+      // Defesa de quem joga: um toque de acerto.
+      vibrar('acerto');
+      return;
     }
+    efeitos.rede = { inicio: agora, x, y };
+    papel.soltar(x, y, agora);
+    if (!reduzido && qualidade().tremida) {
+      efeitos.tremida = agora;
+      efeitos.forcaTremida = 1;
+    }
+    vibrar(reduzido ? 'acerto' : 'gol');
+  }
+
+  /** Bola na trave: brilho no ponto da batida, tremida curta e fraca, vibração e o "plém". */
+  function baterNaTrave(x: number, y: number): void {
+    const agora = relogio();
+    efeitos.trave = { inicio: agora, x, y };
+    if (!reduzido && qualidade().tremida) {
+      efeitos.tremida = agora;
+      efeitos.forcaTremida = 0.5;
+    }
+    vibrar('trave');
+    somTrave();
+  }
+
+  /**
+   * Bola que bateu na trave em (x, y), `ms` depois: volta para dentro do campo quicando duas vezes,
+   * crescendo um pouco (vem para perto da câmera), e para no gramado entre o gol e a marca.
+   */
+  function bolaNaTrave(x: number, y: number, ms: number): void {
+    const t = limitar01(ms / DUR_REBOTE);
+    const voltaPara = x < g.gx + g.gw / 2 ? 1 : -1;
+    const e = facil(t);
+    const px = x + voltaPara * g.gw * 0.16 * e;
+    const chaoFim = g.chao + (g.bolaY - g.chao) * 0.3;
+    const chao = g.chao + (chaoFim - g.chao) * e;
+    // Altura sobre o chão: começa onde bateu e quica duas vezes, cada vez mais baixo.
+    const h0 = Math.max(0, g.chao - y);
+    const h = h0 * Math.abs(Math.cos(t * Math.PI * 1.5)) * (1 - t) * (1 - t);
+    desenharBola(px, chao - h - g.raio * 0.5, 0.5 + 0.2 * e, chao, t * 10);
+  }
+
+  /** Bola espalmada da luva em (x, y): sai para o lado de fora do gol e some atrás da linha de fundo. */
+  function bolaEspalmada(x: number, y: number, ms: number): void {
+    const t = limitar01(ms / DUR_ESPALMADA);
+    if (t >= 1) return;
+    const lado = x < g.gx + g.gw / 2 ? -1 : 1;
+    const e = facil(t);
+    const px = x + lado * g.gw * 0.32 * e;
+    const py = y - g.gh * 0.55 * Math.sin(e * Math.PI * 0.8);
+    c.save();
+    c.globalAlpha = 1 - t * t;
+    desenharBola(px, py, 0.5 - 0.15 * e, g.chao - g.raio * 0.5, t * 14);
+    c.restore();
+  }
+
+  /** Brilho curto no ponto da trave em que a bola bateu (um anel que abre e some). */
+  function desenharBatidaNaTrave(agora: number): void {
+    const t = (agora - efeitos.trave.inicio) / DUR_BATIDA_TRAVE;
+    if (t < 0 || t > 1) return;
+    c.save();
+    c.globalAlpha = 1 - t;
+    c.strokeStyle = '#ffffff';
+    c.lineWidth = 3;
+    c.beginPath();
+    c.arc(efeitos.trave.x, efeitos.trave.y, g.raio * (0.4 + 1.4 * t), 0, Math.PI * 2);
+    c.stroke();
+    c.restore();
   }
 
   /** Converte o arraste em gesto: direção = canto, comprimento = força, curva final = efeito. */
@@ -272,85 +366,17 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
     return [off, o];
   }
 
-  /** Sorteio fixo por posição (a torcida não pode "piscar" entre os quadros). */
-  const hash = (a: number, b: number) => {
-    const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
-    return s - Math.floor(s);
-  };
-
-  /** Lugares da arquibancada atrás do gol (posição, cor e quem segura bandeira). */
-  function lugares(): { x: number; y: number; cor: string; r: number; bandeira: boolean; h: number }[] {
-    const lista = [];
-    const fim = fimArquibancada() - 12;
-    const neutros = ['#2c4a37', '#3a3f4a', '#4a3a2e'];
-    let fila = 0;
-    for (let y = 9; y < fim - 4; y += 10, fila++) {
-      const r = 2.8 + (y / fim) * 1.6;
-      for (let x = fila % 2 ? 3 : 9; x < W + 6; x += 11) {
-        const h = hash(x, y);
-        const cor = h < 0.42 ? cores[0] : h < 0.78 ? cores[1] : neutros[Math.floor(h * 30) % 3];
-        lista.push({ x: x + (h - 0.5) * 3, y, r, cor, bandeira: h > 0.965, h });
-      }
-    }
-    return lista;
-  }
-
-  function desenharTorcedor(o: CanvasRenderingContext2D, x: number, y: number, r: number, cor: string, h: number, levantou = 0, quadroTorcida = 0, bandeira = false): void {
-    // Cada torcedor balança no seu ritmo: 3 quadros de animação, sorteados por pessoa.
-    const balanco = Math.sin((quadroTorcida + h * 3) * ((Math.PI * 2) / 3)) * (h > 0.5 ? 1.4 : 0.6);
-    const dy = -levantou * r * 2.2 + balanco;
-    o.fillStyle = cor;
-    o.beginPath();
-    o.ellipse(x, y + dy + r * 1.5, r * 1.3, r * 1.05, 0, Math.PI, 0);
-    o.fill();
-    o.fillStyle = h > 0.6 ? '#3a2a20' : h > 0.3 ? '#6b4a33' : '#8a5f40';
-    o.beginPath();
-    o.arc(x, y + dy, r * 0.8, 0, Math.PI * 2);
-    o.fill();
-    const bracos = levantou > 0.3 || (h > 0.88 && quadroTorcida % 3 !== Math.floor(h * 9) % 3);
-    if (bracos) {
-      o.strokeStyle = cor;
-      o.lineWidth = r * 0.6;
-      o.beginPath();
-      o.moveTo(x - r, y + dy + r * 0.6);
-      o.lineTo(x - r * 1.5, y + dy - r * 1.7);
-      o.moveTo(x + r, y + dy + r * 0.6);
-      o.lineTo(x + r * 1.5, y + dy - r * 1.7);
-      o.stroke();
-    }
-    if (bandeira) {
-      // Bandeira lisa nas 2 cores do time, tremulando.
-      const onda = Math.sin(quadroTorcida * 2.1 + h * 10) * 3;
-      o.strokeStyle = '#ddd';
-      o.lineWidth = 1;
-      o.beginPath();
-      o.moveTo(x + r, y + dy);
-      o.lineTo(x + r, y + dy - 22);
-      o.stroke();
-      o.fillStyle = cores[0];
-      o.beginPath();
-      o.moveTo(x + r, y + dy - 22);
-      o.quadraticCurveTo(x + r + 9, y + dy - 22 + onda, x + r + 18, y + dy - 21);
-      o.lineTo(x + r + 18, y + dy - 10);
-      o.quadraticCurveTo(x + r + 9, y + dy - 11 + onda, x + r, y + dy - 11);
-      o.fill();
-      o.fillStyle = cores[1];
-      o.fillRect(x + r, y + dy - 17 + onda * 0.3, 18, 2.5);
-    }
-  }
-
-  const QUADROS_TORCIDA = 3;
   let torcida: HTMLCanvasElement[] = [];
   let campo: HTMLCanvasElement | null = null;
   let rede: HTMLCanvasElement | null = null;
   // Para a ola (torcida redesenhada ao vivo): lugares, fundo e placas prontos, sem refazer a cada quadro.
-  let gente: ReturnType<typeof lugares> = [];
+  let gente: Lugar[] = [];
   let fundoTorcida: HTMLCanvasElement | null = null;
   let placasTorcida: HTMLCanvasElement | null = null;
 
   function prepararCenario(dpr: number): void {
     const fim = fimArquibancada();
-    gente = lugares();
+    gente = lugaresDaTorcida(W, fim - 12, coresDaArquibancada, daPartida?.outros);
     levantou = new Float32Array(gente.length);
     deslocado = new Float32Array(gente.length);
     coresDaTorcida = [...new Set(gente.map((l) => l.cor))];
@@ -362,7 +388,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
     torcida = Array.from({ length: QUADROS_TORCIDA }, (_, q) => {
       const [off, o] = novoCanvas(dpr, W, fim);
       fundoDaArquibancada(o, fim);
-      for (const l of gente) desenharTorcedor(o, l.x, l.y, l.r, l.cor, l.h, 0, q, l.bandeira);
+      for (const l of gente) desenharTorcedor(o, coresDaArquibancada, l.x, l.y, l.r, l.cor, l.h, 0, q, l.bandeira);
       placas(o, fim);
       return off;
     });
@@ -392,7 +418,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
     const larg = 64;
     for (let x = 0, i = 0; x < W; x += larg, i++) {
       const grad = o.createLinearGradient(0, y, 0, y + alt);
-      const cor = i % 2 ? cores[0] : cores[1];
+      const cor = i % 2 ? coresDaArquibancada[0] : coresDaArquibancada[1];
       grad.addColorStop(0, cor);
       grad.addColorStop(1, 'rgba(0,0,0,0.35)');
       o.fillStyle = cor;
@@ -461,14 +487,14 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
     // Bandeiras são poucas: uma a uma, pelo desenho de sempre.
     for (let i = 0; i < gente.length; i++) {
       const l = gente[i];
-      if (l.bandeira) desenharTorcedor(c, l.x, l.y, l.r, l.cor, l.h, levantou[i], q, true);
+      if (l.bandeira) desenharTorcedor(c, coresDaArquibancada, l.x, l.y, l.r, l.cor, l.h, levantou[i], q, true);
     }
   }
 
   function desenharArquibancada(agora: number): void {
     const fim = fimArquibancada();
     const t = (agora - efeitos.ola) / DUR_OLA;
-    const q = Math.floor(agora / 170) % QUADROS_TORCIDA;
+    const q = qualidade().torcidaViva ? Math.floor(agora / 170) % QUADROS_TORCIDA : 0;
     if (t < 0 || t > 1.4) {
       if (torcida[q]) c.drawImage(torcida[q], 0, 0, W, fim);
       return;
@@ -888,6 +914,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
   }
 
   function desenharPontos(agora: number): void {
+    papel.desenhar(c, agora, Math.max(8, g.raio * 0.5));
     efeitos.pontos = desenharPontosEm(c, efeitos.pontos, agora, g.raio * 1.5);
   }
 
@@ -900,7 +927,8 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
   function desenharFundo(agora: number): void {
     if (agora - efeitos.tremida < DUR_TREMIDA) {
       const f = 1 - (agora - efeitos.tremida) / DUR_TREMIDA;
-      c.translate((Math.random() * 2 - 1) * 5 * f, (Math.random() * 2 - 1) * 5 * f);
+      const amp = 5 * f * efeitos.forcaTremida;
+      c.translate((Math.random() * 2 - 1) * amp, (Math.random() * 2 - 1) * amp);
     }
     if (campo) c.drawImage(campo, 0, 0, W, H);
     desenharArquibancada(agora);
@@ -921,6 +949,10 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, relogio, reduzido 
     lerArraste,
     zonaTocada,
     comemorar,
+    baterNaTrave,
+    bolaNaTrave,
+    bolaEspalmada,
+    desenharBatidaNaTrave,
     desenharFundo,
     desenharTraves,
     goleiroNoQuadro,

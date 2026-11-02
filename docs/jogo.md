@@ -1,7 +1,7 @@
 # Guerra de Torcidas — documento do jogo
 
 > Nome provisório. Fonte da verdade do projeto: toda decisão nova entra aqui.
-> Última atualização: 21/10/2026, noite (Casa do [time] planejada, com dados em rascunho em dados/casa; Lances do Jogo no lugar dos Pênaltis na Home, com 3 abas; câmera 3D com três distâncias; "A jogada" no cara a cara; antes: tela dos Lances do Jogo em teste, sem valer pontos; novo minigame Lances do Jogo, com medalhas e página Conquistas; Pênaltis vão virar uma sessão dos Lances com disputas históricas; nomes reais na ficha factual dos lances)
+> Última atualização: 01/11/2026 (servidor das divisões: tabelas da temporada, classificação do mês e fechamento às 12h01; torcida sem ninguém não ganha ponto de campeonato; seção 5). Antes, 31/10/2026 (card de compartilhamento "Telão do estádio", seção 9, e torcida verde e amarela nos lances da seleção, seção 7.3). Antes, 31/10/2026 (torcida sem ninguém jogando fica com 0 e teste das divisões em série única em novembro; seção 5). Antes, 31/10/2026 (fechamento da semana gravado, em duas etapas: provisória na segunda 00h05 e travada às 12h; bônus de 1º da torcida sai na confirmação; seção 5). Antes, 31/10/2026 (disputas históricas de pênaltis, primeira etapa: catálogo em `dados/disputas/`, lista na aba Pênaltis só com o que estiver revisado e `disputa_id` na partida; ver seção 6). Antes, 31/10/2026 (seção da Casa na Home, com estádio e troféus, seção 7.4; total de lances no card dos Lances, seção 7.3). Antes, 31/10/2026 (Home nova e aba Perfil: arquibancada do time, cabo de guerra com a sua posição, botão "Jogar agora", cards com desenho, giro da semana, e o bloco "Sua carreira" na aba Perfil; ver seções 5 e 9). Antes, 31/10/2026 (Time do Dia também sem sequência de dias: sai da tela, do card e do narrador; seção 13). Antes, 31/10/2026 (proteção de menores do ECA Digital, seção 13: triagem de faixa etária, push e apoio só para 18+, push sem urgência, Carreira sem sequência, página de termos e "Apagar meus dados"). Antes, 31/10/2026 (uniformes dos Lances: cada lance veste os dois times dele, e o batedor vai de goleiro no Gol 100, exceção à regra dos bonecos; seção 3). Antes, 31/10/2026 (bloco "Seja sócio" na Casa de cada clube, decidido em 30/10: link para o programa oficial, sem pontos, com aviso de saída e cliques contados no servidor sem dado pessoal; ver seção 7.4). Antes, 26/10/2026 (Carreira do jogador no ar: XP no servidor, bloco na Home, linha no resultado e nível opcional no card). Antes, 26/10/2026 (qualidade gráfica automática Alta/Média/Leve, com botão "Gráficos" no rodapé da Home; só visual, ver `docs/visual.md` 4.3). Antes, 26/10/2026 (replay de TV do gol: todo gol dos Lances e os golaços dos Pênaltis, só visual). Antes, 26/10/2026 (fase 1.5 decidida pelas propostas em `docs/propostas/`: mês de estreia em série única antes da Série A e B, divisões e cidade testadas já na pré-temporada, cidade pedida depois da 1ª partida e só no ranking com 5+ jogadores, 52 semanas pela tabela de 20 posições do ranking geral, Galeria na aba Conquistas, níveis da Carreira com XP que sobrevive ao zerar). Antes, 21/10/2026, noite (Casa do [time] planejada, com dados em rascunho em dados/casa; Lances do Jogo no lugar dos Pênaltis na Home, com 3 abas; câmera 3D com três distâncias; "A jogada" no cara a cara; antes: tela dos Lances do Jogo em teste, sem valer pontos; novo minigame Lances do Jogo, com medalhas e página Conquistas; Pênaltis vão virar uma sessão dos Lances com disputas históricas; nomes reais na ficha factual dos lances)
 > Detalhes: `docs/rankings.md` (rankings e regras de justiça), `docs/narrador.md` (frases), `docs/visual.md` (direção visual), `docs/bonecos.md` (bonecos), `docs/casa.md` (Casa do [time]). Ideias ainda não decididas ficam no backlog do projeto no Claude.
 
 ## 1. A ideia em uma frase
@@ -13,7 +13,7 @@ Minigames de futebol de 30 segundos em que **cada ponto que você faz vai para o
 1. **Partida curta.** Uma rodada cabe numa fila de padaria (30 s a 1 min).
 2. **Tribal.** Você não joga por você, joga pelo seu time. Ver o rival na frente é o motor.
 3. **Zoeira.** Tom de resenha: narrador exagerado, provocação ao rival, nunca ofensa a pessoas ou grupos.
-4. **Feito para WhatsApp.** O link abre direto no navegador do celular, sem cadastro e sem loja de app. Todo resultado vira um card pronto para mandar no grupo ou postar nos stories.
+4. **Feito para WhatsApp.** O link abre direto no navegador do celular, sem cadastro e sem loja de app. Todo resultado vira um card pronto para mandar no grupo ou postar nos stories. Quem quiser pode instalar o jogo na tela inicial (PWA, desde 25/10/2026): mesmo site, sem loja. **Aviso de domingo (push, desde 25/10/2026):** só com opt-in, oferecido depois de um bom momento (vitória que valeu, Time do Dia acertado), no máximo a cada 14 dias e nunca de novo se a pessoa recusou no navegador; **um aviso por semana**, domingo 18h, com a situação da torcida e do rival, sem urgência (texto em `src/jogo/avisos.ts`; seção 13). **Só para 18+** (seção 13). **Sininho 🔔 no topo da tela inicial** (desde 26/10/2026): liga, desliga ou explica por que o aparelho não recebe (iPhone fora do app instalado, navegador embutido do WhatsApp/Instagram, notificação bloqueada); aceso quando o aviso está ligado. **Testado em 25/10/2026:** chega no Google Chrome (computador e Android, inclusive como app instalado); no **Opera/Opera GX** a inscrição funciona mas o aviso não chega, e o sininho avisa isso; no iPhone, só com o jogo instalado na tela inicial. Nenhum dado pessoal: só o endereço de entrega do navegador.
 5. **Cresce por minigames.** Os minigames mudam; a torcida, o ranking e as ligas ficam e acumulam.
 6. **Zero aposta.** Nenhum minigame envolve dinheiro, prêmio em dinheiro, odds ou qualquer coisa que pareça casa de aposta. Nem anúncio de aposta.
 7. **Justo.** Título se ganha por média, não por tamanho de torcida; ninguém compra vantagem; evento não distorce o ranking.
@@ -27,7 +27,8 @@ Minigames de futebol de 30 segundos em que **cada ponto que você faz vai para o
 - **Card do time (tela de escolha e onde mais o time aparecer em bloco), decidido em 20/10: "faixa de placar".** Cor 1 cheia, sem transparência; embaixo, uma faixa reta na cor 2 (cerca de 1/4 da altura); nos clubes de três cores, um filete da 3ª cor separando as duas. Nome em Barlow Condensed, caixa alta, cor de texto pelo `corDeTexto`. O mesmo desenho para todos os clubes: **nenhum padrão que imite a camisa** (listras na direção da camisa, faixa diagonal, estrelas ou outro elemento de escudo). Quem diferencia os clubes é a cor e o nome. Substitui as listras diagonais translúcidas, que deixavam as cores com cara de pastel.
 - **Única exceção (decidida em 21/10):** o manto desenhado no bloco de cores da **Casa do [time]**, com o padrão tradicional (listras, aros, faixa) e sem escudo, símbolo, patrocínio ou fornecedor (`docs/casa.md`, seção 5). Card do time, bonecos e cards de compartilhamento continuam como acima.
 - **Goleiros:** camiseta lisa num tom forte de goleiro (amarelo, verde-limão, ciano, rosa ou lilás), escolhido para contrastar com os dois times e com o outro goleiro.
-- **Jogadores fictícios:** nenhum boneco imita jogador real, nem por número, tom de pele ou cabelo (direito de imagem; decidido em 19/10).
+- **Jogadores fictícios:** nenhum boneco imita jogador real, nem por número, tom de pele ou cabelo (direito de imagem; decidido em 19/10). **Única exceção (decidida pelo Kauê em 31/10/2026, ciente do risco de imagem):** nos Lances do Jogo em que quem bateu foi o goleiro (hoje só o Gol 100), o batedor vai de goleiro, porque o fato do lance é esse. Continua sem nome, número, rosto ou cabelo da pessoa; as cores são as do dia, em roupa lisa (Gol 100: camisa dourada, calção preto e meião branco, pela foto do jogo).
+- **Uniformes nos Lances (decidido em 31/10/2026):** cada lance veste os dois times dele, não o time do coração: batedor nas cores do clube do lance, barreira e goleiro nas cores do adversário de verdade, sempre em camiseta lisa ().
 - Cada time pode ter um **rival** cadastrado (o clássico). Sem clássico, vale a regra da seção 8.
 
 | Time | Artigo | Rival | 3ª cor (filete do card) |
@@ -56,9 +57,10 @@ Minigames de futebol de 30 segundos em que **cada ponto que você faz vai para o
 (O rival não precisa ser recíproco: o Botafogo provoca o Flamengo, e o Flamengo provoca o Fluminense.)
 
 ### Cidade (a segunda camisa)
-- Junto com o time, o jogador escolhe a **cidade** onde torce. É opcional, mas a tela incentiva ("defende sua cidade também").
+- O jogador escolhe a **cidade** onde torce. É opcional, mas a tela incentiva ("defende sua cidade também?"). **Quando (decidido em 26/10):** depois da 1ª partida, não na escolha do time, para não atrasar a estreia. Quem pulou vê um lembrete na Home, no máximo 1 vez por semana. A escolha fica também no perfil.
 - A cidade sai de uma **lista fechada de municípios do IBGE** (nome + UF), com busca. Nada de texto livre, então não precisa de moderação.
-- Os pontos de cada partida contam **para o time, para a cidade e para o estado da cidade**, em rankings separados.
+- Os pontos de cada partida contam **para o time, para a cidade e para o estado da cidade**, em rankings separados. Pontos feitos antes de escolher a cidade não contam para ela (vale dali em diante, como na troca de time).
+- **Mínimo de 5 jogadores (decidido em 26/10):** uma cidade só aparece no ranking com 5 ou mais jogadores na semana, para ninguém ser identificado pela pontuação. Abaixo disso, os pontos contam só para o estado, e o jogo avisa quantos faltam ("Faltam 2 pra sua cidade entrar no ranking. Chama a galera.").
 - Quem escolheu "Outro time" joga só pela cidade e pelo estado. Assim ninguém fica sem tribo.
 - A cidade do jogador **nunca aparece ao lado do apelido**. Ela só aparece somada, nos rankings de cidades e estados (privacidade, inclusive de menores).
 - **Rival da cidade:** a cidade logo acima no ranking do seu estado (ou logo abaixo, se for a líder).
@@ -138,18 +140,53 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - O **amistoso de 2 semanas** (regras de justiça, abaixo) continua valendo para minigames lançados **depois** do zerar.
 
 ### A temporada
-- Os 20 times oficiais ficam em **Série A (10)** e **Série B (10)**. Na primeira temporada, a divisão sai da primeira semana de jogo. "Outro time" não entra em divisão.
+- Os 20 times oficiais ficam em **Série A (10)** e **Série B (10)**. "Outro time" não entra em divisão.
 - Soma dos pontos de campeonato das semanas do mês. No fim: **2 últimos da A caem, 2 primeiros da B sobem**. O campeão da Série A é o campeão da temporada.
+- **A semana é do mês da sua segunda-feira** (ex.: 30/11 a 6/12 é de novembro). Dezembro e janeiro seguem normais; a Copa de Verão corre em paralelo.
+- **Mês de estreia em série única (decidido em 26/10):** depois do zerar, o primeiro mês tem os 20 times juntos, com pontos pela tabela de 20 posições (abaixo, em Longo prazo). Do 1º ao 10º vão para a Série A; o 1º ganha o troféu **"Campeão da estreia"**. A primeira queda é no 2º mês. (Substitui "a divisão sai da primeira semana de jogo": uma semana só, com a audiência chegando, sortearia a divisão.)
+- **Teste na pré-temporada (decidido em 31/10):** novembro em série única, como o mês de estreia, e Série A e B em dezembro, para os amigos testarem tela, queda e narrador. Tudo zera junto com a pré-temporada. (Com poucos jogadores por semana, dividir já em novembro seria quase sorteio.)
+- **Torcida sem ninguém jogando (decidido em 31/10):** fica com 0, como na seção 6; a torcida emprestada só completa time que já tem gente jogando. O empate entre elas sai pela posição na semana anterior (no 1º dia, pela ordem da tabela). Empate no fim do mês: mais vitórias de semana; depois, melhor última semana.
+- Precisa do **fechamento da semana**, abaixo.
+- **Como está no servidor (01/11/2026):**
+  - **Tabelas:** `temporada` (uma linha por mês) e `temporada_serie` (a série de cada time no mês: `unica`, `a` ou `b`). Só torcidas, com leitura pública e sem escrita pelo celular.
+  - **Pontos não são gravados:** a view `classificacao_temporada` lê `posicao_campeao` das semanas travadas de `fechamento_semana`, e a semana continua com uma cópia só. Semana provisória não conta. No fim do mês ficam só a foto da posição (`posicao_final`) e o `destino`.
+  - **Posição dentro da série:** nas divisões, o 1º da Série B na semana é quem está mais bem colocado entre os 10 dela, e vitória de semana é ser o 1º da própria série.
+  - **Torcida sem ninguém não ganha ponto (decidido em 01/11):** a semana em que ninguém do time jogou (`ativos` 0) vale 0 ponto de campeonato e nenhuma vitória, mesmo que o desempate a deixe em 3º. Com poucos jogadores, sem essa regra o 1º da ordem da tabela podia ser campeão do mês sem ninguém jogando. A posição dela segue valendo para o desempate pela última semana. Nas 52 semanas a regra é a mesma (decidido em 02/11, seção 5, ranking de 52 semanas).
+  - **Fechamento:** rotina própria `fechar-temporada`, todo dia às 12h01. Fecha quando todas as semanas do mês travaram, grava a foto e abre o mês seguinte. Fica separada de `fechar_semanas` para um erro no mês não desfazer a trava da semana nem o bônus da Carreira. Rodar todo dia cobre a trava atrasada (cron das 00h15). Se os crons caírem, a própria rotina trava as semanas que ficaram para trás, da mais velha para a mais nova, antes de gravar a foto.
+  - **Teste e estreia:** novembro nasce marcado como pré-temporada, e os meses seguintes herdam a marca. O teste não dá troféu: **"Campeão da estreia" sai só no mês de estreia de verdade**, em `temporada.campeao_estreia_id`, porque a pré-temporada não entra na Galeria. O zerar apaga as temporadas e, na mesma transação, abre a estreia no mês seguinte ao da semana do zerar, que sempre começa inteiro. Para estrear num mês, zere até o domingo antes da primeira segunda dele; zerar nessa segunda já joga a estreia para o mês depois.
+
+### Fechamento da semana (31/10/2026)
+- O servidor grava a classificação de cada semana na tabela `fechamento_semana`, em **duas etapas**:
+  - **Segunda 00h05:** grava como provisória.
+  - **Segunda 12h:** grava de novo e trava. Daí em diante não muda mais.
+- **Por que duas etapas:** jogo de domingo à noite só tem placar confirmado depois da virada, e o Crava soma na semana do jogo até segunda 12h (seção 7). Travar às 00h05 deixaria esses pontos de fora. A tela já mostra a semana como "provisória" até as 12h, então nada muda para quem joga.
+- **É cópia do ranking:** a conta continua em `ranking_semana` (teto, suspeitas, `pontos_apagados` e vagas a 80%). A tabela nova guarda só torcidas, com leitura pública: nenhum dado de jogador.
+- **Semana travada não reabre:** nem o fechamento nem `ranking_semana` mudam. Ponto do Crava que chegar depois vai para a semana atual (seção 7). Suspeita liberada depois volta só para a pessoa (seção 6).
+- **Empate entre torcidas sem ninguém:** pela posição na semana anterior; na primeira, pela ordem da tabela. Vale também no ranking ao vivo.
+- **Semana sem ninguém jogando** também fecha, com os 20 times zerados, para a sequência de semanas não ter buraco.
+- **Cron perdido:** o cron diário das 00h15 fecha o que tiver ficado para trás.
+- Base da Série única, da Série A e B, da Galeria e das 52 semanas. Zera junto com a pré-temporada. Nenhuma tela lê essa tabela por enquanto; os pontos de campeonato saem dela pela `classificacao_temporada` (acima).
 
 ### Cidades e estados
 - Mesma conta da semana: média das 30 melhores pessoas da cidade (100 no estado), com as mesmas vagas a 80%.
 - Ranking de cidades **por estado**, mais um top nacional. A campeã do estado na semana ganha troféu na Galeria.
+- Só cidades com 5+ jogadores na semana (seção 3). Aba **Cidades** no Ranking (seu estado, top nacional, estados); na Home, "Sua cidade está em 3º em SP". Liga já na pré-temporada e zera junto.
 
 ### Longo prazo
-- **Ranking de 52 semanas** (estilo tênis): soma dos pontos de campeonato das últimas 52 semanas.
-- **Galeria de Troféus** eterna: semanas, temporadas, acessos, rebaixamentos, títulos de cidade.
-- **Tabela de todos os tempos:** só vitrine.
-- **Carreira do jogador:** Estreante, Reserva, Titular, Craque, Ídolo, Lenda. Nunca zera. XP cheio nas 5 primeiras partidas do dia, metade da 6ª à 15ª, zero depois.
+- **Ordem (decidida em 26/10):** Carreira primeiro (não depende de nada), depois a Galeria (com o fechamento da semana), e as 52 semanas quando a 1ª temporada começar.
+- **Ranking de 52 semanas** (estilo tênis): soma das últimas 52 semanas, **pela posição no ranking geral dos 20 times**, não pelos pontos da divisão (senão o 1º da Série B valeria o mesmo que o 1º da A). Tabela de 20 posições (decidida em 26/10; também usada no mês de estreia): 1º 25, 2º 20, 3º 17, 4º 15, 5º 14, do 6º ao 18º de 13 a 1 (um a menos por posição), 19º e 20º 0. **Torcida sem ninguém jogando (decidido em 02/11/2026):** a semana em que ninguém do time jogou vale 0 ponto nas 52 semanas, como na temporada, seja qual for a posição.
+- **Galeria de Troféus** eterna: campeão da semana, campeão da temporada, campeão da B, acesso, rebaixamento, Campeão da estreia, dérbi, meta coletiva, campeã de estado; a Maior torcida numa prateleira à parte, "vitrine". Fica na **aba Conquistas** (junto das medalhas), não na Casa do [time], para troféu do jogo não parecer título real. A pré-temporada não entra.
+- **Tabela de todos os tempos:** só vitrine, também na aba Conquistas.
+- **Carreira do jogador:** Estreante, Reserva, Titular, Craque, Ídolo, Lenda. **Nunca zera, nem no zerar da pré-temporada** (como as medalhas). Só sua: aparece para você e no card, se quiser; nenhuma lista pública.
+  - XP: 10 por partida válida nas 5 primeiras do dia, 5 da 6ª à 15ª, zero depois. Time do Dia e cada rodada palpitada do Crava contam como 1 partida.
+  - Níveis: Estreante 0 · Reserva 100 · Titular 1.000 · Craque 5.000 · Ídolo 15.000 · Lenda 30.000 (jogando 5 por dia: Titular em ~3 semanas, Lenda em ~1 ano e meio).
+  - Bônus: +100 XP por ser o 1º do dia entre todos; +200 por ser o 1º da sua torcida na semana. Sem sequência de dias (seção 13).
+  - **No ar (26/10):** tabela própria no servidor (`carreira_partidas` e `carreira_bonus`), preenchida por gatilhos no fechamento; o celular só lê o próprio XP. O que já foi jogado na pré-temporada entrou na carreira. Detalhes de implementação:
+    - Conta como partida válida: pênaltis e Prova fechados sem suspeita (inclusive desafio por link e amistoso), o Time do Dia terminado (acertando ou não) e a rodada do Crava no dia do 1º palpite dela (apagar e palpitar de novo não conta outra vez). Partida que vira suspeita depois não tira XP; suspeita tirada na revisão dá o XP.
+    - 1º do dia: soma das partidas no teto + Time do Dia daquele dia (o Crava fica de fora: os pontos saem na confirmação, não no dia do palpite). Calculado às 00h15 do dia seguinte, uma vez só.
+    - 1º da torcida na semana: só torcidas oficiais, pelo total do ranking da semana. Sai na confirmação do fechamento da semana (segunda 12h), na mesma transação; se a confirmação falhar, sai no cron das 00h15. O fechamento guarda só torcidas, então o bônus não lê aquela tabela: o próprio `carreira_bonus` guarda quem foi o 1º. Quem apagou os dados continua somando para a torcida, e o bônus fica com o 1º entre quem continua no jogo. Quem liderou duas torcidas na mesma semana (trocou de time) recebe um bônus só.
+    - Perfil (decidido em 31/10/2026): o bloco 'Sua carreira' sai da Home e vai para a aba Perfil, que substitui 'Carreira' na barra (Jogar, Palpites, Ranking, Perfil) e abre também pelo avatar do cabeçalho. A caixa 'Mostrar meu nível nos cards' fica nos ajustes do Perfil.
+    - Resultado de pênaltis, Prova e Time do Dia: "+10 XP na carreira · Reserva" ou o selo "Subiu pra Titular!". Card: etiqueta "CARREIRA · TITULAR" só com a caixa "Mostrar meu nível nos cards" (guardada no aparelho).
 
 ### Eventos
 - **Evento nunca multiplica pontos do ranking.** Dérbi da semana, metas coletivas, reta final e copas dão **troféu próprio**.
@@ -172,11 +209,20 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 ### Pênaltis dentro dos Lances (decidido em 21/10)
 - Os pênaltis viram uma **sessão dos Lances do Jogo** (seção 7.3): na Home, o card dos Lances ocupa o lugar dos Pênaltis. **No ar desde 21/10:** o card "Lances do Jogo" (com a linha de partidas que contam hoje) abre o hub, e a aba **Pênaltis** abre a Disputa livre de sempre, valendo pontos; o voltar da partida leva de volta ao hub. O convite de X1 por link continua indo direto para a partida.
 - **Visual:** os Pênaltis continuam com a cena de TV de hoje (decidido em 21/10); a câmera 3D é só das faltas e do cara a cara.
+- **Replay de TV (decidido em 26/10):** golaço de quem cobra (no ângulo, cavadinha ou raspando a trave) ganha um replay de uns 3 s, de trás do gol e em câmera lenta, com a câmera 3D por cima da cena de TV. Nos Lances, todo gol ganha replay. Toque pula. Só desenho: o lance já foi resolvido (gesto + semente), nada muda em pontos, tempo de partida no servidor ou detecção. Sem replay com movimento reduzido. Detalhes em `docs/visual.md`, seção 4.2.
 - **Disputas históricas:** disputas de pênaltis que o clube **venceu**, com o adversário de verdade já escolhido (nome, artigo e cores, sem escudo) e a ficha do jogo ("Final de 2018: foi 4 x 3. E hoje?"). Os chutes **não** são pré-definidos: o formato é o de hoje (semente, goleiro e batedor da máquina, morte súbita, par ou ímpar).
 - Cada torcedor vê as disputas **do time do coração** e as da **Seleção Brasileira** (pelo menos 2, para todo mundo). Meta: 3 por clube; clube com menos disputas marcantes é completado pelas da Seleção.
 - **Disputa livre** contra a Máquina continua (é o jogo de hoje): obrigatória para quem é de "Outro time" e para quem só quer bater pênalti.
 - **Só cenário:** motor, dificuldade da semana, detecção, desafio por link e pontuação dos pênaltis não mudam, e os pênaltis continuam **dentro** do teto de 5 partidas. A partida guarda qual disputa foi jogada (`disputa_id`), para a ficha, o card e as medalhas.
 - Adversários de fora da Série A (outras divisões e clubes estrangeiros) ganham cadastro próprio: nome, artigo e cores.
+- **Como está no código (31/10/2026, primeira etapa):**
+  - **Catálogo:** `dados/disputas/` (formato e conferência no `README.md` da pasta; validado por `npm test`), com o mesmo caminho dos lances: nasce `rascunho`, uma segunda sessão confere, e `npm run catalogo-disputas` gera `src/dados/disputas.ts` só com `revisada` ou `ativa`. Sem nenhuma revisada, a aba mostra "Em breve".
+  - **Tela:** a aba Pênaltis lista as do time do coração e as da Seleção, da mais nova à mais antiga. Tocar abre a ficha e "Jogar essa disputa". Na partida, o placar mostra o adversário de verdade, o narrador abre com a frase de sempre e a chamada entra embaixo ("Final de 2018: foi 4 x 3. E hoje?"). O resultado lembra o placar de verdade e "Mais uma" repete a mesma disputa.
+  - **Uniformes:** como nos Lances (seção 3): adversário nas cores dele, sempre em camiseta lisa. Na disputa da Seleção, o placar e o batedor são da Seleção, a arquibancada fica verde e amarela (seção 7.3), e os pontos continuam indo para o time do coração.
+  - **Só cenário no servidor:** `nova-partida` grava `disputa_id` (coluna nova, sem chave estrangeira, porque o catálogo mora no código). A coluna não entra em pontos, teto ou detecção. Id fora do formato vira partida livre, sem erro. Partida de desafio por link não tem disputa, e o desafio gerado por uma disputa é o de sempre.
+  - **Adversários:** `src/dados/adversarios.ts` guarda nome, artigo e cores, e serve aos Lances também. O teste barra adversário sem cadastro.
+  - **Card:** não muda nesta etapa. Medalhas de disputa ficam para quando as medalhas existirem.
+  - **Em desenvolvimento:** `?disputasFalsas` enche a lista com disputas de mentira, para testar a tela sem publicar nada.
 
 ### Regras de implementação (etapa 2, 18/10/2026)
 - **Ordem:** alterna cobrança e defesa (C, D, C, D…), 5 de cada. Se empatar, vai para o desempate (abaixo).
@@ -216,10 +262,13 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - O servidor sorteia a semente da partida (e guarda a dificuldade do dia). O cliente manda só os **gestos** (direção, força, efeito, zona escolhida).
 - O servidor recalcula o resultado com a mesma física determinística e é ele que grava os pontos.
 - Limite de partidas por minuto por jogador. Cada semente vale para uma partida só e expira.
-- **Risco conhecido:** hoje o celular recebe a semente antes de jogar, então quem ler o código consegue prever o canto do goleiro e se a dica do pé de apoio é verdadeira.
-  - Já no ranking: o servidor marca partidas estatisticamente impossíveis e congela os pontos até revisão.
-  - **Antes de divulgar:** a decisão do goleiro e do batedor passa a usar um segredo que só o servidor conhece; o celular manda o gesto de cada lance e recebe o resultado, um lance por vez.
-  - O mesmo vale para o desafio por link: quem aceita recebe as cobranças gravadas antes de defender.
+- **Lance a lance (27/10/2026, fecha o risco da semente):** até aqui o celular recebia a semente antes de jogar, e quem lesse o código previa o canto do goleiro e se a dica do pé de apoio era verdadeira. Agora a semente é segredo do servidor:
+  - O celular manda o gesto de **um lance** para a função `lance-penalti` e recebe o resultado daquele lance. Depois de cada cobrança vem só a **dica** da próxima defesa; o canto do batedor e o "erra" só saem depois que o jogador escolhe a zona. A espera cabe no pé encontrando a bola (a bola só sai quando o resultado chega).
+  - Os gestos ficam guardados no servidor (`partidas_segredo`), um lance por vez, na ordem da regra (lance repetido ou fora de ordem é recusado). No fechamento valem os gestos guardados; do celular só entra a escolha do par ou ímpar.
+  - **Desafio por link:** as cobranças gravadas de quem desafiou também ficam no servidor (antes chegavam ao celular de quem aceitava).
+  - O celular não lê mais a coluna da semente na tabela de partidas.
+  - **Caiu a conexão no meio:** a partida continua no celular, com um sorteio próprio, e fica **sem valer pontos** ("Caiu a conexão: essa partida não vale mais pontos.").
+  - A detecção de partidas impossíveis (abaixo) continua ligada.
 
 ### Como está no servidor (bloco B, 19/10/2026)
 - **Limites:** 3 partidas criadas por minuto por torcedor; a semente expira em 15 minutos. Ajustáveis na tabela `config_deteccao`.
@@ -227,6 +276,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
   - **Defesas:** nas últimas 30 defesas contra o batedor da máquina com chute no gol, 27 ou mais defendidas.
   - **Cobranças:** nas últimas 40 cobranças em que o goleiro pulou por sorteio (sem "ler"), nenhuma no canto dele.
   - Partida marcada fica **sob suspeita**, fora do ranking até revisão. Números ajustáveis em `config_deteccao`.
+  - **Revisão (decidido em 26/10/2026):** as partidas sob suspeita de todos os minigames (pênaltis, Prova de Boleiro e Time do Dia) entram na fila **"Partidas sob suspeita" do painel `#admin`**, com o motivo, os pontos e o histórico do torcedor (só o começo do id, sem apelido). **Liberar** devolve a partida ao teto, ao recorde e ao ranking; **Manter fora** tira da fila e ela segue sem contar. Sem revisão, continua fora. Semana já confirmada (segunda 12h) não reabre: liberada depois disso, a partida volta para a pessoa (teto, recorde, posição), mas o ranking das torcidas daquela semana fica como estava.
 - **Par ou ímpar:** o número do narrador é sorteado no servidor quando a partida começa e fica numa tabela que o celular não lê. Só sai na resposta do fechamento, depois da escolha.
 - **Desafio por link:** toda partida normal registrada gera um código (`?d=xxxxxxxx`) com as cobranças gravadas. Vence o desafio quem fizer **mais pontos**; empate em pontos fica com quem desafiou (chegou primeiro). Partida de desafio não gera outro desafio. O botão **Revanche** joga de novo o mesmo desafio; fora do desafio, é uma partida nova contra a máquina.
 - **Ranking da semana:** time sem nenhum torcedor ativo fica com 0. A "torcida emprestada" (vagas a 80% da média geral) só completa time que já tem gente jogando.
@@ -234,8 +284,8 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Horário de Brasília:** UTC−3 fixo (sem horário de verão desde 2019).
 
 ### Card de resultado
-- **Emojis básicos (decidido em 20/10):** nos textos de compartilhamento só emojis antigos e universais (sem seletor de variação nem quadrados coloridos), para não quebrar no WhatsApp. Os cards de imagem usam o mesmo fundo "faixa de placar" do card do time.
-- Imagem gerada no próprio celular: placar, cores do time, frase do narrador, "Fulano fez 47 pontos {pro_time}" (com o artigo certo) e o link do desafio.
+- **Emojis básicos (decidido em 20/10):** nos textos de compartilhamento só emojis antigos e universais (sem seletor de variação nem quadrados coloridos), para não quebrar no WhatsApp. Só o texto usa emoji: a imagem de todos os jogos é o card "Telão do estádio" (seção 9), com a escada, as bolinhas e os acertos desenhados.
+- Imagem gerada no próprio celular: placar no telão, arquibancada do time, frase do narrador, "+47" e "Fulano {pro_time}" (com o artigo certo; sem apelido, "Fiz 47 pontos {pro_time}") e o link do desafio.
 - Botões: WhatsApp, stories (via compartilhamento nativo), placar em emoji, copiar link.
 - **Botão principal do resultado:** "MAIS UMA" depois de vitória e "REVANCHE" depois de derrota (decidido em 19/10). O que o botão faz não muda.
 
@@ -285,7 +335,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 
 ### Linha vermelha: nada que pareça aposta
 - **Aviso fixo** no topo da tela do minigame e no card: **"Aqui é só resenha: sem aposta, sem dinheiro, sem prêmio em dinheiro. Nunca."**
-- Palavras proibidas em todo o jogo: aposta, apostar, bet, odd, cotação, banca, bolão valendo, "green", "red" (gírias de aposta).
+- Palavras proibidas em todo o jogo: aposta, apostar, bet, odd, cotação, banca, bolão valendo, "green", "red" (gírias de aposta). Só duas exceções nomeiam a aposta para negá-la: o aviso fixo acima e os Termos (`src/dados/termos.md`, seção 13), que é o texto legal.
 - Nenhum anúncio, link ou patrocínio de casa de aposta em nenhuma tela. Se um dia houver anúncio, a categoria apostas fica bloqueada.
 - A porcentagem da torcida aparece só depois que o palpite fecha, nunca como "cotação".
 
@@ -303,7 +353,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **8 perguntas**, 4 alternativas, **15 s** cada (cerca de 1 minuto por partida).
 - Escada de 4 degraus: 2 fáceis, 2 médias, 2 difíceis, 2 de craque.
 - A partir da 3ª pergunta, antes de ela aparecer: **"Parar e levar X"** ou **"Seguir"**.
-- Errou ou estourou o tempo: a partida acaba e leva **metade** dos pontos acumulados (arredondada para cima).
+- **Três erros e fora (decidido em 01/11/2026, opção B de `docs/propostas/calibragem-prova.md`):** pergunta errada ou com tempo estourado vale 0 e a partida **segue**; o **3º erro** encerra a partida, que leva **75%** dos pontos acumulados (arredondado para cima). A tela mostra as 3 vidas. Parar continua levando tudo o que acumulou. Vale a partir da semana de 02/11; partidas já fechadas não mudam.
 - **3 ajudas**, uma de cada por partida, sem custo em pontos (o relógio não para):
   - **Tira duas:** some com duas alternativas erradas.
   - **Arquibancada:** mostra como quem já respondeu aquela pergunta escolheu; com menos de 30 respostas, vira "tira uma".
@@ -317,9 +367,9 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 | Média | 3 e 4 | 12 |
 | Difícil | 5 e 6 | 18 |
 | Craque | 7 e 8 | 25 |
-| **8 de 8** | | **+24** |
+| **8 de 8 (sem nenhum erro)** | | **+24** |
 
-- Máximo: 150. Pessoa mediana (chega à 5ª e para, ou erra por ali): ~40 a 70. O ajuste fino sai do balanço da pré-temporada.
+- Máximo: 150. Pessoa mediana: estimativa ~29 com o banco de hoje, ~35 com as fáceis recalibradas e ~57 para quem manda bem; alvo continua 45 a 75; se o balanço com 20 partidas novas ficar abaixo, a próxima alavanca é 4 erros.
 - Conta dentro do teto diário (5 melhores partidas do dia, somando com os pênaltis).
 
 ### Anti-trapaça
@@ -342,9 +392,11 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
   - **Mesma cota para todos.** A pré-temporada começa com **10 por clube** (3 fáceis, 3 médias, 2 difíceis, 2 de craque) + **60 gerais** = 260; a meta para o lançamento público é 30 por clube + 200 gerais = **800**. Depois, ~100 novas por semana, sempre repondo por igual.
   - **Cada partida:** 4 perguntas de 4 clubes diferentes, sorteados de forma uniforme entre os 20 (nunca pelo tamanho da torcida), e 4 gerais. Todo mundo tem a mesma chance de pegar pergunta do próprio clube.
   - Clubes com menos história nacional (Mirassol, Remo, Bragantino, Chapecoense) têm a mesma cota; as difíceis podem vir de campanhas recentes, estádio, fundação e acessos.
+  - **Fáceis de clube (decidido em 02/11/2026, `docs/propostas/faceis-de-clube-prova.md`):** 27 das 60 fáceis de clube passam para média (as que pedem final antiga, estádio, nome de fundação, ano do título anterior ou artilheiro de campanha). Cada rebaixe vem com uma troca, para manter 3 fáceis por clube: primeiro sobe uma média do mesmo clube, mais conhecida; o que faltar o pipeline do Gemini escreve, com fonte e revisão no `#admin`.
   - **Painel de cobertura** (consulta no banco): perguntas ativas por clube × degrau e acerto médio por clube. Clube com acerto muito fora da média tem as perguntas recalibradas.
 - **Dificuldade calibrada pelos dados:** cada pergunta acumula respostas; com 50 ou mais, o degrau é corrigido: fácil ≥ 75% de acerto, média 50–75%, difícil 30–50%, craque < 30%.
 - **Como o banco nasce:** lotes escritos numa sessão do Code com busca na web, sempre com fonte, em CSV (status rascunho). **Uma segunda sessão, nova, confere cada fonte** e marca revisada ou descarta (decidido em 19/10: não há revisão manual). Só entra no jogo, via `npm run importar-perguntas`, pergunta revisada e com fonte.
+- **Pipeline com Gemini (desde 26/10/2026):** cinco crons por dia (6h, 9h, 12h, 15h e 18h de Brasília, decidido em 02/11/2026) rodam a função `gerar-conteudo` no modo reposição: ela calcula o clube × degrau que mais falta para a cota (3 fáceis, 3 médias, 2 difíceis e 2 de craque por clube, contando as pendentes) e baixa até 3 páginas de fonte aceita desse clube (`staging_gt.fontes_semente`), o Gemini propõe perguntas só com o que está nela, e o código aceita apenas as que passam no validador do CSV, trazem o trecho literal da página e têm a resposta certa dentro do trecho. Uma hora depois de cada geração, a `auditar-conteudo` (até 20 por execução) dá cada uma a **outro modelo, sem dizer qual é a certa**; passa a `pre_aprovada` só se ele escolhe a certa com trecho da página. A IA **nunca** publica nem aprova de memória: **a revisão final é no painel `#admin`** (decidido em 26/10/2026, sem CSV). Cada `pre_aprovada` aparece com o trecho e o link da fonte; o administrador corrige se precisar (o texto passa pelo mesmo validador dos CSVs) e aprova, e a pergunta entra direto em `public.perguntas` como ativa (lote `gemini-AAAA-MM`), ou reprova com o motivo. O lote 1 continua no CSV `dados/perguntas/lote-01.csv`.
 
 ### Card
 - "Prova de Boleiro: cheguei na 6ª e parei, 58 {pro_time}" + a escada em emoji: ✅ acertou, ❌ errou, ✋ parou, 💡 usou ajuda (ex.: ✅✅✅💡✅✋).
@@ -384,11 +436,11 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 ### Anti-trapaça
 - O clube do dia fica só no servidor. O celular manda a tentativa e recebe a linha de pistas; a resposta só aparece quando a partida termina.
 - As tentativas ficam gravadas no servidor (apagar o app não recomeça o dia).
-- Risco: criar conta anônima nova para "estudar" o dia. Mitigação: CAPTCHA antes de divulgar e detecção (acerto na 1ª tentativa em 5 de 7 dias → sob suspeita).
-- Sequência de dias (T01), sem punição para quem perder.
+- Risco: criar conta anônima nova para "estudar" o dia. Mitigação: CAPTCHA no login anônimo (seção 12) e detecção (acerto na 1ª tentativa em 5 de 7 dias → sob suspeita).
+- Sem sequência de dias (seção 13).
 
 ### Card
-- "Time do Dia #34 · 4/6 · 🔥 5 dias" + a grade de emoji (uma linha por tentativa), **sem nome de clube** (nada de spoiler) e com o link para jogar.
+- "Time do Dia #34 · 4/6" + a grade de emoji (uma linha por tentativa), **sem nome de clube** (nada de spoiler) e com o link para jogar.
 
 ### Regras comuns aos jogos de conhecimento
 - Na pré-temporada, os dois **somam no ranking** (decidido em 20/10); a calibragem sai do balanço da pré-temporada (seção 11), não de um amistoso.
@@ -406,6 +458,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Partida = 3 lances** escolhidos pela pessoa (pode repetir o mesmo lance). Cerca de 30 s.
 - **Valendo:** até **6 partidas por dia** (18 lances; ajustável). O dia vale a **melhor partida**.
 - **Treino:** ilimitado, roda só no celular, sem pontos e sem medalhas.
+- Torcida da seleção (31/10/2026): nos lances da seleção brasileira, a arquibancada da partida fica verde e amarela, sem brasão nem escudo; os pontos continuam indo para o clube da pessoa.
 
 ### Pontuação
 | Faixa do lance | Chance de gol esperada | Gol vale |
@@ -424,7 +477,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 
 ### Tela em teste (21/10/2026)
 - **No ar sem servidor:** álbum, partida de 3 e treino rodam só no celular e **ainda não valem pontos** (exceção à pré-temporada valendo da seção 5, até o servidor dos Lances existir). A tela avisa: "Em teste: os Lances ainda não valem pontos."
-- **Na Home:** o card **Lances do Jogo** ocupa o lugar dos Pênaltis na grade e abre o hub com 3 abas: **Pênaltis** (valendo), **Faltas** e **Cara a cara** (em teste).
+- **Na Home:** o card **Lances do Jogo** ocupa o lugar dos Pênaltis na grade, mostra o total de lances do catálogo e quantos são do seu time (decidido em 31/10/2026; contagens em `src/dados/lancesResumo.ts`, gerado junto com o catálogo, para a Home não baixar as fichas) e abre o hub com 3 abas: **Pênaltis** (valendo), **Faltas** e **Cara a cara** (em teste).
 - **Álbum (abas Faltas e Cara a cara):** filtro de clube (abre no time do coração; sem lance do time, abre em todos). Tocar no lance abre a ficha, a situação ("Falta a 25 m, pela direita, barreira de 4") e os botões **Treinar** e **Pôr na partida**. A partida fica numa barra fixa no rodapé com 3 vagas (pode misturar faltas e cara a cara); tocar numa vaga tira o lance.
 - **Câmera 3D com três distâncias (decidido em 21/10):** `src/telas/camera.ts` põe a câmera atrás da bola, olhando para o gol, e `src/telas/cena3d.ts` desenha o campo com a grande área, a pequena área, a marca do pênalti e a meia-lua no chão, o gol com rede, a barreira a 9,15 m da bola (dentro ou fora da área, como na regra), o goleiro, o batedor e a bola. Enquadramentos ajustados para o gol ocupar ~78% da largura da tela no pênalti (referência), ~60% no cara a cara e ~42% na falta de 25 m (falta mais longe, gol menor). A bola é desenhada 2,2 vezes maior que a real, para o dedo achar.
 - **Bola e goleiro seguem a física:** a bola voa pelo caminho 3D do motor (`caminhoDoLance`) e para onde o motor diz (`tFim`: na barreira, no goleiro ou na linha do gol); o goleiro começa onde o motor sorteou (`goleiroAntesDoChute`) e pula para a bola.
@@ -453,13 +506,13 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 ### Anti-trapaça
 - Como nos pênaltis: o servidor sorteia a semente, recebe os 3 lances e os 3 gestos, recalcula e grava. O limite de partidas valendo por dia é contado no servidor.
 - O treino não passa pelo servidor e não conta para nada.
-- Risco conhecido: o celular recebe a semente antes de jogar (o mesmo risco dos pênaltis, com a mesma solução antes de divulgar).
+- Quando o servidor dos Lances nascer, já nasce **lance a lance**, como os pênaltis (seção 6): a semente nunca vai para o celular. Enquanto não há servidor, os Lances não valem pontos e não há o que trapacear.
 
 ### Catálogo
 - **Refeito do zero.** Os lotes de ideias de 20/10 servem só de ponto de partida (vários tinham fatos trocados).
 - **Cada lance guarda:** id, clube (ou Seleção), tipo, título, ficha, competição, ano, adversário, cena (bola, barreira, goleiro), zona histórica, faixa, **fontes** (links de notícias públicas), data da verificação e status (rascunho, revisado, ativo).
 - **Mesma cota para todos os clubes:** 2 a 3 lances por clube na estreia; a Seleção Brasileira entra como coleção extra, aberta a todos.
-- **Só lances que celebram o clube:** nada de tragédia, morte ou acidente, vexame ou atleta menor de idade na data do lance. Nada de opinião sobre pessoas ("vacilo do zagueiro").
+- **Só lances que celebram o clube:** nada de tragédia, morte ou acidente, vexame ou atleta menor de idade na data do lance. Nada de opinião sobre pessoas ("vacilo do zagueiro"). **Exceção (decidida em 26/10/2026):** lances da campanha da Chapecoense na Sul-Americana de 2016 podem entrar, desde que a ficha, o título e o narrador não falem do acidente. **Vale também para as disputas históricas de pênaltis (decidido em 31/10/2026):** a ficha pode citar o goleiro pelo nome, como fato, nas mesmas condições.
 - **Competição e estádio** sem nome de patrocinador.
 - **Como nasce:** como o banco de perguntas (seção 7.1): lotes escritos numa sessão com busca na web, sempre com fonte, e uma segunda sessão, nova, que confere cada fonte.
 
@@ -471,7 +524,20 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Vitrine, não minigame:** não dá pontos, XP nem selo. A ligação com o jogo é só por navegação (Home, Ranking, Time do Dia depois que o dia acaba).
 - Competições pelo nome real da entidade (FIFA, CONMEBOL, CBF, federação), **sem patrocinador**. Títulos: na Casa do clube vale o lado da torcida (o que o clube reivindica conta no total dele, com nota neutra do que a entidade reconhece); fora da Casa vale a lista oficial.
 - O nome "Galeria" continua sendo da **Galeria de Troféus** da torcida no jogo (seção 5), que vira a prateleira "Aqui no jogo" da Casa quando existir.
-- Estático, fora do bundle inicial, sem servidor.
+- Estático, fora do bundle inicial, sem servidor (única exceção: a contagem de cliques do "Seja sócio").
+- **Tela no ar desde 25/10/2026** (`#casa`, `#casa/<id>`): entra pela Home (seção com estádio e troféus, abre a do seu time; sem time, o índice), pelo Ranking (tocar numa torcida) e pelo fim do Time do Dia (só depois que o dia termina). Clube sem a linha de clube revisada fica "em breve" no índice.
+- **"Seja sócio" (decidido em 30/10/2026):** bloco na Casa de cada clube com link para o programa oficial de sócio torcedor. Igual para os 20 clubes, com o nome do programa só como texto (sem logo, escudo ou imagem). Link direto para a página do programa, nunca para a home do clube; se a página promover aposta, o clube fica sem o bloco até mudar. Ser sócio não dá pontos, XP nem selo. Aviso de saída antes de abrir. Link com `utm_source=guerradetorcidas`; cliques contados no servidor por clube e por dia, sem dado pessoal. Só link gratuito: nada de afiliado ou comissão. Curadoria como os fatos da Casa: só `revisada` vai ao ar. **Só para 18+ (decidido em 01/11/2026):** mesma regra do "Apoie o jogo" (seção 13); quem não respondeu a triagem não vê.
+
+## 7.5 Monetização (decidido em 30/10/2026)
+
+> Proposta e comparação das opções: `docs/monetizacao.md`.
+
+- **"Apoie o jogo":** página com Pix e link de apoio mensal (APOIA.se, campanha contínua). Quem apoia não ganha pontos, XP, selo nem nome público. Botão discreto no rodapé da Home, na aba Conquistas e na tela de resultado só depois de um bom momento (vitória que valeu, recorde, Time do Dia acertado), no máximo uma vez por semana por aparelho; nunca no meio da partida nem no card. Fica desligado até a conta da plataforma existir, a chave Pix estar definida e a consulta ao advogado sobre o ECA Digital acontecer.
+- **"Oferecido por":** aceito, com 1 ou 2 marcas vendidas direto, sem rede de anúncios nem rastreio, num selo discreto no rodapé ou no card com o texto "oferecido por"; nunca dentro da partida. Proibidos: aposta (inclusive "fantasy" com dinheiro), bebida alcoólica, cigarro, vape e outros produtos de vício. Só depois de ter audiência.
+- **Cosméticos pagos:** adiados; quando vierem, só com login e com estrutura robusta de pagamento, entrega e reembolso.
+- **Clubes:** neutralidade mantida; ninguém paga nem ganha destaque.
+- **Prêmio em dinheiro ou produto:** fora de qualquer evento ou ranking.
+- **Como está no código (30/10/2026):** a página `#apoie` e os botões existem, atrás do interruptor `apoio_ligado` em `src/config/apoio.ts` (começa desligado; link e chave Pix vazios). Desligado, ou para quem não marcou 18+ (seção 13), nenhum botão aparece e `#apoie` volta para a Home. A regra de "uma vez por semana" no resultado fica guardada no aparelho (`gdt:apoio-oferta`); a Home e a aba Conquistas têm o botão fixo no rodapé. Lógica em `src/jogo/apoio.ts`.
 
 ## 8. Tom e zoeira
 
@@ -482,7 +548,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Provocação ao rival** (só ao time, nunca à pessoa): "Sua torcida tá 300 pontos atrás do [rival]. Vai deixar?"
 - **Quem é o rival:** o clássico da tabela da seção 3. Sem clássico, o rival é o time logo acima no ranking da semana da sua divisão (ou logo abaixo, se for o líder); antes das divisões, no ranking geral (seção 5). Quem escolheu "Outro time" recebe só provocação de cidade.
 - **Zoeira de cidade:** só sobre posição no ranking. Nada de sotaque, origem, economia, "cidade pequena" ou estereótipo de quem mora lá.
-- **Notificações de semana:** "Faltam 6 horas e o [rival] tá encostando."
+- **Notificações de semana:** só informam, sem urgência nem chamada para voltar (seção 13 e `docs/narrador.md`, seção 13).
 - **Limite:** zoeira com o time e com a situação, nunca com raça, orientação, gênero, religião, origem, corpo, deficiência ou pessoa real (jogador, técnico, narrador). Nada de bordão de narrador real nem trecho de música.
 
 ### Nomes reais (decidido em 19/10/2026)
@@ -509,6 +575,8 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - Direção **"Transmissão de domingo"** aprovada em 18/10/2026: placar de TV inclinado, grito do narrador como adesivo na cor do time, arquibancada nas cores do time, campo em perspectiva.
 - Detalhe, tela a tela, e ordem de implementação: `docs/visual.md`.
 - **Cards de time: "faixa de placar"** (decidido em 20/10; seção 3 e `docs/visual.md`).
+- Home nova (decidida em 31/10/2026): arquibancada nas cores do time com luz pelo horário, cabo de guerra com a sua posição, botão 'Jogar agora', cards dos jogos com desenho e estado vivo, giro da semana e avatar que abre a aba Perfil. Detalhe em docs/visual.md, seções 3 e 3.1.
+- Card de compartilhamento 'Telão do estádio' (31/10/2026), detalhe em docs/visual.md.
 - **Bonecos:** estilo "Silhueta premium" (aprovado em 19/10): formas chapadas sem contorno, camiseta lisa nas cores do time (uniforme 1 ou 2), goleiro num tom forte que contrasta com os dois times, tons de pele e cabelos variados, homens e mulheres. Cada lado tem 5 batedores diferentes (um por cobrança) e 1 goleiro, sorteados a cada partida. Detalhe em `docs/bonecos.md`.
 
 ## 10. Roadmap
@@ -516,7 +584,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 | Fase | Conteúdo |
 |---|---|
 | **1. MVP** ✅ pênaltis concluído em 19/10, em teste com amigos | Pênaltis com desempate, times oficiais com artigo e rival, ranking da semana (campeão pelos 30 melhores + Maior torcida), desafio por link, card de resultado com placar em emoji, direção visual nova |
-| **1.5 Logo depois do MVP** | Crava a Rodada no ar desde 20/10, somando desde a 32ª na pré-temporada, até a 38ª (2/12). Depois: cidade como segunda camisa, Série A e Série B mensais, ranking de 52 semanas, Galeria, carreira, anti-trapaça completo antes de divulgar. **Casa do [time]** (seção 7.4; plano em `docs/casa-publicacao.md`), liberada com o upgrade dos pênaltis fechado |
+| **1.5 Logo depois do MVP** | Crava a Rodada no ar desde 20/10, somando desde a 32ª na pré-temporada, até a 38ª (2/12). Depois (decidido em 26/10, `docs/propostas/`): carreira; fechamento da semana gravado; cidade como segunda camisa e Série A e Série B mensais, testadas na pré-temporada; Galeria; ranking de 52 semanas na 1ª temporada; anti-trapaça completo antes de divulgar. **Casa do [time]** (seção 7.4; plano em `docs/casa-publicacao.md`), liberada com o upgrade dos pênaltis fechado |
 | **2. Comunidade** | Times criados, ligas e campeonatos combinados (com ranking entre amigos com apelido), moderação, Copa das Torcidas |
 | **3. Mais minigames** | Prova de Boleiro (seção 7.1) e Time do Dia (seção 7.2) construídos em 19–20/10, somando na pré-temporada. Lances do Jogo (seção 7.3) aprovado em 21/10: motor primeiro, depois catálogo com fontes, tela, servidor, Conquistas e, por fim, os Pênaltis como sessão dos Lances. Depois: Embaixadinha (com chinelo, laranja e bola murcha) |
 | **4. Coleção e resenha** | Álbum de figurinhas com jogadores fictícios e trocas, Técnico por Um Jogo, Pelada de Rua |
@@ -526,7 +594,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - **Convites por jogador:** quantos amigos cada um traz (meta: mais de 1).
 - **Volta no dia seguinte e em 7 dias.**
 - **Partidas por visita.**
-- **Desafios aceitos / desafios enviados.**
+- **Desafios aceitos / desafios enviados.** Cuidado: o desafio nasce sozinho a cada partida, então "enviado" ainda é "gerado". Só vira envio de verdade quando o toque em compartilhar for contado (proposta em `docs/propostas/funil-do-desafio.md`).
 - Enquanto não houver ferramenta de métricas, os números saem do próprio banco (partidas, desafios e torcedores), por um relatório simples: `npm run metricas` (só leitura; jogador = quem fechou ao menos 1 partida; "voltou em 7 dias" = jogou em algum dos 7 dias seguintes à estreia; "entrou por link" = a 1ª partida foi desafio de outra pessoa).
 
 ### Balanço entre minigames (decidido em 20/10)
@@ -545,10 +613,37 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - Supabase: projeto `guerra-de-torcidas` (ref `ybfeqykdnqmnufrgtnoc`), região São Paulo, plano Free durante o desenvolvimento.
 - Chaves: o front-end usa a URL do projeto e a **publishable key** (`sb_publishable_…`). As funções no servidor usam a **secret key** (`sb_secret_…`), só como segredo das funções. As chaves antigas `anon` e `service_role` estão sendo descontinuadas pela Supabase até o fim de 2026: não usar.
 - Como a URL e a publishable key são públicas, ficam versionadas no repositório (o build do GitHub Pages precisa delas). Nada secreto entra no repositório.
-- **Antes de divulgar:** CAPTCHA (Cloudflare Turnstile) no login anônimo, limpeza periódica de usuários anônimos inativos, anti-trapaça completo (inclusive as cobranças do desafio, que hoje chegam ao celular antes da defesa), ranking que aguente muitos jogadores (hoje a semana inteira é recalculada a cada partida fechada; trocar por cálculo incremental ou de minuto em minuto) e decidir sobre o plano Pro (o Free pausa o projeto depois de 1 semana sem uso).
+- **Antes de divulgar:** CAPTCHA (Cloudflare Turnstile) no login anônimo, limpeza periódica de usuários anônimos inativos, anti-trapaça completo (pênaltis lance a lance desde 27/10, com as cobranças do desafio no servidor), ranking que aguente muitos jogadores (hoje a semana inteira é recalculada a cada partida fechada; trocar por cálculo incremental ou de minuto em minuto) e decidir sobre o plano Pro (o Free pausa o projeto depois de 1 semana sem uso).
 - **Rotina contra a pausa do plano Free:** um agendamento no GitHub Actions faz uma consulta leve ao banco a cada 2 dias. Enquanto o projeto estiver no Free, isso evita a pausa por 7 dias sem uso. O GitHub desliga agendamentos de repositório público depois de 60 dias sem commit; se isso acontecer, o GitHub avisa por e-mail e basta reativar. Arquivo: `.github/workflows/manter-supabase.yml` (a cada 2 dias às 09h de Brasília e pelo botão "Run workflow"): lê 1 linha do ranking com a publishable key e falha se a resposta não for 200.
 - **Zerar pré-temporada:** `npm run zerar-pre-temporada` apaga partidas, desafios e ranking (mantém times e torcedores; recordes pessoais zeram junto). Mostra as contagens, lembra de rodar o balanço antes e só apaga depois de digitar ZERAR.
 - **Sessão de usuário apagado:** se o login anônimo salvo no aparelho não existir mais no servidor, o jogo sai e faz um login anônimo novo.
+- **CAPTCHA (decidido em 27/10/2026):** Cloudflare Turnstile no modo escondido, **uma vez por aparelho**: só no primeiro login anônimo (a sessão fica salva) e no login do `#admin`, pelo suporte a CAPTCHA do próprio Supabase. Continua sem cadastro: o login anônimo segue somando pontos. Se a verificação falhar, o jogo roda "sem valer pontos", como sem internet. Liga quando a chave pública do site estiver em `VITE_TURNSTILE_SITE_KEY` (`.env.production`) **e** o CAPTCHA estiver ligado no painel do Supabase, nessa ordem; vazia, fica desligado.
 - DNS: CNAME `torcida` no Hostgator, feito manualmente pelo Kauê.
 - **Lista de cidades:** municípios do IBGE num arquivo estático (nome, UF, código IBGE), carregado só na tela de escolha.
 - **Times:** `src/dados/times.ts` guarda id, nome, cores (2, mais a 3ª opcional do filete do card), artigo e rival (id do outro time ou vazio), conforme a tabela da seção 3.
+
+## 13. Proteção de menores — ECA Digital (decidido em 31/10/2026)
+
+- **O jogo inteiro é seguro para menores**, não só uma área: as regras abaixo valem para todas as telas e para o que vier depois.
+- **Triagem de faixa etária:** uma vez por aparelho, antes da 1ª partida, neutra, com três botões (menos de 16, 16 ou 17, 18 ou mais). Guarda só a faixa e não usa para mais nada.
+- **Só para 18+:** oferta de push, "Apoie o jogo", "Oferecido por" e o "Seja sócio" da Casa (este desde 01/11/2026).
+- **Push sem urgência:** o aviso de domingo só informa a situação da torcida e do rival na semana.
+- **Sem sequência de dias:** nem na Carreira, nem no Time do Dia, em nenhuma tela, card ou frase do narrador.
+- **"Sou maior de 18 ou responsável"** antes do Pix e do link de apoio.
+- **Aviso de saída em todo link externo.**
+- **Página `#termos` e botões "Ver meus dados" e "Apagar meus dados".**
+- **Aviso de mudança dos Termos** na Home, sem bloquear o jogo (decidido em 01/11/2026).
+- **Apelido ofensivo:** o `#admin` pode apagar um apelido que já passou pelo filtro (decidido em 01/11/2026).
+
+### Como está no código
+- **Triagem:** tela `src/telas/triagem.ts`, disparada em `irPara` (`src/app.ts`) antes de Pênaltis/Lances, Prova, Time do Dia e Crava, inclusive vindo de link de desafio. Quem já tinha time responde ao abrir o jogo. Coluna `torcedores.faixa_etaria` (null = não respondeu), gravada por `salvar_faixa_etaria`; no aparelho, em `gdt:prefs`. Só existe torcedor depois de escolher o time, então a faixa sobe na sincronização seguinte (`src/servidor/torcedor.ts`). Nas métricas (`npm run metricas`), só a contagem por faixa.
+- **Regra 18+:** uma só, `soPara18Mais` em `src/jogo/faixaEtaria.ts`, com `podeVerPush`, `podeVerApoio`, `podeVerOferecidoPor` (esta já pronta para o selo) e `podeVerSocio` (o bloco da Casa, por `socioParaMostrar` em `src/telas/casa/socio.ts`). No servidor, `salvar_inscricao_push` recusa quem não é `18_mais`.
+- **Barreira do apoio:** a `#apoie` só mostra o texto, o Pix e o link depois de "Confirmar" em "Sou maior de 18 ou responsável". Vale 30 dias por aparelho (`gdt:apoio-confirmado`); sem armazenamento, pergunta de novo a cada visita. Em desenvolvimento, `?apoioFalso` liga o apoio com dados de mentira.
+- **Aviso de saída:** um só, `src/telas/saida.ts`, pega o toque em qualquer link para outro site, inclusive nos que forem criados depois. Ficam de fora, com `data-sem-aviso`: compartilhar no WhatsApp (é o compartilhar do próprio jogador, como o Stories, e fica no caminho do desafio), as fontes do painel `#admin` e o "Seja sócio", que já tem folha própria.
+- **Termos:** página `#termos` (`src/telas/termos.ts`), que só baixa quando abre, com "Versão em revisão" e a data no topo. O texto mora em `src/dados/termos.md`, sem os trechos para o advogado; um teste recusa "Para o advogado revisar" e "a definir". A tabela da Política vira fichas, para caber em 390×844 sem rolar para o lado. Link no rodapé da Home e na triagem.
+- **Aviso de mudança:** a versão é a data `DATA_DA_VERSAO` em `src/jogo/termos.ts`; mudar a data é o que dispara o aviso. O aparelho guarda a versão vista em `gdt:prefs` (`termosVistos`): aparelho novo guarda a de agora sem aviso; versão diferente mostra a faixa "Os Termos mudaram · Ler" no topo da Home, até a pessoa abrir `#termos` (por ela ou pelo rodapé). Lógica em `avisoDosTermos`.
+- **Ver meus dados:** botão na `#termos`, ao lado do "Apagar meus dados". Chama `ver_meus_dados` (função no banco, só leitura, sempre de `auth.uid()`) e mostra em linguagem simples: time, apelido, faixa de idade, desde quando, partidas por jogo, dias de Time do Dia, desafios criados, palpites, XP da carreira, aviso de domingo (em quantos navegadores) e as mensagens do "Achei um erro" com a tela e o navegador que foram junto. É a única tela que mostra a faixa, porque é a da própria pessoa. É função, e não leitura direta das tabelas, porque a inscrição do aviso e as mensagens não têm leitura pelo celular, e abrir essas tabelas daria mais do que o necessário. Sem sessão ou sem time: "O servidor não guarda nada deste aparelho." Texto em `src/jogo/meusDados.ts`.
+- **Apagar meus dados:** o botão na `#termos` pede confirmação e chama `apagar_meus_dados` (função no banco, numa transação). Apaga o usuário anônimo e, em cascata, torcedor, partidas, desafios, palpites, Time do Dia, Prova, carreira e push; as mensagens do "Achei um erro" são apagadas junto, texto e tudo (desde 01/11/2026; antes ficavam sem o usuário). Depois limpa o aparelho (chaves `gdt` e a sessão) e volta à escolha do time. **Os pontos ficam no placar:** como o ranking é recalculado das partidas, antes de apagar o total de cada semana e time vai para `pontos_apagados`, sem id da pessoa, e o ranking soma essas linhas como um torcedor anônimo (o zerar da pré-temporada leva junto). Conta com login de verdade, como a do `#admin`, é recusada.
+- **Apagar apelido (`#admin`):** seção "Apagar apelido" do painel (`src/telas/adminApelido.ts`). Busca pelo apelido exato (só ajeita os espaços, como o salvar; maiúsculas contam), mostra quantos torcedores usam e, depois de confirmar, limpa o apelido deles e dos desafios já criados (`apelido_contar`, `apelido_apagar`, só administrador). O registro `apelidos_apagados` guarda só quando e quantos torcedores, nunca o apelido. **Limite:** o aparelho da pessoa ainda guarda o apelido e o manda de novo se ela trocar de time ou o login for refeito; para impedir de vez, a palavra vai para `palavras_bloqueadas`.
+- **Trocar a faixa:** a tela não oferece. Vale pelo aparelho: limpar os dados do site ou "Apagar meus dados" faz a triagem voltar.
+- **Envio do push:** só `18_mais` recebe. Outra faixa é desinscrita (na triagem e no envio). Quem se inscreveu antes da triagem e ainda não respondeu fica sem receber, mas não é desinscrito: se responder 18+, volta a receber sem precisar ligar de novo.

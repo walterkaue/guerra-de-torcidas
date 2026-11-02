@@ -54,7 +54,13 @@ describe('aplicar', () => {
     cabMantos.map((c) => `"${(o[c] ?? '').replace(/"/g, '""')}"`).join(',');
 
   it('confirma, corrige, adiciona e apaga só o que a resposta diz', () => {
-    const base = textos();
+    // Base com tudo em rascunho: o teste não depende do andamento da conferência dos CSVs reais.
+    const base = Object.fromEntries(
+      Object.entries(textos()).map(([a, t]) => {
+        const tab = lerTabela(t);
+        return [a, escreverTabela({ ...tab, linhas: tab.linhas.map((l) => ({ ...l, status: 'rascunho' })) })];
+      }),
+    );
     const resposta = lerResposta(
       [
         '=== CORRIGIDAS ===',
@@ -98,7 +104,11 @@ describe('aplicar', () => {
   });
 
   it('pendentes lista o que segue em rascunho', () => {
-    const faltam = pendentes(textos(), ['vasco']);
+    // Não depende dos dados reais: põe a linha do Vasco em rascunho antes.
+    const base = textos();
+    const clubes = lerTabela(base.clubes);
+    for (const l of clubes.linhas) if (l.id === 'vasco') l.status = 'rascunho';
+    const faltam = pendentes({ ...base, clubes: escreverTabela(clubes) }, ['vasco']);
     expect(faltam.some((f) => f.startsWith('clubes: vasco'))).toBe(true);
   });
 });

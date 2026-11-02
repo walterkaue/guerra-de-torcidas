@@ -1,6 +1,8 @@
 // Fechar partida: recebe só os gestos, recalcula com o mesmo motor do celular e só então grava os pontos.
 // Se a disputa chegou ao par ou ímpar, revela o número do narrador (sorteado no nova-partida, que o
 // celular não conhece) depois de receber a escolha do jogador.
+// Partida lance a lance (lance-penalti): os gestos que valem são os guardados no servidor; do corpo
+// só se aproveita a escolha do par ou ímpar.
 // Corpo: { partidaId: string, gestos: Gestos }
 
 import { admin, configDeteccao, ErroHttp, lerCorpo, lerDesempenho, servir, sortear, usuario } from '../_shared/comum.ts';
@@ -49,7 +51,7 @@ servir(async (req) => {
   const uid = await usuario(req, sb);
   const corpo = await lerCorpo(req);
   if (typeof corpo.partidaId !== 'string') throw new ErroHttp(400, 'sem_partida');
-  const gestos = lerGestos(corpo.gestos);
+  const enviados = lerGestos(corpo.gestos);
 
   const { data: partida, error: eP } = await sb
     .from('partidas')
@@ -79,10 +81,16 @@ servir(async (req) => {
 
   const { data: segredo, error: eS } = await sb
     .from('partidas_segredo')
-    .select('numero_narrador')
+    .select('numero_narrador, lance_a_lance, gestos')
     .eq('partida_id', partida.id)
     .single();
   if (eS) throw eS;
+  const gestos: Gestos = segredo.lance_a_lance
+    ? {
+        ...(segredo.gestos as Gestos),
+        ...(enviados.parOuImpar ? { parOuImpar: enviados.parOuImpar } : {}),
+      }
+    : enviados;
 
   let resultado: ResultadoPartida;
   try {

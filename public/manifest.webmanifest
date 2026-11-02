@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "Guerra de Torcidas",
+  "short_name": "Torcidas",
+  "description": "Jogos rápidos de futebol. Cada ponto vai pro placar da sua torcida.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b3d1f",
+  "theme_color": "#0b3d1f",
+  "categories": ["games", "sports"],
+  "icons": [
+    { "src": "/icones/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icones/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

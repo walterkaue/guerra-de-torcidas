@@ -5,7 +5,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { lerCsv } from '../perguntas/validar.mjs';
-import { ARQUIVOS, chaveDe, colunaClube, escreverTabela, lerTabela } from './tabela.mjs';
+import { ARQUIVOS_DE_FATOS as ARQUIVOS, chaveDe, colunaClube, escreverTabela, lerTabela } from './tabela.mjs';
 
 const PASTA = new URL('../../dados/casa/', import.meta.url);
 

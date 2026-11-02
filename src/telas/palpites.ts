@@ -6,6 +6,7 @@
 import { esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, TIMES, corDeTexto, proTime, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
+import { prontoParaDesenhar } from '../jogo/card';
 import { desenharCardCrava, type DadosCardCrava } from '../jogo/cardCrava';
 import {
   GOLS_MAX,
@@ -41,6 +42,7 @@ import {
 } from '../servidor/crava';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
+import { icone } from './icones';
 
 const LINK = 'https://torcida.kauewalter.com.br/';
 const nomeDo = (id: string) => timePorId(id)?.nome ?? id;
@@ -131,12 +133,12 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
           <p class="rotulo cj-faixa faixa-tv">Antes da rodada</p>
           <h2 id="cc-titulo" class="cj-titulo">Como cravar</h2>
           <ul class="cj-passos">
-            <li><span class="cj-icone" aria-hidden="true">✎</span><p><strong>Crava o placar.</strong> Use − e + nos dois times e toque em CRAVAR. Dá pra mudar até a bola rolar, e pode pular os jogos que quiser.</p></li>
-            <li><span class="cj-icone" aria-hidden="true">★</span><p><strong>Jogo da certeza.</strong> A estrela marca 1 jogo por rodada que vale o <strong>dobro</strong>. Escolha até o 1º jogo da rodada começar; depois trava.</p></li>
-            <li><span class="cj-icone" aria-hidden="true">📊</span><p><strong>Na dúvida, olhe os números.</strong> Embaixo de cada time: posição, pontos e os últimos 5 jogos (V vitória, E empate, D derrota). A aba <em>Tabela</em> mostra o campeonato inteiro.</p></li>
-            <li><span class="cj-icone" aria-hidden="true">🎯</span><p><strong>Pontos.</strong> Placar exato 10 · vencedor e saldo certos (ou empate com outro placar) 7 · só o vencedor 5 · errou 0. Na torcida entram em dobro, até 300 por rodada.</p></li>
-            <li><span class="cj-icone" aria-hidden="true">👀</span><p><strong>Bola rolando.</strong> O palpite tranca e aparece como a torcida cravou (com 20 palpites ou mais). Os pontos saem quando o placar é confirmado.</p></li>
-            <li><span class="cj-icone" aria-hidden="true">📲</span><p><strong>Manda no grupo.</strong> No fim da página: <em>Mandar meus palpites</em> gera o card com seus placares; depois dos jogos, <em>Mandar o resultado</em> mostra seus pontos e um emoji por jogo.</p></li>
+            <li><span class="cj-icone">${icone('lapis')}</span><p><strong>Crava o placar.</strong> Use − e + nos dois times e toque em CRAVAR. Dá pra mudar até a bola rolar, e pode pular os jogos que quiser.</p></li>
+            <li><span class="cj-icone">${icone('estrela')}</span><p><strong>Jogo da certeza.</strong> A estrela marca 1 jogo por rodada que vale o <strong>dobro</strong>. Escolha até o 1º jogo da rodada começar; depois trava.</p></li>
+            <li><span class="cj-icone">${icone('grafico')}</span><p><strong>Na dúvida, olhe os números.</strong> Embaixo de cada time: posição, pontos e os últimos 5 jogos (V vitória, E empate, D derrota). A aba <em>Tabela</em> mostra o campeonato inteiro.</p></li>
+            <li><span class="cj-icone">${icone('alvo')}</span><p><strong>Pontos.</strong> Placar exato 10 · vencedor e saldo certos (ou empate com outro placar) 7 · só o vencedor 5 · errou 0. Na torcida entram em dobro, até 300 por rodada.</p></li>
+            <li><span class="cj-icone">${icone('olho')}</span><p><strong>Bola rolando.</strong> O palpite tranca e aparece como a torcida cravou (com 20 palpites ou mais). Os pontos saem quando o placar é confirmado.</p></li>
+            <li><span class="cj-icone">${icone('celular')}</span><p><strong>Manda no grupo.</strong> No fim da página: <em>Mandar meus palpites</em> gera o card com seus placares; depois dos jogos, <em>Mandar o resultado</em> mostra seus pontos e um emoji por jogo.</p></li>
           </ul>
           <p class="cj-nota">🎯 placar exato · ✅ vencedor e saldo · 👍 só o vencedor · ❌ errou · ⭐ jogo da certeza</p>
           <label class="cj-check"><input type="checkbox" data-cc-pular> Não exibir novamente</label>
@@ -599,11 +601,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
 
   async function compartilhar(botao: HTMLElement, dados: DadosCardCrava, texto: string): Promise<void> {
     try {
-      try {
-        await Promise.all([document.fonts.load('400 100px Anton'), document.fonts.load('700 40px Barlow')]);
-      } catch {
-        // segue com a fonte que tiver
-      }
+      await prontoParaDesenhar();
       const canvas = desenharCardCrava(dados);
       const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, 'image/png'));
       const arquivo = blob ? new File([blob], 'crava-a-rodada.png', { type: 'image/png' }) : null;
@@ -630,7 +628,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     if (!linhas.length) return;
     void compartilhar(
       ev.currentTarget as HTMLElement,
-      { tipo: 'meus', time: timeDoCard(), rodada, linhas, link: link().replace('https://', '') },
+      { tipo: 'meus', time: timeDoCard(), paraTime, rodada, linhas, link: link().replace('https://', '') },
       textoMeusPalpites(rodada, linhas, link()),
     );
   });
@@ -645,10 +643,11 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       {
         tipo: 'resultado',
         time: timeDoCard(),
+        apelido: prefs.get().apelido,
         rodada,
         pontos,
         paraTime,
-        emoji: linhaEmoji(resultados),
+        resultados,
         novoRecorde: recordeCrava(pontosPorRodada(), rodada).novo,
         frase: elAdesivo.hidden ? '' : (elAdesivo.textContent ?? ''),
         link: link().replace('https://', ''),

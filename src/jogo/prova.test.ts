@@ -3,7 +3,10 @@ import { criarAleatorio, inteiro } from './aleatorio';
 import {
   BONUS_PERFEITA,
   DEGRAU_DA_POSICAO,
+  ERROS_QUE_ENCERRAM,
+  FRACAO_AO_ERRAR,
   GERAL,
+  pontosDosPassos,
   calcularPontos,
   escadaEmoji,
   escolherPergunta,
@@ -19,6 +22,8 @@ import {
 } from './prova';
 
 const certa: Passo = { desfecho: 'acertou', ajuda: false };
+const erro: Passo = { desfecho: 'errou', ajuda: false };
+const tempo: Passo = { desfecho: 'tempo', ajuda: false };
 const certas = (n: number): Passo[] => Array.from({ length: n }, () => certa);
 
 /** Sorteio previsível para os testes (o mesmo gerador com semente dos pênaltis). */
@@ -41,32 +46,58 @@ describe('pontuação da Prova de Boleiro', () => {
 
   it('8 de 8 ganha +24: máximo 150', () => {
     const p = calcularPontos(certas(8));
-    expect(p).toEqual({ acertos: 8, base: 126, bonus: BONUS_PERFEITA, total: 150 });
+    expect(p).toEqual({ acertos: 8, erros: 0, base: 126, bonus: BONUS_PERFEITA, total: 150 });
   });
 
   it('parar leva tudo o que acumulou', () => {
     expect(calcularPontos(certas(5)).total).toBe(58);
+    // parar com 1 erro pelo caminho: leva a base inteira, sem corte
+    expect(calcularPontos([certa, erro, certa, certa]).total).toBe(8 + 12 + 12);
   });
 
-  it('errar leva metade, arredondada para cima', () => {
-    // 5 certas (58) e erro na 6ª: 29
-    expect(calcularPontos([...certas(5), { desfecho: 'errou', ajuda: false }]).total).toBe(29);
-    // 7 certas (101) e tempo esgotado na 8ª: 50,5 → 51
-    expect(calcularPontos([...certas(7), { desfecho: 'tempo', ajuda: true }]).total).toBe(51);
-    // erro na 1ª: 0
-    expect(calcularPontos([{ desfecho: 'errou', ajuda: false }]).total).toBe(0);
+  it('constantes da calibragem: 3 erros e 75%', () => {
+    expect(ERROS_QUE_ENCERRAM).toBe(3);
+    expect(FRACAO_AO_ERRAR).toBe(0.75);
   });
 
-  it('recusa passo depois do erro e passos demais', () => {
-    expect(() => calcularPontos([{ desfecho: 'errou', ajuda: false }, certa])).toThrow();
+  it('um e dois erros não encerram nem cortam pontos', () => {
+    expect(fimDosPassos([erro])).toBeNull();
+    expect(fimDosPassos([erro, certa, tempo])).toBeNull();
+    expect(calcularPontos([erro, certa, tempo]).total).toBe(8);
+  });
+
+  it('o 3º erro encerra e leva 75%, arredondado para cima', () => {
+    // 5 certas (58), mais 3 erros em 8 passos: 58 * 0,75 = 43,5 → 44
+    const p = calcularPontos([...certas(2), erro, ...certas(1), erro, certa, tempo]);
+    expect(p.erros).toBe(3);
+    expect(p.base).toBe(8 + 8 + 12 + 18); // acertos nas posições 1, 2, 4 e 6
+    expect(p.total).toBe(Math.ceil(46 * 0.75));
+    expect(calcularPontos([erro, erro, erro]).total).toBe(0);
+    expect(fimDosPassos([erro, erro, tempo])).toBe('tempo');
+    expect(fimDosPassos([erro, certa, erro, certa, erro])).toBe('errou');
+  });
+
+  it('cada acerto vale o degrau da sua posição, mesmo depois de um erro', () => {
+    expect(pontosDosPassos([erro, certa])).toBe(8);
+    expect(pontosDosPassos([erro, erro, certa, certa])).toBe(12 + 12);
+  });
+
+  it('8 passos com erros: completa, sem bônus de 8 de 8', () => {
+    const passos = [erro, ...certas(7)];
+    expect(fimDosPassos(passos)).toBe('completa');
+    expect(calcularPontos(passos)).toEqual({ acertos: 7, erros: 1, base: 118, bonus: 0, total: 118 });
+  });
+
+  it('recusa passo depois do 3º erro e passos demais', () => {
+    expect(() => calcularPontos([erro, erro, erro, certa])).toThrow();
     expect(() => calcularPontos(certas(9))).toThrow();
   });
 
   it('fim da partida pelos passos', () => {
     expect(fimDosPassos(certas(3))).toBeNull();
     expect(fimDosPassos(certas(8))).toBe('perfeita');
-    expect(fimDosPassos([...certas(2), { desfecho: 'tempo', ajuda: false }])).toBe('tempo');
-    expect(fimDosPassos([{ desfecho: 'errou', ajuda: false }])).toBe('errou');
+    expect(fimDosPassos([...certas(2), { desfecho: 'tempo', ajuda: false }])).toBeNull();
+    expect(fimDosPassos([{ desfecho: 'errou', ajuda: false }])).toBeNull();
   });
 
   it('parar ou seguir só a partir da 3ª pergunta', () => {
@@ -83,8 +114,9 @@ describe('card em emoji', () => {
 
   it('resumo sem o texto das perguntas', () => {
     expect(resumoDaProva(certas(5), 'parou')).toBe('cheguei na 6ª e parei');
-    expect(resumoDaProva([...certas(4), { desfecho: 'errou', ajuda: false }], 'errou')).toBe('errei na 5ª');
-    expect(resumoDaProva([...certas(2), { desfecho: 'tempo', ajuda: false }], 'tempo')).toBe('o tempo acabou na 3ª');
+    expect(resumoDaProva([...certas(2), erro, erro, erro], 'errou')).toBe('errei a 3ª vez na 5ª');
+    expect(resumoDaProva([erro, erro, tempo], 'tempo')).toBe('o tempo acabou na 3ª, o 3º erro');
+    expect(resumoDaProva([erro, ...certas(7)], 'completa')).toBe('fiz 7 de 8');
     expect(resumoDaProva(certas(8), 'perfeita')).toBe('fiz 8 de 8');
   });
 });

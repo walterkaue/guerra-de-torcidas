@@ -3,8 +3,8 @@ import { htmlPosicao, linhaPosicaoMinigame, linhaPosicaoSemana, linhaRecorde, re
 
 describe('sua posição', () => {
   it('semana: posição, total e pontos; sem pontuar, chama pra disputa', () => {
-    expect(linhaPosicaoSemana({ posicao: 3, total: 14, pontos: 1234 })).toBe('Sua posição: 3º de 14 na semana · 1.234 pontos');
-    expect(linhaPosicaoSemana({ posicao: 1, total: 1, pontos: 1 })).toBe('Sua posição: 1º de 1 na semana · 1 ponto');
+    expect(linhaPosicaoSemana({ posicao: 3, total: 14, pontos: 1234 })).toBe('Você: 3º de 14 na semana');
+    expect(linhaPosicaoSemana({ posicao: 1, total: 1, pontos: 1 })).toBe('Você: 1º de 1 na semana');
     expect(linhaPosicaoSemana({ posicao: null, total: 14, pontos: 0 })).toBe('14 pessoas já pontuaram na semana. Joga uma e entra na disputa!');
     expect(linhaPosicaoSemana({ posicao: null, total: 1, pontos: 0 })).toBe('1 pessoa já pontuou na semana. Joga uma e entra na disputa!');
     expect(linhaPosicaoSemana({ posicao: null, total: 0, pontos: 0 })).toBe('Ninguém pontuou ainda nesta semana. Sai na frente!');

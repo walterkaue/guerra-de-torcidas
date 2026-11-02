@@ -1,5 +1,6 @@
 // Painel do administrador (#admin): login com e-mail e senha, só para quem está na tabela
-// administradores. Confirma, corrige ou anula o placar dos jogos do Crava; a distribuição dos
+// administradores. Revisa as perguntas do pipeline com Gemini (adminRevisao.ts) e as partidas sob
+// suspeita (adminSuspeitas.ts), e apaga apelido ofensivo (adminApelido.ts). Confirma, corrige ou anula o placar dos jogos do Crava; a distribuição dos
 // pontos é feita no servidor (função confirmar-placar), sem duplicar.
 // Usa uma sessão separada (storageKey próprio): a sessão de jogador do aparelho continua a mesma.
 
@@ -9,6 +10,10 @@ import { timePorId } from '../dados/times';
 import { ordinalRodada } from '../jogo/crava';
 import { horaDoJogo, rodadaEmFoco } from '../jogo/cravaTela';
 import type { Jogo } from '../servidor/crava';
+import { opcoesComCaptcha, tokenCaptcha } from '../servidor/captcha';
+import { montarApelido } from './adminApelido';
+import { montarRevisao } from './adminRevisao';
+import { montarSuspeitas } from './adminSuspeitas';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -53,6 +58,9 @@ export function telaAdmin(root: HTMLElement): () => void {
   });
 
   let jogos: Jogo[] = [];
+  let limparRevisao: (() => void) | undefined;
+  let limparSuspeitas: (() => void) | undefined;
+  let limparApelido: (() => void) | undefined;
   let rodada: number | null = null;
 
   const casca = (miolo: string) => {
@@ -76,9 +84,18 @@ export function telaAdmin(root: HTMLElement): () => void {
       const dados = new FormData(form);
       const botao = form.querySelector<HTMLButtonElement>('button')!;
       botao.disabled = true;
+      // Com o CAPTCHA ligado no Supabase, o login por senha também precisa do token.
+      let token: string | undefined;
+      try {
+        token = await tokenCaptcha();
+      } catch {
+        if (!saiu) telaLogin('Não deu pra passar na verificação. Tente de novo.');
+        return;
+      }
       const { error } = await sb.auth.signInWithPassword({
         email: String(dados.get('email') ?? ''),
         password: String(dados.get('senha') ?? ''),
+        options: opcoesComCaptcha(token),
       });
       if (saiu) return;
       if (error) telaLogin('E-mail ou senha não conferem.');
@@ -112,6 +129,12 @@ export function telaAdmin(root: HTMLElement): () => void {
       <section class="lista-jogos" data-jogos></section>
       <p class="nota">Confirmar distribui os pontos da rodada inteira. Confirmar de novo ou corrigir não duplica:
       o servidor grava só a diferença. Placar confirmado depois de segunda 12h entra na semana atual.</p>
+      <h3 class="titulo-placar">Revisão de perguntas</h3>
+      <section data-revisao></section>
+      <h3 class="titulo-placar">Partidas sob suspeita</h3>
+      <section data-suspeitas></section>
+      <h3 class="titulo-placar">Apagar apelido</h3>
+      <section data-apelido></section>
       <h3 class="titulo-placar">Feedback</h3>
       <section class="lista-jogos" data-feedbacks><p class="nota">Carregando…</p></section>
       <h3 class="titulo-placar">Prova de Boleiro</h3>
@@ -122,6 +145,12 @@ export function telaAdmin(root: HTMLElement): () => void {
     root.querySelector('[data-acao="ant"]')!.addEventListener('click', () => mudarRodada(-1));
     root.querySelector('[data-acao="prox"]')!.addEventListener('click', () => mudarRodada(1));
     root.querySelector('[data-jogos]')!.addEventListener('click', acaoNoJogo);
+    limparRevisao?.();
+    limparRevisao = montarRevisao(root.querySelector<HTMLElement>('[data-revisao]')!, sb, () => void carregar());
+    limparSuspeitas?.();
+    limparSuspeitas = montarSuspeitas(root.querySelector<HTMLElement>('[data-suspeitas]')!, sb);
+    limparApelido?.();
+    limparApelido = montarApelido(root.querySelector<HTMLElement>('[data-apelido]')!, sb);
     await carregar();
   }
 
@@ -318,5 +347,8 @@ export function telaAdmin(root: HTMLElement): () => void {
   void abrir();
   return () => {
     saiu = true;
+    limparRevisao?.();
+    limparSuspeitas?.();
+    limparApelido?.();
   };
 }

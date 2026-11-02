@@ -9,9 +9,10 @@
 | Desenho e regras (`docs/casa.md`, `jogo.md` 7.4) | Pronto |
 | Dados: 6 CSVs, 20 clubes (`dados/casa/`) | **Rascunho completo**, com buracos e dúvidas em `dados/casa/RELATORIO.md` |
 | Conferência dos dados (segunda sessão) | **Não começou** |
-| Importador, validador e competições (`scripts/casa/`, `src/dados/competicoes.ts`) | Não existe |
-| Tela, índice e desenhos (`src/telas/casa.ts`) | Não existe |
-| Ganchos (Home, Ranking, Time do Dia) | Não existe |
+| Importador, validador e competições (`scripts/casa/`, `src/dados/competicoes.ts`) | Pronto; conferência por script com Gemini (`npm run conferir-casa`) desde 25/10 |
+| Tela, índice e desenhos (`src/telas/casa/`) | Pronto (25/10/2026), testado em 390×844 |
+| Ganchos (Home, Ranking, Time do Dia) | Prontos (25/10/2026); Prova de Boleiro fica para depois |
+| "Seja sócio" (bloco, `dados/casa/socios.csv`, contagem) | No ar em **19 clubes**, com as linhas aprovadas pelo Kauê em 31/10/2026 (curadoria em `docs/casa.md`, seção 8). O Mirassol fica sem o bloco: a página do Passaporte do Leão ainda mostra a logo de uma casa de aposta. Volta quando a logo sair e a linha for revisada de novo |
 
 O upgrade dos pênaltis que travava a Casa fechou (Lances do Jogo no `main`), então **nada impede de começar**.
 
@@ -32,6 +33,7 @@ O upgrade dos pênaltis que travava a Casa fechou (Lances do Jogo no `main`), en
 
 ### Etapa B. Conferência dos dados (sessão nova, sem o contexto da escrita)
 - **Quem:** sessões de Claude Code, uma por **lote de 5 clubes** (ordem alfabética do id, os mesmos lotes da escrita). Prompt pronto em `dados/casa/conferencia.md`.
+- **Títulos, recordes e goleadas (desde 25/10/2026):** `npm run conferir-casa -- --clube=<id>` (ou `--todos`) confere por script com o Gemini (chave em `GEMINI_API_KEY`, só no ambiente). O script baixa a fonte, o modelo aponta o trecho e o script só marca `revisada` quando o trecho está na página, letra por letra, com o ano, o número ou o placar da linha. O que ele recusa fica em `rascunho` e vai para `dados/casa/conferencia-gemini/<clube>.md`, para a conferência humana. Clubes, estádios e mantos (texto livre) continuam na conferência humana.
 - **O que faz:** abre cada fonte, confere o fato, corrige ou apaga, marca `revisada` com data. Resolve ou escala cada "conferir" da observação. Nas lacunas, tenta achar fonte; se não achar, deixa vazio.
 - **Cuidado:** os CSVs são por tipo e têm todos os clubes. Duas sessões em paralelo mexem nos mesmos arquivos; as linhas são ordenadas por clube, então o merge costuma ser limpo, mas **faça um lote por vez** ou junte as branches com merge conferido.
 - **Pronto quando:** os 5 clubes do lote têm todas as linhas `revisada` (ou apagadas com motivo), `npm test` passa e a tabela de mudanças vem no resumo.
@@ -63,7 +65,7 @@ Arquivos de contato: `inicio.ts` (bloco do time), `ranking.ts` (torcida), `timeD
 2. **Conferência humana por amostra:** o Kauê abre as Casas dos clubes que mais conhece no celular e confere de olho dois ou três fatos.
 3. **Divulgação** só quando os 20 estiverem revisados: card/stories da sala de troféus fica para depois (item 5 da ordem de construção do `docs/casa.md`).
 4. **Medir:** se o `scripts/metricas.mjs` já conta aberturas de tela, registrar aberturas por Casa; se não, só entra se for barato (a Casa não tem servidor).
-- **Pronto quando:** `main` com a Casa, deploy normal do projeto, sem migração nem segredo.
+- **Pronto quando:** `main` com a Casa, deploy normal do projeto, sem segredo. A única migração é a da contagem do "Seja sócio".
 
 ### Etapa G. Manutenção
 | Quando | O que |
@@ -71,6 +73,7 @@ Arquivos de contato: `inicio.ts` (bloco do time), `ranking.ts` (torcida), `timeD
 | **Dezembro de 2026** | Rodada de escrita + conferência com os títulos de 2026 (Libertadores, Copa do Brasil, Brasileirão até 2/12, estaduais de 2026 já entraram) e recordes que mudam (ex.: jogos do Cássio, gols dos jogadores em atividade). Rodapé passa a "Dados até 31/12/2026". |
 | **2027** | Atualização completa com a nova Série A (clubes que sobem e descem). |
 | **Sempre** | Erro apontado pelo botão: corrige no CSV, marca nova `verificada_em`, rodar `npm run importar-casa`. |
+| **Todo mês** | `npm run conferir-casa -- --links` e, para cada `revisada`, uma olhada na página de sócio: se passou a promover aposta, `aposta_na_pagina` = `sim` e `status` = `aposentada`. |
 
 ## 4. Quem faz o quê
 

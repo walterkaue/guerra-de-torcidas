@@ -34,4 +34,4 @@ Para cada lance em `rascunho`:
 4. Se mudar a posição, a barreira ou o goleiro, rodar `npm test` e atualizar a `faixa` com o que o robô disser.
 5. Marcar `revisada` com `verificada_em`, ou apagar a linha se o lance não se sustentar.
 
-Depois da conferência, `npm run catalogo-lances` atualiza `src/dados/lances.ts`, que é o que o jogo lê (só entra lance `revisada` ou `ativa`).
+Depois da conferência, `npm run catalogo-lances` atualiza `src/dados/lances.ts`, que é o que o jogo lê, e `src/dados/lancesResumo.ts`, com as contagens do card da Home (só entra lance `revisada` ou `ativa`).

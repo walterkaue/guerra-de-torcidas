@@ -1,8 +1,12 @@
 // Troca de telas. Cada tela desenha no #app e devolve uma função de limpeza.
 
+import type { Disputa } from './jogo/disputas';
 import type { Gestos, ResultadoPartida } from './jogo/penaltis';
 import type { DesafioRecebido, FechamentoDoServidor } from './servidor/api';
 import type { DadosResultadoProva } from './telas/prova';
+import { faixaDoAparelho } from './estado';
+import { precisaDaTriagem } from './jogo/faixaEtaria';
+import { qualidade } from './telas/qualidade';
 
 export interface DadosResultado {
   timeId: string;
@@ -18,6 +22,8 @@ export interface DadosResultado {
   servidor?: FechamentoDoServidor;
   /** Partida de desafio por link: dados de quem desafiou. */
   desafio?: DesafioRecebido;
+  /** Disputa histórica jogada (só cenário). */
+  disputa?: Disputa;
   /** Até 2 frases do narrador para a tela final (5 de 5, depois o resultado). */
   frasesFinais: string[];
 }
@@ -26,15 +32,25 @@ export type Rota =
   | { tela: 'inicio' }
   | { tela: 'ranking' }
   | { tela: 'palpites' }
+  | { tela: 'perfil' }
   | { tela: 'admin' }
+  | { tela: 'apoie' }
+  /** Faixa etária (docs/jogo.md, seção 13): depois de responder, segue para `depois`. */
+  | { tela: 'triagem'; depois: Rota }
+  /** Termos e privacidade: `de` é para onde o voltar leva (sem ela, a Home); `apagar` abre já em "Apagar meus dados". */
+  | { tela: 'termos'; de?: Rota; apagar?: boolean }
   | { tela: 'feedback'; de?: string }
-  | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia' | 'lances'; desafio?: string }
-  | { tela: 'partida'; desafio?: string }
+  /** `apelido` já leva ao campo do apelido (Perfil, "Escolher apelido"). */
+  | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia' | 'lances' | 'perfil'; desafio?: string; apelido?: boolean }
+  /** `disputa`: disputa histórica escolhida na aba Pênaltis (só cenário; sem ela, a disputa livre). */
+  | { tela: 'partida'; desafio?: string; disputa?: Disputa }
   | { tela: 'resultado'; dados: DadosResultado }
   | { tela: 'prova'; desafio?: string }
   | { tela: 'provaResultado'; dados: DadosResultadoProva }
   | { tela: 'timeDoDia' }
-  | { tela: 'lances'; aba?: 'penaltis' | 'falta' | 'finalizacao' };
+  | { tela: 'lances'; aba?: 'penaltis' | 'falta' | 'finalizacao' }
+  /** Casa do [time]: sem id, o índice dos clubes. */
+  | { tela: 'casa'; id?: string };
 
 type Limpeza = (() => void) | void;
 type Renderizador = (root: HTMLElement, rota: Rota) => Limpeza;
@@ -51,11 +67,28 @@ export function iniciarApp(root: HTMLElement): void {
   raiz = root;
 }
 
-export function irPara(rota: Rota): void {
-  if (typeof limparAtual === 'function') limparAtual();
-  raiz.innerHTML = '';
-  window.scrollTo(0, 0);
-  limparAtual = telas.get(rota.tela)?.(raiz, rota);
+let primeiraTela = true;
+
+/**
+ * Troca de tela. Com a transição nativa do navegador (View Transitions), a tela nova entra numa
+ * varrida inclinada, como a tarja de TV (docs/visual.md, seção 4.5); sem ela, na qualidade Leve,
+ * com movimento reduzido ou na primeira tela, troca direto. A troca em si continua igual.
+ * Toda entrada em jogo passa por aqui, então é aqui que a triagem de faixa etária segura a 1ª partida.
+ */
+export function irPara(pedida: Rota): void {
+  const rota: Rota = precisaDaTriagem(pedida.tela, faixaDoAparelho()) ? { tela: 'triagem', depois: pedida } : pedida;
+  const trocar = () => {
+    if (typeof limparAtual === 'function') limparAtual();
+    raiz.innerHTML = '';
+    window.scrollTo(0, 0);
+    limparAtual = telas.get(rota.tela)?.(raiz, rota);
+  };
+  const doc = document as Document & { startViewTransition?: (fn: () => void) => unknown };
+  const semTransicao =
+    primeiraTela || !doc.startViewTransition || qualidade().nivel === 'leve' || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  primeiraTela = false;
+  if (semTransicao) trocar();
+  else doc.startViewTransition!(trocar);
 }
 
 /** Código de desafio que veio no link (?d=), até ser aceito. */

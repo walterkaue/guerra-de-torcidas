@@ -65,12 +65,29 @@ export function cameraAtrasDaBola(bola: { x: number; z: number }, e: Enquadramen
   const uz = bola.z / d;
   const pos = { x: bola.x + ux * e.atras, y: e.altura, z: bola.z + uz * e.atras };
   const alvo = { x: bola.x * (1 - e.olhar), y: e.alturaOlhar, z: bola.z * (1 - e.olhar) };
+  return cameraOlhando(pos, alvo, e.zoom, largura, altura, e.centroY);
+}
+
+/**
+ * Câmera do replay de TV: atrás do gol, por trás da rede, um pouco alta, olhando para o campo entre a
+ * bola e o gol. Puxa um pouco para o lado onde a bola entrou, como o cinegrafista de fundo.
+ */
+export function cameraDoReplay(bola: { x: number; z: number }, fimX: number, largura: number, altura: number): Camera {
+  // Alta (como a câmera da arquibancada atrás do gol) para o campo encher a tela em pé, sem céu vazio.
+  const pos = { x: Math.max(-2.5, Math.min(2.5, fimX * 0.25 + bola.x * 0.1)), y: 7.5, z: -7.5 };
+  // Mira entre o canto onde a bola entrou e a bola: os dois ficam no quadro.
+  const alvo = { x: fimX * 0.5 + bola.x * 0.2, y: 0, z: bola.z * 0.4 };
+  return cameraOlhando(pos, alvo, 1.15, largura, altura, 0.6);
+}
+
+/** Câmera em `pos` olhando para `alvo`, com o zoom em larguras de tela e o centro na altura `centroY`. */
+export function cameraOlhando(pos: Ponto3, alvo: Ponto3, zoom: number, largura: number, altura: number, centroY: number): Camera {
   const frente = norm(sub(alvo, pos));
   const direita = norm(cross(frente, { x: 0, y: 1, z: 0 }));
   const cima = cross(direita, frente);
-  const f = e.zoom * largura;
+  const f = zoom * largura;
   const cx = largura / 2;
-  const cy = altura * e.centroY;
+  const cy = altura * centroY;
   return {
     pos,
     projetar(p) {

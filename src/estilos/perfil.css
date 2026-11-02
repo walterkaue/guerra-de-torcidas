@@ -1,0 +1,238 @@
+/* Aba Perfil (docs/visual.md, seção 3.1). Baixa junto com a tela. */
+
+.perfil {
+  gap: 14px;
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+}
+
+/* ---------- crachá ---------- */
+.cracha {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.cracha-topo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cracha-nomes {
+  flex: 1;
+  min-width: 0;
+}
+
+.cracha-nome {
+  font-family: var(--fonte-placar);
+  font-size: 26px;
+  line-height: 1.15;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.cracha-time {
+  color: var(--texto-suave);
+}
+
+.cracha .link-trocar {
+  position: static;
+  flex: none;
+}
+
+.cracha .avatar {
+  flex: none;
+}
+
+/* Carreira do jogador (só a própria): nível, barra até o próximo e quanto vale a próxima partida. */
+.carreira {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.carreira-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--texto-suave);
+}
+
+.carreira-xp {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.carreira-nivel {
+  font-family: var(--fonte-placar);
+  font-size: 30px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--amarelo);
+}
+
+.carreira-barra {
+  height: 12px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+  transform: skewX(var(--inclinacao));
+}
+
+.carreira-barra span {
+  display: block;
+  height: 100%;
+  width: calc(var(--enche, 0) * 100%);
+  background: var(--amarelo);
+}
+
+.carreira-falta {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.carreira-linha {
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.carreira-bonus {
+  color: var(--subiu);
+  font-weight: 700;
+}
+
+/* ---------- semana, recordes e ajustes ---------- */
+.perfil-bloco {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 14px 6px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.perfil-bloco h3 {
+  padding-bottom: 4px;
+  color: var(--texto-suave);
+}
+
+.perfil-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 15px;
+}
+
+.perfil-linha dd {
+  margin-left: auto;
+  font-weight: 700;
+}
+
+.perfil-atalho {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--texto-suave);
+  font-weight: 700;
+}
+
+.em-breve {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: var(--amarelo);
+  color: var(--tinta);
+  font-family: var(--fonte-rotulo);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ajuste {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 0;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: none;
+  color: var(--cal);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+button.ajuste {
+  justify-content: flex-start;
+}
+
+.ajuste [data-aviso] {
+  margin-left: auto;
+  color: var(--texto-suave);
+  font-weight: 400;
+}
+
+/* Chave: o quadradinho vira uma chave de ligar, com a mesma resposta dos botões. */
+.chave {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 52px;
+  height: 30px;
+  margin: 0;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.2);
+  transition: background var(--medio);
+}
+
+.chave::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--cal);
+  transition: transform var(--medio) var(--mola-firme);
+}
+
+.chave:checked {
+  background: var(--amarelo);
+}
+
+.chave:checked::after {
+  transform: translateX(22px);
+  background: var(--tinta);
+}
+
+.chave:focus-visible {
+  outline: 2px solid var(--cal);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chave,
+  .chave::after {
+    transition: none;
+  }
+}

@@ -13,7 +13,6 @@ export const CLUBES = [
 ];
 
 export const DEGRAUS = { facil: 1, media: 2, dificil: 3, craque: 4 };
-const LETRA_DO_DEGRAU = { facil: 'f', media: 'm', dificil: 'd', craque: 'c' };
 export const STATUS = ['rascunho', 'revisada', 'ativa', 'aposentada'];
 
 export const MAX_PERGUNTA = 140;
@@ -56,6 +55,13 @@ export const PALAVRAS_PROIBIDAS = [
   'bolao valendo', 'green', 'red', 'premio', 'premios', 'milhao', 'valendo',
 ];
 
+/** Marcas de terceiros (patrocínio de estádio, competição e camisa, fornecedor, aposta): nem na Casa nem no quiz. */
+export const MARCAS_PROIBIDAS = [
+  'mrv', 'ligga', 'itaipava', 'casa de apostas', 'red bull', 'umbro', 'puma', 'adidas', 'nike', 'topper', 'kappa',
+  'penalty', 'betano', 'sportingbet', 'bet365', 'brahma', 'kyocera', 'neo quimica', 'allianz', 'heineken',
+  'petrobras', 'vivo', 'hapvida', 'caixa', 'banrisul', 'nubank', 'sicredi', 'volt', 'supermercado', 'banco',
+];
+
 /** Temas fora da regra (seção 7.1): tragédia, rebaixamento, vexame, menor de idade… */
 export const TEMAS_PROIBIDOS = [
   'rebaixa', 'queda para a serie', 'tragedia', 'morte', 'morreu', 'faleceu', 'falecimento',
@@ -69,14 +75,26 @@ export const normalizar = (s) =>
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase();
 
-const regex = (p, inteira) => new RegExp(`(^|[^a-z0-9])${p.replace(/ /g, '\\s+')}${inteira ? '($|[^a-z0-9])' : ''}`);
+// Cada regex é compilada uma vez: a Casa passa milhares de campos por estas listas.
+const compiladas = new Map();
+const regex = (p, inteira) => {
+  const chave = `${inteira}:${p}`;
+  if (!compiladas.has(chave)) compiladas.set(chave, new RegExp(`(^|[^a-z0-9])${p.replace(/ /g, '\\s+')}${inteira ? '($|[^a-z0-9])' : ''}`));
+  return compiladas.get(chave);
+};
 const limpar = (texto) => normalizar(texto).replace(/morte subita/g, ' ');
 
 /** Palavras proibidas: só palavra inteira ("red" pega "Red Bull", não "redondo"). */
-export const acharPalavras = (texto) => PALAVRAS_PROIBIDAS.filter((p) => regex(p, true).test(limpar(texto)));
+export const acharPalavras = (texto) => {
+  const t = limpar(texto);
+  return PALAVRAS_PROIBIDAS.filter((p) => regex(p, true).test(t));
+};
 
 /** Temas: começo de palavra ("rebaixa" pega "rebaixamento"); "morte súbita" é regra do jogo e passa. */
-export const acharTemas = (texto) => TEMAS_PROIBIDOS.filter((p) => regex(p, false).test(limpar(texto)));
+export const acharTemas = (texto) => {
+  const t = limpar(texto);
+  return TEMAS_PROIBIDOS.filter((p) => regex(p, false).test(t));
+};
 
 /** Parser de CSV (RFC 4180): aspas, aspas dobradas, vírgula e quebra de linha dentro do campo, BOM. */
 export function lerCsv(texto) {
@@ -148,8 +166,9 @@ export function validarPergunta(p) {
   if (!clubeOk) erros.push(`clube "${p.clube}" não é um dos 20 nem "geral"`);
   if (!(p.degrau in DEGRAUS)) erros.push(`degrau "${p.degrau}" (use facil, media, dificil ou craque)`);
   if (!/^[a-z0-9-]+-[fmdc]-\d{2,3}$/.test(p.id)) erros.push(`id "${p.id}" fora do formato clube-f-01`);
-  else if (clubeOk && p.degrau in DEGRAUS && !p.id.startsWith(`${p.clube}-${LETRA_DO_DEGRAU[p.degrau]}-`)) {
-    erros.push(`id "${p.id}" não bate com clube/degrau (${p.clube}-${LETRA_DO_DEGRAU[p.degrau]}-NN)`);
+  else if (clubeOk && !p.id.startsWith(`${p.clube}-`)) {
+    // A letra do id é o degrau de nascimento: a pergunta pode mudar de degrau (rebaixe, calibragem) sem trocar o id.
+    erros.push(`id "${p.id}" não bate com o clube (${p.clube}-x-NN)`);
   }
   if (!p.tema || p.tema.length > 30) erros.push('tema vazio ou longo');
 

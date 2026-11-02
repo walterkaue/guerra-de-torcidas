@@ -3,11 +3,16 @@
 // Sem internet ou com o Supabase fora do ar, tudo aqui falha rápido e o jogo segue "sem valer pontos".
 
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
+import { opcoesComCaptcha, tokenCaptcha } from './captcha';
 import { prefs } from '../estado';
-import type { GestoCobranca, Gestos, ResultadoPartida } from '../jogo/penaltis.ts';
+import type { GestoCobranca, Gestos, ResultadoCobranca, ResultadoDefesa, ResultadoPartida } from '../jogo/penaltis.ts';
+import type { Lance, Passo as PassoPenalti } from '../jogo/penaltisLance.ts';
 import type { Ajuda, Degrau, Desfecho, Fim, Passo, PontosProva } from '../jogo/prova.ts';
 import type { Desempenho, PosicaoSemana } from '../jogo/posicao.ts';
 import type { Tentativa } from '../jogo/timeDoDia.ts';
+import type { Carreira } from '../jogo/carreira.ts';
+import type { FaixaEtaria } from '../jogo/faixaEtaria.ts';
+import type { MeusDados } from '../jogo/meusDados.ts';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -54,12 +59,19 @@ export function garantirSessao(): Promise<string> {
       // Sessão salva de um usuário que não existe mais: limpa e entra de novo.
       if (error && error.status && error.status >= 400 && error.status < 500) {
         await sb.auth.signOut({ scope: 'local' });
-        prefs.set({ sincronizado: undefined });
+        prefs.set({ sincronizado: undefined, faixaSincronizada: undefined });
       } else {
         throw new ErroServidor('sem_conexao');
       }
     }
-    const { data: novo, error } = await comTempoLimite(sb.auth.signInAnonymously());
+    // CAPTCHA (desligado sem a chave do site): só aqui, no primeiro login do aparelho.
+    let token: string | undefined;
+    try {
+      token = await tokenCaptcha();
+    } catch {
+      throw new ErroServidor('captcha');
+    }
+    const { data: novo, error } = await comTempoLimite(sb.auth.signInAnonymously({ options: opcoesComCaptcha(token) }));
     if (error || !novo.user) throw new ErroServidor(error?.code ?? 'login_falhou');
     return novo.user.id;
   })().catch((e) => {
@@ -78,6 +90,50 @@ export async function salvarTorcedor(timeId: string, apelido?: string): Promise<
     const codigo = ['apelido_bloqueado', 'apelido_longo', 'time_invalido'].find((c) => error.message.includes(c));
     throw new ErroServidor(codigo ?? 'falha');
   }
+}
+
+/** Grava a faixa da triagem. False quando o torcedor ainda não existe (falta escolher o time). */
+export async function salvarFaixaEtaria(faixa: FaixaEtaria): Promise<boolean> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('salvar_faixa_etaria', { p_faixa: faixa }));
+  if (error) throw new ErroServidor('falha');
+  return data === true;
+}
+
+/**
+ * Apaga o usuário anônimo e tudo ligado a ele (docs/jogo.md, seção 13). Sem sessão no aparelho não há
+ * nada no servidor, e não cria login só para isso. A limpeza do aparelho fica com a tela.
+ */
+export async function apagarMeusDados(): Promise<void> {
+  const sb = await supabase();
+  const { data } = await comTempoLimite(sb.auth.getSession());
+  if (data.session) {
+    const { error } = await comTempoLimite(sb.rpc('apagar_meus_dados'));
+    if (error) throw new ErroServidor(error.message.includes('conta_nao_anonima') ? 'conta_nao_anonima' : 'falha');
+    await sb.auth.signOut({ scope: 'local' });
+  }
+  sessaoConferida = null;
+}
+
+/**
+ * "Ver meus dados" (docs/jogo.md, seção 13): o que o servidor guarda de quem chama. Sem sessão no aparelho
+ * não há nada no servidor (null), e não cria login só para isso.
+ */
+export async function verMeusDados(): Promise<MeusDados | null> {
+  const sb = await supabase();
+  const { data } = await comTempoLimite(sb.auth.getSession());
+  if (!data.session) return null;
+  const { data: dados, error } = await comTempoLimite(sb.rpc('ver_meus_dados'));
+  if (error) throw new ErroServidor('falha');
+  return dados as MeusDados | null;
+}
+
+/** Conta um clique no "Seja sócio", sem login e sem esperar resposta: nunca segura a saída para o site. */
+export function contarCliqueSocio(clube: string): void {
+  supabase()
+    .then((sb) => comTempoLimite(sb.rpc('contar_clique_socio', { p_clube: clube })))
+    .catch(() => undefined);
 }
 
 async function chamar<T>(funcao: string, corpo: Record<string, unknown>): Promise<T> {
@@ -104,19 +160,36 @@ export interface DesafioRecebido {
   golsJogador: number;
   golsMaquina: number;
   pontos: number;
-  cobrancas: GestoCobranca[];
+  /** Só do servidor antigo: no lance a lance as cobranças gravadas ficam no servidor. */
+  cobrancas?: GestoCobranca[];
 }
 
 export interface PartidaDoServidor {
   partidaId: string;
-  semente: number;
+  /** Servidor antigo (antes do lance a lance): a semente vinha para o celular. */
+  semente?: number;
+  /** Lance a lance: cada lance vai para lancePenalti e o resultado volta de lá. */
+  lanceALance?: boolean;
+  proximo?: PassoPenalti;
   dificuldade: number;
   expiraEm: string;
   desafio: DesafioRecebido | null;
 }
 
-export function novaPartida(desafio?: string): Promise<PartidaDoServidor> {
-  return chamar('nova-partida', desafio ? { desafio } : {});
+/** `disputa`: id da disputa histórica escolhida; só marca a partida, não muda nada do jogo. */
+export function novaPartida(desafio?: string, disputa?: string): Promise<PartidaDoServidor> {
+  return chamar('nova-partida', { ...(desafio ? { desafio } : {}), ...(disputa ? { disputa } : {}) });
+}
+
+export interface LanceDoServidor {
+  cobranca: ResultadoCobranca | null;
+  defesa: ResultadoDefesa | null;
+  proximo: PassoPenalti;
+}
+
+/** Um lance dos pênaltis: o servidor resolve com a semente que só ele conhece. */
+export function lancePenalti(partidaId: string, lance: Lance): Promise<LanceDoServidor> {
+  return chamar('lance-penalti', { partidaId, lance: lance as unknown as Record<string, unknown> });
 }
 
 export interface PosicaoRanking {
@@ -180,6 +253,8 @@ export interface PerguntaProva {
   segundos: number;
   /** Pontos garantidos antes desta pergunta. */
   levar: number;
+  /** Erros e tempos esgotados até aqui (o 3º encerra). */
+  erros: number;
   ajudasUsadas: Ajuda[];
 }
 
@@ -217,6 +292,7 @@ export interface RespostaProva {
   certa: string;
   escolhida: string | null;
   levar: number;
+  erros: number;
   proxima: { numero: number; decidir: boolean } | null;
   fim: FimProva | null;
 }
@@ -293,7 +369,6 @@ export interface EstadoDoDia {
   secreto: { id: string; nome: string } | null;
   /** Posição no Time do Dia daquele dia e recorde pessoal; só depois do fim. */
   desempenho: Desempenho | null;
-  sequencia: number;
   /** Hora (ISO) em que entra o próximo clube. */
   proximoEm: string;
   /** Só na ação "estado". */
@@ -349,6 +424,46 @@ export async function minhaPosicaoSemana(semana: string): Promise<PosicaoSemana 
   const { data, error } = await comTempoLimite(sb.rpc('minha_posicao_semana', { p_semana: semana }));
   if (error) throw new ErroServidor('falha');
   return ((data ?? []) as PosicaoSemana[])[0] ?? null;
+}
+
+export type MinigameDoRecorde = 'penaltis' | 'prova' | 'dia' | 'crava';
+
+/** Meus recordes pessoais, um por minigame (null antes da primeira partida que vale). */
+export async function meusRecordes(): Promise<Partial<Record<MinigameDoRecorde, number | null>>> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('meus_recordes'));
+  if (error) throw new ErroServidor('falha');
+  return Object.fromEntries(((data ?? []) as { minigame: MinigameDoRecorde; recorde: number | null }[]).map((l) => [l.minigame, l.recorde]));
+}
+
+/** Minha posição num minigame: pênaltis e Prova na semana de hoje, Time do Dia no dia de hoje. */
+export async function minhaPosicaoMinigame(minigame: 'penaltis' | 'prova' | 'dia'): Promise<PosicaoSemana | null> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('minha_posicao_minigame', { p_minigame: minigame }));
+  if (error) throw new ErroServidor('falha');
+  return ((data ?? []) as PosicaoSemana[])[0] ?? null;
+}
+
+/** Minha carreira (XP, partidas de hoje e bônus recente). Só a própria. */
+export async function minhaCarreira(): Promise<Carreira | null> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('minha_carreira'));
+  if (error) throw new ErroServidor('falha');
+  const l = ((data ?? []) as {
+    xp: number;
+    partidas_hoje: number;
+    bonus_tipo: 'dia' | 'semana' | null;
+    bonus_referencia: string | null;
+  }[])[0];
+  if (!l) return null;
+  return {
+    xp: l.xp,
+    partidasHoje: l.partidas_hoje,
+    bonus: l.bonus_tipo && l.bonus_referencia ? { tipo: l.bonus_tipo, referencia: l.bonus_referencia } : null,
+  };
 }
 
 /** Quantas partidas fechei hoje, somando os minigames de partida (para o "hoje contam mais N partidas"). */

@@ -9,8 +9,9 @@ import {
   SEGUNDOS,
   calcularPontos,
   escadaEmoji,
+  contarErros,
   fimDosPassos,
-  levar,
+  pontosDosPassos,
   porcentagens,
   precisaDecidir,
   quantasTirar,
@@ -47,7 +48,8 @@ function pergunta(): PerguntaProva {
     texto: `Pergunta de teste ${n}${e.trocas ? ' (trocada)' : ''}: em 2019, qual alternativa é a certa nesta tela de exemplo bem comprida?`,
     alternativas: e.alternativas.map((a) => ({ id: a.id, texto: textos[a.idx] })),
     segundos: SEGUNDOS,
-    levar: levar(e.atual),
+    levar: pontosDosPassos(e.passos),
+    erros: contarErros(e.passos),
     ajudasUsadas: AJUDAS.filter((a) => e.ajudas.has(a)),
   };
 }
@@ -90,13 +92,14 @@ export async function responderPergunta(_id: string, alternativa: string | null)
   const desfecho: Desfecho = !alt ? 'tempo' : alt.idx === 0 ? 'acertou' : 'errou';
   e.passos.push({ desfecho, ajuda: e.ajudaNaAtual });
   e.ajudaNaAtual = false;
-  const acabou = desfecho !== 'acertou' || e.passos.length >= PERGUNTAS;
+  const acabou = fimDosPassos(e.passos) !== null;
   if (!acabou) e.atual++;
   return {
     desfecho,
     certa: e.alternativas.find((a) => a.idx === 0)!.id,
     escolhida: alternativa,
-    levar: levar(e.passos.filter((p) => p.desfecho === 'acertou').length),
+    levar: pontosDosPassos(e.passos),
+    erros: contarErros(e.passos),
     proxima: acabou ? null : { numero: e.atual + 1, decidir: precisaDecidir(e.atual) },
     fim: acabou ? fim() : null,
   };

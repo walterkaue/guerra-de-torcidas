@@ -2,15 +2,21 @@
 // bônus em etiquetas, efeito no ranking, X1 lado a lado, compartilhar e Mais uma/Revanche como ação principal.
 
 import { esc, irPara, type DadosResultado, type Rota } from '../app';
+import { SELECAO } from '../dados/adversarios';
 import { ID_OUTRO, corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
 import { prefs } from '../estado';
-import { desenharCard } from '../jogo/card';
+import { desenharCard, mostrarCard, prontoParaDesenhar, seloNivel } from '../jogo/card';
 import { conviteX1Penaltis } from '../jogo/convites';
+import { ID_SELECAO, lembrancaDaDisputa } from '../jogo/disputas';
 import { placarEmoji } from '../jogo/emoji';
 import { htmlPosicao } from '../jogo/posicao';
 import { escolherFrase } from '../narrador/escolher';
 import { contextoDoTime } from '../narrador/sessao';
 import { rankingDaSemana } from '../servidor/api';
+import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
+import { bomMomentoDosLances } from '../jogo/apoio';
+import { oferecerApoio } from './apoio';
+import { convidarParaAvisos } from './convitePush';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 const semMovimento = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -90,7 +96,9 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   const r = d.resultado;
   const p = r.pontos;
   const paraTime = proTime(time);
-  const nomeAdversario = d.desafio ? (d.desafio.apelido ?? 'Quem te chamou') : 'Máquina';
+  const nomeAdversario = d.desafio ? (d.desafio.apelido ?? 'Quem te chamou') : (d.disputa?.adversario ?? 'Máquina');
+  // Na disputa da Seleção o placar é da Seleção; os pontos continuam indo para o time.
+  const nomeDoLado = d.disputa?.clube === ID_SELECAO ? SELECAO.nome : outro ? 'Você' : time.nome;
 
   const codigo = d.servidor?.desafio?.codigo;
   const link = codigo ? `${SITE}/?d=${codigo}` : `${SITE}/?time=${time.id}`;
@@ -98,7 +106,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   const textoShare = `${convite} ${link}`;
   const emoji = placarEmoji({
     resultado: r,
-    nomeJogador: outro ? 'Eu' : time.nome,
+    nomeJogador: outro && !d.disputa ? 'Eu' : nomeDoLado,
     nomeAdversario,
     linhaPontos: `+${p.total}${paraTime ? ` ${paraTime}` : ''}`,
     link,
@@ -155,10 +163,11 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
       </header>
 
       <section class="res-placar faixa-tv" aria-label="Placar">
-        <div><span class="rotulo">${esc(outro ? 'Você' : time.nome)}</span><strong>${r.golsJogador}</strong></div>
+        <div><span class="rotulo">${esc(nomeDoLado)}</span><strong>${r.golsJogador}</strong></div>
         <em>x</em>
         <div><span class="rotulo">${esc(nomeAdversario)}</span><strong>${r.golsMaquina}</strong></div>
       </section>
+      ${d.disputa ? `<p class="res-disputa rotulo">${esc(lembrancaDaDisputa(d.disputa))}</p>` : ''}
 
       <section class="res-pontos">
         <p class="res-total"><strong data-contador>+0</strong>${paraTime ? `<span>${esc(paraTime)}</span>` : ''}</p>
@@ -177,11 +186,12 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
       </section>
 
       ${htmlPosicao(d.servidor?.desempenho ?? null, 'penaltis')}
+      <div class="res-carreira" data-carreira hidden></div>
 
       ${blocoDesafio}
 
       <section class="res-compartilhar">
-        <a class="botao botao-zap" target="_blank" rel="noopener"
+        <a class="botao botao-zap" data-sem-aviso target="_blank" rel="noopener"
           href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Chamar no X1</a>
         <div class="trio">
           <button class="botao botao-sec" type="button" data-acao="share">Stories</button>
@@ -195,6 +205,9 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
         <img class="card" alt="Card do resultado" />
       </details>
 
+      <div data-convite-push></div>
+      <div class="res-apoio" data-apoio></div>
+
       <div class="res-acoes">
         <button class="botao botao-sec" type="button" data-acao="inicio">Início</button>
         <button class="botao" type="button" data-acao="revanche">${r.venceu ? 'Mais uma' : 'Revanche'}</button>
@@ -203,6 +216,14 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   `;
 
   contar(root.querySelector<HTMLElement>('[data-contador]')!, p.total);
+  // Carreira: só quando o servidor fechou a partida (o XP sai de lá).
+  if (d.servidor) mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]'));
+  // Bom momento para oferecer o aviso de domingo: vitória que valeu pra torcida.
+  if (r.venceu && d.valendo) convidarParaAvisos(root.querySelector<HTMLElement>('[data-convite-push]'));
+  oferecerApoio(
+    root.querySelector<HTMLElement>('[data-apoio]'),
+    bomMomentoDosLances({ venceu: r.venceu, valendo: d.valendo, novoRecorde: !!d.servidor?.desempenho?.novoRecorde }),
+  );
   const elConfete = root.querySelector<HTMLCanvasElement>('.confete');
   if (elConfete) confete(elConfete, [time.cores[0], time.cores[1], '#ffd23f']);
 
@@ -252,12 +273,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
   // ---------- card ----------
   const img = root.querySelector<HTMLImageElement>('.card')!;
   const cardPronto = (async () => {
-    // O card usa Anton e Barlow: espera as fontes para não sair com a fonte do sistema.
-    try {
-      await Promise.all([document.fonts.load('400 100px Anton'), document.fonts.load('700 40px Barlow')]);
-    } catch {
-      // segue com a fonte que tiver
-    }
+    await prontoParaDesenhar();
     const canvas = desenharCard({
       time,
       apelido,
@@ -269,7 +285,9 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
       novoRecorde: !!d.servidor?.desempenho?.novoRecorde,
       link: link.replace('https://', ''),
     });
-    img.src = canvas.toDataURL('image/png');
+    const nivel = await nivelParaCard();
+    if (nivel) seloNivel(canvas, nivel);
+    await mostrarCard(img, canvas);
     return canvas;
   })();
 
@@ -322,9 +340,9 @@ export function telaResultado(root: HTMLElement, rota: Rota): void {
     }
   });
 
-  // Revanche: no desafio, joga o mesmo desafio de novo; senão, partida nova contra a máquina.
+  // Revanche: no desafio ou na disputa histórica, joga a mesma de novo; senão, partida nova contra a máquina.
   root.querySelector('[data-acao="revanche"]')?.addEventListener('click', () =>
-    irPara({ tela: 'partida', desafio: d.desafio?.id }),
+    irPara({ tela: 'partida', desafio: d.desafio?.id, disputa: d.disputa }),
   );
   root.querySelector('[data-acao="inicio"]')?.addEventListener('click', () => irPara({ tela: 'inicio' }));
 }

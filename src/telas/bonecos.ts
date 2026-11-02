@@ -12,6 +12,9 @@
 // 60 quadros por segundo no celular: formas em Path2D criadas uma vez, degradês criados uma vez por
 // cor, nenhum filtro e nenhum objeto novo por quadro (poses e juntas são Float32Array reaproveitados).
 
+import { CONTRASTE_ENTRE_TIMES, distanciaDeCor } from '../dados/times';
+import { qualidade } from './qualidade';
+
 // ---------- medidas (proporção atlética: cabeça pequena, pernas longas) ----------
 const COXA = 24;
 const CANELA = 24;
@@ -592,11 +595,7 @@ function misturarCor(a: string, b: string, t: number): string {
   return hex(r1 + (r2 - r1) * t, g1 + (g2 - g1) * t, b1 + (b2 - b1) * t);
 }
 
-function distancia(a: string, b: string): number {
-  const [r1, g1, b1] = rgb(a);
-  const [r2, g2, b2] = rgb(b);
-  return Math.hypot(r1 - r2, g1 - g2, b1 - b2);
-}
+const distancia = distanciaDeCor;
 
 function luminancia(cor: string): number {
   const [r, g, b] = rgb(cor).map((v) => {
@@ -619,7 +618,7 @@ export function uniformeDeLinha([cor1, cor2]: readonly [string, string]): Unifor
 export const CORES_DA_MAQUINA: readonly [string, string] = ['#f97316', '#1b1b1b'];
 
 /** Diferença mínima entre as camisetas dos dois times em campo (distância de cor, 0 a 441). */
-export const CONTRASTE_ENTRE_TIMES = 110;
+export { CONTRASTE_ENTRE_TIMES } from '../dados/times';
 
 /** Uniforme 1 (cor 1 na camiseta) e uniforme 2 (cores invertidas), os dois lisos. */
 const uniformesDoTime = ([cor1, cor2]: readonly [string, string]): [Uniforme, Uniforme] => [
@@ -1025,9 +1024,11 @@ const J_TORNOZELO = 26; // E 26, D 28
 interface Degrades {
   ctx: CanvasRenderingContext2D;
   /** Pele do osso de cima (base → meio) e do de baixo (meio → escuro). */
-  peleA: CanvasGradient;
-  peleB: CanvasGradient;
-  calcao: CanvasGradient;
+  /** Qualidade leve: cores lisas no lugar dos degradês. */
+  chapado: boolean;
+  peleA: CanvasGradient | string;
+  peleB: CanvasGradient | string;
+  calcao: CanvasGradient | string;
 }
 
 export interface Boneco {
@@ -1100,12 +1101,18 @@ function degrade(c: CanvasRenderingContext2D, chave: string, de: string, para: s
 }
 
 function prepararDegrades(c: CanvasRenderingContext2D, b: Boneco): Degrades {
-  if (b.degrades?.ctx === c) return b.degrades;
+  if (b.degrades?.ctx === c && b.degrades.chapado === !qualidade().degrade) return b.degrades;
+  // Qualidade leve: cores chapadas (um preenchimento simples custa menos que o degradê).
+  if (!qualidade().degrade) {
+    b.degrades = { ctx: c, chapado: true, peleA: b.aparencia.pele, peleB: b.cor.peleMeio, calcao: b.uniforme.calcao };
+    return b.degrades;
+  }
   const pele = b.aparencia.pele;
   const escura = escurecer(pele, 0.76);
   const calcaoEscuro = escurecer(b.uniforme.calcao, 0.74);
   b.degrades = {
     ctx: c,
+    chapado: false,
     peleA: degrade(c, `pa${pele}`, pele, b.cor.peleMeio, 1),
     peleB: degrade(c, `pb${pele}`, b.cor.peleMeio, escura, 1.3),
     calcao: degrade(c, `c${b.uniforme.calcao}`, b.uniforme.calcao, calcaoEscuro, 14, -3),

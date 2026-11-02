@@ -2,6 +2,7 @@
 
 import type { ResultadoLance } from '../jogo/lances';
 import { coluna, linha, type ResultadoCobranca, type ResultadoDefesa, type ResultadoPartida } from '../jogo/penaltis';
+import { ERROS_QUE_ENCERRAM, type Desfecho } from '../jogo/prova';
 import type { Etiqueta } from './escolher';
 import type { EventoNarrador } from './frases';
 
@@ -49,6 +50,12 @@ export function eventoDaDefesa(r: ResultadoDefesa): EventoNarrador {
   if (r.desfecho === 'defesa') return 'defesa';
   if (r.desfecho === 'gol') return 'sofreu_gol';
   return 'maquina_fora';
+}
+
+/** Erro na Prova com a partida seguindo: faltando 1 para acabar, o aviso vale mais que o motivo do erro. */
+export function eventoDoErroNaProva(desfecho: Desfecho, erros: number): EventoNarrador {
+  if (erros === ERROS_QUE_ENCERRAM - 1) return 'prova_ultima_vida';
+  return desfecho === 'tempo' ? 'prova_tempo' : 'prova_errou';
 }
 
 /**

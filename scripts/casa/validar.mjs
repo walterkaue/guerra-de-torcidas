@@ -2,8 +2,8 @@
 // Roda em `npm test` (validar.test.ts) e no importador (`npm run importar-casa`).
 
 import { DOMINIOS_ACEITOS } from '../clubes/validar.mjs';
-import { acharPalavras, acharTemas, normalizar } from '../perguntas/validar.mjs';
-import { ARQUIVOS, CHAVES, colunaClube } from './tabela.mjs';
+import { MARCAS_PROIBIDAS, acharPalavras, acharTemas, normalizar } from '../perguntas/validar.mjs';
+import { ARQUIVOS, CHAVES, SITE_DO_CLUBE, colunaClube } from './tabela.mjs';
 
 export const COLUNAS = {
   clubes: ['id', 'fundacao', 'cidade', 'uf', 'apelidos', 'historia_cores', 'fonte', 'fonte2', 'verificada_em', 'status', 'observacao'],
@@ -12,22 +12,23 @@ export const COLUNAS = {
   recordes: ['clube', 'lista', 'posicao', 'nome', 'valor', 'data_referencia', 'fonte', 'verificada_em', 'status', 'observacao'],
   goleadas: ['clube', 'placar', 'adversario', 'data', 'competicao', 'fonte', 'verificada_em', 'status', 'observacao'],
   mantos: ['clube', 'ordem', 'periodo', 'padrao', 'cores', 'listras', 'descricao', 'fonte', 'verificada_em', 'status', 'observacao'],
+  socios: ['id', 'programa', 'url', 'aposta_na_pagina', 'verificada_em', 'status', 'observacao'],
 };
 
 export const STATUS = ['rascunho', 'revisada', 'ativa', 'aposentada'];
 export const PUBLICADOS = ['revisada', 'ativa'];
+export const RESPOSTAS_APOSTA = ['sim', 'não', 'não_sei'];
+/** Linha do "Seja sócio" que vai ao ar: mais estrita que as outras (docs/jogo.md 7.4). */
+export const socioPublicado = (l) => l.status === 'revisada' && l.aposta_na_pagina === 'não';
 export const FORMATOS = ['oval', 'retangular', 'ferradura'];
 export const PADROES = ['lisa', 'listras-v', 'aros', 'faixa-diagonal', 'faixa-peito'];
 export const ANO_MAX = 2026;
 
-export const MAX = { historia_cores: 400, nota: 160, descricao: 160, nome: 60, periodo: 60, adversario: 60, competicao_goleada: 60 };
+export const MAX = { historia_cores: 400, nota: 160, descricao: 160, nome: 60, periodo: 60, adversario: 60, competicao_goleada: 60, programa: 40 };
 
 /** Marcas de terceiros que não podem aparecer em texto nenhum (patrocínio, fornecedor, aposta). */
-export const MARCAS_PROIBIDAS = [
-  'mrv', 'ligga', 'itaipava', 'casa de apostas', 'red bull', 'umbro', 'puma', 'adidas', 'nike', 'topper', 'kappa',
-  'penalty', 'betano', 'sportingbet', 'bet365', 'brahma', 'kyocera', 'neo quimica', 'allianz', 'heineken',
-  'petrobras', 'vivo', 'hapvida', 'caixa', 'banrisul', 'nubank', 'sicredi', 'volt', 'supermercado', 'banco',
-];
+// A lista de marcas mora em scripts/perguntas/validar.mjs (compartilhada com o pipeline de perguntas).
+export { MARCAS_PROIBIDAS };
 
 /** Palavras que o desenho do manto não pode citar (docs/casa.md, seção 5). */
 export const PROIBIDAS_NO_MANTO = ['escudo', 'cruz', 'estrela', 'estrelas', 'numero', 'patrocinio', 'patrocinador', 'fornecedor'];
@@ -36,7 +37,11 @@ const DATA = /^\d{4}-\d{2}-\d{2}$/;
 const DATA_FLEX = /^\d{4}(-\d{2}(-\d{2})?)?$/;
 const HEX = /^#[0-9a-f]{6}$/i;
 
-const palavraInteira = (norm, p) => new RegExp(`(^|[^a-z0-9])${p.replace(/ /g, '\\s+')}($|[^a-z0-9])`).test(norm);
+const compiladas = new Map();
+const palavraInteira = (norm, p) => {
+  if (!compiladas.has(p)) compiladas.set(p, new RegExp(`(^|[^a-z0-9])${p.replace(/ /g, '\\s+')}($|[^a-z0-9])`));
+  return compiladas.get(p).test(norm);
+};
 
 /** Domínio do link, sem "www.". */
 export function dominioDe(url) {
@@ -94,7 +99,7 @@ export function validarCasa(tabelas, ctx) {
       if (!DATA.test(l.verificada_em)) erro(arq, l, `verificada_em inválida: ${l.verificada_em}`);
       // textos: palavras, temas e marcas proibidas (links e observação ficam de fora)
       for (const [campo, v] of Object.entries(l)) {
-        if (!v || /^fonte|^observacao$|^status$|^verificada_em$|^cores$/.test(campo)) continue;
+        if (!v || /^fonte|^observacao$|^status$|^verificada_em$|^cores$|^url$|^aposta_na_pagina$/.test(campo)) continue;
         const p = acharPalavras(v);
         if (p.length) erro(arq, l, `${campo}: palavra proibida ${p.join(', ')}`);
         const tm = acharTemas(v);
@@ -224,6 +229,32 @@ export function validarCasa(tabelas, ctx) {
     if (new Set(ls.map((l) => l.ordem)).size !== ls.length) erros.push(`mantos ${c}: ordem repetida`);
   }
   for (const id of ctx.times) if (!porClubeM[id]?.some((l) => l.ordem === '1')) avisos.push(`mantos ${id}: sem manto de ordem 1 (o manto tradicional não aparece)`);
+
+  // sócios: rascunho pode nascer sem link; revisada, nunca
+  const vistosS = new Set();
+  for (const l of tabelas.socios.linhas) {
+    if (vistosS.has(l.id)) erro('socios', l, 'clube repetido');
+    vistosS.add(l.id);
+    if (!RESPOSTAS_APOSTA.includes(l.aposta_na_pagina)) erro('socios', l, `aposta_na_pagina deve ser sim, não ou não_sei: ${l.aposta_na_pagina}`);
+    if (l.programa.length > MAX.programa) erro('socios', l, `programa com ${l.programa.length} caracteres (máximo ${MAX.programa})`);
+    if (l.url) {
+      const d = dominioDe(l.url);
+      if (!d || !l.url.startsWith('https://')) erro('socios', l, `url deve ser um link https: ${l.url}`);
+      if (/aposta|(^|[/.-])bet[s]?([/.-]|$)|bet365|betano|sportingbet/i.test(l.url)) erro('socios', l, 'link de aposta em url');
+      // Só link gratuito (docs/jogo.md 7.4); e a tela é quem acrescenta os utm.
+      if (/[?&](ref|aff|afiliado|affiliate|parceiro|cupom|coupon|utm_[a-z]+)=/i.test(l.url)) erro('socios', l, `url com parâmetro de afiliado ou de campanha: ${l.url}`);
+      const site = SITE_DO_CLUBE[l.id];
+      const raiz = d && new URL(l.url).pathname.replace(/\/+$/, '') === '';
+      if (raiz && d === site) erro('socios', l, 'url aponta para a home do clube: use a página do programa');
+    }
+    if (l.status === 'revisada') {
+      if (!l.programa) erro('socios', l, 'revisada sem programa');
+      if (!l.url) erro('socios', l, 'revisada sem url');
+      if (l.aposta_na_pagina !== 'não') erro('socios', l, `revisada com aposta_na_pagina = ${l.aposta_na_pagina}: só vai ao ar com "não" (com "sim", use status aposentada)`);
+    }
+    if (l.status === 'ativa') erro('socios', l, 'status ativa não vale aqui: use revisada');
+  }
+  for (const id of ctx.times) if (!vistosS.has(id)) erros.push(`socios: falta o clube ${id}`);
 
   // linhas publicadas precisam de fonte (já checado) e de data
   for (const arq of ARQUIVOS) {

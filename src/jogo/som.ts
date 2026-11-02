@@ -44,6 +44,27 @@ export function somChute(): void {
   o.stop(t + 0.16);
 }
 
+/** Bola na trave: "plém" metálico curto (dois tons agudos que somem rápido). */
+export function somTrave(): void {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  for (const [freq, vol] of [
+    [1320, 0.35],
+    [2170, 0.2],
+  ] as const) {
+    const o = a.createOscillator();
+    const g = a.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    o.connect(g).connect(a.destination);
+    o.start(t);
+    o.stop(t + 0.36);
+  }
+}
+
 /** Barulho de torcida: forte para gol/defesa, curto para "uuuh". */
 export function somTorcida(intensidade: 'festa' | 'uuuh'): void {
   const a = audio();

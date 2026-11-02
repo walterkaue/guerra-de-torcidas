@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ID_OUTRO, TIMES, proTime, rivalDe, timePorId } from './times';
+import { CONTRASTE_ENTRE_TIMES, ID_OUTRO, TIMES, corDoRivalNoDuelo, distanciaDeCor, proTime, rivalDe, timePorId } from './times';
 
 // Tabela da seção 3 do docs/jogo.md.
 const TABELA: Record<string, [artigo: 'o' | 'a', rival: string | null]> = {
@@ -59,5 +59,22 @@ describe('times', () => {
   it('contração com o artigo', () => {
     expect(proTime(timePorId('chapecoense')!)).toBe('pra Chapecoense');
     expect(proTime(timePorId('flamengo')!)).toBe('pro Flamengo');
+  });
+});
+
+describe('cores do duelo da Home', () => {
+  it('as duas metades da barra sempre se distinguem, em qualquer par de times', () => {
+    for (const eu of TIMES) {
+      for (const rival of TIMES) {
+        if (eu === rival) continue;
+        const cor = corDoRivalNoDuelo(eu.cores[0], rival.cores);
+        expect(distanciaDeCor(eu.cores[0], cor), `${eu.id} x ${rival.id}`).toBeGreaterThanOrEqual(CONTRASTE_ENTRE_TIMES);
+      }
+    }
+  });
+
+  it('Flamengo x Fluminense: o grená some no vermelho, então o Flu entra de verde', () => {
+    const flu = timePorId('fluminense')!;
+    expect(corDoRivalNoDuelo(timePorId('flamengo')!.cores[0], flu.cores)).toBe(flu.cores[1]);
   });
 });

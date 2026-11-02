@@ -3,7 +3,7 @@
 // A semana que fechou fica "provisória" até segunda 12h (jogo de domingo à noite ainda
 // tem o placar confirmado depois da virada; docs/jogo.md, seção 7).
 
-import { esc, type Rota } from '../app';
+import { esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, timePorId } from '../dados/times';
 import { prefs } from '../estado';
 import { ouvirRanking, rankingDaSemana, type LinhaRanking } from '../servidor/api';
@@ -72,7 +72,9 @@ export function telaRanking(root: HTMLElement, _rota: Rota): () => void {
         const classes = ['mini-linha'];
         if (pos(l) === 1 && l.ativos > 0) classes.push('lider');
         if (l.time_id === meuTime && meuTime !== ID_OUTRO) classes.push('meu');
-        return `<div class="${classes.join(' ')}">
+        const casa = l.time_id !== ID_OUTRO ? ` data-casa="${esc(l.time_id)}" role="link" tabindex="0" aria-label="Abrir a Casa ${t?.artigo === 'a' ? 'da' : 'do'} ${esc(t?.nome ?? l.time_id)}"` : '';
+        if (casa) classes.push('abre-casa');
+        return `<div class="${classes.join(' ')}"${casa}>
           <span class="pos">${pos(l)}º</span><span class="seta" aria-hidden="true"></span>
           <span class="cor" style="--c1:${t?.cores[0] ?? '#666'};--c2:${t?.cores[1] ?? '#999'}"></span>
           <span class="nome">${esc(t?.nome ?? l.time_id)}<small> ${l.ativos} ${l.ativos === 1 ? 'torcedor' : 'torcedores'}</small></span>
@@ -81,6 +83,16 @@ export function telaRanking(root: HTMLElement, _rota: Rota): () => void {
       })
       .join('');
   }
+
+  // Tocar numa torcida abre a Casa dela (só navegação: nenhum ponto).
+  const abrirCasa = (e: Event) => {
+    const id = (e.target as HTMLElement).closest<HTMLElement>('[data-casa]')?.dataset.casa;
+    if (id) irPara({ tela: 'casa', id });
+  };
+  elTabela.addEventListener('click', abrirCasa);
+  elTabela.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') abrirCasa(e);
+  });
 
   root.querySelectorAll<HTMLButtonElement>('[data-modo]').forEach((b) =>
     b.addEventListener('click', () => {

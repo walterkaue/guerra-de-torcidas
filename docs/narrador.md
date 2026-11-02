@@ -1,6 +1,8 @@
 # Banco do narrador — pênaltis, palpites, quiz, Time do Dia e Lances
 
-> Versão 1.6 · 21/10/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Versão 1.8 · 01/11/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Mudanças da 1.8: três erros e fora na Prova: 3 frases comuns em `prova_errou` e situação nova `prova_ultima_vida` (aprovadas pelo Kauê em 01/11/2026).
+> Mudanças da 1.7: seção 13, **aviso de domingo** (push sem urgência); sai `dia_sequencia` do Time do Dia (sem sequência de dias, `jogo.md` seção 13).
 > Mudanças da 1.6: seção 12, **Lances do Jogo** (abertura, barreira, lance recriado e fim); nas jogadas, os Lances reaproveitam as frases da seção 3 que não falam de pênalti.
 > Mudanças da 1.5: 7 frases de tiozão trocadas (fila do banco, manchete, capa de jornal, picolé, primeira pedra, caneta, doutorado); glossário novo ("Pênaltis", "Chamar no X1", "em teste"): frases de X1 sem "duvido" e "desafio", e o convite do link virou texto fixo (sai `desafio_convite`).
 > Mudanças da 1.4: seções 10 (**Prova de Boleiro**) e 11 (**Time do Dia**); frases de `prova_ajuda` com a etiqueta da ajuda usada (`[tira_duas]`, `[arquibancada]`, `[troca]`).
@@ -546,6 +548,8 @@ Cuidado extra: o narrador **nunca** fala da pessoa real da pergunta (nem elogio,
 | `{numero}` | número da pergunta (1 a 8) |
 | `{levar}` | pontos garantidos se parar agora |
 
+Só uma frase por erro. O 3º erro não tem grito: a partida acaba e quem fala é `prova_fim`. O mesmo vale para o 2º erro na pergunta 8, sem nada pela frente.
+
 ### `prova_abertura`
 - Prova de Boleiro! Oito perguntas, quinze segundos cada.
 - Hora de mostrar que entende de bola, não só de grito.
@@ -570,16 +574,20 @@ Cuidado extra: o narrador **nunca** fala da pessoa real da pergunta (nem elogio,
 - Garantiu {levar} {pro_time}. Jogo inteligente!
 - Pé no freio na hora certa. Pontos no bolso!
 
-### `prova_errou`
-- Errou! Leva metade, mas leva.
-- Não foi essa! Metade dos pontos vai {pro_time} mesmo assim.
-- Escorregou no degrau! Revanche tá a um toque.
+### `prova_errou` — 1º erro, a prova segue
+- Errou, mas a prova segue! Ainda tem vida.
+- Escorregou, mas não caiu! Próxima pergunta.
+- Essa a bola levou. Vai pra próxima, ainda dá!
 - ⭐ Errou com tanta certeza que até o narrador duvidou.
 
-### `prova_tempo`
+### `prova_tempo` — 1º erro, por tempo
 - O tempo acabou! O relógio não perdoa.
-- Quinze segundos voam, hein! Leva metade.
 - Pensou tanto que o apito soou!
+
+### `prova_ultima_vida` — 2º erro, por resposta ou por tempo, com pergunta pela frente
+- Última vida! A próxima pede cabeça fria.
+- Mais um erro e o apito final soa. Respira!
+- Tá na bacia das almas: um erro e acaba.
 
 ### `prova_ajuda` — etiqueta com a ajuda usada: `[tira_duas]`, `[arquibancada]` ou `[troca]`
 - Pediu ajuda! Sem vergonha nenhuma, é estratégia.
@@ -604,7 +612,6 @@ Cuidado extra: o narrador nunca dá dica do clube secreto nem fala o nome dele a
 | Variável | Exemplo |
 |---|---|
 | `{tentativas}` | tentativas usadas (1 a 6) |
-| `{dias}` | sequência de dias jogando |
 
 ### `dia_abertura`
 - Tem um time escondido aí. Seis chutes pra achar!
@@ -637,9 +644,6 @@ Cuidado extra: o narrador nunca dá dica do clube secreto nem fala o nome dele a
 - Seis chutes e nada! O secreto se escondeu bem.
 - Hoje o time venceu. Revanche amanhã, 00h.
 
-### `dia_sequencia`
-- {dias} dias seguidos! Isso é torcida fiel.
-- Sequência de {dias} dias! Não para agora.
 
 ## 12. Lances do Jogo
 
@@ -672,3 +676,15 @@ Nas jogadas, os Lances usam as frases da seção 3 que servem para qualquer chut
 - Fechou com {pontos}! Escolhe outros lances e vai de novo.
 - Acabou a sessão de história! {pontos} pontos no placar.
 
+## 13. Aviso de domingo (push)
+
+Só informa (docs/jogo.md, seção 13). Texto em `src/jogo/avisos.ts`, não neste banco: o `npm run frases` não lê esta seção. Passa pelo checklist da seção 1, com um cuidado a mais: **nada de contagem de horas, "vai deixar?", convite para jogar ou qualquer pressão para voltar**. As frases de `reta_final` (seção 7) nunca viram push.
+
+Título: Sua torcida na semana
+
+- {O_time} tá em {posicao} na semana, {dif} atrás {do_rival}.
+- {O_time} tá em {posicao} na semana, {dif} na frente {do_rival}.
+- {O_time} tá em {posicao} na semana, no empate com {o_rival}.
+- {O_time} tá em {posicao} na semana. (sem rival com pontos)
+- {O_time} ainda não pontuou nesta semana.
+- O placar da semana tá atualizado no jogo. ("Outro time")

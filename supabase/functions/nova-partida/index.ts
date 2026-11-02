@@ -1,9 +1,14 @@
 // Nova partida: sorteia a semente (vale uma partida só e expira), guarda a dificuldade do dia
 // pelo relógio do servidor e o número secreto do narrador para um eventual par ou ímpar.
-// Corpo: { desafio?: string }  (código do desafio por link)
+// A semente e as cobranças gravadas do desafio NÃO saem daqui: a partida é jogada lance a lance
+// pela função lance-penalti (anti-trapaça antes de divulgar; jogo.md, seção 6).
+// Corpo: { desafio?: string, disputa?: string }  (código do desafio por link; id da disputa histórica)
 
 import { admin, configDeteccao, ErroHttp, lerCorpo, servir, sortear, usuario } from '../_shared/comum.ts';
 import { dificuldadeAgora } from '../_shared/tempo.ts';
+
+/** Disputa histórica é só cenário (jogo.md, seção 6): id fora do formato vira partida livre, sem erro. */
+const disputaDoCorpo = (v: unknown): string | null => (typeof v === 'string' && /^[a-z0-9-]{5,80}$/.test(v) ? v : null);
 
 servir(async (req) => {
   const sb = admin();
@@ -28,7 +33,7 @@ servir(async (req) => {
   if (typeof corpo.desafio === 'string' && corpo.desafio) {
     const { data, error } = await sb
       .from('desafios')
-      .select('id, torcedor_id, time_id, apelido, cobrancas, gols_jogador, gols_maquina, pontos')
+      .select('id, torcedor_id, time_id, apelido, gols_jogador, gols_maquina, pontos')
       .eq('id', corpo.desafio.toLowerCase())
       .maybeSingle();
     if (error) throw error;
@@ -36,6 +41,8 @@ servir(async (req) => {
     if (data.torcedor_id === uid) throw new ErroHttp(409, 'proprio_desafio');
     desafio = data;
   }
+
+  const disputa = desafio ? null : disputaDoCorpo(corpo.disputa);
 
   const agora = new Date();
   const semente = sortear(0x1_0000_0000);
@@ -48,6 +55,8 @@ servir(async (req) => {
       torcedor_id: uid,
       modo: desafio ? 'desafio' : 'normal',
       desafio_id: desafio?.id ?? null,
+      // Só quando há disputa: assim a função nova não depende da migração para a partida de sempre.
+      ...(disputa ? { disputa_id: disputa } : {}),
       semente,
       dificuldade,
       criada_em: agora.toISOString(),
@@ -59,12 +68,13 @@ servir(async (req) => {
 
   const { error: eS } = await sb
     .from('partidas_segredo')
-    .insert({ partida_id: partida.id, numero_narrador: sortear(6) });
+    .insert({ partida_id: partida.id, numero_narrador: sortear(6), lance_a_lance: true });
   if (eS) throw eS;
 
   return {
     partidaId: partida.id,
-    semente,
+    lanceALance: true,
+    proximo: { tipo: 'cobranca', i: 0 },
     dificuldade,
     expiraEm: expiraEm.toISOString(),
     desafio: desafio && {
@@ -74,7 +84,6 @@ servir(async (req) => {
       golsJogador: desafio.gols_jogador,
       golsMaquina: desafio.gols_maquina,
       pontos: desafio.pontos,
-      cobrancas: desafio.cobrancas,
     },
   };
 });

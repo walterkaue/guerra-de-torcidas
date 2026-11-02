@@ -1,5 +1,5 @@
 // CÓPIA GERADA de src/jogo por scripts/compartilhar.mjs. Não edite aqui: mude em src/jogo e rode `npm run compartilhar`.
-// Time do Dia (docs/jogo.md, seção 7.2): pistas, pontos, grade em emoji, sequência, sorteio do
+// Time do Dia (docs/jogo.md, seção 7.2): pistas, pontos, grade em emoji, sorteio do
 // clube do dia sem repetir e detecção. Puro (sem DOM, rede nem relógio): roda no celular e na função
 // do servidor (copiado pelo `npm run compartilhar`).
 
@@ -157,10 +157,9 @@ export function placarDoDia(tentativas: number, acertou: boolean): string {
   return `${acertou ? tentativas : 'X'}/${TENTATIVAS}`;
 }
 
-/** "Time do Dia #34 · 4/6 · 🔥 5 dias · NOVO RECORDE!" — texto do card e do WhatsApp. */
-export function linhaDoCard(numeroDoDia: number, placar: string, dias: number, novoRecorde = false): string {
-  const fogo = dias > 1 ? ` · 🔥 ${dias} dias` : '';
-  return `Time do Dia #${numeroDoDia} · ${placar}${fogo}${novoRecorde ? ' · NOVO RECORDE!' : ''}`;
+/** "Time do Dia #34 · 4/6 · NOVO RECORDE!" — texto do card e do WhatsApp. */
+export function linhaDoCard(numeroDoDia: number, placar: string, novoRecorde = false): string {
+  return `Time do Dia #${numeroDoDia} · ${placar}${novoRecorde ? ' · NOVO RECORDE!' : ''}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -177,21 +176,6 @@ export const diasEntre = (de: string, ate: string): number => Math.round((paraMs
 /** Número do dia: o 1º dia do Time do Dia é o #1 e cada dia de calendário soma 1. */
 export function numeroDoDia(primeiroDia: string, dia: string): number {
   return diasEntre(primeiroDia, dia) + 1;
-}
-
-/**
- * Sequência de dias jogados (ganhando ou perdendo: sem punição para quem perde), terminando hoje.
- * Se ainda não jogou hoje, a sequência de até ontem continua valendo.
- */
-export function sequenciaDeDias(diasJogados: Iterable<string>, hoje: string): number {
-  const dias = new Set(diasJogados);
-  let dia = dias.has(hoje) ? hoje : diaAnterior(hoje);
-  let n = 0;
-  while (dias.has(dia)) {
-    n++;
-    dia = diaAnterior(dia);
-  }
-  return n;
 }
 
 // ---------------------------------------------------------------------------

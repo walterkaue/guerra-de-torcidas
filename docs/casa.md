@@ -1,7 +1,7 @@
 # Casa do [time] — a página de história de cada clube
 
 > Versão 1.0 · 21/10/2026 · Desenho aprovado em 21/10/2026, a partir da proposta "Galeria dos Clubes".
-> **Ainda não construída.** Dados em rascunho em `dados/casa/` (21/10/2026). Ordem de publicação: `docs/casa-publicacao.md`.
+> **Tela construída em 25/10/2026** (`src/telas/casa/`, `#casa` e `#casa/<id>`), com ganchos na Home e no Ranking. Só aparecem os clubes com a linha de clube revisada; os outros ficam "em breve" no índice. Ordem de publicação: `docs/casa-publicacao.md`.
 > Se algo aqui discordar do `docs/jogo.md`, vale o `jogo.md`.
 
 ## 1. O que é
@@ -28,11 +28,11 @@ Por que existe: os minigames dão motivo para jogar 30 segundos; a Casa dá orgu
 - **Rota:** `#casa/<id do time>` (ex.: `#casa/sao-paulo`), com os mesmos ids do `src/dados/times.ts`.
 - **Índice:** grade dos 20 clubes com o card "faixa de placar" (`#casa`).
 - **Ganchos (só navegação):**
-  - **Home:** tocar no bloco do seu time abre a sua Casa.
+  - **Home:** seção com o estádio e os troféus (`docs/visual.md`, seção 3); tocar abre a Casa do seu time.
   - **Ranking:** tocar numa torcida abre a Casa dela.
   - **Time do Dia:** depois que o dia termina (acertou ou não), "Conheça a Casa do [clube]" quando o clube secreto for da Série A. Nunca antes, para não dar pista.
   - **Prova de Boleiro (depois):** no resultado, link para a Casa dos clubes que caíram na partida. O texto das perguntas continua sem aparecer.
-- **Barra de navegação:** não ganha item novo (Jogar, Palpites, Ranking, Carreira ficam). O índice entra pela Home ("Casa dos clubes") e pelo Ranking.
+- **Barra de navegação:** não ganha item novo (Jogar, Palpites, Ranking, Perfil ficam). O índice entra pela Home, para quem não tem time, e pelo Ranking.
 - "Outro time" não tem Casa.
 
 ## 4. Conteúdo da página
@@ -63,6 +63,12 @@ Cabeçalho na **faixa de placar** do time: "CASA DO FLAMENGO", fundação e cida
 - Texto curto (até ~400 caracteres) sobre a origem das cores, e os **apelidos** do clube.
 - O manto tradicional desenhado (seção 5) e, quando houver fonte, um "varal" com 2 a 4 padrões históricos (ex.: Santos de listras azuis e brancas em 1912).
 - Apelido aparece como texto (Galo, Raposa, Peixe). **Mascote nunca vira desenho.**
+
+### Seja sócio (decidido em 30/10/2026; regra em `jogo.md` 7.4)
+- Bloco fixo, fora dos recolhíveis, logo antes do rodapé. Mesmo texto para todos os clubes, com o artigo certo: título "Apoie [o/a] [time] fora do jogo", linha "O programa oficial de sócio torcedor é o [programa]." e botão "Conhecer o programa".
+- Toque abre uma folha: "Você vai para o site oficial [do/da] [time]. O Guerra de Torcidas não tem ligação com o clube.", com "Ir para o site" (nova aba) e "Ficar no jogo".
+- Nome do programa só como texto; nenhuma imagem. Tom neutro, sem cobrança. Não dá pontos, XP nem selo.
+- Clube sem linha publicada em `socios.csv` não mostra o bloco.
 
 ### Rodapé
 - "Dados até DD/MM/AAAA" e fontes ("ver fontes" abre a lista de links).
@@ -136,8 +142,16 @@ CSV em `dados/casa/`, uma linha por fato, para revisar fato a fato (mesmo espír
 | `recordes.csv` | jogador por lista | clube, lista (gols/jogos), posicao, nome, valor, data_referencia, fonte |
 | `goleadas.csv` | goleada | clube, placar, adversario, data, competicao, fonte |
 | `mantos.csv` | padrão | clube, ordem, periodo, padrao, cores, listras, descricao, fonte |
+| `socios.csv` | clube | id, programa, url, aposta_na_pagina (sim/não/não_sei) |
 
 Todas com `verificada_em`, `status` (rascunho, revisada, aposentada) e `observacao`. **A quantidade de títulos nunca é digitada:** sai da contagem de linhas.
+
+### Curadoria do `socios.csv`
+1. Abra o `url` da linha no celular e veja a página inteira, até o rodapé: logos de parceiros, banners e fotos.
+2. Sem promoção de aposta: `aposta_na_pagina` = `não`, `status` = `revisada`, `verificada_em` = a data de hoje. Com promoção: `aposta_na_pagina` = `sim` e `status` = `aposentada`, e o clube fica sem o bloco até a página mudar.
+3. `npm run importar-casa` e `npm test`.
+
+Só entra na tela a linha `revisada` com `aposta_na_pagina` = `não` (`ativa` não vale aqui). O validador recusa linha `revisada` sem programa, sem link, com aposta diferente de `não`, apontando para a home do clube ou com parâmetro de afiliado ou de campanha no endereço. `npm run conferir-casa -- --links` testa os links; não precisa de chave e nunca muda status.
 
 ### Como os dados nascem (igual ao quiz)
 1. **Sessão de escrita** (Code com busca na web): preenche os CSVs dos 20 clubes, status `rascunho`, sempre com fonte. Pode partir da proposta "Galeria dos Clubes" (21/10) só como roteiro: os números dela **não valem**, porque têm erros conferidos (títulos parados em 2024, Botafogo sem os títulos de 2024, recorde do Morumbi de um jogo do Corinthians, contexto de goleada errado, rankings fora de ordem, gramados todos iguais, nomes sem fonte).
@@ -161,7 +175,7 @@ Todas com `verificada_em`, `status` (rascunho, revisada, aposentada) e `observac
 
 ## 9. Técnica
 
-- **Sem servidor:** é conteúdo estático, sem pontos e sem segredo. Nenhuma migração.
+- **Sem servidor:** é conteúdo estático, sem pontos e sem segredo. Única exceção: os cliques do "Seja sócio", contados por clube e por dia em `public.socio_cliques`, sem id de usuário, só pela função `contar_clique_socio`. O aparelho conta no máximo 1 clique por clube por dia, e a contagem sai depois de o link abrir, sem esperar resposta. Relatório: `npm run metricas`.
 - **Fora do bundle inicial:** a tela e os dados entram por `import()` dinâmico (o Vite separa o arquivo). Estimativa: ~20 KB gzip para os 20 clubes.
 - Tela em `src/telas/casa.ts`, CSS próprio em `src/estilos/casa.css`, desenhos (estádio, taça, manto) como SVG gerado em código, sem imagem.
 - Tipos em `src/dados/casa/tipos.ts`; competições em `src/dados/competicoes.ts`; cores do clube vêm do `times.ts` (nunca duplicadas).

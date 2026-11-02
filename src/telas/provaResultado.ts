@@ -2,11 +2,13 @@
 // compartilhar (sem o texto das perguntas) e Mais uma / Revanche.
 
 import { esc, irPara, type Rota } from '../app';
+import { mostrarCard, prontoParaDesenhar, seloNivel } from '../jogo/card';
 import { ID_OUTRO, corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
 import { prefs } from '../estado';
 import { desenharCardProva, linhaDoCard } from '../jogo/cardProva';
 import { conviteX1Prova } from '../jogo/convites';
 import { htmlPosicao } from '../jogo/posicao';
+import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 const maiuscula = (s: string) => s.charAt(0).toLocaleUpperCase('pt-BR') + s.slice(1);
@@ -44,7 +46,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
       </section>`
     : '';
 
-  const titulo = fim.fim === 'perfeita' ? '8 de 8' : fim.fim === 'parou' ? 'Parou na hora' : 'Fim da prova';
+  const titulo = fim.fim === 'perfeita' ? '8 de 8' : fim.fim === 'parou' ? 'Parou na hora' : fim.fim === 'completa' ? 'Prova completa' : 'Fim da prova';
 
   root.innerHTML = `
     <main class="tela resultado prova-resultado ${fim.fim === 'perfeita' || cmp?.venceu ? 'venceu' : ''}"
@@ -64,7 +66,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
         <ul class="etiquetas">
           ${fim.pontos.acertos ? `<li class="rotulo">${fim.pontos.acertos} ${fim.pontos.acertos === 1 ? 'certa' : 'certas'} <b>${fim.pontos.base}</b></li>` : ''}
           ${fim.pontos.bonus ? `<li class="rotulo">8 de 8 <b>+${fim.pontos.bonus}</b></li>` : ''}
-          ${(fim.fim === 'errou' || fim.fim === 'tempo') && fim.pontos.base ? '<li class="rotulo">Leva metade</li>' : ''}
+          ${(fim.fim === 'errou' || fim.fim === 'tempo') && fim.pontos.base ? '<li class="rotulo">3 erros: leva 75%</li>' : ''}
         </ul>
       </section>
 
@@ -73,11 +75,12 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
       <section class="res-efeito"><p class="situacao">${esc(situacao)}</p></section>
 
       ${htmlPosicao(fim.desempenho, 'prova')}
+      <div class="res-carreira" data-carreira hidden></div>
 
       ${blocoDesafio}
 
       <section class="res-compartilhar">
-        <a class="botao botao-zap" target="_blank" rel="noopener"
+        <a class="botao botao-zap" data-sem-aviso target="_blank" rel="noopener"
           href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Chamar no X1</a>
         <div class="trio">
           <button class="botao botao-sec" type="button" data-acao="share">Stories</button>
@@ -98,14 +101,13 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
     </main>
   `;
 
+  // Carreira: só quando o servidor fechou a prova (o XP sai de lá).
+  if (fim.desempenho) mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]'));
+
   // ---------- card ----------
   const img = root.querySelector<HTMLImageElement>('.card')!;
   const cardPronto = (async () => {
-    try {
-      await Promise.all([document.fonts.load('400 100px Anton'), document.fonts.load('700 40px Barlow')]);
-    } catch {
-      // segue com a fonte que tiver
-    }
+    await prontoParaDesenhar();
     const canvas = desenharCardProva({
       time,
       apelido,
@@ -117,7 +119,9 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
       novoRecorde,
       link: link.replace('https://', ''),
     });
-    img.src = canvas.toDataURL('image/png');
+    const nivel = await nivelParaCard();
+    if (nivel) seloNivel(canvas, nivel);
+    await mostrarCard(img, canvas);
     return canvas;
   })();
 

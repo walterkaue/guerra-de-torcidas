@@ -453,15 +453,19 @@ export const FRASES = {
     { t: "Pé no freio na hora certa. Pontos no bolso!" },
   ],
   prova_errou: [
-    { t: "Errou! Leva metade, mas leva." },
-    { t: "Não foi essa! Metade dos pontos vai {pro_time} mesmo assim." },
-    { t: "Escorregou no degrau! Revanche tá a um toque." },
+    { t: "Errou, mas a prova segue! Ainda tem vida." },
+    { t: "Escorregou, mas não caiu! Próxima pergunta." },
+    { t: "Essa a bola levou. Vai pra próxima, ainda dá!" },
     { t: "Errou com tanta certeza que até o narrador duvidou.", rara: true },
   ],
   prova_tempo: [
     { t: "O tempo acabou! O relógio não perdoa." },
-    { t: "Quinze segundos voam, hein! Leva metade." },
     { t: "Pensou tanto que o apito soou!" },
+  ],
+  prova_ultima_vida: [
+    { t: "Última vida! A próxima pede cabeça fria." },
+    { t: "Mais um erro e o apito final soa. Respira!" },
+    { t: "Tá na bacia das almas: um erro e acaba." },
   ],
   prova_ajuda: [
     { t: "Pediu ajuda! Sem vergonha nenhuma, é estratégia." },
@@ -509,10 +513,6 @@ export const FRASES = {
     { t: "Não deu hoje! Amanhã tem outro time escondido." },
     { t: "Seis chutes e nada! O secreto se escondeu bem." },
     { t: "Hoje o time venceu. Revanche amanhã, 00h." },
-  ],
-  dia_sequencia: [
-    { t: "{dias} dias seguidos! Isso é torcida fiel." },
-    { t: "Sequência de {dias} dias! Não para agora." },
   ],
   lance_abertura: [
     { t: "Três lances, três chances de fazer história {pro_time}!" },

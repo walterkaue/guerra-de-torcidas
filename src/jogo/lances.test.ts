@@ -9,6 +9,7 @@ import {
   type ResultadoLance,
   TETO_PARTIDA,
   calibrar,
+  caminhoDoChute,
   caminhoDoLance,
   faixaPorChance,
   goleiroAntesDoChute,
@@ -273,3 +274,20 @@ describe('motor puro', () => {
     expect(motor).not.toMatch(/\bDate\b|performance\.|document\.|window\./);
   });
 });
+
+describe('caminho do chute (desenho e replay)', () => {
+  it('sai da bola e termina no ponto do gol, para lance ou pênalti', () => {
+    for (const bola of [{ x: 0, z: 11 }, { x: 6, z: 24 }]) {
+      const em = caminhoDoChute(bola, { dir: 40, forca: 70, efeito: 30 }, 0.8, 0.6, false);
+      const a = em(0);
+      const b = em(1);
+      expect(a.x).toBeCloseTo(bola.x);
+      expect(a.z).toBeCloseTo(bola.z);
+      expect(a.y).toBeCloseTo(0);
+      expect(b.x).toBeCloseTo(0.8 * 3.66);
+      expect(b.y).toBeCloseTo(0.6 * 2.44);
+      expect(b.z).toBeCloseTo(0);
+    }
+  });
+});
+
