@@ -69,7 +69,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 
 ## Só o Kauê faz
 
-**Publicar os robôs do Gemini** (código no PR dos robôs; a simulação do `db push` lista também a migração da temporada, item 2 acima): `npm run deploy:funcoes` (publica `gerar-conteudo` e `auditar-conteudo`) e depois `supabase db push`, que cria `uso_gemini` e agenda os 5+5 crons. Funções primeiro: o corpo novo dos jobs é ignorado pela função antiga.
+**Robôs do Gemini: publicados em 02/11/2026** (funções `gerar-conteudo` e `auditar-conteudo`, tabela `uso_gemini` e os 5+5 crons; PR dos robôs ainda sem merge, e o código publicado vem do branch dele). A migração `20261102000000` foi aplicada à mão e registrada com `migration repair`, para não arrastar a da temporada. **Por isso o `db push` da temporada (item 2) agora precisa de `--include-all`:** `npx supabase db push --include-all`, depois de conferir o fechamento (item 1).
 
 **Ligar o CAPTCHA (o código já está pronto), nesta ordem:**
 1. ~~Criar o site na Cloudflare Turnstile para `torcida.kauewalter.com.br`, no modo invisível.~~ Feito.
