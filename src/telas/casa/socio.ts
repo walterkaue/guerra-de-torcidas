@@ -2,6 +2,7 @@
 // por clube por dia no aparelho. Sem DOM: testado em socio.test.ts.
 
 import type { Time } from '../../dados/times';
+import { podeVerSocio } from '../../jogo/faixaEtaria';
 
 const CHAVE_CLIQUES = 'gdt:socio-cliques';
 const UTM = { utm_source: 'guerradetorcidas', utm_medium: 'casa', utm_campaign: 'socio' };
@@ -12,6 +13,11 @@ export function textosDoSocio(t: Pick<Time, 'nome' | 'artigo'>, programa: string
     linha: `O programa oficial de sócio torcedor é o ${programa}.`,
     saida: `Você vai para o site oficial ${t.artigo === 'a' ? 'da' : 'do'} ${t.nome}. O Guerra de Torcidas não tem ligação com o clube.`,
   };
+}
+
+/** O bloco só existe para 18+ (docs/jogo.md, seção 13): quem não respondeu a triagem não vê. */
+export function socioParaMostrar<T>(socio: T | undefined, faixa: string | null | undefined): T | undefined {
+  return podeVerSocio(faixa) ? socio : undefined;
 }
 
 /** O endereço do programa com os utm, mantendo os parâmetros que ele já tenha. */

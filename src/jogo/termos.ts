@@ -1,7 +1,17 @@
 // Página #termos (docs/jogo.md, seção 13): o texto mora em src/dados/termos.md e vira HTML aqui.
 // Puro, sem DOM. Cobre só o que o texto usa: títulos, parágrafos, listas, tabela, negrito, itálico e links.
 
+/** Versão em vigor. Mudou o texto de um jeito que importa? Mude a data: a Home avisa quem já tinha visto a anterior. */
 export const DATA_DA_VERSAO = '31/10/2026';
+
+/**
+ * Faixa "Os Termos mudaram" na Home. `vista` é a versão guardada no aparelho. Aparelho sem versão guardada
+ * nunca viu outra: guarda a de agora sem avisar. A faixa fica até a pessoa abrir #termos.
+ */
+export function avisoDosTermos(vista: string | undefined, atual: string = DATA_DA_VERSAO): 'nada' | 'guardar' | 'mostrar' {
+  if (!vista) return 'guardar';
+  return vista === atual ? 'nada' : 'mostrar';
+}
 
 const escapar = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 

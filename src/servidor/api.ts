@@ -12,6 +12,7 @@ import type { Desempenho, PosicaoSemana } from '../jogo/posicao.ts';
 import type { Tentativa } from '../jogo/timeDoDia.ts';
 import type { Carreira } from '../jogo/carreira.ts';
 import type { FaixaEtaria } from '../jogo/faixaEtaria.ts';
+import type { MeusDados } from '../jogo/meusDados.ts';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -113,6 +114,19 @@ export async function apagarMeusDados(): Promise<void> {
     await sb.auth.signOut({ scope: 'local' });
   }
   sessaoConferida = null;
+}
+
+/**
+ * "Ver meus dados" (docs/jogo.md, seção 13): o que o servidor guarda de quem chama. Sem sessão no aparelho
+ * não há nada no servidor (null), e não cria login só para isso.
+ */
+export async function verMeusDados(): Promise<MeusDados | null> {
+  const sb = await supabase();
+  const { data } = await comTempoLimite(sb.auth.getSession());
+  if (!data.session) return null;
+  const { data: dados, error } = await comTempoLimite(sb.rpc('ver_meus_dados'));
+  if (error) throw new ErroServidor('falha');
+  return dados as MeusDados | null;
 }
 
 /** Conta um clique no "Seja sócio", sem login e sem esperar resposta: nunca segura a saída para o site. */

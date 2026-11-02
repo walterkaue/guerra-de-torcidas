@@ -32,6 +32,8 @@ interface Prefs {
   faixa?: FaixaEtaria;
   /** Faixa que o servidor já tem (para não regravar à toa). */
   faixaSincronizada?: FaixaEtaria;
+  /** Versão dos Termos que este aparelho já viu (jogo/termos.ts, avisoDosTermos). */
+  termosVistos?: string;
 }
 
 function ler(): Prefs {

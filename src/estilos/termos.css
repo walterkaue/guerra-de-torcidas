@@ -80,6 +80,33 @@
   border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+/* "Ver meus dados": ficha só de leitura, abaixo dos dois botões. */
+.termos-dados {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+  overflow-wrap: anywhere;
+}
+
+.termos-dados[hidden] {
+  display: none;
+}
+
+.termos-dados small {
+  color: var(--texto-suave);
+}
+
+.termos-mensagem {
+  padding: 10px 14px;
+  border-left: 3px solid var(--amarelo);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.termos-mensagem p {
+  margin: 0 0 4px;
+}
+
 .termos-erro {
   color: var(--amarelo);
   font-size: 15px;

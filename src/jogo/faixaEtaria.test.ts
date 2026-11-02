@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FAIXAS, destinoDaInscricao, ehFaixa, podeVerApoio, podeVerOferecidoPor, podeVerPush, precisaDaTriagem } from './faixaEtaria';
+import { FAIXAS, destinoDaInscricao, ehFaixa, podeVerApoio, podeVerOferecidoPor, podeVerPush, podeVerSocio, precisaDaTriagem } from './faixaEtaria';
 
 describe('faixa etária', () => {
   it('só as três faixas valem', () => {
@@ -7,8 +7,8 @@ describe('faixa etária', () => {
     for (const v of ['', 'adulto', 18, null, undefined]) expect(ehFaixa(v)).toBe(false);
   });
 
-  it('push, apoio e "Oferecido por" só para 18+, e sem resposta conta como não', () => {
-    for (const regra of [podeVerPush, podeVerApoio, podeVerOferecidoPor]) {
+  it('push, apoio, "Oferecido por" e "Seja sócio" só para 18+, e sem resposta conta como não', () => {
+    for (const regra of [podeVerPush, podeVerApoio, podeVerOferecidoPor, podeVerSocio]) {
       expect(regra('18_mais')).toBe(true);
       for (const f of ['menos_16', '16_17', null, undefined]) expect(regra(f)).toBe(false);
     }

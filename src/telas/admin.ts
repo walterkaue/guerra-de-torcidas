@@ -1,6 +1,6 @@
 // Painel do administrador (#admin): login com e-mail e senha, só para quem está na tabela
 // administradores. Revisa as perguntas do pipeline com Gemini (adminRevisao.ts) e as partidas sob
-// suspeita (adminSuspeitas.ts). Confirma, corrige ou anula o placar dos jogos do Crava; a distribuição dos
+// suspeita (adminSuspeitas.ts), e apaga apelido ofensivo (adminApelido.ts). Confirma, corrige ou anula o placar dos jogos do Crava; a distribuição dos
 // pontos é feita no servidor (função confirmar-placar), sem duplicar.
 // Usa uma sessão separada (storageKey próprio): a sessão de jogador do aparelho continua a mesma.
 
@@ -11,6 +11,7 @@ import { ordinalRodada } from '../jogo/crava';
 import { horaDoJogo, rodadaEmFoco } from '../jogo/cravaTela';
 import type { Jogo } from '../servidor/crava';
 import { opcoesComCaptcha, tokenCaptcha } from '../servidor/captcha';
+import { montarApelido } from './adminApelido';
 import { montarRevisao } from './adminRevisao';
 import { montarSuspeitas } from './adminSuspeitas';
 
@@ -59,6 +60,7 @@ export function telaAdmin(root: HTMLElement): () => void {
   let jogos: Jogo[] = [];
   let limparRevisao: (() => void) | undefined;
   let limparSuspeitas: (() => void) | undefined;
+  let limparApelido: (() => void) | undefined;
   let rodada: number | null = null;
 
   const casca = (miolo: string) => {
@@ -131,6 +133,8 @@ export function telaAdmin(root: HTMLElement): () => void {
       <section data-revisao></section>
       <h3 class="titulo-placar">Partidas sob suspeita</h3>
       <section data-suspeitas></section>
+      <h3 class="titulo-placar">Apagar apelido</h3>
+      <section data-apelido></section>
       <h3 class="titulo-placar">Feedback</h3>
       <section class="lista-jogos" data-feedbacks><p class="nota">Carregando…</p></section>
       <h3 class="titulo-placar">Prova de Boleiro</h3>
@@ -145,6 +149,8 @@ export function telaAdmin(root: HTMLElement): () => void {
     limparRevisao = montarRevisao(root.querySelector<HTMLElement>('[data-revisao]')!, sb, () => void carregar());
     limparSuspeitas?.();
     limparSuspeitas = montarSuspeitas(root.querySelector<HTMLElement>('[data-suspeitas]')!, sb);
+    limparApelido?.();
+    limparApelido = montarApelido(root.querySelector<HTMLElement>('[data-apelido]')!, sb);
     await carregar();
   }
 
@@ -343,5 +349,6 @@ export function telaAdmin(root: HTMLElement): () => void {
     saiu = true;
     limparRevisao?.();
     limparSuspeitas?.();
+    limparApelido?.();
   };
 }

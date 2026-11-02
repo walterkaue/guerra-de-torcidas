@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { linkDoSocio, primeiroCliqueDoDia, textosDoSocio } from './socio';
+import { linkDoSocio, primeiroCliqueDoDia, socioParaMostrar, textosDoSocio } from './socio';
 
 function armazemFalso(inicial: Record<string, string> = {}) {
   const dados = new Map(Object.entries(inicial));
@@ -60,5 +60,16 @@ describe('limite de um clique por clube por dia', () => {
     expect(primeiroCliqueDoDia('clube-d', '2026-11-04', quebrado)).toBe(true);
     expect(primeiroCliqueDoDia('clube-d', '2026-11-04', quebrado)).toBe(false);
     expect(primeiroCliqueDoDia('clube-e', '2026-11-04', armazemFalso({ 'gdt:socio-cliques': '{quebrado' }))).toBe(true);
+  });
+});
+
+describe('"Seja sócio" só para 18+', () => {
+  const socio = { programa: 'Sócio Teste', url: 'https://exemplo.org/socio' };
+  it('aparece para 18+, e some para menor ou para quem não respondeu a triagem', () => {
+    expect(socioParaMostrar(socio, '18_mais')).toBe(socio);
+    for (const faixa of ['menos_16', '16_17', null, undefined]) expect(socioParaMostrar(socio, faixa)).toBeUndefined();
+  });
+  it('clube sem programa continua sem bloco', () => {
+    expect(socioParaMostrar(undefined, '18_mais')).toBeUndefined();
   });
 });

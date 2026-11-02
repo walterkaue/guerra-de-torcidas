@@ -617,6 +617,29 @@
   align-self: center;
 }
 
+/* "Os Termos mudaram": faixa discreta até a pessoa abrir #termos (jogo/termos.ts, avisoDosTermos). */
+.faixa-termos {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--texto-suave);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+}
+
+.faixa-termos span {
+  color: var(--amarelo);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* Seção da Casa na Home: estádio e troféus em cena de noite (telas/cardsJogos.ts). */
 .casa-home {
   position: relative;

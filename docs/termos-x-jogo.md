@@ -1,6 +1,8 @@
 # Termos × jogo
 
 > Levantamento de 31/10/2026 para o Kauê e o advogado. Compara cada promessa de `src/dados/termos.md` com o que o jogo faz de verdade (código e migrações; banco só pelo que as migrações definem). **Não é parecer jurídico** e não altera os Termos. Para cada divergência há duas saídas: mudar o jogo ou mudar o texto. Quem escolhe é o Kauê.
+>
+> **Atualizado em 02/11/2026** com as decisões do Kauê de 01/11 (mudar o jogo): aviso de mudança, "Ver meus dados", apagar o texto das mensagens, apagar apelido no `#admin` e "Seja sócio" só para 18+. As linhas marcadas **Passou a cumprir** mudaram no código; o texto dos Termos não mudou aqui.
 
 ## Resumo
 
@@ -11,14 +13,14 @@
 | # | Divergência | Situação | Saídas |
 |---|---|---|---|
 | 1 | Apagar contas paradas | Não cumpre | Criar a rotina, ou tirar a frase |
-| 2 | Aviso de mudança na tela inicial | Não cumpre | Criar o aviso, ou dizer onde a mudança fica |
+| 2 | Aviso de mudança na tela inicial | **Passou a cumprir** (02/11/2026) | Feito: faixa na Home |
 | 3 | Ranking de cidades | Não cumpre | Tirar a cidade do texto agora, ou construir a cidade |
 | 4 | Checagem da Cloudflare | Não cumpre hoje (passo 2 de 3 feito em 01/11: chave pública no site; falta ligar no painel do Supabase) | Ligar o CAPTCHA (passo 3 do Kauê), ou tirar a frase |
 | 5 | "Só você lê os seus" | Cumpre em parte | Reescrever a frase, ou separar o que o administrador lê |
-| 6 | Depois de "Apagar meus dados" | Cumpre em parte | Dizer o que fica, ou mudar o que fica |
-| 7 | Direito de "ver" os dados | Não cumpre | Criar um "ver meus dados", ou dizer que só existe apagar |
+| 6 | Depois de "Apagar meus dados" | Cumpre em parte (melhorou em 02/11/2026: o texto das mensagens some junto) | Fica só o total de pontos da semana, sem id: dizer isso no texto |
+| 7 | Direito de "ver" os dados | **Passou a cumprir** (02/11/2026) | Feito: "Ver meus dados" na `#termos` |
 | 8 | Trapaça "pode ter os pontos zerados" | Não cumpre | Criar a ação no `#admin`, ou mudar a frase |
-| 9 | Apelido ofensivo "apagado" | Cumpre em parte | Criar a ação no `#admin`, ou dizer só "bloqueado" |
+| 9 | Apelido ofensivo "apagado" | **Passou a cumprir** (02/11/2026) | Feito: "Apagar apelido" no `#admin` |
 | 10 | "Antes de sair, o jogo avisa" | Cumpre em parte | Avisar também no WhatsApp, ou dizer a exceção |
 
 ## Resumo em 30 segundos
@@ -31,7 +33,7 @@
 | Não tem chat | **Cumpre** | Não há tabela nem tela de mensagem entre jogadores. O texto livre que existe é o "Achei um erro", que só o administrador lê. |
 | Zoeira com o time, nunca com pessoas | **Cumpre** (regra de conteúdo) | Regra do `docs/jogo.md` seção 8 e `docs/narrador.md`. Não é verificável por código além do teste de palavras proibidas (`src/palavrasProibidas.test.ts`). |
 | Os pontos são conferidos; trapaça tira a partida do ranking | **Cumpre** | O resultado é recalculado no servidor. Partida suspeita fica fora do ranking: `20261019000000_base.sql:163,171,282` (`not p.sob_suspeita`). |
-| Pode pedir para apagar os dados | **Cumpre em parte** | Botão e função existem (`src/telas/termos.ts`, `20261031100200_apagar_meus_dados.sql`). Ver item 6. |
+| Pode pedir para apagar os dados | **Cumpre em parte** | Botão e função existem (`src/telas/termos.ts`, `20261031100200_apagar_meus_dados.sql`; desde 02/11, `20261102000000_termos_x_jogo.sql` apaga também as mensagens). Ver item 6. |
 
 ## Termos de Uso, item por item
 
@@ -41,7 +43,7 @@
 | 2 | "Por dia, só algumas partidas contam pontos" | **Cumpre** | Teto de 5 partidas por dia: `20261020200000_time_do_dia.sql:4` (comentário "teto diário das 5 partidas") e `src/jogo/statusJogos.ts:7`. Vale também para o Crava (teto de 300 por rodada, `src/jogo/crava.ts:15`). |
 | 3 | Nada é vendido; ninguém compra pontos, vidas ou vantagem | **Cumpre** | Não existe loja. O apoio "não dá vantagem" (`docs/jogo.md` seção 7). |
 | 4 | Zero aposta; palpites valem só pontos | **Cumpre** | `palpites` e `crava_pontos` guardam só pontos (`20261019200000_crava.sql`). Teste de palavras proibidas cobre o texto. |
-| 5 | "Apelido ofensivo é bloqueado ou apagado" | **Cumpre em parte** | **Bloqueado:** sim, ao salvar (`20261019000000_base.sql:79-121`, `apelido_bloqueado`). **Apagado:** não há ferramenta no `#admin` para apagar o apelido de alguém que já passou pelo filtro. Só dá para o administrador mexer direto no banco. Saídas: criar a ação no `#admin`; ou o texto dizer só "bloqueado". |
+| 5 | "Apelido ofensivo é bloqueado ou apagado" | **Passou a cumprir** (02/11/2026) | **Bloqueado:** sim, ao salvar (`20261019000000_base.sql:79-121`, `apelido_bloqueado`). **Apagado:** seção "Apagar apelido" no `#admin` (`src/telas/adminApelido.ts`; `apelido_contar` e `apelido_apagar` em `20261102000000_termos_x_jogo.sql`): busca o apelido exato, mostra quantos usam e limpa dos torcedores e dos desafios, com confirmação. O registro guarda só quando e quantos. **Limite:** o aparelho da pessoa ainda tem o apelido e o manda de novo se ela trocar de time ou o login for refeito; para impedir de vez, pôr a palavra em `palavras_bloqueadas`. |
 | 6 | "O servidor confere todas as partidas" | **Cumpre** | Pênaltis, Prova e Time do Dia são fechados por funções do servidor (`supabase/functions/fechar-partida`, `prova`, `time-do-dia`). |
 | 6b | Partida suspeita fica fora até ser revisada | **Cumpre** | Fila e revisão: `20261027000200_revisao_suspeitas.sql`. |
 | 6c | "Quem insistir em trapacear pode ter os pontos zerados" | **Não cumpre** | O administrador só pode **liberar** ou **manter fora** uma partida (mesma migração). Não existe ação de zerar os pontos de uma pessoa. Saídas: criar a ação (e o registro do motivo); ou trocar por "ter as partidas suspeitas mantidas fora do ranking". |
@@ -51,7 +53,7 @@
 | 9 | Apoio financeiro só 18+, sem vantagem | **Cumpre** | `podeVerApoio` (`src/jogo/faixaEtaria.ts:21`, usado em `src/telas/apoio.ts:22`) e barreira "Sou maior de 18 ou responsável" (`docs/jogo.md` seção 13). **Limite:** a faixa é declarada pela própria pessoa, sem prova. O texto não promete verificação, mas o advogado deve saber. |
 | 9b | "Seja sócio" não aparece nos Termos | Ver "O que o texto não diz". |
 | 10 | Pré-temporada: pontos e rankings podem zerar | **Cumpre** | `npm run zerar-pre-temporada` (`docs/jogo.md` seção 12). |
-| 11 | "Quando a mudança for importante, o jogo avisa" | **Não cumpre** | Não existe aviso de mudança. A tela `#termos` só mostra "Versão em revisão · 31/10/2026" (`src/telas/termos.ts:24`), e a data é uma constante manual (`src/jogo/termos.ts:4`). Nada na Home compara a versão que a pessoa viu. Saídas: criar o aviso (guardar a versão vista no aparelho e mostrar uma faixa na Home quando mudar); ou o texto dizer só "a versão e a data ficam na página de Termos". |
+| 11 | "Quando a mudança for importante, o jogo avisa" | **Passou a cumprir** (02/11/2026) | O aparelho guarda a versão vista (`termosVistos` em `gdt:prefs`). Quando `DATA_DA_VERSAO` (`src/jogo/termos.ts`) muda, a Home mostra a faixa "Os Termos mudaram · Ler" até a pessoa abrir `#termos`; não bloqueia o jogo (`avisoDosTermos`, `src/telas/inicio.ts`). Aparelho que nunca guardou versão guarda a atual sem aviso. **Atenção:** o aviso só sai se alguém mudar a data ao mudar o texto. Limpar os dados do site também apaga a versão vista. |
 
 ## Política de Privacidade, item por item
 
@@ -82,7 +84,7 @@
 | Sem rastreio: não segue em outros sites, sem perfil | **Cumpre em parte** | Sem rastreador de terceiros. Mas o jogo guarda carreira (XP), histórico de partidas e a contagem de cliques do "Seja sócio" (esta sem id de pessoa, `20261031000000_cliques_socio.sql`). O link de sócio leva `utm_source=guerradetorcidas` (`casa/socio.ts:7`), então o **site do clube** sabe que a visita veio do jogo. Isso não é perfil, mas é rastro para fora. Sugestão: dizer isso. |
 | Escolhas guardadas só no aparelho | **Cumpre** | Chaves `gdt:*` em `localStorage`: prefs, qualidade gráfica, apoio, narrador, carreira, posições, cliques de sócio. Todas locais. |
 | "**Por quanto tempo:** enquanto você jogar. Contas paradas por muito tempo são apagadas." | **Não cumpre** | **Não existe a rotina.** Os crons do banco são só `crava-sincronizar`, `carreira-fechar`, `job_aviso_domingo` (e os de conteúdo). Nenhum apaga usuário anônimo. Só há menção a "limpeza de usuários anônimos inativos" como tarefa futura (`docs/jogo.md` seção 12, "Antes de divulgar") e comentário em `src/servidor/api.ts:49`. Falta também o prazo (decisão do Kauê). Saídas: criar o cron com um prazo (por exemplo, 12 meses sem jogar; antes de apagar, guardar o total de pontos como no "Apagar meus dados"); ou tirar a frase e dizer "até você pedir para apagar". |
-| "Você, ou seu responsável, pode pedir para **ver** ou apagar seus dados" | **Não cumpre** (ver) / **Cumpre em parte** (apagar) | **Apagar:** botão em `#termos` chama `apagar_meus_dados` (`20261031100200_apagar_meus_dados.sql`). **Ver:** não existe tela nem função de "ver meus dados". O pedido por e-mail também esbarra em outra coisa: sem login, o jogo não sabe quem é a pessoa, e o texto diz "o pedido é feito pelo próprio aparelho", mas só o apagar roda no aparelho. Saídas: criar "Ver meus dados" (mostrar o que a tabela de cima lista); ou escrever que o pedido de cópia é feito por e-mail e o Kauê responde manualmente (e explicar como identificar o aparelho). Para o **responsável**: não há como um responsável agir sem o aparelho da criança. |
+| "Você, ou seu responsável, pode pedir para **ver** ou apagar seus dados" | **Passou a cumprir** (ver, 02/11/2026) / **Cumpre em parte** (apagar) | **Apagar:** botão em `#termos` chama `apagar_meus_dados` (`20261031100200_apagar_meus_dados.sql`, refeita em `20261102000000_termos_x_jogo.sql`). **Ver:** botão "Ver meus dados" na `#termos` chama `ver_meus_dados` (só leitura, só de quem chama) e mostra time, apelido, faixa, partidas, Time do Dia, desafios, palpites, XP, aviso de domingo e as mensagens com a tela e o navegador. **Antes de 02/11:** não existia tela nem função de "ver meus dados". O pedido por e-mail também esbarra em outra coisa: sem login, o jogo não sabe quem é a pessoa, e o texto diz "o pedido é feito pelo próprio aparelho", mas só o apagar roda no aparelho. Saídas: criar "Ver meus dados" (mostrar o que a tabela de cima lista); ou escrever que o pedido de cópia é feito por e-mail e o Kauê responde manualmente (e explicar como identificar o aparelho). Para o **responsável**: não há como um responsável agir sem o aparelho da criança. |
 | Pais: sem chat, perfil público, compra ou anúncio | **Cumpre** | Ver acima. |
 | Pais: menores não recebem push nem veem apoio | **Cumpre** | `soPara18Mais` (`src/jogo/faixaEtaria.ts`), push recusado no servidor. **Quem ainda não respondeu a triagem:** não recebe (`enviar-push/index.ts`, `destinoDaInscricao`), mas o convite de push fica oculto até responder. |
 | Contato por e-mail | **Cumpre** | Endereço fixo no texto e no `VAPID_SUBJECT`. Não verifiquei se a caixa existe; é com o Kauê. |
@@ -94,21 +96,21 @@ Promessa: "pode pedir para apagar seus dados quando quiser".
 
 **O que some** (cascata ao apagar o usuário anônimo, `20261031100200_apagar_meus_dados.sql:118` e o comentário no topo): torcedor (time, apelido, faixa), partidas, desafios, palpites, Time do Dia, Prova, carreira e inscrições de push. O aparelho é limpo (`src/telas/termos.ts:79-80`).
 
-**O que fica:**
+**O que fica** (desde 02/11/2026, só os itens 1, 3 e 4):
 
 1. **Total de pontos por semana e por time**, sem id da pessoa, na tabela `pontos_apagados`, somado ao ranking como "um torcedor anônimo" (mesmo arquivo, linhas 8-20 e 28-40). A tela avisa disso (`AVISO_APAGAR`, `src/telas/termos.ts:10-11`), mas a **Política não diz**. Como não há id, o total não identifica ninguém; o advogado decide se isso basta como "apagar".
-2. **Os feedbacks**: a linha fica, só sem o `usuario_id` (`on delete set null`, `20261019220000_feedback.sql:9`). **O texto livre continua lá**, e a pessoa pode ter escrito algo que a identifique. Saídas: apagar o texto também (mudar o jogo), ou dizer que a mensagem fica sem o vínculo.
+2. ~~**Os feedbacks**~~ **Resolvido em 02/11/2026:** `apagar_meus_dados` apaga as mensagens do "Achei um erro", texto e tudo, antes do usuário (`20261102000000_termos_x_jogo.sql`). Antes, a linha ficava sem o `usuario_id`, com o texto livre.
 3. **Cliques do "Seja sócio"** e **respostas da Prova** (calibragem) não têm id de pessoa e ficam. Contagem de cliques: sem dado pessoal. Respostas: ver `prova.sql:109`.
 4. **Anulação para conta de verdade** (`#admin`): recusada.
 
-Saídas gerais: (a) dizer tudo isso na Política, em "Seus direitos"; ou (b) mudar o jogo para apagar também o texto do feedback.
+Saídas gerais: (a) dizer tudo isso na Política, em "Seus direitos"; ou (b) mudar o jogo para apagar também o texto do feedback (feito em 02/11/2026). Falta (a): o total de pontos da semana continua em `pontos_apagados`, por decisão.
 
 ## O que o jogo faz e o texto não diz
 
 1. **Feedback leva a tela e o navegador** (`src/servidor/api.ts:476`; `feedback.sql:10-11`).
 2. **Total de pontos fica depois de apagar** (acima).
-3. **O texto do feedback fica depois de apagar** (acima).
-4. **"Seja sócio"**: o bloco da Casa leva a sites de programas de sócio (pagos) para **qualquer idade**, com `utm_source=guerradetorcidas`; clicar é contado no servidor, sem id de pessoa (`20261031000000_cliques_socio.sql`). O item 9 só trata do "apoio ao jogo". O bloco "Seja sócio" pode ser lido como compra para menores: decisão de produto.
+3. ~~**O texto do feedback fica depois de apagar**~~ Resolvido em 02/11/2026: some junto.
+4. **"Seja sócio"**: o bloco da Casa leva a sites de programas de sócio (pagos), com `utm_source=guerradetorcidas`; clicar é contado no servidor, sem id de pessoa (`20261031000000_cliques_socio.sql`). **Desde 02/11/2026 só para 18+**, com a mesma regra do apoio (`podeVerSocio`); quem não respondeu a triagem não vê. O texto dos Termos ainda não cita o bloco: o item 9 só trata do "apoio ao jogo".
 5. **O que o administrador vê** (feedbacks, fila de suspeitas) e que existe um painel `#admin` com login de verdade.
 6. **A Cloudflare só passa a existir quando ligar** o CAPTCHA, e aí vê o acesso no primeiro login.
 7. **Triagem de idade é autodeclarada**, sem verificação, e guarda só a faixa (`docs/jogo.md` seção 13). Também vale pelo aparelho: limpar os dados do site faz a pergunta voltar.
@@ -121,9 +123,9 @@ Fora do alcance desta lista: logs do Supabase (IP, user agent) e prazo de reten�
 1. **Contas paradas:** que prazo? E o total de pontos guarda como no apagar?
 2. **Cidade:** tirar do texto agora, ou construir antes de divulgar?
 3. **CAPTCHA:** ligar antes de divulgar (então o texto fica), ou sem CAPTCHA (então tirar a frase).
-4. **Aviso de mudança:** construir ou reescrever a frase.
-5. **"Ver meus dados":** construir ou mudar o texto.
-6. **Zerar pontos de trapaceiro e apagar apelido:** criar as ações ou ajustar o texto.
-7. **O que fica ao apagar:** dizer no texto, ou apagar mais.
+4. ~~**Aviso de mudança:**~~ construído (01/11/2026).
+5. ~~**"Ver meus dados":**~~ construído (01/11/2026).
+6. **Zerar pontos de trapaceiro:** criar a ação ou ajustar o texto. ~~Apagar apelido~~: construído (01/11/2026).
+7. **O que fica ao apagar:** o texto das mensagens passou a sumir (01/11/2026); o total de pontos fica, e o texto precisa dizer isso.
 
 Este documento não substitui a revisão do advogado. Cada linha acima usa o que o código faz **hoje**; se o código mudar, a linha muda.
