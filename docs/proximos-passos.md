@@ -1,14 +1,14 @@
 # Próximos passos
 
-> Retrato do projeto em 02/11/2026, para retomar em qualquer conversa. Regras e decisões continuam no `docs/jogo.md`; aqui só fica o que vem a seguir.
+> Retrato do projeto em 03/11/2026, para retomar em qualquer conversa. Regras e decisões continuam no `docs/jogo.md`; aqui só fica o que vem a seguir.
 > Ao fechar um item, atualize este arquivo no mesmo PR. Para começar, siga a divisão de trabalho do `CLAUDE.md`.
 
 ## Onde estamos
 
 | Área | Estado em 02/11/2026 |
 |---|---|
-| Código | `main` com 77 arquivos e 1.676 testes passando (PR #86, travas da limpeza e do fechamento, em 03/11) |
-| Publicação | Site no ar (`main` de 02/11, 15h47), as 31 migrações aplicadas (a 31ª, do PR #86, em 02/11 à noite), 11 funções publicadas (`fechar-partida` v18) |
+| Código | `main` com 77 arquivos e 1.676 testes passando (PR #86, travas da limpeza e do fechamento, em 03/11). No PR dos Lances valendo: 81 arquivos e 1.718 testes |
+| Publicação | Site no ar (`main` de 02/11, 15h47). 32 migrações aplicadas (a 32ª, dos Lances valendo, em 03/11 às 14h38). 12 funções publicadas (`lances` v1 e `fechar-partida` v19, em 03/11) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
 | Tamanho | 216 KB gzip somando todo o JS e CSS (limite do bundle inicial: ~300 KB) |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
@@ -16,7 +16,23 @@
 
 ## Em andamento
 
-Nenhuma sessão aberta. As conversas e branches sem pendência foram fechadas em 01/11/2026.
+**Lances do Jogo valendo (faltas e cara a cara), branch `claude/lances-servidor`.** O servidor já está no ar desde 03/11/2026: a migração `20261103200000_lances_valendo.sql`, a função `lances` v1 e a `fechar-partida` v19 (agora aceita só pênaltis). Conferido no banco, só leitura:
+- a regra de `minigame` aceita `lances`, os 5 números da detecção estão em `config_deteccao`, `lances_gols` tem RLS e o gatilho;
+- o celular não chama `lances_comecar` nem lê `lances_gols`, e chama `minhas_medalhas`;
+- `ranking-minuto` rodou 15 vezes sem falha em volta da migração;
+- a função responde 401 sem login.
+
+O site com as telas novas só sai com o merge: o ambiente `github-pages` aceita publicar só da `main`. O site de hoje não chama a função nova, então nada muda para quem joga até lá.
+
+**Falta, depois do merge:** jogar uma partida valendo de Faltas ou Cara a cara no celular e conferir no banco:
+
+```sql
+select p.id, p.pontos, p.conta_no_teto, p.sob_suspeita, p.fechada_em, a.atualizado_em as ranking_em
+from public.partidas p left join public.ranking_aviso a on a.semana = p.semana
+where p.minigame = 'lances' order by p.criada_em desc limit 5;
+```
+
+`ranking_em` tem de passar de `fechada_em` em até 1 minuto, se a partida mudou alguma linha do ranking. Confira também se `carreira_partidas` ganhou a linha dela e se `lances_gols` tem os gols.
 
 ## Conferir primeiro
 
@@ -102,6 +118,11 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 - Propostas de `docs/propostas/funil-do-desafio.md`.
 
 ## Depois
+
+0. **Lances, segunda etapa:**
+   - card só da medalha ("Já sou ouro no…");
+   - corrigir a faixa de cada lance pela taxa de acerto real, depois de 50 tentativas valendo (seção 7.3);
+   - o `resultado.ts` dos pênaltis passar a usar `src/telas/efeitoRanking.ts`, que hoje repete a lógica dele.
 
 1. **Cidade, Galeria e 52 semanas:** nessa ordem, depois das telas das divisões.
 2. **Perguntas:** o piloto recomendou parar nas 529 sem fonte do staging. A meta de 800 precisa de perguntas nascidas de páginas reais. A importação continua com o Kauê.
