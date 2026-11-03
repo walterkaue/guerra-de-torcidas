@@ -23,7 +23,7 @@
 **Código do torcedor (uma carreira em vários aparelhos, `docs/jogo.md` seção 14.1):** feito, publicado e aprovado em 03/11/2026 (PR #92), revisado pelo subagente `revisor` (nenhum achado alto; os médios e quase todos os baixos corrigidos antes de publicar).
 - **No ar:** a migração `20261103400000_codigo_torcedor.sql`, conferida no banco (4 tabelas com RLS, 7 políticas de sessão, permissões certas), a função `codigo-torcedor` v1 com o segredo `TURNSTILE_SECRET_KEY`, e o site (merge às 19h46, publicado às 19h48).
 - **Testado pelo Kauê às 19h50, note + celular:** entrou de primeira, juntou as duas carreiras (o celular já tinha dados) e o Time do Dia jogado no celular apareceu no note. No banco: 1 código usado, 0 erro, 1 junção com dados, 1 conta ligada com 2 aparelhos e 3 recordes herdados. Foi a primeira prova do caminho e-mail técnico → passe → `verifyOtp` contra o Auth real.
-- **Ainda não testado de verdade:** "Desconectar" e o aviso de "saiu da conta" no outro aparelho, e o QR lido pela câmera (o teste pode ter sido digitando).
+- **Desconectar e QR, testados pelo Kauê às 19h58:** no note, "Desconectar" tirou o celular da conta, e o celular mostrou o aviso "Este aparelho saiu da conta…" na escolha do time. Depois o celular voltou pela câmera, lendo o QR. No banco: 2 códigos usados, 0 erro, a 2ª junção como aparelho novo e a conta de novo com 2 aparelhos (a sessão desconectada sumiu).
 - **Para o advogado:** a proposta de frase para os Termos e a Política está em `docs/termos-x-jogo.md`, seção "Proposta para o advogado: código do torcedor". O texto dos Termos não mudou.
 - **Ficou de fora (baixo, registrado na revisão):** limite por IP (o limite "por aparelho" é por conta anônima; quem segura a força bruta é o freio geral); partida fechada por outro aparelho da conta que entra no mesmo milissegundo da junção.
 
@@ -126,7 +126,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 - **Termos:** versão de 02/11/2026 com o parecer (PR #84). Antes de divulgar, confirmar com advogado os pontos 4 (triagem autodeclarada × art. 9º do ECA Digital) e 5 (DPO × exceção de alto risco da Res. CD/ANPD 2/2022); o parecer veio sem OAB.
 - Importar as 2 perguntas de `dados/perguntas/lote-02.csv` e dizer se tema de guerra entra na lista de proibidos (`dados/perguntas/piloto-lote-02.md`).
 - Propostas de `docs/propostas/funil-do-desafio.md`.
-- **Código do torcedor:** levar ao advogado a frase proposta para os Termos (`docs/termos-x-jogo.md`). Quando der, testar "Desconectar" com os dois aparelhos.
+- **Código do torcedor:** levar ao advogado a frase proposta para os Termos (`docs/termos-x-jogo.md`).
 
 ## Depois
 
