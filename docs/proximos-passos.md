@@ -31,8 +31,9 @@ Nada disso tem lembrete automático.
 **4. ~~Disputa histórica~~:** conferida em 02/11/2026.
 - Às 12h44 o Kauê jogou no celular a disputa `selecao-2016-olimpiada`, pelo São Paulo. Ela fechou às 12h45 com `disputa_id`, 110 pontos e sem suspeita.
 - A tentativa das 9h17, numa janela anônima pelo Bragantino, não gravou partida. A conta nasceu e passou pelo CAPTCHA, mas a `nova-partida` não recebeu nenhuma chamada nas 24 horas dos logs.
-- Não deu para repetir: o CAPTCHA recusa o navegador do Claude (erro 600010).
-- Se voltar a acontecer, a pista é a janela anônima. O site joga "sem valer pontos" quando o pedido falha antes de chegar ao servidor, e o motivo fica só no console do navegador.
+- No banco, a conta das 9h17 gravou o time (Bragantino, 0,3 s depois de nascer) e a faixa 18+. Só a partida faltou: falhou a chamada da `nova-partida`, não o CAPTCHA nem o login.
+- Em 03/11/2026 o Kauê repetiu com conta nova, no Opera e no Chrome em janela anônima: as duas disputas históricas gravaram. Não é um erro de todo jogador novo; o mais provável é falha de rede pontual naquela hora (o Opera estava com a VPN ligada).
+- Desde então o aviso de partida sem valer pontos traz o código do motivo no fim (`rede`, `captcha`, `tempo_esgotado`, `http_503`…). Se alguém mandar print com ele, dá para saber onde parou sem abrir o console.
 
 **5. ~~Travas da limpeza e do fechamento~~ (PR #86):** revisão de segurança de 02/11/2026. As duas migrações de 02/11 já estavam no ar e passaram na conferência só de leitura (detalhe no PR). A revisão achou duas brechas:
 - a limpeza aceitava prazo de 0 mês ou data no futuro, o que apagaria todas as contas anônimas, e a chave secreta das funções podia chamá-la;

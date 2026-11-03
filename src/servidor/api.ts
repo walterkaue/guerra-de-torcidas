@@ -4,6 +4,7 @@
 
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { opcoesComCaptcha, tokenCaptcha } from './captcha';
+import { codigoDaFuncao } from './motivo';
 import { prefs } from '../estado';
 import type { GestoCobranca, Gestos, ResultadoCobranca, ResultadoDefesa, ResultadoPartida } from '../jogo/penaltis.ts';
 import type { Lance, Passo as PassoPenalti } from '../jogo/penaltisLance.ts';
@@ -141,16 +142,7 @@ async function chamar<T>(funcao: string, corpo: Record<string, unknown>): Promis
   await garantirSessao();
   const sb = await supabase();
   const { data, error } = await comTempoLimite(sb.functions.invoke(funcao, { body: corpo }));
-  if (error) {
-    let codigo = 'falha';
-    try {
-      const ctx = (error as { context?: Response }).context;
-      if (ctx) codigo = ((await ctx.json()) as { erro?: string }).erro ?? codigo;
-    } catch {
-      // resposta sem corpo
-    }
-    throw new ErroServidor(codigo);
-  }
+  if (error) throw new ErroServidor(await codigoDaFuncao(error));
   return data as T;
 }
 
