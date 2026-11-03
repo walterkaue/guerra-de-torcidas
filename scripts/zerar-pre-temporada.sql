@@ -1,5 +1,5 @@
 -- Zerar pré-temporada: apaga partidas, desafios, dias do Time do Dia, pontos do Crava, ranking, fechamentos e temporadas.
--- Os recordes pessoais saem dessas tabelas (recorde_pessoal), então zeram junto.
+-- Os recordes pessoais saem dessas tabelas (recorde_pessoal) e de recordes_herdados, então zeram junto.
 -- Mantém times, torcedores (e os logins), palpites e certezas, perguntas e respostas da Prova,
 -- clubes e sorteio do Time do Dia (o número do dia continua), palavras bloqueadas e configurações.
 -- A carreira (carreira_partidas e carreira_bonus) nunca zera: não tem chave para as tabelas apagadas
@@ -20,6 +20,8 @@ delete from public.desafios;
 delete from public.dia_partidas;
 delete from public.crava_pontos;
 delete from public.pontos_apagados;
+-- Recordes herdados na junção de contas pelo código do torcedor (seção 14.1): zeram como os outros recordes.
+delete from public.recordes_herdados;
 delete from public.ranking_semana;
 -- A fila e o aviso do ranking de minuto em minuto: sem eles, a rotina refaria semanas de teste.
 delete from public.ranking_fila;

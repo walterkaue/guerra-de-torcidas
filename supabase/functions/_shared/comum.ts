@@ -51,12 +51,18 @@ export function servir(handler: (req: Request) => Promise<unknown>): void {
  */
 export function admin(): SupabaseClient {
   const url = Deno.env.get('SUPABASE_URL');
+  if (!url) throw new Error('Falta SUPABASE_URL no ambiente da função.');
+  return createClient(url, chaveSecreta(), { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+/** A secret key "default" de SUPABASE_SECRET_KEYS. Nunca sai do servidor (nem em resposta, nem em log). */
+export function chaveSecreta(): string {
   const bruto = Deno.env.get('SUPABASE_SECRET_KEYS');
-  if (!url || !bruto) throw new Error('Faltam SUPABASE_URL ou SUPABASE_SECRET_KEYS no ambiente da função.');
+  if (!bruto) throw new Error('Falta SUPABASE_SECRET_KEYS no ambiente da função.');
   const chaves = JSON.parse(bruto) as Record<string, string>;
   const chave = chaves.default ?? Object.values(chaves)[0];
   if (!chave) throw new Error('SUPABASE_SECRET_KEYS sem nenhuma chave.');
-  return createClient(url, chave, { auth: { persistSession: false, autoRefreshToken: false } });
+  return chave;
 }
 
 /**
