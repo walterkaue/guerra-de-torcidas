@@ -1,15 +1,15 @@
 # Próximos passos
 
-> Retrato do projeto em 01/11/2026, para retomar em qualquer conversa. Regras e decisões continuam no `docs/jogo.md`; aqui só fica o que vem a seguir.
+> Retrato do projeto em 02/11/2026, para retomar em qualquer conversa. Regras e decisões continuam no `docs/jogo.md`; aqui só fica o que vem a seguir.
 > Ao fechar um item, atualize este arquivo no mesmo PR. Para começar, siga a divisão de trabalho do `CLAUDE.md`.
 
 ## Onde estamos
 
-| Área | Estado em 01/11/2026 |
+| Área | Estado em 02/11/2026 |
 |---|---|
-| Código | `main` limpa, sem PR aberto, testes e build passando |
-| Publicação | Site no ar, as 28 migrações aplicadas (02/11), 11 funções publicadas |
-| Rotinas | Sem falhas em 7 dias; `carreira-fechar` rodou com sucesso em 01/11 |
+| Código | `main` com 77 arquivos e 1.676 testes passando (PR #86, travas da limpeza e do fechamento, em 03/11) |
+| Publicação | Site no ar (`main` de 02/11, 15h47), as 31 migrações aplicadas (a 31ª, do PR #86, em 02/11 à noite), 11 funções publicadas (`fechar-partida` v18) |
+| Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
 | Tamanho | 216 KB gzip somando todo o JS e CSS (limite do bundle inicial: ~300 KB) |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
 | Uso | 7 jogadores, 4 na semana, 87 partidas. Pênaltis trazem 82% dos pontos. Amostra pequena |
@@ -34,7 +34,19 @@ Nada disso tem lembrete automático.
 - Não deu para repetir: o CAPTCHA recusa o navegador do Claude (erro 600010).
 - Se voltar a acontecer, a pista é a janela anônima. O site joga "sem valer pontos" quando o pedido falha antes de chegar ao servidor, e o motivo fica só no console do navegador.
 
-**5. Fechamento do mês:** em 09/11, depois das 12h, a semana de 02/11 tem de aparecer nos pontos. Em 07/12, depois das 12h01, novembro tem de estar fechado e dezembro aberto com 10 times em cada série. Só leitura.
+**5. ~~Travas da limpeza e do fechamento~~ (PR #86):** revisão de segurança de 02/11/2026. As duas migrações de 02/11 já estavam no ar e passaram na conferência só de leitura (detalhe no PR). A revisão achou duas brechas:
+- a limpeza aceitava prazo de 0 mês ou data no futuro, o que apagaria todas as contas anônimas, e a chave secreta das funções podia chamá-la;
+- o fechamento de segunda 12h copiava o ranking sem travar a semana.
+
+A `20261103000100_travas_limpeza_e_fechamento.sql` (só `create or replace` e `revoke`) foi aplicada em 02/11/2026, com o ok do Kauê e antes do merge, e conferida no banco:
+- 31 migrações, a última é a `20261103000100`;
+- `apagar_contas_paradas` fechada para `service_role`, `authenticated` e `anon`, e a rotina mensal continua ligada;
+- o texto de `apagar_contas_paradas` e `fechar_semana` no banco é idêntico ao do arquivo;
+- `ranking-minuto` sem falha nos 5 minutos seguintes.
+
+O merge entrou em 03/11/2026.
+
+**6. Fechamento do mês:** em 09/11, depois das 12h, a semana de 02/11 tem de aparecer nos pontos. Em 07/12, depois das 12h01, novembro tem de estar fechado e dezembro aberto com 10 times em cada série. Só leitura.
 
 ```sql
 select mes, serie, count(*) from public.temporada_serie group by 1, 2 order by 1, 2;
@@ -44,7 +56,10 @@ select * from public.classificacao_temporada where mes = '2026-11-01' order by p
 ## Pode começar já
 
 1. ~~**Telas das divisões:**~~ feito em 02/11/2026: aba Temporada no Ranking (só leitura de `temporada`, `classificacao_temporada`, `temporada_serie` e `fechamento_semana`). Ficaram para depois: a linha na Home ("9º na Série A, 4 pontos da zona"), as frases do narrador no fechamento do mês e o card de fim de temporada. Conferir no celular em 09/11 depois das 12h (1ª semana de novembro com pontos) e em 07/12 (dezembro com A e B, novembro em "Mês passado").
-2. ~~**Ranking incremental:**~~ feito em 02/11/2026 (migração `20261102100000_ranking_por_minuto`): fila + rotina `ranking-minuto`. Falta o Kauê aplicar a migração, publicar a `fechar-partida` e o site (PR #82).
+2. ~~**Ranking incremental:**~~ feito em 02/11/2026 (migração `20261102100000_ranking_por_minuto`): fila + rotina `ranking-minuto`. No ar desde 02/11/2026 às 15h24: migração, `fechar-partida` v18 e site. Conferido no mesmo dia:
+   - as 3 partidas das 15h34 às 15h37 entraram no ranking em 20 a 50 s (aviso na versão 3);
+   - a conta da rotina é igual à conta completa refeita do zero, nos 20 times;
+   - as semanas travadas de 12/10, 19/10 e 26/10 batem com a `ranking_semana`.
 
 ## Feito em 31/10/2026
 
@@ -55,7 +70,7 @@ select * from public.classificacao_temporada where mes = '2026-11-01' order by p
 
 **Termos × jogo (feito em 31/10/2026):** a lista está em `docs/termos-x-jogo.md`, para o Kauê e o advogado. Além das divergências já vistas (cidades, Cloudflare, contas paradas, aviso de mudança, "só você lê os seus", o que fica ao apagar), achou: "ver meus dados" não existe, "zerar pontos de trapaceiro" e "apagar apelido" não têm ação no `#admin`, o aviso de saída não cobre o WhatsApp e o feedback leva tela e navegador sem o texto dizer. Cada item traz as saídas (mudar o jogo ou o texto). Falta o Kauê decidir; o texto só muda com ele.
 
-**6. Reavaliar os robôs do Gemini (domingo 08/11/2026, 17h):** os 5 crons por dia de `gerar-conteudo` e de `auditar-conteudo` (decidido em 02/11, `docs/propostas/robos-gemini-perguntas.md`) já têm medida em `staging_gt.uso_gemini`. Olhar chamadas, tokens e erros 429/503 por dia e por função, quantos rascunhos nasceram, quantos passaram na auditoria e quantas das 9 fáceis já foram preenchidas. Decidir: manter 5, subir ou descer `paginas` e `quantidade`, ou ligar a cobrança do Google AI Studio. Consulta:
+**7. Reavaliar os robôs do Gemini (domingo 08/11/2026, 17h):** os 5 crons por dia de `gerar-conteudo` e de `auditar-conteudo` (decidido em 02/11, `docs/propostas/robos-gemini-perguntas.md`) já têm medida em `staging_gt.uso_gemini`. Olhar chamadas, tokens e erros 429/503 por dia e por função, quantos rascunhos nasceram, quantos passaram na auditoria e quantas das 9 fáceis já foram preenchidas. Decidir: manter 5, subir ou descer `paginas` e `quantidade`, ou ligar a cobrança do Google AI Studio. Consulta:
 
 ```sql
 select criada_em::date dia, funcao, sum(chamadas) chamadas, sum(falhas) falhas, sum(entrada) entrada, sum(saida) saida
@@ -89,13 +104,13 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 
 1. **Cidade, Galeria e 52 semanas:** nessa ordem, depois das telas das divisões.
 2. **Perguntas:** o piloto recomendou parar nas 529 sem fonte do staging. A meta de 800 precisa de perguntas nascidas de páginas reais. A importação continua com o Kauê.
-3. ~~**Limpeza de anônimos:**~~ feita no PR #84 (`20261103000000_contas_paradas.sql`), guardando os pontos em `pontos_apagados`. Fica no ar quando o Kauê aplicar a migração.
+3. ~~**Limpeza de anônimos:**~~ feita no PR #84 (`20261103000000_contas_paradas.sql`), guardando os pontos em `pontos_apagados`. No ar desde 02/11/2026 (rotina `apagar-contas-paradas`, dia 1º às 4h). Na simulação de 02/11, 0 conta sairia: a anônima mais antiga é de 19/10/2026, então a primeira limpeza possível é em 1º/05/2027. As travas do PR #86 estão no ar desde 02/11/2026.
 
 ## Antes de divulgar
 
 - [x] CAPTCHA ligado (conferido em 02/11/2026)
-- [ ] Limpeza de anônimos no ar
-- [x] Ranking de minuto em minuto (falta aplicar no banco)
+- [x] Limpeza de anônimos no ar (02/11/2026, com as travas do PR #86)
+- [x] Ranking de minuto em minuto (no ar e conferido em 02/11/2026)
 - [ ] Plano do Supabase decidido
 - [ ] Termos e jogo batendo, com revisão do advogado
 - [ ] Prova calibrada
