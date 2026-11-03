@@ -7,8 +7,8 @@
 
 | Área | Estado em 02/11/2026 |
 |---|---|
-| Código | `main` com 76 arquivos e 1.673 testes passando; PR #86 (travas da limpeza e do fechamento, 77 arquivos e 1.676 testes) aberto |
-| Publicação | Site no ar (`main` de 02/11, 15h47), as 31 migrações aplicadas (a 31ª, do PR #86, em 02/11 à noite, antes do merge), 11 funções publicadas (`fechar-partida` v18) |
+| Código | `main` com 77 arquivos e 1.676 testes passando (PR #86, travas da limpeza e do fechamento, em 03/11) |
+| Publicação | Site no ar (`main` de 02/11, 15h47), as 31 migrações aplicadas (a 31ª, do PR #86, em 02/11 à noite), 11 funções publicadas (`fechar-partida` v18) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
 | Tamanho | 216 KB gzip somando todo o JS e CSS (limite do bundle inicial: ~300 KB) |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
@@ -44,7 +44,7 @@ A `20261103000100_travas_limpeza_e_fechamento.sql` (só `create or replace` e `r
 - o texto de `apagar_contas_paradas` e `fechar_semana` no banco é idêntico ao do arquivo;
 - `ranking-minuto` sem falha nos 5 minutos seguintes.
 
-Falta só o merge do PR.
+O merge entrou em 03/11/2026.
 
 **6. Fechamento do mês:** em 09/11, depois das 12h, a semana de 02/11 tem de aparecer nos pontos. Em 07/12, depois das 12h01, novembro tem de estar fechado e dezembro aberto com 10 times em cada série. Só leitura.
 
