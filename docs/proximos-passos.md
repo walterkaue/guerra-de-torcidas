@@ -8,7 +8,7 @@
 | Área | Estado em 02/11/2026 |
 |---|---|
 | Código | `main` com 77 arquivos e 1.676 testes passando (PR #86, travas da limpeza e do fechamento, em 03/11). No PR dos Lances valendo: 81 arquivos e 1.718 testes |
-| Publicação | Site no ar (`main` de 02/11, 15h47). 32 migrações aplicadas (a 32ª, dos Lances valendo, em 03/11 às 14h38). 12 funções publicadas (`lances` v1 e `fechar-partida` v19, em 03/11) |
+| Publicação | Site no ar (`main` de 02/11, 15h47). 32 migrações aplicadas (a 32ª, dos Lances valendo, em 03/11 à tarde). 12 funções publicadas (`lances` v1 e `fechar-partida` v19, em 03/11) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
 | Tamanho | 216 KB gzip somando todo o JS e CSS (limite do bundle inicial: ~300 KB) |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
