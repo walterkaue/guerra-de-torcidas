@@ -7,8 +7,8 @@
 
 | Área | Estado em 02/11/2026 |
 |---|---|
-| Código | `main` com 77 arquivos e 1.676 testes passando (PR #86, travas da limpeza e do fechamento, em 03/11). No PR dos Lances valendo: 81 arquivos e 1.718 testes |
-| Publicação | Site no ar (`main` de 02/11, 15h47). 32 migrações aplicadas (a 32ª, dos Lances valendo, em 03/11 à tarde). 12 funções publicadas (`lances` v1 e `fechar-partida` v19, em 03/11) |
+| Código | `main` com 81 arquivos e 1.718 testes passando (PR #88, Lances valendo, em 03/11) |
+| Publicação | Site no ar (`main` de 03/11, 14h42, com o PR #88). 32 migrações aplicadas (a 32ª, dos Lances valendo, em 03/11 à tarde). 12 funções publicadas (`lances` v1 e `fechar-partida` v19, em 03/11) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
 | Tamanho | 216 KB gzip somando todo o JS e CSS (limite do bundle inicial: ~300 KB) |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
@@ -16,23 +16,9 @@
 
 ## Em andamento
 
-**Lances do Jogo valendo (faltas e cara a cara), branch `claude/lances-servidor`.** O servidor já está no ar desde 03/11/2026: a migração `20261103200000_lances_valendo.sql`, a função `lances` v1 e a `fechar-partida` v19 (agora aceita só pênaltis). Conferido no banco, só leitura:
-- a regra de `minigame` aceita `lances`, os 5 números da detecção estão em `config_deteccao`, `lances_gols` tem RLS e o gatilho;
-- o celular não chama `lances_comecar` nem lê `lances_gols`, e chama `minhas_medalhas`;
-- `ranking-minuto` rodou 15 vezes sem falha em volta da migração;
-- a função responde 401 sem login.
+**Lances do Jogo valendo (faltas e cara a cara):** feito em 03/11/2026 (PR #88). Detalhes na seção "Conferir primeiro", item 7.
 
-O site com as telas novas só sai com o merge: o ambiente `github-pages` aceita publicar só da `main`. O site de hoje não chama a função nova, então nada muda para quem joga até lá.
-
-**Falta, depois do merge:** jogar uma partida valendo de Faltas ou Cara a cara no celular e conferir no banco:
-
-```sql
-select p.id, p.pontos, p.conta_no_teto, p.sob_suspeita, p.fechada_em, a.atualizado_em as ranking_em
-from public.partidas p left join public.ranking_aviso a on a.semana = p.semana
-where p.minigame = 'lances' order by p.criada_em desc limit 5;
-```
-
-`ranking_em` tem de passar de `fechada_em` em até 1 minuto, se a partida mudou alguma linha do ranking. Confira também se `carreira_partidas` ganhou a linha dela e se `lances_gols` tem os gols.
+**Pênaltis, semente achável pelo resultado do lance:** sessão própria aberta em 03/11/2026. É a mesma brecha que a revisão achou nos Lances, mas nos pênaltis ela já estava no ar antes. Tem de estar fechada antes de divulgar.
 
 ## Conferir primeiro
 
@@ -87,7 +73,17 @@ select * from public.classificacao_temporada where mes = '2026-11-01' order by p
 
 **Termos × jogo (feito em 31/10/2026):** a lista está em `docs/termos-x-jogo.md`, para o Kauê e o advogado. Além das divergências já vistas (cidades, Cloudflare, contas paradas, aviso de mudança, "só você lê os seus", o que fica ao apagar), achou: "ver meus dados" não existe, "zerar pontos de trapaceiro" e "apagar apelido" não têm ação no `#admin`, o aviso de saída não cobre o WhatsApp e o feedback leva tela e navegador sem o texto dizer. Cada item traz as saídas (mudar o jogo ou o texto). Falta o Kauê decidir; o texto só muda com ele.
 
-**7. Reavaliar os robôs do Gemini (domingo 08/11/2026, 17h):** os 5 crons por dia de `gerar-conteudo` e de `auditar-conteudo` (decidido em 02/11, `docs/propostas/robos-gemini-perguntas.md`) já têm medida em `staging_gt.uso_gemini`. Olhar chamadas, tokens e erros 429/503 por dia e por função, quantos rascunhos nasceram, quantos passaram na auditoria e quantas das 9 fáceis já foram preenchidas. Decidir: manter 5, subir ou descer `paginas` e `quantidade`, ou ligar a cobrança do Google AI Studio. Consulta:
+**7. ~~Lances valendo no ar~~:** conferido em 03/11/2026.
+- O servidor foi publicado antes do merge: a migração `20261103200000`, a função `lances` v1 e a `fechar-partida` v19, que agora aceita só pênaltis.
+- O site saiu com o merge do PR #88, às 14h42.
+- O Kauê jogou 3 partidas pelo São Paulo, das 14h44 às 14h46, com 0, 36 e 24 pontos.
+- A de 36 virou a melhor do dia (`conta_no_teto`) e entrou na `ranking_semana` às 14h45min00s, 12 s depois de fechar.
+- As outras duas ficaram de fora do ranking, como manda a regra.
+- Cada uma ganhou a linha dela na Carreira, e `lances_gols` anotou 2 e 1 gols.
+- Nenhuma ficou sob suspeita, e a fila do ranking esvaziou.
+- No total da semana dele, os Lances somam só 36, por fora das partidas de pênaltis e Prova.
+
+**8. Reavaliar os robôs do Gemini (domingo 08/11/2026, 17h):** os 5 crons por dia de `gerar-conteudo` e de `auditar-conteudo` (decidido em 02/11, `docs/propostas/robos-gemini-perguntas.md`) já têm medida em `staging_gt.uso_gemini`. Olhar chamadas, tokens e erros 429/503 por dia e por função, quantos rascunhos nasceram, quantos passaram na auditoria e quantas das 9 fáceis já foram preenchidas. Decidir: manter 5, subir ou descer `paginas` e `quantidade`, ou ligar a cobrança do Google AI Studio. Consulta:
 
 ```sql
 select criada_em::date dia, funcao, sum(chamadas) chamadas, sum(falhas) falhas, sum(entrada) entrada, sum(saida) saida
