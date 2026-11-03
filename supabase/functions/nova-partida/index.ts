@@ -1,10 +1,11 @@
-// Nova partida: sorteia a semente (vale uma partida só e expira), guarda a dificuldade do dia
+// Nova partida: sorteia uma semente por lance (valem uma partida só e expiram), guarda a dificuldade do dia
 // pelo relógio do servidor e o número secreto do narrador para um eventual par ou ímpar.
-// A semente e as cobranças gravadas do desafio NÃO saem daqui: a partida é jogada lance a lance
+// As sementes e as cobranças gravadas do desafio NÃO saem daqui: a partida é jogada lance a lance
 // pela função lance-penalti (anti-trapaça antes de divulgar; jogo.md, seção 6).
 // Corpo: { desafio?: string, disputa?: string }  (código do desafio por link; id da disputa histórica)
 
 import { admin, configDeteccao, ErroHttp, lerCorpo, servir, sortear, usuario } from '../_shared/comum.ts';
+import { sortearSementes } from '../_shared/jogo/penaltis.ts';
 import { dificuldadeAgora } from '../_shared/tempo.ts';
 
 /** Disputa histórica é só cenário (jogo.md, seção 6): id fora do formato vira partida livre, sem erro. */
@@ -45,7 +46,10 @@ servir(async (req) => {
   const disputa = desafio ? null : disputaDoCorpo(corpo.disputa);
 
   const agora = new Date();
+  // partidas.semente é obrigatória, mas as partidas novas não a usam: valem as sementes por lance, guardadas
+  // em partidas_segredo (uma semente só na partida deixava prever os lances seguintes; jogo.md, seção 6).
   const semente = sortear(0x1_0000_0000);
+  const sementes = sortearSementes(sortear);
   const dificuldade = dificuldadeAgora(agora);
   const expiraEm = new Date(agora.getTime() + (cfg.minutos_validade_semente ?? 15) * 60_000);
 
@@ -68,7 +72,7 @@ servir(async (req) => {
 
   const { error: eS } = await sb
     .from('partidas_segredo')
-    .insert({ partida_id: partida.id, numero_narrador: sortear(6), lance_a_lance: true });
+    .insert({ partida_id: partida.id, numero_narrador: sortear(6), lance_a_lance: true, sementes });
   if (eS) throw eS;
 
   return {

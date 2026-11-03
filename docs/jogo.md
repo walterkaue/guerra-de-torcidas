@@ -240,7 +240,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Goleiro da máquina:** lê o chute com chance de 12% (segunda) a 36% (domingo), mais 40% em bola fraca. Quando não lê, pula numa zona sorteada.
 - **Defesa:** a máquina sorteia 1 das 6 zonas. A dica (pé de apoio) aponta a coluna certa em 85% das vezes na segunda e 50% no domingo. Acertar a zona = defesa; acertar a coluna com a altura errada = 40% de chance. A máquina erra (manda pra fora) 8% das cobranças, e isso não conta como defesa.
 - **Dificuldade:** vai de 0 (segunda) a 1 (domingo), pelo horário de Brasília. O tempo para reagir na defesa cai de 1,9 s para 1,2 s depois da corrida. Com servidor, a dificuldade é a do dia em que **o servidor** emitiu a semente, nunca a do relógio do celular.
-- **Determinismo:** cada cobrança e cada defesa usa um sorteio próprio, derivado de (semente, tipo, índice). Por isso a defesa não depende das cobranças, e o plano do batedor pode ser calculado antes. O motor fica em `src/jogo/penaltis.ts`, sem DOM, relógio, `Math.random` nem trigonometria.
+- **Determinismo:** cada cobrança e cada defesa usa um sorteio próprio, derivado de (semente do lance, tipo, índice). Por isso a defesa não depende das cobranças, e o plano do batedor pode ser calculado antes. Partida valendo tem uma semente por lance (ver "Anti-trapaça"); o treino no celular, que não vale pontos, usa uma só. O motor fica em `src/jogo/penaltis.ts`, sem DOM, relógio, `Math.random` nem trigonometria.
 
 ### Desempate
 1. Se, depois das 5 cobranças e 5 defesas, o placar estiver empatado: **morte súbita**. Uma cobrança e uma defesa por rodada, na mesma ordem da partida. Quem marcar enquanto o outro erra vence. No máximo 3 rodadas.
@@ -262,7 +262,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - Gols e defesas da morte súbita valem os pontos normais. O bônus de 5 de 5 olha só as 5 primeiras cobranças e as 5 primeiras defesas.
 
 ### Anti-trapaça
-- O servidor sorteia a semente da partida (e guarda a dificuldade do dia). O cliente manda só os **gestos** (direção, força, efeito, zona escolhida).
+- O servidor sorteia as sementes da partida (e guarda a dificuldade do dia). O cliente manda só os **gestos** (direção, força, efeito, zona escolhida).
 - O servidor recalcula o resultado com a mesma física determinística e é ele que grava os pontos.
 - Limite de partidas por minuto por jogador. Cada semente vale para uma partida só e expira.
 - **Lance a lance (27/10/2026, fecha o risco da semente):** até aqui o celular recebia a semente antes de jogar, e quem lesse o código previa o canto do goleiro e se a dica do pé de apoio era verdadeira. Agora a semente é segredo do servidor:
@@ -272,6 +272,12 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
   - O celular não lê mais a coluna da semente na tabela de partidas.
   - **Caiu a conexão no meio:** a partida continua no celular, com um sorteio próprio, e fica **sem valer pontos** ("Caiu a conexão: essa partida não vale mais pontos.").
   - A detecção de partidas impossíveis (abaixo) continua ligada.
+- **Uma semente por lance (03/11/2026):** o resultado de uma cobrança volta exato ao celular (ponto da bola e goleiro), porque a tela precisa dele para desenhar. Quem conhece o gesto que mandou tira dali o tremor sorteado e, testando as 2^32 sementes possíveis (uns 2 minutos num computador), achava a semente da partida. Com ela previa o canto do batedor em todas as defesas e o goleiro nas cobranças seguintes. A revisão dos Lances do Jogo achou o problema lá e a correção veio para cá:
+  - A `nova-partida` sorteia **uma semente para cada cobrança e cada defesa** (8 + 8, para caber a morte súbita), guardadas só em `partidas_segredo.sementes`. A semente achada pelo resultado é a de um lance já jogado e não diz nada dos outros. A dica da defesa sai da semente daquela defesa, que vale 1 em 3 colunas e não basta para achá-la.
+  - **Por que não arredondar o resultado:** cada cobrança arredondada ainda entrega uns 11 bits do sorteio, e 5 cobranças somam mais que os 32 da semente. Arredondar só ajudaria junto com a semente por lance. Um segredo maior (128 bits) também resolveria, mas pediria uma função de hash no motor; a semente por lance usa o mesmo motor e é o que os Lances já fazem.
+  - **Partidas antigas não mudam:** `sementes` vazia é partida criada antes da mudança, e o servidor refaz com a semente única de sempre (`partidas.semente`). Nas novas, `partidas.semente` continua sendo preenchida, mas não é usada.
+  - **Desafio por link:** nada muda no que é guardado. As cobranças gravadas de quem desafiou seguem a semente de cada defesa de quem aceita.
+  - O número do narrador no par ou ímpar já era um segredo separado.
 
 ### Como está no servidor (bloco B, 19/10/2026)
 - **Limites:** 3 partidas criadas por minuto por torcedor; a semente expira em 15 minutos. Ajustáveis na tabela `config_deteccao`.

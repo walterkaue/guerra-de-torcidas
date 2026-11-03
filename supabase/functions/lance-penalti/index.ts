@@ -1,10 +1,10 @@
 // Um lance dos pênaltis: recebe o gesto de uma cobrança ou a zona de uma defesa, resolve com a semente
-// (que só o servidor conhece) e devolve o resultado daquele lance, mais a dica da próxima defesa.
+// do lance (que só o servidor conhece) e devolve o resultado daquele lance, mais a dica da próxima defesa.
 // Os gestos ficam guardados em partidas_segredo; o fechar-partida recalcula a partida a partir deles.
 // Corpo: { partidaId: string, lance: { tipo: 'cobranca', gesto: { dir, forca, efeito } } | { tipo: 'defesa', zona } }
 
 import { admin, ErroHttp, lerCorpo, servir, usuario } from '../_shared/comum.ts';
-import type { GestoCobranca, Gestos } from '../_shared/jogo/penaltis.ts';
+import { lerSementes, type GestoCobranca, type Gestos } from '../_shared/jogo/penaltis.ts';
 import { jogarLance, LanceForaDeOrdem, type Lance } from '../_shared/jogo/penaltisLance.ts';
 
 const numero = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -40,7 +40,7 @@ servir(async (req) => {
 
   const { data: segredo, error: eS } = await sb
     .from('partidas_segredo')
-    .select('lance_a_lance, gestos, lances')
+    .select('lance_a_lance, gestos, lances, sementes')
     .eq('partida_id', partida.id)
     .single();
   if (eS) throw eS;
@@ -55,7 +55,9 @@ servir(async (req) => {
 
   let jogada;
   try {
-    jogada = jogarLance(Number(partida.semente), segredo.gestos as Gestos, lance, Number(partida.dificuldade), gravadas);
+    // Sem sementes por lance é partida criada antes de 03/11/2026: segue com a semente única da partida.
+    const sementes = lerSementes(segredo.sementes, Number(partida.semente));
+    jogada = jogarLance(sementes, segredo.gestos as Gestos, lance, Number(partida.dificuldade), gravadas);
   } catch (e) {
     if (e instanceof LanceForaDeOrdem) throw new ErroHttp(409, 'lance_fora_de_ordem');
     throw e;
