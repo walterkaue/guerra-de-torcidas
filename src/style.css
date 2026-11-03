@@ -795,3 +795,13 @@ body {
   z-index: 1000;
   max-width: calc(100vw - 32px);
 }
+
+/* Aviso em caixa (ex.: "este aparelho saiu da conta"). */
+.aviso-caixa {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 210, 63, 0.14);
+  border: 2px solid var(--amarelo);
+  font-weight: 700;
+}

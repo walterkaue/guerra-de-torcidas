@@ -109,6 +109,28 @@ Promessa: "pode pedir para apagar seus dados quando quiser".
 
 Saídas gerais: (a) dizer tudo isso na Política, em "Seus direitos"; ou (b) mudar o jogo para apagar também o texto do feedback (feito em 02/11/2026). Falta (a): o total de pontos da semana continua em `pontos_apagados`, por decisão.
 
+## Proposta para o advogado: código do torcedor (03/11/2026)
+
+O jogo passou a ligar uma carreira em vários aparelhos por um código de 8 caracteres (`docs/jogo.md`, seção 14.1). **O texto de `src/dados/termos.md` não mudou.** Estas são as frases propostas para levar ao advogado:
+
+**Termos de Uso, item novo ("Jogar em outro aparelho"):**
+> No Perfil, "Jogar em outro aparelho" mostra um código de 8 caracteres e um QR, que valem por 10 minutos e uma vez só. Quem digitar ou escanear esse código passa a ser o mesmo torcedor que você, com a mesma carreira, time e pontos, e pode fazer tudo o que você faz, inclusive desconectar aparelhos e apagar a conta. Por isso, não mande o código para ninguém. Se aparecer em "Aparelhos ligados" um aparelho que você não reconhece, toque em "Desconectar". Se o aparelho que entra já tinha carreira, ela é juntada com a da conta: XP, medalhas e recordes passam, e os pontos que já contaram para a torcida ficam onde estão.
+
+**Política de Privacidade, linhas novas na tabela "O que o jogo guarda sobre você":**
+> | Os aparelhos ligados à sua conta: quando cada um entrou, quando foi usado pela última vez e o tipo de navegador e aparelho | Mostrar em "Aparelhos ligados" e deixar você desconectar um deles | Não, é automático |
+> | As tentativas de digitar um código: o código aleatório do aparelho e a hora (nunca o que foi digitado) | Barrar quem tenta adivinhar códigos | Não, é automático. Apagadas em 2 dias |
+
+**Política de Privacidade, depois da tabela:**
+> O código de 8 caracteres não fica guardado: o servidor guarda só uma impressão digital dele, que deixa de valer em 10 minutos e é apagada em 2 dias. Para ligar aparelhos, a conta ganha um identificador interno no formato de e-mail, sorteado, que não recebe mensagens. Ele não é o seu e-mail e não aparece em lugar nenhum.
+
+**Política de Privacidade, "Seus direitos", frase nova:**
+> Se a sua conta está em mais de um aparelho, ver e apagar os dados funciona em qualquer um deles, e apagar tira a conta de todos.
+
+**Pontos para o advogado olhar:**
+- **IP e navegador de cada sessão:** a Supabase já guardava os dois em cada sessão antes do código. O jogo mostra só o navegador, nunca o IP. A tabela da Política não cita esse registro do Auth.
+- **Quem tem o código vira dono da conta:** um menor pode passar o código a outra pessoa. A tela avisa, e a lista de aparelhos permite desconectar.
+- **Identificador interno em formato de e-mail:** ele não é dado pessoal da pessoa, mas está na tabela de usuários do Auth. Convém confirmar que a frase acima basta.
+
 ## O que o jogo faz e o texto não diz
 
 1. **Feedback leva a tela e o navegador** (`src/servidor/api.ts:476`; `feedback.sql:10-11`).
@@ -119,6 +141,7 @@ Saídas gerais: (a) dizer tudo isso na Política, em "Seus direitos"; ou (b) mud
 6. **A Cloudflare só passa a existir quando ligar** o CAPTCHA, e aí vê o acesso no primeiro login.
 7. **Triagem de idade é autodeclarada**, sem verificação, e guarda só a faixa (`docs/jogo.md` seção 13). Também vale pelo aparelho: limpar os dados do site faz a pergunta voltar.
 8. **Provedores de infraestrutura** que veem o acesso: Supabase, GitHub Pages (IP e navegador), e o serviço de push do navegador. O texto cita os três; não diz que o IP chega a eles.
+9. **Código do torcedor** (desde 03/11/2026): aparelhos ligados, tentativas de código e o identificador interno. Texto proposto na seção acima, ainda não aplicado.
 
 Fora do alcance desta lista: logs do Supabase (IP, user agent) e prazo de retenção deles, que dependem do plano e do painel.
 

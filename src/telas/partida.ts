@@ -630,6 +630,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         if (t) vestir(t.cores);
       }
     } catch (e) {
+      if (e instanceof ErroServidor && e.codigo === 'saiu_da_conta') return; // a navegação já levou à escolha do time
       console.warn('Partida sem valer pontos:', e instanceof ErroServidor ? e.codigo : e);
       mostrarAviso(e instanceof ErroServidor && e.codigo === 'muitas_partidas'
         ? 'Calma! Muitas partidas em 1 minuto: esta não vale pontos.'

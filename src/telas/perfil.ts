@@ -14,6 +14,7 @@ import type { PosicaoSemana } from '../jogo/posicao';
 import { meusRecordes, minhaPosicaoMinigame, minhaPosicaoSemana, type MinigameDoRecorde } from '../servidor/api';
 import { jogosDoCrava, minhaPosicaoCrava } from '../servidor/crava';
 import { semanaBrasilia } from '../servidor/tempo';
+import { montarAparelhos } from './aparelhosLigados';
 import { carregarCarreiraPerfil } from './carreira';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { icone } from './icones';
@@ -86,6 +87,12 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
           : '<p class="vazio">Escolhe o time pra ver sua carreira, sua posição e seus recordes.</p>'
       }
 
+      <section class="perfil-bloco" aria-label="Outros aparelhos">
+        <h3 class="rotulo">Aparelhos ligados</h3>
+        ${time ? '<div data-aparelhos></div><button class="ajuste" type="button" data-acao="outro-aparelho">Jogar em outro aparelho</button>' : '<p class="vazio">Escolhe o time pra ligar outro aparelho.</p>'}
+        <button class="ajuste" type="button" data-acao="entrar-codigo">Entrar com código de outro aparelho</button>
+      </section>
+
       <button class="perfil-atalho" type="button" data-acao="conquistas">${icone('trofeu')} Conquistas</button>
 
       <section class="perfil-bloco" aria-label="Ajustes">
@@ -117,6 +124,10 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
   );
   // "Escolher apelido" usa o campo e o filtro de sempre, na escolha do time.
   root.querySelector('[data-acao="apelido"]')?.addEventListener('click', () => irPara({ tela: 'times', depois: 'perfil', apelido: true }));
+  root.querySelector('[data-acao="outro-aparelho"]')?.addEventListener('click', () => irPara({ tela: 'outroAparelho' }));
+  root.querySelector('[data-acao="entrar-codigo"]')?.addEventListener('click', () => irPara({ tela: 'entrar', de: 'perfil' }));
+  const elAparelhos = root.querySelector<HTMLElement>('[data-aparelhos]');
+  if (elAparelhos) montarAparelhos(elAparelhos, () => saiu);
   root.querySelector('[data-acao="conquistas"]')?.addEventListener('click', () => irPara({ tela: 'ranking', aba: 'conquistas' }));
   root.querySelector('[data-acao="termos"]')?.addEventListener('click', () => irPara({ tela: 'termos', de: aqui }));
   root.querySelector('[data-acao="apagar"]')?.addEventListener('click', () => irPara({ tela: 'termos', de: aqui, apagar: true }));

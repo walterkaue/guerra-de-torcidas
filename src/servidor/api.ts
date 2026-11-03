@@ -5,7 +5,8 @@
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { opcoesComCaptcha, tokenCaptcha } from './captcha';
 import { codigoDaFuncao } from './motivo';
-import { prefs } from '../estado';
+import { esquecerTorcedor, prefs } from '../estado';
+import type { Aparelho } from '../jogo/aparelhos.ts';
 import type { GestoCobranca, Gestos, ResultadoCobranca, ResultadoDefesa, ResultadoPartida } from '../jogo/penaltis.ts';
 import type { Lance, Passo as PassoPenalti } from '../jogo/penaltisLance.ts';
 import type { Ajuda, Degrau, Desfecho, Fim, Passo, PontosProva } from '../jogo/prova.ts';
@@ -40,33 +41,80 @@ export function comTempoLimite<T>(p: PromiseLike<T>, ms = TEMPO_LIMITE_MS): Prom
 
 export async function supabase(): Promise<SupabaseClient> {
   if (!URL_SUPABASE || !CHAVE_PUBLICA) throw new ErroServidor('sem_configuracao');
-  cliente ??= import('@supabase/supabase-js').then(({ createClient }) =>
-    createClient(URL_SUPABASE, CHAVE_PUBLICA, { auth: { persistSession: true, autoRefreshToken: true } }),
-  );
+  cliente ??= import('@supabase/supabase-js').then(({ createClient }) => {
+    const sb = createClient(URL_SUPABASE, CHAVE_PUBLICA, { auth: { persistSession: true, autoRefreshToken: true } });
+    // Sessão encerrada com o jogo aberto (desconectado em outro aparelho, renovação recusada): a próxima chamada
+    // confere de novo, em vez de seguir com o id guardado. A saída feita pelo próprio garantirSessao não conta:
+    // senão outra chamada no meio começaria um segundo login anônimo.
+    sb.auth.onAuthStateChange((evento) => {
+      if (evento === 'SIGNED_OUT' && !saindoPorDentro) sessaoConferida = null;
+    });
+    return sb;
+  });
   return cliente;
 }
 
 let sessaoConferida: Promise<string> | null = null;
+let saindoPorDentro = false;
+let aoSairDaConta: (() => void) | null = null;
+
+/** Sessão ou conta que não existe mais (session_not_found, user_not_found); 408 e 429 são passageiros. */
+const sessaoSumiu = (status: number | undefined) => status === 401 || status === 403 || status === 404;
+
+async function sairLocal(sb: SupabaseClient): Promise<void> {
+  saindoPorDentro = true;
+  try {
+    await sb.auth.signOut({ scope: 'local' });
+  } finally {
+    saindoPorDentro = false;
+  }
+}
+
+/** A tela avisa e volta para a escolha do time quando este aparelho perde a conta (jogo.md, seção 14.1). */
+export function quandoSairDaConta(fn: () => void): void {
+  aoSairDaConta = fn;
+}
+
+/**
+ * Este aparelho era um torcedor e perdeu a conta: desconectado em outro aparelho, "Apagar meus dados" em outro
+ * aparelho ou conta parada há 6 meses (jogo.md, seções 13 e 14.1). Volta a ser aparelho novo, com aviso, em vez
+ * de criar outra conta sozinho com o time e o apelido de antes.
+ */
+function sairDaConta(): never {
+  esquecerTorcedor();
+  prefs.set({ saiuDaConta: true });
+  aoSairDaConta?.();
+  throw new ErroServidor('saiu_da_conta');
+}
 
 /**
  * Garante uma sessão (login anônimo na primeira vez; depois a sessão fica salva no aparelho).
- * Uma vez por carregamento confere no servidor se o usuário ainda existe: se ele foi apagado
- * (limpeza de testes, usuários anônimos inativos), sai e faz um login anônimo novo.
+ * Uma vez por carregamento confere no servidor se a sessão ainda vale. Se a conta ou a sessão sumiu
+ * (desconectado, apagada, parada), o aparelho que já tinha torcedor sai da conta; o que nunca teve
+ * entra de novo como anônimo.
  */
 export function garantirSessao(): Promise<string> {
   sessaoConferida ??= (async () => {
     const sb = await supabase();
-    const { data } = await comTempoLimite(sb.auth.getSession());
+    const { data, error: erroSessao } = await comTempoLimite(sb.auth.getSession());
+    // Renovação que falhou por rede: a sessão continua guardada, então não é "saiu da conta".
+    if (!data.session && erroSessao && !(erroSessao.status && erroSessao.status >= 400 && erroSessao.status < 500)) {
+      throw new ErroServidor('sem_conexao');
+    }
     if (data.session) {
       const { data: atual, error } = await comTempoLimite(sb.auth.getUser());
       if (!error && atual.user) return atual.user.id;
-      // Sessão salva de um usuário que não existe mais: limpa e entra de novo.
-      if (error && error.status && error.status >= 400 && error.status < 500) {
-        await sb.auth.signOut({ scope: 'local' });
+      // Sessão salva de um usuário ou sessão que não existe mais (session_not_found, user_not_found).
+      if (error && sessaoSumiu(error.status)) {
+        await sairLocal(sb);
+        if (prefs.get().sincronizado) sairDaConta();
         prefs.set({ sincronizado: undefined, faixaSincronizada: undefined });
       } else {
         throw new ErroServidor('sem_conexao');
       }
+    } else if (prefs.get().sincronizado) {
+      // O supabase-js já tirou a sessão (a renovação foi recusada), mas o aparelho tinha torcedor no servidor.
+      sairDaConta();
     }
     // CAPTCHA (desligado sem a chave do site): só aqui, no primeiro login do aparelho.
     let token: string | undefined;
@@ -131,6 +179,111 @@ export async function verMeusDados(): Promise<MeusDados | null> {
   const { data: dados, error } = await comTempoLimite(sb.rpc('ver_meus_dados'));
   if (error) throw new ErroServidor('falha');
   return dados as MeusDados | null;
+}
+
+// ---------------------------------------------------------------------------
+// Código do torcedor (docs/jogo.md, seção 14.1): uma carreira em vários aparelhos. O código só passa pela
+// função codigo-torcedor, no corpo do pedido; nunca em endereço, log ou armazenamento do aparelho.
+// ---------------------------------------------------------------------------
+
+export interface CodigoGerado {
+  codigo: string;
+  expiraEm: string;
+}
+
+/** Sorteia o código deste aparelho (vale 10 min, uma vez só; gerar outro mata o anterior). */
+export function gerarCodigo(): Promise<CodigoGerado> {
+  return chamar('codigo-torcedor', { acao: 'gerar' });
+}
+
+export interface TorcedorNoServidor {
+  time_id: string;
+  apelido: string | null;
+  faixa_etaria: FaixaEtaria | null;
+}
+
+export type RespostaEntrar =
+  | { etapa: 'escolher_time'; timeDono: string; timeSeu: string }
+  | { etapa: 'pronto'; tokenHash: string; torcedor: TorcedorNoServidor | null };
+
+/**
+ * Manda o código digitado no outro aparelho, com um CAPTCHA novo a cada tentativa. Se os times forem diferentes,
+ * volta pedindo a escolha, e a segunda chamada leva `time`. No "pronto", a conta antiga deste aparelho já foi
+ * juntada e apagada no servidor: falta só `entrarNaConta`.
+ */
+export async function pedirEntrada(codigo: string, time?: string): Promise<RespostaEntrar> {
+  await garantirSessao();
+  let captcha: string | undefined;
+  try {
+    captcha = await tokenCaptcha();
+  } catch {
+    throw new ErroServidor('captcha');
+  }
+  return chamar('codigo-torcedor', { acao: 'entrar', codigo, ...(captcha ? { captcha } : {}), ...(time ? { time } : {}) });
+}
+
+/**
+ * Troca o passe de uso único por uma sessão da conta do outro aparelho. Tenta de novo só em falha de rede: passe
+ * usado ou vencido não volta. Se não entrar, o aparelho fica sem conta e pede um código novo ('entrada_falhou').
+ */
+export async function entrarNaConta(tokenHash: string): Promise<void> {
+  const sb = await supabase();
+  let entrou = false;
+  for (let tentativa = 0; tentativa < 3 && !entrou; tentativa++) {
+    try {
+      const { data, error } = await comTempoLimite(sb.auth.verifyOtp({ token_hash: tokenHash, type: 'magiclink' }));
+      entrou = !error && !!data.session;
+      if (error?.status && error.status >= 400 && error.status < 500) break;
+    } catch {
+      // sem rede: tenta de novo
+    }
+  }
+  sessaoConferida = null;
+  if (!entrou) {
+    await sb.auth.signOut({ scope: 'local' }).catch(() => undefined);
+    esquecerTorcedor();
+    throw new ErroServidor('entrada_falhou');
+  }
+}
+
+/** Time, apelido e faixa da conta, como estão no servidor (null antes de escolher o time). */
+export async function meuTorcedor(): Promise<TorcedorNoServidor | null> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.from('torcedores').select('time_id, apelido, faixa_etaria').maybeSingle());
+  if (error) throw new ErroServidor('falha');
+  return (data as TorcedorNoServidor | null) ?? null;
+}
+
+export type StatusDoCodigo = 'ativo' | 'usado' | 'vencido' | null;
+
+/** O último código deste torcedor: a tela do código fica de olho para dizer "o outro aparelho entrou". */
+export async function statusDoCodigo(): Promise<StatusDoCodigo> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('meu_codigo_status'));
+  if (error) throw new ErroServidor('falha');
+  return (data as StatusDoCodigo) ?? null;
+}
+
+/** Os aparelhos (sessões) ligados à conta, este primeiro. */
+export async function meusAparelhos(): Promise<Aparelho[]> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('meus_aparelhos'));
+  if (error) throw new ErroServidor(error.message.includes('sessao_encerrada') ? 'sessao_encerrada' : 'falha');
+  return (data ?? []) as Aparelho[];
+}
+
+/** Encerra a sessão de outro aparelho da conta: ele não renova mais o acesso e volta a ser aparelho novo. */
+export async function desconectarAparelho(id: string): Promise<void> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { error } = await comTempoLimite(sb.rpc('desconectar_aparelho', { p_sessao: id }));
+  if (error) {
+    const codigo = ['este_aparelho', 'sessao_encerrada', 'nao_encontrado'].find((c) => error.message.includes(c));
+    throw new ErroServidor(codigo ?? 'falha');
+  }
 }
 
 /** Conta um clique no "Seja sócio", sem login e sem esperar resposta: nunca segura a saída para o site. */

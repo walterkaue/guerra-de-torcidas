@@ -7,6 +7,9 @@ import { sincronizarTorcedor } from '../servidor/torcedor';
 export function telaTimes(root: HTMLElement, rota: Rota): void {
   const depois = rota.tela === 'times' ? (rota.depois ?? 'partida') : 'partida';
   const atual = prefs.get();
+  // Aparelho que perdeu a conta: avisa uma vez e limpa a marca.
+  const saiuDaConta = !!atual.saiuDaConta;
+  if (saiuDaConta) prefs.set({ saiuDaConta: undefined });
 
   root.innerHTML = `
     <main class="tela times">
@@ -14,6 +17,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
         <button class="voltar" type="button" aria-label="Voltar">‹</button>
         <h2>Qual é a sua torcida?</h2>
       </header>
+      ${saiuDaConta ? '<p class="aviso-caixa" role="note">Este aparelho saiu da conta: foi desconectado em outro aparelho ou a conta foi apagada. Escolha seu time pra começar de novo, ou entre com um código.</p>' : ''}
       ${rota.tela === 'times' && rota.desafio ? '<p class="campo-dica">É só escolher o time: o X1 que te mandaram começa em seguida.</p>' : ''}
 
       <div class="grade-times" role="radiogroup" aria-label="Times">
@@ -37,6 +41,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
       <button class="botao" type="button" data-acao="confirmar" ${atual.time ? '' : 'disabled'}>
         ${depois === 'partida' || depois === 'prova' || depois === 'timeDoDia' || depois === 'lances' ? 'Bora pro jogo' : 'Salvar'}
       </button>
+      ${atual.sincronizado ? '' : '<button class="link-feedback" type="button" data-acao="outro-aparelho">Já jogo em outro aparelho</button>'}
     </main>
   `;
 
@@ -81,6 +86,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
     irPara(depois === 'partida' ? { tela: 'partida', desafio } : depois === 'prova' ? { tela: 'prova', desafio } : { tela: depois });
   });
 
+  root.querySelector('[data-acao="outro-aparelho"]')?.addEventListener('click', () => irPara({ tela: 'entrar', de: 'times' }));
   root.querySelector('.voltar')?.addEventListener('click', () =>
     irPara({ tela: depois === 'palpites' || depois === 'perfil' ? depois : 'inicio' }),
   );

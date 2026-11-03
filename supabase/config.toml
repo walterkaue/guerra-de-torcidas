@@ -446,6 +446,11 @@ verify_jwt = true
 [functions.lances]
 verify_jwt = true
 
+# Código do torcedor (docs/jogo.md, seção 14.1): uma função com ações (gerar, entrar). Precisa do segredo
+# TURNSTILE_SECRET_KEY (a mesma chave secreta do CAPTCHA do login); sem ele, "entrar" responde captcha_indisponivel.
+[functions.codigo-torcedor]
+verify_jwt = true
+
 [functions.gerar-conteudo]
 enabled = true
 verify_jwt = false

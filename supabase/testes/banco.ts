@@ -10,11 +10,23 @@ const PASTA = join(import.meta.dirname, '..', 'migrations');
 const ESBOCO_SUPABASE = `
   create role anon; create role authenticated; create role service_role;
   create schema auth;
-  create table auth.users (id uuid primary key, is_anonymous boolean not null default true, created_at timestamptz not null default now());
+  create table auth.users (id uuid primary key, is_anonymous boolean not null default true, email text,
+    created_at timestamptz not null default now());
   create function auth.uid() returns uuid language sql stable
     as $$ select nullif(current_setting('teste.uid', true), '')::uuid $$;
+  -- Sessões (um aparelho cada). Cada usuário de teste nasce com uma, de id igual ao dele; o JWT do pedido usa
+  -- teste.sessao ou, sem ela, essa sessão de nascença.
+  create table auth.sessions (id uuid primary key, user_id uuid not null references auth.users (id) on delete cascade,
+    created_at timestamptz not null default now(), updated_at timestamptz, not_after timestamptz,
+    refreshed_at timestamp, user_agent text);
+  create function auth.sessao_de_nascenca() returns trigger language plpgsql
+    as $$ begin insert into auth.sessions (id, user_id) values (new.id, new.id); return new; end $$;
+  create trigger sessao_de_nascenca after insert on auth.users for each row execute function auth.sessao_de_nascenca();
+  create function auth.jwt() returns jsonb language sql stable
+    as $$ select jsonb_build_object('sub', current_setting('teste.uid', true),
+      'session_id', coalesce(nullif(current_setting('teste.sessao', true), ''), current_setting('teste.uid', true))) $$;
   grant usage on schema auth to anon, authenticated, service_role;
-  grant execute on function auth.uid() to anon, authenticated, service_role;
+  grant execute on function auth.uid(), auth.jwt() to anon, authenticated, service_role;
   create schema extensions;
   create function extensions.unaccent(t text) returns text language sql immutable as $$ select t $$;
   create schema cron;

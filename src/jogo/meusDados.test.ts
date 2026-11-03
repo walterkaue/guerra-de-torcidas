@@ -66,6 +66,14 @@ describe('ver meus dados', () => {
     expect(valor('Mensagens do "Achei um erro"', vazio)).toBe('nenhuma');
   });
 
+  it('aparelhos ligados aparece depois do aviso de domingo, só com o servidor novo', () => {
+    const rotulos = linhasDosMeusDados({ ...dados, aparelhos: 2 }, nome).map((l) => l.rotulo);
+    expect(rotulos.indexOf('Aparelhos ligados')).toBe(rotulos.indexOf('Aviso de domingo') + 1);
+    expect(valor('Aparelhos ligados', { ...dados, aparelhos: 2 })).toBe('2 aparelhos');
+    expect(valor('Aparelhos ligados', { ...dados, aparelhos: 1 })).toBe('1 aparelho');
+    expect(valor('Aparelhos ligados')).toBeUndefined();
+  });
+
   it('sem sessão ou sem time, não há ficha', () => {
     expect(linhasDosMeusDados(null, nome)).toEqual([]);
     expect(linhasDosMeusDados({ ...dados, torcedor: null }, nome)).toEqual([]);

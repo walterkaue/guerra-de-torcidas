@@ -9,6 +9,8 @@ import './estilos/protecao.css';
 import { iniciarApp, irPara, linkDoTimeDoDia, registrarTela, type Rota } from './app';
 import { faixaDoAparelho, prefs } from './estado';
 import { timePorId } from './dados/times';
+import { ROTA_ENTRAR, codigoDoEndereco } from './jogo/codigoTorcedor';
+import { quandoSairDaConta } from './servidor/api';
 import { apoioLiberado, telaApoio } from './telas/apoio';
 import { telaInicio } from './telas/inicio';
 import { ligarAvisoDeSaida } from './telas/saida';
@@ -85,6 +87,8 @@ registrarTela('lances', sobDemanda('Abrindo os Lances…', TELAS_DE_JOGO.lances)
 registrarTela('admin', sobDemanda('Carregando o painel…', () => import('./telas/admin').then((m) => m.telaAdmin as Tela)));
 // Aba Perfil e Termos e privacidade (#termos): só baixam quando alguém abre.
 registrarTela('perfil', sobDemanda('Abrindo seu perfil…', () => import('./telas/perfil').then((m) => m.telaPerfil as Tela)));
+registrarTela('outroAparelho', sobDemanda('Sorteando o código…', () => import('./telas/outroAparelho').then((m) => m.telaOutroAparelho as Tela)));
+registrarTela('entrar', sobDemanda('Abrindo a entrada…', () => import('./telas/entrarComCodigo').then((m) => m.telaEntrarComCodigo as Tela)));
 registrarTela('termos', sobDemanda('Abrindo os termos…', () => import('./telas/termos').then((m) => m.telaTermos as Tela)));
 // Apoie o jogo (#apoie): atrás do interruptor de src/config/apoio.ts e só para 18+.
 registrarTela('apoie', telaApoio);
@@ -106,6 +110,17 @@ function preaquecer(): void {
 function rotaDoHash(): Rota | undefined {
   if (location.hash === '#admin') return { tela: 'admin' };
   if (location.hash === '#termos') return { tela: 'termos' };
+  if (/^#entrar(\/|$)/.test(location.hash)) {
+    // Link do QR: o código sai do endereço e do histórico na hora; a pessoa toca em "Entrar".
+    let codigo: string | undefined;
+    try {
+      codigo = codigoDoEndereco(location.hash) ?? undefined;
+    } catch {
+      codigo = undefined;
+    }
+    history.replaceState(null, '', `${location.pathname}${location.search}#${ROTA_ENTRAR}`);
+    return { tela: 'entrar', codigo };
+  }
   if (location.hash === '#apoie') {
     if (apoioLiberado()) return { tela: 'apoie' };
     history.replaceState(null, '', `${location.pathname}${location.search}`);
@@ -125,6 +140,8 @@ if (!prefs.get().time && timePorId(timeDoLink)) prefs.set({ time: timeDoLink! })
 const app = document.querySelector<HTMLDivElement>('#app');
 if (app) {
   iniciarApp(app);
+  // Aparelho que perdeu a conta (desconectado em outro aparelho ou conta apagada): volta à escolha do time, com aviso.
+  quandoSairDaConta(() => irPara({ tela: 'times', depois: 'inicio' }));
   // ?dia (link do card do Time do Dia) abre direto no jogo; sem time escolhido, passa antes pela escolha.
   const dia = linkDoTimeDoDia() || (import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso'));
   const entrada: Rota =
@@ -134,7 +151,7 @@ if (app) {
         ? { tela: 'timeDoDia' }
         : { tela: 'times', depois: 'timeDoDia' }
       : { tela: 'inicio' });
-  const semTriagem = entrada.tela === 'admin' || entrada.tela === 'termos';
+  const semTriagem = entrada.tela === 'admin' || entrada.tela === 'termos' || entrada.tela === 'entrar';
   irPara(jaJoga && !faixaDoAparelho() && !semTriagem ? { tela: 'triagem', depois: entrada } : entrada);
   if (document.readyState === 'complete') preaquecer();
   else window.addEventListener('load', preaquecer, { once: true });

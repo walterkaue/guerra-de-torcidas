@@ -34,6 +34,8 @@ interface Prefs {
   faixaSincronizada?: FaixaEtaria;
   /** Versão dos Termos que este aparelho já viu (jogo/termos.ts, avisoDosTermos). */
   termosVistos?: string;
+  /** Este aparelho perdeu a conta (desconectado em outro aparelho ou conta apagada): a escolha do time avisa uma vez. */
+  saiuDaConta?: boolean;
 }
 
 function ler(): Prefs {
@@ -70,6 +72,23 @@ export function faixaDoAparelho(): FaixaEtaria | undefined {
 export function guardarFaixa(faixa: FaixaEtaria): void {
   faixaDaAba = faixa;
   prefs.set({ faixa });
+}
+
+/**
+ * Este aparelho deixa de ser o torcedor que era (saiu da conta, ou entrou em outra pelo código; jogo.md, 14.1):
+ * esquece time, apelido e faixa, como um aparelho novo. Som, gráficos e os "não exibir de novo" ficam.
+ */
+export function esquecerTorcedor(): void {
+  faixaDaAba = undefined;
+  prefs.set({ time: undefined, apelido: undefined, faixa: undefined, sincronizado: undefined, faixaSincronizada: undefined });
+  // O que o aparelho guardou da conta de antes (XP visto, posições, duelo da Home): não vale para a conta nova.
+  for (const chave of ['gdt:carreira', 'gdt:posicoes', 'gdt:minha-posicao', 'gdt:duelo']) {
+    try {
+      localStorage.removeItem(chave);
+    } catch {
+      // armazenamento bloqueado: não há o que limpar
+    }
+  }
 }
 
 /** Tudo o que o jogo guarda: as chaves gdt, mais a sessão do Supabase (sb-). */
