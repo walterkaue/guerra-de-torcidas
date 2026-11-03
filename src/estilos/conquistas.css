@@ -1,0 +1,138 @@
+/* Aba Conquistas do Ranking: medalhas da pessoa e vitrine das torcidas. Celular primeiro (390 px). */
+.conquistas {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.conquistas h3 {
+  margin-bottom: 8px;
+}
+
+.conq-sub {
+  margin: 10px 0 6px;
+  color: var(--texto-suave);
+}
+
+.conq-lista {
+  list-style: none;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.conq-linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px 0;
+  flex-wrap: wrap;
+}
+
+.conq-linha + .conq-linha {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.conq-linha.meu {
+  color: var(--amarelo);
+}
+
+.conq-linha .pos {
+  min-width: 28px;
+  font: 400 20px var(--fonte-placar);
+}
+
+.conq-linha .cor {
+  flex: none;
+  width: 14px;
+  height: 30px;
+  border-radius: 4px;
+  background: linear-gradient(var(--c1) 50%, var(--c2) 50%);
+}
+
+.conq-nome {
+  flex: 1 1 120px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.conq-nome small {
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.conq-nome .conq-falta {
+  color: var(--cal);
+}
+
+.conq-contagem {
+  display: flex;
+  gap: 10px;
+}
+
+.conq-n {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 34px;
+  line-height: 1.1;
+}
+
+.conq-n.zero {
+  opacity: 0.45;
+}
+
+.conq-n b {
+  font: 400 20px var(--fonte-placar);
+}
+
+.conq-n small {
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+.medalha {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.35);
+}
+
+.medalha.ouro {
+  background: #e9c75a;
+}
+
+.medalha.prata {
+  background: #c9d1d8;
+}
+
+.medalha.bronze {
+  background: #c27b3a;
+}
+
+.conq-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font: 600 14px var(--fonte-rotulo);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.conq-selo.sem {
+  color: var(--texto-suave);
+}
+
+.conquistas .rodape-apoio {
+  text-align: center;
+}

@@ -17,6 +17,8 @@ export interface MeusDados {
   desafios: number;
   palpites: number;
   carreira_xp: number | null;
+  /** Gols guardados para as medalhas dos Lances (não zeram com a pré-temporada). Servidor antigo: ausente. */
+  gols_lances?: number;
   avisos: number;
   mensagens: MensagemGuardada[];
 }
@@ -27,7 +29,7 @@ export interface LinhaDosDados {
 }
 
 const FAIXA: Record<string, string> = { menos_16: 'menos de 16', '16_17': '16 ou 17', '18_mais': '18 ou mais' };
-const MINIGAME: Record<string, string> = { penaltis: 'de pênaltis e lances', prova: 'da Prova de Boleiro' };
+const MINIGAME: Record<string, string> = { penaltis: 'de pênaltis', prova: 'da Prova de Boleiro', lances: 'de faltas e cara a cara' };
 const TIPO: Record<string, string> = { bug: 'Bug', ideia: 'Ideia', outro: 'Outro' };
 
 const plural = (n: number, um: string, varios: string) => `${n.toLocaleString('pt-BR')} ${n === 1 ? um : varios}`;
@@ -57,6 +59,7 @@ export function linhasDosMeusDados(d: MeusDados | null, nomeDoTime: (id: string)
     { rotulo: 'Desafios criados', valor: d.desafios ? plural(d.desafios, 'desafio', 'desafios') : 'nenhum' },
     { rotulo: 'Palpites do Crava', valor: d.palpites ? plural(d.palpites, 'palpite', 'palpites') : 'nenhum' },
     { rotulo: 'Carreira', valor: `${(d.carreira_xp ?? 0).toLocaleString('pt-BR')} XP` },
+    { rotulo: 'Medalhas dos Lances', valor: d.gols_lances ? plural(d.gols_lances, 'gol guardado', 'gols guardados') : 'nenhuma' },
     { rotulo: 'Aviso de domingo', valor: d.avisos ? `ligado em ${plural(d.avisos, 'navegador', 'navegadores')}` : 'desligado' },
     {
       rotulo: 'Mensagens do "Achei um erro"',

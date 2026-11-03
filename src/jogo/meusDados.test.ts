@@ -28,6 +28,7 @@ describe('ver meus dados', () => {
       'Desafios criados',
       'Palpites do Crava',
       'Carreira',
+      'Medalhas dos Lances',
       'Aviso de domingo',
       'Mensagens do "Achei um erro"',
     ]);
@@ -37,10 +38,11 @@ describe('ver meus dados', () => {
     expect(valor('Time')).toBe('Bahia');
     expect(valor('Faixa de idade')).toBe('16 ou 17');
     expect(valor('No jogo desde')).toBe('20/10/2026');
-    expect(valor('Partidas')).toBe('3 partidas (2 de pênaltis e lances, 1 da Prova de Boleiro)');
+    expect(valor('Partidas')).toBe('3 partidas (2 de pênaltis, 1 da Prova de Boleiro)');
     expect(valor('Time do Dia')).toBe('1 dia jogado');
     expect(valor('Desafios criados')).toBe('nenhum');
     expect(valor('Carreira')).toBe('1.250 XP');
+    expect(valor('Medalhas dos Lances')).toBe('nenhuma');
     expect(valor('Aviso de domingo')).toBe('ligado em 1 navegador');
     expect(valor('Mensagens do "Achei um erro"')).toBe('1 mensagem');
   });

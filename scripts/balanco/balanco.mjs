@@ -21,7 +21,7 @@ import {
 } from './estatisticas.mjs';
 
 const RAIZ = fileURLToPath(new URL('../..', import.meta.url));
-const NOMES = { penaltis: 'Pênaltis', prova: 'Prova de Boleiro', dia: 'Time do Dia', crava: 'Crava' };
+const NOMES = { penaltis: 'Pênaltis', prova: 'Prova de Boleiro', dia: 'Time do Dia', crava: 'Crava', lances: 'Lances do Jogo' };
 
 // A Prova de Boleiro passou a acabar no 3º erro (e levar 75%) na virada da semana de 02/11/2026
 // (docs/propostas/calibragem-prova.md). O balanço só conta Prova com a regra nova, para não misturar as duas:
@@ -93,6 +93,7 @@ export function montarBalanco(dados) {
   const valores = {
     penaltis: partidas('penaltis').map((p) => p.pontos),
     prova: partidas('prova').map((p) => p.pontos),
+    lances: partidas('lances').map((p) => p.pontos),
     dia: dados.dias.map((d) => d.pontos),
     crava_palpite: dados.palpites.map((p) => p.pontos),
     crava_rodada: cravaPorRodada(dados.palpites),
@@ -100,6 +101,7 @@ export function montarBalanco(dados) {
   const jogadores = {
     penaltis: new Set(partidas('penaltis').map((p) => p.pessoa)).size,
     prova: new Set(partidas('prova').map((p) => p.pessoa)).size,
+    lances: new Set(partidas('lances').map((p) => p.pessoa)).size,
     dia: new Set(dados.dias.map((d) => d.pessoa)).size,
     crava_palpite: new Set(dados.palpites.map((p) => p.pessoa)).size,
     crava_rodada: new Set(dados.palpites.map((p) => p.pessoa)).size,
@@ -133,7 +135,7 @@ export function montarBalanco(dados) {
   );
 
   // 2. Peso de cada minigame na semana (só o que contou no ranking).
-  const peso = pesoNaSemana(dados.semana, ['penaltis', 'prova', 'dia', 'crava']);
+  const peso = pesoNaSemana(dados.semana, ['penaltis', 'prova', 'dia', 'crava', 'lances']);
   texto.push(
     '\nPeso de cada minigame na semana (só pontos que contaram no ranking; "por pessoa" = cada pessoa em cada semana; ' +
       'a Prova aqui inclui as semanas com a regra antiga: só vale depois de uma semana inteira de 3 erros)',

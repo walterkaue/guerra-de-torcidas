@@ -30,7 +30,8 @@ export interface DadosResultado {
 
 export type Rota =
   | { tela: 'inicio' }
-  | { tela: 'ranking' }
+  /** `aba`: abre direto numa aba do Ranking (o atalho do Perfil leva às Conquistas). */
+  | { tela: 'ranking'; aba?: 'conquistas' }
   | { tela: 'palpites' }
   | { tela: 'perfil' }
   | { tela: 'admin' }

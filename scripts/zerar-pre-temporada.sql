@@ -4,6 +4,8 @@
 -- clubes e sorteio do Time do Dia (o número do dia continua), palavras bloqueadas e configurações.
 -- A carreira (carreira_partidas e carreira_bonus) nunca zera: não tem chave para as tabelas apagadas
 -- aqui, então fica inteira. Não acrescente delete nela (docs/jogo.md, seção 5, "Longo prazo").
+-- As medalhas dos Lances (lances_gols) também nunca zeram e não têm chave para partidas: não acrescente
+-- delete nelas (docs/jogo.md, seção 7.3, "Medalhas e Conquistas").
 -- NÃO rode direto: use `npm run zerar-pre-temporada`, que lembra do balanço, mostra o que vai sumir
 -- e pede confirmação.
 

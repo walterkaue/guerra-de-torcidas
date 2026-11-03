@@ -87,11 +87,11 @@ export const meusDadosDoCrava = (): Promise<MeusDados> =>
   });
 
 export const meusRecordes = (): Promise<Partial<Record<MinigameDoRecorde, number | null>>> =>
-  espera(params.has('semRanking') ? { penaltis: null, prova: null, dia: null, crava: null } : { penaltis: 85, prova: 58, dia: 70, crava: 44 });
+  espera(params.has('semRanking') ? { penaltis: null, prova: null, dia: null, crava: null, lances: null } : { penaltis: 85, prova: 58, dia: 70, crava: 44, lances: 62 });
 
 export const minhaCarreira = (): Promise<Carreira> => espera({ xp: 770, partidasHoje: 3, bonus: null });
 
-export const minhaPosicaoMinigame = (minigame: 'penaltis' | 'prova' | 'dia'): Promise<PosicaoSemana | null> =>
-  espera({ penaltis: { posicao: 2, total: 9, pontos: 85 }, prova: { posicao: null, total: 6, pontos: 0 }, dia: { posicao: 1, total: 5, pontos: 70 } }[minigame]);
+export const minhaPosicaoMinigame = (minigame: 'penaltis' | 'prova' | 'dia' | 'lances'): Promise<PosicaoSemana | null> =>
+  espera({ penaltis: { posicao: 2, total: 9, pontos: 85 }, prova: { posicao: null, total: 6, pontos: 0 }, dia: { posicao: 1, total: 5, pontos: 70 }, lances: { posicao: 4, total: 9, pontos: 62 } }[minigame]);
 
 export const minhaPosicaoCrava = (): Promise<MinhaPosicao | null> => espera({ posicao: 37, total: 412, pontos: 44 });

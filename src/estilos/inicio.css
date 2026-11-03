@@ -863,6 +863,10 @@
   touch-action: manipulation;
 }
 
+.abas.abas-ranking {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .temporada-topo + .abas,
 .abas + .abas {
   margin-top: -8px;
