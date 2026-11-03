@@ -946,6 +946,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         servidorOk = true;
       } catch (e) {
         if (acabou) return;
+        if (e instanceof ErroServidor && e.codigo === 'saiu_da_conta') return;
         if (e instanceof ErroServidor && e.codigo === 'limite_do_dia') return limiteDoDia(lances);
         console.warn('Partida sem valer pontos:', e instanceof ErroServidor ? e.codigo : e);
         mostrarAviso(

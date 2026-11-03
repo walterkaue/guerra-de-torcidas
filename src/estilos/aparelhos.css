@@ -1,0 +1,152 @@
+/* Código do torcedor: tela do código, entrada com código e lista de aparelhos (docs/jogo.md, seção 14.1). */
+
+.aparelhos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.aparelho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.aparelho-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.aparelho-texto strong {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.aparelho-texto span {
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.aparelho-este {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.aparelho-sair {
+  flex: none;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  background: none;
+  color: var(--cal);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  touch-action: manipulation;
+}
+
+.aparelho-sair:disabled {
+  opacity: 0.5;
+}
+
+/* ---------- tela do código ---------- */
+.codigo-caixa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 14px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+.codigo-qr {
+  width: min(220px, 62vw);
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.codigo-qr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.codigo-grande {
+  font-family: var(--fonte-placar);
+  font-size: clamp(34px, 11vw, 46px);
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  user-select: all;
+}
+
+.codigo-tempo {
+  font-family: var(--fonte-rotulo);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.codigo-pronto {
+  font-family: var(--fonte-rotulo);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.aviso-codigo {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 210, 63, 0.14);
+  border: 2px solid var(--amarelo);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ---------- entrar com código ---------- */
+.campo-codigo input {
+  text-align: center;
+  font-family: var(--fonte-placar);
+  font-size: 30px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.entrar-opcoes {
+  display: grid;
+  gap: 10px;
+}
+
+.entrar-opcoes .cartao-time {
+  min-height: 84px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.entrar-opcoes .cartao-time small {
+  font-size: 13px;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.entrar-pilha {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}

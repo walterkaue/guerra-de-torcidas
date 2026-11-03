@@ -1,18 +1,86 @@
 // Mantém o time, o apelido e a faixa etária do aparelho iguais aos do servidor.
+// Com o código do torcedor (docs/jogo.md, seção 14.1), a mesma conta pode estar em vários aparelhos: o que
+// mudou aqui sobe; o que outro aparelho mudou desce, uma vez por carregamento.
 
-import { faixaDoAparelho, prefs } from '../estado';
-import { ErroServidor, salvarFaixaEtaria, salvarTorcedor } from './api';
+import { esquecerTorcedor, faixaDoAparelho, guardarFaixa, prefs } from '../estado';
+import { FAIXAS, type FaixaEtaria } from '../jogo/faixaEtaria';
+import { entrarNaConta, ErroServidor, meuTorcedor, pedirEntrada, salvarFaixaEtaria, salvarTorcedor, type TorcedorNoServidor } from './api';
 
-/** Grava no servidor se mudou desde a última vez (ou se `forcar`, ex.: sessão nova). */
-export async function sincronizarTorcedor(forcar = false): Promise<void> {
+const marcaDe = (time: string, apelido: string | null | undefined) => `${time}|${apelido ?? ''}`;
+/** A faixa do servidor é mais nova (mais protetora) que a do aparelho. */
+const maisProtetora = (servidor: FaixaEtaria, aparelho: FaixaEtaria | undefined) =>
+  !aparelho || FAIXAS.indexOf(servidor) < FAIXAS.indexOf(aparelho);
+
+/** Grava no aparelho o torcedor da conta, já marcado como igual ao do servidor. */
+export function adotarTorcedor(t: TorcedorNoServidor): void {
+  prefs.set({ time: t.time_id, apelido: t.apelido ?? undefined, sincronizado: marcaDe(t.time_id, t.apelido) });
+  if (t.faixa_etaria) {
+    guardarFaixa(t.faixa_etaria);
+    prefs.set({ faixaSincronizada: t.faixa_etaria });
+  } else {
+    prefs.set({ faixaSincronizada: undefined });
+  }
+}
+
+let puxado: Promise<boolean> | null = null;
+/** O que outro aparelho mudou e a tela ainda não redesenhou (sincronizarTorcedor devolve uma vez só). */
+let mudancaPorAvisar = false;
+
+/**
+ * Uma vez por carregamento, adota o que outro aparelho da conta gravou (troca de time, apelido apagado no
+ * #admin, faixa da junção). O que mudou aqui e ainda não subiu ganha: sobe em seguida. True se mudou algo.
+ * `forcar`: busca de novo (a tela do código, quando o outro aparelho entrou e pode ter escolhido o time dele).
+ */
+export function puxarTorcedor(forcar = false): Promise<boolean> {
+  if (forcar) puxado = null;
+  puxado ??= (async () => {
+    const t = await meuTorcedor();
+    if (!t) return false;
+    const p = prefs.get();
+    let mudou = false;
+    const local = p.time ? marcaDe(p.time, p.apelido) : '';
+    if (p.sincronizado === local && marcaDe(t.time_id, t.apelido) !== local) {
+      prefs.set({ time: t.time_id, apelido: t.apelido ?? undefined, sincronizado: marcaDe(t.time_id, t.apelido) });
+      mudou = true;
+    }
+    // A faixa do servidor ganha se este aparelho não mudou nada por subir, e sempre que for a mais protetora (a da
+    // junção, seção 14.1): uma resposta antiga deste aparelho não desfaz a proteção.
+    const faixa = faixaDoAparelho();
+    if (t.faixa_etaria && t.faixa_etaria !== faixa && (p.faixaSincronizada === faixa || maisProtetora(t.faixa_etaria, faixa))) {
+      guardarFaixa(t.faixa_etaria);
+      prefs.set({ faixaSincronizada: t.faixa_etaria });
+      mudou = true;
+    } else if (!t.faixa_etaria && p.faixaSincronizada) {
+      prefs.set({ faixaSincronizada: undefined }); // o servidor perdeu a faixa: sobe de novo
+    }
+    if (mudou) mudancaPorAvisar = true;
+    return mudou;
+  })().catch((e) => {
+    puxado = null;
+    throw e;
+  });
+  return puxado;
+}
+
+/**
+ * Grava no servidor se mudou desde a última vez (ou se `forcar`, ex.: sessão nova). Antes, puxa o que outro
+ * aparelho mudou. True uma vez só, na primeira chamada depois de o time, o apelido ou a faixa deste aparelho
+ * mudarem por isso (a tela redesenha).
+ */
+export async function sincronizarTorcedor(forcar = false): Promise<boolean> {
+  if (!prefs.get().time) throw new ErroServidor('sem_time');
+  if (!forcar) await puxarTorcedor();
+  const mudou = mudancaPorAvisar;
+  mudancaPorAvisar = false;
   const p = prefs.get();
   if (!p.time) throw new ErroServidor('sem_time');
-  const marca = `${p.time}|${p.apelido ?? ''}`;
+  const marca = marcaDe(p.time, p.apelido);
   if (forcar || p.sincronizado !== marca) {
     await salvarTorcedor(p.time, p.apelido);
     prefs.set({ sincronizado: marca, faixaSincronizada: forcar ? undefined : p.faixaSincronizada });
   }
   await sincronizarFaixa();
+  return mudou;
 }
 
 /**
@@ -28,4 +96,21 @@ export async function sincronizarFaixa(): Promise<void> {
   } catch {
     // tenta de novo na próxima
   }
+}
+
+export type ResultadoEntrada = { etapa: 'escolher_time'; timeDono: string; timeSeu: string } | { etapa: 'pronto' };
+
+/**
+ * Entra com o código do outro aparelho (jogo.md, seção 14.1). Se os dois têm times diferentes, a primeira
+ * chamada volta pedindo a escolha; a segunda leva `time`. No fim, este aparelho é o mesmo torcedor do outro.
+ */
+export async function entrarComCodigo(codigo: string, time?: string): Promise<ResultadoEntrada> {
+  const r = await pedirEntrada(codigo, time);
+  if (r.etapa === 'escolher_time') return r;
+  await entrarNaConta(r.tokenHash);
+  esquecerTorcedor();
+  prefs.set({ saiuDaConta: undefined });
+  if (r.torcedor) adotarTorcedor(r.torcedor);
+  puxado = Promise.resolve(false); // acabou de vir do servidor
+  return { etapa: 'pronto' };
 }

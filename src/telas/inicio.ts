@@ -56,6 +56,8 @@ const SERVIDOR = { rankingDaSemana, minhaPosicaoSemana, partidasFechadasHoje, es
 // Em desenvolvimento, ?homeFalsa troca o servidor por um de mentira (src/dev/homeFalsa.ts) e ?diaFalso
 // usa o Time do Dia de mentira também no card (src/dev/diaFalso.ts).
 const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
+/** O resultado da sincronização fica guardado: redesenha só uma vez por carregamento, senão repetiria sem fim. */
+let jaRedesenhou = false;
 const FALSA_DIA = import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso');
 const servidor = async (): Promise<typeof SERVIDOR> => {
   if (FALSA) return import('../dev/homeFalsa');
@@ -321,7 +323,12 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   if (time) {
     (async () => {
       const api = await servidor();
-      if (!FALSA && !FALSA_DIA) await sincronizarTorcedor();
+      // Outro aparelho trocou time, apelido ou faixa: redesenha uma vez com o time novo.
+      if (!FALSA && !FALSA_DIA && (await sincronizarTorcedor()) && !saiu && !jaRedesenhou) {
+        jaRedesenhou = true;
+        irPara({ tela: 'inicio' });
+        return;
+      }
       const e = await api.estadoDoDia();
       if (saiu || !e.pronto) return;
       dia = { chutes: e.tentativas.length, fim: e.fim, acertou: e.acertou, volta: Date.parse(e.proximoEm) };

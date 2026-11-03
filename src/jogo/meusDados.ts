@@ -20,6 +20,8 @@ export interface MeusDados {
   /** Gols guardados para as medalhas dos Lances (não zeram com a pré-temporada). Servidor antigo: ausente. */
   gols_lances?: number;
   avisos: number;
+  /** Sessões ligadas à conta (código do torcedor, seção 14.1). Servidor antigo: ausente. */
+  aparelhos?: number;
   mensagens: MensagemGuardada[];
 }
 
@@ -61,6 +63,7 @@ export function linhasDosMeusDados(d: MeusDados | null, nomeDoTime: (id: string)
     { rotulo: 'Carreira', valor: `${(d.carreira_xp ?? 0).toLocaleString('pt-BR')} XP` },
     { rotulo: 'Medalhas dos Lances', valor: d.gols_lances ? plural(d.gols_lances, 'gol guardado', 'gols guardados') : 'nenhuma' },
     { rotulo: 'Aviso de domingo', valor: d.avisos ? `ligado em ${plural(d.avisos, 'navegador', 'navegadores')}` : 'desligado' },
+    ...(d.aparelhos ? [{ rotulo: 'Aparelhos ligados', valor: plural(d.aparelhos, 'aparelho', 'aparelhos') }] : []),
     {
       rotulo: 'Mensagens do "Achei um erro"',
       valor: d.mensagens.length ? plural(d.mensagens.length, 'mensagem', 'mensagens') : 'nenhuma',
