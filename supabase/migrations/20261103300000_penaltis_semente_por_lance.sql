@@ -8,12 +8,21 @@
 -- Versão do segredo: `sementes` nula é partida criada antes desta migração, que segue com partidas.semente (o
 -- resultado delas não muda). Preenchida: { "cobrancas": [8 inteiros], "defesas": [8 inteiros] }, e
 -- partidas.semente fica sem uso (continua obrigatória e fora da leitura do celular).
+--
+-- Publicação: esta migração primeiro, depois lance-penalti e fechar-partida, e a nova-partida por último. Se a
+-- nova-partida nova gravar sementes antes das outras duas subirem, a partida é mostrada com uma semente e
+-- recalculada com outra. Pelo mesmo motivo, não volte lance-penalti ou fechar-partida depois que houver partidas
+-- com sementes.
 
 alter table public.partidas_segredo
   add column sementes jsonb check (
     sementes is null
-    -- coalesce: em lista ou texto, `->` dá nulo, e checagem nula deixaria passar.
-    or coalesce(jsonb_typeof(sementes -> 'cobrancas') = 'array' and jsonb_typeof(sementes -> 'defesas') = 'array', false)
+    -- coalesce: em lista ou texto, `->` dá nulo, e checagem nula deixaria passar. 8 = RODADAS_MAX.
+    or coalesce(
+      jsonb_typeof(sementes -> 'cobrancas') = 'array' and jsonb_array_length(sementes -> 'cobrancas') = 8
+      and jsonb_typeof(sementes -> 'defesas') = 'array' and jsonb_array_length(sementes -> 'defesas') = 8,
+      false
+    )
   );
 
 comment on column public.partidas_segredo.sementes is

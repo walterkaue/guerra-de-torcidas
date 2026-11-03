@@ -278,6 +278,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
   - **Partidas antigas não mudam:** `sementes` vazia é partida criada antes da mudança, e o servidor refaz com a semente única de sempre (`partidas.semente`). Nas novas, `partidas.semente` continua sendo preenchida, mas não é usada.
   - **Desafio por link:** nada muda no que é guardado. As cobranças gravadas de quem desafiou seguem a semente de cada defesa de quem aceita.
   - O número do narrador no par ou ímpar já era um segredo separado.
+  - **Ordem de publicação:** a migração primeiro, depois `lance-penalti` e `fechar-partida`, e a `nova-partida` por último. Ao contrário, uma partida aberta na janela seria mostrada com uma semente e recalculada com outra. Pelo mesmo motivo, essas duas não voltam à versão anterior depois que houver partidas com sementes por lance.
 
 ### Como está no servidor (bloco B, 19/10/2026)
 - **Limites:** 3 partidas criadas por minuto por torcedor; a semente expira em 15 minutos. Ajustáveis na tabela `config_deteccao`.

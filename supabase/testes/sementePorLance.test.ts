@@ -66,12 +66,20 @@ describe('pênaltis: sementes por lance no banco', () => {
     await expect(gravar([1, 2, 3])).rejects.toThrow(/check/);
     await expect(gravar({ cobrancas: [1] })).rejects.toThrow(/check/);
     await expect(gravar({ cobrancas: 1, defesas: [] })).rejects.toThrow(/check/);
+    await expect(gravar({ cobrancas: [], defesas: [] })).rejects.toThrow(/check/);
+    await expect(gravar({ ...SEMENTES, defesas: SEMENTES.defesas.slice(1) })).rejects.toThrow(/check/);
   });
 
-  it('o celular não lê nem escreve as sementes', async () => {
+  it('o celular não lê nem escreve as sementes (vale a regra de acesso, como na Supabase)', async () => {
+    // Na Supabase o papel authenticated tem acesso à tabela; quem barra é a RLS (leitura com `using (false)`,
+    // sem política de escrita). Aqui o acesso é dado de propósito para a RLS ser o que está sendo testado.
+    await db.exec('grant select, update on public.partidas_segredo to authenticated');
     await db.query(`select set_config('teste.uid', $1, false)`, [ANA]);
     await db.exec('set role authenticated');
-    await expect(db.query('select sementes from public.partidas_segredo')).rejects.toThrow(/permission denied/);
-    await expect(db.query(`update public.partidas_segredo set sementes = null`)).rejects.toThrow(/permission denied/);
+    expect((await db.query('select sementes from public.partidas_segredo')).rows).toEqual([]);
+    expect((await db.query(`update public.partidas_segredo set sementes = null`)).affectedRows).toBe(0);
+    await db.exec('reset role');
+    const { rows } = await db.query<{ n: number }>('select count(*)::int as n from public.partidas_segredo where sementes is not null');
+    expect(rows[0].n).toBe(1);
   });
 });

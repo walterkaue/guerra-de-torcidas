@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { criarAleatorio } from './aleatorio';
 import {
+  COBRANCAS,
   lerSementes,
   planejarDefesa,
   resolverCobranca,
@@ -36,16 +37,19 @@ function acharSementes(i: number, r: ResultadoCobranca): number[] {
 }
 
 /**
- * Joga a cobrança 1, acha a semente pelo resultado e tenta prever para onde o batedor vai na defesa 1.
- * Devolve se achou uma semente só e se a previsão acertou.
+ * Joga a cobrança 1, acha a semente pelo resultado e tenta prever para onde o batedor vai na defesa 1 e onde o
+ * goleiro pula na cobrança 2 (com o mesmo gesto). Devolve as sementes achadas e se cada previsão acertou.
  */
 function atacar(sementes: SementesPartida) {
   const cobranca = jogarLance(sementes, VAZIO, { tipo: 'cobranca', gesto: GESTO }, D);
   const achadas = acharSementes(0, cobranca.cobranca!);
   const defesa = jogarLance(sementes, cobranca.gestos, { tipo: 'defesa', zona: 0 }, D);
+  const seguinte = jogarLance(sementes, defesa.gestos, { tipo: 'cobranca', gesto: GESTO }, D);
+  const uma = achadas.length === 1;
   return {
     achadas,
-    acertou: achadas.length === 1 && planejarDefesa(achadas[0], 0, D).alvo === defesa.defesa!.alvo,
+    acertou: uma && planejarDefesa(achadas[0], 0, D).alvo === defesa.defesa!.alvo,
+    acertouGoleiro: uma && resolverCobranca(achadas[0], 1, GESTO, D).zonaGoleiro === seguinte.cobranca!.zonaGoleiro,
   };
 }
 
@@ -54,9 +58,10 @@ describe('pênaltis: uma semente por lance', () => {
     const r = criarAleatorio(11);
     for (let n = 0; n < 30; n++) {
       const semente = Math.floor(r() * ESPACO);
-      const { achadas, acertou } = atacar(semente);
+      const { achadas, acertou, acertouGoleiro } = atacar(semente);
       expect(achadas).toEqual([semente]);
       expect(acertou).toBe(true);
+      expect(acertouGoleiro).toBe(true);
     }
   });
 
@@ -64,15 +69,19 @@ describe('pênaltis: uma semente por lance', () => {
     const r = criarAleatorio(12);
     const N = 300;
     let acertos = 0;
+    let goleiro = 0;
     for (let n = 0; n < N; n++) {
       const sementes = sortearSementes(() => Math.floor(r() * ESPACO));
-      const { achadas, acertou } = atacar(sementes);
+      const { achadas, acertou, acertouGoleiro } = atacar(sementes);
       // O ataque ainda acha a semente do lance jogado...
       expect(achadas).toContain(sementes.cobrancas[0]);
       if (acertou) acertos++;
+      if (acertouGoleiro) goleiro++;
     }
-    // ...mas prever a defesa vira chute: 1 em 6 zonas (~50 de 300). Com a semente da partida, seriam 300.
+    // ...mas prever o próximo lance vira chute: a defesa acerta 1 em 6 zonas (~50 de 300), e o goleiro da cobrança
+    // seguinte fica perto disso. Com a semente da partida, seriam 300 nos dois.
     expect(acertos / N).toBeLessThan(0.3);
+    expect(goleiro / N).toBeLessThan(0.3);
   });
 
   it('partidas antigas (uma semente) dão o mesmo resultado de antes desta mudança', () => {
@@ -92,25 +101,29 @@ describe('pênaltis: uma semente por lance', () => {
     }
   });
 
-  it('lance a lance com sementes por lance dá o mesmo que a partida inteira', () => {
+  it('lance a lance com sementes por lance dá o mesmo que a partida inteira (também no desafio)', () => {
     const r = criarAleatorio(13);
     for (let n = 0; n < 100; n++) {
       const sementes = sortearSementes(() => Math.floor(r() * 0x1_0000_0000));
+      // Metade é desafio por link: o tremor da cobrança gravada sai da semente de cada defesa.
+      const gravadas =
+        n % 2 ? Array.from({ length: COBRANCAS }, () => ({ dir: r() * 200 - 100, forca: 30 + r() * 70, efeito: 0 })) : undefined;
       let gestos = VAZIO;
-      let passo = passoAtual(sementes, gestos, D);
+      let passo = passoAtual(sementes, gestos, D, gravadas);
       const lances = [];
       while (passo.tipo === 'cobranca' || passo.tipo === 'defesa') {
         const lance: Lance =
           passo.tipo === 'cobranca'
             ? { tipo: 'cobranca', gesto: { dir: r() * 200 - 100, forca: r() * 100, efeito: r() * 200 - 100 } }
             : { tipo: 'defesa', zona: Math.floor(r() * 7) - 1 };
-        const j = jogarLance(sementes, gestos, lance, D);
+        const j = jogarLance(sementes, gestos, lance, D, gravadas);
         lances.push(j);
         gestos = j.gestos;
         passo = j.proximo;
       }
       const parOuImpar = passo.tipo === 'par_ou_impar' ? { escolha: 'impar' as const, numero: 4 } : undefined;
-      const final = simularPartida(sementes, { ...gestos, ...(parOuImpar ? { parOuImpar } : {}) }, D, 2);
+      const final = simularPartida(sementes, { ...gestos, ...(parOuImpar ? { parOuImpar } : {}) }, D, 2, gravadas);
+      if (gravadas) expect(final.defesas.slice(0, COBRANCAS).every((d) => d.contraGravada)).toBe(true);
       expect(lances.filter((l) => l.cobranca).map((l) => l.cobranca)).toEqual(final.cobrancas);
       expect(lances.filter((l) => l.defesa).map((l) => l.defesa)).toEqual(final.defesas);
     }
