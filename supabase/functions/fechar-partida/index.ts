@@ -8,6 +8,7 @@
 import { admin, configDeteccao, ErroHttp, lerCorpo, lerDesempenho, servir, sortear, usuario } from '../_shared/comum.ts';
 import { motivoSuspeita } from '../_shared/jogo/deteccao.ts';
 import {
+  lerSementes,
   RODADAS_MAX,
   simularPartida,
   type GestoCobranca,
@@ -83,7 +84,7 @@ servir(async (req) => {
 
   const { data: segredo, error: eS } = await sb
     .from('partidas_segredo')
-    .select('numero_narrador, lance_a_lance, gestos')
+    .select('numero_narrador, lance_a_lance, gestos, sementes')
     .eq('partida_id', partida.id)
     .single();
   if (eS) throw eS;
@@ -94,10 +95,12 @@ servir(async (req) => {
       }
     : enviados;
 
+  // Sem sementes por lance é partida criada antes de 03/11/2026: refaz com a semente única, como sempre.
+  const sementes = lerSementes(segredo.sementes, Number(partida.semente));
   let resultado: ResultadoPartida;
   try {
     resultado = simularPartida(
-      Number(partida.semente),
+      sementes,
       gestos,
       Number(partida.dificuldade),
       segredo.numero_narrador,

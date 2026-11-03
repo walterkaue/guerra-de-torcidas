@@ -4,7 +4,7 @@
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { sementeNova } from '../jogo/aleatorio';
-import { simularPartida, type Gestos } from '../jogo/penaltis';
+import { simularPartida, sortearSementes, type Gestos, type SementesPorLance } from '../jogo/penaltis';
 import { jogarLance, type Lance } from '../jogo/penaltisLance';
 import { ErroServidor, type FechamentoDoServidor, type LanceDoServidor, type PartidaDoServidor } from '../servidor/api';
 
@@ -13,11 +13,11 @@ const latencia = Number(new URLSearchParams(location.search).get('latencia')) ||
 const espera = () => new Promise((ok) => setTimeout(ok, latencia));
 const caiNoLance = Number(new URLSearchParams(location.search).get('caiNoLance')) || 0;
 
-let estado: { semente: number; dificuldade: number; gestos: Gestos; lances: number } | null = null;
+let estado: { semente: SementesPorLance; dificuldade: number; gestos: Gestos; lances: number } | null = null;
 
 export async function novaPartida(): Promise<PartidaDoServidor> {
   await espera();
-  estado = { semente: sementeNova(), dificuldade: 0.5, gestos: { cobrancas: [], defesas: [] }, lances: 0 };
+  estado = { semente: sortearSementes(sementeNova), dificuldade: 0.5, gestos: { cobrancas: [], defesas: [] }, lances: 0 };
   return {
     partidaId: 'falsa',
     lanceALance: true,

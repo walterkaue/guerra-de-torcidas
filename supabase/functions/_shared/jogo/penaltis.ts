@@ -141,6 +141,46 @@ export const PONTOS = {
 const SAL_COBRANCA = 0xc0b;
 const SAL_DEFESA = 0xdef;
 
+/**
+ * Sementes de uma partida valendo (jogo.md, seção 6, "Uma semente por lance").
+ * - Um número: formato antigo, uma semente para a partida toda. O resultado exato de uma cobrança deixa achá-la
+ *   por força bruta (são 2^32) e, com ela, prever os lances seguintes. Fica só para refazer partidas antigas e
+ *   para o treino no celular, que não vale pontos.
+ * - Objeto: uma semente por lance, sorteadas à parte (partidas criadas desde 03/11/2026). A semente achada é a
+ *   de um lance já jogado e não diz nada das outras.
+ */
+export type SementesPartida = number | SementesPorLance;
+
+export interface SementesPorLance {
+  /** Uma por cobrança e uma por defesa, até RODADAS_MAX cada (0 a 2^32 - 1). Nunca saem do servidor. */
+  cobrancas: readonly number[];
+  defesas: readonly number[];
+}
+
+const sementeValida = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 0 && (v as number) <= 0xffffffff;
+
+/** A semente que a cobrança ou a defesa i usa. No formato antigo é a da partida (o sal e o índice separam os sorteios). */
+export function sementeDoLance(sementes: SementesPartida, tipo: 'cobranca' | 'defesa', i: number): number {
+  const v = typeof sementes === 'number' ? sementes : (tipo === 'cobranca' ? sementes.cobrancas : sementes.defesas)[i];
+  if (!sementeValida(v)) throw new Error(`Falta a semente da ${tipo} ${i + 1}.`);
+  return v;
+}
+
+/** Sorteia as sementes de uma partida nova. `sortear(n)` dá um inteiro em [0, n) (no servidor, com crypto). */
+export function sortearSementes(sortear: (n: number) => number): SementesPorLance {
+  const lista = () => Array.from({ length: RODADAS_MAX }, () => sortear(0x1_0000_0000));
+  return { cobrancas: lista(), defesas: lista() };
+}
+
+/** Lê as sementes guardadas no servidor: `porLance` nulo é partida antiga, que usa a `semente` da partida. */
+export function lerSementes(porLance: unknown, semente: number): SementesPartida {
+  if (porLance === null || porLance === undefined) return semente;
+  const s = porLance as Partial<SementesPorLance>;
+  const ok = (l: unknown) => Array.isArray(l) && l.length === RODADAS_MAX && l.every(sementeValida);
+  if (!ok(s.cobrancas) || !ok(s.defesas)) throw new Error('Sementes por lance com formato errado.');
+  return { cobrancas: s.cobrancas!, defesas: s.defesas! };
+}
+
 const limitar = (v: number, min: number, max: number) => (v < min ? min : v > max ? max : v);
 
 /** Garante que o gesto está no formato aceito (inteiros nos limites). */
@@ -361,7 +401,7 @@ export function resolverParOuImpar(e: EscolhaParOuImpar, numeroNarrador: number)
  * `numeroNarrador` só é usado (e exigido) quando a disputa chega ao par ou ímpar.
  */
 export function simularPartida(
-  semente: number,
+  semente: SementesPartida,
   gestos: Gestos,
   dificuldade: number,
   numeroNarrador?: number,
@@ -378,8 +418,8 @@ export function simularPartida(
   for (let i = 0; i < n; i++) {
     // Rodada a mais do que a regra permite (ex.: morte súbita depois de desempatar) é recusada.
     if (!precisaDeOutraRodada(cobrancas, defesas)) throw new Error(`Rodada ${i + 1} não deveria existir.`);
-    cobrancas.push(resolverCobranca(semente, i, gestos.cobrancas[i], d));
-    defesas.push(resolverDefesa(semente, i, gestos.defesas[i], d, gravadas?.[i]));
+    cobrancas.push(resolverCobranca(sementeDoLance(semente, 'cobranca', i), i, gestos.cobrancas[i], d));
+    defesas.push(resolverDefesa(sementeDoLance(semente, 'defesa', i), i, gestos.defesas[i], d, gravadas?.[i]));
   }
   if (precisaDeOutraRodada(cobrancas, defesas)) throw new Error('Faltam rodadas de morte súbita.');
 
