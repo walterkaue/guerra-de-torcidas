@@ -7,8 +7,8 @@
 
 | Área | Estado em 02/11/2026 |
 |---|---|
-| Código | `main` com 83 arquivos e 1.728 testes passando (PR #90, pênaltis com uma semente por lance, em 03/11) |
-| Publicação | Site no ar (`main` de 03/11, 14h42, com o PR #88). 33 migrações aplicadas (a 33ª, das sementes por lance dos pênaltis, em 03/11). 12 funções publicadas (`lances` v1, `nova-partida` v19, `lance-penalti` v5 e `fechar-partida` v20, em 03/11) |
+| Código | `main` com 83 arquivos e 1.728 testes passando (PR #90, pênaltis com uma semente por lance, em 03/11). Branch `claude/codigo-do-torcedor` com 87 arquivos e 1.793 testes, esperando merge |
+| Publicação | Site no ar (`main` de 03/11, 14h42, com o PR #88). 34 migrações aplicadas (a 34ª, do código do torcedor, em 03/11 por volta das 19h30, antes do merge). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
 | Tamanho | 216 KB gzip somando todo o JS e CSS (limite do bundle inicial: ~300 KB) |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
@@ -19,6 +19,15 @@
 **Lances do Jogo valendo (faltas e cara a cara):** feito em 03/11/2026 (PR #88). Detalhes na seção "Conferir primeiro", item 7.
 
 **Pênaltis com uma semente por lance:** feito em 03/11/2026 (PR #90). Detalhes na seção "Conferir primeiro", item 8.
+
+**Código do torcedor (uma carreira em vários aparelhos, `docs/jogo.md` seção 14.1):** construído em 03/11/2026 na branch `claude/codigo-do-torcedor`, revisado pelo subagente `revisor` (nenhum achado alto; os médios e quase todos os baixos corrigidos antes de publicar).
+- **No ar:** a migração `20261103400000_codigo_torcedor.sql`, conferida no banco (4 tabelas com RLS, 7 políticas de sessão, permissões certas), e a função `codigo-torcedor` v1. O site atual não usa nenhuma das duas; só as escritas do celular passaram a conferir a sessão, o que não muda nada para quem joga.
+- **Falta, com o Kauê:**
+  - pôr o segredo `TURNSTILE_SECRET_KEY` nas funções (Supabase → Edge Functions → Secrets), com a chave secreta do Turnstile, a mesma do CAPTCHA do login. Sem ele, a entrada por código responde "não deu pra conferir o aparelho";
+  - o merge do PR, que publica o site;
+  - o teste com o note e o celular: o e-mail técnico, o passe e o `verifyOtp` só foram conferidos lendo o código do Auth (v2.197), nunca contra o Auth de verdade. Testar também que a câmera lê o QR.
+- **Para o advogado:** a proposta de frase para os Termos e a Política está em `docs/termos-x-jogo.md`, seção "Proposta para o advogado: código do torcedor". O texto dos Termos não mudou.
+- **Ficou de fora (baixo, registrado na revisão):** limite por IP (o limite "por aparelho" é por conta anônima; quem segura a força bruta é o freio geral); partida fechada por outro aparelho da conta que entra no mesmo milissegundo da junção.
 
 ## Conferir primeiro
 
@@ -119,6 +128,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 - **Termos:** versão de 02/11/2026 com o parecer (PR #84). Antes de divulgar, confirmar com advogado os pontos 4 (triagem autodeclarada × art. 9º do ECA Digital) e 5 (DPO × exceção de alto risco da Res. CD/ANPD 2/2022); o parecer veio sem OAB.
 - Importar as 2 perguntas de `dados/perguntas/lote-02.csv` e dizer se tema de guerra entra na lista de proibidos (`dados/perguntas/piloto-lote-02.md`).
 - Propostas de `docs/propostas/funil-do-desafio.md`.
+- **Código do torcedor:** o segredo `TURNSTILE_SECRET_KEY` nas funções, o merge do PR e o teste com dois aparelhos (seção "Em andamento"). Levar ao advogado a frase proposta para os Termos.
 
 ## Depois
 
@@ -137,7 +147,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 - [x] Limpeza de anônimos no ar (02/11/2026, com as travas do PR #86)
 - [x] Ranking de minuto em minuto (no ar e conferido em 02/11/2026)
 - [ ] Plano do Supabase decidido
-- [ ] Termos e jogo batendo, com revisão do advogado
+- [ ] Termos e jogo batendo, com revisão do advogado (inclui a frase do código do torcedor)
 - [ ] Prova calibrada
 - [x] Funil do desafio entendido (mas falta medir envio e abertura do link; ver a proposta)
 - [ ] Balanço rodado e pré-temporada zerada
