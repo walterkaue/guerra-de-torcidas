@@ -7,8 +7,8 @@
 
 | Área | Estado em 02/11/2026 |
 |---|---|
-| Código | `main` com 81 arquivos e 1.718 testes passando (PR #88, Lances valendo, em 03/11) |
-| Publicação | Site no ar (`main` de 03/11, 14h42, com o PR #88). 32 migrações aplicadas (a 32ª, dos Lances valendo, em 03/11 à tarde). 12 funções publicadas (`lances` v1 e `fechar-partida` v19, em 03/11) |
+| Código | `main` com 83 arquivos e 1.728 testes passando (PR #90, pênaltis com uma semente por lance, em 03/11) |
+| Publicação | Site no ar (`main` de 03/11, 14h42, com o PR #88). 33 migrações aplicadas (a 33ª, das sementes por lance dos pênaltis, em 03/11). 12 funções publicadas (`lances` v1, `nova-partida` v19, `lance-penalti` v5 e `fechar-partida` v20, em 03/11) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
 | Tamanho | 216 KB gzip somando todo o JS e CSS (limite do bundle inicial: ~300 KB) |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
@@ -18,7 +18,7 @@
 
 **Lances do Jogo valendo (faltas e cara a cara):** feito em 03/11/2026 (PR #88). Detalhes na seção "Conferir primeiro", item 7.
 
-**Pênaltis, semente achável pelo resultado do lance:** sessão própria aberta em 03/11/2026. É a mesma brecha que a revisão achou nos Lances, mas nos pênaltis ela já estava no ar antes. Tem de estar fechada antes de divulgar.
+**Pênaltis com uma semente por lance:** feito em 03/11/2026 (PR #90). Detalhes na seção "Conferir primeiro", item 8.
 
 ## Conferir primeiro
 
@@ -83,7 +83,14 @@ select * from public.classificacao_temporada where mes = '2026-11-01' order by p
 - Nenhuma ficou sob suspeita, e a fila do ranking esvaziou.
 - No total da semana dele, os Lances somam só 36, por fora das partidas de pênaltis e Prova.
 
-**8. Reavaliar os robôs do Gemini (domingo 08/11/2026, 17h):** os 5 crons por dia de `gerar-conteudo` e de `auditar-conteudo` (decidido em 02/11, `docs/propostas/robos-gemini-perguntas.md`) já têm medida em `staging_gt.uso_gemini`. Olhar chamadas, tokens e erros 429/503 por dia e por função, quantos rascunhos nasceram, quantos passaram na auditoria e quantas das 9 fáceis já foram preenchidas. Decidir: manter 5, subir ou descer `paginas` e `quantidade`, ou ligar a cobrança do Google AI Studio. Consulta:
+**8. ~~Pênaltis com uma semente por lance~~:** conferido em 03/11/2026.
+- A brecha: pelo resultado exato de uma cobrança dava para achar a semente da partida e prever os lances seguintes. A revisão dos Lances achou o problema lá, e os pênaltis já tinham a mesma brecha no ar.
+- Publicado na ordem: a migração `20261103300000`, a `lance-penalti` v5 e a `fechar-partida` v20, e por último a `nova-partida` v19.
+- A partida do Kauê das 15h40 nasceu com 8 sementes de cobrança e 8 de defesa, todas diferentes, em `partidas_segredo.sementes`.
+- Ela fechou com 40 pontos, sem suspeita, e entrou no ranking às 15h42, 16 s depois de fechar.
+- As partidas anteriores seguem com a semente única, sem mudar resultado.
+
+**9. Reavaliar os robôs do Gemini (domingo 08/11/2026, 17h):** os 5 crons por dia de `gerar-conteudo` e de `auditar-conteudo` (decidido em 02/11, `docs/propostas/robos-gemini-perguntas.md`) já têm medida em `staging_gt.uso_gemini`. Olhar chamadas, tokens e erros 429/503 por dia e por função, quantos rascunhos nasceram, quantos passaram na auditoria e quantas das 9 fáceis já foram preenchidas. Decidir: manter 5, subir ou descer `paginas` e `quantidade`, ou ligar a cobrança do Google AI Studio. Consulta:
 
 ```sql
 select criada_em::date dia, funcao, sum(chamadas) chamadas, sum(falhas) falhas, sum(entrada) entrada, sum(saida) saida
