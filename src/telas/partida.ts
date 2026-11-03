@@ -37,6 +37,7 @@ import {
   type DesafioRecebido,
   type FechamentoDoServidor,
 } from '../servidor/api';
+import { comMotivo } from '../servidor/motivo';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { criarCena, facil, limitar01, suave } from './cena';
 import { criarCena3d, type Cena3d } from './cena3d';
@@ -113,7 +114,8 @@ const DUR_CAMERA_LENTA = 500;
 /** Golaço (ângulo, cavadinha ou raspando a trave) ganha replay de TV; o replay entra este tempo depois do gol. */
 const DUR_ANTES_DO_REPLAY = 1000;
 
-export const AVISO_SEM_PONTOS = 'Sem internet: essa partida não vale pontos.';
+// O código do motivo vai no fim (servidor/motivo.ts): "Sem internet" também cobre CAPTCHA, login e função fora.
+export const AVISO_SEM_PONTOS = 'Sem conexão: essa partida não vale pontos.';
 export const AVISO_CAIU = 'Caiu a conexão: essa partida não vale mais pontos.';
 
 export function telaPartida(root: HTMLElement, rota: Rota): () => void {
@@ -336,7 +338,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   /** O servidor não respondeu um lance: a partida segue no celular, sem valer pontos. */
   function caiuALigacao(e?: unknown): void {
     if (e) console.warn('Lance sem servidor:', e instanceof ErroServidor ? e.codigo : e);
-    if (!aviso) mostrarAviso(AVISO_CAIU);
+    // Sem erro: o servidor respondeu, mas sem o resultado do lance.
+    if (!aviso) mostrarAviso(comMotivo(AVISO_CAIU, e ?? { codigo: 'sem_resultado' }));
   }
 
   async function resultadoDaCobranca(gq: GestoCobranca, i: number): Promise<ResultadoCobranca> {
@@ -630,7 +633,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       console.warn('Partida sem valer pontos:', e instanceof ErroServidor ? e.codigo : e);
       mostrarAviso(e instanceof ErroServidor && e.codigo === 'muitas_partidas'
         ? 'Calma! Muitas partidas em 1 minuto: esta não vale pontos.'
-        : AVISO_SEM_PONTOS);
+        : comMotivo(AVISO_SEM_PONTOS, e));
     }
     servidorPronto = true;
     talvezComecar();
@@ -656,9 +659,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       try {
         const r = await fechando;
         if (r.numeroNarrador !== null) return r.numeroNarrador;
-      } catch {
+      } catch (e) {
         fechamento = null;
-        mostrarAviso(AVISO_SEM_PONTOS);
+        mostrarAviso(comMotivo(AVISO_SEM_PONTOS, e));
       }
     }
     return pedirNumeroDoNarrador(escolha);
@@ -675,8 +678,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         servidor = await fechando;
         // Quem manda é o servidor (deve dar igual ao que o celular calculou).
         resultado = servidor.resultado;
-      } catch {
-        aviso = 'Não deu pra registrar: esta partida ficou sem valer pontos.';
+      } catch (e) {
+        aviso = comMotivo('Não deu pra registrar: esta partida ficou sem valer pontos.', e);
       }
     }
     somApito(true);
