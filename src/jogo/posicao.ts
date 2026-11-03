@@ -21,12 +21,13 @@ export interface Desempenho {
   novoRecorde: boolean;
 }
 
-export type Minigame = 'penaltis' | 'prova' | 'dia';
+export type Minigame = 'penaltis' | 'prova' | 'dia' | 'lances';
 
 const ONDE: Record<Minigame, string> = {
   penaltis: 'nos pênaltis na semana',
   prova: 'na Prova de Boleiro na semana',
   dia: 'no Time do Dia de hoje',
+  lances: 'nos Lances do Jogo na semana',
 };
 
 const pontos = (n: number) => `${n.toLocaleString('pt-BR')} ${n === 1 ? 'ponto' : 'pontos'}`;

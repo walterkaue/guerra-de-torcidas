@@ -11,6 +11,8 @@ import type { Lance, Passo as PassoPenalti } from '../jogo/penaltisLance.ts';
 import type { Ajuda, Degrau, Desfecho, Fim, Passo, PontosProva } from '../jogo/prova.ts';
 import type { Desempenho, PosicaoSemana } from '../jogo/posicao.ts';
 import type { Tentativa } from '../jogo/timeDoDia.ts';
+import type { RespostaLanceDoJogo, RespostaNovaLances } from '../jogo/lancesPartida.ts';
+import type { Medalha } from '../jogo/lances.ts';
 import type { Carreira } from '../jogo/carreira.ts';
 import type { FaixaEtaria } from '../jogo/faixaEtaria.ts';
 import type { MeusDados } from '../jogo/meusDados.ts';
@@ -232,6 +234,71 @@ export async function verDesafio(id: string): Promise<ResumoDesafio | null> {
   const { data, error } = await comTempoLimite(sb.rpc('ver_desafio', { p_id: id }));
   if (error) throw new ErroServidor('falha');
   return ((data as ResumoDesafio[] | null) ?? [])[0] ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// Lances do Jogo valendo (função "lances", docs/jogo.md, seção 7.3): lance a lance, como os pênaltis.
+// ---------------------------------------------------------------------------
+
+/** Começa uma partida valendo com os 3 lances escolhidos (ids do catálogo; pode repetir). */
+export function novaPartidaLances(lances: string[]): Promise<RespostaNovaLances> {
+  return chamar('lances', { acao: 'nova', lances });
+}
+
+/** Um lance: o celular manda só o gesto; o servidor resolve com a semente que só ele conhece. */
+export function lanceDoJogo(partidaId: string, i: number, gesto: GestoCobranca): Promise<RespostaLanceDoJogo> {
+  return chamar('lances', {
+    acao: 'lance',
+    partidaId,
+    i,
+    gesto: { dir: gesto.dir, forca: gesto.forca, efeito: gesto.efeito },
+  });
+}
+
+export interface LancesHoje {
+  feitas: number;
+  limite: number;
+  melhor: number | null;
+}
+
+/** Partidas valendo começadas hoje (Brasília), o limite do dia e a melhor do dia. Null sem resposta. */
+export async function meusLancesHoje(): Promise<LancesHoje | null> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('meus_lances_hoje'));
+  if (error) throw new ErroServidor('falha');
+  return ((data ?? []) as LancesHoje[])[0] ?? null;
+}
+
+export interface MedalhaDoLance {
+  lance_id: string;
+  gols: number;
+  recriados: number;
+  medalha: Medalha | null;
+}
+
+/** Minhas medalhas e o progresso em cada lance que já joguei valendo. Só a própria pessoa. */
+export async function minhasMedalhas(): Promise<MedalhaDoLance[]> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('minhas_medalhas'));
+  if (error) throw new ErroServidor('falha');
+  return (data ?? []) as MedalhaDoLance[];
+}
+
+export interface VitrineDoTime {
+  time_id: string;
+  bronze: number;
+  prata: number;
+  ouro: number;
+}
+
+/** Medalhas somadas por torcida, sem ninguém identificado. */
+export async function vitrineMedalhas(): Promise<VitrineDoTime[]> {
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('vitrine_medalhas'));
+  if (error) throw new ErroServidor('falha');
+  return (data ?? []) as VitrineDoTime[];
 }
 
 // ---------------------------------------------------------------------------
@@ -476,7 +543,7 @@ export async function minhaPosicaoSemana(semana: string): Promise<PosicaoSemana 
   return ((data ?? []) as PosicaoSemana[])[0] ?? null;
 }
 
-export type MinigameDoRecorde = 'penaltis' | 'prova' | 'dia' | 'crava';
+export type MinigameDoRecorde = 'penaltis' | 'prova' | 'dia' | 'crava' | 'lances';
 
 /** Meus recordes pessoais, um por minigame (null antes da primeira partida que vale). */
 export async function meusRecordes(): Promise<Partial<Record<MinigameDoRecorde, number | null>>> {
@@ -488,7 +555,7 @@ export async function meusRecordes(): Promise<Partial<Record<MinigameDoRecorde, 
 }
 
 /** Minha posição num minigame: pênaltis e Prova na semana de hoje, Time do Dia no dia de hoje. */
-export async function minhaPosicaoMinigame(minigame: 'penaltis' | 'prova' | 'dia'): Promise<PosicaoSemana | null> {
+export async function minhaPosicaoMinigame(minigame: 'penaltis' | 'prova' | 'dia' | 'lances'): Promise<PosicaoSemana | null> {
   await garantirSessao();
   const sb = await supabase();
   const { data, error } = await comTempoLimite(sb.rpc('minha_posicao_minigame', { p_minigame: minigame }));
@@ -527,6 +594,8 @@ export async function partidasFechadasHoje(dia: string): Promise<number> {
       .select('id', { count: 'exact', head: true })
       .eq('dia', dia)
       .eq('amistoso', false)
+      // Os Lances do Jogo ficam por fora do teto (jogo.md, 7.3): têm limite próprio de partidas por dia.
+      .neq('minigame', 'lances')
       .not('fechada_em', 'is', null),
   );
   if (error) throw new ErroServidor('falha');

@@ -13,6 +13,8 @@ export const UNIDADES = [
   { id: 'penaltis', nome: 'Pênaltis', unidade: 'partida', teto: 150, faixa: true },
   { id: 'prova', nome: 'Prova de Boleiro', unidade: 'partida', teto: 150, faixa: true },
   { id: 'dia', nome: 'Time do Dia', unidade: 'dia', teto: 100, faixa: true },
+  // Por fora do teto de 5: o dia vale a melhor partida (jogo.md, seção 7.3).
+  { id: 'lances', nome: 'Lances do Jogo', unidade: 'partida', teto: 120, faixa: false },
   // Já com o peso ×2: placar exato (10) × certeza (2) × peso (2).
   { id: 'crava_palpite', nome: 'Crava (por palpite)', unidade: 'palpite', teto: 40, faixa: false },
   { id: 'crava_rodada', nome: 'Crava (por pessoa na rodada)', unidade: 'pessoa na rodada', teto: 300, faixa: false },

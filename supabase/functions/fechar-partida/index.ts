@@ -58,6 +58,8 @@ servir(async (req) => {
     .select('id, modo, desafio_id, semente, dificuldade, criada_em, expira_em, fechada_em')
     .eq('id', corpo.partidaId)
     .eq('torcedor_id', uid)
+    // Só pênaltis: a Prova fecha na função prova e os Lances na função lances, cada um com a própria regra.
+    .eq('minigame', 'penaltis')
     .maybeSingle();
   if (eP) throw eP;
   if (!partida) throw new ErroHttp(404, 'partida_nao_encontrada');

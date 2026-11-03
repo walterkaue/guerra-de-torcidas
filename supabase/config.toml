@@ -442,6 +442,10 @@ verify_jwt = true
 [functions.time-do-dia]
 verify_jwt = true
 
+# Lances do Jogo (faltas e cara a cara) valendo, lance a lance: uma função com ações (nova, lance).
+[functions.lances]
+verify_jwt = true
+
 [functions.gerar-conteudo]
 enabled = true
 verify_jwt = false

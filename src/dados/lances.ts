@@ -1,5 +1,5 @@
 // GERADO por scripts/lances/catalogo.mjs a partir de dados/lances/*.csv. Não edite aqui: mude o CSV e rode `npm run catalogo-lances`.
-import type { Lance } from '../jogo/lances';
+import type { Lance } from '../jogo/lances.ts';
 
 export const LANCES: readonly Lance[] = [
   {"id":"flamengo-1981-toquio","clube":"flamengo","titulo":"O primeiro gol de Tóquio","ficha":"13/12/1981, final do Mundial Interclubes, em Tóquio: no começo do jogo, o lançamento de Zico passa por cima da defesa e Nunes chuta na saída do goleiro. Foi o primeiro dos 3 a 0 sobre o Liverpool.","competicao":"Mundial Interclubes","data":"1981-12-13","adversario":"Liverpool","chegada":"Lançamento por cima da defesa e saída cara a cara com o goleiro.","chegadaDe":"tras","tipo":"finalizacao","bola":{"x":2,"z":13},"zonaHistorica":0,"faixa":"facil","goleiroSaida":4},

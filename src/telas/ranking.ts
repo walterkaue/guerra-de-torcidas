@@ -14,7 +14,7 @@ import { desenharTemporada } from './temporada';
 
 type Modo = 'campeao' | 'soma';
 
-export function telaRanking(root: HTMLElement, _rota: Rota): () => void {
+export function telaRanking(root: HTMLElement, rota: Rota): () => void {
   const meuTime = prefs.get().time;
   const atual = semanaBrasilia();
   const passada = semanaBrasilia(new Date(Date.now() - 7 * 24 * 3600_000));
@@ -30,6 +30,7 @@ export function telaRanking(root: HTMLElement, _rota: Rota): () => void {
       <div class="abas abas-ranking" role="tablist">
         <button role="tab" class="rotulo" aria-selected="true" data-ranking="semana">Semana</button>
         <button role="tab" class="rotulo" aria-selected="false" data-ranking="temporada">Temporada</button>
+        <button role="tab" class="rotulo" aria-selected="false" data-ranking="conquistas">Conquistas</button>
       </div>
       <div class="painel-ranking" data-painel="semana">
         <div class="abas abas-semana" role="tablist">
@@ -45,25 +46,47 @@ export function telaRanking(root: HTMLElement, _rota: Rota): () => void {
         <p class="explica" data-explica></p>
       </div>
       <div class="painel-ranking" data-painel="temporada" hidden></div>
+      <div class="painel-ranking" data-painel="conquistas" hidden></div>
       ${barraNavegacao('ranking')}
     </main>`;
   ligarBarraNavegacao(root);
 
-  // A aba Temporada só carrega quando é aberta, e a cada abertura começa do zero.
-  const painelSemana = root.querySelector<HTMLElement>('[data-painel="semana"]')!;
-  const painelTemporada = root.querySelector<HTMLElement>('[data-painel="temporada"]')!;
-  let limparTemporada: (() => void) | null = null;
+  // As abas Temporada e Conquistas só carregam quando são abertas, e a cada abertura começam do zero.
+  type AbaDoRanking = 'semana' | 'temporada' | 'conquistas';
+  const paineis: Record<AbaDoRanking, HTMLElement> = {
+    semana: root.querySelector<HTMLElement>('[data-painel="semana"]')!,
+    temporada: root.querySelector<HTMLElement>('[data-painel="temporada"]')!,
+    conquistas: root.querySelector<HTMLElement>('[data-painel="conquistas"]')!,
+  };
+  const desenhadores: Partial<Record<AbaDoRanking, (el: HTMLElement) => () => void>> = {
+    temporada: desenharTemporada,
+    // Conquistas baixa sob demanda (lances, medalhas e o CSS dela não pesam na Home).
+    conquistas: (el) => {
+      let parar: (() => void) | null = null;
+      let saiuDaAba = false;
+      void import('./conquistas').then((m) => {
+        if (!saiuDaAba) parar = m.desenharConquistas(el);
+      });
+      return () => {
+        saiuDaAba = true;
+        parar?.();
+      };
+    },
+  };
+  let abaAberta: AbaDoRanking = 'semana';
+  let limparAba: (() => void) | null = null;
+  function abrirAba(aba: AbaDoRanking): void {
+    if (aba === abaAberta) return;
+    abaAberta = aba;
+    root.querySelectorAll<HTMLElement>('[data-ranking]').forEach((o) => o.setAttribute('aria-selected', String(o.dataset.ranking === aba)));
+    for (const [nome, el] of Object.entries(paineis)) el.hidden = nome !== aba;
+    limparAba?.();
+    limparAba = desenhadores[aba]?.(paineis[aba]) ?? null;
+  }
   root.querySelectorAll<HTMLButtonElement>('[data-ranking]').forEach((b) =>
-    b.addEventListener('click', () => {
-      const temporada = b.dataset.ranking === 'temporada';
-      if (temporada === !painelTemporada.hidden) return;
-      root.querySelectorAll('[data-ranking]').forEach((o) => o.setAttribute('aria-selected', String(o === b)));
-      painelSemana.hidden = temporada;
-      painelTemporada.hidden = !temporada;
-      limparTemporada?.();
-      limparTemporada = temporada ? desenharTemporada(painelTemporada) : null;
-    }),
+    b.addEventListener('click', () => abrirAba(b.dataset.ranking as AbaDoRanking)),
   );
+  if (rota.tela === 'ranking' && rota.aba === 'conquistas') abrirAba('conquistas');
 
   const elTabela = root.querySelector<HTMLElement>('[data-tabela-semana]')!;
   const elExplica = root.querySelector<HTMLElement>('[data-explica]')!;
@@ -164,6 +187,6 @@ export function telaRanking(root: HTMLElement, _rota: Rota): () => void {
   return () => {
     saiu = true;
     parar?.();
-    limparTemporada?.();
+    limparAba?.();
   };
 }

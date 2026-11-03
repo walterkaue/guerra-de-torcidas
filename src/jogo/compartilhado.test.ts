@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 // O servidor recalcula a partida com uma cópia deste motor. Se ela ficar diferente,
 // o servidor e o celular passam a discordar do resultado.
 describe('motor compartilhado com o servidor', () => {
-  for (const nome of ['aleatorio.ts', 'penaltis.ts', 'penaltisLance.ts', 'deteccao.ts', 'crava.ts', 'footballData.ts', 'prova.ts', 'timeDoDia.ts', 'lances.ts', 'avisos.ts']) {
+  for (const nome of ['aleatorio.ts', 'penaltis.ts', 'penaltisLance.ts', 'deteccao.ts', 'crava.ts', 'footballData.ts', 'prova.ts', 'timeDoDia.ts', 'lances.ts', 'lancesPartida.ts', 'avisos.ts', 'faixaEtaria.ts']) {
     it(`supabase/functions/_shared/jogo/${nome} está em dia (rode npm run compartilhar)`, () => {
       const original = readFileSync(new URL(`./${nome}`, import.meta.url), 'utf8');
       const copia = readFileSync(new URL(`../../supabase/functions/_shared/jogo/${nome}`, import.meta.url), 'utf8');
@@ -24,10 +24,12 @@ describe('validador de perguntas compartilhado com o servidor', () => {
   }
 });
 
-describe('times compartilhados com o servidor (texto dos avisos)', () => {
-  it('supabase/functions/_shared/dados/times.ts está em dia (rode npm run compartilhar)', () => {
-    const original = readFileSync(new URL('../dados/times.ts', import.meta.url), 'utf8');
-    const copia = readFileSync(new URL('../../supabase/functions/_shared/dados/times.ts', import.meta.url), 'utf8');
-    expect(copia.slice(copia.indexOf('\n') + 1)).toBe(original);
-  });
+describe('dados compartilhados com o servidor (times dos avisos, catálogo dos Lances)', () => {
+  for (const nome of ['times.ts', 'lances.ts']) {
+    it(`supabase/functions/_shared/dados/${nome} está em dia (rode npm run compartilhar)`, () => {
+      const original = readFileSync(new URL(`../dados/${nome}`, import.meta.url), 'utf8');
+      const copia = readFileSync(new URL(`../../supabase/functions/_shared/dados/${nome}`, import.meta.url), 'utf8');
+      expect(copia.slice(copia.indexOf('\n') + 1)).toBe(original);
+    });
+  }
 });

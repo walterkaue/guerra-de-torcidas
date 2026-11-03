@@ -38,7 +38,7 @@ export function gerarCatalogo(lances) {
   });
   return [
     '// GERADO por scripts/lances/catalogo.mjs a partir de dados/lances/*.csv. Não edite aqui: mude o CSV e rode `npm run catalogo-lances`.',
-    "import type { Lance } from '../jogo/lances';",
+    "import type { Lance } from '../jogo/lances.ts';",
     '',
     'export const LANCES: readonly Lance[] = [',
     ...itens,

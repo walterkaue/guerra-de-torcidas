@@ -213,7 +213,7 @@ describe('posições e recorde', () => {
     const mini = await como(db, beto, `select * from public.minha_posicao_minigame('prova', $1)`, [SEMANA]);
     expect(mini).toEqual([{ posicao: 1, total: 1, pontos: 50 }]);
     const recordes = await como<{ minigame: string; recorde: number | null }>(db, beto, 'select * from public.meus_recordes()');
-    expect(Object.fromEntries(recordes.map((r) => [r.minigame, r.recorde]))).toEqual({ penaltis: null, prova: 50, dia: null, crava: null });
+    expect(Object.fromEntries(recordes.map((r) => [r.minigame, r.recorde]))).toEqual({ penaltis: null, prova: 50, dia: null, crava: null, lances: null });
     expect(await como(db, null, 'select * from public.minha_posicao_semana($1)', [SEMANA])).toEqual([]);
   });
 

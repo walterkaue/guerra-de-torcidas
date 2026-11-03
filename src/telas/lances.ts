@@ -1,13 +1,33 @@
 // Lances do Jogo (docs/jogo.md, seção 7.3): hub com três abas. Pênaltis abre o jogo de sempre (telas/partida.ts,
-// valendo pontos), livre ou com o cenário de uma disputa histórica (seção 6); Faltas e Cara a cara têm o álbum (filtro de clube, ficha, partida de 3 e treino), em teste e
-// ainda sem valer pontos. Quem decide o lance é o motor puro (jogo/lances.ts); aqui é escolha, gesto e desenho,
+// valendo pontos), livre ou com o cenário de uma disputa histórica (seção 6); Faltas e Cara a cara têm o álbum
+// (filtro de clube, ficha, partida de 3 e treino). A partida de 3 vale pontos na pré-temporada, lance a lance com
+// o servidor (função `lances`, como os pênaltis): a semente nunca vem para o celular, cada chute manda o gesto e a
+// bola só sai quando o resultado chega. Caiu a conexão: a partida segue aqui, sem valer pontos. O treino roda
+// só no celular. Quem decide o lance é o motor puro (jogo/lances.ts); aqui é escolha, gesto e desenho,
 // na cena 3D (telas/cena3d.ts) com a câmera de cada tipo (telas/camera.ts).
 
 import { esc, irPara, type Rota } from '../app';
 import { LANCES } from '../dados/lances';
-import { TIMES, corDeTexto, timePorId, type Time } from '../dados/times';
+import { ID_OUTRO, TIMES, corDeTexto, proTime, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { sementeNova } from '../jogo/aleatorio';
+import { desenharCardLances } from '../jogo/cardLances';
+import { mostrarCard, prontoParaDesenhar, seloNivel } from '../jogo/card';
+import type { FechamentoLances } from '../jogo/lancesPartida';
+import {
+  AVISO_LIMITE_DO_DIA,
+  linhaValendoHoje,
+  situacaoDoResultado,
+  textoDaMedalhaNova,
+  textoDeCompartilhar,
+} from '../jogo/lancesTextos';
+import { AVISO_PRE_TEMPORADA, htmlPosicao, type Desempenho } from '../jogo/posicao';
+import * as SERVIDOR from '../servidor/api';
+import { ErroServidor } from '../servidor/api';
+import { comMotivo } from '../servidor/motivo';
+import { sincronizarTorcedor } from '../servidor/torcedor';
+import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
+import { ligarEfeitoNoRanking } from './efeitoRanking';
 import {
   BONUS_RECRIOU,
   LANCES_POR_PARTIDA,
@@ -35,13 +55,21 @@ import { ANTES_DO_CORTE, criarReplay, montarTarjaDoReplay, type Replay } from '.
 import { icone, type NomeIcone } from './icones';
 import { aoMudarQualidade, medirQuadros, qualidade } from './qualidade';
 
-export const AVISO_EM_TESTE = 'Em teste: Faltas e Cara a cara ainda não valem pontos.';
+// Em desenvolvimento, ?lancesFalsos troca o servidor por um de mentira (src/dev/lancesFalsos.ts).
+const FALSO = import.meta.env.DEV && new URLSearchParams(location.search).has('lancesFalsos');
+type Servidor = Pick<typeof SERVIDOR, 'novaPartidaLances' | 'lanceDoJogo' | 'meusLancesHoje'>;
+const servidor = (): Promise<Servidor> => (FALSO ? import('../dev/lancesFalsos') : Promise.resolve(SERVIDOR));
+
+// O código do motivo vai no fim (servidor/motivo.ts), como nos pênaltis.
+export const AVISO_SEM_PONTOS = 'Sem conexão: essa partida não vale pontos.';
+export const AVISO_CAIU = 'Caiu a conexão: essa partida não vale mais pontos.';
+const SITE = 'https://torcida.kauewalter.com.br';
 
 export type AbaLances = 'penaltis' | 'falta' | 'finalizacao';
 const ABAS: { id: AbaLances; rotulo: string; nota: string }[] = [
   { id: 'penaltis', rotulo: 'Pênaltis', nota: 'valendo' },
-  { id: 'falta', rotulo: 'Faltas', nota: 'em teste' },
-  { id: 'finalizacao', rotulo: 'Cara a cara', nota: 'em teste' },
+  { id: 'falta', rotulo: 'Faltas', nota: 'valendo' },
+  { id: 'finalizacao', rotulo: 'Cara a cara', nota: 'valendo' },
 ];
 
 const ROTULO_FAIXA: Record<Faixa, string> = { facil: 'Fácil', media: 'Média', dificil: 'Difícil', craque: 'Craque' };
@@ -207,7 +235,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           ? 'Passe por cima ou contorne a barreira e acerte o canto.'
           : 'A bola chega, o goleiro sai: escolha o canto ou tente a cavadinha.'
       } Monte uma partida de 3 (pode misturar faltas e cara a cara). Gol no canto do lance de verdade vale +${BONUS_RECRIOU}.</p>
-      <p class="lances-aviso rotulo" role="note">${esc(AVISO_EM_TESTE)}</p>
+      <p class="lances-aviso rotulo" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
       <label class="lances-clube">
         <span class="rotulo">Clube</span>
         <select data-filtro="clube">
@@ -217,6 +245,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       </label>
       <ul class="lista-lances" aria-live="polite"></ul>
       <section class="sua-partida" aria-label="Sua partida">
+        <p class="valendo-hoje rotulo" data-valendo-hoje hidden></p>
         <div class="slots"></div>
         <button class="botao" type="button" data-acao="jogar" disabled>Jogar os 3</button>
       </section>`;
@@ -288,15 +317,52 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     botaoJogar.addEventListener('click', () => jogo([...escolhidos], false));
     desenharLista();
     desenharSlots();
+    // "Valendo hoje: 2 de 6": sem resposta do servidor, a linha não aparece.
+    const elHoje = el.querySelector<HTMLElement>('[data-valendo-hoje]')!;
+    void servidor()
+      .then((s) => s.meusLancesHoje())
+      .then((h) => {
+        const linha = linhaValendoHoje(h);
+        if (linha && elHoje.isConnected) {
+          elHoje.textContent = linha;
+          elHoje.hidden = false;
+        }
+      })
+      .catch(() => {});
   }
 
   // ---------- resultado ----------
-  function resultado(lances: Lance[], resultados: ResultadoLance[], frase: string | null): void {
+  function resultado(lances: Lance[], resultados: ResultadoLance[], frase: string | null, fim: FechamentoLances | null, aviso: string | null): void {
     limparJogo?.();
     limparJogo = null;
     const pontos = resultados.reduce((s, r) => s + r.pontos, 0);
+    const valendo = !!fim;
+    const outro = time.id === ID_OUTRO;
+    const paraTime = proTime(time);
+    const apelido = prefs.get().apelido;
+    const desempenho: Desempenho | null = fim?.desempenho
+      ? { posicao: fim.desempenho.posicao, total: fim.desempenho.total, recorde: fim.desempenho.recorde, novoRecorde: fim.desempenho.novo_recorde }
+      : null;
+    const situacao = situacaoDoResultado({
+      fechou: valendo,
+      aviso: aviso ?? undefined,
+      contaNoRanking: fim?.contaNoRanking ?? false,
+      sobSuspeita: fim?.sobSuspeita ?? false,
+      melhorDoDia: fim?.melhorDoDia ?? null,
+    });
+    const tituloDe = (id: string) => (lances.find((l) => l.id === id) ?? LANCES.find((l) => l.id === id))?.titulo ?? 'do jogo';
+    const medalhas = (fim?.medalhas ?? []).map((m) => textoDaMedalhaNova(m.medalha, tituloDe(m.lanceId)));
+    const link = `${SITE}/?time=${time.id}`;
+    const textoShare = textoDeCompartilhar({
+      desfechos: resultados.map((r) => r.desfecho),
+      pontos,
+      paraTime,
+      link,
+      medalha: medalhas[0] ?? null,
+    });
+
     root.innerHTML = `
-      <main class="tela lances-resultado" style="${estilo(time.cores)}">
+      <main class="tela lances-resultado resultado" style="${estilo(time.cores)}">
         <header class="cabecalho">
           <button class="voltar" type="button" aria-label="Voltar">‹</button>
           <h2>Lances do Jogo</h2>
@@ -307,6 +373,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           <span class="rotulo">pontos</span>
         </section>
         ${frase ? `<p class="adesivo">${esc(frase)}</p>` : ''}
+        ${medalhas.map((t) => `<p class="selo-recorde selo-medalha">${esc(t)}</p>`).join('')}
         <ul class="resumo-lances">
           ${lances
             .map((l, i) => {
@@ -317,8 +384,29 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
             })
             .join('')}
         </ul>
-        <p class="lances-aviso rotulo" role="note">${esc(AVISO_EM_TESTE)}</p>
-        <div class="dupla">
+        <section class="res-efeito" aria-live="polite">
+          ${situacao.texto ? `<p class="situacao${valendo ? '' : ' sem-pontos'}">${esc(situacao.texto)}</p>` : ''}
+        </section>
+        ${htmlPosicao(desempenho, 'lances')}
+        <div class="res-carreira" data-carreira hidden></div>
+        ${
+          valendo
+            ? `<section class="res-compartilhar">
+          <a class="botao botao-zap" data-sem-aviso target="_blank" rel="noopener"
+            href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Mandar no WhatsApp</a>
+          <div class="dupla">
+            <button class="botao botao-sec" type="button" data-acao="share">Stories</button>
+            <button class="botao botao-sec" type="button" data-acao="copiar">Copiar texto</button>
+          </div>
+        </section>
+        <details class="res-card">
+          <summary class="rotulo">Ver o card</summary>
+          <img class="card" alt="Card dos Lances do Jogo" />
+        </details>`
+            : ''
+        }
+        <p class="lances-aviso rotulo" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
+        <div class="res-acoes">
           <button type="button" class="botao botao-sec" data-acao="album">Escolher outros</button>
           <button type="button" class="botao" data-acao="denovo">Jogar de novo</button>
         </div>
@@ -326,6 +414,114 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     root.querySelector('.voltar')!.addEventListener('click', hub);
     root.querySelector('[data-acao="album"]')!.addEventListener('click', hub);
     root.querySelector('[data-acao="denovo"]')!.addEventListener('click', () => jogo(lances, false));
+    if (!fim) return;
+
+    // XP da carreira e posição: só quando o servidor fechou a partida (o XP sai de lá).
+    mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]'));
+    // Efeito no ranking: "Subiu de 5º pra 3º" ou "Contou pro ranking da semana" (mesmo fluxo dos pênaltis).
+    const elEfeito = root.querySelector<HTMLElement>('.res-efeito')!;
+    let pararEfeito: (() => void) | null = null;
+    if (situacao.tipo === 'ranking') {
+      if (outro) elEfeito.innerHTML = '<p class="situacao">Contou pro ranking da semana.</p>';
+      else {
+        pararEfeito = ligarEfeitoNoRanking(elEfeito, {
+          timeId: time.id,
+          paraTime,
+          semana: fim.semana,
+          confirmadaEm: fim.confirmadaEm,
+          antes: fim.ranking.antes,
+        });
+      }
+    }
+    limparJogo = () => pararEfeito?.();
+
+    // Card "Telão do estádio": só no resultado valendo.
+    const img = root.querySelector<HTMLImageElement>('.card')!;
+    const cardPronto = (async () => {
+      await prontoParaDesenhar();
+      const canvas = desenharCardLances({
+        time,
+        apelido,
+        paraTime,
+        frase: frase ?? '',
+        novoRecorde: !!desempenho?.novoRecorde,
+        link: link.replace('https://', ''),
+        pontos,
+        lances: lances.map((l, i) => ({ titulo: l.titulo, desfecho: resultados[i].desfecho, recriou: resultados[i].recriou, pontos: resultados[i].pontos })),
+        medalha: medalhas[0] ?? null,
+      });
+      const nivel = await nivelParaCard();
+      if (nivel) seloNivel(canvas, nivel);
+      await mostrarCard(img, canvas);
+      return canvas;
+    })();
+    const btnShare = root.querySelector<HTMLButtonElement>('[data-acao="share"]')!;
+    const btnCopiar = root.querySelector<HTMLButtonElement>('[data-acao="copiar"]')!;
+    const avisar = (botao: HTMLButtonElement, texto: string) => {
+      const antes = botao.textContent;
+      botao.textContent = texto;
+      setTimeout(() => (botao.textContent = antes), 1800);
+    };
+    btnShare.addEventListener('click', async () => {
+      try {
+        const canvas = await cardPronto;
+        const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, 'image/png'));
+        const arquivo = blob ? new File([blob], 'guerra-de-torcidas-lances.png', { type: 'image/png' }) : null;
+        if (arquivo && navigator.canShare?.({ files: [arquivo] })) await navigator.share({ files: [arquivo], text: textoShare });
+        else if (navigator.share) await navigator.share({ text: textoShare });
+        else {
+          await navigator.clipboard.writeText(textoShare);
+          avisar(btnShare, 'Copiado!');
+        }
+      } catch {
+        // cancelou o compartilhamento
+      }
+    });
+    btnCopiar.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(textoShare);
+        avisar(btnCopiar, 'Copiado!');
+      } catch {
+        avisar(btnCopiar, 'Não deu pra copiar');
+      }
+    });
+  }
+
+  /** Já jogou as partidas valendo de hoje: avisa e oferece o treino (que segue liberado). */
+  function limiteDoDia(lances: Lance[]): void {
+    limparJogo?.();
+    limparJogo = null;
+    const distintos = lances.filter((l, i) => lances.findIndex((o) => o.id === l.id) === i);
+    root.innerHTML = `
+      <main class="tela lances-limite" style="${estilo(time.cores)}">
+        <header class="cabecalho">
+          <button class="voltar" type="button" aria-label="Voltar">‹</button>
+          <h2>Lances do Jogo</h2>
+        </header>
+        <p class="situacao sem-pontos" role="status">${esc(AVISO_LIMITE_DO_DIA)}</p>
+        <p class="rotulo lances-secao">Treinar</p>
+        <ul class="lista-lances">
+          ${distintos
+            .map(
+              (l) => `<li class="lance" style="${estilo(clubeDoLance(l.clube).cores)}">
+                <button type="button" class="lance-topo" data-treinar="${esc(l.id)}">
+                  <span class="lance-titulo">${esc(l.titulo)}</span>
+                  <span class="lance-meta">${esc(clubeDoLance(l.clube).nome)} · ${esc(situacaoDoLance(l).split(',')[0])}</span>
+                </button>
+              </li>`,
+            )
+            .join('')}
+        </ul>
+        <button type="button" class="botao botao-sec" data-acao="album">Escolher outros</button>
+      </main>`;
+    root.querySelector('.voltar')!.addEventListener('click', hub);
+    root.querySelector('[data-acao="album"]')!.addEventListener('click', hub);
+    root.querySelectorAll<HTMLButtonElement>('[data-treinar]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const l = lances.find((o) => o.id === b.dataset.treinar);
+        if (l) jogo([l], true);
+      }),
+    );
   }
 
   // ---------- jogo ----------
@@ -348,6 +544,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           <p class="grito-frase"></p>
           <p class="grito-sub rotulo"></p>
         </div>
+        <p class="aviso-partida" hidden></p>
       </main>`;
 
     const canvas = root.querySelector<HTMLCanvasElement>('canvas')!;
@@ -370,16 +567,27 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     const poseBarreira = novaPose();
 
     let semente = sementeNova();
+    // Valendo: lance a lance com o servidor (a semente fica lá). Sem servidor, ou se cair a conexão no meio,
+    // o motor local assume com a semente de cima e a partida fica sem valer pontos.
+    let preparando = !treino;
+    let servidorOk = false;
+    let partidaId: string | null = null;
+    let goleiroServidor: number | null = null;
+    let goleiroProximo: number | null = null;
+    let fechamento: FechamentoLances | null = null;
+    let aviso: string | null = null;
     let indice = 0;
     let tentativa = 0;
     const resultados: ResultadoLance[] = [];
     type Fase =
       | { tipo: 'chegada'; inicio: number }
       | { tipo: 'mirar'; inicio: number }
+      /** Esperando o servidor: ao preparar a partida ou, com `chutando`, o resultado do chute (o pé já corre). */
+      | { tipo: 'espera'; inicio: number; chutando: boolean }
       | { tipo: 'chute'; inicio: number; r: ResultadoLance; em: (t: number) => { x: number; y: number; z: number }; dur: number }
       | { tipo: 'pausa'; inicio: number; r: ResultadoLance; em: (t: number) => { x: number; y: number; z: number }; dur: number }
       | { tipo: 'replay'; replay: Replay };
-    let fase: Fase = { tipo: 'mirar', inicio: relogio() };
+    let fase: Fase = treino ? { tipo: 'mirar', inicio: relogio() } : { tipo: 'espera', inicio: relogio(), chutando: false };
     let rastro: { x: number; y: number }[] = [];
     let acabou = false;
 
@@ -422,7 +630,11 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       cena.definirLance(l.bola, l.tipo === 'falta' ? ENQUADRAMENTOS.falta : ENQUADRAMENTOS.caraACara);
       rastro = [];
       elInstrucao.textContent = `${l.titulo} · ${situacaoDoLance(l)}`;
-      if (l.tipo === 'finalizacao' && l.chegada && !reduzido) {
+      if (preparando) {
+        fase = { tipo: 'espera', inicio: relogio(), chutando: false };
+        elJogada.hidden = true;
+        elInstrucao.textContent = 'Preparando a partida…';
+      } else if (l.tipo === 'finalizacao' && l.chegada && !reduzido) {
         fase = { tipo: 'chegada', inicio: relogio() };
         elJogada.querySelector('span')!.textContent = l.chegada;
         elJogada.hidden = false;
@@ -433,18 +645,60 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       atualizarHud();
     }
 
-    function chutar(gesto: GestoCobranca): void {
-      const gq = normalizarCobranca(gesto);
-      const l = atual();
-      const r = resolverLance(semente, indiceDoSorteio(), l, gq);
+    function mostrarAviso(texto: string): void {
+      aviso = texto;
+      const el = root.querySelector<HTMLElement>('.aviso-partida')!;
+      el.textContent = texto;
+      el.hidden = false;
+    }
+
+    /** O servidor não respondeu: a partida segue aqui, sem valer pontos, com o código do motivo. */
+    function caiuALigacao(e: unknown): void {
+      console.warn('Lances sem servidor:', e instanceof ErroServidor ? e.codigo : e);
+      servidorOk = false;
+      fechamento = null;
+      mostrarAviso(comMotivo(AVISO_CAIU, e));
+    }
+
+    /** Anima o chute com o resultado já decidido (do servidor ou do motor local). `esperaMs`: o pé já estava correndo. */
+    function comecarChute(r: ResultadoLance, gq: GestoCobranca, l: Lance, esperaMs: number): void {
       const em = caminhoDoLance(l, gq, r);
       // Duração pelo tamanho do caminho (cavadinha e bola fraca, mais devagar).
       const dist = Math.hypot(em(r.tFim).x - l.bola.x, em(r.tFim).z - l.bola.z);
       const dur = Math.max(450, (dist / METROS_POR_MS) * (r.cavadinha || gq.forca < 32 ? 1.8 : 1));
-      fase = { tipo: 'chute', inicio: relogio(), r, em, dur };
+      fase = { tipo: 'chute', inicio: relogio() - Math.min(esperaMs, DUR_BATIDA), r, em, dur };
       elInstrucao.textContent = '';
       elJogada.hidden = true;
       somChute();
+    }
+
+    /** Valendo: manda o gesto e só solta a bola quando o resultado chega (a espera cabe no pé encontrando a bola). */
+    async function pedirAoServidor(gq: GestoCobranca, l: Lance, i: number): Promise<void> {
+      const antes = relogio();
+      fase = { tipo: 'espera', inicio: antes, chutando: true };
+      elInstrucao.textContent = '';
+      elJogada.hidden = true;
+      try {
+        const resp = await (await servidor()).lanceDoJogo(partidaId!, i, gq);
+        if (acabou) return;
+        if (i === LANCES_POR_PARTIDA - 1) {
+          if (!resp.fim) throw new ErroServidor('sem_resultado');
+          fechamento = resp.fim;
+        }
+        goleiroProximo = resp.goleiroProximo;
+        comecarChute(resp.lance, gq, l, relogio() - antes);
+      } catch (e) {
+        if (acabou) return;
+        caiuALigacao(e);
+        comecarChute(resolverLance(semente, indice, l, gq), gq, l, relogio() - antes);
+      }
+    }
+
+    function chutar(gesto: GestoCobranca): void {
+      const gq = normalizarCobranca(gesto);
+      const l = atual();
+      if (!treino && servidorOk && partidaId) void pedirAoServidor(gq, l, indice);
+      else comecarChute(resolverLance(semente, indiceDoSorteio(), l, gq), gq, l, 0);
     }
 
     function fimDoChute(r: ResultadoLance, em: (t: number) => { x: number; y: number; z: number }, dur: number): void {
@@ -498,12 +752,14 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         return;
       }
       indice++;
-      if (indice < lances.length) comecarLance();
-      else {
+      if (indice < lances.length) {
+        if (servidorOk && goleiroProximo !== null) goleiroServidor = goleiroProximo;
+        comecarLance();
+      } else {
         acabou = true;
         somApito(true);
         const pontos = resultados.reduce((s, r) => s + r.pontos, 0);
-        resultado(lances, resultados, narrador.falar('lance_fim', { pontos }));
+        resultado(lances, resultados, narrador.falar('lance_fim', { pontos }), servidorOk ? fechamento : null, aviso);
       }
     }
 
@@ -537,15 +793,20 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       }
       cena.desenharFundo(agora);
       const l = atual();
-      const x0 = goleiroAntesDoChute(semente, indiceDoSorteio(), l);
+      // Valendo, onde o goleiro começa vem do servidor (a semente não está aqui); antes da resposta, no meio.
+      const x0 = !treino && (preparando || servidorOk) ? (goleiroServidor ?? 0) : goleiroAntesDoChute(semente, indiceDoSorteio(), l);
       switch (fase.tipo) {
         case 'chegada':
+        case 'espera':
         case 'mirar': {
           const k = posicaoDoGoleiro(x0);
           cena.desenharGoleiro(goleiro, k.x, k.z, agora);
           cena.desenharTraves();
           if (l.barreira) cena.desenharBarreira(l.barreira, barreira, poseParado(agora, poseBarreira));
-          cena.desenharBatedor(batedor, poseParado(agora, poseBatedor));
+          if (fase.tipo === 'espera' && fase.chutando) {
+            const ms = agora - fase.inicio;
+            cena.desenharBatedor(batedor, poseChute(Math.min(ms, DUR_BATIDA), false, poseBatedor), facil(limitar01(ms / DUR_BATIDA)));
+          } else cena.desenharBatedor(batedor, poseParado(agora, poseBatedor));
           if (fase.tipo === 'chegada') {
             const t = limitar01((agora - fase.inicio) / DUR_CHEGADA);
             const o = origemDaChegada(l);
@@ -664,11 +925,45 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     const aoRedimensionar = () => cena.medir();
     window.addEventListener('resize', aoRedimensionar);
 
+    /** Valendo: pede a partida ao servidor. Sem resposta, segue local e sem valer pontos. */
+    async function iniciarValendo(): Promise<void> {
+      try {
+        const api = await servidor();
+        const ids = lances.map((l) => l.id);
+        // Time e apelido precisam estar no servidor; sessão nova (aparelho limpo) regrava.
+        if (!FALSO) await sincronizarTorcedor();
+        let r;
+        try {
+          r = await api.novaPartidaLances(ids);
+        } catch (e) {
+          if (!(e instanceof ErroServidor) || e.codigo !== 'sem_time') throw e;
+          await sincronizarTorcedor(true);
+          r = await api.novaPartidaLances(ids);
+        }
+        if (acabou) return;
+        partidaId = r.partidaId;
+        goleiroServidor = r.goleiroX;
+        servidorOk = true;
+      } catch (e) {
+        if (acabou) return;
+        if (e instanceof ErroServidor && e.codigo === 'limite_do_dia') return limiteDoDia(lances);
+        console.warn('Partida sem valer pontos:', e instanceof ErroServidor ? e.codigo : e);
+        mostrarAviso(
+          e instanceof ErroServidor && e.codigo === 'muitas_partidas'
+            ? 'Calma! Muitas partidas em 1 minuto: esta não vale pontos.'
+            : comMotivo(AVISO_SEM_PONTOS, e),
+        );
+      }
+      preparando = false;
+      comecarLance();
+    }
+
     cena.medir();
     comecarLance();
     if (treino) narrar(null, 'Treino: tente quantas vezes quiser');
     else narrar(narrador.falar('lance_abertura'));
     somApito();
+    if (!treino) void iniciarValendo();
     // Qualidade automática: mede os quadros e, se o nível mudar, refaz o canvas.
     const medidor = medirQuadros();
     const pararDeOuvirQualidade = aoMudarQualidade(() => cena.medir());

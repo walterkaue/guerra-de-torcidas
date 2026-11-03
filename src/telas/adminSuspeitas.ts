@@ -19,7 +19,7 @@ export interface Suspeita {
   na_fila: number;
 }
 
-const MINIGAME: Record<string, string> = { penaltis: 'Pênaltis', prova: 'Prova de Boleiro', dia: 'Time do Dia' };
+const MINIGAME: Record<string, string> = { penaltis: 'Pênaltis', prova: 'Prova de Boleiro', dia: 'Time do Dia', lances: 'Lances do Jogo' };
 
 const ERROS: Record<string, string> = {
   sem_permissao: 'Esta conta não é de administrador.',

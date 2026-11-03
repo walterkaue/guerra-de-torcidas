@@ -37,6 +37,7 @@ const NOME_DO_RECORDE: Record<MinigameDoRecorde, string> = {
   prova: 'Prova de Boleiro',
   dia: 'Time do Dia',
   crava: 'Crava a Rodada',
+  lances: 'Lances do Jogo',
 };
 
 const linha = (rotulo: string, valor: string) => `<div class="perfil-linha"><dt>${rotulo}</dt><dd>${valor}</dd></div>`;
@@ -85,7 +86,7 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
           : '<p class="vazio">Escolhe o time pra ver sua carreira, sua posição e seus recordes.</p>'
       }
 
-      <p class="perfil-atalho" aria-disabled="true">${icone('trofeu')} Conquistas <span class="em-breve">em breve</span></p>
+      <button class="perfil-atalho" type="button" data-acao="conquistas">${icone('trofeu')} Conquistas</button>
 
       <section class="perfil-bloco" aria-label="Ajustes">
         <h3 class="rotulo">Ajustes</h3>
@@ -116,6 +117,7 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
   );
   // "Escolher apelido" usa o campo e o filtro de sempre, na escolha do time.
   root.querySelector('[data-acao="apelido"]')?.addEventListener('click', () => irPara({ tela: 'times', depois: 'perfil', apelido: true }));
+  root.querySelector('[data-acao="conquistas"]')?.addEventListener('click', () => irPara({ tela: 'ranking', aba: 'conquistas' }));
   root.querySelector('[data-acao="termos"]')?.addEventListener('click', () => irPara({ tela: 'termos', de: aqui }));
   root.querySelector('[data-acao="apagar"]')?.addEventListener('click', () => irPara({ tela: 'termos', de: aqui, apagar: true }));
 
@@ -165,11 +167,12 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
     try {
       const api = await servidor();
       const nada = () => null;
-      const [geral, penaltis, prova, dia, jogos] = await Promise.all([
+      const [geral, penaltis, prova, dia, lances, jogos] = await Promise.all([
         api.minhaPosicaoSemana(semanaBrasilia()),
         api.minhaPosicaoMinigame('penaltis').catch(nada),
         api.minhaPosicaoMinigame('prova').catch(nada),
         api.minhaPosicaoMinigame('dia').catch(nada),
+        api.minhaPosicaoMinigame('lances').catch(nada),
         api.jogosDoCrava().catch(() => []),
       ]);
       const rodada = rodadaEmFoco(jogos, new Date());
@@ -182,6 +185,7 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
         linha('Pênaltis', linhaDaPosicao(penaltis)),
         linha('Prova de Boleiro', linhaDaPosicao(prova)),
         linha('Time do Dia, hoje', linhaDaPosicao(dia)),
+        linha('Lances do Jogo', linhaDaPosicao(lances)),
         ...(rodada === null ? [] : [linha(`Crava, ${ordinalRodada(rodada)} rodada`, linhaDaPosicao(crava))]),
       ].join('');
     } catch {
