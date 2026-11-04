@@ -521,7 +521,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - Por lance, contando só gols em partidas valendo (conferidas no servidor): **bronze** com 5 gols, **prata** com 20, **ouro** com 50 gols, dos quais 10 recriando o lance.
 - **Nunca zeram**, nem no zerar da pré-temporada: ficam numa tabela própria, que o `zerar-pre-temporada` preserva.
 - **Não valem ponto** no ranking (são coleção, como a Carreira).
-- **Página Conquistas**, como aba ao lado do Ranking das torcidas: as medalhas do jogador por clube e por lance, e a vitrine da torcida ("a torcida do São Paulo tem 1.240 medalhas de ouro"), por soma e sem apelido. **No ar desde 03/11/2026:** 3ª aba do Ranking (Semana, Temporada, Conquistas), que o atalho "Conquistas" do Perfil também abre. "Suas medalhas" por clube e por lance, com quanto falta para a próxima; "Vitrine das torcidas" ordenada por ouro, pelo time atual de quem ganhou. Em desenvolvimento, `?lancesFalsos` (`=limite` para o limite do dia; `&caiNoLance=N` derruba o N-ésimo lance).
+- **Página Conquistas**, como aba ao lado do Ranking das torcidas: as medalhas do jogador por clube e por lance, e a vitrine da torcida ("a torcida do São Paulo tem 1.240 medalhas de ouro"), por soma e sem apelido. **No ar desde 03/11/2026:** 3ª aba do Ranking (Semana, Temporada, Conquistas), que o atalho "Conquistas" do Perfil também abre. "Suas medalhas" por clube e por lance, com a trilha de 3 medalhas (seção 14.3); "Vitrine das torcidas" ordenada por ouro, pelo time atual de quem ganhou. Em desenvolvimento, `?lancesFalsos` (`=limite` para o limite do dia; `&caiNoLance=N` derruba o N-ésimo lance).
 - **Card de medalha:** "Já sou ouro no Gol 100 do goleiro — São Paulo x Corinthians (2011)". Título do lance, nunca nome de pessoa (seção 8). Ainda não existe: por enquanto a medalha nova aparece no resultado e numa linha do card da partida.
 - O id de um lance nunca muda depois de publicado (as medalhas apontam para ele).
 
@@ -760,6 +760,12 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - "Meus troféus" mostra os lances com pelo menos o bronze. "Perto do próximo" ordena pelos gols que faltam para a próxima medalha, e quem tem o ouro completo vai para o fim. Os ⭐ ficam no topo em qualquer filtro.
 - A linha do resultado lê `minhas_medalhas()` de novo depois do 3º lance, quando o gatilho já anotou os gols. Lance sem gol na partida mostra só "Rumo ao bronze · 3/5". Quando sobram gols e faltam recriados, a conta passa a ser dos recriados ("7/10 recriando"). Partida sob suspeita ou sem conexão não mostra as linhas, porque os gols dela não contam.
 - Papel picado e vibração seguem as regras de sempre: nada com movimento reduzido nem com a Vibração desligada.
+- **Como está no código (04/11/2026):**
+  - **Conta pura:** `trilhaDoLance`, `linhaRumo`, `linhasRumoDaPartida`, `previaDoProximoGol` e `filtrarAlbum`, em `src/jogo/lancesTextos.ts`.
+  - **Bloco:** `trilha()` em `src/telas/blocos.ts`.
+  - **Telas:** `src/telas/albumLances.ts` (cards, filtros e favoritos em `prefs.favoritosLances`), `src/telas/fichaLance.ts` (a ficha, um `<dialog>`) e `src/telas/rumoMedalhas.ts` (a placa "Rumo às medalhas" do resultado).
+  - **Em dev:** `?lancesFalsos`. Prints em `docs/auditoria/2026-11-04/trofeus/`.
+  - **`#admin`:** foi para o Grafismo de TV no mesmo PR, com as mesmas ações (`src/estilos/admin.css`; em dev, `?adminFalso#admin`).
 
 ### 14.4 Aquecimento e tutoriais no gesto
 > Decisão do Kauê em 04/11/2026.

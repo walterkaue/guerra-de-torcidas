@@ -185,6 +185,12 @@ Escolhida pelo Kauê depois da auditoria de 03/11 (`docs/jogo.md`, seção 14.2;
 - **Número destaque:** número grande em Anton com rótulo curto em Barlow Condensed embaixo, sempre em bloco, nunca em frase. O "º" sai em Barlow Condensed (o da Anton parece um zero elevado) e "de 412" vai menor ao lado. Amarelo só no número principal do bloco.
 - **Selo:** etiqueta curta inclinada (recorde novo em contorno amarelo, subiu em verde, caiu em vermelho).
 - **Barra:** progresso inclinado em verde `--subiu`.
+- **Trilha de medalhas (04/11/2026, `docs/jogo.md` 14.3):**
+  - **Desenho:** três bolinhas (5, 20 e 50 gols) ligadas por um trilho. A parte cheia é um degradê bronze → prata → ouro preso às bolinhas, recortado até o ponto.
+  - **Bolinhas:** a conquistada vem cheia na cor da medalha (`--m-bronze`, `--m-prata`, `--m-ouro`). A próxima enche de baixo para cima, com o contorno na cor dela.
+  - **Ouro completo:** brilha, e o brilho fica parado com movimento reduzido.
+  - **Versões:** a compacta vai no card, nas Conquistas e no resultado; a grande, com os marcos escritos, vai na ficha.
+  - **Leitura:** o nome da medalha vai sempre por escrito (`aria-label`).
 - **Abas:** a principal é uma fileira em placa, e a marcada vira papel claro com o filete do time embaixo. As de 2º nível são menores, escuras e ficam lado a lado na mesma linha. Nenhuma aba é amarela.
 - **Vazio, erro e carregando:** ícone, frase, detalhe e ação ("Tentar de novo" no erro; convite no vazio, como "Jogar agora").
 - **Cabeçalho de tela:** título em Anton 30 px igual em todas, voltar à esquerda e o **selo único da pré-temporada** à direita. O toque abre a explicação ("tudo vale ponto, mas zera antes do lançamento"); os outros avisos de pré-temporada saíram.
