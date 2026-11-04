@@ -195,7 +195,8 @@ export function telaAquecimento(root: HTMLElement, rota: Rota): () => void {
       elGrito.classList.add('pulso');
     }
     papelPicadoNaTela(palco, cores);
-    vibrar('acerto');
+    // Comemoração forte em toda estação, acertando ou não (jogo.md, 14.4): o 'acerto' (22 ms) quase não se sente.
+    vibrar('gol');
     somTorcida(acertou ? 'festa' : 'uuuh');
     liberaToqueEm = performance.now() + TOQUE_PARA_SEGUIR_DEPOIS_MS;
     timerDaPausa = window.setTimeout(seguir, opcoes.pausaMs ?? PAUSA_PADRAO_MS);
