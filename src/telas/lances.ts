@@ -69,10 +69,14 @@ import {
 } from '../jogo/dicasGatilhos';
 import { dicasDoAparelho, mostrarDica, tirarDica } from './dicas';
 import { abrirRegras } from './regras';
+import { cardDoAlbum, criarMedalhasDoAlbum, favoritosDoAparelho, htmlFiltrosDoAlbum, marcarFavorito } from './albumLances';
+import { abrirFicha } from './fichaLance';
+import { mostrarRumoDasMedalhas } from './rumoMedalhas';
+import { filtrarAlbum, type FiltroAlbum } from '../jogo/lancesTextos';
 
 // Em desenvolvimento, ?lancesFalsos troca o servidor por um de mentira (src/dev/lancesFalsos.ts).
 const FALSO = import.meta.env.DEV && new URLSearchParams(location.search).has('lancesFalsos');
-type Servidor = Pick<typeof SERVIDOR, 'novaPartidaLances' | 'lanceDoJogo' | 'meusLancesHoje'>;
+type Servidor = Pick<typeof SERVIDOR, 'novaPartidaLances' | 'lanceDoJogo' | 'meusLancesHoje' | 'minhasMedalhas'>;
 const servidor = (): Promise<Servidor> => (FALSO ? import('../dev/lancesFalsos') : Promise.resolve(SERVIDOR));
 
 // O código do motivo vai no fim (servidor/motivo.ts), como nos pênaltis.
@@ -145,6 +149,8 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   let escolhidos: Lance[] = [];
   let filtroClube = LANCES.some((l) => l.clube === time.id) ? time.id : 'todos';
   let limparJogo: (() => void) | null = null;
+  let filtroAlbum: FiltroAlbum = 'todos';
+  const medalhasDoAlbum = criarMedalhasDoAlbum(() => servidor().then((s) => s.minhasMedalhas()));
   /** As 6 partidas valendo do dia já foram (o servidor disse): o treino e o álbum avisam. */
   let valendoEsgotado = false;
   // ?disputasFalsas enche a lista em desenvolvimento, enquanto o catálogo está em rascunho (src/dev/disputasFalsas.ts).
@@ -256,6 +262,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           ${clubes.map((c) => `<option value="${c.id}"${c.id === filtroClube ? ' selected' : ''}>${esc(c.nome)}</option>`).join('')}
         </select>
       </label>
+      ${htmlFiltrosDoAlbum(filtroAlbum)}
       <ul class="lista-lances" aria-live="polite"></ul>
       ${placa(
         `<p class="valendo-hoje" data-valendo-hoje hidden></p>
@@ -270,37 +277,84 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     const botaoJogar = el.querySelector<HTMLButtonElement>('[data-acao="jogar"]')!;
 
     function desenharLista(): void {
-      const visiveis = doTipo.filter((l) => filtroClube === 'todos' || l.clube === filtroClube);
-      lista.innerHTML = visiveis.length
-        ? visiveis
-            .map((l) => {
-              const clube = clubeDoLance(l.clube);
-              return `<li class="lance placa filete" style="${estilo(clube.cores)}">
-                <button type="button" class="lance-topo" aria-expanded="false" data-id="${l.id}">
-                  <span class="lance-titulo">${esc(l.titulo)}</span>
-                  <span class="lance-meta">${esc(clube.nome)} · ${l.data.slice(0, 4)} · ${esc(situacaoDoLance(l).split(',')[0])}</span>
-                  <span class="lance-pontos faixa-${l.faixa}">${pontosDaFaixa(l.faixa)}</span>
-                </button>
-                <div class="lance-ficha" hidden>
-                  <p>${esc(l.ficha)}</p>
-                  <div class="numeros dois">
-                    ${numero(`${Math.round(distanciaDoLance(l))}<small>m</small>`, 'Distância')}
-                    ${numero(`+${PONTOS_FAIXA[l.faixa]}`, `Gol ${ROTULO_FAIXA[l.faixa].toLowerCase()}`, 'destaque')}
-                  </div>
-                  <p class="lance-situacao">${esc(situacaoDoLance(l))}</p>
-                  <div class="lance-acoes">
-                    <button type="button" class="botao-linha" data-acao="treinar" data-id="${l.id}">Treinar</button>
-                    <button type="button" class="botao botao-sec" data-acao="por" data-id="${l.id}">Pôr na partida</button>
-                  </div>
-                </div>
-              </li>`;
-            })
-            .join('')
-        : `<li>${estado('vazio', 'Nenhum lance desse clube ainda.', { detalhe: 'Tenta outro!', acao: 'Ver todos os clubes' })}</li>`;
-      aoTocarNoEstado(lista, () => {
-        filtroClube = 'todos';
-        el.querySelector<HTMLSelectElement>('[data-filtro="clube"]')!.value = 'todos';
-        desenharLista();
+      const doClube = doTipo.filter((l) => filtroClube === 'todos' || l.clube === filtroClube);
+      const situacaoMedalhas = medalhasDoAlbum.estado();
+      const mapa = medalhasDoAlbum.mapa();
+      const favs = favoritosDoAparelho();
+      // Sem as medalhas lidas, "Todos" mostra o álbum sem trilha; os outros filtros esperam por elas.
+      const semMedalhas = filtroAlbum !== 'todos' && situacaoMedalhas !== 'ok';
+      const visiveis = semMedalhas ? [] : filtrarAlbum(doClube, situacaoMedalhas === 'ok' ? mapa : new Map(), filtroAlbum, favs);
+      let acao: (() => void) | null = null;
+      if (semMedalhas) {
+        lista.innerHTML =
+          situacaoMedalhas === 'erro'
+            ? `<li>${estado('erro', 'Sem conexão com as medalhas agora.')}</li>`
+            : `<li>${estado('carregando', 'Buscando as medalhas…')}</li>`;
+        acao = () => {
+          medalhasDoAlbum.esquecer();
+          void carregarMedalhas();
+          desenharLista();
+        };
+      } else if (visiveis.length) {
+        lista.innerHTML = visiveis
+          .map((l) => {
+            const clube = clubeDoLance(l.clube);
+            return cardDoAlbum({
+              id: l.id,
+              titulo: l.titulo,
+              meta: `${clube.nome} · ${l.data.slice(0, 4)} · ${situacaoDoLance(l).split(',')[0]}`,
+              pontos: pontosDaFaixa(l.faixa),
+              faixa: l.faixa,
+              estilo: estilo(clube.cores),
+              favorito: favs.has(l.id),
+              numeros: situacaoMedalhas === 'ok' ? (mapa.get(l.id) ?? { gols: 0, recriados: 0 }) : null,
+            });
+          })
+          .join('');
+      } else if (filtroAlbum === 'meus' && doClube.length) {
+        lista.innerHTML = `<li>${estado('vazio', 'Nenhum troféu por aqui ainda.', { detalhe: 'Cinco gols no mesmo lance, em partida valendo, já dão o bronze.', acao: 'Ver todos os lances' })}</li>`;
+        acao = () => {
+          filtroAlbum = 'todos';
+          marcarAba(el, 'album', 'todos');
+          desenharLista();
+        };
+      } else {
+        lista.innerHTML = `<li>${estado('vazio', 'Nenhum lance desse clube ainda.', { detalhe: 'Tenta outro!', acao: 'Ver todos os clubes' })}</li>`;
+        acao = () => {
+          filtroClube = 'todos';
+          el.querySelector<HTMLSelectElement>('[data-filtro="clube"]')!.value = 'todos';
+          desenharLista();
+        };
+      }
+      if (acao) aoTocarNoEstado(lista, acao);
+    }
+
+    /** Lê as medalhas uma vez ao abrir o álbum; quando chegam (ou falham), a lista se refaz com as trilhas. */
+    async function carregarMedalhas(): Promise<void> {
+      await medalhasDoAlbum.carregar();
+      if (lista.isConnected) desenharLista();
+    }
+
+    function abrirFichaDe(lance: Lance): void {
+      const clube = clubeDoLance(lance.clube);
+      abrirFicha({
+        lance,
+        raiz: root,
+        estilo: estilo(clube.cores),
+        meta: `${clube.nome} · ${lance.data.slice(0, 4)} · ${pontosDaFaixa(lance.faixa)}`,
+        situacao: situacaoDoLance(lance),
+        favorito: favoritosDoAparelho().has(lance.id),
+        medalhas: medalhasDoAlbum.paraAFicha(lance.id),
+        aoFavoritar: (f) => {
+          marcarFavorito(lance.id, f);
+          if (lista.isConnected) desenharLista();
+        },
+        aoTreinar: () => jogo([lance], true),
+        aoPor: () => {
+          if (escolhidos.length >= LANCES_POR_PARTIDA) escolhidos.shift();
+          escolhidos.push(lance);
+          desenharSlots();
+        },
       });
     }
 
@@ -315,18 +369,16 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     }
 
     lista.addEventListener('click', (e) => {
-      const alvo = (e.target as HTMLElement).closest<HTMLElement>('button');
-      const lance = alvo && LANCES.find((l) => l.id === alvo.dataset.id);
-      if (!alvo || !lance) return;
-      if (alvo.classList.contains('lance-topo')) {
-        const aberto = alvo.getAttribute('aria-expanded') === 'true';
-        alvo.setAttribute('aria-expanded', String(!aberto));
-        alvo.nextElementSibling?.toggleAttribute('hidden', aberto);
-      } else if (alvo.dataset.acao === 'por') {
-        if (escolhidos.length >= LANCES_POR_PARTIDA) escolhidos.shift();
-        escolhidos.push(lance);
-        desenharSlots();
-      } else if (alvo.dataset.acao === 'treinar') jogo([lance], true);
+      const alvo = (e.target as HTMLElement).closest<HTMLElement>('[data-ficha]');
+      const lance = alvo && LANCES.find((l) => l.id === alvo.dataset.ficha);
+      if (lance) abrirFichaDe(lance);
+    });
+    el.querySelector('[data-album]')?.parentElement?.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLElement>('[data-album]');
+      if (!b) return;
+      filtroAlbum = b.dataset.album as FiltroAlbum;
+      marcarAba(el, 'album', filtroAlbum);
+      desenharLista();
     });
     slots.addEventListener('click', (e) => {
       const slot = (e.target as HTMLElement).closest<HTMLElement>('[data-slot]');
@@ -341,6 +393,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     botaoJogar.addEventListener('click', () => jogo([...escolhidos], false));
     desenharLista();
     desenharSlots();
+    void carregarMedalhas();
     // "Valendo hoje: 2 de 6": sem resposta do servidor, a linha não aparece.
     const elHoje = el.querySelector<HTMLElement>('[data-valendo-hoje]')!;
     void servidor()
@@ -392,6 +445,9 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
 
     const gols = resultados.filter((r) => r.desfecho === 'gol').length;
     const recriou = resultados.filter((r) => r.recriou).length;
+    // Rumo às medalhas: só quando o servidor fechou a partida e ela contou (sob suspeita ou sem conexão, não).
+    const contouProMedalha = !!fim && !fim.sobSuspeita;
+    medalhasDoAlbum.esquecer();
     const esperaRanking = !!fim && situacao.tipo === 'ranking' && !outro;
     const emoji = [
       '⚽ Guerra de Torcidas · Lances do Jogo',
@@ -425,7 +481,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         ${recriou ? `<div class="numeros dois">${numero(String(recriou), recriou === 1 ? 'Lance recriado' : 'Lances recriados', 'destaque')}</div>` : ''}
         <button type="button" class="botao-linha" data-acao="album">Escolher outros</button>`,
         { titulo: `Seus ${lances.length} lances`, filete: true },
-      ),
+      ) + (contouProMedalha ? '<div data-rumo hidden></div>' : ''),
       frases: frase ? [frase] : [],
       aviso: situacao.texto ? { texto: situacao.texto, forte: !valendo } : null,
       selos:
@@ -448,6 +504,14 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           ? () => import('../dev/homeFalsa').then((m) => m.minhaCarreira())
           : undefined,
       );
+    if (fim && contouProMedalha)
+      void mostrarRumoDasMedalhas({
+        alvo: root.querySelector<HTMLElement>('[data-rumo]')!,
+        jogados: lances.map((l, i) => ({ id: l.id, titulo: l.titulo, gol: resultados[i].desfecho === 'gol', recriou: resultados[i].recriou })),
+        novas: fim.medalhas,
+        cores: [time.cores[0], time.cores[1], '#ffd23f'],
+        ler: () => servidor().then((s) => s.minhasMedalhas()),
+      });
     // Efeito no ranking: selo "No ranking em 1 min" que vira "Subiu de 5º pra 3º" (mesmo fluxo dos pênaltis).
     let pararEfeito: (() => void) | null = null;
     if (esperaRanking && fim) {

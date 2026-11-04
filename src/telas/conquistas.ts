@@ -13,6 +13,7 @@ import {
   CONQUISTAS_VAZIO,
   NOME_DA_MEDALHA,
   montarMedalhas,
+  trilhaDoLance,
   ordenarVitrine,
   type MedalhaDoLanceMontada,
   type MedalhasDoClube,
@@ -20,7 +21,7 @@ import {
 import type { Medalha } from '../jogo/lances';
 import * as real from '../servidor/api';
 import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
-import { aoTocarNoEstado, estado, faixa, numero } from './blocos';
+import { aoTocarNoEstado, estado, faixa, numero, trilha } from './blocos';
 
 type Servidor = Pick<typeof real, 'minhasMedalhas' | 'vitrineMedalhas'>;
 // Em desenvolvimento, ?lancesFalsos troca o servidor por um de mentira (src/dev/lancesFalsos.ts).
@@ -60,9 +61,9 @@ function linhaDoLance(l: MedalhaDoLanceMontada): string {
   const m = l.progresso.medalha;
   return `<li class="conq-linha conq-lance">
     <span class="cor" style="--c1:${t.cores[0]};--c2:${t.cores[1]}" aria-hidden="true"></span>
-    <span class="conq-nome">${esc(l.titulo)}<small>${esc(t.nome)} · ${l.gols} ${l.gols === 1 ? 'gol' : 'gols'}${l.recriados ? `, ${l.recriados} recriando` : ''}</small>
-      <small class="conq-falta">${esc(l.progresso.texto)}</small></span>
+    <span class="conq-nome">${esc(l.titulo)}<small>${esc(t.nome)}${l.recriados ? ` · ${l.recriados} recriando` : ''}</small></span>
     ${m ? `<span class="conq-selo ${m}">${bolinha(m)}${NOME_DA_MEDALHA[m]}</span>` : '<span class="conq-selo sem">Sem medalha</span>'}
+    <div class="conq-trilha">${trilha(trilhaDoLance(l.gols, l.recriados), { compacta: true })}</div>
   </li>`;
 }
 

@@ -117,6 +117,159 @@ export function progressoDaMedalha(gols: number, recriados: number): Progresso {
   };
 }
 
+// ---------- trilha de 3 medalhas (docs/jogo.md, seção 14.3) ----------
+// Só desenho e texto a partir do que o servidor já guarda (gols e recriados por lance): não muda regra nem pontos.
+
+const OURO = MEDALHAS[MEDALHAS.length - 1];
+const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
+const fracao = (v: number, de: number, ate: number) => (ate <= de ? 1 : Math.max(0, Math.min(1, (v - de) / (ate - de))));
+
+export interface MarcoDaTrilha {
+  medalha: Medalha;
+  /** Gols que o marco pede (5, 20, 50). */
+  gols: number;
+  conquistada: boolean;
+  /** Só na próxima medalha: quanto da bolinha já está cheio (0 a 1). */
+  parcial: number;
+}
+
+export interface Trilha {
+  gols: number;
+  recriados: number;
+  /** Bronze, prata e ouro, nessa ordem. */
+  marcos: MarcoDaTrilha[];
+  /** Quanto da linha está cheio (0 a 1): três trechos iguais, até o bronze, até a prata e até o ouro. */
+  enche: number;
+  medalha: Medalha | null;
+  proxima: Medalha | null;
+  /** Ouro com os 10 recriados: ganha brilho. */
+  ouroCompleto: boolean;
+  /** Ao lado da trilha: "23 gols · faltam 27". */
+  rotulo: string;
+  /** Barra própria de recriados: o ouro pede 10. */
+  recriadosDoOuro: { feitos: number; pede: number };
+  /** "Faltam 27 gols, 6 recriando, pro ouro." */
+  faltaProOuro: string;
+}
+
+/** Trilha de um lance: as três bolinhas, a linha que se enche e os textos ao lado. */
+export function trilhaDoLance(golsBrutos: number, recriadosBrutos: number): Trilha {
+  const gols = Math.max(0, golsBrutos);
+  const recriados = Math.max(0, Math.min(recriadosBrutos, gols));
+  const p = progressoDaMedalha(gols, recriados);
+  let anterior = 0;
+  let enche = 0;
+  const marcos = MEDALHAS.map((m): MarcoDaTrilha => {
+    const conquistada = gols >= m.acertos && recriados >= m.recriados;
+    // A bolinha da próxima medalha enche pelo trecho de gols; no ouro, também pelos recriados (vale o menor).
+    const doTrecho = Math.min(fracao(gols, anterior, m.acertos), m.recriados ? recriados / m.recriados : 1);
+    const ehProxima = !conquistada && p.proxima?.medalha === m.medalha;
+    enche += (conquistada ? 1 : ehProxima ? doTrecho : 0) / MEDALHAS.length;
+    anterior = m.acertos;
+    return { medalha: m.medalha, gols: m.acertos, conquistada, parcial: ehProxima ? doTrecho : 0 };
+  });
+  let rotulo = plural(gols, 'gol', 'gols');
+  if (p.proxima) {
+    const alvo = MEDALHAS.find((m) => m.medalha === p.proxima!.medalha)!;
+    // Gols de sobra, mas faltando recriados: o que falta é recriar.
+    rotulo += gols >= alvo.acertos ? ` · faltam ${p.proxima.faltamRecriados} recriando` : ` · faltam ${p.proxima.faltamGols}`;
+  } else rotulo += ' · ouro completo';
+  const faltaRec = Math.max(0, OURO.recriados - recriados);
+  const faltaGols = Math.max(OURO.acertos - gols, faltaRec, 0);
+  return {
+    gols,
+    recriados,
+    marcos,
+    enche: Math.min(1, enche),
+    medalha: p.medalha,
+    proxima: p.proxima?.medalha ?? null,
+    ouroCompleto: !p.proxima,
+    rotulo,
+    recriadosDoOuro: { feitos: Math.min(recriados, OURO.recriados), pede: OURO.recriados },
+    faltaProOuro: !p.proxima
+      ? 'Ouro completo!'
+      : `Faltam ${plural(faltaGols, 'gol', 'gols')}${faltaRec ? `, ${faltaRec} recriando,` : ''} pro ouro.`,
+  };
+}
+
+export interface LinhaRumo {
+  texto: string;
+  /** Medalha que entrou com esta partida (a maior, se subiu duas), ou null. */
+  subiu: Medalha | null;
+}
+
+/**
+ * Linha do resultado por lance: "+1 rumo ao ouro · 24/50". Sem gol na partida: "Rumo ao ouro · 23/50".
+ * Gols de sobra, faltando recriados: "+1 rumo ao ouro · 7/10 recriando". Ouro completo: "+1 · ouro completo · 53 gols".
+ */
+export function linhaRumo(antes: { gols: number; recriados: number }, depois: { gols: number; recriados: number }): LinhaRumo {
+  const ganhou = Math.max(0, depois.gols - antes.gols);
+  const mAntes = medalhaDoLance(antes.gols, antes.recriados);
+  const mDepois = medalhaDoLance(depois.gols, depois.recriados);
+  const subiu = mDepois && mDepois !== mAntes ? mDepois : null;
+  const p = progressoDaMedalha(depois.gols, depois.recriados);
+  if (!p.proxima) return { texto: `${ganhou ? `+${ganhou} · ` : ''}ouro completo · ${plural(depois.gols, 'gol', 'gols')}`, subiu };
+  const alvo = MEDALHAS.find((m) => m.medalha === p.proxima!.medalha)!;
+  const nome = `${alvo.medalha === 'prata' ? 'à' : 'ao'} ${NOME_DA_MEDALHA[alvo.medalha].toLowerCase()}`;
+  const conta = depois.gols >= alvo.acertos ? `${depois.recriados}/${alvo.recriados} recriando` : `${depois.gols}/${alvo.acertos}`;
+  return { texto: `${ganhou ? `+${ganhou} rumo` : 'Rumo'} ${nome} · ${conta}`, subiu };
+}
+
+/**
+ * Uma linha por lance da partida (sem repetir), na ordem em que foram jogados. `depois` é a leitura de
+ * minhas_medalhas() logo depois de a partida fechar (o gatilho já anotou os gols). Só para partida que contou.
+ */
+export function linhasRumoDaPartida(
+  jogados: readonly { id: string; gol: boolean; recriou: boolean }[],
+  depois: readonly LinhaMedalha[],
+): { lanceId: string; linha: LinhaRumo }[] {
+  return [...new Set(jogados.map((j) => j.id))].map((id) => {
+    const daqui = jogados.filter((j) => j.id === id && j.gol);
+    const gols = daqui.length;
+    const rec = daqui.filter((j) => j.recriou).length;
+    const d = depois.find((l) => l.lance_id === id) ?? { gols, recriados: rec };
+    const antes = { gols: Math.max(0, d.gols - gols), recriados: Math.max(0, d.recriados - rec) };
+    return { lanceId: id, linha: linhaRumo(antes, { gols: d.gols, recriados: d.recriados }) };
+  });
+}
+
+/** Prévia na ficha: a linha do resultado com mais um gol (recriando, se o que falta pro ouro é recriar). */
+export function previaDoProximoGol(gols: number, recriados: number): string {
+  const recria = recriados < OURO.recriados && gols + 1 >= OURO.acertos;
+  return linhaRumo({ gols, recriados }, { gols: gols + 1, recriados: recriados + (recria ? 1 : 0) }).texto;
+}
+
+export type FiltroAlbum = 'todos' | 'meus' | 'perto';
+
+/**
+ * Álbum: "Todos" (ordem do catálogo), "Meus troféus" (só lances com medalha) e "Perto do próximo" (pelos gols
+ * que faltam pra próxima medalha; ouro completo vai pro fim). Favoritos sempre primeiro.
+ */
+export function filtrarAlbum<T extends { id: string }>(
+  lances: readonly T[],
+  medalhas: ReadonlyMap<string, { gols: number; recriados: number }>,
+  filtro: FiltroAlbum,
+  favoritos: ReadonlySet<string>,
+): T[] {
+  const de = (id: string) => medalhas.get(id) ?? { gols: 0, recriados: 0 };
+  const falta = (id: string) => progressoDaMedalha(de(id).gols, de(id).recriados).proxima?.faltamGols ?? Infinity;
+  const fav = (id: string) => (favoritos.has(id) ? 0 : 1);
+  return lances
+    .map((l, i) => ({ l, i }))
+    .filter(({ l }) => filtro !== 'meus' || medalhaDoLance(de(l.id).gols, de(l.id).recriados) !== null)
+    .sort((a, b) => {
+      if (fav(a.l.id) !== fav(b.l.id)) return fav(a.l.id) - fav(b.l.id);
+      if (filtro === 'perto') {
+        const fa = falta(a.l.id);
+        const fb = falta(b.l.id);
+        if (fa !== fb) return fa < fb ? -1 : 1;
+        if (de(a.l.id).gols !== de(b.l.id).gols) return de(b.l.id).gols - de(a.l.id).gols;
+      }
+      return a.i - b.i;
+    })
+    .map(({ l }) => l);
+}
+
 export interface LinhaMedalha {
   lance_id: string;
   gols: number;

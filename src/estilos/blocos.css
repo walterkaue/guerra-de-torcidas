@@ -501,3 +501,188 @@
     animation: none;
   }
 }
+
+/* ---------- trilha de medalhas (jogo.md 14.3): três bolinhas ligadas por uma linha que se enche ---------- */
+:root {
+  --m-bronze: #c27b3a;
+  --m-prata: #c9d1d8;
+  --m-ouro: #e9c75a;
+}
+
+.trilha {
+  --d: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  min-width: 0;
+}
+
+.trilha.compacta {
+  --d: 14px;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.trilha-via {
+  position: relative;
+  flex: none;
+  height: calc(var(--d) + 20px);
+}
+
+.trilha.compacta .trilha-via {
+  flex: 1 1 96px;
+  min-width: 72px;
+  height: var(--d);
+}
+
+.trilha-trilho {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--d) / 2 - 2px);
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(245, 245, 240, 0.18);
+}
+
+/* A parte cheia ocupa o trilho todo e é recortada até o ponto: o degradê fica preso às bolinhas. */
+.trilha-trilho > i {
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--m-bronze) 33%, var(--m-prata) 66%, var(--m-ouro));
+  clip-path: inset(0 calc(100% - (100% - var(--d)) * var(--enche, 0) - var(--d) / 2) 0 0);
+  transition: clip-path var(--lento) var(--mola-firme);
+}
+
+.trilha.vazia .trilha-trilho > i {
+  clip-path: inset(0 100% 0 0);
+}
+
+.trilha-marco {
+  position: absolute;
+  top: 0;
+  left: calc((100% - var(--d)) * var(--k) / 3);
+  width: var(--d);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.trilha-marco > b {
+  position: absolute;
+  top: calc(var(--d) + 3px);
+  font: 700 14px/1 var(--fonte-rotulo);
+  letter-spacing: 0.04em;
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+
+.trilha-bol {
+  --m: var(--m-bronze);
+  width: var(--d);
+  height: var(--d);
+  border-radius: 50%;
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 2px rgba(245, 245, 240, 0.35);
+}
+
+.trilha-bol.prata {
+  --m: var(--m-prata);
+}
+
+.trilha-bol.ouro {
+  --m: var(--m-ouro);
+}
+
+.trilha-bol.conquistada {
+  background: var(--m);
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.35);
+}
+
+/* A próxima: preenchida em parte (cresce de baixo pra cima), com o contorno da cor dela. */
+.trilha-bol.parcial {
+  background: linear-gradient(to top, var(--m) calc(var(--parcial, 0) * 100%), var(--placa-alta) 0);
+  box-shadow: inset 0 0 0 2px var(--m);
+}
+
+.trilha-rotulo {
+  flex: none;
+  font: 700 14px/1.15 var(--fonte-rotulo);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cal);
+}
+
+.trilha.compacta .trilha-rotulo {
+  font-size: 13px;
+}
+
+/* Ouro completo: brilho suave na terceira bolinha (parado com movimento reduzido). */
+.trilha.ouro-completo .trilha-bol.ouro {
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.35), 0 0 8px 2px rgba(233, 199, 90, 0.7);
+  animation: brilho-ouro 2.4s ease-in-out infinite;
+}
+
+@keyframes brilho-ouro {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.35), 0 0 4px 1px rgba(233, 199, 90, 0.45);
+  }
+  50% {
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.35), 0 0 12px 4px rgba(233, 199, 90, 0.85);
+  }
+}
+
+/* Selo da medalha (nome por escrito + bolinha na cor dela). */
+.selo-medalha {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  font: 700 13px var(--fonte-rotulo);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cal);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trilha-trilho > i {
+    transition: none;
+  }
+  .trilha.ouro-completo .trilha-bol.ouro {
+    animation: none;
+  }
+}
+
+/* Bolinha da medalha (aba Conquistas, selos e resultado). */
+.medalha {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.35);
+}
+
+.numero .medalha {
+  width: 22px;
+  height: 22px;
+  align-self: center;
+}
+
+.medalha.ouro {
+  background: var(--m-ouro);
+}
+
+.medalha.prata {
+  background: var(--m-prata);
+}
+
+.medalha.bronze {
+  background: var(--m-bronze);
+}

@@ -1,0 +1,235 @@
+/* Troféus dos lances (jogo.md 14.3): ficha que abre de baixo, cards do álbum com trilha e filtros, placa do resultado. */
+
+/* ---------- ficha (bottom sheet) ---------- */
+.ficha-lance {
+  position: fixed;
+  inset: auto 0 0 0;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90dvh;
+  padding: 0;
+  border: 0;
+  border-radius: var(--raio-g) var(--raio-g) 0 0;
+  background: var(--placa);
+  color: var(--cal);
+  box-shadow: var(--sombra-alta), inset 0 4px 0 var(--c1, var(--cal));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: ficha-sobe var(--medio) var(--mola-firme);
+}
+
+.ficha-lance::backdrop {
+  background: rgba(0, 0, 0, 0.62);
+}
+
+@keyframes ficha-sobe {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.ficha-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4) calc(var(--e4) + env(safe-area-inset-bottom));
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.ficha-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+}
+
+.ficha-fav,
+.ficha-fechar {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 var(--e3);
+  border: 0;
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  color: var(--cal);
+  font: 700 14px var(--fonte-rotulo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+
+.ficha-fechar {
+  font-size: 18px;
+}
+
+.ficha-fav .ico {
+  font-size: 20px;
+}
+
+.ficha-fav[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 2px var(--m-ouro);
+}
+
+.ficha-fav[aria-pressed='true'] .ico {
+  fill: var(--m-ouro);
+  color: var(--m-ouro);
+}
+
+.ficha-fav:active,
+.ficha-fechar:active {
+  transform: scale(0.95);
+  transition-duration: 0s;
+}
+
+.ficha-meta {
+  font: 700 13px var(--fonte-rotulo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.ficha-titulo {
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.ficha-medalhas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  padding: var(--e3);
+  border-radius: var(--raio);
+  background: var(--placa-alta);
+}
+
+.ficha-aviso {
+  color: var(--texto-suave);
+}
+
+.ficha-recriados-rotulo {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font: 700 14px var(--fonte-rotulo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ficha-falta {
+  font-weight: 700;
+}
+
+.ficha-previa {
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.ficha-previa span {
+  font-weight: 700;
+  color: var(--cal);
+}
+
+.ficha-lance .lance-acoes {
+  margin-top: var(--e1);
+}
+
+.ficha-lance .lance-acoes .botao,
+.ficha-lance .lance-acoes .botao-linha {
+  min-height: 52px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ficha-lance {
+    animation: none;
+  }
+}
+
+/* ---------- cards do álbum (botão que abre a ficha) ---------- */
+.lance-card {
+  grid-template-areas:
+    'titulo pontos'
+    'meta pontos'
+    'trilha trilha';
+}
+
+.lance-card .lance-titulo {
+  grid-area: titulo;
+}
+
+.lance-card .lance-meta {
+  grid-area: meta;
+}
+
+.lance-card .lance-pontos {
+  grid-area: pontos;
+}
+
+.lance-card .trilha {
+  grid-area: trilha;
+  margin-top: var(--e2);
+}
+
+.lance-card:active {
+  background: rgba(245, 245, 240, 0.05);
+}
+
+.lance-estrela {
+  display: inline-block;
+  vertical-align: -3px;
+  margin-right: 4px;
+  color: var(--m-ouro);
+}
+
+.lance-estrela .ico {
+  fill: currentColor;
+}
+
+/* ---------- "Rumo às medalhas" no resultado ---------- */
+.rumo-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.rumo-linha {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--e3) 0;
+}
+
+.rumo-linha + .rumo-linha {
+  border-top: 1px solid var(--linha);
+}
+
+.rumo-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+}
+
+.rumo-titulo {
+  font-weight: 800;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.rumo-texto {
+  font-size: 15px;
+  color: var(--cal);
+}

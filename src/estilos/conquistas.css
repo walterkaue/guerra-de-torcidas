@@ -99,33 +99,6 @@
   color: var(--texto-suave);
 }
 
-.medalha {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  flex: none;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.35);
-}
-
-.numero .medalha {
-  width: 22px;
-  height: 22px;
-  align-self: center;
-}
-
-.medalha.ouro {
-  background: #e9c75a;
-}
-
-.medalha.prata {
-  background: #c9d1d8;
-}
-
-.medalha.bronze {
-  background: #c27b3a;
-}
-
 .conq-selo {
   display: inline-flex;
   align-items: center;
@@ -149,4 +122,10 @@
 
 .conquistas .rodape-apoio {
   text-align: center;
+}
+
+/* Trilha do lance ocupa a linha de baixo, de ponta a ponta. */
+.conq-trilha {
+  flex: 1 1 100%;
+  padding-left: 20px;
 }

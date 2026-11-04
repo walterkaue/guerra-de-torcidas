@@ -7,7 +7,7 @@
 
 import { LANCES } from '../dados/lances';
 import { sementeNova } from '../jogo/aleatorio';
-import type { Lance } from '../jogo/lances';
+import { medalhaDoLance, type Lance } from '../jogo/lances';
 import {
   LANCES_PARTIDAS_POR_DIA,
   goleiroParaOCelular,
@@ -31,6 +31,22 @@ const espera = () => new Promise((ok) => setTimeout(ok, latencia));
 let feitas = noLimite ? LANCES_PARTIDAS_POR_DIA : 0;
 let melhor: number | null = null;
 let recorde: number | null = null;
+// Medalhas de mentira, nos lances do Flamengo primeiro (o time de teste): sem gol, bronze, 23 gols com 4 recriados,
+// 52 com 6 (faltam recriados), ouro completo, e dois quase na próxima medalha (4 e 19 gols) para ver a subida.
+// A partida falsa soma os gols dela aqui, então "+1 rumo ao…" e a comemoração aparecem de verdade.
+const peso = (l: Lance) => (l.tipo !== 'falta' ? 0 : l.clube === 'flamengo' ? 2 : 1);
+const ordemDoAlbum = [...LANCES].sort((a, b) => peso(b) - peso(a));
+const medalhasFalsas = new Map<string, { gols: number; recriados: number }>(
+  [
+    [5, 1],
+    [23, 4],
+    [52, 11],
+    [4, 0],
+    [52, 6],
+    [19, 3],
+  ].map(([gols, recriados], i) => [ordemDoAlbum[i].id, { gols, recriados }]),
+);
+
 let estado: { cenas: Lance[]; gestos: GestosLances; chamadas: number } | null = null;
 
 export async function novaPartidaLances(ids: string[]): Promise<RespostaNovaLances> {
@@ -59,6 +75,16 @@ export async function lanceDoJogo(_id: string, i: number, gesto: GestoCobranca):
   let fim: FechamentoLances | null = null;
   if (i === 2) {
     const resultado = fecharPartidaLances(e.gestos.sementes, e.cenas, e.gestos.cobrancas);
+    const novas: { lanceId: string; medalha: 'bronze' | 'prata' | 'ouro' }[] = [];
+    resultado.lances.forEach((r, k) => {
+      if (r.desfecho !== 'gol') return;
+      const id = e.cenas[k].id;
+      const antes = medalhasFalsas.get(id) ?? { gols: 0, recriados: 0 };
+      const depois = { gols: antes.gols + 1, recriados: antes.recriados + (r.recriou ? 1 : 0) };
+      medalhasFalsas.set(id, depois);
+      const m = medalhaDoLance(depois.gols, depois.recriados);
+      if (m && m !== medalhaDoLance(antes.gols, antes.recriados)) novas.push({ lanceId: id, medalha: m });
+    });
     const antes = melhor;
     const conta = antes === null || resultado.pontos > antes;
     if (conta) melhor = resultado.pontos;
@@ -73,8 +99,7 @@ export async function lanceDoJogo(_id: string, i: number, gesto: GestoCobranca):
       ranking: { antes: null, depois: null },
       confirmadaEm: new Date().toISOString(),
       desempenho: { posicao: 3, total: 14, recorde, novo_recorde: novoRecorde },
-      // Sempre uma medalha nova no 1º lance, para conferir o selo.
-      medalhas: [{ lanceId: e.cenas[0].id, medalha: 'bronze' }],
+      medalhas: novas,
       restantesHoje: LANCES_PARTIDAS_POR_DIA - feitas,
     };
   }
@@ -88,14 +113,7 @@ export async function meusLancesHoje(): Promise<LancesHoje | null> {
 
 export async function minhasMedalhas(): Promise<MedalhaDoLance[]> {
   await espera();
-  const ids = LANCES.slice(0, 5).map((l) => l.id);
-  return [
-    { lance_id: ids[0], gols: 5, recriados: 1, medalha: 'bronze' },
-    { lance_id: ids[1], gols: 23, recriados: 4, medalha: 'prata' },
-    { lance_id: ids[2], gols: 52, recriados: 11, medalha: 'ouro' },
-    { lance_id: ids[3], gols: 2, recriados: 0, medalha: null },
-    { lance_id: ids[4], gols: 50, recriados: 6, medalha: 'prata' },
-  ];
+  return [...medalhasFalsas].map(([lance_id, n]) => ({ lance_id, ...n, medalha: medalhaDoLance(n.gols, n.recriados) }));
 }
 
 export async function vitrineMedalhas(): Promise<VitrineDoTime[]> {
