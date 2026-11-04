@@ -7,10 +7,10 @@
 
 | Área | Estado em 02/11/2026 |
 |---|---|
-| Código | `main` com 87 arquivos e 1.793 testes passando (PR #92, código do torcedor, em 03/11) |
-| Publicação | Site no ar (`main` de 03/11, 19h48, com o PR #92). 34 migrações aplicadas (a 34ª, do código do torcedor, em 03/11 por volta das 19h30, antes do merge). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
+| Código | `main` com 87 arquivos de teste e 1.796 testes passando (PR #96, Grafismo de TV, em 04/11) |
+| Publicação | Site no ar (`main` de 04/11, 8h07, com o PR #96; o deploy foi conferido e o site serve o build testado). 34 migrações aplicadas (a 34ª, do código do torcedor, em 03/11 por volta das 19h30, antes do merge). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
-| Tamanho | Em 03/11/2026, na branch `claude/grafismo-tv`: bundle inicial de 59 KB gzip (limite: ~300 KB). Somando todo o JS e o CSS, 251 KB gzip. A conta de 02/11 deu 216 KB, mas pode não ter usado o mesmo método |
+| Tamanho | Em 04/11/2026, com o PR #96: bundle inicial de 59 KB gzip (limite: ~300 KB). Somando todo o JS e o CSS, 251 KB gzip. A conta de 02/11 deu 216 KB, mas pode não ter usado o mesmo método |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
 | Uso | 7 jogadores, 4 na semana, 87 partidas. Pênaltis trazem 82% dos pontos. Amostra pequena |
 
@@ -20,7 +20,7 @@
 
 **Pênaltis com uma semente por lance:** feito em 03/11/2026 (PR #90). Detalhes na seção "Conferir primeiro", item 8.
 
-**Grafismo de TV (auditoria visual, `docs/jogo.md` seção 14.2, `docs/visual.md` seção 4.6):** construído em 03/11/2026 na branch `claude/grafismo-tv`, à espera do merge do Kauê (o merge é o que publica).
+**Grafismo de TV (auditoria visual, `docs/jogo.md` seção 14.2, `docs/visual.md` seção 4.6):** construído em 03/11/2026 e no ar desde 04/11/2026, às 8h07 (PR #96).
 - **O que entrou:**
   - blocos em `src/telas/blocos.ts` e `src/estilos/blocos.css`;
   - resultado padrão em `src/telas/resultadoPadrao.ts`, nos 5 jogos;
@@ -33,7 +33,7 @@
     - texto grudado no fim do Crava;
     - "PÊNALTIS bora jogar mais" no fim do Time do Dia: agora leva aos Lances do Jogo, e a barra fixa não cobre mais o conteúdo;
     - número "14"/"15" da Prova: eram os segundos do relógio e agora aparecem como "14 s".
-- **Conferir no celular depois do merge:**
+- **Conferir no celular (o Kauê, no site no ar):**
   - a faixa "Aqui é só resenha" grudada no topo ao rolar o Crava (no Safari antigo, sem `clip`, ela volta a não grudar);
   - o selo "Pré-temporada" abrindo e fechando ao toque;
   - os botões Card, Stories, Emoji e Link nos 5 resultados.
