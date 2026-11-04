@@ -16,18 +16,22 @@ const cenario = params.get('cenario') ?? 'dia';
 const espera = <T>(v: T) => new Promise<T>((ok) => setTimeout(() => ok(v), 120));
 
 export function rankingDaSemana(): Promise<LinhaRanking[]> {
-  // ?semRanking: semana sem ninguém jogando.
+  // ?semRanking: semana sem ninguém jogando. ?rankingErro: sem conexão. ?rankingDemora: fica carregando.
+  if (params.has('rankingErro')) return new Promise((_, falha) => setTimeout(() => falha(new Error('rede')), 120));
+  if (params.has('rankingDemora')) return new Promise(() => {});
   const times = TIMES.filter((t) => t.id !== ID_OUTRO);
-  return espera(
-    times.map((t, i) => ({
-      time_id: t.id,
-      ativos: params.has('semRanking') ? 0 : 12,
-      soma: 0,
-      media30: params.has('semRanking') ? 0 : 240 - i * 12 - (i % 3),
-      posicao_campeao: i + 1,
-      posicao_soma: i + 1,
-    })),
-  );
+  const vazio = params.has('semRanking');
+  const linhas = times.map((t, i) => ({
+    time_id: t.id,
+    ativos: vazio ? 0 : 10 + ((i * 7) % 5),
+    // A soma não segue a média (é vitrine), mas a posição dela sempre segue a soma, como no servidor.
+    soma: vazio ? 0 : 600 + ((i * 7919) % 1200),
+    media30: vazio ? 0 : 240 - i * 12 - (i % 3),
+    posicao_campeao: i + 1,
+    posicao_soma: 0,
+  }));
+  [...linhas].sort((a, b) => b.soma - a.soma).forEach((l, i) => (l.posicao_soma = i + 1));
+  return espera(linhas);
 }
 
 export const minhaPosicaoSemana = (): Promise<PosicaoSemana | null> =>

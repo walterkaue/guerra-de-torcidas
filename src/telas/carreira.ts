@@ -12,6 +12,8 @@ import {
   type Carreira,
 } from '../jogo/carreira';
 import { minhaCarreira } from '../servidor/api';
+import { barra, faixa, numero, placa, selo } from './blocos';
+import { icone } from './icones';
 
 const CHAVE = 'gdt:carreira';
 
@@ -45,14 +47,12 @@ export function carregarCarreiraPerfil(el: HTMLElement, saiu: () => boolean, ler
     const n = nivelDe(c.xp);
     const bonus = linhaBonus(c.bonus);
     el.innerHTML = `
-      <div class="carreira-topo">
-        <p class="carreira-nivel">${n.nome}</p>
-        <p class="carreira-xp">${c.xp.toLocaleString('pt-BR')} XP</p>
+      ${faixa('Carreira')}
+      <div class="numeros dois">
+        ${numero(n.nome, 'Nível', 'destaque')}
+        ${numero(c.xp.toLocaleString('pt-BR'), 'XP')}
       </div>
-      <div class="carreira-barra" role="progressbar" aria-label="${linhaFalta(n)}"
-        aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(n.fracao * 100)}">
-        <span style="--enche:${n.fracao}"></span>
-      </div>
+      ${barra(n.fracao, linhaFalta(n))}
       <p class="carreira-falta">${linhaFalta(n)}</p>
       <p class="carreira-linha">${linhaHoje(c.partidasHoje)}</p>
       ${bonus ? `<p class="carreira-linha carreira-bonus">${bonus}</p>` : ''}`;
@@ -60,16 +60,24 @@ export function carregarCarreiraPerfil(el: HTMLElement, saiu: () => boolean, ler
   });
 }
 
-/** Linha do resultado: "+10 XP na carreira · Reserva" ou o selo "Subiu pra Titular!". Só com servidor. */
-export function mostrarCarreiraNoResultado(el: HTMLElement | null): void {
+/** Placa do resultado: nível, "+10 XP" (ou o selo "Subiu pra Titular!") e a barra até o próximo. Só com servidor. */
+export function mostrarCarreiraNoResultado(el: HTMLElement | null, ler: () => Promise<Carreira | null> = buscar): void {
   if (!el) return;
-  void buscar().then((c) => {
+  void ler().then((c) => {
     if (!c) return;
-    const r = linhaResultado(xpVisto(c.xp), c.xp);
-    if (!r) return;
-    el.innerHTML = r.subiu
-      ? `<span class="selo-recorde">${r.texto}</span>`
-      : `<p>${r.texto}</p>`;
+    const antes = xpVisto(c.xp);
+    const r = linhaResultado(antes, c.xp);
+    if (!r || antes === null) return;
+    const n = nivelDe(c.xp);
+    el.innerHTML = placa(
+      `<div class="carreira-res">
+        <p class="carreira-nivel">${n.nome}</p>
+        ${r.subiu ? selo(`${icone('estrela')} ${r.texto}`, 'ouro') : `<p class="carreira-ganho">+${(c.xp - antes).toLocaleString('pt-BR')} XP</p>`}
+      </div>
+      ${barra(n.fracao, linhaFalta(n))}
+      <p class="carreira-falta">${linhaFalta(n)}</p>`,
+      { titulo: 'Carreira', classe: 'aperta' },
+    );
     el.hidden = false;
   });
 }

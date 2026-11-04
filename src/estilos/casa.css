@@ -25,36 +25,22 @@
   text-transform: uppercase;
 }
 
-/* Cabeçalho na faixa de placar do time. */
+/* Ficha de fundação: placa com o filete nas cores do time (os blocos vêm de estilos/blocos.css). */
 .casa-faixa {
-  margin-top: -8px;
-  /* Embaixo, uma tira fixa de 22px (filete + cor de apoio): o texto nunca encosta nela, em qualquer largura. */
-  padding: 14px 16px 30px;
-  border-radius: 14px;
-  background: linear-gradient(to bottom, var(--c1) 0 calc(100% - 22px), var(--c3) calc(100% - 22px) calc(100% - 19px), var(--c2) calc(100% - 19px) 100%);
-  color: var(--txt);
-}
-.casa-faixa.clara {
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
-}
-.casa-titulo {
-  font-family: var(--fonte-placar);
-  font-size: 32px;
-  font-weight: 400;
-  line-height: 1.05;
-  text-transform: uppercase;
-  overflow-wrap: anywhere;
+  gap: 0;
+  padding-bottom: var(--e3);
 }
 .casa-sub {
-  margin-top: 4px;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16px;
+  color: var(--cal);
 }
 
 /* Blocos recolhíveis. */
 .bloco-casa {
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.32);
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
 }
 .bloco-casa > summary {
   display: flex;
@@ -62,6 +48,10 @@
   gap: 8px;
   min-height: 52px;
   padding: 0 16px;
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   font-size: 18px;
   list-style: none;
   cursor: pointer;
@@ -75,7 +65,7 @@
   margin-left: auto;
   font-family: var(--fonte-placar);
   font-size: 22px;
-  color: var(--amarelo);
+  color: var(--cal);
 }
 .bloco-casa[open] > summary::after {
   content: '–';
@@ -83,7 +73,7 @@
 .contador {
   padding: 0 8px;
   border-radius: 8px;
-  background: var(--amarelo);
+  background: var(--cal);
   color: var(--tinta);
   font-family: var(--fonte-placar);
   font-weight: 400;
@@ -302,10 +292,10 @@
   /* Respiro antes e depois: é um convite para fora do jogo, não mais um bloco da Casa. */
   margin: 8px 0 6px;
   padding: 16px;
-  border-radius: 14px;
+  border-radius: var(--raio);
   /* Cor cheia (docs/visual.md): sem a transparência dos blocos, as listras do gramado não cortam o texto ao meio. */
-  background: #0a2a15;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
 }
 .casa-socio h3 {
   font-size: 18px;

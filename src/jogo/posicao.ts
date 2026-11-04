@@ -73,6 +73,26 @@ export function recordeCrava(porRodada: ReadonlyMap<number, number>, rodada: num
   return { recorde, novo };
 }
 
+const ONDE_CURTO: Record<Minigame, string> = {
+  penaltis: 'nos pênaltis',
+  prova: 'na Prova',
+  dia: 'no Time do Dia',
+  lances: 'nos Lances',
+};
+
+/**
+ * Selos do resultado padrão (docs/jogo.md 14.2): "Novo recorde!", "2º de 9 nos pênaltis" e
+ * "Recorde: 85 pontos". Curtos, para caber em selo; vazio sem servidor.
+ */
+export function selosDaPosicao(d: Desempenho | null, minigame: Minigame): { texto: string; tom?: 'ouro' }[] {
+  if (!d) return [];
+  const selos: { texto: string; tom?: 'ouro' }[] = [];
+  if (d.novoRecorde) selos.push({ texto: 'Novo recorde!', tom: 'ouro' });
+  if (d.posicao !== null) selos.push({ texto: `${d.posicao}º de ${d.total} ${ONDE_CURTO[minigame]}` });
+  if (d.recorde !== null && !d.novoRecorde) selos.push({ texto: `Recorde: ${pontos(d.recorde)}` });
+  return selos;
+}
+
 /**
  * Bloco da tela de resultado: "NOVO RECORDE!", posição naquele minigame e recorde. Vazio quando não
  * há nada para mostrar (sem servidor, ou partida fora do ranking e sem recorde). Só números e textos

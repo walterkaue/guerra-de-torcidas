@@ -39,6 +39,20 @@
   --fonte-rotulo: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
   --fonte-texto: 'Barlow', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --inclinacao: -8deg;
+  /* Grafismo de TV (docs/jogo.md 14.2, docs/visual.md 4.6): placas quase pretas sobre o gramado. */
+  --placa: #0a130e;
+  --placa-alta: #16211b;
+  --linha: rgba(245, 245, 240, 0.1);
+  --raio-p: 8px;
+  --raio: 12px;
+  --raio-g: 16px;
+  --sombra-placa: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 20px -8px rgba(0, 0, 0, 0.6);
+  --sombra-alta: 0 14px 32px -8px rgba(0, 0, 0, 0.7);
+  --e1: 4px;
+  --e2: 8px;
+  --e3: 12px;
+  --e4: 16px;
+  --e5: 24px;
   /* Movimento (docs/visual.md, seção 4): durações curtas e duas molas. --mola passa ~10% do ponto
      e volta (pop de adesivo, botão soltando); --mola-firme quase não passa (cards, barras).
      Navegador sem linear() (Chrome < 113, Safari < 17.2) fica com a cubic-bezier de reserva. */
@@ -71,10 +85,13 @@
   display: none !important;
 }
 
+/* clip, e não hidden: corta a rolagem lateral sem desligar o position: sticky (faixa do Crava). */
 html,
 body {
   min-height: 100%;
+  /* Navegador sem clip (Safari < 16) fica com hidden, como antes. */
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {

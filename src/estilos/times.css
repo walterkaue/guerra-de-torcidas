@@ -1,0 +1,13 @@
+/* Escolha do time (Grafismo de TV): o time marcado ganha contorno claro, sem amarelo (amarelo é do botão principal). */
+.times .cartao-time[aria-checked='true'] {
+  border-color: var(--cal);
+  box-shadow: 0 0 0 3px rgba(245, 245, 240, 0.35);
+}
+
+.times .aviso-caixa {
+  padding: var(--e3) var(--e4);
+  border: 0;
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
+}

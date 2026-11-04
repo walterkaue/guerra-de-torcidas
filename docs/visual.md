@@ -1,6 +1,7 @@
 # Revisão gráfica — direção "Transmissão de domingo"
 
-> Versão 1.11 · 31/10/2026 · **Direção aprovada em 18/10/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Versão 1.12 · 03/11/2026 · **Direção aprovada em 18/10/2026; rota "Grafismo de TV" em 03/11/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Mudanças da 1.12: "Grafismo de TV" (seção 4.6): placas, números em bloco, selo único da pré-temporada, abas de dois níveis e resultado padrão nos 5 jogos; Resultado (seção 3) e Perfil (3.1) seguem a 4.6.
 > Base: o jogo publicado em 18/10/2026 (commit b492b99), testado em 390×844.
 > Mudanças da 1.11: card de compartilhamento "Telão do estádio" (seção 3).
 > Mudanças da 1.10: seção da Casa na Home, com estádio e troféus (seção 3, item 7), e total de lances no card dos Lances (seção 3, item 5).
@@ -87,7 +88,7 @@ Home nova, decidida em 31/10/2026. De cima para baixo:
 - **"+85 PRO [TIME]"** contando de 0 até o total, com os bônus em etiquetas (com o artigo certo: "pra Chapecoense").
 - **O efeito na torcida:** "subiu de 5º pra 3º na Série A" com barra enchendo, e quanto falta para o próximo.
 - **Sua posição naquele minigame** na semana e o **recorde pessoal**; quando bate o recorde, selo "NOVO RECORDE!" (que entra no card).
-- Botões: "Chamar no X1" (WhatsApp, o maior), Stories, Placar em emoji, Copiar link, e "Revanche" como ação principal.
+- Botões: "Mandar no grupo" (WhatsApp, o maior, verde), com Card, Stories, Emoji e Link embaixo, e "Mais uma" ou "Revanche" como ação principal. Ordem e blocos do resultado padrão na seção 4.6 (03/11/2026).
 
 ### Card de compartilhamento
 Card 'Telão do estádio' (decidido em 31/10/2026): arquibancada do clube no alto com a luz pelo horário da Home; telão pendurado com o resultado de cada jogo (placar nos Lances, escada na Prova, bolinhas sem revelar o clube no Time do Dia, palpites ou acertos no Crava); '+pontos pro time' em Anton amarelo como protagonista; adesivo do narrador; gramado e rodapé com selo da Carreira, link e aviso da pré-temporada. Sem escudo, camisa ou pessoa; legível na miniatura do WhatsApp. A arquibancada do card é sempre a do clube, mesmo em lance da seleção. Todo minigame novo usa este modelo, com seu conteúdo dentro do telão.
@@ -114,6 +115,7 @@ Card 'Telão do estádio' (decidido em 31/10/2026): arquibancada do clube no alt
 
 Decidido em 31/10/2026. A aba "Carreira" da barra (que era "em breve") vira **Perfil**, e o avatar do cabeçalho da Home abre a mesma tela. Baixa sob demanda, com o esqueleto de carregando de sempre. **Só a própria pessoa vê:** nenhuma lista de outras pessoas e nenhum dado novo no servidor; tudo vem do que já é calculado lá (`minha_carreira`, `minha_posicao_semana`, `minha_posicao_minigame`, `minha_posicao_crava`, `meus_recordes`).
 
+- **Desde 03/11/2026 (seção 4.6):** cabeçalho isolado em placa com avatar de 76 px (espaço para o boneco montável), apelido em destaque e "Torcedor do [time]" com "trocar" embaixo; sem apelido, o destaque vira o convite "Escolha seu apelido". Carreira (nível e XP em bloco, barra), Na semana (posições em bloco) e Recordes (pontos em bloco) em placas separadas.
 - **Crachá:** avatar, apelido (sem apelido: "Torcedor do [time]" com o artigo certo, e o botão "Escolher apelido", que leva ao campo e ao filtro de sempre, na escolha do time), time com "trocar", nível da Carreira com barra, quanto falta e quanto vale a próxima partida de hoje. Não mostra sequência de dias.
 - **Na semana:** posição geral e posição em cada minigame (pênaltis, Prova e Time do Dia pelo que o servidor já calcula; Crava pela rodada em foco).
 - **Recordes:** um por minigame.
@@ -172,6 +174,24 @@ Amostra aprovada em 26/10 (página "Qualidade Alta, Média e Leve"). Código em 
 
 - A tela nova entra por uma **borda inclinada a −8°** (a das tarjas), da esquerda para a direita, em 300 ms; a velha fica parada embaixo. Usa a transição nativa do navegador (View Transitions, em `app.ts`): Chrome e Android de hoje têm; quem não tem troca direto, sem custo.
 - Sem transição na qualidade Leve, com movimento reduzido e na primeira tela.
+
+## 4.6 Grafismo de TV (rota A, 03/11/2026)
+
+Escolhida pelo Kauê depois da auditoria de 03/11 (`docs/jogo.md`, seção 14.2; prints em `docs/auditoria/2026-11-03/` e `depois/`). Os blocos ficam em `telas/blocos.ts` (HTML) e `estilos/blocos.css`; ninguém escreve placa, aba ou estado à mão.
+
+- **Variáveis (`:root` em `style.css`):** `--placa` `#0a130e` e `--placa-alta` `#16211b` (placa dentro de placa, aba marcada), `--linha`, raios `--raio-p` 8 px, `--raio` 12 px e `--raio-g` 16 px, sombras `--sombra-placa` e `--sombra-alta`, espaços `--e1` a `--e5` (4, 8, 12, 16 e 24 px).
+- **Placa:** quase preta, cantos de 12 px e sombra suave sobre o gramado. Com `filete`, a cor do time entra como faixa de 4 px no topo (72% cor 1, o resto cor 2).
+- **Faixa da TV:** rótulo de cada bloco em papel claro inclinado (−8°), com a borda esquerda na cor do time e o texto reto.
+- **Número destaque:** número grande em Anton com rótulo curto em Barlow Condensed embaixo, sempre em bloco, nunca em frase. O "º" sai em Barlow Condensed (o da Anton parece um zero elevado) e "de 412" vai menor ao lado. Amarelo só no número principal do bloco.
+- **Selo:** etiqueta curta inclinada (recorde novo em contorno amarelo, subiu em verde, caiu em vermelho).
+- **Barra:** progresso inclinado em verde `--subiu`.
+- **Abas:** a principal é uma fileira em placa, e a marcada vira papel claro com o filete do time embaixo. As de 2º nível são menores, escuras e ficam lado a lado na mesma linha. Nenhuma aba é amarela.
+- **Vazio, erro e carregando:** ícone, frase, detalhe e ação ("Tentar de novo" no erro; convite no vazio, como "Jogar agora").
+- **Cabeçalho de tela:** título em Anton 30 px igual em todas, voltar à esquerda e o **selo único da pré-temporada** à direita. O toque abre a explicação ("tudo vale ponto, mas zera antes do lançamento"); os outros avisos de pré-temporada saíram.
+- **Amarelo cheio só no botão principal**, um por tela. Chave ligada em verde, sua torcida no ranking com placa clara e contorno.
+- **Contraste:** texto pequeno com pelo menos 4,5:1; nada de opacidade baixa em texto.
+- **Resultado padrão (`telas/resultadoPadrao.ts`), nos 5 jogos e nesta ordem:** placar → pontos pro time → detalhe em placas (gols, defesas, degraus; escada da Prova, grade do Time do Dia, lista dos 3 lances) → frase do narrador → selos (novo recorde, posição na semana, medalha, "No ranking em 1 min", que vira "Subiu de 5º pra 3º" quando a tabela mexe) → Carreira em placa com o XP ganho e a barra → "Mandar no grupo" (verde) com Card, Stories, Emoji e Link embaixo → Início e "Mais uma" (amarelo) fixos no rodapé. O selo da pré-temporada fica na linha de cima, ao lado do "Na morte súbita".
+- **Movimento e vibração:** as molas e vibrações de sempre (seção 4). Entrou a vibração no fim da morte súbita (gol na vitória, erro na derrota).
 
 ## 5. Ajustes encontrados no código
 

@@ -10,6 +10,7 @@ import { linhasDosMeusDados, NADA_GUARDADO, resumoDaMensagem, type MeusDados } f
 import { DATA_DA_VERSAO, termosEmHtml } from '../jogo/termos';
 import { apagarMeusDados, ErroServidor, verMeusDados } from '../servidor/api';
 import { cancelarInscricaoDoAparelho } from './convitePush';
+import { cabecalhoTela, estado, faixa } from './blocos';
 
 /** Ficha do "Ver meus dados": só leitura, do que o servidor devolveu. */
 function htmlDosMeusDados(d: MeusDados | null): string {
@@ -38,16 +39,14 @@ export function telaTermos(root: HTMLElement, rota: Rota): void {
 
   root.innerHTML = `
     <main class="tela termos">
-      <header class="cabecalho">
-        <button class="voltar" type="button" aria-label="Voltar">‹</button>
-        <h2 class="titulo-placar">Termos e privacidade</h2>
-      </header>
+      ${cabecalhoTela({ titulo: 'Termos e privacidade', voltar: true, pre: false })}
       <p class="termos-versao rotulo">Versão em revisão · ${DATA_DA_VERSAO}</p>
       <article class="termos-texto">${termosEmHtml(texto)}</article>
-      <section class="termos-apagar" aria-label="Seus dados">
+      <section class="termos-apagar placa" aria-label="Seus dados">
+        ${faixa('Seus dados')}
         <div class="dupla">
-          <button class="botao botao-sec" type="button" data-acao="ver" aria-expanded="false" aria-controls="meus-dados">Ver meus dados</button>
-          <button class="botao botao-sec" type="button" data-acao="apagar" aria-haspopup="dialog">Apagar meus dados</button>
+          <button class="botao-linha" type="button" data-acao="ver" aria-expanded="false" aria-controls="meus-dados">Ver meus dados</button>
+          <button class="botao-linha" type="button" data-acao="apagar" aria-haspopup="dialog">Apagar meus dados</button>
         </div>
         <div class="termos-dados" id="meus-dados" aria-live="polite" hidden></div>
       </section>
@@ -85,11 +84,11 @@ export function telaTermos(root: HTMLElement, rota: Rota): void {
     dados.hidden = false;
     ver.setAttribute('aria-expanded', 'true');
     ver.disabled = true;
-    dados.innerHTML = '<p>Buscando no servidor…</p>';
+    dados.innerHTML = estado('carregando', 'Buscando no servidor…');
     try {
       dados.innerHTML = htmlDosMeusDados(await verMeusDados());
     } catch {
-      dados.innerHTML = '<p class="termos-erro">Não deu pra buscar agora. Confere a internet e tenta de novo.</p>';
+      dados.innerHTML = estado('erro', 'Não deu pra buscar agora.', { detalhe: 'Confere a internet e toca em Ver meus dados de novo.', acao: '' });
     }
     ver.disabled = false;
   });

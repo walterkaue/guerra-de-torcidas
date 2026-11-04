@@ -1,0 +1,11 @@
+/* Feedback (Grafismo de TV): o amarelo cheio fica só no "Enviar"; o tipo escolhido vira papel claro. */
+.feedback .tipos-feedback [aria-checked='true'] {
+  border-color: var(--cal);
+  background: var(--cal);
+  color: var(--tinta);
+}
+
+.feedback .tipos-feedback button {
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+}

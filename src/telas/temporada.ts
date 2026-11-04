@@ -3,6 +3,7 @@
 // O mês é o mais recente da tabela `temporada`, nunca o relógio do celular.
 
 import { esc, irPara } from '../app';
+import { estado } from './blocos';
 import { ID_OUTRO, timePorId } from '../dados/times';
 import { prefs } from '../estado';
 import * as real from '../servidor/api';
@@ -45,11 +46,12 @@ export function desenharTemporada(el: HTMLElement): () => void {
   const cache = new Map<string, DadosDoMes>();
 
   const aviso = (texto: string, tentar = false) => {
-    el.innerHTML = `<p class="vazio">${esc(texto)}</p>${tentar ? '<button class="botao-tentar rotulo" data-tentar>Tentar de novo</button>' : ''}`;
+    el.innerHTML = estado(tentar ? 'erro' : 'vazio', texto);
+    el.querySelector('[data-estado-acao]')?.setAttribute('data-tentar', '');
   };
 
   async function carregar(): Promise<void> {
-    el.innerHTML = '<p class="vazio">Carregando…</p>';
+    el.innerHTML = estado('carregando', 'Buscando a temporada…');
     try {
       const api = await servidor();
       temporadas ??= await api.temporadasRecentes();
@@ -95,14 +97,14 @@ export function desenharTemporada(el: HTMLElement): () => void {
 
     const subMes =
       temporadas!.length > 1
-        ? `<div class="abas" role="tablist">
+        ? `<div class="abas-2" role="tablist">
             <button role="tab" class="rotulo" aria-selected="${indice === 0}" data-mes="0">Este mês</button>
             <button role="tab" class="rotulo" aria-selected="${indice === 1}" data-mes="1">Mês passado</button>
           </div>`
         : '';
     const subSerie =
       modo === 'ab'
-        ? `<div class="abas" role="tablist">
+        ? `<div class="abas-2" role="tablist">
             <button role="tab" class="rotulo" aria-selected="${serieVista === 'a'}" data-serie="a">Série A</button>
             <button role="tab" class="rotulo" aria-selected="${serieVista === 'b'}" data-serie="b">Série B</button>
           </div>`
@@ -145,8 +147,7 @@ export function desenharTemporada(el: HTMLElement): () => void {
         ${semSemana ? `<p class="selo-semana provisoria">${esc(mensagemSemSemana(t.mes, new Date()))}</p>` : ''}
         ${frase ? `<p class="frase-meu-time">${esc(frase)}</p>` : ''}
       </section>
-      ${subMes}
-      ${subSerie}
+      ${subMes || subSerie ? `<div class="abas-linha">${subMes}${subSerie}</div>` : ''}
       <div class="tabela" aria-live="polite" data-tabela-temporada aria-label="${esc(nomeDaSerie(serieVista))}">${linhasHtml}</div>
       ${legenda}
       <p class="explica">${esc(textoExplica(modo))}</p>`;

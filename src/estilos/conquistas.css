@@ -1,25 +1,19 @@
-/* Aba Conquistas do Ranking: medalhas da pessoa e vitrine das torcidas. Celular primeiro (390 px). */
+/* Aba Conquistas do Ranking no Grafismo de TV: placas com faixa, números em bloco. Celular primeiro (390 px). */
 .conquistas {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.conquistas h3 {
-  margin-bottom: 8px;
-}
-
 .conq-sub {
-  margin: 10px 0 6px;
+  margin-top: var(--e1);
   color: var(--texto-suave);
 }
 
 .conq-lista {
   list-style: none;
   margin: 0;
-  padding: 6px 10px;
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.35);
+  padding: 0;
 }
 
 .conq-linha {
@@ -27,29 +21,36 @@
   align-items: center;
   gap: 10px;
   min-height: 52px;
-  padding: 8px 0;
+  padding: 8px 6px;
+  border-radius: var(--raio-p);
   flex-wrap: wrap;
 }
 
 .conq-linha + .conq-linha {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--linha);
 }
 
+/* Sua torcida: placa mais clara com contorno, sem amarelo. */
 .conq-linha.meu {
-  color: var(--amarelo);
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 1px rgba(245, 245, 240, 0.35);
 }
 
 .conq-linha .pos {
-  min-width: 28px;
-  font: 400 20px var(--fonte-placar);
+  min-width: 30px;
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--texto-suave);
 }
 
 .conq-linha .cor {
   flex: none;
-  width: 14px;
+  width: 10px;
   height: 30px;
-  border-radius: 4px;
-  background: linear-gradient(var(--c1) 50%, var(--c2) 50%);
+  border-radius: 2px;
+  background: linear-gradient(var(--c1) 55%, var(--c2) 55%);
+  transform: skewX(var(--inclinacao));
 }
 
 .conq-nome {
@@ -63,7 +64,7 @@
 
 .conq-nome small {
   font-weight: 400;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--texto-suave);
 }
 
@@ -80,12 +81,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 34px;
+  min-width: 38px;
   line-height: 1.1;
 }
 
-.conq-n.zero {
-  opacity: 0.45;
+.conq-n.zero b,
+.conq-n.zero .medalha {
+  opacity: 0.5;
 }
 
 .conq-n b {
@@ -93,7 +95,7 @@
 }
 
 .conq-n small {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--texto-suave);
 }
 
@@ -101,8 +103,15 @@
   display: inline-block;
   width: 16px;
   height: 16px;
+  flex: none;
   border-radius: 50%;
   box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.35);
+}
+
+.numero .medalha {
+  width: 22px;
+  height: 22px;
+  align-self: center;
 }
 
 .medalha.ouro {
@@ -122,15 +131,20 @@
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  font: 600 14px var(--fonte-rotulo);
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  font: 700 14px var(--fonte-rotulo);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .conq-selo.sem {
   color: var(--texto-suave);
+}
+
+.conq-jogar {
+  width: 100%;
 }
 
 .conquistas .rodape-apoio {

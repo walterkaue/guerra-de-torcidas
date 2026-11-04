@@ -10,24 +10,22 @@ import { svgDoQr } from '../jogo/qrSvg';
 import { ErroServidor } from '../servidor/api';
 import { montarAparelhos } from './aparelhosLigados';
 import { servidorDoCodigo } from './codigoApi';
+import { cabecalhoTela, estado, faixa } from './blocos';
 
 const CONSULTA_MS = 5000;
 
 export function telaOutroAparelho(root: HTMLElement, _rota: Rota): () => void {
   root.innerHTML = `
     <main class="tela outro-aparelho">
-      <header class="cabecalho">
-        <button class="voltar" type="button" aria-label="Voltar">‹</button>
-        <h2>Jogar em outro aparelho</h2>
-      </header>
+      ${cabecalhoTela({ titulo: 'Jogar em outro aparelho', voltar: true, pre: false })}
       <p class="campo-dica">No outro aparelho, aponta a câmera pro QR. Ou abre o Guerra de Torcidas e digita o código em "Já jogo em outro aparelho", na escolha do time, ou no Perfil. Vira o mesmo torcedor: carreira, medalhas, recordes e time.</p>
 
-      <section class="codigo-caixa" data-caixa aria-live="polite"><p class="vazio">Sorteando o código…</p></section>
+      <section class="codigo-caixa placa" data-caixa aria-live="polite">${estado('carregando', 'Sorteando o código…')}</section>
       <p class="aviso-codigo" role="note">${esc(AVISO_DO_CODIGO)}</p>
-      <button class="botao botao-sec" type="button" data-acao="outro" disabled>Gerar outro</button>
+      <button class="botao-linha" type="button" data-acao="outro" disabled>Gerar outro</button>
 
-      <section class="perfil-bloco" aria-label="Aparelhos ligados">
-        <h3 class="rotulo">Aparelhos ligados</h3>
+      <section class="placa" aria-label="Aparelhos ligados">
+        ${faixa('Aparelhos ligados')}
         <div data-aparelhos></div>
       </section>
     </main>`;
@@ -95,7 +93,7 @@ export function telaOutroAparelho(root: HTMLElement, _rota: Rota): () => void {
     const minha = ++rodada;
     parar();
     gerarOutro.disabled = true;
-    caixa.innerHTML = '<p class="vazio">Sorteando o código…</p>';
+    caixa.innerHTML = estado('carregando', 'Sorteando o código…');
     try {
       const api = await servidorDoCodigo();
       const g = await api.gerarCodigo();

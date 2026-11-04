@@ -1,8 +1,10 @@
+import '../estilos/times.css';
 import { esc, irPara, type Rota } from '../app';
 import { TIMES, corDeTexto } from '../dados/times';
 import { APELIDO_MAX, prefs } from '../estado';
 import { ErroServidor } from '../servidor/api';
 import { sincronizarTorcedor } from '../servidor/torcedor';
+import { cabecalhoTela } from './blocos';
 
 export function telaTimes(root: HTMLElement, rota: Rota): void {
   const depois = rota.tela === 'times' ? (rota.depois ?? 'partida') : 'partida';
@@ -13,10 +15,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
 
   root.innerHTML = `
     <main class="tela times">
-      <header class="cabecalho">
-        <button class="voltar" type="button" aria-label="Voltar">‹</button>
-        <h2>Qual é a sua torcida?</h2>
-      </header>
+      ${cabecalhoTela({ titulo: 'Qual é a sua torcida?', voltar: true, pre: false })}
       ${saiuDaConta ? '<p class="aviso-caixa" role="note">Este aparelho saiu da conta: foi desconectado em outro aparelho ou a conta foi apagada. Escolha seu time pra começar de novo, ou entre com um código.</p>' : ''}
       ${rota.tela === 'times' && rota.desafio ? '<p class="campo-dica">É só escolher o time: o X1 que te mandaram começa em seguida.</p>' : ''}
 

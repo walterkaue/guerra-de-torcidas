@@ -10,6 +10,7 @@ import { mensagemDoCodigo } from '../jogo/aparelhos';
 import { TAMANHO_CODIGO, formatarCodigo, limparDigitado } from '../jogo/codigoTorcedor';
 import { ErroServidor } from '../servidor/api';
 import { servidorDoCodigo } from './codigoApi';
+import { cabecalhoTela, faixa } from './blocos';
 
 export const AVISO_DE_JUNTAR =
   'Este aparelho já tem time e carreira. Ao entrar, tudo junta com a conta do outro aparelho: XP, medalhas e recordes. Os pontos que já contaram no ranking ficam onde estão.';
@@ -37,11 +38,8 @@ export function telaEntrarComCodigo(root: HTMLElement, rota: Rota): () => void {
 
   root.innerHTML = `
     <main class="tela entrar-codigo">
-      <header class="cabecalho">
-        <button class="voltar" type="button" aria-label="Voltar">‹</button>
-        <h2>Entrar com código</h2>
-      </header>
-      <div class="entrar-pilha" data-corpo></div>
+      ${cabecalhoTela({ titulo: 'Entrar com código', voltar: true, pre: false })}
+      <div class="entrar-pilha placa" data-corpo></div>
     </main>`;
   root.querySelector('.voltar')!.addEventListener('click', voltar);
   const corpo = root.querySelector<HTMLElement>('[data-corpo]')!;
@@ -109,7 +107,7 @@ export function telaEntrarComCodigo(root: HTMLElement, rota: Rota): () => void {
 
   function telaDoTime(codigo: string, timeDono: string, timeSeu: string): void {
     corpo.innerHTML = `
-      <h3 class="rotulo">Qual time fica?</h3>
+      ${faixa('Qual time fica?', 'h3')}
       <p class="campo-dica">Os dois aparelhos torcem por times diferentes. A conta fica com um só, e o resto da carreira junta do mesmo jeito.</p>
       <div class="entrar-opcoes" role="radiogroup" aria-label="Qual time fica?">
         ${cartaoDoTime(timePorId(timeDono), timeDono, 'Time do outro aparelho')}

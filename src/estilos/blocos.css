@@ -1,0 +1,503 @@
+/* Blocos do "Grafismo de TV" (docs/jogo.md 14.2, docs/visual.md 4.6). HTML em telas/blocos.ts.
+   Placa quase preta, número em Anton, rótulo em faixa inclinada, cor do time como filete no topo. */
+
+/* ---------- cabeçalho de tela ---------- */
+.cab-tela {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  min-height: 48px;
+}
+
+.titulo-tela {
+  flex: 1;
+  min-width: 0;
+  /* Folga para o acento das maiúsculas na Anton. */
+  padding-top: 4px;
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+/* Selo único da pré-temporada: o toque abre a explicação, sem JS (details). */
+.selo-pre {
+  flex: none;
+}
+
+.selo-pre summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid rgba(245, 245, 240, 0.4);
+  border-radius: var(--raio-p);
+  color: var(--cal);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  list-style: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.selo-pre summary::-webkit-details-marker {
+  display: none;
+}
+
+.selo-pre .sp-curto {
+  display: none;
+}
+
+/* Tela com voltar (e às vezes "?"): o selo encurta e o título cabe numa linha. */
+.cab-tela:is(:has(.voltar), :has(> .selo-pre + *)) .sp-cheio {
+  display: none;
+}
+
+.cab-tela:is(:has(.voltar), :has(> .selo-pre + *)) .sp-curto {
+  display: inline;
+}
+
+.cab-tela:is(:has(.voltar), :has(> .selo-pre + *)) .titulo-tela {
+  font-size: 26px;
+}
+
+.selo-pre summary .ico {
+  font-size: 14px;
+}
+
+.selo-pre[open] summary {
+  background: var(--cal);
+  color: var(--tinta);
+}
+
+.selo-pre p {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 15;
+  width: min(300px, calc(100vw - 32px));
+  padding: var(--e3) var(--e4);
+  border-radius: var(--raio);
+  background: var(--placa-alta);
+  box-shadow: var(--sombra-alta);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+/* ---------- placa ---------- */
+.placa {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  padding: var(--e4);
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
+}
+
+.placa.filete {
+  overflow: hidden;
+  padding-top: calc(var(--e4) + 4px);
+}
+
+.placa.filete::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--c1, var(--cal)) 0 72%, var(--c2, var(--c1, var(--cal))) 72%);
+}
+
+.placa.aperta {
+  gap: var(--e2);
+  padding: var(--e3);
+}
+
+.placa-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+}
+
+/* ---------- faixa da TV (rótulo inclinado) ---------- */
+.faixa {
+  position: relative;
+  isolation: isolate;
+  align-self: flex-start;
+  padding: 3px 12px 3px 14px;
+  color: var(--tinta);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.faixa::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-left: 5px solid var(--c1, var(--caiu));
+  border-radius: 3px;
+  background: var(--cal);
+  transform: skewX(var(--inclinacao));
+}
+
+/* ---------- número destaque ---------- */
+.numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--e2);
+}
+
+.numeros.tres {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.numeros.dois {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.numero {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--e1);
+  min-width: 0;
+  padding: 10px var(--e3);
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+}
+
+.numero strong {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 4px;
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  color: var(--cal);
+}
+
+/* O "º" da Anton parece um zero elevado: vai na Barlow Condensed. */
+.numero strong i {
+  margin-left: -3px;
+  font-family: var(--fonte-rotulo);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.55em;
+  align-self: flex-start;
+}
+
+.numero strong small {
+  text-transform: none;
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--texto-suave);
+}
+
+.numero > span {
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.numero.destaque strong {
+  color: var(--amarelo);
+}
+
+.numero.apagado strong {
+  color: var(--texto-suave);
+}
+
+/* ---------- selo ---------- */
+.selos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+}
+
+.selo {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 12px;
+  color: var(--cal);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.15;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.selo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 4px;
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  transform: skewX(var(--inclinacao));
+}
+
+.selo.ouro {
+  color: var(--amarelo);
+}
+
+.selo.ouro::before {
+  box-shadow: inset 0 0 0 2px var(--amarelo);
+}
+
+.selo.subiu {
+  color: var(--subiu);
+}
+
+.selo.caiu {
+  color: #ff8b73;
+}
+
+/* ---------- barra de progresso ---------- */
+.barra {
+  height: 10px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(245, 245, 240, 0.14);
+  transform: skewX(var(--inclinacao));
+}
+
+.barra > span {
+  display: block;
+  height: 100%;
+  width: calc(var(--enche, 0) * 100%);
+  background: var(--subiu);
+  transition: width var(--lento) var(--mola-firme);
+}
+
+/* ---------- abas ---------- */
+/* Principal: uma fileira em placa; a marcada vira papel claro com o filete do time embaixo. */
+.abas-tv {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--e1);
+  padding: var(--e1);
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
+}
+
+.abas-tv button {
+  min-height: 44px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--raio-p);
+  background: transparent;
+  color: var(--texto-suave);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+
+.abas-tv [aria-selected='true'] {
+  background: var(--cal);
+  color: var(--tinta);
+  box-shadow: inset 0 -3px 0 var(--c1, var(--caiu));
+}
+
+/* 2º nível: menores, escuras e lado a lado. */
+.abas-linha {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--e2);
+}
+
+.abas-2 {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--raio-p);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.abas-2 button {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--texto-suave);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+
+.abas-2 [aria-selected='true'] {
+  background: var(--placa-alta);
+  color: var(--cal);
+  box-shadow: inset 0 -2px 0 var(--cal);
+}
+
+.abas-tv button,
+.abas-2 button {
+  transition: transform var(--lento) var(--mola);
+}
+
+.abas-tv button:active,
+.abas-2 button:active {
+  transform: scale(0.95);
+  transition-duration: 0s;
+}
+
+/* ---------- vazio, erro e carregando ---------- */
+.estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--e2);
+  padding: var(--e5) var(--e4);
+  text-align: center;
+}
+
+.estado .ico {
+  font-size: 30px;
+  color: var(--texto-suave);
+}
+
+.estado p {
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.estado small {
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.estado.e-carregando .ico {
+  animation: esq-giro 0.9s linear infinite;
+}
+
+.estado .botao-linha {
+  margin-top: var(--e1);
+}
+
+/* Botão secundário de contorno ("Tentar de novo", "Jogar agora" num vazio). */
+.botao-linha {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 2px solid rgba(245, 245, 240, 0.45);
+  border-radius: var(--raio-p);
+  background: transparent;
+  color: var(--cal);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  transition: transform var(--lento) var(--mola);
+}
+
+.botao-linha:active {
+  transform: scale(0.95);
+  transition-duration: 0s;
+}
+
+/* Botão verde de mandar no grupo e a fileira de formatos embaixo. */
+.mandar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.formatos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--e2);
+}
+
+.formatos button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 60px;
+  padding: 6px 2px;
+  border: 0;
+  border-radius: var(--raio-p);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
+  color: var(--cal);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  transition: transform var(--lento) var(--mola);
+}
+
+.formatos button .ico {
+  font-size: 20px;
+}
+
+.formatos button[aria-expanded='true'] {
+  background: var(--placa-alta);
+  box-shadow: inset 0 -2px 0 var(--cal);
+}
+
+.formatos button:active {
+  transform: scale(0.94);
+  transition-duration: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barra > span,
+  .abas-tv button,
+  .abas-2 button,
+  .botao-linha,
+  .formatos button {
+    transition: none;
+  }
+  .estado.e-carregando .ico {
+    animation: none;
+  }
+}

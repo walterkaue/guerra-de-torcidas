@@ -8,6 +8,7 @@ import { APOIO } from '../config/apoio';
 import { faixaDoAparelho } from '../estado';
 import { apoioDisponivel, chaveLimpa, confirmacaoValida, linkSeguro, passouUmaSemana } from '../jogo/apoio';
 import { podeVerApoio } from '../jogo/faixaEtaria';
+import { cabecalhoTela } from './blocos';
 
 const CHAVE_OFERTA = 'gdt:apoio-oferta';
 const CHAVE_CONFIRMACAO = 'gdt:apoio-confirmado';
@@ -99,10 +100,7 @@ export function telaApoio(root: HTMLElement, _rota: Rota): void {
   // A confirmação vem antes do Pix e do link: até aqui, nada deles aparece.
   root.innerHTML = `
     <main class="tela apoio">
-      <header class="cabecalho">
-        <button class="voltar" type="button" aria-label="Voltar">‹</button>
-        <h2 class="titulo-placar">Apoie o jogo</h2>
-      </header>
+      ${cabecalhoTela({ titulo: 'Apoie o jogo', voltar: true, pre: false })}
       <p class="apoio-confirma">Sou maior de 18 ou responsável</p>
       <button class="botao" type="button" data-acao="confirmar">Confirmar</button>
       <button class="botao botao-sec" type="button" data-acao="voltar">Voltar</button>
@@ -121,10 +119,7 @@ function desenharApoio(root: HTMLElement, sair: () => void): void {
 
   root.innerHTML = `
     <main class="tela apoio">
-      <header class="cabecalho">
-        <button class="voltar" type="button" aria-label="Voltar">‹</button>
-        <h2 class="titulo-placar">Apoie o jogo</h2>
-      </header>
+      ${cabecalhoTela({ titulo: 'Apoie o jogo', voltar: true, pre: false })}
       <p>O Guerra de Torcidas é independente: sem rede de anúncios, sem rastreio e sem propaganda de jogo de azar. Ele se mantém com quem curte. Se o jogo rende resenha no seu grupo, dá pra ajudar a mantê-lo no ar.</p>
       ${link ? `<a class="botao" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Apoiar todo mês</a>` : ''}
       ${

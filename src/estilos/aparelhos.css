@@ -68,8 +68,6 @@
   align-items: center;
   gap: 14px;
   padding: 18px 14px;
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.35);
   text-align: center;
 }
 
@@ -112,9 +110,9 @@
 .aviso-codigo {
   margin: 0;
   padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(255, 210, 63, 0.14);
-  border: 2px solid var(--amarelo);
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa), inset 0 0 0 2px var(--linha);
   font-weight: 700;
   text-align: center;
 }
@@ -142,11 +140,21 @@
 .entrar-opcoes .cartao-time small {
   font-size: 13px;
   font-weight: 400;
-  opacity: 0.85;
+}
+
+.entrar-opcoes .cartao-time[aria-checked='true'] {
+  border-color: var(--cal);
+  box-shadow: 0 0 0 3px rgba(245, 245, 240, 0.35);
 }
 
 .entrar-pilha {
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.entrar-pilha .aviso-caixa {
+  border: 0;
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 1px var(--linha);
 }

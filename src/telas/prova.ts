@@ -6,7 +6,6 @@ import { esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, corDeTexto, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { DEGRAU_DA_POSICAO, NOME_DEGRAU, PERGUNTAS, PONTOS_DO_DEGRAU, ERROS_QUE_ENCERRAM, type Ajuda, type Degrau } from '../jogo/prova';
-import { AVISO_PRE_TEMPORADA } from '../jogo/posicao';
 
 /** Nome do degrau na tela: "Média" sozinho parecia média de pontos. */
 const ROTULO_DEGRAU: Record<Degrau, string> = { ...NOME_DEGRAU, 2: 'Nível médio' };
@@ -26,6 +25,7 @@ import {
   verDesafioProva,
 } from '../servidor/api';
 import { sincronizarTorcedor } from '../servidor/torcedor';
+import { aoTocarNoEstado, cabecalhoTela, estado, placa } from './blocos';
 import { icone, type NomeIcone } from './icones';
 import { vibrar } from './toque';
 import { papelPicadoNaTela } from './papelPicado';
@@ -89,42 +89,45 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
 
   const mostrarComo = !prefs.get().semComoProva;
 
-  root.innerHTML = `
-    <main class="tela prova" style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
-      <header class="prova-topo">
-        <button class="voltar" type="button" aria-label="Sair da prova">‹</button>
-        <p class="rotulo prova-nome">Prova de Boleiro</p>
-        <button class="voltar prova-como" type="button" aria-label="Como jogar">?</button>
-      </header>
-
-      <ol class="escada" aria-label="Escada de perguntas">
-        ${DEGRAU_DA_POSICAO.map(
-          (d, i) => `<li data-degrau="${i}"><span class="num">${i + 1}</span><span class="val">${PONTOS_DO_DEGRAU[d]}</span></li>`,
-        ).join('')}
-      </ol>
-
-      <section class="prova-inicio" data-inicio>
-        <p class="rotulo cj-faixa faixa-tv">Prova de Boleiro</p>
-        <p class="adesivo" data-abertura></p>
-        <div class="convite-desafio" data-convite hidden></div>
-        <ul class="cj-passos" data-regras ${mostrarComo ? '' : 'hidden'}>
+  const regras = `<ul class="cj-passos">
           <li><span class="cj-icone">${icone('pergunta')}</span><p><strong>8 perguntas, 15 s cada.</strong> 2 fáceis, 2 médias, 2 difíceis e 2 de craque. Toque na alternativa.</p></li>
           <li><span class="cj-icone">${icone('mao')}</span><p><strong>Parar ou seguir.</strong> Da 3ª em diante, antes de ver a pergunta: para e leva o que juntou, ou arrisca.</p></li>
           <li><span class="cj-icone">${icone('xis')}</span><p><strong>Três erros e fora.</strong> Errar ou estourar o tempo conta um erro e a prova segue. No 3º, acaba e leva 75% do que juntou.</p></li>
           <li><span class="cj-icone">${icone('lampada')}</span><p><strong>3 ajudas, uma de cada:</strong> Tira duas, Arquibancada e Troca. O relógio não para.</p></li>
           <li><span class="cj-icone">${icone('trofeu')}</span><p><strong>Pontos:</strong> 8, 12, 18 e 25 por degrau. 8 de 8 sem errar ganha +24.</p></li>
         </ul>
-        <label class="cj-check" ${mostrarComo ? '' : 'hidden'}><input type="checkbox" data-pular> Não exibir as regras de novo</label>
-        <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
+        <label class="cj-check"><input type="checkbox" data-pular> Não exibir as regras de novo</label>`;
+
+  root.innerHTML = `
+    <main class="tela prova" style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
+      ${cabecalhoTela({
+        titulo: 'Prova de Boleiro',
+        voltar: true,
+        extra: '<button class="voltar prova-como" type="button" aria-label="Como jogar">?</button>',
+      })}
+
+      <div class="escada-bloco">
+        <ol class="escada" aria-label="Escada de perguntas: número e pontos de cada uma">
+          ${DEGRAU_DA_POSICAO.map(
+            (d, i) => `<li data-degrau="${i}"><span class="num">${i + 1}</span><span class="val">${PONTOS_DO_DEGRAU[d]}</span></li>`,
+          ).join('')}
+        </ol>
+        <p class="escada-legenda" aria-hidden="true"><span>nº da pergunta</span><span>pontos</span></p>
+      </div>
+
+      <section class="prova-inicio" data-inicio>
+        <p class="adesivo" data-abertura></p>
+        <div class="convite-desafio" data-convite hidden></div>
+        ${placa(regras, { filete: true, classe: 'prova-regras', attrs: mostrarComo ? '' : 'hidden' })}
         <button class="botao" type="button" data-comecar>Começar a prova</button>
-        <p class="prova-erro" data-erro hidden></p>
+        <div class="prova-erro" data-erro hidden></div>
       </section>
 
       <section class="prova-jogo" data-jogo hidden>
         <p class="prova-erros" data-erros aria-live="polite"></p>
         <div class="relogio" aria-hidden="true"><span class="relogio-barra"></span><strong data-segundos></strong></div>
-        <article class="cartao-pergunta">
-          <p class="rotulo cartao-rotulo" data-rotulo></p>
+        <article class="placa filete cartao-pergunta">
+          <p class="faixa" data-rotulo></p>
           <h2 class="pergunta-texto" data-texto aria-live="polite"></h2>
           <div class="alternativas" data-alternativas></div>
         </article>
@@ -140,8 +143,8 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       </section>
 
       <section class="prova-decisao" data-decisao hidden role="dialog" aria-modal="true" aria-labelledby="pd-titulo">
-        <div class="cj-caixa">
-          <p class="rotulo cj-faixa faixa-tv" data-decisao-degrau></p>
+        <div class="cj-caixa placa filete">
+          <p class="faixa" data-decisao-degrau></p>
           <h2 id="pd-titulo" class="cj-titulo" data-decisao-titulo></h2>
           <p class="adesivo" data-decisao-frase></p>
           <button class="botao" type="button" data-seguir></button>
@@ -209,7 +212,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
     elRelogio.classList.add('correndo');
     const tique = () => {
       const resta = Math.max(0, Math.ceil(segundos - (performance.now() - inicioPergunta) / 1000));
-      elSeg.textContent = String(resta);
+      elSeg.textContent = `${resta} s`;
       elRelogio.classList.toggle('acabando', resta <= 5);
     };
     tique();
@@ -391,20 +394,27 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
     });
   }
 
+  /** Falha com "Tentar de novo": o botão de começar sai e quem recomeça é o do estado. */
+  function mostrarErro(texto: string, acao: string): void {
+    elErro.innerHTML = estado('erro', texto, { acao });
+    aoTocarNoEstado(elErro, () => void comecar());
+    elErro.hidden = false;
+    btnComecar.hidden = true;
+  }
+
   function mostrarFalha(e: unknown): void {
     pararRelogio();
     elJogo.hidden = true;
     elDecisao.hidden = true;
     elInicio.hidden = false;
-    elErro.textContent = `${mensagemDe(e)} A prova foi encerrada; começa outra quando quiser.`;
-    elErro.hidden = false;
-    btnComecar.textContent = 'Nova prova';
+    mostrarErro(`${mensagemDe(e)} A prova foi encerrada; começa outra quando quiser.`, 'Nova prova');
     btnComecar.disabled = false;
     partidaId = null;
   }
 
   // ---------- começar ----------
   async function comecar(): Promise<void> {
+    btnComecar.hidden = false;
     btnComecar.disabled = true;
     btnComecar.textContent = 'Preparando…';
     elErro.hidden = true;
@@ -445,9 +455,8 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
     } catch (e) {
       if (saiu) return;
       btnComecar.disabled = false;
-      btnComecar.textContent = 'Tentar de novo';
-      elErro.textContent = mensagemDe(e);
-      elErro.hidden = false;
+      btnComecar.textContent = codigoDesafio ? 'Aceitar o X1' : 'Começar a prova';
+      mostrarErro(mensagemDe(e), 'Tentar de novo');
     }
   }
   btnComecar.addEventListener('click', () => void comecar());
@@ -455,11 +464,12 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   // "?" mostra as regras de novo (só fora da pergunta, que corre contra o relógio).
   $('.prova-como').addEventListener('click', () => {
     if (!elInicio.hidden) {
-      root.querySelectorAll<HTMLElement>('[data-regras], .cj-check').forEach((el) => (el.hidden = !el.hidden));
+      const el = $('.prova-regras');
+      el.hidden = !el.hidden;
     } else gritar('Regras no começo da prova. Agora é com você!');
   });
 
-  $('.voltar').addEventListener('click', () => {
+  $('[data-voltar]').addEventListener('click', () => {
     const noMeio = partidaId && elInicio.hidden;
     if (noMeio && !confirm('Sair da prova? No meio da pergunta conta como tempo esgotado.')) return;
     irPara({ tela: 'inicio' });

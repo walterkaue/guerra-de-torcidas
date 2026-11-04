@@ -12,14 +12,26 @@
   gap: 14px;
 }
 
+.triagem-pergunta {
+  padding: var(--e5) var(--e4);
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
+}
+
 .triagem-pergunta h2 {
   text-align: center;
-  font-size: 26px;
-  font-weight: 900;
+  font-family: var(--fonte-placar);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.1;
+  text-transform: uppercase;
 }
 
 .triagem-pergunta .botao {
   min-height: 72px;
+  align-items: center;
+  justify-content: center;
   font-size: 22px;
 }
 
@@ -46,9 +58,8 @@
   gap: 14px;
   padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
   border-radius: 18px 18px 0 0;
-  background: #0b2a16;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  border-bottom: 0;
+  background: var(--placa-alta);
+  box-shadow: var(--sombra-alta);
 }
 
 .folha-caixa .botao {
@@ -58,4 +69,25 @@
 
 .folha-caixa p {
   overflow-wrap: anywhere;
+}
+
+/* Carregando e sem rede: o formato da tela em placas, com o brilho passando (telas/esqueleto.ts). */
+.esqueleto .esq {
+  border-radius: var(--raio);
+  background: linear-gradient(100deg, var(--placa) 30%, var(--placa-alta) 50%, var(--placa) 70%) 0 0 / 300% 100%;
+  box-shadow: var(--sombra-placa);
+}
+
+.esqueleto .esq-titulo {
+  height: 32px;
+}
+
+.esqueleto.sem-rede {
+  padding-top: 18vh;
+  align-items: center;
+  gap: var(--e4);
+}
+
+.esqueleto.sem-rede .estado {
+  width: 100%;
 }
