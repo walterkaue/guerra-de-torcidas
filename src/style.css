@@ -601,7 +601,7 @@ body {
   font-weight: 700;
 }
 
-/* ---------- partida: placar de TV, grito do narrador, como jogar ---------- */
+/* ---------- partida: placar de TV e grito do narrador ---------- */
 .ajuda { width: 44px; height: 44px; flex: none; border: 0; border-radius: 12px; background: rgba(0,0,0,0.3); color: var(--cal); font: 700 22px var(--fonte-rotulo); touch-action: manipulation; }
 .placar-jogo { transform: skewX(var(--inclinacao)); background: #0a0a0a; border-radius: 6px; padding: 4px 8px; box-shadow: inset 6px 0 0 var(--c1); }
 .placar-jogo > * { transform: skewX(8deg); }
@@ -619,16 +619,8 @@ body {
 .grito-sub { padding: 3px 10px; border-radius: 4px; background: rgba(0,0,0,0.8); color: var(--amarelo); font-size: 16px; }
 .grito.pulso { animation: narrar 1.6s ease-out forwards; }
 @media (prefers-reduced-motion: reduce) { .grito.pulso { animation: none; opacity: 1; } }
-.como-jogar { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0.7); overflow-y: auto; }
 .cj-caixa { width: 100%; max-width: 420px; padding: 18px 16px; border-radius: 18px; background: #0b2a16; border: 2px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; gap: 12px; color: var(--cal); }
-.cj-faixa { align-self: flex-start; padding: 2px 12px; color: var(--txt); }
 .cj-titulo { font: 400 34px var(--fonte-placar); text-transform: uppercase; color: var(--amarelo); line-height: 1; }
-.cj-passos { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.cj-passos li { display: flex; gap: 10px; font-size: 15px; line-height: 1.35; }
-.cj-icone { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; background: rgba(255,255,255,0.1); font-size: 18px; color: var(--amarelo); }
-.cj-nota { font-size: 14px; color: var(--texto-suave); }
-.cj-check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 700; }
-.cj-check input { width: 24px; height: 24px; accent-color: var(--amarelo); }
 
 /* ---------- pré-temporada e recorde (docs/jogo.md, seção 5) ---------- */
 /* Aviso único da pré-temporada, no lugar dos antigos selos de teste. */

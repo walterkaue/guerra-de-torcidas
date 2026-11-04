@@ -18,14 +18,6 @@ interface Prefs {
   qualidade?: 'auto' | 'alta' | 'media' | 'leve';
   /** Desligou a vibração (telas/toque.ts). */
   semVibracao?: boolean;
-  /** Marcou "não exibir novamente" no "Como jogar" antes da partida. */
-  semComoJogar?: boolean;
-  /** Marcou "não exibir novamente" no "Como cravar" da aba Palpites. */
-  semComoCravar?: boolean;
-  /** Marcou "não exibir as regras de novo" na Prova de Boleiro. */
-  semComoProva?: boolean;
-  /** Marcou "não exibir de novo" no "Como jogar" do Time do Dia. */
-  semComoDia?: boolean;
   /** Escolheu mostrar o nível da carreira nos cards. */
   nivelNoCard?: boolean;
   /** "time|apelido" que o servidor já tem (para não regravar à toa). */
@@ -82,7 +74,7 @@ export function guardarFaixa(faixa: FaixaEtaria): void {
 
 /**
  * Este aparelho deixa de ser o torcedor que era (saiu da conta, ou entrou em outra pelo código; jogo.md, 14.1):
- * esquece time, apelido e faixa, como um aparelho novo. Som, gráficos e os "não exibir de novo" ficam.
+ * esquece time, apelido e faixa, como um aparelho novo. Som e gráficos ficam.
  */
 export function esquecerTorcedor(): void {
   faixaDaAba = undefined;

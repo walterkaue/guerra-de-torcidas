@@ -20,3 +20,11 @@
 | `13-perfil-selo-aquecido.png` | Perfil: selo Aquecido e Rever aquecimento |
 
 Os quadros "Como jogar" ainda existem nesta etapa (as dicas dos prints 08 a 10 foram tiradas com eles fechados); saem depois do "pode seguir".
+
+## Depois do "pode seguir" (tutoriais fora)
+
+| Print | O que mostra |
+|---|---|
+| `14-regras-penaltis.png` | O "?" dos Pênaltis: como joga e a tabela de pontos, no Grafismo |
+| `15-regras-prova.png` | O "?" da Prova |
+| `16-prova-inicio-sem-regras.png` | Começo da Prova sem a lista de regras |

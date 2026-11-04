@@ -208,3 +208,15 @@
 .time-do-dia-fim .numero strong {
   font-size: 28px;
 }
+
+/* Linha de exemplo da 1ª vez (dica "Adivinhe o clube secreto"): as 6 células se pintam uma a uma. */
+.dia-exemplo[hidden] {
+  display: none;
+}
+.dia-exemplo .dia-cel {
+  animation: dia-vira 0.7s ease-out both;
+  animation-delay: calc(var(--i) * 0.3s + 0.3s);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dia-exemplo .dia-cel { animation: none; }
+}

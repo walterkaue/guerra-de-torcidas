@@ -2,7 +2,7 @@
 
 import '../estilos/dicas.css';
 import { prefs } from '../estado';
-import { criarDicas, type Dicas } from '../jogo/dicas';
+import { criarDicas, type Dicas, type IdDica } from '../jogo/dicas';
 
 /** Um controle por tela de jogo (a regra de 1 por lance vale dentro da tela). */
 export function dicasDoAparelho(): Dicas {
@@ -10,6 +10,11 @@ export function dicasDoAparelho(): Dicas {
     () => prefs.get().dicas ?? {},
     (dicas) => prefs.set({ dicas }),
   );
+}
+
+/** Quantas vezes essa dica já apareceu neste aparelho. */
+export function vezesVista(id: IdDica): number {
+  return prefs.get().dicas?.vistas?.[id] ?? 0;
 }
 
 /**
