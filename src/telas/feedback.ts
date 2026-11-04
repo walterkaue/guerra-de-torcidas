@@ -1,8 +1,11 @@
 // Feedback e relato de bug, sem sair do jogo. Vai para a tabela feedbacks, que só o admin lê
 // (#admin). Nada de dado pessoal: o aviso pede para não pôr nome, telefone ou e-mail.
 
+import '../estilos/feedback.css';
 import { irPara, type Rota } from '../app';
+import '../estilos/feedback.css';
 import { ErroServidor, enviarFeedback, type TipoFeedback } from '../servidor/api';
+import { cabecalhoTela } from './blocos';
 
 const TIPOS: { id: TipoFeedback; rotulo: string; dica: string }[] = [
   { id: 'bug', rotulo: '🐞 Bug', dica: 'O que você fez, o que esperava e o que aconteceu. Ex.: "Na aba Palpites, toquei em Cravar e o botão travou."' },
@@ -17,10 +20,7 @@ export function telaFeedback(root: HTMLElement, rota: Rota): void {
 
   root.innerHTML = `
     <main class="tela feedback">
-      <header class="cabecalho">
-        <button class="voltar" type="button" aria-label="Voltar">‹</button>
-        <h2 class="titulo-placar">Feedback</h2>
-      </header>
+      ${cabecalhoTela({ titulo: 'Feedback', voltar: true, pre: false })}
       <p>Achou um bug, teve uma ideia ou quer reclamar do narrador? Manda aqui. Quem lê é a gente que faz o jogo.</p>
       <div class="tipos-feedback" role="radiogroup" aria-label="Tipo">
         ${TIPOS.map((t) => `<button type="button" role="radio" aria-checked="${t.id === tipo}" data-tipo="${t.id}">${t.rotulo}</button>`).join('')}
@@ -33,7 +33,7 @@ export function telaFeedback(root: HTMLElement, rota: Rota): void {
       <p class="nota nota-esquerda">Não coloque nome, telefone, e-mail ou outro dado pessoal. Junto vai só a tela e o modelo do navegador, pra gente achar o bug.</p>
       <p class="erro-campo" role="alert" hidden></p>
       <button class="botao" type="button" data-acao="enviar" disabled>Enviar</button>
-      <section class="feedback-ok" hidden>
+      <section class="feedback-ok placa" hidden>
         <p class="adesivo">Recebido! Valeu por ajudar a melhorar o jogo.</p>
         <button class="botao botao-sec" type="button" data-acao="voltar">Voltar pro jogo</button>
       </section>

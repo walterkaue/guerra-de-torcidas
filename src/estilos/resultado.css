@@ -58,8 +58,9 @@
   line-height: 1.35;
 }
 
+/* Vermelho mais fechado que o --caiu: texto branco com contraste acima de 4,5:1. */
 .res-aviso.forte {
-  background: var(--caiu);
+  background: #b3261e;
   color: #fff;
   box-shadow: var(--sombra-placa);
 }

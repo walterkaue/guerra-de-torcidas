@@ -1,6 +1,6 @@
 // Apoio puro da aba Palpites: rodada em foco, estado de cada jogo, horários e textos dos cards.
 
-import { linhaEmoji, ordinalRodada, type Placar, type PontosDoJogo } from './crava';
+import { linhaEmoji, ordinalRodada, type Acerto, type Placar, type PontosDoJogo } from './crava';
 import { STATUS_ADIADO } from './footballData';
 
 /** Aviso fixo do Crava (docs/jogo.md, seção 7): topo da tela e todo card. */
@@ -69,6 +69,28 @@ export interface LinhaMeuPalpite {
   visitante: string;
   placar: Placar;
   certeza: boolean;
+}
+
+/** "2 x 1". */
+export const placarTexto = (p: Placar): string => `${p.m} x ${p.v}`;
+
+/** Nome curto de cada acerto, para o selo do cartão (o emoji sozinho não diz nada ao leitor de tela). */
+export const NOME_DO_ACERTO: Record<Acerto, string> = {
+  exato: 'Placar exato',
+  saldo: 'Vencedor e saldo',
+  vencedor: 'Só o vencedor',
+  errou: 'Errou',
+};
+
+/** Rótulo curto embaixo do número de pontos: "pontos", "ponto" ou "pontos pro Flamengo". */
+export function rotuloDePontos(pontos: number, paraTime: string | null): string {
+  return `${pontos === 1 ? 'ponto' : 'pontos'}${paraTime ? ` ${paraTime}` : ''}`;
+}
+
+/** Quantos jogos com resultado foram certeiros (qualquer acerto, menos "errou"). */
+export function acertosDaRodada(resultados: readonly Pick<PontosDoJogo, 'acerto'>[]): { acertos: number; jogos: number } {
+  const jogos = resultados.filter((r) => r.acerto !== null);
+  return { acertos: jogos.filter((r) => r.acerto !== 'errou').length, jogos: jogos.length };
 }
 
 /** Texto do card "Meus palpites" (antes): só os placares cravados e o jogo da certeza. */

@@ -53,6 +53,23 @@
   display: none;
 }
 
+.selo-pre .sp-curto {
+  display: none;
+}
+
+/* Tela com voltar (e às vezes "?"): o selo encurta e o título cabe numa linha. */
+.cab-tela:is(:has(.voltar), :has(> .selo-pre + *)) .sp-cheio {
+  display: none;
+}
+
+.cab-tela:is(:has(.voltar), :has(> .selo-pre + *)) .sp-curto {
+  display: inline;
+}
+
+.cab-tela:is(:has(.voltar), :has(> .selo-pre + *)) .titulo-tela {
+  font-size: 26px;
+}
+
 .selo-pre summary .ico {
   font-size: 14px;
 }

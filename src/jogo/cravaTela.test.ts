@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   AVISO_RESENHA,
+  NOME_DO_ACERTO,
+  acertosDaRodada,
+  placarTexto,
+  rotuloDePontos,
   adiado,
   faseDoJogo,
   horaDoJogo,
@@ -57,6 +61,14 @@ describe('aba Palpites', () => {
     expect(tempoAte(40 * 60_000)).toBe('40 minutos');
     expect(tempoAte(65 * 60_000)).toBe('1 hora');
     expect(tempoAte(6.5 * 3600_000)).toBe('6 horas');
+  });
+
+  it('textos do cartão e da rodada', () => {
+    expect(placarTexto({ m: 2, v: 1 })).toBe('2 x 1');
+    expect(NOME_DO_ACERTO.exato).toBe('Placar exato');
+    expect(rotuloDePontos(1, null)).toBe('ponto');
+    expect(rotuloDePontos(40, 'pro Flamengo')).toBe('pontos pro Flamengo');
+    expect(acertosDaRodada([{ acerto: 'exato' }, { acerto: 'errou' }, { acerto: null }, { acerto: 'vencedor' }])).toEqual({ acertos: 2, jogos: 3 });
   });
 
   it('cards levam o aviso fixo', () => {

@@ -8,10 +8,9 @@
   display: none;
 }
 
-.dia-como .cj-passos {
-  padding: 12px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.3);
+/* Pistas numa placa: 6 colunas cabem em 334 px (≈ 53 px cada). */
+.dia-pistas {
+  gap: var(--e2);
 }
 
 /* ---------- grade ---------- */
@@ -168,41 +167,44 @@
   color: var(--tinta);
 }
 
-/* ---------- fim ---------- */
-.dia-fim {
+/* ---------- fim (resultado padrão, telas/timeDoDia.ts) ---------- */
+.dia-placar-tv {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--e2);
 }
 .dia-revelado {
   padding: 10px 16px;
   color: var(--txt);
 }
 .dia-revelado h2 {
+  /* Folga para o acento das maiúsculas na Anton ("GOIÁS" encostava no rótulo). */
+  margin-top: 0.3em;
   font: 400 34px var(--fonte-placar);
   text-transform: uppercase;
   line-height: 1.05;
   overflow-wrap: anywhere;
 }
-.dia-placar {
+.dia-chutes {
   display: flex;
   align-items: baseline;
-  gap: 12px;
-  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--fonte-placar);
+  text-transform: uppercase;
 }
-.dia-placar strong {
-  font: 400 56px var(--fonte-placar);
+.dia-chutes strong {
+  font-weight: 400;
+  font-size: 72px;
   line-height: 1;
   color: var(--amarelo);
 }
-.dia-placar span {
-  font-weight: 800;
+.dia-chutes span {
+  font-size: 26px;
 }
-.dia-proximo {
-  font-size: 15px;
-  color: var(--texto-suave);
+.time-do-dia-fim .numeros {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
-.dia-proximo strong {
-  color: var(--cal);
-  font-variant-numeric: tabular-nums;
+.time-do-dia-fim .numero strong {
+  font-size: 28px;
 }

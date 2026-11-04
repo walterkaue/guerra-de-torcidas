@@ -4,10 +4,9 @@
 import { esc, irPara, type Rota } from '../app';
 import { corDeTexto, ID_OUTRO, proTime, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
-import { mostrarCard, prontoParaDesenhar, seloNivel } from '../jogo/card';
+import { prontoParaDesenhar, seloNivel } from '../jogo/card';
 import { desenharCardDia } from '../jogo/cardDia';
 import { conviteDia } from '../jogo/convites';
-import { AVISO_PRE_TEMPORADA, htmlPosicao } from '../jogo/posicao';
 import {
   AMOSTRA_COR,
   NOMES_PISTAS,
@@ -33,7 +32,9 @@ import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { bomMomentoDoDia } from '../jogo/apoio';
 import { oferecerApoio } from './apoio';
 import { convidarParaAvisos } from './convitePush';
+import { aoTocarNoEstado, cabecalhoTela, estado as blocoEstado, numero, placa } from './blocos';
 import { bolinha, icone } from './icones';
+import { contar, htmlResultado, htmlSelosDaPosicao, ligarResultado } from './resultadoPadrao';
 import { vibrar } from './toque';
 import { papelPicadoNaTela } from './papelPicado';
 
@@ -88,6 +89,10 @@ function valorDaPista(t: Tentativa, n: NomePista): string {
   }
 }
 
+const CABECALHO_PISTAS = `<div class="dia-cabecalho" aria-hidden="true">
+        ${NOMES_PISTAS.map((n) => `<span>${SIGLA_CURTA[n]}</span>`).join('')}
+      </div>`;
+
 const TEXTO_TOM = { certo: 'igual', perto: 'perto', longe: 'longe' } as const;
 
 function linhaHtml(t: Tentativa, nova: boolean): string {
@@ -121,33 +126,31 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
 
   const mostrarComo = !prefs.get().semComoDia;
 
-  root.innerHTML = `
-    <main class="tela time-do-dia" style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
-      <header class="prova-topo">
-        <button class="voltar" type="button" aria-label="Voltar">‹</button>
-        <p class="rotulo prova-nome" data-titulo>Time do Dia</p>
-        <button class="voltar prova-como" type="button" aria-label="Como jogar">?</button>
-      </header>
-
-      <p class="adesivo" data-grito></p>
-
-      <section class="dia-como" data-como ${mostrarComo ? '' : 'hidden'}>
-        <ul class="cj-passos">
+  const passos = `<ul class="cj-passos">
           <li><span class="cj-icone">${icone('lupa')}</span><p><strong>Um clube secreto por dia</strong>, o mesmo pra todo mundo. Clubes das Séries A, B e C de 2026. Troca às 00h.</p></li>
           <li><span class="cj-icone">${icone('bola')}</span><p><strong>6 chutes.</strong> Escolha um clube na busca e veja as pistas.</p></li>
           <li><span class="cj-icone">${bolinha('certo')}</span><p><strong>${bolinha('certo')} igual, ${bolinha('perto')} perto, ${bolinha('longe')} longe.</strong> Estado (${bolinha('perto')} = mesma região), fundação (${bolinha('perto')} = até 10 anos), títulos do Brasileirão (${bolinha('perto')} = até 2), série, as 2 cores (${bolinha('perto')} = uma igual) e capital ou interior.</p></li>
           <li><span class="cj-icone" aria-hidden="true">↑</span><p><strong>↑ ou ↓</strong> no ano e nos títulos: o secreto tem número maior (fundado depois, mais títulos) ou menor.</p></li>
           <li><span class="cj-icone">${icone('trofeu')}</span><p><strong>Pontos:</strong> 100 de primeira, depois 85, 70, 55, 40 e 25.</p></li>
         </ul>
-        <label class="cj-check"><input type="checkbox" data-pular> Não exibir de novo</label>
+        <label class="cj-check"><input type="checkbox" data-pular> Não exibir de novo</label>`;
+
+  root.innerHTML = `
+    <main class="tela time-do-dia" style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
+      ${cabecalhoTela({
+        titulo: 'Time do Dia',
+        voltar: true,
+        extra: '<button class="voltar prova-como" type="button" aria-label="Como jogar">?</button>',
+      })}
+
+      <p class="adesivo" data-grito></p>
+
+      ${placa(passos, { filete: true, classe: 'dia-como', attrs: `data-como${mostrarComo ? '' : ' hidden'}` })}
+
+      <section class="placa aperta dia-pistas" data-pistas>
+        ${CABECALHO_PISTAS}
+        <ol class="dia-grade" data-grade aria-label="Seus chutes" aria-live="polite"></ol>
       </section>
-
-      <p class="aviso-pre" role="note" data-aviso-pre>${esc(AVISO_PRE_TEMPORADA)}</p>
-
-      <div class="dia-cabecalho" aria-hidden="true">
-        ${NOMES_PISTAS.map((n) => `<span>${SIGLA_CURTA[n]}</span>`).join('')}
-      </div>
-      <ol class="dia-grade" data-grade aria-label="Seus chutes" aria-live="polite"></ol>
 
       <section class="dia-chutar" data-chutar hidden>
         <label class="rotulo" for="dia-busca">Seu chute <span data-restam></span></label>
@@ -157,10 +160,8 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
         <button class="botao" type="button" data-chutar-btn disabled>Escolha um clube</button>
       </section>
 
-      <section class="dia-fim" data-fim hidden></section>
-
-      <p class="vazio" data-carregando>Procurando o time escondido…</p>
-      <p class="prova-erro" data-erro hidden></p>
+      <div data-carregando>${blocoEstado('carregando', 'Procurando o time escondido…')}</div>
+      <div class="prova-erro" data-erro hidden></div>
     </main>
   `;
 
@@ -170,7 +171,6 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
   const elBusca = $<HTMLInputElement>('#dia-busca');
   const elResultados = $('[data-resultados]');
   const btnChutar = $<HTMLButtonElement>('[data-chutar-btn]');
-  const elFim = $('[data-fim]');
   const elErro = $('[data-erro]');
   const elGrito = $('[data-grito]');
   const elCarregando = $('[data-carregando]');
@@ -183,9 +183,22 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     elGrito.classList.add('pulso');
   }
 
+  /** Aviso curto de um chute que não valeu (clube repetido, dia virou…). */
   function erro(texto: string | null): void {
+    elErro.className = 'res-aviso forte';
     elErro.hidden = !texto;
     elErro.textContent = texto ?? '';
+  }
+
+  /** Falha ao carregar o dia: convite para tentar de novo. */
+  function falhaDeCarga(texto: string): void {
+    elErro.className = 'prova-erro';
+    elErro.innerHTML = blocoEstado('erro', texto);
+    aoTocarNoEstado(elErro, () => {
+      elErro.hidden = true;
+      void carregar();
+    });
+    elErro.hidden = false;
   }
 
   // ---------- grade ----------
@@ -299,7 +312,6 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
   // ---------- fim ----------
   function terminar(): void {
     const e = estado!;
-    elChutar.hidden = true;
     const n = e.tentativas.length;
     // Primeira vez que o fim aparece nesta visita (não ao reabrir a tela já jogada).
     const festejar = !frasesFinais.length && e.acertou;
@@ -312,7 +324,6 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
         : narrador.falar('dia_errou');
       frasesFinais = f1 ? [f1] : [];
     }
-    if (frasesFinais[0]) gritar(frasesFinais[0]);
 
     const placar = placarDoDia(n, e.acertou);
     const grade = gradeEmoji(e.tentativas.map((t) => t.pistas));
@@ -320,7 +331,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     const novoRecorde = !!e.desempenho?.novoRecorde;
     const linha = linhaDoCard(e.numero, placar, novoRecorde);
     const textoShare = `${linha}\n${grade}\n${conviteDia(n, e.acertou)} ${link}`;
-    const situacao = `+${e.pontos} na semana, além das 5 partidas do dia.`;
+    const paraTime = proTime(time);
     // Casa do [time]: só depois que o dia termina (antes daria pista) e só para clube da Série A.
     const timeCasa = timePorId(e.secreto?.id);
     const casa =
@@ -331,67 +342,63 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
           </button>`
         : '';
 
-    elFim.innerHTML = `
-      <div class="dia-revelado faixa-tv">
-        <p class="rotulo">${e.acertou ? 'Achou!' : 'Era o time de hoje'}</p>
-        <h2>${esc(e.secreto?.nome ?? '')}</h2>
-      </div>
-      <div class="dia-placar">
-        <strong>${placar}</strong>
-        <span>${e.acertou ? `${e.pontos} pontos` : 'sem pontos hoje'}</span>
-      </div>
-      <p class="situacao">${esc(situacao)}</p>
-      ${casa}
-      <div data-convite-push></div>
-      <div class="res-apoio" data-apoio></div>
-      ${htmlPosicao(e.desempenho, 'dia')}
-      <div class="res-carreira" data-carreira hidden></div>
-      <p class="dia-proximo rotulo">Próximo time em <strong data-relogio>${formatarRelogio(Date.parse(e.proximoEm) - Date.now())}</strong></p>
-      <section class="res-compartilhar">
-        <a class="botao botao-zap" data-sem-aviso target="_blank" rel="noopener"
-          href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Mandar no grupo</a>
-        <div class="trio">
-          <button class="botao botao-sec" type="button" data-acao="share">Stories</button>
-          <button class="botao botao-sec" type="button" data-acao="emoji">Grade em emoji</button>
-          <button class="botao botao-sec" type="button" data-acao="copiar">Copiar link</button>
-        </div>
-      </section>
-      <details class="res-card">
-        <summary class="rotulo">Ver o card</summary>
-        <img class="card" alt="Card do Time do Dia, sem o nome do clube" />
-      </details>
-      <div class="res-acoes">
-        <button class="botao botao-sec" type="button" data-acao="inicio">Início</button>
-        <button class="botao" type="button" data-acao="jogar">Pênaltis<small>bora jogar mais</small></button>
-      </div>`;
-    elFim.hidden = false;
+    root.innerHTML = htmlResultado({
+      time,
+      classe: `resultado time-do-dia-fim ${e.acertou ? 'venceu' : 'perdeu'}`,
+      rotulo: `Time do Dia #${e.numero}`,
+      titulo: e.acertou ? 'Achou!' : 'Não foi dessa',
+      ganhou: e.acertou,
+      placar: `<section class="dia-placar-tv" aria-label="Placar">
+          <div class="dia-revelado faixa-tv">
+            <p class="rotulo">Era o time de hoje</p>
+            <h2>${esc(e.secreto?.nome ?? '')}</h2>
+          </div>
+          <p class="dia-chutes"><strong>${placar}</strong><span>${n === 1 ? 'chute' : 'chutes'}</span></p>
+        </section>`,
+      pontos: e.acertou ? { total: e.pontos, paraTime } : null,
+      detalhe: `${placa(`${CABECALHO_PISTAS}<ol class="dia-grade">${e.tentativas.map((t) => linhaHtml(t, false)).join('')}</ol>`, {
+        titulo: 'Suas pistas',
+        classe: 'aperta dia-pistas',
+      })}
+        ${casa}
+        <div class="numeros">
+          ${numero(`<span data-relogio>${formatarRelogio(Date.parse(e.proximoEm) - Date.now())}</span>`, 'Próximo time em')}
+          ${e.acertou ? '' : numero('0', 'pontos hoje', 'apagado')}
+        </div>`,
+      frases: frasesFinais,
+      aviso: e.acertou ? { texto: `+${e.pontos} na semana, além das 5 partidas do dia.`, forte: false } : null,
+      selos: htmlSelosDaPosicao(e.desempenho, 'dia'),
+      zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
+      // Time do Dia é um por dia: o botão principal leva ao próximo jogo (Lances do Jogo).
+      maisUma: 'Lances do Jogo',
+    });
+    if (e.acertou) contar(root.querySelector<HTMLElement>('[data-contador]'), e.pontos);
+    scrollTo(0, 0);
     // Bom momento para oferecer o aviso de domingo: acertou o time do dia.
-    if (e.acertou) convidarParaAvisos(elFim.querySelector<HTMLElement>('[data-convite-push]'));
-    oferecerApoio(elFim.querySelector<HTMLElement>('[data-apoio]'), bomMomentoDoDia({ acertou: e.acertou }));
-    if (festejar) papelPicadoNaTela(elFim.querySelector('.dia-placar') ?? elFim, [time.cores[0], time.cores[1], '#ffd23f']);
+    if (e.acertou) convidarParaAvisos(root.querySelector<HTMLElement>('[data-convite-push]'));
+    oferecerApoio(root.querySelector<HTMLElement>('[data-apoio]'), bomMomentoDoDia({ acertou: e.acertou }));
+    if (festejar) papelPicadoNaTela(root.querySelector('.dia-chutes') ?? root, [time.cores[0], time.cores[1], '#ffd23f']);
 
-    const elRelogio = elFim.querySelector<HTMLElement>('[data-relogio]')!;
+    const elRelogio = root.querySelector<HTMLElement>('[data-relogio]')!;
     clearInterval(relogio);
     relogio = window.setInterval(() => {
       const ms = Date.parse(e.proximoEm) - Date.now();
       elRelogio.textContent = formatarRelogio(ms);
       if (ms <= 0) {
         clearInterval(relogio);
-        elRelogio.textContent = 'já! Recarrega a página';
+        elRelogio.textContent = 'já!';
       }
     }, 1000);
 
     // Carreira: só com o servidor (o XP sai de lá); reabrir o dia já feito não mostra nada (XP igual).
-    if (e.desempenho) mostrarCarreiraNoResultado(elFim.querySelector<HTMLElement>('[data-carreira]'));
+    if (e.desempenho) mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]'));
 
-    // ---------- card ----------
-    const img = elFim.querySelector<HTMLImageElement>('.card')!;
-    const cardPronto = (async () => {
+    const card = (async () => {
       await prontoParaDesenhar();
       const canvas = desenharCardDia({
         time,
         apelido: prefs.get().apelido,
-        paraTime: proTime(time),
+        paraTime,
         numero: e.numero,
         placar,
         pistas: e.tentativas.map((t) => t.pistas),
@@ -402,60 +409,24 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       });
       const nivel = await nivelParaCard();
       if (nivel) seloNivel(canvas, nivel);
-      await mostrarCard(img, canvas);
       return canvas;
     })();
 
-    const avisar = (botao: HTMLButtonElement, texto: string) => {
-      const antes = botao.textContent;
-      botao.textContent = texto;
-      setTimeout(() => (botao.textContent = antes), 1800);
-    };
-    const btnShare = elFim.querySelector<HTMLButtonElement>('[data-acao="share"]')!;
-    btnShare.addEventListener('click', async () => {
-      try {
-        const canvas = await cardPronto;
-        const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, 'image/png'));
-        const arquivo = blob ? new File([blob], 'time-do-dia.png', { type: 'image/png' }) : null;
-        if (arquivo && navigator.canShare?.({ files: [arquivo] })) await navigator.share({ files: [arquivo], text: textoShare });
-        else if (navigator.share) await navigator.share({ text: textoShare });
-        else {
-          await navigator.clipboard.writeText(textoShare);
-          avisar(btnShare, 'Copiado!');
-        }
-      } catch {
-        // cancelou
-      }
+    ligarResultado(root, {
+      card,
+      textoShare,
+      link,
+      emoji: `${linha}\n${grade}`,
+      maisUma: () => irPara({ tela: 'lances' }),
+      inicio: () => irPara({ tela: 'inicio' }),
     });
-    const btnEmoji = elFim.querySelector<HTMLButtonElement>('[data-acao="emoji"]')!;
-    btnEmoji.addEventListener('click', async () => {
-      try {
-        if (navigator.share) await navigator.share({ text: textoShare });
-        else {
-          await navigator.clipboard.writeText(textoShare);
-          avisar(btnEmoji, 'Copiado!');
-        }
-      } catch {
-        // cancelou
-      }
-    });
-    const btnCopiar = elFim.querySelector<HTMLButtonElement>('[data-acao="copiar"]')!;
-    btnCopiar.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(link);
-        avisar(btnCopiar, 'Copiado!');
-      } catch {
-        avisar(btnCopiar, link);
-      }
-    });
-    elFim.querySelector('[data-acao="inicio"]')?.addEventListener('click', () => irPara({ tela: 'inicio' }));
-    elFim.querySelector('[data-acao="casa"]')?.addEventListener('click', () => irPara({ tela: 'casa', id: timeCasa?.id }));
-    elFim.querySelector('[data-acao="jogar"]')?.addEventListener('click', () => irPara({ tela: 'partida' }));
+    root.querySelector('[data-acao="casa"]')?.addEventListener('click', () => irPara({ tela: 'casa', id: timeCasa?.id }));
   }
 
   // ---------- carregar o dia ----------
   async function carregar(): Promise<void> {
     elCarregando.hidden = false;
+    elErro.hidden = true;
     try {
       const api = await servidor();
       if (!FALSA) await sincronizarTorcedor();
@@ -463,13 +434,14 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       if (saiu) return;
       elCarregando.hidden = true;
       if (!r.pronto) {
+        elCarregando.innerHTML = blocoEstado('vazio', 'O Time do Dia entra em campo já já. Volta mais tarde!', { acao: 'Voltar pro início' });
+        aoTocarNoEstado(elCarregando, () => irPara({ tela: 'inicio' }));
         elCarregando.hidden = false;
-        elCarregando.textContent = 'O Time do Dia entra em campo já já. Volta mais tarde!';
         return;
       }
       estado = r;
       clubes = r.clubes ?? clubes;
-      $('[data-titulo]').textContent = `Time do Dia #${r.numero}`;
+      $('.titulo-tela').textContent = `Time do Dia #${r.numero}`;
       desenharGrade();
       if (r.fim) terminar();
       else {
@@ -480,7 +452,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     } catch (e) {
       if (saiu) return;
       elCarregando.hidden = true;
-      erro(mensagemDe(e));
+      falhaDeCarga(mensagemDe(e));
     }
   }
 
@@ -494,7 +466,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     prefs.set({ semComoDia: marcado || undefined });
     if (marcado) $('[data-como]').hidden = true;
   });
-  $('.voltar').addEventListener('click', () => irPara({ tela: 'inicio' }));
+  $('[data-voltar]').addEventListener('click', () => irPara({ tela: 'inicio' }));
 
   void carregar();
 

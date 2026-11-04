@@ -1,23 +1,41 @@
-/* Aba Palpites (Crava a Rodada), lista de jogos da aba Jogar, semana do ranking e painel #admin. */
+/* Aba Palpites (Crava a Rodada) no Grafismo de TV, lista de jogos da aba Jogar, semana do ranking e painel #admin. */
 
 .palpites,
 .admin {
   padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
-/* Aviso fixo: sempre visível no topo. */
+/* Aviso fixo no topo enquanto a tela rola. O sticky funciona porque html e body cortam a rolagem lateral
+   com overflow-x: clip (style.css); com hidden ele ficava solto e cortado. */
 .aviso-resenha {
   position: sticky;
-  top: 0;
-  z-index: 5;
-  margin: calc(-12px - env(safe-area-inset-top)) -16px 0;
-  padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
-  background: #ffd23f;
-  color: var(--tinta);
-  font-size: 13px;
-  font-weight: 800;
+  top: calc(6px + env(safe-area-inset-top));
+  z-index: 12;
+  padding: 8px 12px 8px 14px;
+  border-radius: var(--raio-p);
+  background: var(--placa);
+  box-shadow: inset 5px 0 0 var(--amarelo), var(--sombra-placa);
+  color: var(--cal);
+  font-size: 14px;
+  font-weight: 700;
   line-height: 1.3;
-  text-align: center;
+}
+
+.visao-palpites {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.visao-palpites[hidden],
+.tabela-campeonato[hidden] {
+  display: none;
+}
+
+.tabela-campeonato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
 }
 
 .seletor-rodada {
@@ -27,8 +45,15 @@
   text-align: center;
 }
 
+.seletor-rodada[hidden] {
+  display: none;
+}
+
 .seletor-rodada strong {
-  font-size: 20px;
+  font-family: var(--fonte-rotulo);
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .seletor-rodada button:disabled {
@@ -39,24 +64,30 @@
   max-width: 100%;
 }
 
+.sua-rodada[hidden],
+.crava-ranking[hidden],
+.crava-compartilhar[hidden] {
+  display: none;
+}
+
 .lista-jogos {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
+/* Cartão do jogo: placa com sombra suave; o filete vem do bloco `.placa.filete`. */
 .jogo-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px 12px;
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.38);
-  border: 2px solid transparent;
+  gap: var(--e2);
+  padding: var(--e3) var(--e4) var(--e4);
+}
+
+.jogo-card.filete {
+  padding-top: calc(var(--e3) + 4px);
 }
 
 .jogo-card.com-certeza {
-  border-color: var(--amarelo);
+  box-shadow: var(--sombra-placa), inset 0 0 0 2px rgba(245, 245, 240, 0.55);
 }
 
 .jogo-topo {
@@ -74,33 +105,36 @@
 .tag-adiado {
   padding: 1px 6px;
   border-radius: 4px;
-  background: var(--caiu);
+  background: #b53a22;
   color: #fff;
   font-style: normal;
 }
 
+/* Jogo da certeza: contorno, nunca amarelo cheio (o amarelo cheio fica só no botão principal da tela). */
 .certeza {
   min-height: 44px;
-  padding: 4px 12px;
-  border: 2px solid rgba(255, 210, 63, 0.6);
-  border-radius: 999px;
-  background: none;
-  color: var(--amarelo);
+  padding: 4px 14px;
+  border: 2px solid rgba(245, 245, 240, 0.45);
+  border-radius: var(--raio-p);
+  background: transparent;
+  color: var(--cal);
   font: 700 15px var(--fonte-rotulo);
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   touch-action: manipulation;
 }
 
 .certeza[aria-pressed='true'],
 .certeza.ligada {
-  background: var(--amarelo);
-  color: var(--tinta);
   border-color: var(--amarelo);
+  background: var(--placa-alta);
+  color: var(--amarelo);
 }
 
 span.certeza {
   display: inline-flex;
   align-items: center;
+  min-height: 32px;
 }
 
 .linha-time {
@@ -128,9 +162,9 @@ span.certeza {
 }
 
 .linha-time .nome small {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--amarelo);
+  color: var(--texto-suave);
 }
 
 .ajuste {
@@ -143,16 +177,19 @@ span.certeza {
 .ajuste button {
   height: 48px;
   border: 0;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.12);
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
   color: var(--cal);
   font: 700 28px var(--fonte-rotulo);
   line-height: 1;
   touch-action: manipulation;
+  transition: transform var(--lento) var(--mola);
 }
 
 .ajuste button:active:not(:disabled) {
-  background: rgba(255, 210, 63, 0.4);
+  background: rgba(245, 245, 240, 0.22);
+  transform: scale(0.92);
+  transition-duration: 0s;
 }
 
 .ajuste button:disabled {
@@ -163,7 +200,7 @@ span.certeza {
 .gols-final {
   font-family: var(--fonte-placar);
   font-size: 30px;
-  color: var(--amarelo);
+  color: var(--cal);
   font-variant-numeric: tabular-nums;
 }
 
@@ -179,49 +216,47 @@ span.certeza {
   gap: 10px;
 }
 
-.jogo-rodape .estado {
-  font-size: 14px;
+.situacao {
+  font-size: 15px;
+  line-height: 1.3;
   color: var(--texto-suave);
 }
 
-.jogo-rodape .estado strong {
+.situacao strong {
   color: var(--cal);
 }
 
-.botao.cravar {
-  width: auto;
+/* Cravar: papel claro (como a aba marcada). Pronto vira contorno verde. Amarelo cheio fica de fora. */
+.cravar {
   min-width: 128px;
   min-height: 48px;
   padding: 8px 18px;
-  font-size: 20px;
-  justify-content: center;
+  border: 0;
+  border-radius: var(--raio-p);
+  background: var(--cal);
+  color: var(--tinta);
+  font: 700 20px var(--fonte-rotulo);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  transition: transform var(--lento) var(--mola);
 }
 
-.botao.cravar:disabled {
-  background: rgba(61, 220, 132, 0.2);
+.cravar:active:not(:disabled) {
+  transform: scale(0.95);
+  transition-duration: 0s;
+}
+
+.cravar.feito,
+.cravar:disabled {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--subiu);
   color: var(--subiu);
-  box-shadow: none;
-  opacity: 1;
-}
-
-.jogo-card .estado {
-  font-size: 15px;
 }
 
 .rolando {
-  color: var(--amarelo);
+  color: var(--cal);
   font-weight: 800;
-}
-
-.acerto {
-  font-size: 17px;
-}
-
-.acerto strong {
-  font-family: var(--fonte-placar);
-  font-size: 22px;
-  font-weight: 400;
-  color: var(--amarelo);
 }
 
 .frase-jogo {
@@ -234,8 +269,8 @@ span.certeza {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding-top: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: var(--e2);
+  border-top: 1px solid var(--linha);
 }
 
 .como .rotulo {
@@ -258,8 +293,9 @@ span.certeza {
 
 .como-barra {
   height: 10px;
-  border-radius: 5px;
-  background: linear-gradient(90deg, var(--amarelo) calc(var(--p) * 1%), rgba(255, 255, 255, 0.12) 0);
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--cal) calc(var(--p) * 1%), rgba(245, 245, 240, 0.14) 0);
+  transform: skewX(var(--inclinacao));
 }
 
 .como-linha strong {
@@ -271,51 +307,48 @@ span.certeza {
   color: var(--texto-suave);
 }
 
-.crava-resumo {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.crava-meus-pontos {
-  font-size: 18px;
-}
-
-.crava-meus-pontos strong {
-  font-family: var(--fonte-placar);
-  font-weight: 400;
-  font-size: 26px;
-  color: var(--amarelo);
-}
-
-.crava-meus-pontos small {
-  color: var(--texto-suave);
+/* Placa "Sua rodada" e ranking do Crava. */
+.sua-rodada .numero strong small {
+  font-size: 15px;
 }
 
 .crava-posicao {
   font-weight: 700;
 }
 
-.crava-recorde {
-  font-size: 15px;
-  color: var(--texto-suave);
+.crava-ranking .tabela {
+  padding: 0;
+  background: none;
+  box-shadow: none;
 }
 
-.crava-resumo > .rotulo {
-  color: var(--texto-suave);
+.crava-ranking .estado {
+  padding: var(--e4) var(--e2);
 }
 
-.crava-compartilhar {
+/* Mandar no grupo: o verde é um só; o outro formato vira botão de contorno. */
+.crava-compartilhar .botao-linha,
+.mandar-resultado {
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  gap: 2px;
+  font-size: 18px;
+}
+
+.mandar-resultado small {
+  font-family: var(--fonte-texto);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--texto-suave);
 }
 
 /* "Como cravar": o mesmo "Como jogar" dos pênaltis, preso à tela inteira. */
-.cabecalho-crava {
-  justify-content: space-between;
-}
-
 .palpites .como-jogar {
   position: fixed;
   z-index: 40;
@@ -325,10 +358,6 @@ span.certeza {
   font-style: normal;
   font-weight: 800;
   color: var(--amarelo);
-}
-
-.crava-compartilhar > .rotulo {
-  color: var(--texto-suave);
 }
 
 .crava-compartilhar .botao {
@@ -522,10 +551,6 @@ span.certeza {
 }
 
 /* ---------- indicadores e tabela do campeonato (apoio para cravar) ---------- */
-.abas-crava {
-  margin-top: -6px;
-}
-
 .linha-time.com-indicador {
   min-height: 54px;
 }
@@ -546,7 +571,7 @@ span.certeza {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--texto-suave);
   white-space: nowrap;
@@ -558,12 +583,12 @@ span.certeza {
 }
 
 .forma i {
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
   display: grid;
   place-items: center;
   border-radius: 3px;
-  font: 700 9px var(--fonte-rotulo);
+  font: 700 11px var(--fonte-rotulo);
   font-style: normal;
   color: var(--tinta);
 }
@@ -577,13 +602,13 @@ span.certeza {
 }
 
 .forma .f-D {
-  background: var(--caiu);
+  background: #c8412a;
   color: #fff;
 }
 
 .dicas {
   padding: 6px 10px;
-  border-left: 3px solid rgba(255, 210, 63, 0.5);
+  border-left: 3px solid rgba(245, 245, 240, 0.4);
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.05);
   font-size: 13px;
@@ -593,6 +618,9 @@ span.certeza {
 
 .tabela-brasileirao {
   padding: 4px 8px;
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
 }
 
 .tb-linha {
@@ -652,11 +680,16 @@ span.certeza {
 }
 
 .tb-linha.meu {
-  background: rgba(255, 210, 63, 0.16);
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 1px rgba(245, 245, 240, 0.35);
 }
 
 .tb-linha.z4 {
   box-shadow: inset 3px 0 0 var(--caiu);
+}
+
+.tb-linha.meu.z4 {
+  box-shadow: inset 3px 0 0 var(--caiu), inset 0 0 0 1px rgba(245, 245, 240, 0.35);
 }
 
 /* Revisão de perguntas do pipeline com Gemini (adminRevisao.ts). */

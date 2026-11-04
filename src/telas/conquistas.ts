@@ -1,6 +1,7 @@
 // Aba Conquistas do Ranking (docs/jogo.md, seção 7.3, "Medalhas e Conquistas"): as medalhas da própria
 // pessoa por clube e por lance, e a vitrine das torcidas (soma por time, sem ninguém identificado).
 // Medalha é coleção: não vale ponto. Só leitura; baixa sob demanda quando a aba é aberta.
+// Visual do Grafismo de TV (docs/jogo.md 14.2): placas com faixa, números em bloco, estados com "Tentar de novo".
 
 import '../estilos/conquistas.css';
 import { esc, irPara } from '../app';
@@ -19,13 +20,13 @@ import {
 import type { Medalha } from '../jogo/lances';
 import * as real from '../servidor/api';
 import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
+import { aoTocarNoEstado, estado, faixa, numero } from './blocos';
 
 type Servidor = Pick<typeof real, 'minhasMedalhas' | 'vitrineMedalhas'>;
 // Em desenvolvimento, ?lancesFalsos troca o servidor por um de mentira (src/dev/lancesFalsos.ts).
 const FALSO = import.meta.env.DEV && new URLSearchParams(location.search).has('lancesFalsos');
 const servidor = async (): Promise<Servidor> => (FALSO ? import('../dev/lancesFalsos') : real);
 
-const SEM_CONEXAO = '<p class="vazio">Sem conexão com as medalhas agora.</p>';
 const TIPOS: Medalha[] = ['ouro', 'prata', 'bronze'];
 
 /** Nome e cores do clube de um lance (id de times.ts ou "selecao"). */
@@ -36,10 +37,12 @@ const ficha = (id: string) => {
   return l && { titulo: l.titulo, clube: l.clube };
 };
 
+const bolinha = (m: Medalha) => `<span class="medalha ${m}" aria-hidden="true"></span>`;
+
 /** Três contadores (ouro, prata, bronze). O nome vai por escrito, nunca só a cor. */
 function contadores(c: { ouro: number; prata: number; bronze: number }): string {
   return `<span class="conq-contagem">${TIPOS.map(
-    (m) => `<span class="conq-n${c[m] ? '' : ' zero'}"><i class="medalha ${m}" aria-hidden="true"></i><b>${c[m]}</b><small>${NOME_DA_MEDALHA[m].toLowerCase()}</small></span>`,
+    (m) => `<span class="conq-n${c[m] ? '' : ' zero'}">${bolinha(m)}<b>${c[m]}</b><small>${NOME_DA_MEDALHA[m].toLowerCase()}</small></span>`,
   ).join('')}</span>`;
 }
 
@@ -59,18 +62,25 @@ function linhaDoLance(l: MedalhaDoLanceMontada): string {
     <span class="cor" style="--c1:${t.cores[0]};--c2:${t.cores[1]}" aria-hidden="true"></span>
     <span class="conq-nome">${esc(l.titulo)}<small>${esc(t.nome)} · ${l.gols} ${l.gols === 1 ? 'gol' : 'gols'}${l.recriados ? `, ${l.recriados} recriando` : ''}</small>
       <small class="conq-falta">${esc(l.progresso.texto)}</small></span>
-    ${m ? `<span class="conq-selo ${m}"><i class="medalha ${m}" aria-hidden="true"></i>${NOME_DA_MEDALHA[m]}</span>` : '<span class="conq-selo sem">Sem medalha</span>'}
+    ${m ? `<span class="conq-selo ${m}">${bolinha(m)}${NOME_DA_MEDALHA[m]}</span>` : '<span class="conq-selo sem">Sem medalha</span>'}
   </li>`;
+}
+
+/** Soma das medalhas da pessoa, para os três números do topo da placa. */
+function totais(porClube: readonly MedalhasDoClube[]): Record<Medalha, number> {
+  const t: Record<Medalha, number> = { ouro: 0, prata: 0, bronze: 0 };
+  for (const c of porClube) for (const m of TIPOS) t[m] += c[m];
+  return t;
 }
 
 export function desenharConquistas(el: HTMLElement): () => void {
   let saiu = false;
   const meuTime = prefs.get().time;
   el.innerHTML = `<div class="conquistas">
-      <section aria-label="Suas medalhas" data-minhas aria-live="polite"><h3 class="rotulo">Suas medalhas</h3><p class="vazio">Carregando…</p></section>
-      <section aria-label="Vitrine das torcidas" data-vitrine aria-live="polite"><h3 class="rotulo">Vitrine das torcidas</h3><p class="vazio">Carregando…</p></section>
+      <section class="placa" aria-label="Suas medalhas" data-minhas aria-live="polite"></section>
+      <section class="placa" aria-label="Vitrine das torcidas" data-vitrine aria-live="polite"></section>
       <p class="explica">Medalha por lance, só com gol em partida valendo: bronze com 5 gols, prata com 20 e ouro com 50, 10 deles recriando o lance. Não vale ponto e não zera.</p>
-      <button class="botao botao-sec" type="button" data-acao="jogar">Jogar os Lances do Jogo</button>
+      <button class="botao-linha conq-jogar" type="button" data-acao="jogar">Jogar os Lances do Jogo</button>
       <div class="rodape-apoio">${htmlBotaoApoio()}</div>
     </div>`;
   ligarBotaoApoio(el);
@@ -78,29 +88,47 @@ export function desenharConquistas(el: HTMLElement): () => void {
   const minhas = el.querySelector<HTMLElement>('[data-minhas]')!;
   const vitrine = el.querySelector<HTMLElement>('[data-vitrine]')!;
 
-  void servidor().then((api) => {
-    void api
-      .minhasMedalhas()
+  /** Põe a faixa da placa e o conteúdo (ou um estado, com o botão ligado quando há como tentar de novo). */
+  const pintar = (placa: HTMLElement, titulo: string, html: string, tentar?: () => void): void => {
+    placa.innerHTML = `${faixa(titulo)}${html}`;
+    if (tentar) aoTocarNoEstado(placa, tentar);
+  };
+
+  function carregarMinhas(): void {
+    pintar(minhas, 'Suas medalhas', estado('carregando', 'Buscando as medalhas…'));
+    void servidor()
+      .then((api) => api.minhasMedalhas())
       .then((linhas) => {
         if (saiu) return;
         const { porClube, porLance } = montarMedalhas(linhas, ficha);
-        minhas.innerHTML = `<h3 class="rotulo">Suas medalhas</h3>${
-          porLance.length
-            ? `<p class="rotulo conq-sub">Por clube</p><ul class="conq-lista">${porClube.map(linhaDoClube).join('')}</ul>
-               <p class="rotulo conq-sub">Por lance</p><ul class="conq-lista">${porLance.map(linhaDoLance).join('')}</ul>`
-            : `<p class="vazio">${esc(CONQUISTAS_VAZIO)}</p>`
-        }`;
+        if (!porLance.length) {
+          pintar(minhas, 'Suas medalhas', estado('vazio', CONQUISTAS_VAZIO));
+          return;
+        }
+        const t = totais(porClube);
+        pintar(
+          minhas,
+          'Suas medalhas',
+          `<div class="numeros tres">${TIPOS.map((m) => numero(`${bolinha(m)}${t[m]}`, NOME_DA_MEDALHA[m], t[m] ? undefined : 'apagado')).join('')}</div>
+           <p class="rotulo conq-sub">Por clube</p><ul class="conq-lista">${porClube.map(linhaDoClube).join('')}</ul>
+           <p class="rotulo conq-sub">Por lance</p><ul class="conq-lista">${porLance.map(linhaDoLance).join('')}</ul>`,
+        );
       })
       .catch(() => {
-        if (!saiu) minhas.innerHTML = `<h3 class="rotulo">Suas medalhas</h3>${SEM_CONEXAO}`;
+        if (!saiu) pintar(minhas, 'Suas medalhas', estado('erro', 'Sem conexão com as medalhas agora.'), carregarMinhas);
       });
+  }
 
-    void api
-      .vitrineMedalhas()
+  function carregarVitrine(): void {
+    pintar(vitrine, 'Vitrine das torcidas', estado('carregando', 'Buscando a vitrine…'));
+    void servidor()
+      .then((api) => api.vitrineMedalhas())
       .then((linhas) => {
         if (saiu) return;
         const lista = ordenarVitrine(linhas);
-        vitrine.innerHTML = `<h3 class="rotulo">Vitrine das torcidas</h3>${
+        pintar(
+          vitrine,
+          'Vitrine das torcidas',
           lista.length
             ? `<ul class="conq-lista">${lista
                 .map((l, i) => {
@@ -114,13 +142,16 @@ export function desenharConquistas(el: HTMLElement): () => void {
                   </li>`;
                 })
                 .join('')}</ul>`
-            : '<p class="vazio">Nenhuma torcida levou medalha ainda. Quem abre a vitrine?</p>'
-        }`;
+            : estado('vazio', 'Nenhuma torcida levou medalha ainda. Quem abre a vitrine?'),
+        );
       })
       .catch(() => {
-        if (!saiu) vitrine.innerHTML = `<h3 class="rotulo">Vitrine das torcidas</h3>${SEM_CONEXAO}`;
+        if (!saiu) pintar(vitrine, 'Vitrine das torcidas', estado('erro', 'Sem conexão com as medalhas agora.'), carregarVitrine);
       });
-  });
+  }
+
+  carregarMinhas();
+  carregarVitrine();
 
   return () => {
     saiu = true;

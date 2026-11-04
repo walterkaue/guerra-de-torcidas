@@ -10,44 +10,48 @@ import { prontoParaDesenhar } from '../jogo/card';
 import { desenharCardCrava, type DadosCardCrava } from '../jogo/cardCrava';
 import {
   GOLS_MAX,
-  linhaEmoji,
+  EMOJI_ACERTO,
   ordinalRodada,
   palpiteContra,
   pontosDaRodada,
   type Placar,
   type PontosDoJogo,
 } from '../jogo/crava';
-import { AVISO_RESENHA, adiado, faseDoJogo, horaDoJogo, rodadaEmFoco, tempoAte, textoMeusPalpites, textoResultadoRodada } from '../jogo/cravaTela';
-import { AVISO_PRE_TEMPORADA, linhaRecorde, recordeCrava } from '../jogo/posicao';
+import {
+  AVISO_RESENHA,
+  NOME_DO_ACERTO,
+  acertosDaRodada,
+  adiado,
+  faseDoJogo,
+  horaDoJogo,
+  placarTexto,
+  rodadaEmFoco,
+  rotuloDePontos,
+  tempoAte,
+  textoMeusPalpites,
+  textoResultadoRodada,
+} from '../jogo/cravaTela';
+import { linhaRecorde, recordeCrava } from '../jogo/posicao';
 import { ZONA_REBAIXAMENTO, classificacao, dicasDoJogo, type Letra, type LinhaTabela, type Resultado } from '../jogo/tabela';
 import { escolherFrase, type ContextoNarrador, type Etiqueta } from '../narrador/escolher';
 import type { EventoNarrador } from '../narrador/frases';
 import { lerRecentes, registrarVista } from '../narrador/historico';
 import { contextoDoTime } from '../narrador/sessao';
 import { ErroServidor } from '../servidor/api';
-import {
-  comoCravaram,
-  cravar,
-  jogosDoCrava,
-  marcarCerteza,
-  meusDadosDoCrava,
-  minhaPosicaoCrava,
-  rankingCrava,
-  resultadosDaTemporada,
-  rodadasDoCrava,
-  type ComoCravaram,
-  type Jogo,
-  type MeusDados,
-  type Rodada,
-} from '../servidor/crava';
-import { sincronizarTorcedor } from '../servidor/torcedor';
+import * as real from '../servidor/crava';
+import type { ComoCravaram, Jogo, MeusDados, MinhaPosicao, Rodada } from '../servidor/crava';
+import { sincronizarTorcedor as sincronizarReal } from '../servidor/torcedor';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
+import { abas, aoTocarNoEstado, cabecalhoTela, estado, faixa, marcarAba, numero, posicaoHtml, selo } from './blocos';
+
+// Em desenvolvimento, ?homeFalsa troca o servidor por um de mentira (src/dev/cravaFalsa.ts).
+const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
+type Api = typeof real & { sincronizarTorcedor: () => Promise<unknown> };
 
 const LINK = 'https://torcida.kauewalter.com.br/';
 const nomeDo = (id: string) => timePorId(id)?.nome ?? id;
 const iguais = (a?: Placar, b?: Placar) => !!a && !!b && a.m === b.m && a.v === b.v;
-const placarTexto = (p: Placar) => `${p.m} x ${p.v}`;
 const OFICIAIS = TIMES.filter((t) => t.id !== ID_OUTRO).map((t) => t.id);
 const NOME_LETRA: Record<Letra, string> = { V: 'vitória', E: 'empate', D: 'derrota' };
 
@@ -64,12 +68,16 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   const paraTime = time && !outro ? proTime(time) : null;
   const ctxBase: ContextoNarrador = time ? contextoDoTime(time) : {};
   const usadas = new Set<string>();
+  let api: Api = { ...real, sincronizarTorcedor: sincronizarReal };
 
   let jogos: Jogo[] = [];
   let rodadas: Rodada[] = [];
   let meus: MeusDados = { palpites: new Map(), certezas: new Map(), pontos: new Map() };
   let rodada: number | null = null;
   let rankingDe: 'rodada' | 'tudo' = 'rodada';
+  /** Posição na rodada em foco: undefined = ainda carregando, null = sem posição. */
+  let posRodada: MinhaPosicao | null | undefined;
+  let rodadaDaPosicao: number | null = null;
   let visao: 'palpites' | 'tabela' = 'palpites';
   // Resultados da temporada (placar da API) e a tabela calculada deles: apoio para cravar.
   let temporada: Resultado[] = [];
@@ -85,48 +93,40 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   root.innerHTML = `
     <main class="tela palpites">
       <p class="aviso-resenha" role="note">${esc(AVISO_RESENHA)}</p>
-      <header class="cabecalho cabecalho-crava">
-        <h2 class="titulo-placar">Crava a Rodada</h2>
-        <button class="ajuda" type="button" data-acao="como-cravar" aria-label="Como cravar">?</button>
-      </header>
-      <div class="abas abas-crava" role="tablist" aria-label="O que ver">
-        <button role="tab" class="rotulo" aria-selected="true" data-visao="palpites">Palpites</button>
-        <button role="tab" class="rotulo" aria-selected="false" data-visao="tabela">Tabela</button>
-      </div>
+      ${cabecalhoTela({
+        titulo: 'Crava a Rodada',
+        extra: '<button class="ajuda" type="button" data-acao="como-cravar" aria-label="Como cravar">?</button>',
+      })}
+      ${abas('visao', [{ id: 'palpites', texto: 'Palpites' }, { id: 'tabela', texto: 'Tabela' }], 'palpites', 1)}
       <section class="tabela-campeonato" data-tabela hidden></section>
       <div class="visao-palpites" data-visao-palpites>
-      <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
-      <nav class="seletor-rodada" aria-label="Rodada" hidden>
-        <button type="button" class="voltar" data-acao="rodada-ant" aria-label="Rodada anterior">‹</button>
-        <strong class="rotulo" data-rodada></strong>
-        <button type="button" class="voltar" data-acao="rodada-prox" aria-label="Próxima rodada">›</button>
-      </nav>
-      <p class="adesivo" data-adesivo hidden></p>
-      <p class="nota" data-lembrete hidden></p>
-      <section class="lista-jogos" aria-live="polite"><p class="vazio">Carregando os jogos…</p></section>
-      <section class="crava-resumo" hidden>
-        <p class="crava-meus-pontos" data-meus-pontos></p>
-        <p class="crava-posicao" data-posicao></p>
-        <p class="crava-recorde" data-recorde hidden></p>
-        <p class="rotulo">Ranking do Crava</p>
-        <div class="abas" role="tablist">
-          <button role="tab" class="rotulo" aria-selected="true" data-acao="rk-rodada">Rodada</button>
-          <button role="tab" class="rotulo" aria-selected="false" data-acao="rk-tudo">Brasileirão</button>
-        </div>
-        <div class="tabela" data-ranking><p class="vazio">Carregando…</p></div>
-        <p class="explica">Média dos 30 melhores de cada torcida. Na semana, vale em dobro (até 300 por rodada).</p>
-      </section>
-      <section class="crava-compartilhar" hidden>
-        <p class="rotulo">Mandar no grupo</p>
-        <button class="botao botao-zap" type="button" data-acao="card-meus">
-          Mandar meus palpites
-          <small>Card com os placares que você cravou, sem porcentagem</small>
-        </button>
-        <button class="botao botao-sec" type="button" data-acao="card-resultado" hidden>
-          Mandar o resultado da rodada
-          <small>Seus pontos e um emoji por jogo: 🎯 ✅ 👍 ❌</small>
-        </button>
-      </section>
+        <nav class="seletor-rodada placa aperta" aria-label="Rodada" hidden>
+          <button type="button" class="voltar" data-acao="rodada-ant" aria-label="Rodada anterior">‹</button>
+          <strong data-rodada></strong>
+          <button type="button" class="voltar" data-acao="rodada-prox" aria-label="Próxima rodada">›</button>
+        </nav>
+        <section class="placa filete sua-rodada" data-sua-rodada aria-label="Sua rodada" hidden></section>
+        <p class="adesivo" data-adesivo hidden></p>
+        <p class="nota" data-lembrete hidden></p>
+        <section class="lista-jogos" aria-live="polite">${estado('carregando', 'Buscando os jogos…')}</section>
+        <section class="placa crava-ranking" data-ranking-placa hidden>
+          ${faixa('Ranking do Crava')}
+          ${abas('rk', [{ id: 'rodada', texto: 'Rodada' }, { id: 'tudo', texto: 'Brasileirão' }], 'rodada', 2)}
+          <p class="crava-posicao" data-posicao></p>
+          <div class="tabela" data-ranking>${estado('carregando', 'Buscando o ranking…')}</div>
+          <p class="explica">Média dos 30 melhores de cada torcida. Na semana, vale em dobro (até 300 por rodada).</p>
+        </section>
+        <section class="mandar crava-compartilhar" aria-label="Mandar no grupo" hidden>
+          ${faixa('Mandar no grupo')}
+          <button class="botao botao-zap" type="button" data-acao="card-meus">
+            Mandar meus palpites
+            <small>Card com os placares que você cravou, sem porcentagem</small>
+          </button>
+          <button class="botao-linha mandar-resultado" type="button" data-acao="card-resultado" hidden>
+            Mandar o resultado da rodada
+            <small>Seus pontos e um emoji por jogo: 🎯 ✅ 👍 ❌</small>
+          </button>
+        </section>
       </div>
       <section class="como-jogar" role="dialog" aria-modal="true" aria-labelledby="cc-titulo" hidden>
         <div class="cj-caixa">
@@ -153,10 +153,17 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   const elLista = $('.lista-jogos');
   const elAdesivo = $('[data-adesivo]');
   const elLembrete = $('[data-lembrete]');
-  const elResumo = $('.crava-resumo');
+  const elSua = $('[data-sua-rodada]');
+  const elRankPlaca = $('[data-ranking-placa]');
   const elShare = $('.crava-compartilhar');
   if (time && !outro) {
     root.querySelector<HTMLElement>('.palpites')!.style.cssText = `--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}`;
+  }
+
+  /** Troca o conteúdo de um bloco por um estado (vazio, erro, carregando) e liga o "Tentar de novo". */
+  function mostrar(el: HTMLElement, html: string, tentar?: () => void): void {
+    el.innerHTML = html;
+    if (tentar) aoTocarNoEstado(el, tentar);
   }
 
   // ---------- narrador ----------
@@ -232,11 +239,15 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     </div>`;
   }
 
+  /** Cartão do jogo: uma placa (filete na cor do seu time quando ele joga). */
   function cartao(j: Jogo, resultados: PontosDoJogo[]): string {
     const agora = new Date();
     const fase = faseDoJogo(j, agora);
     const salvo = meus.palpites.get(j.id);
     const certeza = certezaDaRodada() === j.id;
+    const doMeuTime = !!time && !outro && (j.mandante_id === time.id || j.visitante_id === time.id);
+    const abre = (extra: string) =>
+      `<article class="placa jogo-card${doMeuTime ? ' filete' : ''}${extra}" data-jogo="${j.id}">`;
     const topo = `<header class="jogo-topo">
       <span class="rotulo">${esc(horaDoJogo(j.inicio))}${adiado(j) ? ' <em class="tag-adiado">adiado</em>' : ''}</span>
       ${
@@ -251,14 +262,14 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     if (fase === 'aberto') {
       const atual = rascunho.get(j.id) ?? salvo ?? { m: 0, v: 0 };
       const pronto = iguais(atual, salvo);
-      return `<article class="jogo-card aberto${certeza ? ' com-certeza' : ''}" data-jogo="${j.id}">
+      return `${abre(` aberto${certeza ? ' com-certeza' : ''}`)}
         ${topo}
         ${linhaTime(j.mandante_id, 'm', atual.m, true)}
         ${linhaTime(j.visitante_id, 'v', atual.v, true)}
         ${dicasHtml(j)}
         <div class="jogo-rodape">
-          <span class="estado">${salvo ? `Cravado: <strong>${placarTexto(salvo)}</strong>` : 'Ainda não cravado'}</span>
-          <button type="button" class="botao cravar" data-acao="cravar" ${pronto ? 'disabled' : ''}>${pronto ? 'Cravado ✓' : 'Cravar'}</button>
+          <span class="situacao">${salvo ? `Cravado: <strong>${placarTexto(salvo)}</strong>` : 'Ainda não cravado'}</span>
+          <button type="button" class="cravar${pronto ? ' feito' : ''}" data-acao="cravar" ${pronto ? 'disabled' : ''}>${pronto ? 'Cravado ✓' : 'Cravar'}</button>
         </div>
       </article>`;
     }
@@ -267,25 +278,29 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       ? `Seu palpite: <strong>${placarTexto(salvo)}</strong>${certeza ? ' ⭐' : ''}`
       : 'Você não cravou esse.';
     if (fase === 'anulado') {
-      return `<article class="jogo-card fechado" data-jogo="${j.id}">${topo}
+      return `${abre(' fechado')}${topo}
         ${linhaTime(j.mandante_id, 'm', null, false)}${linhaTime(j.visitante_id, 'v', null, false)}
-        <p class="estado">${meuTexto}</p><p class="nota">Jogo anulado: sem pontos.</p></article>`;
+        <p class="situacao">${meuTexto}</p><p class="nota">Jogo anulado: sem pontos.</p></article>`;
     }
     if (fase === 'rolando') {
-      return `<article class="jogo-card fechado" data-jogo="${j.id}">${topo}
+      return `${abre(' fechado')}${topo}
         ${linhaTime(j.mandante_id, 'm', null, false)}${linhaTime(j.visitante_id, 'v', null, false)}
-        <p class="estado"><span class="rolando">Bola rolando</span> · ${meuTexto}</p>
+        <p class="situacao"><span class="rolando">Bola rolando</span> · ${meuTexto}</p>
         ${blocoComo(j)}</article>`;
     }
-    // confirmado
+    // confirmado: pontos em número de bloco, acerto em selo
     const r = resultados.find((x) => x.jogoId === j.id);
     const ganho = r
-      ? `<p class="acerto">${r.acerto ? `${linhaEmoji([r])} ` : ''}<strong>+${r.torcida}</strong> ${r.torcida === 1 ? 'ponto' : 'pontos'}${paraTime ? ` ${esc(paraTime)}` : ''}</p>`
-      : '';
+      ? `<div class="numeros dois">
+          ${numero(`+${r.torcida}`, rotuloDePontos(r.torcida, paraTime), r.torcida > 0 ? 'destaque' : 'apagado')}
+          ${numero(salvo ? placarTexto(salvo) : '–', 'Seu palpite', 'apagado')}
+        </div>
+        <div class="selos">${r.acerto ? selo(`${EMOJI_ACERTO[r.acerto]} ${esc(NOME_DO_ACERTO[r.acerto])}`) : ''}${r.certeza ? selo('★ Certeza ×2') : ''}</div>`
+      : `<p class="situacao">${meuTexto}</p>`;
     const frase = salvo && r ? fraseDoResultado(j, salvo, r) : null;
-    return `<article class="jogo-card fechado confirmado" data-jogo="${j.id}">${topo}
+    return `${abre(' fechado confirmado')}${topo}
       ${linhaTime(j.mandante_id, 'm', j.gols_mandante, false)}${linhaTime(j.visitante_id, 'v', j.gols_visitante, false)}
-      <p class="estado">${meuTexto}</p>${ganho}
+      ${ganho}
       ${frase ? `<p class="frase-jogo">${esc(frase)}</p>` : ''}
       ${blocoComo(j)}</article>`;
   }
@@ -320,13 +335,18 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     const seletor = $('.seletor-rodada');
     if (rodada === null || !nums.length) {
       seletor.hidden = true;
-      elLista.innerHTML = '<p class="vazio">Os jogos da rodada ainda não chegaram. Volta daqui a pouco!</p>';
-      elResumo.hidden = true;
+      mostrar(elLista, estado('vazio', 'Os jogos da rodada ainda não chegaram.', { detalhe: 'Volta daqui a pouco!' }));
+      elSua.hidden = true;
+      elRankPlaca.hidden = true;
       elShare.hidden = true;
       return;
     }
     seletor.hidden = false;
     $('[data-rodada]').textContent = `${ordinalRodada(rodada)} rodada`;
+    if (rodada !== rodadaDaPosicao) {
+      posRodada = undefined;
+      rodadaDaPosicao = rodada;
+    }
     $<HTMLButtonElement>('[data-acao="rodada-ant"]').disabled = rodada <= nums[0];
     $<HTMLButtonElement>('[data-acao="rodada-prox"]').disabled = rodada >= nums[nums.length - 1];
 
@@ -375,6 +395,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       lembreteVisto = chaveLembrete;
     }
 
+    desenharSuaRodada();
     desenharCompartilhar();
     void carregarComo();
     void carregarRanking();
@@ -384,7 +405,41 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     const lista = daRodada();
     const temPalpite = lista.some((j) => meus.palpites.has(j.id));
     elShare.hidden = !temPalpite;
-    $('[data-acao="card-resultado"]').hidden = !resultadosDaRodada().some((r) => r.acerto !== null);
+    const temResultado = resultadosDaRodada().some((r) => r.acerto !== null);
+    const btnResultado = $('[data-acao="card-resultado"]');
+    const btnMeus = $('[data-acao="card-meus"]');
+    btnResultado.hidden = !temResultado;
+    // Um verde só: com resultado, o que importa é mandar os pontos; os palpites viram o botão de contorno.
+    btnResultado.className = temResultado ? 'botao botao-zap' : 'botao-linha mandar-resultado';
+    btnMeus.className = temResultado ? 'botao-linha mandar-resultado' : 'botao botao-zap';
+    if (temResultado) btnResultado.parentElement!.insertBefore(btnResultado, btnMeus);
+    else btnMeus.parentElement!.insertBefore(btnMeus, btnResultado);
+  }
+
+  /** Placa "Sua rodada": pontos, acertos e posição como números; recorde em selo. Só depois do 1º resultado. */
+  function desenharSuaRodada(): void {
+    const resultados = resultadosDaRodada();
+    const { acertos, jogos: comResultado } = acertosDaRodada(resultados);
+    if (rodada === null || !comResultado) {
+      elSua.hidden = true;
+      return;
+    }
+    const pontos = resultados.reduce((s, x) => s + x.torcida, 0);
+    const rec = recordeCrava(pontosPorRodada(), rodada);
+    const textoRec = linhaRecorde(rec.recorde);
+    const selos = rec.novo
+      ? selo(`${icone('estrela')} Novo recorde!`, 'ouro') + (textoRec ? selo(`${esc(textoRec)} numa rodada`) : '')
+      : textoRec
+        ? selo(`${esc(textoRec)} numa rodada`)
+        : '';
+    elSua.hidden = false;
+    elSua.innerHTML = `${faixa(`Sua ${ordinalRodada(rodada)} rodada`)}
+      <div class="numeros tres">
+        ${numero(`${pontos}`, rotuloDePontos(pontos, paraTime), 'destaque')}
+        ${numero(`${acertos}<small>de ${comResultado}</small>`, 'Acertos')}
+        ${posRodada ? numero(posicaoHtml(posRodada.posicao), 'Na rodada') : numero('–', 'Na rodada', 'apagado')}
+      </div>
+      ${selos ? `<div class="selos">${selos}</div>` : ''}`;
   }
 
   // ---------- como a torcida cravou (só depois do início) ----------
@@ -392,7 +447,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     const r = rodada;
     if (r === null || !daRodada().some((j) => faseDoJogo(j, new Date()) !== 'aberto')) return;
     try {
-      const linhas = await comoCravaram(r);
+      const linhas = await api.comoCravaram(r);
       if (saiu || r !== rodada) return;
       for (const l of linhas) como.set(l.jogo_id, l);
       for (const l of linhas) desenharCartao(l.jogo_id);
@@ -415,30 +470,27 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   async function carregarRanking(): Promise<void> {
     const r = rodada;
     if (r === null) return;
-    elResumo.hidden = false;
+    elRankPlaca.hidden = false;
     const alvo = rankingDe === 'rodada' ? r : null;
-    const meusPontos = daRodada().reduce((s, j) => s + (meus.pontos.get(j.id) ?? 0), 0);
-    $('[data-meus-pontos]').innerHTML =
-      `Na ${ordinalRodada(r)}: <strong>${meusPontos}</strong> ${meusPontos === 1 ? 'ponto' : 'pontos'}${paraTime ? ` ${esc(paraTime)}` : ''}`;
-    // Recorde pessoal: a melhor rodada (já com peso).
-    const rec = recordeCrava(pontosPorRodada(), r);
-    const elRec = $('[data-recorde]');
-    const textoRec = linhaRecorde(rec.recorde);
-    elRec.hidden = !textoRec;
-    elRec.innerHTML = rec.novo
-      ? `<span class="selo-recorde">NOVO RECORDE!</span> ${esc(textoRec ?? '')} numa rodada`
-      : textoRec ? `${esc(textoRec)} numa rodada` : '';
     const elRk = $('[data-ranking]');
     const elPos = $('[data-posicao]');
     try {
-      const [linhas, pos] = await Promise.all([rankingCrava(alvo), minhaPosicaoCrava(alvo).catch(() => null)]);
+      // A posição da rodada também alimenta a placa "Sua rodada"; a do Brasileirão só aparece aqui embaixo.
+      const [linhas, posR, posT] = await Promise.all([
+        api.rankingCrava(alvo),
+        api.minhaPosicaoCrava(r).catch(() => null),
+        alvo === null ? api.minhaPosicaoCrava(null).catch(() => null) : Promise.resolve(null),
+      ]);
       if (saiu || r !== rodada) return;
+      posRodada = posR;
+      desenharSuaRodada();
+      const pos = alvo === null ? posT : posR;
       const onde = rankingDe === 'rodada' ? 'na rodada' : 'no Brasileirão';
       elPos.textContent = pos
         ? `Sua posição: ${pos.posicao}º de ${pos.total} ${onde}.`
         : 'Sua posição aparece quando sair o primeiro resultado que você cravou.';
       if (!linhas.some((l) => l.palpiteiros > 0)) {
-        elRk.innerHTML = '<p class="vazio">Sai quando o primeiro placar for confirmado.</p>';
+        mostrar(elRk, estado('vazio', 'Sai quando o primeiro placar for confirmado.'));
         return;
       }
       elRk.innerHTML = linhas
@@ -457,7 +509,10 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
         })
         .join('');
     } catch {
-      if (!saiu) elRk.innerHTML = '<p class="vazio">Sem conexão com o placar agora.</p>';
+      if (!saiu) {
+        elPos.textContent = '';
+        mostrar(elRk, estado('erro', 'Sem conexão com o placar agora.'), () => void carregarRanking());
+      }
     }
   }
 
@@ -466,7 +521,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     const el = $('[data-tabela]');
     const linhas = [...tabela.values()].sort((a, b) => a.posicao - b.posicao);
     if (!linhas.some((l) => l.jogos > 0)) {
-      el.innerHTML = '<p class="vazio">A tabela aparece depois da próxima atualização dos resultados.</p>';
+      mostrar(el, estado('vazio', 'A tabela aparece depois da próxima atualização dos resultados.'));
       return;
     }
     const ultimaRodada = Math.max(...temporada.map((r) => r.rodada));
@@ -502,7 +557,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   root.querySelectorAll<HTMLButtonElement>('[data-visao]').forEach((b) =>
     b.addEventListener('click', () => {
       visao = b.dataset.visao === 'tabela' ? 'tabela' : 'palpites';
-      root.querySelectorAll('[data-visao]').forEach((o) => o.setAttribute('aria-selected', String(o === b)));
+      marcarAba(root, 'visao', visao);
       $('[data-visao-palpites]').hidden = visao !== 'palpites';
       $('[data-tabela]').hidden = visao !== 'tabela';
       if (visao === 'tabela') desenharTabela();
@@ -519,8 +574,8 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     botao.disabled = true;
     botao.textContent = 'Cravando…';
     try {
-      await sincronizarTorcedor();
-      await cravar(j.id, placar);
+      await api.sincronizarTorcedor();
+      await api.cravar(j.id, placar);
       meus.palpites.set(j.id, placar);
       rascunho.delete(j.id);
       const contra = palpiteContra(placar, j.mandante_id, j.visitante_id, time.id);
@@ -542,8 +597,8 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     const ligar = certezaDaRodada() !== j.id;
     const antes = certezaDaRodada();
     try {
-      await sincronizarTorcedor();
-      await marcarCerteza(rodada, ligar ? j.id : null);
+      await api.sincronizarTorcedor();
+      await api.marcarCerteza(rodada, ligar ? j.id : null);
       if (ligar) meus.certezas.set(rodada, j.id);
       else meus.certezas.delete(rodada);
       if (ligar) gritar(falar('crava_certeza'));
@@ -584,10 +639,10 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     desenhar();
   }
 
-  root.querySelectorAll<HTMLButtonElement>('[data-acao^="rk-"]').forEach((b) =>
+  root.querySelectorAll<HTMLButtonElement>('[data-rk]').forEach((b) =>
     b.addEventListener('click', () => {
-      rankingDe = b.dataset.acao === 'rk-tudo' ? 'tudo' : 'rodada';
-      root.querySelectorAll('[data-acao^="rk-"]').forEach((o) => o.setAttribute('aria-selected', String(o === b)));
+      rankingDe = b.dataset.rk === 'tudo' ? 'tudo' : 'rodada';
+      marcarAba(root, 'rk', rankingDe);
       void carregarRanking();
     }),
   );
@@ -677,12 +732,13 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
 
   // ---------- carga ----------
   async function recarregar(): Promise<void> {
+    if (FALSA) api = await import('../dev/cravaFalsa');
     try {
-      const [j, r] = await Promise.all([jogosDoCrava(), rodadasDoCrava()]);
+      const [j, r] = await Promise.all([api.jogosDoCrava(), api.rodadasDoCrava()]);
       jogos = j;
       rodadas = r;
       try {
-        meus = await meusDadosDoCrava();
+        meus = await api.meusDadosDoCrava();
       } catch {
         // sem sessão ainda: mostra os jogos mesmo assim
       }
@@ -691,14 +747,14 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       desenhar();
       void carregarTemporada();
     } catch {
-      if (!saiu) elLista.innerHTML = '<p class="vazio">Sem conexão com o placar agora. Tenta de novo daqui a pouco.</p>';
+      if (!saiu) mostrar(elLista, estado('erro', 'Sem conexão com o placar agora.', { detalhe: 'Tenta de novo daqui a pouco.' }), () => void recarregar());
     }
   }
   void recarregar();
 
   async function carregarTemporada(): Promise<void> {
     try {
-      temporada = await resultadosDaTemporada();
+      temporada = await api.resultadosDaTemporada();
     } catch {
       return; // sem os dados de apoio, a aba funciona igual
     }

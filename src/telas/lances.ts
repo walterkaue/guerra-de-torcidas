@@ -12,22 +12,25 @@ import { ID_OUTRO, TIMES, corDeTexto, proTime, timePorId, type Time } from '../d
 import { prefs } from '../estado';
 import { sementeNova } from '../jogo/aleatorio';
 import { desenharCardLances } from '../jogo/cardLances';
-import { mostrarCard, prontoParaDesenhar, seloNivel } from '../jogo/card';
+import { prontoParaDesenhar, seloNivel } from '../jogo/card';
 import type { FechamentoLances } from '../jogo/lancesPartida';
 import {
   AVISO_LIMITE_DO_DIA,
+  emojisDaPartida,
   linhaValendoHoje,
   situacaoDoResultado,
   textoDaMedalhaNova,
   textoDeCompartilhar,
 } from '../jogo/lancesTextos';
-import { AVISO_PRE_TEMPORADA, htmlPosicao, type Desempenho } from '../jogo/posicao';
+import type { Desempenho } from '../jogo/posicao';
 import * as SERVIDOR from '../servidor/api';
 import { ErroServidor } from '../servidor/api';
 import { comMotivo } from '../servidor/motivo';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
+import { abas, aoTocarNoEstado, cabecalhoTela, estado, faixa, marcarAba, numero, placa, selo } from './blocos';
 import { ligarEfeitoNoRanking } from './efeitoRanking';
+import { contar, htmlResultado, htmlSelosDaPosicao, ligarResultado } from './resultadoPadrao';
 import {
   BONUS_RECRIOU,
   LANCES_POR_PARTIDA,
@@ -66,10 +69,10 @@ export const AVISO_CAIU = 'Caiu a conexão: essa partida não vale mais pontos.'
 const SITE = 'https://torcida.kauewalter.com.br';
 
 export type AbaLances = 'penaltis' | 'falta' | 'finalizacao';
-const ABAS: { id: AbaLances; rotulo: string; nota: string }[] = [
-  { id: 'penaltis', rotulo: 'Pênaltis', nota: 'valendo' },
-  { id: 'falta', rotulo: 'Faltas', nota: 'valendo' },
-  { id: 'finalizacao', rotulo: 'Cara a cara', nota: 'valendo' },
+const ABAS: { id: AbaLances; texto: string }[] = [
+  { id: 'penaltis', texto: 'Pênaltis' },
+  { id: 'falta', texto: 'Faltas' },
+  { id: 'finalizacao', texto: 'Cara a cara' },
 ];
 
 const ROTULO_FAIXA: Record<Faixa, string> = { facil: 'Fácil', media: 'Média', dificil: 'Difícil', craque: 'Craque' };
@@ -142,7 +145,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   /** Uma disputa da lista: tocar abre a ficha e o botão de jogar, como no álbum. */
   function itemDaDisputa(d: Disputa): string {
     const clube = clubeDoLance(d.clube);
-    return `<li class="lance" style="${estilo(clube.cores)}">
+    return `<li class="lance placa filete" style="${estilo(clube.cores)}">
       <button type="button" class="lance-topo" aria-expanded="false">
         <span class="lance-titulo">${esc(d.titulo)}</span>
         <span class="lance-meta">${esc(contraAdversario(d.adversario))} · ${d.data.slice(0, 4)}</span>
@@ -150,8 +153,8 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       </button>
       <div class="lance-ficha" hidden>
         <p>${esc(d.ficha)}</p>
-        <p class="lance-situacao rotulo">${esc(chamadaDaDisputa(d))}</p>
-        <button type="button" class="botao" data-disputa="${esc(d.id)}">Jogar essa disputa</button>
+        <p class="lance-situacao">${esc(chamadaDaDisputa(d))}</p>
+        <button type="button" class="botao botao-sec" data-disputa="${esc(d.id)}">Jogar essa disputa</button>
       </div>
     </li>`;
   }
@@ -162,25 +165,18 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     limparJogo = null;
     root.innerHTML = `
       <main class="tela lances" style="${estilo(time.cores)}">
-        <header class="cabecalho">
-          <button class="voltar" type="button" aria-label="Voltar">‹</button>
-          <h2>Lances do Jogo</h2>
-        </header>
-        <div class="lances-abas" role="tablist" aria-label="Tipo de lance">
-          ${ABAS.map(
-            (a) => `<button type="button" role="tab" aria-selected="${a.id === aba}" data-aba="${a.id}">${a.rotulo}<small>${a.nota}</small></button>`,
-          ).join('')}
-        </div>
+        ${cabecalhoTela({ titulo: 'Lances do Jogo', voltar: true })}
+        ${abas('aba', ABAS, aba, 1)}
         <div class="lances-conteudo"></div>
       </main>`;
     root.querySelectorAll<HTMLButtonElement>('[data-aba]').forEach((b) =>
       b.addEventListener('click', () => {
         aba = b.dataset.aba as AbaLances;
-        root.querySelectorAll('[data-aba]').forEach((o) => o.setAttribute('aria-selected', String(o === b)));
+        marcarAba(root, 'aba', aba);
         conteudo();
       }),
     );
-    root.querySelector('.voltar')!.addEventListener('click', () => irPara({ tela: 'inicio' }));
+    root.querySelector('[data-voltar]')!.addEventListener('click', () => irPara({ tela: 'inicio' }));
     conteudo();
   }
 
@@ -189,24 +185,27 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     if (aba === 'penaltis') {
       const { doTime, daSelecao } = disputasDoTorcedor(catalogoDisputas, time.id);
       const secao = (rotulo: string, lista: Disputa[]) =>
-        lista.length ? `<p class="rotulo lances-secao">${esc(rotulo)}</p><ul class="lista-lances">${lista.map(itemDaDisputa).join('')}</ul>` : '';
+        lista.length ? `<div class="lances-bloco">${faixa(rotulo, 'h3')}<ul class="lista-lances">${lista.map(itemDaDisputa).join('')}</ul></div>` : '';
       const historicas =
         secao(`Disputas históricas ${time.artigo === 'a' ? 'da' : 'do'} ${time.nome}`, doTime) + secao('Disputas históricas da Seleção', daSelecao);
       el.innerHTML = `
-        <p class="lances-aviso rotulo" role="note">Pênaltis valem pontos como sempre</p>
-        <button type="button" class="lance-card" data-acao="disputa-livre">
-          <span class="lance-titulo">Disputa livre</span>
-          <span class="lance-meta">Bate 5, pega 5, contra a máquina. Empatou? Morte súbita.</span>
-        </button>
+        <p class="lances-linha">Pênaltis valem pontos como sempre.</p>
+        ${placa(
+          `<div>
+            <p class="lance-titulo">Disputa livre</p>
+            <p class="lance-meta">Bate 5, pega 5, contra a máquina. Empatou? Morte súbita.</p>
+          </div>
+          <button class="botao" type="button" data-acao="disputa-livre">Bater a disputa livre</button>`,
+          { filete: true },
+        )}
         ${
           historicas ||
-          `<p class="rotulo lances-secao">Disputas históricas</p>
-          <p class="lance-card lance-card-breve">
-            <span class="lance-titulo">Em breve</span>
-            <span class="lance-meta">Disputas de pênaltis que o seu time venceu, contra o adversário de verdade, e as da Seleção.</span>
-          </p>`
-        }
-        <button class="botao" type="button" data-acao="disputa-livre">Bater a disputa livre</button>`;
+          `<div class="lances-bloco">${faixa('Disputas históricas', 'h3')}${placa(
+            estado('vazio', 'Em breve', {
+              detalhe: 'Disputas de pênaltis que o seu time venceu, contra o adversário de verdade, e as da Seleção.',
+            }),
+          )}</div>`
+        }`;
       el.querySelectorAll('[data-acao="disputa-livre"]').forEach((b) => b.addEventListener('click', () => irPara({ tela: 'partida' })));
       el.querySelectorAll<HTMLButtonElement>('.lance-topo').forEach((b) =>
         b.addEventListener('click', () => {
@@ -230,25 +229,21 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       .sort((a, b) => (a.id === 'selecao' ? 1 : b.id === 'selecao' ? -1 : a.nome.localeCompare(b.nome)));
     if (filtroClube !== 'todos' && !clubes.some((c) => c.id === filtroClube)) filtroClube = 'todos';
     el.innerHTML = `
-      <p class="lances-intro">${
-        tipo === 'falta'
-          ? 'Passe por cima ou contorne a barreira e acerte o canto.'
-          : 'A bola chega, o goleiro sai: escolha o canto ou tente a cavadinha.'
-      } Monte uma partida de 3 (pode misturar faltas e cara a cara). Gol no canto do lance de verdade vale +${BONUS_RECRIOU}.</p>
-      <p class="lances-aviso rotulo" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
+      <p class="lances-linha">Monte uma partida de 3. Gol no canto do lance de verdade vale +${BONUS_RECRIOU}.</p>
       <label class="lances-clube">
-        <span class="rotulo">Clube</span>
+        <span>Clube</span>
         <select data-filtro="clube">
           <option value="todos">Todos os clubes</option>
           ${clubes.map((c) => `<option value="${c.id}"${c.id === filtroClube ? ' selected' : ''}>${esc(c.nome)}</option>`).join('')}
         </select>
       </label>
       <ul class="lista-lances" aria-live="polite"></ul>
-      <section class="sua-partida" aria-label="Sua partida">
-        <p class="valendo-hoje rotulo" data-valendo-hoje hidden></p>
+      ${placa(
+        `<p class="valendo-hoje" data-valendo-hoje hidden></p>
         <div class="slots"></div>
-        <button class="botao" type="button" data-acao="jogar" disabled>Jogar os 3</button>
-      </section>`;
+        <button class="botao" type="button" data-acao="jogar" disabled>Jogar os 3</button>`,
+        { classe: 'sua-partida aperta', attrs: 'aria-label="Sua partida"' },
+      )}`;
 
     const lista = el.querySelector<HTMLElement>('.lista-lances')!;
     const slots = el.querySelector<HTMLElement>('.slots')!;
@@ -260,7 +255,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         ? visiveis
             .map((l) => {
               const clube = clubeDoLance(l.clube);
-              return `<li class="lance" style="${estilo(clube.cores)}">
+              return `<li class="lance placa filete" style="${estilo(clube.cores)}">
                 <button type="button" class="lance-topo" aria-expanded="false" data-id="${l.id}">
                   <span class="lance-titulo">${esc(l.titulo)}</span>
                   <span class="lance-meta">${esc(clube.nome)} · ${l.data.slice(0, 4)} · ${esc(situacaoDoLance(l).split(',')[0])}</span>
@@ -268,16 +263,25 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
                 </button>
                 <div class="lance-ficha" hidden>
                   <p>${esc(l.ficha)}</p>
-                  <p class="lance-situacao rotulo">${esc(situacaoDoLance(l))}</p>
-                  <div class="dupla">
-                    <button type="button" class="botao botao-sec" data-acao="treinar" data-id="${l.id}">Treinar</button>
-                    <button type="button" class="botao" data-acao="por" data-id="${l.id}">Pôr na partida</button>
+                  <div class="numeros dois">
+                    ${numero(`${Math.round(distanciaDoLance(l))}<small>m</small>`, 'Distância')}
+                    ${numero(`+${PONTOS_FAIXA[l.faixa]}`, `Gol ${ROTULO_FAIXA[l.faixa].toLowerCase()}`, 'destaque')}
+                  </div>
+                  <p class="lance-situacao">${esc(situacaoDoLance(l))}</p>
+                  <div class="lance-acoes">
+                    <button type="button" class="botao-linha" data-acao="treinar" data-id="${l.id}">Treinar</button>
+                    <button type="button" class="botao botao-sec" data-acao="por" data-id="${l.id}">Pôr na partida</button>
                   </div>
                 </div>
               </li>`;
             })
             .join('')
-        : '<li class="vazio">Nenhum lance desse clube ainda. Tenta outro!</li>';
+        : `<li>${estado('vazio', 'Nenhum lance desse clube ainda.', { detalhe: 'Tenta outro!', acao: 'Ver todos os clubes' })}</li>`;
+      aoTocarNoEstado(lista, () => {
+        filtroClube = 'todos';
+        el.querySelector<HTMLSelectElement>('[data-filtro="clube"]')!.value = 'todos';
+        desenharLista();
+      });
     }
 
     function desenharSlots(): void {
@@ -361,20 +365,29 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       medalha: medalhas[0] ?? null,
     });
 
-    root.innerHTML = `
-      <main class="tela lances-resultado resultado" style="${estilo(time.cores)}">
-        <header class="cabecalho">
-          <button class="voltar" type="button" aria-label="Voltar">‹</button>
-          <h2>Lances do Jogo</h2>
-        </header>
-        <section class="placar-lances faixa-tv">
-          <p class="rotulo">Sua partida</p>
-          <strong>${pontos}</strong>
-          <span class="rotulo">pontos</span>
-        </section>
-        ${frase ? `<p class="adesivo">${esc(frase)}</p>` : ''}
-        ${medalhas.map((t) => `<p class="selo-recorde selo-medalha">${esc(t)}</p>`).join('')}
-        <ul class="resumo-lances">
+    const gols = resultados.filter((r) => r.desfecho === 'gol').length;
+    const recriou = resultados.filter((r) => r.recriou).length;
+    const esperaRanking = !!fim && situacao.tipo === 'ranking' && !outro;
+    const emoji = [
+      '⚽ Guerra de Torcidas · Lances do Jogo',
+      `${emojisDaPartida(resultados.map((r) => r.desfecho))} · ${pontos} ${pontos === 1 ? 'ponto' : 'pontos'}${paraTime ? ` ${paraTime}` : ''}`,
+      link,
+    ].join('\n');
+
+    root.innerHTML = htmlResultado({
+      time,
+      classe: `resultado lances-resultado ${gols > 0 ? 'venceu' : 'perdeu'}`,
+      rotulo: 'Lances do Jogo',
+      titulo: 'Fim de jogo',
+      ganhou: gols > 0,
+      placar: `<section class="res-placar faixa-tv" aria-label="Gols">
+          <div><span class="rotulo">Gols</span><strong>${gols}</strong></div>
+          <em>de</em>
+          <div><span class="rotulo">Lances</span><strong>${lances.length}</strong></div>
+        </section>`,
+      pontos: { total: pontos, paraTime },
+      detalhe: placa(
+        `<ul class="resumo-lances">
           ${lances
             .map((l, i) => {
               const r = resultados[i];
@@ -384,60 +397,44 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
             })
             .join('')}
         </ul>
-        <section class="res-efeito" aria-live="polite">
-          ${situacao.texto ? `<p class="situacao${valendo ? '' : ' sem-pontos'}">${esc(situacao.texto)}</p>` : ''}
-        </section>
-        ${htmlPosicao(desempenho, 'lances')}
-        <div class="res-carreira" data-carreira hidden></div>
-        ${
-          valendo
-            ? `<section class="res-compartilhar">
-          <a class="botao botao-zap" data-sem-aviso target="_blank" rel="noopener"
-            href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Mandar no WhatsApp</a>
-          <div class="dupla">
-            <button class="botao botao-sec" type="button" data-acao="share">Stories</button>
-            <button class="botao botao-sec" type="button" data-acao="copiar">Copiar texto</button>
-          </div>
-        </section>
-        <details class="res-card">
-          <summary class="rotulo">Ver o card</summary>
-          <img class="card" alt="Card dos Lances do Jogo" />
-        </details>`
-            : ''
-        }
-        <p class="lances-aviso rotulo" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
-        <div class="res-acoes">
-          <button type="button" class="botao botao-sec" data-acao="album">Escolher outros</button>
-          <button type="button" class="botao" data-acao="denovo">Jogar de novo</button>
-        </div>
-      </main>`;
-    root.querySelector('.voltar')!.addEventListener('click', hub);
+        ${recriou ? `<div class="numeros dois">${numero(String(recriou), recriou === 1 ? 'Lance recriado' : 'Lances recriados', 'destaque')}</div>` : ''}
+        <button type="button" class="botao-linha" data-acao="album">Escolher outros</button>`,
+        { titulo: `Seus ${lances.length} lances`, filete: true },
+      ),
+      frases: frase ? [frase] : [],
+      aviso: situacao.texto ? { texto: situacao.texto, forte: !valendo } : null,
+      selos:
+        htmlSelosDaPosicao(desempenho, 'lances') +
+        medalhas.map((t) => selo(`${icone('estrela')} ${esc(t)}`, 'ouro')).join('') +
+        (esperaRanking ? selo('No ranking em 1 min', undefined, 'data-selo-ranking') : '') +
+        (valendo && situacao.tipo === 'ranking' && outro ? selo('Contou pro ranking') : ''),
+      zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
+      maisUma: 'Jogar de novo',
+    });
+    contar(root.querySelector<HTMLElement>('[data-contador]'), pontos);
     root.querySelector('[data-acao="album"]')!.addEventListener('click', hub);
-    root.querySelector('[data-acao="denovo"]')!.addEventListener('click', () => jogo(lances, false));
-    if (!fim) return;
 
     // XP da carreira e posição: só quando o servidor fechou a partida (o XP sai de lá).
-    mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]'));
-    // Efeito no ranking: "Subiu de 5º pra 3º" ou "Contou pro ranking da semana" (mesmo fluxo dos pênaltis).
-    const elEfeito = root.querySelector<HTMLElement>('.res-efeito')!;
+    if (fim)
+      mostrarCarreiraNoResultado(
+        root.querySelector<HTMLElement>('[data-carreira]'),
+        // Em desenvolvimento, ?homeFalsa lê a carreira de mentira (src/dev/homeFalsa.ts).
+        import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa')
+          ? () => import('../dev/homeFalsa').then((m) => m.minhaCarreira())
+          : undefined,
+      );
+    // Efeito no ranking: selo "No ranking em 1 min" que vira "Subiu de 5º pra 3º" (mesmo fluxo dos pênaltis).
     let pararEfeito: (() => void) | null = null;
-    if (situacao.tipo === 'ranking') {
-      if (outro) elEfeito.innerHTML = '<p class="situacao">Contou pro ranking da semana.</p>';
-      else {
-        pararEfeito = ligarEfeitoNoRanking(elEfeito, {
-          timeId: time.id,
-          paraTime,
-          semana: fim.semana,
-          confirmadaEm: fim.confirmadaEm,
-          antes: fim.ranking.antes,
-        });
-      }
+    if (esperaRanking && fim) {
+      pararEfeito = ligarEfeitoNoRanking(
+        { selo: root.querySelector<HTMLElement>('[data-selo-ranking]'), nota: root.querySelector<HTMLElement>('[data-nota]')! },
+        { timeId: time.id, semana: fim.semana, confirmadaEm: fim.confirmadaEm, antes: fim.ranking.antes },
+      );
     }
     limparJogo = () => pararEfeito?.();
 
-    // Card "Telão do estádio": só no resultado valendo.
-    const img = root.querySelector<HTMLImageElement>('.card')!;
-    const cardPronto = (async () => {
+    // Card "Telão do estádio": o Card, o Stories e o Link saem do resultado padrão.
+    const card = (async () => {
       await prontoParaDesenhar();
       const canvas = desenharCardLances({
         time,
@@ -452,38 +449,15 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       });
       const nivel = await nivelParaCard();
       if (nivel) seloNivel(canvas, nivel);
-      await mostrarCard(img, canvas);
       return canvas;
     })();
-    const btnShare = root.querySelector<HTMLButtonElement>('[data-acao="share"]')!;
-    const btnCopiar = root.querySelector<HTMLButtonElement>('[data-acao="copiar"]')!;
-    const avisar = (botao: HTMLButtonElement, texto: string) => {
-      const antes = botao.textContent;
-      botao.textContent = texto;
-      setTimeout(() => (botao.textContent = antes), 1800);
-    };
-    btnShare.addEventListener('click', async () => {
-      try {
-        const canvas = await cardPronto;
-        const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, 'image/png'));
-        const arquivo = blob ? new File([blob], 'guerra-de-torcidas-lances.png', { type: 'image/png' }) : null;
-        if (arquivo && navigator.canShare?.({ files: [arquivo] })) await navigator.share({ files: [arquivo], text: textoShare });
-        else if (navigator.share) await navigator.share({ text: textoShare });
-        else {
-          await navigator.clipboard.writeText(textoShare);
-          avisar(btnShare, 'Copiado!');
-        }
-      } catch {
-        // cancelou o compartilhamento
-      }
-    });
-    btnCopiar.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(textoShare);
-        avisar(btnCopiar, 'Copiado!');
-      } catch {
-        avisar(btnCopiar, 'Não deu pra copiar');
-      }
+    ligarResultado(root, {
+      card,
+      textoShare,
+      link,
+      emoji,
+      maisUma: () => jogo(lances, false),
+      inicio: () => irPara({ tela: 'inicio' }),
     });
   }
 
@@ -494,27 +468,26 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     const distintos = lances.filter((l, i) => lances.findIndex((o) => o.id === l.id) === i);
     root.innerHTML = `
       <main class="tela lances-limite" style="${estilo(time.cores)}">
-        <header class="cabecalho">
-          <button class="voltar" type="button" aria-label="Voltar">‹</button>
-          <h2>Lances do Jogo</h2>
-        </header>
-        <p class="situacao sem-pontos" role="status">${esc(AVISO_LIMITE_DO_DIA)}</p>
-        <p class="rotulo lances-secao">Treinar</p>
-        <ul class="lista-lances">
-          ${distintos
-            .map(
-              (l) => `<li class="lance" style="${estilo(clubeDoLance(l.clube).cores)}">
-                <button type="button" class="lance-topo" data-treinar="${esc(l.id)}">
-                  <span class="lance-titulo">${esc(l.titulo)}</span>
-                  <span class="lance-meta">${esc(clubeDoLance(l.clube).nome)} · ${esc(situacaoDoLance(l).split(',')[0])}</span>
-                </button>
-              </li>`,
-            )
-            .join('')}
-        </ul>
-        <button type="button" class="botao botao-sec" data-acao="album">Escolher outros</button>
+        ${cabecalhoTela({ titulo: 'Lances do Jogo', voltar: true })}
+        <p class="res-aviso forte" role="status">${esc(AVISO_LIMITE_DO_DIA)}</p>
+        <div class="lances-bloco">
+          ${faixa('Treinar', 'h3')}
+          <ul class="lista-lances">
+            ${distintos
+              .map(
+                (l) => `<li class="lance placa filete" style="${estilo(clubeDoLance(l.clube).cores)}">
+                  <button type="button" class="lance-topo" data-treinar="${esc(l.id)}">
+                    <span class="lance-titulo">${esc(l.titulo)}</span>
+                    <span class="lance-meta">${esc(clubeDoLance(l.clube).nome)} · ${esc(situacaoDoLance(l).split(',')[0])}</span>
+                  </button>
+                </li>`,
+              )
+              .join('')}
+          </ul>
+        </div>
+        <button type="button" class="botao" data-acao="album">Escolher outros</button>
       </main>`;
-    root.querySelector('.voltar')!.addEventListener('click', hub);
+    root.querySelector('[data-voltar]')!.addEventListener('click', hub);
     root.querySelector('[data-acao="album"]')!.addEventListener('click', hub);
     root.querySelectorAll<HTMLButtonElement>('[data-treinar]').forEach((b) =>
       b.addEventListener('click', () => {
@@ -980,6 +953,8 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     }
   }
 
+  // Em desenvolvimento, deixa abrir o resultado com dados de mentira pelo console (conferência visual).
+  if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__lancesResultado = resultado;
   hub();
   return () => limparJogo?.();
 }

@@ -9,7 +9,7 @@ import { icone, type NomeIcone } from './icones';
 /** Selo único da pré-temporada: o toque abre a explicação (details, sem JS). */
 export function seloPre(): string {
   return `<details class="selo-pre">
-      <summary aria-label="Pré-temporada: o que é">${icone('info')} Pré-temporada</summary>
+      <summary aria-label="Pré-temporada: o que é">${icone('info')} <span class="sp-cheio">Pré-temporada</span><span class="sp-curto">Pré</span></summary>
       <p role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
     </details>`;
 }

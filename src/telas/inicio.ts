@@ -23,7 +23,7 @@ import {
   type JogoDaHome,
   type SituacaoDoDia,
 } from '../jogo/home';
-import { AVISO_PRE_TEMPORADA, linhaPosicaoSemana, linhaRecorde, setaDaPosicao } from '../jogo/posicao';
+import { linhaPosicaoSemana, linhaRecorde, setaDaPosicao } from '../jogo/posicao';
 import { linhaPenaltis, statusCrava } from '../jogo/statusJogos';
 import { escolherFrase } from '../narrador/escolher';
 import { rivalDaSemana, situacaoDoDuelo } from '../narrador/rival';
@@ -45,6 +45,7 @@ import { sincronizarTorcedor } from '../servidor/torcedor';
 import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
 import { ligarArquibancada } from './arquibancada';
 import { anotarCarreira } from './carreira';
+import { seloPre, faixa, numero as numeroBloco, posicaoHtml } from './blocos';
 import { arteEscada, arteGrade, htmlDaCasa, htmlDosCards } from './cardsJogos';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
@@ -143,7 +144,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
               : ''
           }
         </div>
-        <p class="contagem rotulo"><span class="etiqueta-fase">Pré-temporada</span>Semana fecha em <strong data-contagem>${formatarContagem(msAteZerarSemana())}</strong></p>
+        <div class="contagem rotulo">${seloPre()}<span>Semana fecha em <strong data-contagem>${formatarContagem(msAteZerarSemana())}</strong></span></div>
       </header>
 
       ${termos === 'mostrar' ? '<button class="faixa-termos" type="button" data-acao="termos">Os Termos mudaram <span>Ler</span></button>' : ''}
@@ -157,9 +158,9 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         ${tarjaDoTime(time)}
       </section>
 
-      <section class="cabo" aria-label="Duelo com o rival"${time?.id === ID_OUTRO ? '' : ' hidden'}>
+      <section class="cabo placa" aria-label="Duelo com o rival"${time?.id === ID_OUTRO ? '' : ' hidden'}>
         <div class="cabo-duelo" data-duelo hidden>
-          <p class="rotulo cabo-titulo">Duelo com o rival</p>
+          ${faixa('Duelo com o rival')}
           <div class="cabo-nomes">
             <p><strong data-cabo-v-eu></strong><span data-cabo-eu></span></p>
             <p><strong data-cabo-v-rival></strong><span data-cabo-rival></span></p>
@@ -185,8 +186,6 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       </button>
 
       <div class="casa-secao"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>${htmlDaCasa(esc(tituloDaCasa(time)))}</div>
-
-      <p class="aviso-pre" role="note">${esc(AVISO_PRE_TEMPORADA)}</p>
 
       <button class="link-feedback" type="button" data-acao="feedback">${icone('balao')} Feedback ou bug? Conta pra gente</button>
       ${htmlBotaoApoio()}
@@ -394,7 +393,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''} te chamou no X1:
           <strong>${d.pontos} pontos</strong>, ${d.gols_jogador} x ${d.gols_maquina} contra a máquina.</p>
           <p class="convite-como">Você defende as cobranças dele e bate as suas. Quem fizer mais pontos ganha.</p>
-          <button class="botao" type="button" data-acao="desafio">Aceitar o X1</button>`;
+          <button class="botao-linha" type="button" data-acao="desafio">Aceitar o X1</button>`;
         desafioAberto = d.id;
         atualizarBotao();
         caixa.querySelector('[data-acao="desafio"]')!.addEventListener('click', () => jogar(d.id));
@@ -418,7 +417,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''}: ${esc(d.resumo)},
           <strong>${d.pontos} pontos</strong>. Mesmas 8 perguntas, faz mais?</p>
           <p class="escada-emoji">${esc(d.escada)}</p>
-          <button class="botao" type="button" data-acao="desafio-prova">Aceitar o X1</button>`;
+          <button class="botao-linha" type="button" data-acao="desafio-prova">Aceitar o X1</button>`;
         caixa.hidden = false;
         caixa.querySelector('[data-acao="desafio-prova"]')!.addEventListener('click', () => jogarProva(d.id));
       })
@@ -521,11 +520,13 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         memoria(CHAVE_MINHA_POSICAO, { semana, posicao: p.posicao });
         const seta = setaDaPosicao(posicaoAntes, p.posicao);
         elMinha.innerHTML =
-          (seta === 'subiu'
-            ? '<span class="seta subiu" title="Subiu">▲</span> '
-            : seta === 'caiu'
-              ? '<span class="seta caiu" title="Caiu">▼</span> '
-              : '') + esc(linhaPosicaoSemana(p));
+          p.posicao === null
+            ? esc(linhaPosicaoSemana(p))
+            : `<div class="numeros um">${numeroBloco(
+                `${seta === 'subiu' ? '<span class="seta subiu" title="Subiu">▲</span>' : seta === 'caiu' ? '<span class="seta caiu" title="Caiu">▼</span>' : ''}${posicaoHtml(p.posicao, p.total)}`,
+                'Sua posição na semana',
+                'destaque',
+              )}</div>`;
         elMinha.hidden = false;
         mostrarCabo();
       })

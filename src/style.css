@@ -85,10 +85,13 @@
   display: none !important;
 }
 
+/* clip, e não hidden: corta a rolagem lateral sem desligar o position: sticky (faixa do Crava). */
 html,
 body {
   min-height: 100%;
+  /* Navegador sem clip (Safari < 16) fica com hidden, como antes. */
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {

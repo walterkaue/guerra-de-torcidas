@@ -10,7 +10,7 @@
 | Código | `main` com 87 arquivos e 1.793 testes passando (PR #92, código do torcedor, em 03/11) |
 | Publicação | Site no ar (`main` de 03/11, 19h48, com o PR #92). 34 migrações aplicadas (a 34ª, do código do torcedor, em 03/11 por volta das 19h30, antes do merge). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
-| Tamanho | 216 KB gzip somando todo o JS e CSS (limite do bundle inicial: ~300 KB) |
+| Tamanho | Em 03/11/2026, na branch `claude/grafismo-tv`: bundle inicial de 59 KB gzip (limite: ~300 KB). Somando todo o JS e o CSS, 251 KB gzip. A conta de 02/11 deu 216 KB, mas pode não ter usado o mesmo método |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
 | Uso | 7 jogadores, 4 na semana, 87 partidas. Pênaltis trazem 82% dos pontos. Amostra pequena |
 
@@ -19,6 +19,25 @@
 **Lances do Jogo valendo (faltas e cara a cara):** feito em 03/11/2026 (PR #88). Detalhes na seção "Conferir primeiro", item 7.
 
 **Pênaltis com uma semente por lance:** feito em 03/11/2026 (PR #90). Detalhes na seção "Conferir primeiro", item 8.
+
+**Grafismo de TV (auditoria visual, `docs/jogo.md` seção 14.2, `docs/visual.md` seção 4.6):** construído em 03/11/2026 na branch `claude/grafismo-tv`, à espera do merge do Kauê (o merge é o que publica).
+- **O que entrou:**
+  - blocos em `src/telas/blocos.ts` e `src/estilos/blocos.css`;
+  - resultado padrão em `src/telas/resultadoPadrao.ts`, nos 5 jogos;
+  - todas as telas da auditoria;
+  - prints de depois em `docs/auditoria/2026-11-03/depois/`.
+- **Bugs da auditoria:**
+  - **"Maior torcida" fora de ordem:** não era bug. O servidor ordena pela soma; a ordem errada veio dos dados falsos da auditoria.
+  - **Os outros quatro eram reais e foram corrigidos:**
+    - faixa do Crava cortada: o `overflow-x: hidden` desligava o `sticky`, agora é `clip`;
+    - texto grudado no fim do Crava;
+    - "PÊNALTIS bora jogar mais" no fim do Time do Dia: agora leva aos Lances do Jogo, e a barra fixa não cobre mais o conteúdo;
+    - número "14"/"15" da Prova: eram os segundos do relógio e agora aparecem como "14 s".
+- **Conferir no celular depois do merge:**
+  - a faixa "Aqui é só resenha" grudada no topo ao rolar o Crava (no Safari antigo, sem `clip`, ela volta a não grudar);
+  - o selo "Pré-temporada" abrindo e fechando ao toque;
+  - os botões Card, Stories, Emoji e Link nos 5 resultados.
+- **Fase 2:** os tutoriais "Como jogar" e a caixa "Como cravar" continuam no visual antigo.
 
 **Código do torcedor (uma carreira em vários aparelhos, `docs/jogo.md` seção 14.1):** feito, publicado e aprovado em 03/11/2026 (PR #92), revisado pelo subagente `revisor` (nenhum achado alto; os médios e quase todos os baixos corrigidos antes de publicar).
 - **No ar:** a migração `20261103400000_codigo_torcedor.sql`, conferida no banco (4 tabelas com RLS, 7 políticas de sessão, permissões certas), a função `codigo-torcedor` v1 com o segredo `TURNSTILE_SECRET_KEY`, e o site (merge às 19h46, publicado às 19h48).
@@ -133,11 +152,11 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 0. **Lances, segunda etapa:**
    - card só da medalha ("Já sou ouro no…");
    - corrigir a faixa de cada lance pela taxa de acerto real, depois de 50 tentativas valendo (seção 7.3);
-   - o `resultado.ts` dos pênaltis passar a usar `src/telas/efeitoRanking.ts`, que hoje repete a lógica dele.
-
+   - o `resultado.ts` dos pênaltis passar a usar `src/telas/efeitoRanking.ts`, que hoje repete a lógica dele (desde 03/11 os dois mostram o efeito como selo + nota, então a troca ficou mais simples).
 1. **Cidade, Galeria e 52 semanas:** nessa ordem, depois das telas das divisões.
 2. **Perguntas:** o piloto recomendou parar nas 529 sem fonte do staging. A meta de 800 precisa de perguntas nascidas de páginas reais. A importação continua com o Kauê.
 3. ~~**Limpeza de anônimos:**~~ feita no PR #84 (`20261103000000_contas_paradas.sql`), guardando os pontos em `pontos_apagados`. No ar desde 02/11/2026 (rotina `apagar-contas-paradas`, dia 1º às 4h). Na simulação de 02/11, 0 conta sairia: a anônima mais antiga é de 19/10/2026, então a primeira limpeza possível é em 1º/05/2027. As travas do PR #86 estão no ar desde 02/11/2026.
+4. **Grafismo de TV, fase 2:** tutoriais "Como jogar", caixa "Como cravar" e painel `#admin` no visual da seção 4.6 do `docs/visual.md`. O confete da vitória dos Pênaltis pode ir para o `resultadoPadrao.ts`, para os outros jogos usarem.
 
 ## Antes de divulgar
 

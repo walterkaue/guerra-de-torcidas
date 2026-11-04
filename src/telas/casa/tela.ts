@@ -23,6 +23,7 @@ import {
   totalDeTitulos,
 } from './logica';
 import { linkDoSocio, primeiroCliqueDoDia, socioParaMostrar, textosDoSocio } from './socio';
+import { cabecalhoTela } from '../blocos';
 
 const EMAIL_ERRO = 'contato@kauewalter.com.br';
 const NOTA_CURTA =
@@ -54,10 +55,7 @@ function indice(root: HTMLElement): void {
   const times = TIMES.filter((t) => t.id !== ID_OUTRO);
   root.innerHTML = `
     <main class="tela casa-indice">
-      <header class="cabecalho">
-        <button class="voltar" type="button" aria-label="Voltar">‹</button>
-        <h2>Casa dos clubes</h2>
-      </header>
+      ${cabecalhoTela({ titulo: 'Casa dos clubes', voltar: true, pre: false })}
       <p class="nota casa-intro">Estádio, troféus, recordes e cores de cada clube da Série A, em fatos com fonte.</p>
       <div class="grade-times">
         ${times
@@ -88,11 +86,8 @@ function paginaDoClube(root: HTMLElement, casa: CasaDoClube, time: Time): void {
 
   root.innerHTML = `
     <main class="tela casa" style="${coresDoTime(time)}">
-      <header class="cabecalho">
-        <button class="voltar" type="button" aria-label="Voltar para a Casa dos clubes">‹</button>
-      </header>
-      <div class="casa-faixa${c1.toLowerCase() === '#ffffff' ? ' clara' : ''}">
-        <h2 class="casa-titulo">${esc(nomeDaCasa(time))}</h2>
+      ${cabecalhoTela({ titulo: nomeDaCasa(time), voltar: true, pre: false })}
+      <div class="placa filete casa-faixa">
         <p class="casa-sub">Fundad${time.artigo === 'a' ? 'a' : 'o'} em ${dataBR(casa.fundacao)} · ${esc(casa.cidade)} (${esc(casa.uf)})</p>
       </div>
       ${html}
