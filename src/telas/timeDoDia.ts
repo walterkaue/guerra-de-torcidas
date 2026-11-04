@@ -33,9 +33,12 @@ import { bomMomentoDoDia } from '../jogo/apoio';
 import { oferecerApoio } from './apoio';
 import { convidarParaAvisos } from './convitePush';
 import { aoTocarNoEstado, cabecalhoTela, estado as blocoEstado, numero, placa } from './blocos';
-import { bolinha, icone } from './icones';
 import { contar, htmlResultado, htmlSelosDaPosicao, ligarResultado } from './resultadoPadrao';
 import { vibrar } from './toque';
+import { dicasDoAparelho, mostrarDica, tirarDica, vezesVista } from './dicas';
+import { DICAS } from '../jogo/dicas';
+import { coresEmAmarelo, primeiraDica, temSeta, terceiroChuteSemVerde } from '../jogo/dicasGatilhos';
+import { abrirRegras } from './regras';
 import { papelPicadoNaTela } from './papelPicado';
 
 const SITE = 'https://torcida.kauewalter.com.br';
@@ -89,6 +92,16 @@ function valorDaPista(t: Tentativa, n: NomePista): string {
   }
 }
 
+/** Linha de exemplo da 1ª vez (nenhum clube de verdade): tom e valor de cada pista, na ordem da grade. */
+const EXEMPLO: readonly (readonly [string, string])[] = [
+  ['certo', 'SP'],
+  ['perto', '1910<i>↑</i>'],
+  ['longe', '7<i>↓</i>'],
+  ['certo', 'A'],
+  ['perto', '<span class="amostra" style="background:#2e9d4f"></span>'],
+  ['longe', 'Interior'],
+];
+
 const CABECALHO_PISTAS = `<div class="dia-cabecalho" aria-hidden="true">
         ${NOMES_PISTAS.map((n) => `<span>${SIGLA_CURTA[n]}</span>`).join('')}
       </div>`;
@@ -124,32 +137,27 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
   let relogio = 0;
   let frasesFinais: string[] = [];
 
-  const mostrarComo = !prefs.get().semComoDia;
-
-  const passos = `<ul class="cj-passos">
-          <li><span class="cj-icone">${icone('lupa')}</span><p><strong>Um clube secreto por dia</strong>, o mesmo pra todo mundo. Clubes das Séries A, B e C de 2026. Troca às 00h.</p></li>
-          <li><span class="cj-icone">${icone('bola')}</span><p><strong>6 chutes.</strong> Escolha um clube na busca e veja as pistas.</p></li>
-          <li><span class="cj-icone">${bolinha('certo')}</span><p><strong>${bolinha('certo')} igual, ${bolinha('perto')} perto, ${bolinha('longe')} longe.</strong> Estado (${bolinha('perto')} = mesma região), fundação (${bolinha('perto')} = até 10 anos), títulos do Brasileirão (${bolinha('perto')} = até 2), série, as 2 cores (${bolinha('perto')} = uma igual) e capital ou interior.</p></li>
-          <li><span class="cj-icone" aria-hidden="true">↑</span><p><strong>↑ ou ↓</strong> no ano e nos títulos: o secreto tem número maior (fundado depois, mais títulos) ou menor.</p></li>
-          <li><span class="cj-icone">${icone('trofeu')}</span><p><strong>Pontos:</strong> 100 de primeira, depois 85, 70, 55, 40 e 25.</p></li>
-        </ul>
-        <label class="cj-check"><input type="checkbox" data-pular> Não exibir de novo</label>`;
+  // "1º ..." de cada dica vale por partida; o limite por aparelho fica em jogo/dicas.ts.
+  const vistas = { seta: false, amarelo: false, fechar: false, busca: false };
 
   root.innerHTML = `
     <main class="tela time-do-dia" style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
       ${cabecalhoTela({
         titulo: 'Time do Dia',
         voltar: true,
-        extra: '<button class="voltar prova-como" type="button" aria-label="Como jogar">?</button>',
+        extra: '<button class="voltar prova-como" type="button" aria-label="Regras e pontos">?</button>',
       })}
 
       <p class="adesivo" data-grito></p>
 
-      ${placa(passos, { filete: true, classe: 'dia-como', attrs: `data-como${mostrarComo ? '' : ' hidden'}` })}
-
       <section class="placa aperta dia-pistas" data-pistas>
         ${CABECALHO_PISTAS}
+        <div class="dia-linha dia-exemplo" data-exemplo hidden aria-hidden="true">
+          <p class="dia-chute">Exemplo de pistas</p>
+          <div class="dia-celulas">${EXEMPLO.map(([tom, valor], i) => `<span class="dia-cel ${tom}" style="--i:${i}">${valor}</span>`).join('')}</div>
+        </div>
         <ol class="dia-grade" data-grade aria-label="Seus chutes" aria-live="polite"></ol>
+        <p class="faixa-dica" data-dica hidden aria-live="polite"></p>
       </section>
 
       <section class="dia-chutar" data-chutar hidden>
@@ -209,8 +217,6 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       `<li class="dia-linha vazia"><p class="dia-chute">${e.tentativas.length + i + 1}º chute</p>
         <div class="dia-celulas">${NOMES_PISTAS.map(() => '<span class="dia-cel"></span>').join('')}</div></li>`);
     elGrade.innerHTML = [...feitas, ...vazias].join('');
-    // Depois do primeiro chute as regras saem da frente (o "?" abre de novo); senão o resultado some lá embaixo.
-    if (e.tentativas.length > 0) $('[data-como]').hidden = true;
   }
 
   // ---------- busca ----------
@@ -237,6 +243,10 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       : q
         ? '<li class="nota">Nenhum clube com esse nome (ou você já chutou).</li>'
         : '';
+    if (q && !lista.length && !vistas.busca) {
+      dicas.novoLance();
+      vistas.busca = mostrarDica($('[data-dica]'), dicas.pedir('dia_busca'));
+    }
     elResultados.querySelectorAll<HTMLButtonElement>('[data-clube]').forEach((b) =>
       b.addEventListener('click', () => {
         escolhido = clubes.find((c) => c.id === b.dataset.clube) ?? null;
@@ -269,8 +279,14 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
   });
 
   // ---------- chutar ----------
+  // Dicas na hora do erro (jogo.md, 14.4).
+  const dicas = dicasDoAparelho();
   async function chutar(): Promise<void> {
     if (!estado || !escolhido || enviando) return;
+    const elDica = $('[data-dica]');
+    dicas.novoLance();
+    tirarDica(elDica);
+    $('[data-exemplo]').hidden = true;
     enviando = true;
     atualizarBotao();
     erro(null);
@@ -288,6 +304,19 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       else {
         const certas = ultima ? quantasCertas(ultima.pistas) : 0;
         gritar(certas >= 4 ? narrador.falar('dia_quase') : certas === 0 ? narrador.falar('dia_longe') : null);
+        // Vale a mais específica; o 1º chute leva a dica das cores, que é a que explica a linha.
+        const t = novo.tentativas;
+        const texto = primeiraDica(dicas, [
+          [t.length === 1, 'dia_cores'],
+          [terceiroChuteSemVerde(t) && !vistas.fechar, 'dia_fechar'],
+          [!!ultima && temSeta(ultima) && !vistas.seta, 'dia_seta'],
+          [!!ultima && coresEmAmarelo(ultima) && !vistas.amarelo, 'dia_cores_amarelo'],
+        ]);
+        if (mostrarDica(elDica, texto)) {
+          if (texto === DICAS.dia_fechar) vistas.fechar = true;
+          else if (texto === DICAS.dia_seta) vistas.seta = true;
+          else if (texto === DICAS.dia_cores_amarelo) vistas.amarelo = true;
+        }
         atualizarRestam();
         elBusca.focus({ preventScroll: true });
       }
@@ -353,6 +382,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
             <p class="rotulo">Era o time de hoje</p>
             <h2>${esc(e.secreto?.nome ?? '')}</h2>
           </div>
+        <ol class="dia-grade" data-grade aria-label="Seus chutes" aria-live="polite"></ol>
           <p class="dia-chutes"><strong>${placar}</strong><span>${n === 1 ? 'chute' : 'chutes'}</span></p>
         </section>`,
       pontos: e.acertou ? { total: e.pontos, paraTime } : null,
@@ -447,7 +477,13 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       else {
         elChutar.hidden = false;
         atualizarRestam();
-        if (!r.tentativas.length) gritar(narrador.falar('dia_abertura'));
+        if (!r.tentativas.length) {
+          gritar(narrador.falar('dia_abertura'));
+          // 1ª vez: a dica traz uma linha de exemplo se pintando (nas outras, só a frase).
+          const primeiraVez = vezesVista('dia_comeco') === 0;
+          dicas.novoLance();
+          if (mostrarDica($('[data-dica]'), dicas.pedir('dia_comeco')) && primeiraVez) $('[data-exemplo]').hidden = false;
+        }
       }
     } catch (e) {
       if (saiu) return;
@@ -457,15 +493,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
   }
 
   // ---------- topo ----------
-  $('.prova-como').addEventListener('click', () => {
-    const el = $('[data-como]');
-    el.hidden = !el.hidden;
-  });
-  $<HTMLInputElement>('[data-pular]').addEventListener('change', (ev) => {
-    const marcado = (ev.target as HTMLInputElement).checked;
-    prefs.set({ semComoDia: marcado || undefined });
-    if (marcado) $('[data-como]').hidden = true;
-  });
+  $('.prova-como').addEventListener('click', () => abrirRegras(root, 'dia'));
   $('[data-voltar]').addEventListener('click', () => irPara({ tela: 'inicio' }));
 
   void carregar();

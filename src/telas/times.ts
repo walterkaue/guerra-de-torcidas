@@ -1,7 +1,8 @@
 import '../estilos/times.css';
-import { esc, irPara, type Rota } from '../app';
+import { desafioDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
 import { TIMES, corDeTexto } from '../dados/times';
 import { APELIDO_MAX, prefs } from '../estado';
+import { abreSozinho } from '../jogo/aquecimento';
 import { ErroServidor } from '../servidor/api';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { cabecalhoTela } from './blocos';
@@ -82,7 +83,14 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
       // Sem internet: fica salvo no aparelho e sobe para o servidor na próxima partida.
     }
     const desafio = rota.tela === 'times' ? rota.desafio : undefined;
-    irPara(depois === 'partida' ? { tela: 'partida', desafio } : depois === 'prova' ? { tela: 'prova', desafio } : { tela: depois });
+    const destino: Rota = depois === 'partida' ? { tela: 'partida', desafio } : depois === 'prova' ? { tela: 'prova', desafio } : { tela: depois };
+    // Aquecimento (docs/jogo.md, 14.4): uma vez por aparelho, logo depois de escolher o time. Quem chegou por
+    // link de desafio vai direto ao desafio; o aquecimento aparece depois, como card na Home.
+    const veioPorDesafio = !!desafio || !!desafioDoLink() || !!desafioProvaDoLink();
+    const aquecimento = prefs.get().aquecimento ?? {};
+    if (abreSozinho(aquecimento, veioPorDesafio)) return irPara({ tela: 'aquecimento', depois: destino });
+    if (veioPorDesafio && !aquecimento.visto && !aquecimento.cardNaHome) prefs.set({ aquecimento: { ...aquecimento, cardNaHome: true } });
+    irPara(destino);
   });
 
   root.querySelector('[data-acao="outro-aparelho"]')?.addEventListener('click', () => irPara({ tela: 'entrar', de: 'times' }));

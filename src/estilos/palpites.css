@@ -348,18 +348,6 @@ span.certeza {
   color: var(--texto-suave);
 }
 
-/* "Como cravar": o mesmo "Como jogar" dos pênaltis, preso à tela inteira. */
-.palpites .como-jogar {
-  position: fixed;
-  z-index: 40;
-}
-
-.cj-passos em {
-  font-style: normal;
-  font-weight: 800;
-  color: var(--amarelo);
-}
-
 .crava-compartilhar .botao {
   font-size: 20px;
 }
@@ -729,4 +717,24 @@ span.certeza {
   display: block;
   margin-top: 4px;
   color: var(--amarelo);
+}
+
+/* Dica "A estrela dobra os pontos": o botão da estrela fica em destaque até a pessoa escolher o jogo da certeza. */
+.palpites .certeza.dica-estrela {
+  outline: 3px solid var(--amarelo);
+  outline-offset: 2px;
+  animation: estrela-dica 1.2s ease-in-out infinite;
+}
+
+@keyframes estrela-dica {
+  50% {
+    outline-color: rgba(233, 199, 90, 0.35);
+    outline-offset: 5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .palpites .certeza.dica-estrela {
+    animation: none;
+  }
 }

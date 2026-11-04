@@ -1,6 +1,8 @@
 // Preferências do jogador guardadas só neste aparelho (time, apelido, som).
 // Nada aqui é obrigatório; tudo tem valor padrão.
 
+import type { EstadoDoAquecimento } from './jogo/aquecimento';
+import type { EstadoDasDicas } from './jogo/dicas';
 import { ehFaixa, type FaixaEtaria } from './jogo/faixaEtaria';
 
 const CHAVE = 'gdt:prefs';
@@ -16,14 +18,6 @@ interface Prefs {
   qualidade?: 'auto' | 'alta' | 'media' | 'leve';
   /** Desligou a vibração (telas/toque.ts). */
   semVibracao?: boolean;
-  /** Marcou "não exibir novamente" no "Como jogar" antes da partida. */
-  semComoJogar?: boolean;
-  /** Marcou "não exibir novamente" no "Como cravar" da aba Palpites. */
-  semComoCravar?: boolean;
-  /** Marcou "não exibir as regras de novo" na Prova de Boleiro. */
-  semComoProva?: boolean;
-  /** Marcou "não exibir de novo" no "Como jogar" do Time do Dia. */
-  semComoDia?: boolean;
   /** Escolheu mostrar o nível da carreira nos cards. */
   nivelNoCard?: boolean;
   /** "time|apelido" que o servidor já tem (para não regravar à toa). */
@@ -34,6 +28,10 @@ interface Prefs {
   faixaSincronizada?: FaixaEtaria;
   /** Versão dos Termos que este aparelho já viu (jogo/termos.ts, avisoDosTermos). */
   termosVistos?: string;
+  /** Aquecimento (jogo.md, 14.4): andamento, se já viu, selo e desfecho por mandar. Uma vez por aparelho. */
+  aquecimento?: EstadoDoAquecimento;
+  /** Dicas da faixa de instrução já vistas e contadores de gatilho (jogo/dicas.ts). */
+  dicas?: EstadoDasDicas;
   /** Este aparelho perdeu a conta (desconectado em outro aparelho ou conta apagada): a escolha do time avisa uma vez. */
   saiuDaConta?: boolean;
 }
@@ -76,7 +74,7 @@ export function guardarFaixa(faixa: FaixaEtaria): void {
 
 /**
  * Este aparelho deixa de ser o torcedor que era (saiu da conta, ou entrou em outra pelo código; jogo.md, 14.1):
- * esquece time, apelido e faixa, como um aparelho novo. Som, gráficos e os "não exibir de novo" ficam.
+ * esquece time, apelido e faixa, como um aparelho novo. Som e gráficos ficam.
  */
 export function esquecerTorcedor(): void {
   faixaDaAba = undefined;

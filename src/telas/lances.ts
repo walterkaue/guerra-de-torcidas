@@ -57,6 +57,18 @@ import { criarCena3d } from './cena3d';
 import { ANTES_DO_CORTE, criarReplay, montarTarjaDoReplay, type Replay } from './replay';
 import { icone, type NomeIcone } from './icones';
 import { aoMudarQualidade, medirQuadros, qualidade } from './qualidade';
+import { DICAS } from '../jogo/dicas';
+import {
+  bolaNaBarreira,
+  cantosDaZona,
+  cavadinhaPegaSemSair,
+  goleiroPegouNoMeio,
+  goleiroSaiu,
+  golSemRecriar,
+  primeiraDica,
+} from '../jogo/dicasGatilhos';
+import { dicasDoAparelho, mostrarDica, tirarDica } from './dicas';
+import { abrirRegras } from './regras';
 
 // Em desenvolvimento, ?lancesFalsos troca o servidor por um de mentira (src/dev/lancesFalsos.ts).
 const FALSO = import.meta.env.DEV && new URLSearchParams(location.search).has('lancesFalsos');
@@ -133,6 +145,8 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   let escolhidos: Lance[] = [];
   let filtroClube = LANCES.some((l) => l.clube === time.id) ? time.id : 'todos';
   let limparJogo: (() => void) | null = null;
+  /** As 6 partidas valendo do dia já foram (o servidor disse): o treino e o álbum avisam. */
+  let valendoEsgotado = false;
   // ?disputasFalsas enche a lista em desenvolvimento, enquanto o catálogo está em rascunho (src/dev/disputasFalsas.ts).
   let catalogoDisputas: readonly Disputa[] = DISPUTAS;
   if (import.meta.env.DEV && new URLSearchParams(location.search).has('disputasFalsas')) {
@@ -165,7 +179,11 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     limparJogo = null;
     root.innerHTML = `
       <main class="tela lances" style="${estilo(time.cores)}">
-        ${cabecalhoTela({ titulo: 'Lances do Jogo', voltar: true })}
+        ${cabecalhoTela({
+          titulo: 'Lances do Jogo',
+          voltar: true,
+          extra: '<button class="ajuda" type="button" data-regras aria-label="Regras e pontos">?</button>',
+        })}
         ${abas('aba', ABAS, aba, 1)}
         <div class="lances-conteudo"></div>
       </main>`;
@@ -177,6 +195,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       }),
     );
     root.querySelector('[data-voltar]')!.addEventListener('click', () => irPara({ tela: 'inicio' }));
+    root.querySelector('[data-regras]')!.addEventListener('click', () => abrirRegras(root, 'lances'));
     conteudo();
   }
 
@@ -240,6 +259,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       <ul class="lista-lances" aria-live="polite"></ul>
       ${placa(
         `<p class="valendo-hoje" data-valendo-hoje hidden></p>
+        <p class="faixa-dica" data-dica hidden aria-live="polite"></p>
         <div class="slots"></div>
         <button class="botao" type="button" data-acao="jogar" disabled>Jogar os 3</button>`,
         { classe: 'sua-partida aperta', attrs: 'aria-label="Sua partida"' },
@@ -330,6 +350,11 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         if (linha && elHoje.isConnected) {
           elHoje.textContent = linha;
           elHoje.hidden = false;
+          if (h && h.limite > 0 && h.feitas >= h.limite) {
+            valendoEsgotado = true;
+            const dicasDoHub = dicasDoAparelho();
+            mostrarDica(el.querySelector<HTMLElement>('[data-dica]')!, dicasDoHub.pedir('lan_seis_valendo'));
+          }
         }
       })
       .catch(() => {});
@@ -463,6 +488,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
 
   /** Já jogou as partidas valendo de hoje: avisa e oferece o treino (que segue liberado). */
   function limiteDoDia(lances: Lance[]): void {
+    valendoEsgotado = true;
     limparJogo?.();
     limparJogo = null;
     const distintos = lances.filter((l, i) => lances.findIndex((o) => o.id === l.id) === i);
@@ -564,6 +590,81 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     let rastro: { x: number; y: number }[] = [];
     let acabou = false;
 
+    // Dicas na hora do erro (jogo.md, 14.4): "1º ..." vale por partida; o limite por aparelho fica em jogo/dicas.ts.
+    const dicas = dicasDoAparelho();
+    let dicaGuardada: string | null = null;
+    let barreirasNaPartida = 0;
+    let partidasComBarreira = 0;
+    const vistas = { saiu: false, cara: false, recriar: false, seis: false };
+    /** Zona do gol de verdade pintada no gol depois de um gol que não recriou. */
+    let zonaMarcada: { zona: number; ate: number } | null = null;
+    let pausaLonga = false;
+    const DUR_ZONA = 3200;
+    function instruir(texto: string): void {
+      tirarDica(elInstrucao);
+      elInstrucao.textContent = texto;
+    }
+    /** Dicas do começo do lance (o goleiro que saiu, o cara a cara, o treino depois das 6 valendo). */
+    function dicaDoComeco(l: Lance): void {
+      if (dicaGuardada) {
+        mostrarDica(elInstrucao, dicaGuardada);
+        dicaGuardada = null;
+        return;
+      }
+      const cara = l.tipo === 'finalizacao';
+      const texto = primeiraDica(dicas, [
+        [treino && valendoEsgotado && !vistas.seis, 'lan_seis_valendo'],
+        [cara && goleiroSaiu(l) && !vistas.saiu, 'lan_goleiro_saiu'],
+        [cara && !vistas.cara, 'lan_cara_a_cara'],
+      ]);
+      if (!mostrarDica(elInstrucao, texto)) return;
+      if (texto === DICAS.lan_seis_valendo) vistas.seis = true;
+      else if (texto === DICAS.lan_goleiro_saiu) vistas.saiu = true;
+      else vistas.cara = true;
+    }
+    function dicaDoResultado(r: ResultadoLance, l: Lance): void {
+      if (bolaNaBarreira(r) && ++barreirasNaPartida === 1) partidasComBarreira = dicas.marco('barreira_partidas');
+      const primeiraBarreira = bolaNaBarreira(r) && barreirasNaPartida === 1;
+      const recriar = golSemRecriar(r) && !vistas.recriar;
+      const texto = primeiraDica(dicas, [
+        [primeiraBarreira && partidasComBarreira === 2, 'lan_barreira_de_novo'],
+        [primeiraBarreira && partidasComBarreira === 1, 'lan_barreira'],
+        [cavadinhaPegaSemSair(r, l), 'lan_cavadinha_sem_sair'],
+        [goleiroPegouNoMeio(r), 'lan_goleiro_no_meio'],
+        [recriar, 'lan_recriar'],
+      ]);
+      if (!mostrarDica(elInstrucao, texto)) return;
+      dicaGuardada = texto;
+      if (texto === DICAS.lan_recriar) {
+        vistas.recriar = true;
+        pausaLonga = true;
+        zonaMarcada = { zona: l.zonaHistorica, ate: relogio() + DUR_ZONA };
+      }
+    }
+    /** Pinta a zona onde entrou o gol de verdade (por uns segundos; parada com movimento reduzido). */
+    function desenharZonaMarcada(): void {
+      if (!zonaMarcada || relogio() > zonaMarcada.ate) return;
+      const k = cantosDaZona(zonaMarcada.zona);
+      const q = [
+        [k.x0, k.y0],
+        [k.x1, k.y0],
+        [k.x1, k.y1],
+        [k.x0, k.y1],
+      ].map(([x, y]) => cena.projetar({ x, y, z: 0 }));
+      const pulso = reduzido ? 1 : 0.75 + 0.25 * Math.sin(relogio() / 180);
+      c.save();
+      c.beginPath();
+      q.forEach((o, i) => (i ? c.lineTo(o.x, o.y) : c.moveTo(o.x, o.y)));
+      c.closePath();
+      c.fillStyle = `rgba(255,210,63,${0.32 * pulso})`;
+      c.fill();
+      c.strokeStyle = 'rgba(255,210,63,0.95)';
+      c.lineWidth = 3;
+      c.setLineDash([8, 6]);
+      c.stroke();
+      c.restore();
+    }
+
     const atual = () => lances[treino ? 0 : indice];
     /** Índice do sorteio: na partida é o lance; no treino, cada tentativa sorteia de novo. */
     const indiceDoSorteio = () => (treino ? tentativa : indice);
@@ -594,6 +695,9 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
 
     /** Começa o lance: câmera do tipo, situação no topo e, no cara a cara, "A jogada" com a bola chegando. */
     function comecarLance(): void {
+      dicas.novoLance();
+      zonaMarcada = null;
+      pausaLonga = false;
       if (atual().id !== vestido) {
         vestido = atual().id;
         ({ batedor, goleiro, barreira } = elencoDoLance(atual()));
@@ -602,11 +706,11 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       cena.trocarTorcida(l.clube === 'selecao' ? TORCIDA_SELECAO : undefined);
       cena.definirLance(l.bola, l.tipo === 'falta' ? ENQUADRAMENTOS.falta : ENQUADRAMENTOS.caraACara);
       rastro = [];
-      elInstrucao.textContent = `${l.titulo} · ${situacaoDoLance(l)}`;
+      instruir(`${l.titulo} · ${situacaoDoLance(l)}`);
       if (preparando) {
         fase = { tipo: 'espera', inicio: relogio(), chutando: false };
         elJogada.hidden = true;
-        elInstrucao.textContent = 'Preparando a partida…';
+        instruir('Preparando a partida…');
       } else if (l.tipo === 'finalizacao' && l.chegada && !reduzido) {
         fase = { tipo: 'chegada', inicio: relogio() };
         elJogada.querySelector('span')!.textContent = l.chegada;
@@ -614,6 +718,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       } else {
         elJogada.hidden = true;
         fase = { tipo: 'mirar', inicio: relogio() };
+        dicaDoComeco(l);
       }
       atualizarHud();
     }
@@ -640,7 +745,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       const dist = Math.hypot(em(r.tFim).x - l.bola.x, em(r.tFim).z - l.bola.z);
       const dur = Math.max(450, (dist / METROS_POR_MS) * (r.cavadinha || gq.forca < 32 ? 1.8 : 1));
       fase = { tipo: 'chute', inicio: relogio() - Math.min(esperaMs, DUR_BATIDA), r, em, dur };
-      elInstrucao.textContent = '';
+      instruir('');
       elJogada.hidden = true;
       somChute();
     }
@@ -649,7 +754,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     async function pedirAoServidor(gq: GestoCobranca, l: Lance, i: number): Promise<void> {
       const antes = relogio();
       fase = { tipo: 'espera', inicio: antes, chutando: true };
-      elInstrucao.textContent = '';
+      instruir('');
       elJogada.hidden = true;
       try {
         const resp = await (await servidor()).lanceDoJogo(partidaId!, i, gq);
@@ -683,6 +788,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       } else if (r.desfecho === 'trave') cena.baterNaTrave();
       somTorcida(r.desfecho === 'gol' ? 'festa' : 'uuuh');
       if (!treino) resultados.push(r);
+      dicaDoResultado(r, atual());
       atualizarHud();
     }
 
@@ -788,6 +894,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
             if (agora - fase.inicio >= DUR_CHEGADA + 700) {
               fase = { tipo: 'mirar', inicio: agora };
               elJogada.hidden = true;
+              dicaDoComeco(l);
             }
           } else {
             cena.desenharBola3d({ x: l.bola.x, y: 0, z: l.bola.z });
@@ -841,9 +948,10 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
               t * 10,
             );
           } else if (r.desfecho !== 'fora') cena.desenharBola3d({ x: fim.x, y: fim.y * (1 - cai), z: r.desfecho === 'gol' ? -0.6 * cai : fim.z });
-          const comReplay = r.desfecho === 'gol' && !reduzido && qualidade().replay;
+          desenharZonaMarcada();
+          const comReplay = r.desfecho === 'gol' && !reduzido && qualidade().replay && !pausaLonga;
           if (comReplay && ms >= DUR_ANTES_DO_REPLAY - ANTES_DO_CORTE) tarja.entrar();
-          if (ms >= (comReplay ? DUR_ANTES_DO_REPLAY : DUR_PAUSA)) {
+          if (ms >= (comReplay ? DUR_ANTES_DO_REPLAY : pausaLonga ? DUR_ZONA : DUR_PAUSA)) {
             if (comReplay) comecarReplay(r, fase.em, fase.dur);
             else proximo();
           }
@@ -886,7 +994,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       const gesto = cena.lerArraste(rastro);
       rastro = [];
       if (gesto) chutar(gesto);
-      else elInstrucao.textContent = 'Arraste da bola na direção do gol.';
+      else instruir('Arraste da bola na direção do gol.');
     });
     canvas.addEventListener('pointercancel', () => (rastro = []));
 

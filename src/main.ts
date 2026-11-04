@@ -70,6 +70,7 @@ const TELAS_DE_JOGO = {
   provaResultado: () => import('./telas/provaResultado').then((m) => m.telaProvaResultado as Tela),
   timeDoDia: () => import('./telas/timeDoDia').then((m) => m.telaTimeDoDia as Tela),
   lances: () => import('./telas/lances').then((m) => m.telaLances as Tela),
+  aquecimento: () => import('./telas/aquecimento').then((m) => m.telaAquecimento as Tela),
 };
 
 registrarTela('inicio', telaInicio);
@@ -84,6 +85,7 @@ registrarTela('prova', sobDemanda('Chamando a Prova…', TELAS_DE_JOGO.prova));
 registrarTela('provaResultado', sobDemanda('Fechando o placar…', TELAS_DE_JOGO.provaResultado));
 registrarTela('timeDoDia', sobDemanda('Escondendo o time…', TELAS_DE_JOGO.timeDoDia));
 registrarTela('lances', sobDemanda('Abrindo os Lances…', TELAS_DE_JOGO.lances));
+registrarTela('aquecimento', sobDemanda('Preparando o aquecimento…', TELAS_DE_JOGO.aquecimento));
 // Painel do administrador e Casa do [time]: só baixam quando alguém abre (#admin, #casa ou #casa/<id>).
 registrarTela('admin', sobDemanda('Carregando o painel…', () => import('./telas/admin').then((m) => m.telaAdmin as Tela)));
 // Aba Perfil e Termos e privacidade (#termos): só baixam quando alguém abre.
@@ -104,7 +106,13 @@ function preaquecer(): void {
   if (conexao?.saveData) return;
   const ocioso = (fn: () => void) =>
     'requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 1500);
-  ocioso(() => Object.values(TELAS_DE_JOGO).forEach((carregar) => void carregar().catch(() => {})));
+  // O aquecimento só interessa a quem ainda não viu (ele abre logo depois de escolher o time).
+  const jaViuOAquecimento = !!prefs.get().aquecimento?.visto;
+  ocioso(() =>
+    Object.entries(TELAS_DE_JOGO).forEach(([nome, carregar]) => {
+      if (nome !== 'aquecimento' || !jaViuOAquecimento) void carregar().catch(() => {});
+    }),
+  );
 }
 
 /** Rota do endereço: #admin, #apoie, #termos, #casa e #casa/<id>. */

@@ -26,7 +26,7 @@ export const podeVerOferecidoPor = soPara18Mais;
 export const podeVerSocio = soPara18Mais;
 
 /** Telas de jogo: a triagem vem antes de qualquer uma delas, inclusive pelo link de desafio. */
-const TELAS_DE_JOGO: readonly string[] = ['partida', 'prova', 'timeDoDia', 'lances', 'palpites'];
+const TELAS_DE_JOGO: readonly string[] = ['aquecimento', 'partida', 'prova', 'timeDoDia', 'lances', 'palpites'];
 
 export function precisaDaTriagem(tela: string, faixa: FaixaEtaria | null | undefined): boolean {
   return !faixa && TELAS_DE_JOGO.includes(tela);

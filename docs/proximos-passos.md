@@ -1,6 +1,6 @@
 # Próximos passos
 
-> Retrato do projeto em 03/11/2026, para retomar em qualquer conversa. Regras e decisões continuam no `docs/jogo.md`; aqui só fica o que vem a seguir.
+> Retrato do projeto em 04/11/2026, para retomar em qualquer conversa. Regras e decisões continuam no `docs/jogo.md`; aqui só fica o que vem a seguir.
 > Ao fechar um item, atualize este arquivo no mesmo PR. Para começar, siga a divisão de trabalho do `CLAUDE.md`.
 
 ## Onde estamos
@@ -8,13 +8,20 @@
 | Área | Estado em 02/11/2026 |
 |---|---|
 | Código | `main` com 87 arquivos de teste e 1.796 testes passando (PR #96, Grafismo de TV, em 04/11) |
-| Publicação | Site no ar (`main` de 04/11, 8h07, com o PR #96; o deploy foi conferido e o site serve o build testado). 34 migrações aplicadas (a 34ª, do código do torcedor, em 03/11 por volta das 19h30, antes do merge). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
+| Publicação | Site no ar (`main` de 04/11, 8h07, com o PR #96; o deploy foi conferido e o site serve o build testado). 35 migrações aplicadas (a 35ª, do aquecimento, em 04/11, antes do merge do PR dele; só acrescenta e o site de antes não a usa). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
 | Tamanho | Em 04/11/2026, com o PR #96: bundle inicial de 59 KB gzip (limite: ~300 KB). Somando todo o JS e o CSS, 251 KB gzip. A conta de 02/11 deu 216 KB, mas pode não ter usado o mesmo método |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
 | Uso | 7 jogadores, 4 na semana, 87 partidas. Pênaltis trazem 82% dos pontos. Amostra pequena |
 
 ## Em andamento
+
+**Aquecimento e dicas no gesto (`docs/jogo.md` seção 14.4):** construído em 04/11/2026, no branch `claude/aquecimento` (PR aberto, sem merge). Prints em `docs/auditoria/2026-11-04/aquecimento/`, aprovados pelo Kauê antes de aplicar em tudo.
+- **O que entra:** o aquecimento de 5 estações (`src/telas/aquecimento.ts` e `src/telas/aquecimento/`), o card na Home para quem chega por desafio, o selo e o "Rever aquecimento" no Perfil, as 36 dicas na faixa de instrução (`src/jogo/dicas.ts`, `src/jogo/dicasGatilhos.ts`), o "?" com as regras e a tabela de pontos de cada jogo (`src/telas/regras.ts`) e uma frase só no resultado da Prova. Saíram os quadros "Como jogar", "Como cravar", as listas de regras e o "Não exibir".
+- **Servidor:** a migração `20261104100000_aquecimento.sql` (+20 XP uma vez e a contagem da métrica) já está no ar desde 04/11, revisada pelo `revisor` (nada grave). Nenhuma função muda.
+- **Métrica:** `npm run metricas` ganhou a seção "Aquecimento" (completou, pulou e parou, por estação).
+- **Conferir no celular depois do merge:** fazer o aquecimento de ponta a ponta num aparelho limpo (limpar os dados do site), ver o palpite da estação 5 em Palpites e os +20 XP na Carreira; vibração e papel picado; a mão animada em movimento; um link de desafio num aparelho limpo, que deve ir direto ao desafio e deixar o card na Home.
+- **Não testado à mão:** as dicas de morte súbita, cavadinha pega no meio, altura errada e 3 cobranças sem efeito (cobertas por teste das condições, não pela tela); a zona do gol de verdade nos Lances só foi vista pelo DOM.
 
 **Lances do Jogo valendo (faltas e cara a cara):** feito em 03/11/2026 (PR #88). Detalhes na seção "Conferir primeiro", item 7.
 
@@ -37,7 +44,7 @@
   - a faixa "Aqui é só resenha" grudada no topo ao rolar o Crava (no Safari antigo, sem `clip`, ela volta a não grudar);
   - o selo "Pré-temporada" abrindo e fechando ao toque;
   - os botões Card, Stories, Emoji e Link nos 5 resultados.
-- **Fase 2:** os tutoriais "Como jogar" e a caixa "Como cravar" continuam no visual antigo.
+- **Fase 2:** os tutoriais saíram com o aquecimento (14.4); falta o painel `#admin`.
 
 **Código do torcedor (uma carreira em vários aparelhos, `docs/jogo.md` seção 14.1):** feito, publicado e aprovado em 03/11/2026 (PR #92), revisado pelo subagente `revisor` (nenhum achado alto; os médios e quase todos os baixos corrigidos antes de publicar).
 - **No ar:** a migração `20261103400000_codigo_torcedor.sql`, conferida no banco (4 tabelas com RLS, 7 políticas de sessão, permissões certas), a função `codigo-torcedor` v1 com o segredo `TURNSTILE_SECRET_KEY`, e o site (merge às 19h46, publicado às 19h48).
@@ -156,7 +163,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 1. **Cidade, Galeria e 52 semanas:** nessa ordem, depois das telas das divisões.
 2. **Perguntas:** o piloto recomendou parar nas 529 sem fonte do staging. A meta de 800 precisa de perguntas nascidas de páginas reais. A importação continua com o Kauê.
 3. ~~**Limpeza de anônimos:**~~ feita no PR #84 (`20261103000000_contas_paradas.sql`), guardando os pontos em `pontos_apagados`. No ar desde 02/11/2026 (rotina `apagar-contas-paradas`, dia 1º às 4h). Na simulação de 02/11, 0 conta sairia: a anônima mais antiga é de 19/10/2026, então a primeira limpeza possível é em 1º/05/2027. As travas do PR #86 estão no ar desde 02/11/2026.
-4. **Grafismo de TV, fase 2:** tutoriais "Como jogar", caixa "Como cravar" e painel `#admin` no visual da seção 4.6 do `docs/visual.md`. O confete da vitória dos Pênaltis pode ir para o `resultadoPadrao.ts`, para os outros jogos usarem.
+4. **Grafismo de TV, fase 2:** painel `#admin` no visual da seção 4.6 do `docs/visual.md`. O confete da vitória dos Pênaltis pode ir para o `resultadoPadrao.ts`, para os outros jogos usarem.
 
 ## Antes de divulgar
 

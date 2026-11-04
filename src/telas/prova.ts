@@ -25,10 +25,14 @@ import {
   verDesafioProva,
 } from '../servidor/api';
 import { sincronizarTorcedor } from '../servidor/torcedor';
-import { aoTocarNoEstado, cabecalhoTela, estado, placa } from './blocos';
+import { aoTocarNoEstado, cabecalhoTela, estado } from './blocos';
 import { icone, type NomeIcone } from './icones';
 import { vibrar } from './toque';
 import { papelPicadoNaTela } from './papelPicado';
+import { dicasDoAparelho, mostrarDica, tirarDica } from './dicas';
+import { DICAS } from '../jogo/dicas';
+import { primeiraDica } from '../jogo/dicasGatilhos';
+import { abrirRegras } from './regras';
 
 export interface DadosResultadoProva {
   timeId: string;
@@ -86,24 +90,15 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   let pausa = 0;
   let inicioPergunta = 0;
   let errosFeitos = 0;
-
-  const mostrarComo = !prefs.get().semComoProva;
-
-  const regras = `<ul class="cj-passos">
-          <li><span class="cj-icone">${icone('pergunta')}</span><p><strong>8 perguntas, 15 s cada.</strong> 2 fáceis, 2 médias, 2 difíceis e 2 de craque. Toque na alternativa.</p></li>
-          <li><span class="cj-icone">${icone('mao')}</span><p><strong>Parar ou seguir.</strong> Da 3ª em diante, antes de ver a pergunta: para e leva o que juntou, ou arrisca.</p></li>
-          <li><span class="cj-icone">${icone('xis')}</span><p><strong>Três erros e fora.</strong> Errar ou estourar o tempo conta um erro e a prova segue. No 3º, acaba e leva 75% do que juntou.</p></li>
-          <li><span class="cj-icone">${icone('lampada')}</span><p><strong>3 ajudas, uma de cada:</strong> Tira duas, Arquibancada e Troca. O relógio não para.</p></li>
-          <li><span class="cj-icone">${icone('trofeu')}</span><p><strong>Pontos:</strong> 8, 12, 18 e 25 por degrau. 8 de 8 sem errar ganha +24.</p></li>
-        </ul>
-        <label class="cj-check"><input type="checkbox" data-pular> Não exibir as regras de novo</label>`;
+  // "1º ..." de cada dica vale por prova; o limite por aparelho fica em jogo/dicas.ts.
+  const vistas = { decisao: false, tempo: false, ultima: false, ajuda: false };
 
   root.innerHTML = `
     <main class="tela prova" style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
       ${cabecalhoTela({
         titulo: 'Prova de Boleiro',
         voltar: true,
-        extra: '<button class="voltar prova-como" type="button" aria-label="Como jogar">?</button>',
+        extra: '<button class="voltar prova-como" type="button" aria-label="Regras e pontos">?</button>',
       })}
 
       <div class="escada-bloco">
@@ -118,7 +113,6 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       <section class="prova-inicio" data-inicio>
         <p class="adesivo" data-abertura></p>
         <div class="convite-desafio" data-convite hidden></div>
-        ${placa(regras, { filete: true, classe: 'prova-regras', attrs: mostrarComo ? '' : 'hidden' })}
         <button class="botao" type="button" data-comecar>Começar a prova</button>
         <div class="prova-erro" data-erro hidden></div>
       </section>
@@ -131,6 +125,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
           <h2 class="pergunta-texto" data-texto aria-live="polite"></h2>
           <div class="alternativas" data-alternativas></div>
         </article>
+        <p class="faixa-dica" data-dica hidden aria-live="polite"></p>
         <div class="ajudas" data-ajudas>
           ${(Object.keys(AJUDA_INFO) as Ajuda[])
             .map(
@@ -147,6 +142,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
           <p class="faixa" data-decisao-degrau></p>
           <h2 id="pd-titulo" class="cj-titulo" data-decisao-titulo></h2>
           <p class="adesivo" data-decisao-frase></p>
+          <p class="faixa-dica" data-dica-decisao hidden aria-live="polite"></p>
           <button class="botao" type="button" data-seguir></button>
           <button class="botao botao-sec" type="button" data-parar></button>
         </div>
@@ -163,6 +159,9 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   const elRotulo = $('[data-rotulo]');
   const elAlts = $('[data-alternativas]');
   const elGrito = $('[data-grito]');
+  // Dicas na hora do erro (jogo.md, 14.4).
+  const elDica = $('[data-dica]');
+  const dicas = dicasDoAparelho();
   const elErros = $('[data-erros]');
   const elSeg = $('[data-segundos]');
   const elRelogio = $('.relogio');
@@ -231,6 +230,8 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   // ---------- pergunta ----------
   function mostrarPergunta(p: PerguntaProva): void {
     pergunta = p;
+    dicas.novoLance();
+    tirarDica(elDica);
     mostrarErros(p.erros ?? 0);
     ajudaNaAtual = false;
     const i = p.numero - 1;
@@ -253,6 +254,8 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
     elDecisao.hidden = true;
     elJogo.hidden = false;
     ligarRelogio(p.segundos);
+    // Travou? A 1ª difícil, ainda sem ajuda usada.
+    if (p.degrau === 3 && usadas.size === 0 && !vistas.ajuda) vistas.ajuda = mostrarDica(elDica, dicas.pedir('prova_ajuda'));
   }
 
   function atualizarAjudas(): void {
@@ -290,7 +293,19 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
         if (botao) papelPicadoNaTela(botao, [time.cores[0], time.cores[1], '#ffd23f']);
       }
       // No 3º erro a partida acaba: o grito de "segue" não cabe, quem fala é o fim da prova.
-      else if (!r.fim) gritar(falar(eventoDoErroNaProva(r.desfecho, errosFeitos)));
+      else if (!r.fim) {
+        gritar(falar(eventoDoErroNaProva(r.desfecho, errosFeitos)));
+        // Vale a mais específica: tempo esgotado, depois a última vida, depois o 1º erro.
+        const texto = primeiraDica(dicas, [
+          [r.desfecho === 'tempo' && !vistas.tempo, 'prova_tempo'],
+          [errosFeitos === ERROS_QUE_ENCERRAM - 1 && !vistas.ultima, 'prova_ultima_vida'],
+          [errosFeitos === 1, 'prova_primeiro_erro'],
+        ]);
+        if (mostrarDica(elDica, texto)) {
+          if (texto === DICAS.prova_tempo) vistas.tempo = true;
+          else if (texto === DICAS.prova_ultima_vida) vistas.ultima = true;
+        }
+      }
 
       pausa = window.setTimeout(() => {
         if (saiu) return;
@@ -311,6 +326,10 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
     $('[data-decisao-titulo]').textContent = 'Para ou segue?';
     $('[data-decisao-frase]').textContent = falar('prova_decisao', { levar: garantidos, numero }) ?? '';
     const restam = Math.max(0, ERROS_QUE_ENCERRAM - errosFeitos);
+    const elDicaDecisao = $('[data-dica-decisao]');
+    dicas.novoLance();
+    tirarDica(elDicaDecisao);
+    if (!vistas.decisao) vistas.decisao = mostrarDica(elDicaDecisao, dicas.pedir('prova_parar_ou_seguir'));
     $('[data-seguir]').innerHTML = `Seguir<small>${restam === 1 ? 'mais 1 erro e acaba' : `${restam} erros restantes`}</small>`;
     $('[data-parar]').innerHTML = `Parar e levar ${garantidos}`;
     elDecisao.hidden = false;
@@ -324,7 +343,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       const r = await (await servidor()).proximaPergunta(partidaId, decisao);
       if (saiu) return;
       if (r.fim) {
-        terminar(r.fim, r.fim.fim === 'parou' ? falar('prova_parou', { levar: r.fim.pontos.base }) : null);
+        terminar(r.fim);
       } else if (r.pergunta) mostrarPergunta(r.pergunta);
     } catch (e) {
       if (!saiu) mostrarFalha(e);
@@ -371,6 +390,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
             ? 'A arquibancada ainda tá chegando: tirou uma!'
             : falar('prova_ajuda', { etiquetas: new Set([tipo]) }),
         );
+        if (r.tiraUma) mostrarDica(elDica, dicas.pedir('prova_arquibancada'));
         atualizarAjudas();
       } catch (e) {
         if (saiu) return;
@@ -382,15 +402,13 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   );
 
   // ---------- fim ----------
-  function terminar(fim: FimProva, frasePronta: string | null = null): void {
+  function terminar(fim: FimProva): void {
     pararRelogio();
-    const frases: string[] = [];
-    if (frasePronta) frases.push(frasePronta);
-    if (fim.fim === 'perfeita') frases.push(falar('prova_perfeita') ?? '');
-    frases.push(falar('prova_fim', { pontos: fim.pontos.total }) ?? '');
+    // Uma frase só: a do fim (o 8 de 8 ganha a própria; a de "parou" era de transição e saiu).
+    const frase = fim.fim === 'perfeita' ? falar('prova_perfeita') : falar('prova_fim', { pontos: fim.pontos.total });
     irPara({
       tela: 'provaResultado',
-      dados: { timeId: time.id, fim, desafio, frases: frases.filter(Boolean).slice(0, 2) },
+      dados: { timeId: time.id, fim, desafio, frases: frase ? [frase] : [] },
     });
   }
 
@@ -418,8 +436,6 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
     btnComecar.disabled = true;
     btnComecar.textContent = 'Preparando…';
     elErro.hidden = true;
-    const pular = root.querySelector<HTMLInputElement>('[data-pular]');
-    if (pular?.checked) prefs.set({ semComoProva: true });
     try {
       const api = await servidor();
       const pedir = async (codigo?: string) => {
@@ -463,10 +479,9 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
 
   // "?" mostra as regras de novo (só fora da pergunta, que corre contra o relógio).
   $('.prova-como').addEventListener('click', () => {
-    if (!elInicio.hidden) {
-      const el = $('.prova-regras');
-      el.hidden = !el.hidden;
-    } else gritar('Regras no começo da prova. Agora é com você!');
+    // Com a prova rodando o relógio corre: as regras abrem antes de começar (como o "?" dos pênaltis, que só abre fora da defesa).
+    if (elInicio.hidden) gritar('As regras abrem antes de começar a prova. Agora é com você!');
+    else abrirRegras(root, 'prova');
   });
 
   $('[data-voltar]').addEventListener('click', () => {

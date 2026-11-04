@@ -43,6 +43,10 @@ import type { ComoCravaram, Jogo, MeusDados, MinhaPosicao, Rodada } from '../ser
 import { sincronizarTorcedor as sincronizarReal } from '../servidor/torcedor';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
+import { dicasDoAparelho, mostrarDica } from './dicas';
+import { DICAS } from '../jogo/dicas';
+import { primeiraDica } from '../jogo/dicasGatilhos';
+import { abrirRegras } from './regras';
 import { abas, aoTocarNoEstado, cabecalhoTela, estado, faixa, marcarAba, numero, posicaoHtml, selo } from './blocos';
 
 // Em desenvolvimento, ?homeFalsa troca o servidor por um de mentira (src/dev/cravaFalsa.ts).
@@ -89,13 +93,18 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   /** Situação do grito do topo e do lembrete já narrados (não troca a frase a cada redesenho). */
   let topoVisto = '';
   let lembreteVisto = '';
+  // Dicas (jogo.md, 14.4): o "1º ..." vale por visita à tela; o limite por aparelho fica em jogo/dicas.ts.
+  const dicas = dicasDoAparelho();
+  const vistas = { mudar: false, estrela: false, travada: false, ved: false, rolando: false, fechada: false };
+  /** A dica da estrela está no ar: o botão da estrela fica em destaque até a pessoa escolher o jogo da certeza. */
+  let destacarEstrela = false;
 
   root.innerHTML = `
     <main class="tela palpites">
       <p class="aviso-resenha" role="note">${esc(AVISO_RESENHA)}</p>
       ${cabecalhoTela({
         titulo: 'Crava a Rodada',
-        extra: '<button class="ajuda" type="button" data-acao="como-cravar" aria-label="Como cravar">?</button>',
+        extra: '<button class="ajuda" type="button" data-acao="como-cravar" aria-label="Regras e pontos">?</button>',
       })}
       ${abas('visao', [{ id: 'palpites', texto: 'Palpites' }, { id: 'tabela', texto: 'Tabela' }], 'palpites', 1)}
       <section class="tabela-campeonato" data-tabela hidden></section>
@@ -107,6 +116,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
         </nav>
         <section class="placa filete sua-rodada" data-sua-rodada aria-label="Sua rodada" hidden></section>
         <p class="adesivo" data-adesivo hidden></p>
+        <p class="faixa-dica" data-dica hidden aria-live="polite"></p>
         <p class="nota" data-lembrete hidden></p>
         <section class="lista-jogos" aria-live="polite">${estado('carregando', 'Buscando os jogos…')}</section>
         <section class="placa crava-ranking" data-ranking-placa hidden>
@@ -128,23 +138,6 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
           </button>
         </section>
       </div>
-      <section class="como-jogar" role="dialog" aria-modal="true" aria-labelledby="cc-titulo" hidden>
-        <div class="cj-caixa">
-          <p class="rotulo cj-faixa faixa-tv">Antes da rodada</p>
-          <h2 id="cc-titulo" class="cj-titulo">Como cravar</h2>
-          <ul class="cj-passos">
-            <li><span class="cj-icone">${icone('lapis')}</span><p><strong>Crava o placar.</strong> Use − e + nos dois times e toque em CRAVAR. Dá pra mudar até a bola rolar, e pode pular os jogos que quiser.</p></li>
-            <li><span class="cj-icone">${icone('estrela')}</span><p><strong>Jogo da certeza.</strong> A estrela marca 1 jogo por rodada que vale o <strong>dobro</strong>. Escolha até o 1º jogo da rodada começar; depois trava.</p></li>
-            <li><span class="cj-icone">${icone('grafico')}</span><p><strong>Na dúvida, olhe os números.</strong> Embaixo de cada time: posição, pontos e os últimos 5 jogos (V vitória, E empate, D derrota). A aba <em>Tabela</em> mostra o campeonato inteiro.</p></li>
-            <li><span class="cj-icone">${icone('alvo')}</span><p><strong>Pontos.</strong> Placar exato 10 · vencedor e saldo certos (ou empate com outro placar) 7 · só o vencedor 5 · errou 0. Na torcida entram em dobro, até 300 por rodada.</p></li>
-            <li><span class="cj-icone">${icone('olho')}</span><p><strong>Bola rolando.</strong> O palpite tranca e aparece como a torcida cravou (com 20 palpites ou mais). Os pontos saem quando o placar é confirmado.</p></li>
-            <li><span class="cj-icone">${icone('celular')}</span><p><strong>Manda no grupo.</strong> No fim da página: <em>Mandar meus palpites</em> gera o card com seus placares; depois dos jogos, <em>Mandar o resultado</em> mostra seus pontos e um emoji por jogo.</p></li>
-          </ul>
-          <p class="cj-nota">🎯 placar exato · ✅ vencedor e saldo · 👍 só o vencedor · ❌ errou · ⭐ jogo da certeza</p>
-          <label class="cj-check"><input type="checkbox" data-cc-pular> Não exibir novamente</label>
-          <button class="botao" type="button" data-cc-fechar>Bora cravar!</button>
-        </div>
-      </section>
       ${barraNavegacao('palpites')}
     </main>`;
   ligarBarraNavegacao(root);
@@ -153,6 +146,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   const elLista = $('.lista-jogos');
   const elAdesivo = $('[data-adesivo]');
   const elLembrete = $('[data-lembrete]');
+  const elDica = $('[data-dica]');
   const elSua = $('[data-sua-rodada]');
   const elRankPlaca = $('[data-ranking-placa]');
   const elShare = $('.crava-compartilhar');
@@ -252,7 +246,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       <span class="rotulo">${esc(horaDoJogo(j.inicio))}${adiado(j) ? ' <em class="tag-adiado">adiado</em>' : ''}</span>
       ${
         fase === 'aberto' && !certezaTravada()
-          ? `<button type="button" class="certeza" data-acao="certeza" aria-pressed="${certeza}">${certeza ? '★' : '☆'} Certeza ×2</button>`
+          ? `<button type="button" class="certeza${destacarEstrela && !certeza ? ' dica-estrela' : ''}" data-acao="certeza" aria-pressed="${certeza}">${certeza ? '★' : '☆'} Certeza ×2</button>`
           : certeza
             ? '<span class="certeza ligada">★ Certeza ×2</span>'
             : ''
@@ -382,6 +376,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       gritar(falar('crava_abertura', { rodada: ordinalRodada(rodada) }));
     }
     topoVisto = chave;
+    dicaDaRodada(lista, todosFechados, agora);
 
     const trava = travaDaRodada();
     const falta = trava ? Date.parse(trava) - agora.getTime() : 0;
@@ -399,6 +394,29 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     desenharCompartilhar();
     void carregarComo();
     void carregarRanking();
+  }
+
+  /** Uma dica por vez na faixa: rodada fechada, bola rolando, certeza travada ou a estrela (antes do 1º jogo). */
+  function dicaDaRodada(lista: Jogo[], todosFechados: boolean, agora: Date): void {
+    const fases = lista.map((j) => faseDoJogo(j, agora));
+    const aberto = fases.includes('aberto');
+    const travada = certezaTravada() && !!travaDaRodada();
+    dicas.novoLance();
+    const texto = primeiraDica(dicas, [
+      [todosFechados && !vistas.fechada, 'crava_rodada_fechada'],
+      [fases.includes('rolando') && !vistas.rolando, 'crava_rolando'],
+      [travada && aberto && !vistas.travada, 'crava_certeza_travada'],
+      [!certezaTravada() && aberto && certezaDaRodada() === null && !vistas.estrela, 'crava_estrela'],
+    ]);
+    if (!mostrarDica(elDica, texto)) return;
+    if (texto === DICAS.crava_rodada_fechada) vistas.fechada = true;
+    else if (texto === DICAS.crava_rolando) vistas.rolando = true;
+    else if (texto === DICAS.crava_certeza_travada) vistas.travada = true;
+    else {
+      vistas.estrela = true;
+      destacarEstrela = true;
+      for (const j of lista) if (faseDoJogo(j, agora) === 'aberto') desenharCartao(j.id);
+    }
   }
 
   function desenharCompartilhar(): void {
@@ -580,6 +598,8 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       rascunho.delete(j.id);
       const contra = palpiteContra(placar, j.mandante_id, j.visitante_id, time.id);
       gritar(falar(contra ? 'crava_contra_time' : 'crava_salvo'));
+      dicas.novoLance();
+      if (!vistas.mudar) vistas.mudar = mostrarDica(elDica, dicas.pedir('crava_mudar'));
     } catch (e) {
       const fechado = e instanceof ErroServidor && e.codigo === 'fechado';
       gritar(fechado ? 'Esse jogo já começou: palpite trancado.' : 'Sem conexão agora. Tenta de novo em instantes.');
@@ -602,9 +622,14 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       if (ligar) meus.certezas.set(rodada, j.id);
       else meus.certezas.delete(rodada);
       if (ligar) gritar(falar('crava_certeza'));
+      destacarEstrela = false;
     } catch (e) {
       const fechado = e instanceof ErroServidor && e.codigo === 'fechado';
       gritar(fechado ? 'O jogo da certeza já travou nesta rodada.' : 'Sem conexão agora. Tenta de novo em instantes.');
+      if (fechado && !vistas.travada) {
+        dicas.novoLance();
+        vistas.travada = mostrarDica(elDica, dicas.pedir('crava_certeza_travada'));
+      }
     }
     if (antes) desenharCartao(antes);
     desenharCartao(j.id);
@@ -711,24 +736,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     );
   });
 
-  // ---------- como cravar (abre sozinho na primeira vez; o "?" reabre) ----------
-  const elComo = $('.como-jogar');
-  const elPular = $<HTMLInputElement>('[data-cc-pular]');
-  function abrirComoCravar(): void {
-    elPular.checked = !!prefs.get().semComoCravar;
-    elComo.hidden = false;
-    $<HTMLButtonElement>('[data-cc-fechar]').focus();
-  }
-  function fecharComoCravar(): void {
-    prefs.set({ semComoCravar: elPular.checked });
-    elComo.hidden = true;
-  }
-  $('[data-acao="como-cravar"]').addEventListener('click', abrirComoCravar);
-  $('[data-cc-fechar]').addEventListener('click', fecharComoCravar);
-  elComo.addEventListener('click', (ev) => {
-    if (ev.target === elComo) fecharComoCravar();
-  });
-  if (!prefs.get().semComoCravar) abrirComoCravar();
+  $('[data-acao="como-cravar"]').addEventListener('click', () => abrirRegras(root, 'crava'));
 
   // ---------- carga ----------
   async function recarregar(): Promise<void> {
@@ -762,6 +770,11 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     tabela = new Map(classificacao(temporada, OFICIAIS).map((l) => [l.timeId, l]));
     // Só os cartões abertos mostram os indicadores: redesenha sem mexer no grito do topo.
     for (const j of daRodada()) if (faseDoJogo(j, new Date()) === 'aberto') desenharCartao(j.id);
+    // 1ª vez com V/E/D na tela, se a faixa estiver livre (nenhuma outra dica no ar).
+    if (!vistas.ved && elDica.hidden && elLista.querySelector('.forma')) {
+      dicas.novoLance();
+      vistas.ved = mostrarDica(elDica, dicas.pedir('crava_ved'));
+    }
     if (visao === 'tabela') desenharTabela();
   }
 

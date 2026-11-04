@@ -15,7 +15,7 @@ import { meusRecordes, minhaPosicaoMinigame, minhaPosicaoSemana, type MinigameDo
 import { jogosDoCrava, minhaPosicaoCrava } from '../servidor/crava';
 import { semanaBrasilia } from '../servidor/tempo';
 import { montarAparelhos } from './aparelhosLigados';
-import { aoTocarNoEstado, cabecalhoTela, estado, faixa, numero, placa, posicaoHtml } from './blocos';
+import { aoTocarNoEstado, cabecalhoTela, estado, faixa, numero, placa, posicaoHtml, selo } from './blocos';
 import { carregarCarreiraPerfil } from './carreira';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { icone } from './icones';
@@ -97,6 +97,12 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
         <button class="ajuste" type="button" data-acao="entrar-codigo">Entrar com código de outro aparelho</button>
       </section>
 
+      <section class="placa perfil-bloco" aria-label="Aquecimento">
+        ${faixa('Aquecimento')}
+        ${prefs.get().aquecimento?.aquecido ? '<p class="perfil-selo">' + selo('Aquecido', 'ouro') + '</p>' : ''}
+        <button class="ajuste" type="button" data-acao="aquecimento">Rever aquecimento</button>
+      </section>
+
       <button class="perfil-atalho" type="button" data-acao="conquistas">${icone('trofeu')} Conquistas</button>
 
       <section class="placa perfil-bloco" aria-label="Ajustes">
@@ -134,6 +140,7 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
   root.querySelector('[data-acao="entrar-codigo"]')?.addEventListener('click', () => irPara({ tela: 'entrar', de: 'perfil' }));
   const elAparelhos = root.querySelector<HTMLElement>('[data-aparelhos]');
   if (elAparelhos) montarAparelhos(elAparelhos, () => saiu);
+  root.querySelector('[data-acao="aquecimento"]')?.addEventListener('click', () => irPara({ tela: 'aquecimento', depois: aqui }));
   root.querySelector('[data-acao="conquistas"]')?.addEventListener('click', () => irPara({ tela: 'ranking', aba: 'conquistas' }));
   root.querySelector('[data-acao="termos"]')?.addEventListener('click', () => irPara({ tela: 'termos', de: aqui }));
   root.querySelector('[data-acao="apagar"]')?.addEventListener('click', () => irPara({ tela: 'termos', de: aqui, apagar: true }));

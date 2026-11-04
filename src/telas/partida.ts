@@ -3,7 +3,7 @@
 
 import { esc, irPara, type Rota } from '../app';
 import { SELECAO, TORCIDA_SELECAO, coresDoAdversario } from '../dados/adversarios';
-import { corDeTexto, proTime, timePorId, TIMES, type Time } from '../dados/times';
+import { corDeTexto, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { sementeNova } from '../jogo/aleatorio';
 import { ID_SELECAO, chamadaDaDisputa } from '../jogo/disputas';
@@ -63,6 +63,17 @@ import {
   uniformesDaPartida,
   type Boneco,
 } from './bonecos';
+import { dicasDoAparelho, mostrarDica, tirarDica } from './dicas';
+import {
+  chuteFracoPego,
+  chutePorCimaPorForca,
+  cavadinhaPegaNoMeio,
+  defesaSemToque,
+  ladoCertoAlturaErrada,
+  primeiraDica,
+  semEfeitoSeguido,
+} from '../jogo/dicasGatilhos';
+import { abrirRegras } from './regras';
 import { icone } from './icones';
 import { aoMudarQualidade, medirQuadros, qualidade } from './qualidade';
 
@@ -138,7 +149,6 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   let fechamento: Promise<FechamentoDoServidor> | null = null;
   const narrador = criarNarrador(time, prefs.get().apelido);
   const reduzido = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const paraTime = proTime(time) ?? 'pra sua torcida';
 
   root.innerHTML = `
     <main class="partida" style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
@@ -149,7 +159,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
           <strong class="gols"><span data-gols="jogador">0</span><em>x</em><span data-gols="maquina">0</span></strong>
           <div class="lado lado-maquina"><span class="sigla">${esc(disputa?.adversario ?? 'Máquina')}</span><span class="bolinhas" data-lado="maquina"></span></div>
         </div>
-        <button class="ajuda" type="button" aria-label="Como jogar">?</button>
+        <button class="ajuda" type="button" aria-label="Regras e pontos">?</button>
         <button class="mudo" type="button" aria-label="Som"></button>
       </header>
       <canvas class="campo-jogo"></canvas>
@@ -159,21 +169,6 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         <p class="grito-sub rotulo"></p>
       </div>
       <p class="aviso-partida" hidden></p>
-      <section class="como-jogar" role="dialog" aria-modal="true" aria-labelledby="cj-titulo" hidden>
-        <div class="cj-caixa">
-          <p class="rotulo cj-faixa faixa-tv">Antes do apito</p>
-          <h2 id="cj-titulo" class="cj-titulo">Como jogar</h2>
-          <ul class="cj-passos">
-            <li><span class="cj-icone">${icone('bola')}</span><p><strong>Cobrar.</strong> Arraste o dedo da bola na direção do gol. Arraste longo = chute forte; forte demais vai por cima.</p></li>
-            <li><span class="cj-icone">${icone('curva')}</span><p><strong>Efeito.</strong> Curve o fim do arraste pra bola fazer curva. Arraste curtinho e reto é cavadinha.</p></li>
-            <li><span class="cj-icone">${icone('mao')}</span><p><strong>Defender.</strong> O batedor corre. Olhe o pé de apoio, em amarelo, e toque no gol onde pular. Ele nem sempre é honesto!</p></li>
-            <li><span class="cj-icone">${icone('trofeu')}</span><p><strong>Pontos ${esc(paraTime)}.</strong> Gol 10, ângulo +5, cavadinha +10, defesa 10, vitória +20, 5 de 5 +25.</p></li>
-          </ul>
-          <p class="cj-nota">5 cobranças e 5 defesas, alternadas. Empatou? Morte súbita.</p>
-          <label class="cj-check"><input type="checkbox" data-cj-pular> Não exibir novamente</label>
-          <button class="botao" type="button" data-cj-fechar>Bora jogar!</button>
-        </div>
-      </section>
     </main>
   `;
 
@@ -213,7 +208,6 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   const elGritoFrase = root.querySelector<HTMLElement>('.grito-frase')!;
   const elGritoSub = root.querySelector<HTMLElement>('.grito-sub')!;
   const elMudo = root.querySelector<HTMLButtonElement>('.mudo')!;
-  const elComoJogar = root.querySelector<HTMLElement>('.como-jogar')!;
 
   const cobrancas: ResultadoCobranca[] = [];
   const defesas: ResultadoDefesa[] = [];
@@ -278,8 +272,36 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   }
 
   function instruir(texto: string): void {
+    tirarDica(elInstrucao);
     elInstrucao.textContent = texto;
     elInstrucao.hidden = !texto;
+  }
+
+  // Dicas na hora do erro (jogo.md, 14.4): aparecem logo depois do lance e voltam no começo da próxima
+  // cobrança, no lugar do "Cobrança 2 de 5".
+  const dicas = dicasDoAparelho();
+  let dicaDaProximaCobranca: string | null = null;
+  /** Mostra a dica na faixa e a guarda para voltar no começo da próxima cobrança. */
+  function dicaDepoisDoLance(texto: string | null): void {
+    if (mostrarDica(elInstrucao, texto)) dicaDaProximaCobranca = texto;
+  }
+  function dicaDaCobranca(r: ResultadoCobranca): void {
+    dicaDepoisDoLance(
+      primeiraDica(dicas, [
+        [cavadinhaPegaNoMeio(r), 'pen_cavadinha_meio'],
+        [chutePorCimaPorForca(r), 'pen_forte_demais'],
+        [chuteFracoPego(r), 'pen_fraco'],
+        [semEfeitoSeguido(gestosCobranca), 'pen_sem_efeito'],
+      ]),
+    );
+  }
+  function dicaDaDefesa(r: ResultadoDefesa): void {
+    dicaDepoisDoLance(
+      primeiraDica(dicas, [
+        [defesaSemToque(r), 'pen_defesa_sem_toque'],
+        [ladoCertoAlturaErrada(r), 'pen_altura'],
+      ]),
+    );
   }
 
   // ---------- fluxo ----------
@@ -304,7 +326,12 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   function comecarCobranca(): void {
     fase = { tipo: 'mirar', inicio: relogio() };
     rastro = [];
+    dicas.novoLance();
     const extra = rodada - COBRANCAS + 1;
+    const dicaGuardada = dicaDaProximaCobranca;
+    dicaDaProximaCobranca = null;
+    // 1ª cobrança da 2ª partida (o contador atravessa as partidas e só soma na primeira cobrança).
+    const partidasJogadas = rodada === 0 ? dicas.marco('pen_partidas') : 0;
     instruir(
       rodada === 0
         ? 'Arraste da bola pro gol. Mais longo = mais forte. Curve no fim para dar efeito.'
@@ -312,12 +339,16 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
           ? `${extra === 1 ? 'Empatou! ' : ''}Morte súbita: rodada extra ${extra} de ${RODADAS_EXTRAS_MAX}.`
           : `Cobrança ${rodada + 1} de ${COBRANCAS}. Arraste para chutar.`,
     );
+    if (extra === 1) mostrarDica(elInstrucao, dicas.pedir('pen_morte_subita'));
+    else if (dicaGuardada && extra <= 0) mostrarDica(elInstrucao, dicaGuardada);
+    else if (partidasJogadas === 2) mostrarDica(elInstrucao, dicas.pedir('pen_cavadinha'));
     if (rodada === 0) narrar(narrador.falar('abertura'), disputa && chamadaDaDisputa(disputa));
     else if (rodada === COBRANCAS) narrar(narrador.falar('morte_subita', { placar: placarAtual() }));
     else if (cobrancaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['cobranca']) }));
   }
 
   function comecarDefesa(): void {
+    dicas.novoLance();
     const dica =
       emLanceALance() && dicaDoServidor !== null
         ? dicaDoServidor
@@ -403,6 +434,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     cobrancas.push(r);
     atualizarHud();
     narrar(narrador.falar(eventoDaCobranca(r), { etiquetas: etiquetasDaCobranca(r) }), legendaDaCobranca(r));
+    dicaDaCobranca(r);
     if (r.desfecho === 'gol') comemorar(telaX(r.x), telaY(r.y), r.pontos, true);
     else if (r.desfecho === 'trave') cena.baterNaTrave(telaX(r.x), telaY(r.y));
     somTorcida(r.desfecho === 'gol' ? 'festa' : 'uuuh');
@@ -492,6 +524,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       efeitos.rede = { inicio: relogio(), x: telaX(z.x), y: telaY(z.y) };
     }
     somTorcida(r.desfecho === 'defesa' ? 'festa' : 'uuuh');
+    dicaDaDefesa(r);
     rodada++;
     if (precisaDeOutraRodada(cobrancas, defesas)) depoisDe(1500, comecarCobranca);
     else if (precisaDeParOuImpar(cobrancas, defesas)) depoisDe(1600, abrirParOuImpar);
@@ -508,6 +541,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     painel.className = 'par-ou-impar';
     painel.innerHTML = `
       <h2>Par ou ímpar</h2>
+      <p class="faixa-dica" data-dica hidden aria-live="polite"></p>
       <div class="poi-paridade" role="radiogroup" aria-label="Par ou ímpar">
         <button type="button" role="radio" aria-checked="false" data-paridade="par">Par</button>
         <button type="button" role="radio" aria-checked="false" data-paridade="impar">Ímpar</button>
@@ -520,6 +554,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       <p class="poi-status" aria-live="polite"></p>`;
     root.querySelector('.partida')!.append(painel);
     narrar(narrador.falar('par_ou_impar_escolha'));
+    dicas.novoLance();
+    mostrarDica(painel.querySelector<HTMLElement>('[data-dica]')!, dicas.pedir('pen_par_ou_impar'));
 
     let paridade: Paridade | null = null;
     let numero: number | null = null;
@@ -559,29 +595,14 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     });
   }
 
-  // ---------- como jogar ----------
+  // ---------- apito ----------
   let servidorPronto = false;
-  let jogadorPronto = !!prefs.get().semComoJogar;
 
-  /** O apito só sai quando o servidor respondeu e o jogador fechou o "Como jogar". */
+  /** O apito sai quando o servidor respondeu (as regras ficam no "?"). */
   function talvezComecar(): void {
-    if (!servidorPronto || !jogadorPronto || acabou || fase.tipo !== 'preparando') return;
+    if (!servidorPronto || acabou || fase.tipo !== 'preparando') return;
     somApito();
     comecarCobranca();
-  }
-
-  function abrirComoJogar(): void {
-    root.querySelector<HTMLInputElement>('[data-cj-pular]')!.checked = !!prefs.get().semComoJogar;
-    elComoJogar.hidden = false;
-    root.querySelector<HTMLButtonElement>('[data-cj-fechar]')!.focus();
-  }
-
-  function fecharComoJogar(): void {
-    destravarSom();
-    prefs.set({ semComoJogar: root.querySelector<HTMLInputElement>('[data-cj-pular]')!.checked });
-    elComoJogar.hidden = true;
-    jogadorPronto = true;
-    talvezComecar();
   }
 
   // ---------- servidor ----------
@@ -749,6 +770,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     const gesto = lerArraste(rastro);
     rastro = [];
     if (gesto) chutar(gesto);
+    else if (mostrarDica(elInstrucao, dicas.pedir('pen_sem_chute'))) dicas.novoLance(); // arraste que não vira chute não gasta o lance
     else instruir('Arraste pra cima, na direção do gol.');
   }
 
@@ -1013,7 +1035,6 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   }
   medir();
   atualizarHud();
-  if (!jogadorPronto) abrirComoJogar();
   void preparar();
   let raf = proximoQuadro(quadro);
 
@@ -1024,13 +1045,11 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   canvas.addEventListener('pointerup', aoSoltar);
   canvas.addEventListener('pointercancel', () => (rastro = []));
   root.querySelector('.voltar')?.addEventListener('click', () => irPara({ tela: 'lances', aba: 'penaltis' }));
-  root.querySelector('[data-cj-fechar]')!.addEventListener('click', fecharComoJogar);
   root.querySelector('.ajuda')!.addEventListener('click', () => {
     // Só abre quando nada corre contra o relógio (na mira ou antes do apito).
     if (fase.tipo === 'mirar' || fase.tipo === 'preparando') {
       rastro = [];
-      jogadorPronto = false;
-      abrirComoJogar();
+      abrirRegras(root, 'penaltis');
     } else instruir('Dá pra ver as regras na hora da sua cobrança.');
   });
   elMudo.addEventListener('click', () => {
