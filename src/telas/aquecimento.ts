@@ -19,8 +19,7 @@ import {
   tituloDoFim,
   type Desfecho,
   type Estacao as NomeDaEstacao,
-  type EstadoDoAquecimento,
-} from '../jogo/aquecimento';
+  type EstadoDoAquecimento, guardarPendente, limparPendente } from '../jogo/aquecimento';
 import { rodadaEmFoco } from '../jogo/cravaTela';
 import type { Placar } from '../jogo/crava';
 import { somTorcida } from '../jogo/som';
@@ -63,10 +62,10 @@ function gravar(parcial: Partial<EstadoDoAquecimento>): void {
 async function enviar(desfecho: Desfecho, estacao: number | null): Promise<number> {
   try {
     const xp = await (await servidor()).registrarAquecimento(desfecho, estacao);
-    if (prefs.get().aquecimento?.pendente) gravar({ pendente: undefined });
+    gravar({ pendente: limparPendente(prefs.get().aquecimento?.pendente, { desfecho, estacao }) });
     return xp;
   } catch {
-    gravar({ pendente: { desfecho, estacao } });
+    gravar({ pendente: guardarPendente(prefs.get().aquecimento?.pendente, { desfecho, estacao }) });
     return 0;
   }
 }

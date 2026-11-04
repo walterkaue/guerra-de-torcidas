@@ -6,6 +6,8 @@ import {
   GRITO_ACERTOU,
   GRITO_ERROU,
   gritoDaEstacao,
+  guardarPendente,
+  limparPendente,
   jogoDoTimeParaCravar,
   numeroDaEstacao,
   PERGUNTA_AQUECIMENTO,
@@ -86,5 +88,16 @@ describe('aquecimento', () => {
   it('fechou no meio: vira "parou" naquela estação na abertura seguinte', () => {
     expect(fecharAbandonado({ visto: true })).toBeNull();
     expect(fecharAbandonado({ emAndamento: 3 })).toEqual({ visto: true, pendente: { desfecho: 'parou', estacao: 3 } });
+  });
+
+  it('pendente: completou nunca é trocado; só some o que acabou de chegar', () => {
+    const c = { desfecho: 'completou' as const, estacao: null };
+    const p = { desfecho: 'pulou' as const, estacao: 2 };
+    expect(guardarPendente(c, p)).toEqual(c);
+    expect(guardarPendente(p, c)).toEqual(c);
+    expect(guardarPendente(undefined, p)).toEqual(p);
+    expect(limparPendente(c, p)).toEqual(c);
+    expect(limparPendente(c, { desfecho: 'completou', estacao: null })).toBeUndefined();
+    expect(limparPendente(undefined, p)).toBeUndefined();
   });
 });

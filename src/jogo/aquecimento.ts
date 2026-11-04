@@ -146,3 +146,15 @@ export function fecharAbandonado(e: EstadoDoAquecimento): EstadoDoAquecimento | 
   const { emAndamento, ...resto } = e;
   return { ...resto, visto: true, pendente: resto.pendente ?? { desfecho: 'parou', estacao: emAndamento } };
 }
+
+type Pendente = NonNullable<EstadoDoAquecimento['pendente']>;
+
+/** Desfecho que não chegou ao servidor: um `completou` guardado nunca é trocado por outro (é o que dá o XP). */
+export function guardarPendente(atual: Pendente | undefined, novo: Pendente): Pendente {
+  return atual?.desfecho === 'completou' ? atual : novo;
+}
+
+/** Depois de um envio que deu certo: só some o pendente que é o mesmo que acabou de chegar. */
+export function limparPendente(atual: Pendente | undefined, enviado: Pendente): Pendente | undefined {
+  return atual && atual.desfecho === enviado.desfecho && atual.estacao === enviado.estacao ? undefined : atual;
+}

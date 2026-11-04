@@ -5,7 +5,7 @@ import { desafioDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../ap
 import { LANCES_POR_CLUBE } from '../dados/lancesResumo';
 import { ID_OUTRO, TIMES, corDeTexto, corDoRivalNoDuelo, timePorId, type Time } from '../dados/times';
 import { faixaDoAparelho, prefs } from '../estado';
-import { fecharAbandonado } from '../jogo/aquecimento';
+import { fecharAbandonado, limparPendente } from '../jogo/aquecimento';
 import { AVISO_RESENHA } from '../jogo/cravaTela';
 import { podeVerPush } from '../jogo/faixaEtaria';
 import { avisoDosTermos, DATA_DA_VERSAO } from '../jogo/termos';
@@ -208,7 +208,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const pendente = prefs.get().aquecimento?.pendente;
   if (pendente && !FALSA) {
     registrarAquecimento(pendente.desfecho, pendente.estacao)
-      .then(() => prefs.set({ aquecimento: { ...prefs.get().aquecimento, pendente: undefined } }))
+      .then(() => {
+        const agora = prefs.get().aquecimento;
+        prefs.set({ aquecimento: { ...agora, pendente: limparPendente(agora?.pendente, pendente) } });
+      })
       .catch(() => {});
   }
 
