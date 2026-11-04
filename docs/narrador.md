@@ -688,3 +688,17 @@ Título: Sua torcida na semana
 - {O_time} tá em {posicao} na semana. (sem rival com pontos)
 - {O_time} ainda não pontuou nesta semana.
 - O placar da semana tá atualizado no jogo. ("Outro time")
+
+## 14. Aquecimento
+
+Gritos curtos das 5 estações do aquecimento (docs/jogo.md, seção 14.4), um por estação, acertando ou não. Texto em `src/jogo/aquecimento.ts` (`GRITO_ACERTOU`, `GRITO_ERROU`), não neste banco: o `npm run frases` não lê esta seção. Na Prova e no Crava, sem "valendo" (seções 9 e 10).
+
+| Estação | Acertou | Errou |
+|---|---|---|
+| Pênalti | É GOL! No jogo valendo, isso é ponto. · Na rede! Tá aquecido esse pé. | Quase! No jogo valendo você acerta. · Passou perto! Aquecimento é pra isso. |
+| Defesa | PEGOU! Leu o pé e foi buscar. · Defesa! O gol tá trancado hoje. | Quase! No jogo valendo você pega. · Foi no outro canto! Agora você já sabe. |
+| Falta | Por cima da barreira! Que cobrança. · Passou da barreira e foi pra rede! | Quase! No jogo valendo você acerta. · A barreira ganhou essa. A próxima é sua. |
+| Prova | Na mosca! Começou bem a prova. · Certinha! Tem cabeça de boleiro. | Quase! Na Prova de verdade você acerta. · Essa escapou! A próxima você crava. |
+| Crava | Cravado! Esse vale de verdade. · Palpite feito! Agora é torcer. | (sempre comemora como acerto) |
+
+Fim: "Aquecido! Agora vale ponto {pro_time}" (sem time oficial: "Aquecido! Agora vale ponto de verdade").

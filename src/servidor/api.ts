@@ -766,3 +766,15 @@ export async function enviarFeedback(tipo: TipoFeedback, texto: string, tela: st
   );
   if (error) throw new ErroServidor(error.code === '42501' ? 'muitos' : 'falha');
 }
+
+/**
+ * Aquecimento (jogo.md, 14.4): manda o desfecho (completou, pulou ou parou na estação N) e devolve o XP ganho
+ * agora (20 na primeira vez que completa; 0 depois). 'sem_torcedor': o time ainda não chegou ao servidor.
+ */
+export async function registrarAquecimento(desfecho: 'completou' | 'pulou' | 'parou', estacao: number | null): Promise<number> {
+  await garantirSessao();
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('aquecimento_registrar', { p_desfecho: desfecho, p_estacao: estacao }));
+  if (error) throw new ErroServidor(error.message === 'sem_torcedor' ? 'sem_torcedor' : 'falha');
+  return typeof data === 'number' ? data : 0;
+}

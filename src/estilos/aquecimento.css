@@ -1,0 +1,233 @@
+/* Aquecimento (docs/jogo.md, 14.4): celular primeiro, só toque, nada de rolagem horizontal. */
+
+.aquecimento {
+  position: relative;
+  height: 100dvh;
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: calc(8px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom));
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.aq-topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.aq-progresso {
+  flex: 1;
+  min-width: 0;
+}
+.aq-pular {
+  flex: none;
+  min-width: 72px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--cal);
+  font-family: var(--fonte-rotulo);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.aq-etapa {
+  color: var(--texto-suave);
+}
+.aq-instrucao .faixa {
+  max-width: 100%;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+/* Palco: onde cada estação desenha. A mão e os canvas se medem a partir dele. */
+.aq-palco {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.aq-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  border-radius: 12px;
+}
+.aq-espera {
+  padding: 32px 0;
+  text-align: center;
+  color: var(--texto-suave);
+}
+
+.aquecimento .grito {
+  top: 52%;
+  z-index: 10;
+}
+
+/* Mão animada e o rastro do gesto. */
+.aq-gesto {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  fill: none;
+  stroke: var(--amarelo);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.aq-gesto circle {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.aq-gesto text {
+  fill: var(--amarelo);
+  stroke: none;
+  font: 700 20px var(--fonte-rotulo);
+}
+.aq-mao {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 6;
+  pointer-events: none;
+  font-size: 56px;
+  line-height: 0;
+  color: #fff;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  will-change: transform;
+}
+.aq-mao .ico {
+  stroke-width: 1.6;
+  fill: rgba(255, 255, 255, 0.18);
+}
+
+/* Estação 4: pergunta */
+.aq-prova {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Estação 5: o jogo */
+.aq-crava {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.aq-confronto {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 6px;
+}
+.aq-lado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.aq-camisa {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: linear-gradient(135deg, var(--c1) 0 60%, var(--c2) 60% 100%);
+}
+.aq-nome {
+  max-width: 100%;
+  text-align: center;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+.aq-gols {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.aq-gols output {
+  min-width: 32px;
+  text-align: center;
+  font: 400 40px/1 var(--fonte-placar);
+  color: var(--amarelo);
+  font-variant-numeric: tabular-nums;
+}
+.aq-passo {
+  width: 44px;
+  height: 44px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  background: var(--placa-alta);
+  color: var(--cal);
+  font-size: 24px;
+  font-weight: 900;
+  touch-action: manipulation;
+}
+.aq-passo:active { transform: scale(0.94); }
+.aq-x {
+  padding-top: 70px;
+  font: 400 24px var(--fonte-placar);
+  color: var(--texto-suave);
+}
+.aq-erro {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(192, 57, 43, 0.25);
+  text-align: center;
+}
+.aq-resenha {
+  font-size: 13px;
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+/* Fim */
+.aq-selos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.aq-lista {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.aq-lista li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+.aq-marca {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #1f9d55;
+  font-size: 14px;
+}
+.aq-palpite {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.aq-palpite strong {
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}

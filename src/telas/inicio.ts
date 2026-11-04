@@ -5,6 +5,7 @@ import { desafioDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../ap
 import { LANCES_POR_CLUBE } from '../dados/lancesResumo';
 import { ID_OUTRO, TIMES, corDeTexto, corDoRivalNoDuelo, timePorId, type Time } from '../dados/times';
 import { faixaDoAparelho, prefs } from '../estado';
+import { fecharAbandonado } from '../jogo/aquecimento';
 import { AVISO_RESENHA } from '../jogo/cravaTela';
 import { podeVerPush } from '../jogo/faixaEtaria';
 import { avisoDosTermos, DATA_DA_VERSAO } from '../jogo/termos';
@@ -36,6 +37,7 @@ import {
   partidasFechadasHoje,
   rankingDaSemana,
   verDesafio,
+  registrarAquecimento,
   verDesafioProva,
   type LinhaRanking,
 } from '../servidor/api';
@@ -177,6 +179,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
       <button class="botao botao-jogar" type="button" data-acao="jogar-agora">Jogar agora<small data-motivo>&nbsp;</small></button>
 
+      ${prefs.get().aquecimento?.cardNaHome && !prefs.get().aquecimento?.visto ? `<button class="card-aquecimento" type="button" data-acao="aquecimento"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}><span class="rotulo">Aquecimento</span><strong>Conheça os outros jogos</strong><small>1 min</small></button>` : ''}
+
       <section class="grade-jogos" aria-label="Jogos"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>
         ${htmlDosCards(esc(linhaDosLances(time, LANCES_POR_CLUBE)), linhaPenaltis(null, TETO_DIARIO))}
       </section>
@@ -196,6 +200,17 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       ${barraNavegacao('jogar')}
     </main>
   `;
+
+  // Aquecimento: quem fechou o app no meio "parou" naquela estação; e o desfecho que não chegou é mandado de novo (em silêncio).
+  const aqu = prefs.get().aquecimento;
+  const fechado = aqu && fecharAbandonado(aqu);
+  if (fechado) prefs.set({ aquecimento: fechado });
+  const pendente = prefs.get().aquecimento?.pendente;
+  if (pendente && !FALSA) {
+    registrarAquecimento(pendente.desfecho, pendente.estacao)
+      .then(() => prefs.set({ aquecimento: { ...prefs.get().aquecimento, pendente: undefined } }))
+      .catch(() => {});
+  }
 
   const pararArquibancada = ligarArquibancada(root.querySelector('canvas')!, dono.cores, luzDoHorario(horaDaLuz()));
 
@@ -219,6 +234,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   root.querySelector('[data-acao="jogar-agora"]')?.addEventListener('click', () =>
     desafioAberto ? jogar(desafioAberto) : abrir[proximoJogo(situacao)](),
   );
+  root.querySelector('[data-acao="aquecimento"]')?.addEventListener('click', () => irPara({ tela: 'aquecimento', depois: { tela: 'inicio' } }));
   root.querySelector('[data-acao="perfil"]')?.addEventListener('click', () => irPara({ tela: 'perfil' }));
   root.querySelectorAll('[data-acao="trocar"]').forEach((b) =>
     b.addEventListener('click', () => irPara({ tela: 'times', depois: 'inicio' })),

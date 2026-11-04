@@ -1023,3 +1023,23 @@
   color: var(--amarelo);
   font-size: 18px;
 }
+
+/* Card "Conheça os outros jogos" (Aquecimento, docs/jogo.md 14.4): some quando a pessoa abre o aquecimento. */
+.card-aquecimento {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px 14px;
+  border: 1px solid var(--linha);
+  border-left: 5px solid var(--c1, var(--linha));
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
+  color: var(--cal);
+  font: inherit;
+  text-align: left;
+}
+.card-aquecimento .rotulo { color: var(--texto-suave); }
+.card-aquecimento strong { flex: 1; font-size: 16px; }
+.card-aquecimento small { color: var(--texto-suave); }

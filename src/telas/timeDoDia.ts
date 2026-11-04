@@ -36,6 +36,7 @@ import { aoTocarNoEstado, cabecalhoTela, estado as blocoEstado, numero, placa } 
 import { bolinha, icone } from './icones';
 import { contar, htmlResultado, htmlSelosDaPosicao, ligarResultado } from './resultadoPadrao';
 import { vibrar } from './toque';
+import { dicasDoAparelho, mostrarDica, tirarDica } from './dicas';
 import { papelPicadoNaTela } from './papelPicado';
 
 const SITE = 'https://torcida.kauewalter.com.br';
@@ -150,6 +151,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       <section class="placa aperta dia-pistas" data-pistas>
         ${CABECALHO_PISTAS}
         <ol class="dia-grade" data-grade aria-label="Seus chutes" aria-live="polite"></ol>
+        <p class="faixa-dica" data-dica hidden aria-live="polite"></p>
       </section>
 
       <section class="dia-chutar" data-chutar hidden>
@@ -269,8 +271,13 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
   });
 
   // ---------- chutar ----------
+  // Dicas na hora do erro (jogo.md, 14.4).
+  const dicas = dicasDoAparelho();
   async function chutar(): Promise<void> {
     if (!estado || !escolhido || enviando) return;
+    const elDica = $('[data-dica]');
+    dicas.novoLance();
+    tirarDica(elDica);
     enviando = true;
     atualizarBotao();
     erro(null);
@@ -288,6 +295,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       else {
         const certas = ultima ? quantasCertas(ultima.pistas) : 0;
         gritar(certas >= 4 ? narrador.falar('dia_quase') : certas === 0 ? narrador.falar('dia_longe') : null);
+        if (novo.tentativas.length === 1) mostrarDica(elDica, dicas.pedir('dia_cores'));
         atualizarRestam();
         elBusca.focus({ preventScroll: true });
       }

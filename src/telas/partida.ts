@@ -63,6 +63,7 @@ import {
   uniformesDaPartida,
   type Boneco,
 } from './bonecos';
+import { dicasDoAparelho, mostrarDica, tirarDica } from './dicas';
 import { icone } from './icones';
 import { aoMudarQualidade, medirQuadros, qualidade } from './qualidade';
 
@@ -278,8 +279,18 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   }
 
   function instruir(texto: string): void {
+    tirarDica(elInstrucao);
     elInstrucao.textContent = texto;
     elInstrucao.hidden = !texto;
+  }
+
+  // Dicas na hora do erro (jogo.md, 14.4): aparecem logo depois do lance e voltam no começo da próxima
+  // cobrança, no lugar do "Cobrança 2 de 5".
+  const dicas = dicasDoAparelho();
+  let dicaDaProximaCobranca: string | null = null;
+  function dicaDaCobranca(r: ResultadoCobranca): void {
+    const texto = r.desfecho === 'defesa' && r.fraca ? dicas.pedir('pen_fraco') : null;
+    if (mostrarDica(elInstrucao, texto)) dicaDaProximaCobranca = texto;
   }
 
   // ---------- fluxo ----------
@@ -304,7 +315,10 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   function comecarCobranca(): void {
     fase = { tipo: 'mirar', inicio: relogio() };
     rastro = [];
+    dicas.novoLance();
     const extra = rodada - COBRANCAS + 1;
+    const dicaGuardada = dicaDaProximaCobranca;
+    dicaDaProximaCobranca = null;
     instruir(
       rodada === 0
         ? 'Arraste da bola pro gol. Mais longo = mais forte. Curve no fim para dar efeito.'
@@ -312,12 +326,14 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
           ? `${extra === 1 ? 'Empatou! ' : ''}Morte súbita: rodada extra ${extra} de ${RODADAS_EXTRAS_MAX}.`
           : `Cobrança ${rodada + 1} de ${COBRANCAS}. Arraste para chutar.`,
     );
+    if (dicaGuardada && extra <= 0) mostrarDica(elInstrucao, dicaGuardada);
     if (rodada === 0) narrar(narrador.falar('abertura'), disputa && chamadaDaDisputa(disputa));
     else if (rodada === COBRANCAS) narrar(narrador.falar('morte_subita', { placar: placarAtual() }));
     else if (cobrancaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['cobranca']) }));
   }
 
   function comecarDefesa(): void {
+    dicas.novoLance();
     const dica =
       emLanceALance() && dicaDoServidor !== null
         ? dicaDoServidor
@@ -403,6 +419,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     cobrancas.push(r);
     atualizarHud();
     narrar(narrador.falar(eventoDaCobranca(r), { etiquetas: etiquetasDaCobranca(r) }), legendaDaCobranca(r));
+    dicaDaCobranca(r);
     if (r.desfecho === 'gol') comemorar(telaX(r.x), telaY(r.y), r.pontos, true);
     else if (r.desfecho === 'trave') cena.baterNaTrave(telaX(r.x), telaY(r.y));
     somTorcida(r.desfecho === 'gol' ? 'festa' : 'uuuh');

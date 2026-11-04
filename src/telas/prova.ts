@@ -29,6 +29,7 @@ import { aoTocarNoEstado, cabecalhoTela, estado, placa } from './blocos';
 import { icone, type NomeIcone } from './icones';
 import { vibrar } from './toque';
 import { papelPicadoNaTela } from './papelPicado';
+import { dicasDoAparelho, mostrarDica, tirarDica } from './dicas';
 
 export interface DadosResultadoProva {
   timeId: string;
@@ -131,6 +132,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
           <h2 class="pergunta-texto" data-texto aria-live="polite"></h2>
           <div class="alternativas" data-alternativas></div>
         </article>
+        <p class="faixa-dica" data-dica hidden aria-live="polite"></p>
         <div class="ajudas" data-ajudas>
           ${(Object.keys(AJUDA_INFO) as Ajuda[])
             .map(
@@ -163,6 +165,9 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   const elRotulo = $('[data-rotulo]');
   const elAlts = $('[data-alternativas]');
   const elGrito = $('[data-grito]');
+  // Dicas na hora do erro (jogo.md, 14.4).
+  const elDica = $('[data-dica]');
+  const dicas = dicasDoAparelho();
   const elErros = $('[data-erros]');
   const elSeg = $('[data-segundos]');
   const elRelogio = $('.relogio');
@@ -231,6 +236,8 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   // ---------- pergunta ----------
   function mostrarPergunta(p: PerguntaProva): void {
     pergunta = p;
+    dicas.novoLance();
+    tirarDica(elDica);
     mostrarErros(p.erros ?? 0);
     ajudaNaAtual = false;
     const i = p.numero - 1;
@@ -290,7 +297,10 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
         if (botao) papelPicadoNaTela(botao, [time.cores[0], time.cores[1], '#ffd23f']);
       }
       // No 3º erro a partida acaba: o grito de "segue" não cabe, quem fala é o fim da prova.
-      else if (!r.fim) gritar(falar(eventoDoErroNaProva(r.desfecho, errosFeitos)));
+      else if (!r.fim) {
+        gritar(falar(eventoDoErroNaProva(r.desfecho, errosFeitos)));
+        if (errosFeitos === 1) mostrarDica(elDica, dicas.pedir('prova_primeiro_erro'));
+      }
 
       pausa = window.setTimeout(() => {
         if (saiu) return;

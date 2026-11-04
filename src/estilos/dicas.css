@@ -1,0 +1,68 @@
+/* Dica na faixa de instrução (docs/jogo.md, 14.4): papel claro inclinado, como a faixa da TV (visual.md, 4.6),
+   com a borda na cor do time e o texto reto. Entra com um pulinho; sem movimento com movimento reduzido. */
+
+.instrucao.dica,
+.faixa-dica {
+  isolation: isolate;
+  color: var(--tinta);
+  background: none;
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  padding: 6px 14px 6px 16px;
+  text-shadow: none;
+}
+
+.instrucao.dica::before,
+.faixa-dica::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-left: 5px solid var(--c1, var(--caiu));
+  border-radius: 3px;
+  background: var(--cal);
+  box-shadow: var(--sombra-placa);
+  transform: skewX(var(--inclinacao));
+}
+
+.faixa-dica {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: var(--e2) auto 0;
+  text-align: center;
+}
+
+.faixa-dica[hidden] {
+  display: none;
+}
+
+/* Na partida a faixa já é absoluta (style.css); a dica só troca a cara e o tamanho. */
+.instrucao.dica {
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  margin: 0 auto;
+}
+
+.instrucao.dica,
+.faixa-dica:not([hidden]) {
+  animation: dica-entra var(--medio, 260ms) var(--mola, ease-out) both;
+}
+
+@keyframes dica-entra {
+  from {
+    transform: translateY(6px) scale(0.94);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .instrucao.dica,
+  .faixa-dica:not([hidden]) {
+    animation: none;
+  }
+}

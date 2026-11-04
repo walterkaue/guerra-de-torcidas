@@ -138,6 +138,13 @@ const secoes = [
      group by faixa_etaria
      order by faixa_etaria nulls last`,
   ],
+  [
+    'Aquecimento (jogo.md, 14.4; só contagem, o 1º desfecho de cada pessoa). Estação: 1 Pênalti, 2 Defesa, 3 Falta, 4 Prova, 5 Crava',
+    `select desfecho, coalesce(estacao::text, '-') as estacao, count(*) as pessoas
+     from public.aquecimento_contagem
+     group by desfecho, estacao
+     order by case desfecho when 'completou' then 0 when 'pulou' then 1 else 2 end, estacao`,
+  ],
 ];
 
 console.log('Métricas do Guerra de Torcidas (só leitura)');

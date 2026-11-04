@@ -1,6 +1,8 @@
 // Preferências do jogador guardadas só neste aparelho (time, apelido, som).
 // Nada aqui é obrigatório; tudo tem valor padrão.
 
+import type { EstadoDoAquecimento } from './jogo/aquecimento';
+import type { EstadoDasDicas } from './jogo/dicas';
 import { ehFaixa, type FaixaEtaria } from './jogo/faixaEtaria';
 
 const CHAVE = 'gdt:prefs';
@@ -34,6 +36,10 @@ interface Prefs {
   faixaSincronizada?: FaixaEtaria;
   /** Versão dos Termos que este aparelho já viu (jogo/termos.ts, avisoDosTermos). */
   termosVistos?: string;
+  /** Aquecimento (jogo.md, 14.4): andamento, se já viu, selo e desfecho por mandar. Uma vez por aparelho. */
+  aquecimento?: EstadoDoAquecimento;
+  /** Dicas da faixa de instrução já vistas e contadores de gatilho (jogo/dicas.ts). */
+  dicas?: EstadoDasDicas;
   /** Este aparelho perdeu a conta (desconectado em outro aparelho ou conta apagada): a escolha do time avisa uma vez. */
   saiuDaConta?: boolean;
 }
