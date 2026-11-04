@@ -7,8 +7,8 @@
 
 | Área | Estado em 02/11/2026 |
 |---|---|
-| Código | `main` com 87 arquivos de teste e 1.796 testes passando (PR #96, Grafismo de TV, em 04/11) |
-| Publicação | Site no ar (`main` de 04/11, 8h07, com o PR #96; o deploy foi conferido e o site serve o build testado). 35 migrações aplicadas (a 35ª, do aquecimento, em 04/11, antes do merge do PR dele; só acrescenta e o site de antes não a usa). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
+| Código | `main` com 91 arquivos de teste e 1.832 testes passando (PR #98, aquecimento, em 04/11) |
+| Publicação | Site no ar (`main` de 04/11, 13h05, com o PR #98; o deploy foi conferido e o site serve o build testado). 35 migrações aplicadas (a 35ª, do aquecimento, em 04/11, antes do merge do PR #98). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
 | Tamanho | Em 04/11/2026, com o PR #96: bundle inicial de 59 KB gzip (limite: ~300 KB). Somando todo o JS e o CSS, 251 KB gzip. A conta de 02/11 deu 216 KB, mas pode não ter usado o mesmo método |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
@@ -16,11 +16,11 @@
 
 ## Em andamento
 
-**Aquecimento e dicas no gesto (`docs/jogo.md` seção 14.4):** construído em 04/11/2026, no branch `claude/aquecimento` (PR aberto, sem merge). Prints em `docs/auditoria/2026-11-04/aquecimento/`, aprovados pelo Kauê antes de aplicar em tudo.
+**Aquecimento e dicas no gesto (`docs/jogo.md` seção 14.4):** construído e no ar desde 04/11/2026, às 13h05 (PR #98; deploy conferido: o site serve o build com o aquecimento e as regras). Prints em `docs/auditoria/2026-11-04/aquecimento/`, aprovados pelo Kauê antes de aplicar em tudo.
 - **O que entra:** o aquecimento de 5 estações (`src/telas/aquecimento.ts` e `src/telas/aquecimento/`), o card na Home para quem chega por desafio, o selo e o "Rever aquecimento" no Perfil, as 36 dicas na faixa de instrução (`src/jogo/dicas.ts`, `src/jogo/dicasGatilhos.ts`), o "?" com as regras e a tabela de pontos de cada jogo (`src/telas/regras.ts`) e uma frase só no resultado da Prova. Saíram os quadros "Como jogar", "Como cravar", as listas de regras e o "Não exibir".
 - **Servidor:** a migração `20261104100000_aquecimento.sql` (+20 XP uma vez e a contagem da métrica) já está no ar desde 04/11, revisada pelo `revisor` (nada grave). Nenhuma função muda.
 - **Métrica:** `npm run metricas` ganhou a seção "Aquecimento" (completou, pulou e parou, por estação).
-- **Conferir no celular depois do merge:** fazer o aquecimento de ponta a ponta num aparelho limpo (limpar os dados do site), ver o palpite da estação 5 em Palpites e os +20 XP na Carreira; vibração e papel picado; a mão animada em movimento; um link de desafio num aparelho limpo, que deve ir direto ao desafio e deixar o card na Home.
+- **Conferir no celular (o Kauê, no site no ar):** fazer o aquecimento de ponta a ponta num aparelho limpo (limpar os dados do site), ver o palpite da estação 5 em Palpites e os +20 XP na Carreira; vibração e papel picado; a mão animada em movimento; um link de desafio num aparelho limpo, que deve ir direto ao desafio e deixar o card na Home.
 - **Não testado à mão:** as dicas de morte súbita, cavadinha pega no meio, altura errada e 3 cobranças sem efeito (cobertas por teste das condições, não pela tela); a zona do gol de verdade nos Lances só foi vista pelo DOM.
 
 **Lances do Jogo valendo (faltas e cara a cara):** feito em 03/11/2026 (PR #88). Detalhes na seção "Conferir primeiro", item 7.
