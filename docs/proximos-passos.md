@@ -23,6 +23,23 @@
 - **Conferir no celular (o Kauê, no site no ar):** fazer o aquecimento de ponta a ponta num aparelho limpo (limpar os dados do site), ver o palpite da estação 5 em Palpites e os +20 XP na Carreira; vibração e papel picado; a mão animada em movimento; um link de desafio num aparelho limpo, que deve ir direto ao desafio e deixar o card na Home.
 - **Não testado à mão:** as dicas de morte súbita, cavadinha pega no meio, altura errada e 3 cobranças sem efeito (cobertas por teste das condições, não pela tela); a zona do gol de verdade nos Lances só foi vista pelo DOM.
 
+**Troféus dos lances e `#admin` no Grafismo de TV (`docs/jogo.md` seção 14.3):** construído em 04/11/2026, branch `claude/trofeus-lances`, PR aberto esperando o merge do Kauê. Prints em `docs/auditoria/2026-11-04/trofeus/`, aprovados pelo Kauê antes de aplicar.
+- **O que entra:**
+  - **Trilha:** bloco `trilha()` em `src/telas/blocos.ts`; a conta pura (`trilhaDoLance`, `linhaRumo`, `filtrarAlbum`) fica em `src/jogo/lancesTextos.ts`, com testes.
+  - **Álbum:** filtros e favoritos em `src/telas/albumLances.ts`. Os favoritos ficam em `prefs.favoritosLances`, só no aparelho.
+  - **Ficha:** abre de baixo, em `src/telas/fichaLance.ts`.
+  - **Resultado:** a placa "Rumo às medalhas" vem de `src/telas/rumoMedalhas.ts`.
+  - **Aba Conquistas:** usa a mesma trilha.
+  - **`#admin`:** placas, faixas e estados, com as mesmas ações. O CSS saiu de `palpites.css` para `admin.css`.
+- **Servidor:** nada muda. Os números vêm de `minhas_medalhas()`, que é lida de novo depois do 3º lance.
+- **Em dev:** `?lancesFalsos` (com casos de 0, 5, 19, 23, 52 e 52 gols com o ouro completo) e `?adminFalso#admin` (`&vazio`, `&erro`).
+- **Conferir no celular (o Kauê, no site no ar):**
+  - papel picado e vibração ao subir de medalha (não apareceram no navegador de teste, em qualidade Leve);
+  - fechar a ficha tocando fora e com o voltar do Android;
+  - a ⭐ continua depois de fechar o site;
+  - o login do `#admin` (sem Supabase de verdade, não deu para ver).
+- **Ficou para depois (baixo):** `.admin-tabela` em `prova.css` e `.conq-falta` em `conquistas.css` ficaram sem uso.
+
 **Lances do Jogo valendo (faltas e cara a cara):** feito em 03/11/2026 (PR #88). Detalhes na seção "Conferir primeiro", item 7.
 
 **Pênaltis com uma semente por lance:** feito em 03/11/2026 (PR #90). Detalhes na seção "Conferir primeiro", item 8.
@@ -44,7 +61,7 @@
   - a faixa "Aqui é só resenha" grudada no topo ao rolar o Crava (no Safari antigo, sem `clip`, ela volta a não grudar);
   - o selo "Pré-temporada" abrindo e fechando ao toque;
   - os botões Card, Stories, Emoji e Link nos 5 resultados.
-- **Fase 2:** os tutoriais saíram com o aquecimento (14.4); falta o painel `#admin`.
+- **Fase 2:** os tutoriais saíram com o aquecimento (14.4), e o painel `#admin` entrou com os troféus dos lances (14.3).
 
 **Código do torcedor (uma carreira em vários aparelhos, `docs/jogo.md` seção 14.1):** feito, publicado e aprovado em 03/11/2026 (PR #92), revisado pelo subagente `revisor` (nenhum achado alto; os médios e quase todos os baixos corrigidos antes de publicar).
 - **No ar:** a migração `20261103400000_codigo_torcedor.sql`, conferida no banco (4 tabelas com RLS, 7 políticas de sessão, permissões certas), a função `codigo-torcedor` v1 com o segredo `TURNSTILE_SECRET_KEY`, e o site (merge às 19h46, publicado às 19h48).

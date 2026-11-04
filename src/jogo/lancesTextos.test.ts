@@ -6,6 +6,11 @@ import {
   montarMedalhas,
   ordenarVitrine,
   progressoDaMedalha,
+  filtrarAlbum,
+  linhaRumo,
+  linhasRumoDaPartida,
+  previaDoProximoGol,
+  trilhaDoLance,
   situacaoDoResultado,
   textoDaMedalhaNova,
   textoDeCompartilhar,
@@ -139,5 +144,86 @@ describe('vitrine das torcidas', () => {
       { time_id: 'c', ouro: 1, prata: 9, bronze: 10 },
     ]);
     expect(v.map((l) => l.time_id)).toEqual(['a', 'c', 'b']);
+  });
+});
+
+describe('trilha de 3 medalhas (seção 14.3)', () => {
+  it('23 gols: bronze e prata cheias, ouro em parte, "faltam 27"', () => {
+    const t = trilhaDoLance(23, 4);
+    expect(t.marcos.map((m) => m.conquistada)).toEqual([true, true, false]);
+    expect(t.marcos[2].parcial).toBeCloseTo(0.1);
+    expect(t.enche).toBeCloseTo(2 / 3 + 0.1 / 3);
+    expect(t.rotulo).toBe('23 gols · faltam 27');
+    expect(t.faltaProOuro).toBe('Faltam 27 gols, 6 recriando, pro ouro.');
+    expect(t.recriadosDoOuro).toEqual({ feitos: 4, pede: 10 });
+    expect(t.ouroCompleto).toBe(false);
+  });
+
+  it('zero gol: nada cheio, próxima é o bronze', () => {
+    const t = trilhaDoLance(0, 0);
+    expect(t.enche).toBe(0);
+    expect(t.proxima).toBe('bronze');
+    expect(t.rotulo).toBe('0 gols · faltam 5');
+    expect(t.faltaProOuro).toBe('Faltam 50 gols, 10 recriando, pro ouro.');
+  });
+
+  it('gols de sobra, faltando recriados: a bolinha do ouro enche pelos recriados', () => {
+    const t = trilhaDoLance(52, 6);
+    expect(t.medalha).toBe('prata');
+    expect(t.marcos[2].parcial).toBeCloseTo(0.6);
+    expect(t.rotulo).toBe('52 gols · faltam 4 recriando');
+    expect(t.faltaProOuro).toBe('Faltam 4 gols, 4 recriando, pro ouro.');
+  });
+
+  it('ouro completo ganha brilho e a linha toda cheia', () => {
+    const t = trilhaDoLance(50, 10);
+    expect(t.ouroCompleto).toBe(true);
+    expect(t.enche).toBe(1);
+    expect(t.rotulo).toBe('50 gols · ouro completo');
+    expect(t.faltaProOuro).toBe('Ouro completo!');
+  });
+
+  it('linha do resultado', () => {
+    expect(linhaRumo({ gols: 23, recriados: 4 }, { gols: 24, recriados: 4 })).toEqual({ texto: '+1 rumo ao ouro · 24/50', subiu: null });
+    expect(linhaRumo({ gols: 3, recriados: 0 }, { gols: 3, recriados: 0 }).texto).toBe('Rumo ao bronze · 3/5');
+    expect(linhaRumo({ gols: 18, recriados: 0 }, { gols: 20, recriados: 1 })).toEqual({ texto: '+2 rumo ao ouro · 20/50', subiu: 'prata' });
+    expect(linhaRumo({ gols: 4, recriados: 0 }, { gols: 5, recriados: 0 })).toEqual({ texto: '+1 rumo à prata · 5/20', subiu: 'bronze' });
+    expect(linhaRumo({ gols: 55, recriados: 6 }, { gols: 56, recriados: 7 }).texto).toBe('+1 rumo ao ouro · 7/10 recriando');
+    expect(linhaRumo({ gols: 52, recriados: 9 }, { gols: 53, recriados: 10 })).toEqual({ texto: '+1 · ouro completo · 53 gols', subiu: 'ouro' });
+  });
+
+  it('uma linha por lance da partida, sem repetir, com o antes tirado da leitura de depois', () => {
+    const l = linhasRumoDaPartida(
+      [
+        { id: 'a', gol: true, recriou: false },
+        { id: 'b', gol: false, recriou: false },
+        { id: 'a', gol: true, recriou: true },
+      ],
+      [{ lance_id: 'a', gols: 20, recriados: 2, medalha: 'prata' }],
+    );
+    expect(l).toEqual([
+      { lanceId: 'a', linha: { texto: '+2 rumo ao ouro · 20/50', subiu: 'prata' } },
+      { lanceId: 'b', linha: { texto: 'Rumo ao bronze · 0/5', subiu: null } },
+    ]);
+  });
+
+  it('prévia do próximo gol na ficha', () => {
+    expect(previaDoProximoGol(23, 4)).toBe('+1 rumo ao ouro · 24/50');
+    expect(previaDoProximoGol(49, 9)).toBe('+1 · ouro completo · 50 gols');
+  });
+
+  it('álbum: meus troféus, perto do próximo e favoritos primeiro', () => {
+    const lances = ['a', 'b', 'c', 'd'].map((id) => ({ id }));
+    const m = new Map([
+      ['a', { gols: 50, recriados: 10 }], // ouro completo
+      ['b', { gols: 18, recriados: 0 }], // faltam 2 pra prata
+      ['c', { gols: 4, recriados: 0 }], // falta 1 pro bronze
+    ]);
+    const ids = (f: Parameters<typeof filtrarAlbum>[2], fav: string[] = []) => filtrarAlbum(lances, m, f, new Set(fav)).map((l) => l.id);
+    expect(ids('todos')).toEqual(['a', 'b', 'c', 'd']);
+    expect(ids('meus')).toEqual(['a', 'b']);
+    expect(ids('perto')).toEqual(['c', 'b', 'd', 'a']);
+    expect(ids('todos', ['d'])).toEqual(['d', 'a', 'b', 'c']);
+    expect(ids('perto', ['a'])).toEqual(['a', 'c', 'b', 'd']);
   });
 });

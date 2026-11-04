@@ -3,6 +3,7 @@
 // as funções só escapam o que montam sozinhas.
 
 import { esc } from '../app';
+import { NOME_DA_MEDALHA, type Trilha } from '../jogo/lancesTextos';
 import { AVISO_PRE_TEMPORADA } from '../jogo/posicao';
 import { icone, type NomeIcone } from './icones';
 
@@ -96,4 +97,31 @@ export function estado(tipo: 'vazio' | 'erro' | 'carregando', texto: string, o: 
 /** Liga o botão de um estado (ex.: "Tentar de novo") dentro de `el`. */
 export function aoTocarNoEstado(el: ParentNode, fazer: () => void): void {
   el.querySelector('[data-estado-acao]')?.addEventListener('click', fazer);
+}
+
+/** Frase da trilha para leitor de tela: "Prata. 23 gols, faltam 27 pro ouro". */
+export function descricaoDaTrilha(t: Trilha): string {
+  const nome = t.medalha ? NOME_DA_MEDALHA[t.medalha] : 'Sem medalha';
+  return `${nome}. ${t.rotulo.replace(' · ', ', ')}${t.proxima ? ` ${t.proxima === 'prata' ? 'pra' : 'pro'} ${t.proxima}` : ''}`;
+}
+
+/**
+ * Trilha de medalhas de um lance (jogo.md 14.3): bronze, prata e ouro (5, 20 e 50 gols) ligados por uma linha que
+ * se enche em três trechos iguais; a próxima fica preenchida em parte. `compacta` é a do card e das linhas.
+ * O nome da medalha vai sempre por escrito (aria-label), nunca só a cor.
+ */
+export function trilha(t: Trilha, o: { compacta?: boolean } = {}): string {
+  const classes = ['trilha', o.compacta ? 'compacta' : '', t.ouroCompleto ? 'ouro-completo' : '', t.enche <= 0 ? 'vazia' : '']
+    .filter(Boolean)
+    .join(' ');
+  const marcos = t.marcos
+    .map(
+      (m, i) =>
+        `<span class="trilha-marco" style="--k:${i + 1}"><span class="trilha-bol ${m.medalha}${m.conquistada ? ' conquistada' : m.parcial > 0 ? ' parcial' : ''}" style="--parcial:${m.parcial.toFixed(3)}"></span>${o.compacta ? '' : `<b>${m.gols}</b>`}</span>`,
+    )
+    .join('');
+  return `<div class="${classes}" role="img" aria-label="${esc(descricaoDaTrilha(t))}" style="--enche:${t.enche.toFixed(3)};">
+      <span class="trilha-via" aria-hidden="true"><span class="trilha-trilho"><i></i></span>${marcos}</span>
+      <span class="trilha-rotulo" aria-hidden="true">${esc(t.rotulo)}</span>
+    </div>`;
 }

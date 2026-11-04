@@ -5,6 +5,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { esc } from '../app';
 import { timePorId } from '../dados/times';
+import { aoTocarNoEstado, estado, numero } from './blocos';
 
 export interface Suspeita {
   minigame: string;
@@ -38,7 +39,7 @@ export function cartaoSuspeita(s: Suspeita): string {
     <p class="erro-campo" role="alert" hidden></p>
     <div class="dupla">
       <button class="botao" type="button" data-acao="liberar">Liberar</button>
-      <button class="botao botao-sec" type="button" data-acao="manter">Manter fora</button>
+      <button class="botao-linha" type="button" data-acao="manter">Manter fora</button>
     </div>
   </article>`;
 }
@@ -49,11 +50,12 @@ export function montarSuspeitas(el: HTMLElement, sb: SupabaseClient): () => void
   let fila: Suspeita[] = [];
 
   async function carregar(): Promise<void> {
-    el.innerHTML = '<p class="nota">Carregando…</p>';
+    el.innerHTML = estado('carregando', 'Carregando…');
     const { data, error } = await sb.rpc('suspeitas_fila', { p_limite: 30 });
     if (saiu) return;
     if (error) {
-      el.innerHTML = `<p class="admin-alerta">Não deu pra ler a fila: ${esc(ERROS[error.message] ?? error.message)}</p>`;
+      el.innerHTML = estado('erro', `Não deu pra ler a fila: ${ERROS[error.message] ?? error.message}`);
+      aoTocarNoEstado(el, () => void carregar());
       return;
     }
     fila = (data ?? []) as Suspeita[];
@@ -62,9 +64,10 @@ export function montarSuspeitas(el: HTMLElement, sb: SupabaseClient): () => void
 
   function desenhar(): void {
     el.innerHTML = fila.length
-      ? `<p class="nota">${fila[0].na_fila} na fila. Liberar devolve os pontos; semana já confirmada (segunda 12h) não reabre.</p>` +
+      ? `<div class="numeros dois">${numero(String(fila[0].na_fila), 'na fila', 'destaque')}</div>
+        <p class="nota">Liberar devolve os pontos; semana já confirmada (segunda 12h) não reabre.</p>` +
         fila.map(cartaoSuspeita).join('')
-      : '<p class="nota">Nenhuma partida sob suspeita.</p>';
+      : estado('vazio', 'Nenhuma partida sob suspeita.');
   }
 
   async function acao(ev: Event): Promise<void> {

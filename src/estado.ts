@@ -34,6 +34,8 @@ interface Prefs {
   dicas?: EstadoDasDicas;
   /** Este aparelho perdeu a conta (desconectado em outro aparelho ou conta apagada): a escolha do time avisa uma vez. */
   saiuDaConta?: boolean;
+  /** Lances favoritos do álbum (jogo.md, 14.3): só neste aparelho, nunca vão para o servidor. */
+  favoritosLances?: string[];
 }
 
 function ler(): Prefs {

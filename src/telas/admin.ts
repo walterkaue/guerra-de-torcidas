@@ -11,12 +11,18 @@ import { ordinalRodada } from '../jogo/crava';
 import { horaDoJogo, rodadaEmFoco } from '../jogo/cravaTela';
 import type { Jogo } from '../servidor/crava';
 import { opcoesComCaptcha, tokenCaptcha } from '../servidor/captcha';
+import '../estilos/admin.css';
 import { montarApelido } from './adminApelido';
 import { montarRevisao } from './adminRevisao';
 import { montarSuspeitas } from './adminSuspeitas';
+import { aoTocarNoEstado, cabecalhoTela, estado, numero, placa, selo } from './blocos';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+
+// Em desenvolvimento, ?adminFalso (com #admin) troca o Supabase por um de mentira (src/dev/adminFalso.ts):
+// entra direto como administrador, com jogos, feedbacks, fila e cobertura de mentira. Não entra no build de produção.
+const FALSO = import.meta.env.DEV && new URLSearchParams(location.search).has('adminFalso');
 
 const nome = (id: string) => timePorId(id)?.nome ?? id;
 
@@ -49,13 +55,17 @@ interface Sincronizacao {
 
 export function telaAdmin(root: HTMLElement): () => void {
   let saiu = false;
-  if (!URL_SUPABASE || !CHAVE_PUBLICA) {
-    root.innerHTML = '<main class="tela admin"><p class="vazio">Supabase não configurado.</p></main>';
+  if (!FALSO && (!URL_SUPABASE || !CHAVE_PUBLICA)) {
+    root.innerHTML = `<main class="tela admin">${cabecalhoTela({ titulo: 'Painel do Crava', pre: false })}
+      ${placa(estado('erro', 'Supabase não configurado.', { acao: 'Voltar pro jogo' }))}</main>`;
+    root.querySelector('[data-estado-acao]')?.addEventListener('click', () => location.assign('./'));
     return () => {};
   }
-  const sb: SupabaseClient = createClient(URL_SUPABASE, CHAVE_PUBLICA, {
-    auth: { storageKey: 'gdt-admin', persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
-  });
+  let sb: SupabaseClient = FALSO
+    ? (null as unknown as SupabaseClient)
+    : createClient(URL_SUPABASE!, CHAVE_PUBLICA!, {
+        auth: { storageKey: 'gdt-admin', persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
+      });
 
   let jogos: Jogo[] = [];
   let limparRevisao: (() => void) | undefined;
@@ -65,19 +75,24 @@ export function telaAdmin(root: HTMLElement): () => void {
 
   const casca = (miolo: string) => {
     root.innerHTML = `<main class="tela admin">
-      <header class="cabecalho"><h2 class="titulo-placar">Painel do Crava</h2></header>
+      ${cabecalhoTela({ titulo: 'Painel do Crava', pre: false })}
       ${miolo}
-      <p class="nota"><a href="./" style="color: var(--amarelo)">Voltar pro jogo</a></p>
+      <a class="botao-linha admin-voltar" href="./">Voltar pro jogo</a>
     </main>`;
   };
 
   function telaLogin(erro = ''): void {
-    casca(`<form class="admin-login">
+    casca(
+      placa(
+        `<form class="admin-login">
       <label class="campo"><span>E-mail</span><input type="email" name="email" autocomplete="username" required /></label>
       <label class="campo"><span>Senha</span><input type="password" name="senha" autocomplete="current-password" required /></label>
       <p class="erro-campo" role="alert" ${erro ? '' : 'hidden'}>${esc(erro)}</p>
       <button class="botao" type="submit">Entrar</button>
-    </form>`);
+    </form>`,
+        { titulo: 'Entrar' },
+      ),
+    );
     const form = root.querySelector<HTMLFormElement>('form')!;
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
@@ -104,41 +119,50 @@ export function telaAdmin(root: HTMLElement): () => void {
   }
 
   async function abrir(): Promise<void> {
+    if (FALSO && !sb) sb = (await import('../dev/adminFalso')).clienteFalso() as unknown as SupabaseClient;
     const { data } = await sb.auth.getSession();
     if (saiu) return;
     if (!data.session) return telaLogin();
     const { data: admin, error } = await sb.rpc('sou_admin');
     if (saiu) return;
     if (error || !admin) {
-      casca(`<p class="admin-alerta">Esta conta (${esc(data.session.user.email ?? '')}) não está na tabela de administradores.</p>
-        <button class="botao botao-sec" type="button" data-acao="sair">Sair</button>`);
+      casca(
+        placa(
+          `<p class="admin-alerta">Esta conta (${esc(data.session.user.email ?? '')}) não está na tabela de administradores.</p>
+        <button class="botao-linha" type="button" data-acao="sair">Sair</button>`,
+          { titulo: 'Sem acesso' },
+        ),
+      );
       root.querySelector('[data-acao="sair"]')!.addEventListener('click', sair);
       return;
     }
-    casca(`<div class="dupla">
-        <button class="botao botao-sec" type="button" data-acao="sincronizar">Sincronizar agora</button>
-        <button class="botao botao-sec" type="button" data-acao="sair">Sair</button>
+    casca(
+      placa(
+        `<div class="dupla">
+        <button class="botao" type="button" data-acao="sincronizar">Sincronizar agora</button>
+        <button class="botao-linha" type="button" data-acao="sair">Sair</button>
       </div>
-      <div data-sinc><p class="nota">Carregando…</p></div>
-      <p class="nota" data-ensaio></p>
-      <nav class="seletor-rodada" aria-label="Rodada">
+      <div data-sinc>${estado('carregando', 'Carregando…')}</div>
+      <p class="nota" data-ensaio></p>`,
+        { titulo: 'Sincronização' },
+      ) +
+        placa(
+          `<nav class="seletor-rodada" aria-label="Rodada">
         <button type="button" class="voltar" data-acao="ant" aria-label="Rodada anterior">‹</button>
         <strong class="rotulo" data-rodada></strong>
         <button type="button" class="voltar" data-acao="prox" aria-label="Próxima rodada">›</button>
       </nav>
       <section class="lista-jogos" data-jogos></section>
       <p class="nota">Confirmar distribui os pontos da rodada inteira. Confirmar de novo ou corrigir não duplica:
-      o servidor grava só a diferença. Placar confirmado depois de segunda 12h entra na semana atual.</p>
-      <h3 class="titulo-placar">Revisão de perguntas</h3>
-      <section data-revisao></section>
-      <h3 class="titulo-placar">Partidas sob suspeita</h3>
-      <section data-suspeitas></section>
-      <h3 class="titulo-placar">Apagar apelido</h3>
-      <section data-apelido></section>
-      <h3 class="titulo-placar">Feedback</h3>
-      <section class="lista-jogos" data-feedbacks><p class="nota">Carregando…</p></section>
-      <h3 class="titulo-placar">Prova de Boleiro</h3>
-      <section data-cobertura><p class="nota">Carregando…</p></section>`);
+      o servidor grava só a diferença. Placar confirmado depois de segunda 12h entra na semana atual.</p>`,
+          { titulo: 'Placares da rodada' },
+        ) +
+        placa('<div data-revisao></div>', { titulo: 'Revisão de perguntas' }) +
+        placa('<div data-suspeitas></div>', { titulo: 'Partidas sob suspeita' }) +
+        placa('<div data-apelido></div>', { titulo: 'Apagar apelido' }) +
+        placa(`<div class="lista-jogos" data-feedbacks>${estado('carregando', 'Carregando…')}</div>`, { titulo: 'Feedback' }) +
+        placa(`<div data-cobertura>${estado('carregando', 'Carregando…')}</div>`, { titulo: 'Prova de Boleiro' }),
+    );
     root.querySelector('[data-feedbacks]')!.addEventListener('click', marcarLido);
     root.querySelector('[data-acao="sair"]')!.addEventListener('click', sair);
     root.querySelector('[data-acao="sincronizar"]')!.addEventListener('click', sincronizar);
@@ -173,7 +197,8 @@ export function telaAdmin(root: HTMLElement): () => void {
     const elSinc = root.querySelector<HTMLElement>('[data-sinc]')!;
     elSinc.innerHTML = !ultima
       ? '<p class="admin-alerta">Ainda não houve sincronização. Toque em "Sincronizar agora".</p>'
-      : `<p class="nota">Última sincronização: ${new Date(ultima.quando).toLocaleString('pt-BR')} (${esc(ultima.origem)}) ·
+      : `<div class="numeros dois">${numero(ultima.ok ? String(ultima.jogos) : '—', 'jogos', ultima.ok ? 'destaque' : 'apagado')}${numero(String(ultima.sem_par.length), 'times sem par', ultima.sem_par.length ? undefined : 'apagado')}</div>
+        <p class="nota">Última sincronização: ${new Date(ultima.quando).toLocaleString('pt-BR')} (${esc(ultima.origem)}) ·
           ${ultima.ok ? `${ultima.jogos} jogos` : `falhou${ultima.mensagem ? `: ${esc(ultima.mensagem)}` : ''}`}</p>
         ${ultima.sem_par.length ? `<p class="admin-alerta"><strong>Time sem par na API:</strong> ${ultima.sem_par.map(esc).join(', ')}. Os jogos desses times não entraram. Peça o ajuste em src/jogo/footballData.ts.</p>` : ''}`;
     const valendo = c.data ? Number(c.data.valor) : 99;
@@ -191,21 +216,27 @@ export function telaAdmin(root: HTMLElement): () => void {
     const el = root.querySelector<HTMLElement>('[data-cobertura]');
     if (!el) return;
     if (falhou) {
-      el.innerHTML = '<p class="admin-alerta">Não deu pra ler o banco de perguntas.</p>';
+      el.innerHTML = estado('erro', 'Não deu pra ler o banco de perguntas.');
+      aoTocarNoEstado(el, () => void carregar());
       return;
     }
     if (!linhas.length) {
-      el.innerHTML = '<p class="nota">Nenhuma pergunta ativa. Rode <code>npm run importar-perguntas</code> com perguntas revisadas.</p>';
+      el.innerHTML = estado('vazio', 'Nenhuma pergunta ativa.', { detalhe: 'Rode npm run importar-perguntas com perguntas revisadas.' });
       return;
     }
     const clubes = [...new Set(linhas.map((l) => l.clube))];
+    const META = [3, 3, 2, 2];
+    const abaixo = clubes.filter(
+      (c) => c !== 'geral' && META.some((m, i) => (linhas.find((x) => x.clube === c && x.degrau === i + 1)?.ativas ?? 0) < m),
+    ).length;
     const celula = (clube: string, d: number) => {
       const l = linhas.find((x) => x.clube === clube && x.degrau === d);
       if (!l) return '<td class="falta">0</td>';
       return `<td>${l.ativas}${l.acerto !== null ? `<small> ${Number(l.acerto).toFixed(0)}%</small>` : ''}</td>`;
     };
-    el.innerHTML = `<p class="nota">Perguntas ativas por degrau (e % de acerto). Meta da pré-temporada: 3/3/2/2 por clube.</p>
-      <div class="admin-tabela"><table>
+    el.innerHTML = `<div class="numeros tres">${numero(String(linhas.reduce((t, l) => t + l.ativas, 0)), 'perguntas ativas', 'destaque')}${numero(String(clubes.length), 'clubes')}${numero(String(abaixo), 'abaixo da meta', abaixo ? undefined : 'apagado')}</div>
+      <p class="nota">Perguntas ativas por degrau (e % de acerto). Meta da pré-temporada: 3/3/2/2 por clube.</p>
+      <div class="adm-tabela"><table>
         <thead><tr><th>Clube</th><th>Fác.</th><th>Méd.</th><th>Dif.</th><th>Craq.</th></tr></thead>
         <tbody>${clubes
           .map((c) => `<tr><th>${esc(c === 'geral' ? 'Gerais' : nome(c))}</th>${[1, 2, 3, 4].map((d) => celula(c, d)).join('')}</tr>`)
@@ -218,21 +249,24 @@ export function telaAdmin(root: HTMLElement): () => void {
     if (!el) return;
     const rotulo = { bug: '🐞 Bug', ideia: '💡 Ideia', outro: '💬 Outro' } as Record<string, string>;
     const novos = lista.filter((x) => !x.lido).length;
-    el.innerHTML = falhou
-      ? '<p class="admin-alerta">Não deu pra ler os feedbacks.</p>'
-      : !lista.length
-        ? '<p class="nota">Nenhum feedback ainda.</p>'
-        : `<p class="nota">${novos} ${novos === 1 ? 'novo' : 'novos'} · últimos 50</p>` +
-          lista
-            .map(
-              (x) => `<article class="admin-feedback${x.lido ? ' lido' : ''}" data-feedback="${x.id}">
+    if (falhou) {
+      el.innerHTML = estado('erro', 'Não deu pra ler os feedbacks.');
+      aoTocarNoEstado(el, () => void carregar());
+      return;
+    }
+    el.innerHTML = !lista.length
+      ? estado('vazio', 'Nenhum feedback ainda.')
+      : `<div class="numeros dois">${numero(String(novos), novos === 1 ? 'novo' : 'novos', novos ? 'destaque' : 'apagado')}${numero(String(lista.length), 'últimos 50')}</div>` +
+        lista
+          .map(
+            (x) => `<article class="admin-feedback${x.lido ? ' lido' : ''}" data-feedback="${x.id}">
                 <p class="rotulo">${rotulo[x.tipo] ?? esc(x.tipo)} · ${new Date(x.criado_em).toLocaleString('pt-BR')} · tela ${esc(x.tela ?? '?')}</p>
                 <p class="texto">${esc(x.texto)}</p>
                 <p class="nota"><small>${esc(x.aparelho ?? '')}</small></p>
-                ${x.lido ? '' : '<button type="button" data-acao="lido">Marcar como lido</button>'}
+                ${x.lido ? '' : '<button class="botao-linha" type="button" data-acao="lido">Marcar como lido</button>'}
               </article>`,
-            )
-            .join('');
+          )
+          .join('');
   }
 
   async function marcarLido(ev: Event): Promise<void> {
@@ -272,28 +306,27 @@ export function telaAdmin(root: HTMLElement): () => void {
         const v = j.gols_visitante ?? j.gols_api_visitante ?? '';
         const api = j.gols_api_mandante === null ? 'sem placar' : `${j.gols_api_mandante} x ${j.gols_api_visitante}`;
         const situacao = j.anulado
-          ? 'ANULADO'
+          ? selo('ANULADO', 'caiu')
           : j.confirmado_em
-            ? `Confirmado ${j.gols_mandante} x ${j.gols_visitante}${j.corrigido_em ? ' (corrigido)' : ''}`
-            : 'Não confirmado';
+            ? selo(esc(`Confirmado ${j.gols_mandante} x ${j.gols_visitante}${j.corrigido_em ? ' (corrigido)' : ''}`), 'subiu')
+            : selo('Não confirmado');
         return `<article class="admin-jogo${j.confirmado_em && !j.anulado ? ' ok' : ''}" data-jogo="${j.id}">
           <p class="rotulo">${esc(horaDoJogo(j.inicio))} · API: ${esc(j.status_api)} · ${esc(api)}</p>
           <div class="admin-placar">
             <span class="nome">${esc(nome(j.mandante_id))}</span>
             <input type="number" inputmode="numeric" min="0" max="30" value="${m}" data-gols="m" aria-label="Gols ${esc(nome(j.mandante_id))}" />
-            <span>x</span>
+            <span class="nome">${esc(nome(j.visitante_id))}</span>
             <input type="number" inputmode="numeric" min="0" max="30" value="${v}" data-gols="v" aria-label="Gols ${esc(nome(j.visitante_id))}" />
-            <span class="nome" style="text-align:right">${esc(nome(j.visitante_id))}</span>
           </div>
-          <p class="nota">${situacao}</p>
+          <div class="selos">${situacao}</div>
           <div class="admin-acoes">
             <button class="botao" type="button" data-acao="confirmar" ${comecou && !j.confirmado_em ? '' : 'disabled'}>Confirmar</button>
-            <button class="botao botao-sec" type="button" data-acao="corrigir" ${j.confirmado_em ? '' : 'disabled'}>Corrigir o placar</button>
-            <button class="botao botao-sec" type="button" data-acao="anular" ${j.anulado ? 'disabled' : ''}>Anular</button>
+            <button class="botao-linha" type="button" data-acao="corrigir" ${j.confirmado_em ? '' : 'disabled'}>Corrigir o placar</button>
+            <button class="botao-linha" type="button" data-acao="anular" ${j.anulado ? 'disabled' : ''}>Anular</button>
           </div>
         </article>`;
       })
-      .join('') || '<p class="vazio">Nenhum jogo nesta rodada.</p>';
+      .join('') || estado('vazio', 'Nenhum jogo nesta rodada.');
   }
 
   async function acaoNoJogo(ev: Event): Promise<void> {
