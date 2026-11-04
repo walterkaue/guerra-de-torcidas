@@ -1,0 +1,270 @@
+/* Painel #admin no Grafismo de TV (docs/visual.md 4.6): cada seção é uma placa com faixa; dentro dela,
+   cartões em --placa-alta. Blocos em telas/blocos.ts e estilos/blocos.css. */
+
+.admin {
+  padding-bottom: calc(48px + env(safe-area-inset-bottom));
+}
+
+.admin .placa {
+  min-width: 0;
+}
+
+.admin .nota {
+  text-align: left;
+}
+
+.admin form,
+.admin .admin-login {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+/* ---------- campos ---------- */
+.admin .campo > span {
+  font-family: var(--fonte-rotulo);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.admin input,
+.admin select,
+.admin textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 8px var(--e3);
+  border: 2px solid rgba(245, 245, 240, 0.45);
+  border-radius: var(--raio-p);
+  background: var(--placa);
+  color: var(--cal);
+  font: inherit;
+  font-size: 17px;
+}
+
+.admin textarea {
+  resize: vertical;
+}
+
+.admin input:focus-visible,
+.admin select:focus-visible,
+.admin textarea:focus-visible {
+  outline: 3px solid var(--amarelo);
+  outline-offset: 2px;
+}
+
+.admin input[type='number'] {
+  width: 72px;
+  text-align: center;
+  font-family: var(--fonte-placar);
+  font-size: 24px;
+}
+
+/* ---------- botões ---------- */
+.admin .botao {
+  min-height: 48px;
+  padding: 6px var(--e3);
+  justify-content: center;
+  font-size: 16px;
+}
+
+.admin .botao-linha {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  text-decoration: none;
+}
+
+.admin .botao:disabled,
+.admin .botao-linha:disabled {
+  opacity: 1;
+  border: 2px solid var(--linha);
+  background: transparent;
+  box-shadow: none;
+  color: #8a948d;
+}
+
+.admin-voltar {
+  align-self: center;
+  padding: 0 var(--e5);
+}
+
+.admin .dupla {
+  gap: var(--e2);
+}
+
+.admin .dupla .botao,
+.admin .dupla .botao-linha {
+  white-space: normal;
+}
+
+/* ---------- avisos ---------- */
+.admin-alerta {
+  padding: var(--e3);
+  border-radius: var(--raio-p);
+  border-left: 4px solid var(--caiu);
+  background: var(--placa-alta);
+  line-height: 1.4;
+}
+
+.admin .estado {
+  padding: var(--e4) var(--e3);
+}
+
+/* ---------- cartões dentro das placas ---------- */
+.admin-jogo,
+.admin-revisao,
+.admin-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  min-width: 0;
+  padding: var(--e3);
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+  line-height: 1.35;
+}
+
+.admin-jogo.ok {
+  box-shadow: inset 4px 0 0 var(--subiu);
+}
+
+.admin .rotulo {
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.admin .seletor-rodada .rotulo {
+  font-size: 22px;
+  color: var(--cal);
+}
+
+.admin .lista-jogos {
+  gap: var(--e3);
+}
+
+/* Mandante e visitante um embaixo do outro: o nome ganha a linha inteira e o campo fica à direita. */
+.admin-placar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--e2) var(--e3);
+}
+
+.admin-placar .nome {
+  font-weight: 800;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.admin-acoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--e2);
+}
+
+.admin-acoes .botao {
+  grid-column: 1 / -1;
+}
+
+.admin-acoes .botao-linha {
+  padding: 0 var(--e2);
+  font-size: 14px;
+}
+
+/* ---------- feedback ---------- */
+.admin-feedback.lido {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--linha);
+  color: var(--texto-suave);
+}
+
+.admin-feedback .texto {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.admin-feedback .botao-linha {
+  align-self: flex-start;
+  padding: 0 var(--e3);
+}
+
+/* ---------- revisão ---------- */
+.admin-trecho {
+  margin: 0;
+  padding: var(--e2) var(--e3);
+  border-left: 4px solid var(--amarelo);
+  background: var(--placa);
+  font-size: 15px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.admin-trecho a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--amarelo);
+}
+
+/* ---------- cobertura ---------- */
+.adm-tabela {
+  overflow-x: auto;
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+}
+
+.adm-tabela table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.adm-tabela th,
+.adm-tabela td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--linha);
+  text-align: center;
+}
+
+.adm-tabela thead th {
+  font-family: var(--fonte-rotulo);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.adm-tabela tbody th {
+  text-align: left;
+  font-weight: 700;
+}
+
+.adm-tabela td small {
+  color: var(--texto-suave);
+}
+
+.adm-tabela td.falta {
+  color: var(--caiu);
+  font-weight: 900;
+}
+
+/* Os contêineres que os módulos preenchem empilham seus cartões com o mesmo respiro da placa. */
+.admin [data-sinc],
+.admin [data-revisao],
+.admin [data-suspeitas],
+.admin [data-apelido],
+.admin [data-apelido-resultado],
+.admin [data-cobertura] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}

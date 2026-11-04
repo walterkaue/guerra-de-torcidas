@@ -3,6 +3,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { esc } from '../app';
+import { estado } from './blocos';
 
 const ERROS: Record<string, string> = { sem_permissao: 'Esta conta não é de administrador.' };
 
@@ -26,7 +27,7 @@ export function montarApelido(el: HTMLElement, sb: SupabaseClient): () => void {
   let saiu = false;
   el.innerHTML = `<form class="admin-revisao" data-apelido-busca>
       <label class="campo"><span>Apelido exato</span><input name="apelido" maxlength="40" autocomplete="off" required /></label>
-      <button class="botao botao-sec" type="submit">Buscar</button>
+      <button class="botao-linha" type="submit">Buscar</button>
     </form>
     <div data-apelido-resultado></div>`;
   const form = el.querySelector<HTMLFormElement>('form')!;
@@ -38,13 +39,13 @@ export function montarApelido(el: HTMLElement, sb: SupabaseClient): () => void {
     ev.preventDefault();
     const apelido = String(new FormData(form).get('apelido') ?? '').trim();
     if (!apelido) return;
-    resultado.innerHTML = '<p class="nota">Buscando…</p>';
+    resultado.innerHTML = estado('carregando', 'Buscando…');
     const { data, error } = await sb.rpc('apelido_contar', { p_apelido: apelido });
     if (saiu) return;
     if (error) return void erro(error);
     const n = Number(data ?? 0);
     resultado.innerHTML = `<p class="nota">${esc(textoDaBusca(apelido, n))}</p>${
-      n ? '<button class="botao botao-sec" type="button" data-acao="apagar-apelido">Apagar apelido</button>' : ''
+      n ? '<button class="botao-linha" type="button" data-acao="apagar-apelido">Apagar apelido</button>' : ''
     }`;
     resultado.querySelector('[data-acao="apagar-apelido"]')?.addEventListener('click', () => confirmar(apelido, n));
   });
@@ -53,7 +54,7 @@ export function montarApelido(el: HTMLElement, sb: SupabaseClient): () => void {
     resultado.innerHTML = `<p class="admin-alerta">${esc(textoDaConfirmacao(n))}</p>
       <div class="dupla">
         <button class="botao" type="button" data-acao="confirmar">Apagar</button>
-        <button class="botao botao-sec" type="button" data-acao="voltar">Voltar</button>
+        <button class="botao-linha" type="button" data-acao="voltar">Voltar</button>
       </div>`;
     resultado.querySelector('[data-acao="voltar"]')!.addEventListener('click', () => (resultado.innerHTML = ''));
     resultado.querySelector('[data-acao="confirmar"]')!.addEventListener('click', async () => {

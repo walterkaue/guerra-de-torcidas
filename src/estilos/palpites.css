@@ -1,7 +1,7 @@
-/* Aba Palpites (Crava a Rodada) no Grafismo de TV, lista de jogos da aba Jogar, semana do ranking e painel #admin. */
+/* Aba Palpites (Crava a Rodada) no Grafismo de TV, lista de jogos da aba Jogar e semana do ranking.
+   O painel #admin mora em estilos/admin.css. */
 
-.palpites,
-.admin {
+.palpites {
   padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
@@ -366,85 +366,6 @@ span.certeza {
   font-weight: 700;
 }
 
-/* ---------- painel #admin ---------- */
-.admin form,
-.admin .admin-login {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.admin input[type='email'],
-.admin input[type='password'],
-.admin input[type='number'] {
-  min-height: 48px;
-  padding: 8px 12px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.35);
-  color: var(--cal);
-  font: inherit;
-  font-size: 17px;
-}
-
-.admin input[type='number'] {
-  width: 64px;
-  text-align: center;
-  font-family: var(--fonte-placar);
-  font-size: 22px;
-}
-
-.admin-alerta {
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: rgba(255, 90, 60, 0.2);
-  border: 2px solid var(--caiu);
-  line-height: 1.35;
-}
-
-.admin-jogo {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.38);
-}
-
-.admin-jogo.ok {
-  box-shadow: inset 4px 0 0 var(--subiu);
-}
-
-.admin-placar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.admin-placar .nome {
-  flex: 1 1 100px;
-  min-width: 0;
-  font-weight: 800;
-}
-
-.admin-acoes {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-}
-
-.admin-acoes .botao {
-  min-height: 48px;
-  padding: 6px;
-  font-size: 16px;
-  justify-content: center;
-}
-
-.admin .nota {
-  text-align: left;
-}
-
 /* ---------- feedback ---------- */
 .link-feedback {
   min-height: 48px;
@@ -505,37 +426,6 @@ span.certeza {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.admin-feedback {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.38);
-  line-height: 1.35;
-}
-
-.admin-feedback.lido {
-  opacity: 0.55;
-}
-
-.admin-feedback .texto {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.admin-feedback button {
-  align-self: flex-start;
-  min-height: 40px;
-  padding: 4px 12px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-radius: 10px;
-  background: none;
-  color: var(--cal);
-  font: 700 14px var(--fonte-rotulo);
-  text-transform: uppercase;
 }
 
 /* ---------- indicadores e tabela do campeonato (apoio para cravar) ---------- */
@@ -678,45 +568,6 @@ span.certeza {
 
 .tb-linha.meu.z4 {
   box-shadow: inset 3px 0 0 var(--caiu), inset 0 0 0 1px rgba(245, 245, 240, 0.35);
-}
-
-/* Revisão de perguntas do pipeline com Gemini (adminRevisao.ts). */
-.admin-revisao {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.3);
-}
-.admin-revisao textarea,
-.admin-revisao select,
-.admin-revisao input {
-  width: 100%;
-  min-height: 44px;
-  padding: 8px 12px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.3);
-  color: var(--cal);
-  font: inherit;
-}
-.admin-revisao textarea {
-  resize: vertical;
-}
-.admin-trecho {
-  margin: 0;
-  padding: 8px 12px;
-  border-left: 4px solid var(--amarelo);
-  background: rgba(233, 199, 90, 0.08);
-  font-size: 14px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-.admin-trecho a {
-  display: block;
-  margin-top: 4px;
-  color: var(--amarelo);
 }
 
 /* Dica "A estrela dobra os pontos": o botão da estrela fica em destaque até a pessoa escolher o jogo da certeza. */

@@ -7,6 +7,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { MAX_ALTERNATIVA, MAX_PERGUNTA, validarPergunta } from '../../scripts/perguntas/validar.mjs';
 import { esc } from '../app';
 import { timePorId } from '../dados/times';
+import { aoTocarNoEstado, estado, numero } from './blocos';
 
 interface Rascunho {
   id: number;
@@ -74,11 +75,12 @@ export function montarRevisao(el: HTMLElement, sb: SupabaseClient, aoPublicar: (
   let fila: Rascunho[] = [];
 
   async function carregar(): Promise<void> {
-    el.innerHTML = '<p class="nota">Carregando a fila…</p>';
+    el.innerHTML = estado('carregando', 'Carregando a fila…');
     const { data, error } = await sb.rpc('revisao_perguntas_fila', { p_limite: 30 });
     if (saiu) return;
     if (error) {
-      el.innerHTML = `<p class="admin-alerta">Não deu pra ler a fila: ${esc(ERROS[error.message] ?? error.message)}</p>`;
+      el.innerHTML = estado('erro', `Não deu pra ler a fila: ${ERROS[error.message] ?? error.message}`);
+      aoTocarNoEstado(el, () => void carregar());
       return;
     }
     fila = (data ?? []) as Rascunho[];
@@ -87,11 +89,12 @@ export function montarRevisao(el: HTMLElement, sb: SupabaseClient, aoPublicar: (
 
   function desenhar(): void {
     if (!fila.length) {
-      el.innerHTML = '<p class="nota">Fila vazia. O gerador roda às 6h e o auditor às 7h.</p>';
+      el.innerHTML = estado('vazio', 'Fila vazia.', { detalhe: 'O gerador roda às 6h e o auditor às 7h.' });
       return;
     }
     el.innerHTML =
-      `<p class="nota">${fila[0].na_fila} na fila · cada uma passou nas travas do código e num auditor que não sabia a resposta. Confira o fato no trecho.</p>` +
+      `<div class="numeros dois">${numero(String(fila[0].na_fila), 'na fila', 'destaque')}</div>
+      <p class="nota">Cada uma passou nas travas do código e num auditor que não sabia a resposta. Confira o fato no trecho.</p>` +
       fila.map(cartao).join('');
   }
 
@@ -115,7 +118,7 @@ export function montarRevisao(el: HTMLElement, sb: SupabaseClient, aoPublicar: (
       <p class="erro-campo" role="alert" hidden></p>
       <div class="dupla">
         <button class="botao" type="button" data-acao="aprovar">Aprovar</button>
-        <button class="botao botao-sec" type="button" data-acao="reprovar">Reprovar</button>
+        <button class="botao-linha" type="button" data-acao="reprovar">Reprovar</button>
       </div>
     </article>`;
   }
