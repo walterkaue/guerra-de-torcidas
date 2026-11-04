@@ -17,11 +17,92 @@
 }
 
 .res-topo {
+  position: relative;
   text-align: center;
 }
 
 .res-topo .rotulo {
   color: var(--texto-suave);
+}
+
+/* Rótulo no meio e o selo da pré-temporada no canto, na mesma linha. */
+.res-topo-linha {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--e2);
+  min-height: 36px;
+}
+
+.res-topo-linha .rotulo {
+  grid-column: 2;
+}
+
+.res-topo-linha .selo-pre {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.res-titulo.neutro {
+  color: var(--cal);
+}
+
+/* ---------- resultado padrão (telas/resultadoPadrao.ts) ---------- */
+.res-aviso {
+  padding: 10px 14px;
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: inset 4px 0 0 var(--linha), var(--sombra-placa);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.res-aviso.forte {
+  background: var(--caiu);
+  color: #fff;
+  box-shadow: var(--sombra-placa);
+}
+
+.res-selos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.res-selos .selos:empty {
+  display: none;
+}
+
+.res-nota {
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.carreira-res {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--e2);
+}
+
+.carreira-res .carreira-nivel {
+  font-family: var(--fonte-placar);
+  font-size: 28px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--amarelo);
+}
+
+.carreira-ganho {
+  font-family: var(--fonte-placar);
+  font-size: 24px;
+  color: var(--subiu);
+}
+
+.res-padrao .carreira-falta {
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .res-titulo {
@@ -220,6 +301,11 @@
   justify-content: center;
 }
 
+.res-card:not(details) .card {
+  display: block;
+  margin-top: var(--e1);
+}
+
 .res-card summary {
   min-height: 48px;
   display: flex;
@@ -284,6 +370,12 @@
 .duelo-desafio > .rotulo {
   grid-column: 1 / -1;
   color: var(--amarelo);
+}
+
+/* Dentro da placa do resultado padrão o fundo já é a placa. */
+.placa .duelo-desafio {
+  padding: 0;
+  background: none;
 }
 
 .duelo-desafio div {

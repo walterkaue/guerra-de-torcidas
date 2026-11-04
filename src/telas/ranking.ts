@@ -11,8 +11,14 @@ import { semanaConfirmadaEm } from '../jogo/crava';
 import { semanaBrasilia } from '../servidor/tempo';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { desenharTemporada } from './temporada';
+import { abas, aoTocarNoEstado, cabecalhoTela, estado } from './blocos';
 
 type Modo = 'campeao' | 'soma';
+
+// Em desenvolvimento, ?homeFalsa troca o servidor por um de mentira (src/dev/homeFalsa.ts).
+const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
+const servidor = (): Promise<{ rankingDaSemana: typeof rankingDaSemana }> =>
+  FALSA ? import('../dev/homeFalsa') : Promise.resolve({ rankingDaSemana });
 
 export function telaRanking(root: HTMLElement, rota: Rota): () => void {
   const meuTime = prefs.get().time;
@@ -24,25 +30,22 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
   let parar: (() => void) | null = null;
   let saiu = false;
 
+  const eu = timePorId(meuTime);
   root.innerHTML = `
-    <main class="tela ranking">
-      <header class="cabecalho"><h2 class="titulo-placar">Ranking</h2></header>
-      <div class="abas abas-ranking" role="tablist">
-        <button role="tab" class="rotulo" aria-selected="true" data-ranking="semana">Semana</button>
-        <button role="tab" class="rotulo" aria-selected="false" data-ranking="temporada">Temporada</button>
-        <button role="tab" class="rotulo" aria-selected="false" data-ranking="conquistas">Conquistas</button>
-      </div>
+    <main class="tela ranking"${eu ? ` style="--c1:${eu.cores[0]};--c2:${eu.cores[1]}"` : ''}>
+      ${cabecalhoTela({ titulo: 'Ranking' })}
+      ${abas('ranking', [
+        { id: 'semana', texto: 'Semana' },
+        { id: 'temporada', texto: 'Temporada' },
+        { id: 'conquistas', texto: 'Conquistas' },
+      ], 'semana')}
       <div class="painel-ranking" data-painel="semana">
-        <div class="abas abas-semana" role="tablist">
-          <button role="tab" class="rotulo" aria-selected="true" data-semana="atual">Esta semana</button>
-          <button role="tab" class="rotulo" aria-selected="false" data-semana="passada">Semana passada</button>
+        <div class="abas-linha">
+          ${abas('semana', [{ id: 'atual', texto: 'Esta semana' }, { id: 'passada', texto: 'Passada' }], 'atual', 2)}
+          ${abas('modo', [{ id: 'campeao', texto: 'Campeão' }, { id: 'soma', texto: 'Maior torcida' }], 'campeao', 2)}
         </div>
         <p class="selo-semana" data-selo hidden></p>
-        <div class="abas" role="tablist">
-          <button role="tab" class="rotulo" aria-selected="true" data-modo="campeao">Campeão da semana</button>
-          <button role="tab" class="rotulo" aria-selected="false" data-modo="soma">Maior torcida</button>
-        </div>
-        <div class="tabela" data-tabela-semana aria-live="polite"><p class="vazio">Carregando…</p></div>
+        <div class="tabela" data-tabela-semana aria-live="polite">${estado('carregando', 'Buscando a tabela…')}</div>
         <p class="explica" data-explica></p>
       </div>
       <div class="painel-ranking" data-painel="temporada" hidden></div>
@@ -107,7 +110,11 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
         ? 'Conta a média dos 30 melhores de cada torcida. Só as 5 melhores partidas do dia de cada um valem.'
         : 'Soma de todo mundo que jogou na semana. É vitrine: o título sai do Campeão da semana.';
     if (!linhas.some((l) => l.ativos > 0)) {
-      elTabela.innerHTML = `<p class="vazio">Ninguém jogou ${semana === atual ? 'ainda nesta semana' : 'na semana passada'}.</p>`;
+      elTabela.innerHTML =
+        semana === atual
+          ? estado('vazio', 'Ninguém jogou ainda nesta semana.', { detalhe: 'Joga uma e põe sua torcida na frente.', acao: 'Jogar agora' })
+          : estado('vazio', 'Ninguém jogou na semana passada.');
+      aoTocarNoEstado(elTabela, () => irPara({ tela: 'inicio' }));
       return;
     }
     const pos = (l: LinhaRanking) => (modo === 'campeao' ? l.posicao_campeao : l.posicao_soma);
@@ -149,16 +156,22 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
     }),
   );
 
-  const carregar = () => {
+  const carregar = (): Promise<void> => {
     const pedida = semana;
-    return rankingDaSemana(pedida)
+    return servidor()
+      .then((api) => api.rankingDaSemana(pedida))
       .then((l) => {
         if (saiu || pedida !== semana) return;
         linhas = l;
         desenhar();
       })
       .catch(() => {
-        if (!saiu) elTabela.innerHTML = '<p class="vazio">Sem conexão com o placar agora.</p>';
+        if (saiu) return;
+        elTabela.innerHTML = estado('erro', 'Sem conexão com o placar agora.', { detalhe: 'A tabela volta assim que a internet voltar.' });
+        aoTocarNoEstado(elTabela, () => {
+          elTabela.innerHTML = estado('carregando', 'Buscando a tabela…');
+          void carregar();
+        });
       });
   };
   const ouvir = () => {
@@ -178,7 +191,7 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
       if (nova === semana) return;
       semana = nova;
       root.querySelectorAll('[data-semana]').forEach((o) => o.setAttribute('aria-selected', String(o === b)));
-      elTabela.innerHTML = '<p class="vazio">Carregando…</p>';
+      elTabela.innerHTML = estado('carregando', 'Buscando a tabela…');
       void carregar();
       ouvir();
     }),

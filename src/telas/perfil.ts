@@ -9,12 +9,13 @@ import { faixaDoAparelho, prefs } from '../estado';
 import { rodadaEmFoco } from '../jogo/cravaTela';
 import { ordinalRodada } from '../jogo/crava';
 import { podeVerPush } from '../jogo/faixaEtaria';
-import { linhaDaPosicao, linhaDoRecorde, nomeNoCracha } from '../jogo/perfil';
+import { nomeNoCracha } from '../jogo/perfil';
 import type { PosicaoSemana } from '../jogo/posicao';
 import { meusRecordes, minhaPosicaoMinigame, minhaPosicaoSemana, type MinigameDoRecorde } from '../servidor/api';
 import { jogosDoCrava, minhaPosicaoCrava } from '../servidor/crava';
 import { semanaBrasilia } from '../servidor/tempo';
 import { montarAparelhos } from './aparelhosLigados';
+import { aoTocarNoEstado, cabecalhoTela, estado, faixa, numero, placa, posicaoHtml } from './blocos';
 import { carregarCarreiraPerfil } from './carreira';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { icone } from './icones';
@@ -35,13 +36,11 @@ function rotuloGraficos(): string {
 
 const NOME_DO_RECORDE: Record<MinigameDoRecorde, string> = {
   penaltis: 'Pênaltis',
-  prova: 'Prova de Boleiro',
+  prova: 'Prova',
   dia: 'Time do Dia',
-  crava: 'Crava a Rodada',
-  lances: 'Lances do Jogo',
+  crava: 'Crava',
+  lances: 'Lances',
 };
-
-const linha = (rotulo: string, valor: string) => `<div class="perfil-linha"><dt>${rotulo}</dt><dd>${valor}</dd></div>`;
 
 export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
   const { apelido, nivelNoCard, semVibracao } = prefs.get();
@@ -49,54 +48,59 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
   const dono = time ?? timePorId(ID_OUTRO)!;
   let saiu = false;
 
-  root.innerHTML = `
-    <main class="tela perfil">
-      <header class="cabecalho"><h2 class="titulo-placar">Perfil</h2></header>
+  // Destaque do cabeçalho: o apelido; sem apelido (ou sem time), o convite para escolher.
+  const destaque = !time
+    ? `<button class="perfil-destaque convite" type="button" data-acao="trocar">Escolha seu time ${icone('lapis')}</button>`
+    : apelido
+      ? `<p class="perfil-destaque">${esc(apelido)}</p>`
+      : `<button class="perfil-destaque convite" type="button" data-acao="apelido">Escolha seu apelido ${icone('lapis')}</button>`;
 
-      <section class="cracha" aria-label="Seu crachá"
-        style="--c1:${dono.cores[0]};--c2:${dono.cores[1]};--txt:${corDeTexto(dono.cores[0])}">
-        <div class="cracha-topo">
-          <span class="avatar" aria-hidden="true">${icone('pessoa')}</span>
-          <div class="cracha-nomes">
-            <p class="cracha-nome">${esc(nomeNoCracha(apelido, time))}</p>
-            ${time ? `<p class="rotulo cracha-time">${esc(time.id === ID_OUTRO ? 'Outro time' : time.nome)}</p>` : ''}
-          </div>
-          ${time ? '<button class="link-trocar" type="button" data-acao="trocar">trocar</button>' : ''}
+  root.innerHTML = `
+    <main class="tela perfil"
+      style="--c1:${dono.cores[0]};--c2:${dono.cores[1]};--txt:${corDeTexto(dono.cores[0])}">
+      ${cabecalhoTela({ titulo: 'Perfil' })}
+
+      <section class="perfil-cab placa filete" aria-label="Seu crachá">
+        <span class="avatar avatar-g" aria-hidden="true">${icone('pessoa')}</span>
+        <div class="perfil-nomes">
+          ${destaque}
+          ${
+            time
+              ? `<p class="perfil-time">${esc(nomeNoCracha(undefined, time))}
+                  <button class="link-mini" type="button" data-acao="trocar">trocar</button></p>`
+              : ''
+          }
         </div>
-        ${
-          !time
-            ? '<button class="botao botao-sec" type="button" data-acao="trocar">Escolher meu time</button>'
-            : apelido
-              ? ''
-              : '<button class="botao botao-sec" type="button" data-acao="apelido">Escolher apelido</button>'
-        }
-        <div class="carreira" data-carreira aria-label="Sua carreira" hidden></div>
       </section>
 
       ${
         time
-          ? `<section class="perfil-bloco" aria-label="Na semana">
-        <h3 class="rotulo">Na semana</h3>
-        <dl data-semana aria-live="polite"><p class="vazio">Carregando…</p></dl>
+          ? `<section class="placa" data-carreira aria-label="Sua carreira" hidden></section>
+
+      <section class="placa" aria-label="Na semana">
+        ${faixa('Na semana')}
+        <div data-semana aria-live="polite">${estado('carregando', 'Buscando suas posições…')}</div>
       </section>
 
-      <section class="perfil-bloco" aria-label="Recordes">
-        <h3 class="rotulo">Recordes</h3>
-        <dl data-recordes aria-live="polite"><p class="vazio">Carregando…</p></dl>
+      <section class="placa" aria-label="Recordes">
+        ${faixa('Recordes')}
+        <div data-recordes aria-live="polite">${estado('carregando', 'Buscando seus recordes…')}</div>
       </section>`
-          : '<p class="vazio">Escolhe o time pra ver sua carreira, sua posição e seus recordes.</p>'
+          : placa(estado('vazio', 'Escolhe o time pra ver sua carreira, sua posição e seus recordes.', { acao: 'Escolher meu time' }), {
+              attrs: 'data-sem-time',
+            })
       }
 
-      <section class="perfil-bloco" aria-label="Outros aparelhos">
-        <h3 class="rotulo">Aparelhos ligados</h3>
+      <section class="placa perfil-bloco" aria-label="Outros aparelhos">
+        ${faixa('Aparelhos ligados')}
         ${time ? '<div data-aparelhos></div><button class="ajuste" type="button" data-acao="outro-aparelho">Jogar em outro aparelho</button>' : '<p class="vazio">Escolhe o time pra ligar outro aparelho.</p>'}
         <button class="ajuste" type="button" data-acao="entrar-codigo">Entrar com código de outro aparelho</button>
       </section>
 
       <button class="perfil-atalho" type="button" data-acao="conquistas">${icone('trofeu')} Conquistas</button>
 
-      <section class="perfil-bloco" aria-label="Ajustes">
-        <h3 class="rotulo">Ajustes</h3>
+      <section class="placa perfil-bloco" aria-label="Ajustes">
+        ${faixa('Ajustes')}
         <button class="ajuste" type="button" data-acao="graficos" aria-live="polite">${rotuloGraficos()}</button>
         <label class="ajuste">Vibração
           <input class="chave" type="checkbox" role="switch" data-vibracao${semVibracao ? '' : ' checked'}>
@@ -122,7 +126,9 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
   root.querySelectorAll('[data-acao="trocar"]').forEach((b) =>
     b.addEventListener('click', () => irPara({ tela: 'times', depois: 'perfil' })),
   );
-  // "Escolher apelido" usa o campo e o filtro de sempre, na escolha do time.
+  const semTime = root.querySelector('[data-sem-time]');
+  if (semTime) aoTocarNoEstado(semTime, () => irPara({ tela: 'times', depois: 'perfil' }));
+  // "Escolha seu apelido" usa o campo e o filtro de sempre, na escolha do time.
   root.querySelector('[data-acao="apelido"]')?.addEventListener('click', () => irPara({ tela: 'times', depois: 'perfil', apelido: true }));
   root.querySelector('[data-acao="outro-aparelho"]')?.addEventListener('click', () => irPara({ tela: 'outroAparelho' }));
   root.querySelector('[data-acao="entrar-codigo"]')?.addEventListener('click', () => irPara({ tela: 'entrar', de: 'perfil' }));
@@ -174,6 +180,19 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
     void carregarRecordes(root.querySelector<HTMLElement>('[data-recordes]')!);
   }
 
+  /** Erro com "Tentar de novo", que refaz a mesma busca. */
+  function semConexao(el: HTMLElement, tentar: () => void): void {
+    el.innerHTML = estado('erro', 'Sem conexão com o placar agora.');
+    aoTocarNoEstado(el, () => {
+      el.innerHTML = estado('carregando', 'Buscando…');
+      tentar();
+    });
+  }
+
+  /** Posição como número grande ("3º de 4"); quem ainda não pontuou ali vê um traço. */
+  const posicao = (p: Pick<PosicaoSemana, 'posicao' | 'total'> | null, rotulo: string, tom?: 'destaque') =>
+    p?.posicao ? numero(posicaoHtml(p.posicao, p.total), rotulo, tom) : numero('—', rotulo, 'apagado');
+
   async function carregarSemana(el: HTMLElement): Promise<void> {
     try {
       const api = await servidor();
@@ -189,18 +208,20 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
       const rodada = rodadaEmFoco(jogos, new Date());
       const crava = rodada === null ? null : await api.minhaPosicaoCrava(rodada).catch(nada);
       if (saiu) return;
-      const comPontos = (p: PosicaoSemana | null) =>
-        p?.posicao ? `${linhaDaPosicao(p)} · ${linhaDoRecorde(p.pontos)}` : linhaDaPosicao(p);
-      el.innerHTML = [
-        linha('Geral', comPontos(geral)),
-        linha('Pênaltis', linhaDaPosicao(penaltis)),
-        linha('Prova de Boleiro', linhaDaPosicao(prova)),
-        linha('Time do Dia, hoje', linhaDaPosicao(dia)),
-        linha('Lances do Jogo', linhaDaPosicao(lances)),
-        ...(rodada === null ? [] : [linha(`Crava, ${ordinalRodada(rodada)} rodada`, linhaDaPosicao(crava))]),
-      ].join('');
+      el.innerHTML = `
+        <div class="numeros dois">
+          ${posicao(geral, 'Geral na semana', 'destaque')}
+          ${geral?.posicao ? numero(geral.pontos.toLocaleString('pt-BR'), geral.pontos === 1 ? 'ponto' : 'pontos') : numero('0', 'pontos', 'apagado')}
+        </div>
+        <div class="numeros tres">
+          ${posicao(penaltis, 'Pênaltis')}
+          ${posicao(prova, 'Prova')}
+          ${posicao(dia, 'Time do Dia hoje')}
+          ${posicao(lances, 'Lances')}
+          ${rodada === null ? '' : posicao(crava, `Crava ${ordinalRodada(rodada)}`)}
+        </div>`;
     } catch {
-      if (!saiu) el.innerHTML = '<p class="vazio">Sem conexão com o placar agora.</p>';
+      if (!saiu) semConexao(el, () => void carregarSemana(el));
     }
   }
 
@@ -208,11 +229,16 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
     try {
       const recordes = await (await servidor()).meusRecordes();
       if (saiu) return;
-      el.innerHTML = (Object.keys(NOME_DO_RECORDE) as MinigameDoRecorde[])
-        .map((m) => linha(NOME_DO_RECORDE[m], linhaDoRecorde(recordes[m])))
-        .join('');
+      el.innerHTML = `<div class="numeros tres">${(Object.keys(NOME_DO_RECORDE) as MinigameDoRecorde[])
+        .map((m) => {
+          const r = recordes[m];
+          return r === null || r === undefined
+            ? numero('—', NOME_DO_RECORDE[m], 'apagado')
+            : numero(`${r.toLocaleString('pt-BR')}<small>pts</small>`, NOME_DO_RECORDE[m]);
+        })
+        .join('')}</div>`;
     } catch {
-      if (!saiu) el.innerHTML = '<p class="vazio">Sem conexão com o placar agora.</p>';
+      if (!saiu) semConexao(el, () => void carregarRecordes(el));
     }
   }
 

@@ -1,4 +1,5 @@
 import './style.css';
+import './estilos/blocos.css';
 import './estilos/inicio.css';
 import './estilos/resultado.css';
 import './estilos/palpites.css';

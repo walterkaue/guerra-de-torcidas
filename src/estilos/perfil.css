@@ -5,94 +5,84 @@
   padding-bottom: calc(88px + env(safe-area-inset-bottom));
 }
 
-/* ---------- crachá ---------- */
-.cracha {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.35);
-}
-
-.cracha-topo {
-  position: relative;
-  display: flex;
+/* ---------- cabeçalho isolado: avatar grande (espaço para o boneco montável), apelido e time ---------- */
+.perfil-cab {
+  flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: var(--e4);
 }
 
-.cracha-nomes {
+.avatar.avatar-g {
+  flex: none;
+  width: 76px;
+  height: 76px;
+  border-width: 3px;
+  font-size: 40px;
+  box-shadow: 0 0 0 4px var(--placa), 0 0 0 6px var(--c2, var(--linha));
+}
+
+.perfil-nomes {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e1);
 }
 
-.cracha-nome {
+.perfil-destaque {
+  padding-top: 4px;
   font-family: var(--fonte-placar);
-  font-size: 26px;
-  line-height: 1.15;
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.05;
   text-transform: uppercase;
   overflow-wrap: anywhere;
+  color: var(--cal);
 }
 
-.cracha-time {
+/* Sem apelido: o destaque vira o convite, com o mesmo tamanho e um lápis. */
+button.perfil-destaque {
+  display: inline;
+  min-height: 44px;
+  padding: 4px 0 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(245, 245, 240, 0.4);
+  touch-action: manipulation;
+}
+
+button.perfil-destaque .ico {
+  font-size: 22px;
   color: var(--texto-suave);
 }
 
-.cracha .link-trocar {
-  position: static;
-  flex: none;
+.perfil-time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--e2);
+  font-weight: 700;
+  color: var(--texto-suave);
 }
 
-.cracha .avatar {
-  flex: none;
+.link-mini {
+  min-height: 36px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--cal);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  touch-action: manipulation;
 }
 
 /* Carreira do jogador (só a própria): nível, barra até o próximo e quanto vale a próxima partida. */
-.carreira {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.carreira-topo {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-  color: var(--texto-suave);
-}
-
-.carreira-xp {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.carreira-nivel {
-  font-family: var(--fonte-placar);
-  font-size: 30px;
-  line-height: 1.1;
-  text-transform: uppercase;
-  color: var(--amarelo);
-}
-
-.carreira-barra {
-  height: 12px;
-  border-radius: 3px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.12);
-  transform: skewX(var(--inclinacao));
-}
-
-.carreira-barra span {
-  display: block;
-  height: 100%;
-  width: calc(var(--enche, 0) * 100%);
-  background: var(--amarelo);
-}
-
 .carreira-falta {
   font-size: 14px;
   font-weight: 700;
@@ -109,33 +99,20 @@
 }
 
 /* ---------- semana, recordes e ajustes ---------- */
-.perfil-bloco {
+[data-semana] {
   display: flex;
   flex-direction: column;
-  padding: 10px 14px 6px;
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.35);
+  gap: var(--e2);
 }
 
-.perfil-bloco h3 {
-  padding-bottom: 4px;
-  color: var(--texto-suave);
+/* Lista de ajustes e aparelhos: a placa fica sem espaço entre as linhas, que já têm o próprio. */
+.perfil-bloco {
+  gap: 0;
+  padding-bottom: var(--e1);
 }
 
-.perfil-linha {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 2px 12px;
-  padding: 8px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 15px;
-}
-
-.perfil-linha dd {
-  margin-left: auto;
-  font-weight: 700;
+.perfil-bloco .faixa {
+  margin-bottom: var(--e2);
 }
 
 .perfil-atalho {
@@ -144,10 +121,11 @@
   gap: 8px;
   width: 100%;
   min-height: 52px;
-  padding: 10px 14px;
+  padding: 10px var(--e4);
   border: 0;
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.25);
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
   color: var(--cal);
   font: inherit;
   font-weight: 700;
@@ -221,8 +199,9 @@ button.ajuste {
   transition: transform var(--medio) var(--mola-firme);
 }
 
+/* Ligada em verde: o amarelo fica só para o botão principal (docs/jogo.md 14.2). */
 .chave:checked {
-  background: var(--amarelo);
+  background: var(--subiu);
 }
 
 .chave:checked::after {

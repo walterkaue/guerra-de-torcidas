@@ -1,15 +1,15 @@
-// Resultado (docs/visual.md, "Resultado"): placar gigante, VITÓRIA/DERROTA, "+85 PRA [TIME]" contando,
-// bônus em etiquetas, efeito no ranking, X1 lado a lado, compartilhar e Mais uma/Revanche como ação principal.
+// Resultado dos Pênaltis no resultado padrão (telas/resultadoPadrao.ts): placar gigante, VITÓRIA/DERROTA,
+// "+85 PRO [TIME]" contando, pontos da partida em placas, narrador, selos (posição, recorde, efeito no
+// ranking), Carreira, "Mandar no grupo" e Mais uma/Revanche como ação principal.
 
 import { esc, irPara, type DadosResultado, type Rota } from '../app';
 import { SELECAO } from '../dados/adversarios';
-import { ID_OUTRO, corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
+import { ID_OUTRO, proTime, timePorId, TIMES } from '../dados/times';
 import { prefs } from '../estado';
-import { desenharCard, mostrarCard, prontoParaDesenhar, seloNivel } from '../jogo/card';
+import { desenharCard, prontoParaDesenhar, seloNivel } from '../jogo/card';
 import { conviteX1Penaltis } from '../jogo/convites';
 import { ID_SELECAO, lembrancaDaDisputa } from '../jogo/disputas';
 import { placarEmoji } from '../jogo/emoji';
-import { htmlPosicao } from '../jogo/posicao';
 import { escolherFrase } from '../narrador/escolher';
 import { contextoDoTime } from '../narrador/sessao';
 import { ouvirRanking, rankingCalculadoEm, rankingDaSemana, type LinhaRanking } from '../servidor/api';
@@ -18,24 +18,13 @@ import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { bomMomentoDosLances } from '../jogo/apoio';
 import { oferecerApoio } from './apoio';
 import { convidarParaAvisos } from './convitePush';
+import { numero, placa, selo } from './blocos';
+import { contar, htmlResultado, htmlSelosDaPosicao, ligarResultado } from './resultadoPadrao';
+import { vibrar } from './toque';
 
 const SITE = 'https://torcida.kauewalter.com.br';
+const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
 const semMovimento = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-
-/** Conta de 0 até `total` em ~700 ms (sem animação para quem pediu menos movimento). */
-function contar(el: HTMLElement, total: number): void {
-  if (semMovimento() || total <= 0) {
-    el.textContent = `+${total}`;
-    return;
-  }
-  const inicio = performance.now();
-  const passo = (agora: number) => {
-    const t = Math.min(1, (agora - inicio) / 700);
-    el.textContent = `+${Math.round(total * (1 - (1 - t) ** 3))}`;
-    if (t < 1) requestAnimationFrame(passo);
-  };
-  requestAnimationFrame(passo);
-}
 
 /** Confete curto nas cores do time (só na vitória e só para quem não pediu menos movimento). */
 function confete(canvas: HTMLCanvasElement, cores: string[]): void {
@@ -144,81 +133,60 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
       Math.random,
     )?.texto;
   const blocoDesafio = cmp
-    ? `<section class="duelo-desafio">
-        <p class="rotulo">X1</p>
-        <div><span>Você</span><strong>${p.total}</strong><small>${r.golsJogador} x ${r.golsMaquina}</small></div>
-        <em>x</em>
-        <div><span>${esc(cmp.desafiante ?? 'Quem te chamou')}</span><strong>${cmp.pontosDesafiante}</strong><small>${cmp.golsJogadorDesafiante} x ${cmp.golsMaquinaDesafiante}</small></div>
-        ${fraseDesafio ? `<p class="adesivo">${esc(fraseDesafio)}</p>` : ''}
-      </section>`
+    ? placa(
+        `<div class="duelo-desafio">
+          <div><span>Você</span><strong>${p.total}</strong><small>${r.golsJogador} x ${r.golsMaquina}</small></div>
+          <em>x</em>
+          <div><span>${esc(cmp.desafiante ?? 'Quem te chamou')}</span><strong>${cmp.pontosDesafiante}</strong><small>${cmp.golsJogadorDesafiante} x ${cmp.golsMaquinaDesafiante}</small></div>
+        </div>
+        ${fraseDesafio ? `<p class="adesivo">${esc(fraseDesafio)}</p>` : ''}`,
+        { titulo: 'X1', filete: true },
+      )
     : '';
 
-  root.innerHTML = `
-    <main class="tela resultado ${r.venceu ? 'venceu' : 'perdeu'}"
-      style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
-      ${r.venceu ? '<canvas class="confete" aria-hidden="true"></canvas>' : ''}
+  const detalhes = etiquetas.filter(([, v]) => v > 0);
+  // O efeito no ranking chega depois (até 1 minuto): começa como selo de espera.
+  const esperaRanking = !situacao && !!d.servidor && !outro;
 
-      <header class="res-topo">
-        <p class="rotulo">${decisao}</p>
-        <h1 class="res-titulo">${r.venceu ? 'Vitória' : 'Derrota'}</h1>
-      </header>
-
-      <section class="res-placar faixa-tv" aria-label="Placar">
+  root.innerHTML = htmlResultado({
+    time,
+    classe: `resultado ${r.venceu ? 'venceu' : 'perdeu'}`,
+    rotulo: decisao,
+    titulo: r.venceu ? 'Vitória' : 'Derrota',
+    ganhou: r.venceu,
+    placar: `<section class="res-placar faixa-tv" aria-label="Placar">
         <div><span class="rotulo">${esc(nomeDoLado)}</span><strong>${r.golsJogador}</strong></div>
         <em>x</em>
         <div><span class="rotulo">${esc(nomeAdversario)}</span><strong>${r.golsMaquina}</strong></div>
       </section>
-      ${d.disputa ? `<p class="res-disputa rotulo">${esc(lembrancaDaDisputa(d.disputa))}</p>` : ''}
+      ${d.disputa ? `<p class="res-disputa rotulo">${esc(lembrancaDaDisputa(d.disputa))}</p>` : ''}`,
+    pontos: { total: p.total, paraTime },
+    detalhe: `${
+      detalhes.length
+        ? `<div class="numeros${detalhes.length === 3 ? ' tres' : ''}">${detalhes.map(([nome, v]) => numero(`+${v}`, nome)).join('')}</div>`
+        : ''
+    }${blocoDesafio}`,
+    frases: d.frasesFinais,
+    aviso: situacao ? { texto: situacao, forte: !d.valendo } : null,
+    selos:
+      htmlSelosDaPosicao(d.servidor?.desempenho ?? null, 'penaltis') +
+      (esperaRanking ? selo('No ranking em 1 min', undefined, 'data-selo-ranking') : '') +
+      (!situacao && !esperaRanking ? selo('Contou pro ranking') : ''),
+    zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
+    maisUma: r.venceu ? 'Mais uma' : 'Revanche',
+    confete: r.venceu,
+  });
 
-      <section class="res-pontos">
-        <p class="res-total"><strong data-contador>+0</strong>${paraTime ? `<span>${esc(paraTime)}</span>` : ''}</p>
-        <ul class="etiquetas">
-          ${etiquetas
-            .filter(([, v]) => v > 0)
-            .map(([nome, v]) => `<li class="rotulo">${nome} <b>+${v}</b></li>`)
-            .join('')}
-        </ul>
-      </section>
-
-      ${d.frasesFinais.map((t, i) => `<p class="adesivo${i ? ' segundo' : ''}">${esc(t)}</p>`).join('')}
-
-      <section class="res-efeito" aria-live="polite">
-        ${situacao ? `<p class="situacao${d.valendo ? '' : ' sem-pontos'}">${esc(situacao)}</p>` : ''}
-      </section>
-
-      ${htmlPosicao(d.servidor?.desempenho ?? null, 'penaltis')}
-      <div class="res-carreira" data-carreira hidden></div>
-
-      ${blocoDesafio}
-
-      <section class="res-compartilhar">
-        <a class="botao botao-zap" data-sem-aviso target="_blank" rel="noopener"
-          href="https://wa.me/?text=${encodeURIComponent(textoShare)}">Chamar no X1</a>
-        <div class="trio">
-          <button class="botao botao-sec" type="button" data-acao="share">Stories</button>
-          <button class="botao botao-sec" type="button" data-acao="emoji">Placar em emoji</button>
-          <button class="botao botao-sec" type="button" data-acao="copiar">Copiar link</button>
-        </div>
-      </section>
-
-      <details class="res-card">
-        <summary class="rotulo">Ver o card</summary>
-        <img class="card" alt="Card do resultado" />
-      </details>
-
-      <div data-convite-push></div>
-      <div class="res-apoio" data-apoio></div>
-
-      <div class="res-acoes">
-        <button class="botao botao-sec" type="button" data-acao="inicio">Início</button>
-        <button class="botao" type="button" data-acao="revanche">${r.venceu ? 'Mais uma' : 'Revanche'}</button>
-      </div>
-    </main>
-  `;
-
-  contar(root.querySelector<HTMLElement>('[data-contador]')!, p.total);
+  contar(root.querySelector<HTMLElement>('[data-contador]'), p.total);
+  // Fim da morte súbita: o coração para ou explode (docs/jogo.md 14.2).
+  if (r.decisao === 'morte_subita') vibrar(r.venceu ? 'gol' : 'erro');
   // Carreira: só quando o servidor fechou a partida (o XP sai de lá).
-  if (d.servidor) mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]'));
+  if (d.servidor)
+    mostrarCarreiraNoResultado(
+      root.querySelector<HTMLElement>('[data-carreira]'),
+      // Em desenvolvimento, ?homeFalsa lê a carreira de mentira (src/dev/homeFalsa.ts).
+      FALSA ? () => import('../dev/homeFalsa').then((m) => m.minhaCarreira()) : undefined,
+    );
   // Bom momento para oferecer o aviso de domingo: vitória que valeu pra torcida.
   if (r.venceu && d.valendo) convidarParaAvisos(root.querySelector<HTMLElement>('[data-convite-push]'));
   oferecerApoio(
@@ -231,51 +199,47 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
   // ---------- efeito no ranking ("subiu de 5º pra 3º") ----------
   // O servidor refaz o ranking a cada minuto: a tela compara a foto de antes da partida com a primeira
   // tabela calculada depois que a partida foi gravada (já pronta ao abrir, ou pelo aviso do Realtime).
-  // Partida que não mexe em nada não gera aviso: passado o minuto, fica só o "contou pro ranking".
-  const elEfeito = root.querySelector<HTMLElement>('.res-efeito')!;
+  // Partida que não mexe em nada não gera aviso: passado o minuto, o selo vira só "Contou pro ranking".
+  const elSelo = root.querySelector<HTMLElement>('[data-selo-ranking]');
+  const elNota = root.querySelector<HTMLElement>('[data-nota]')!;
   const rk = d.servidor?.ranking;
   let saiu = false;
   let pararRanking: (() => void) | null = null;
   let espera: ReturnType<typeof setTimeout> | undefined;
+  const trocarSelo = (texto: string, tom?: 'subiu' | 'caiu') => {
+    if (!elSelo) return;
+    elSelo.className = `selo${tom ? ` ${tom}` : ''}`;
+    elSelo.innerHTML = texto;
+  };
   const mostrarEfeito = (linhas: LinhaRanking[]) => {
     const meu = linhas.find((l) => l.time_id === time.id);
     if (!meu) return;
     const depois = meu.posicao_campeao;
     const antes = rk?.antes && Number(rk.antes.media30) > 0 ? rk.antes.posicao_campeao : undefined;
-    const frase =
-      antes === undefined
-        ? `Entrou em <strong>${depois}º</strong> na semana`
-        : antes > depois
-          ? `<span class="seta subiu" aria-hidden="true">▲</span> Subiu de ${antes}º pra <strong>${depois}º</strong> na semana`
-          : antes < depois
-            ? `<span class="seta caiu" aria-hidden="true">▼</span> Caiu de ${antes}º pra <strong>${depois}º</strong> na semana`
-            : `Segue em <strong>${depois}º</strong> na semana`;
-    elEfeito.innerHTML = `<p class="efeito-texto">${frase}</p>
-      <div class="efeito-barra"><span></span></div>
-      <p class="efeito-falta"></p>`;
-    const barra = elEfeito.querySelector<HTMLElement>('.efeito-barra span')!;
-    const falta = elEfeito.querySelector<HTMLElement>('.efeito-falta')!;
+    if (antes === undefined) trocarSelo(`Entrou em ${depois}º na semana`);
+    else if (antes > depois) trocarSelo(`<span aria-hidden="true">▲</span> Subiu de ${antes}º pra ${depois}º`, 'subiu');
+    else if (antes < depois) trocarSelo(`<span aria-hidden="true">▼</span> Caiu de ${antes}º pra ${depois}º`, 'caiu');
+    else trocarSelo(`Segue em ${depois}º na semana`);
+    const nota = (texto: string) => {
+      elNota.textContent = texto;
+      elNota.hidden = false;
+    };
     if (meu.posicao_campeao === 1) {
       const segundo = linhas.find((l) => l.posicao_campeao === 2);
-      barra.style.setProperty('--enche', '1');
-      falta.textContent = segundo
-        ? `Na liderança, ${pontosDeMedia(Math.round(meu.media30 - segundo.media30))} na frente ${doTime(segundo.time_id)}.`
-        : 'Na liderança!';
+      nota(
+        segundo
+          ? `Na liderança, ${pontosDeMedia(Math.round(meu.media30 - segundo.media30))} na frente ${doTime(segundo.time_id)}.`
+          : 'Na liderança!',
+      );
       return;
     }
     const acima = linhas.find((l) => l.posicao_campeao === meu.posicao_campeao - 1);
     const tAcima = acima && timePorId(acima.time_id);
     if (!acima || !tAcima) return;
-    barra.style.setProperty('--enche', String(acima.media30 > 0 ? Math.min(1, meu.media30 / acima.media30) : 1));
     const n = Math.max(1, Math.ceil(acima.media30 - meu.media30));
-    falta.textContent = `Mais ${n} de média e passa ${tAcima.artigo} ${tAcima.nome} (${acima.posicao_campeao}º).`;
+    nota(`Mais ${n} de média e passa ${tAcima.artigo} ${tAcima.nome} (${acima.posicao_campeao}º).`);
   };
-  const contou = (aguardando: boolean) =>
-    `<p class="situacao">Contou pro ranking da semana${paraTime ? ` ${esc(paraTime)}` : ''}.${
-      aguardando ? ' A tabela mexe em até 1 minuto.' : ''
-    }</p>`;
-  if (!situacao) elEfeito.innerHTML = contou(!!d.servidor && !outro);
-  if (!situacao && d.servidor && !outro) {
+  if (esperaRanking && d.servidor) {
     const semana = d.servidor.semana;
     const confirmadaEm = d.servidor.confirmadaEm;
     let pronto = false;
@@ -303,13 +267,12 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     espera = setTimeout(() => {
       if (saiu || pronto) return;
       encerrar();
-      elEfeito.innerHTML = contou(false);
+      trocarSelo('Contou pro ranking');
     }, ESPERA_RANKING_MS);
   }
 
   // ---------- card ----------
-  const img = root.querySelector<HTMLImageElement>('.card')!;
-  const cardPronto = (async () => {
+  const card = (async () => {
     await prontoParaDesenhar();
     const canvas = desenharCard({
       time,
@@ -324,64 +287,18 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     });
     const nivel = await nivelParaCard();
     if (nivel) seloNivel(canvas, nivel);
-    await mostrarCard(img, canvas);
     return canvas;
   })();
 
-  // ---------- botões ----------
-  const avisar = (botao: HTMLButtonElement, texto: string) => {
-    const antes = botao.textContent;
-    botao.textContent = texto;
-    setTimeout(() => (botao.textContent = antes), 1800);
-  };
-
-  const btnShare = root.querySelector<HTMLButtonElement>('[data-acao="share"]')!;
-  btnShare.addEventListener('click', async () => {
-    try {
-      const canvas = await cardPronto;
-      const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, 'image/png'));
-      const arquivo = blob ? new File([blob], 'guerra-de-torcidas.png', { type: 'image/png' }) : null;
-      if (arquivo && navigator.canShare?.({ files: [arquivo] })) {
-        await navigator.share({ files: [arquivo], text: textoShare });
-      } else if (navigator.share) {
-        await navigator.share({ text: textoShare, url: link });
-      } else {
-        await navigator.clipboard.writeText(textoShare);
-        avisar(btnShare, 'Copiado!');
-      }
-    } catch {
-      // cancelou o compartilhamento
-    }
+  ligarResultado(root, {
+    card,
+    textoShare,
+    link,
+    emoji,
+    // Revanche: no desafio ou na disputa histórica, joga a mesma de novo; senão, partida nova contra a máquina.
+    maisUma: () => irPara({ tela: 'partida', desafio: d.desafio?.id, disputa: d.disputa }),
+    inicio: () => irPara({ tela: 'inicio' }),
   });
-
-  const btnEmoji = root.querySelector<HTMLButtonElement>('[data-acao="emoji"]')!;
-  btnEmoji.addEventListener('click', async () => {
-    try {
-      if (navigator.share) await navigator.share({ text: emoji });
-      else {
-        await navigator.clipboard.writeText(emoji);
-        avisar(btnEmoji, 'Copiado!');
-      }
-    } catch {
-      // cancelou
-    }
-  });
-
-  const btnCopiar = root.querySelector<HTMLButtonElement>('[data-acao="copiar"]')!;
-  btnCopiar.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(link);
-      avisar(btnCopiar, 'Copiado!');
-    } catch {
-      avisar(btnCopiar, link);
-    }
-  });
-
-  // Revanche: no desafio ou na disputa histórica, joga a mesma de novo; senão, partida nova contra a máquina.
-  root.querySelector('[data-acao="revanche"]')?.addEventListener('click', () =>
-    irPara({ tela: 'partida', desafio: d.desafio?.id, disputa: d.disputa }),
-  );
-  root.querySelector('[data-acao="inicio"]')?.addEventListener('click', () => irPara({ tela: 'inicio' }));
 
   return () => {
     saiu = true;

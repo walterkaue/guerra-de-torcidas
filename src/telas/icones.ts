@@ -28,6 +28,11 @@ const TRACOS = {
   troca: '<path d="M4 8h13l-3-3m6 11H7l3 3"/>',
   barreira: '<path d="M3 6h18v12H3zm0 6h18M9 6v6m6-6v6m-9 0v6m6-6v6m6-6v6"/>',
   pessoa: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+  imagem: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
+  sorriso: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14a4 4 0 007 0M9 9.5h.01M15 9.5h.01"/>',
+  corrente: '<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1m2 3.7a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/>',
+  semRede: '<path d="M3 3l18 18M8.5 16.5a5 5 0 017 0M5 12.9a10 10 0 015.2-2.7M19 12.9a10 10 0 00-2.3-1.6M2 9a15 15 0 014.4-2.8M22 9a15 15 0 00-9.3-3.9M12 20h.01"/>',
 } as const;
 
 export type NomeIcone = keyof typeof TRACOS;

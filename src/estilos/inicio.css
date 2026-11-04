@@ -382,8 +382,14 @@
   box-shadow: inset 4px 0 0 var(--amarelo);
 }
 
+/* Sua torcida: placa mais clara com contorno, sem amarelo (fica só no botão principal). */
 .mini-linha.meu {
-  background: rgba(255, 210, 63, 0.16);
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 1px rgba(245, 245, 240, 0.35);
+}
+
+.mini-linha.meu.lider {
+  box-shadow: inset 4px 0 0 var(--amarelo), inset 0 0 0 1px rgba(245, 245, 240, 0.35);
 }
 
 /* Cards em tamanhos diferentes: Lances e Crava largos, Prova e Time do Dia lado a lado. */
@@ -954,8 +960,9 @@
 
 .tabela {
   padding: 6px 10px;
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.35);
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
 }
 
 .explica {

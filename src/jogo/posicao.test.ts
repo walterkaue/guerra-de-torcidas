@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { htmlPosicao, linhaPosicaoMinigame, linhaPosicaoSemana, linhaRecorde, recordeCrava, setaDaPosicao } from './posicao';
+import { htmlPosicao, linhaPosicaoMinigame, linhaPosicaoSemana, linhaRecorde, recordeCrava, selosDaPosicao, setaDaPosicao } from './posicao';
 
 describe('sua posição', () => {
   it('semana: posição, total e pontos; sem pontuar, chama pra disputa', () => {
@@ -68,5 +68,22 @@ describe('bloco da tela de resultado', () => {
   it('sem servidor ou sem nada para mostrar, vazio', () => {
     expect(htmlPosicao(null, 'prova')).toBe('');
     expect(htmlPosicao({ posicao: null, total: 3, recorde: null, novoRecorde: false }, 'prova')).toBe('');
+  });
+});
+
+describe('selos do resultado padrão', () => {
+  it('recorde novo, posição curta e recorde só quando não é novo', () => {
+    expect(selosDaPosicao({ posicao: 2, total: 9, recorde: 80, novoRecorde: true }, 'penaltis')).toEqual([
+      { texto: 'Novo recorde!', tom: 'ouro' },
+      { texto: '2º de 9 nos pênaltis' },
+    ]);
+    expect(selosDaPosicao({ posicao: 1, total: 5, recorde: 1, novoRecorde: false }, 'dia')).toEqual([
+      { texto: '1º de 5 no Time do Dia' },
+      { texto: 'Recorde: 1 ponto' },
+    ]);
+  });
+  it('sem servidor ou partida fora do ranking', () => {
+    expect(selosDaPosicao(null, 'prova')).toEqual([]);
+    expect(selosDaPosicao({ posicao: null, total: 3, recorde: null, novoRecorde: false }, 'lances')).toEqual([]);
   });
 });
