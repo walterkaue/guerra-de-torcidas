@@ -35,9 +35,14 @@ Quatro trilhos, que rodam em paralelo (fila decidida pelo Kauê em 05/11/2026). 
 - cards personalizáveis;
 - Galeria de Troféus e ranking de 52 semanas (a regra já está na seção 5 do `docs/jogo.md`). **O servidor está no ar desde 05/11/2026** (migração `20261106000000_galeria_52_semanas.sql`, PR #122), com as funções `ranking_52_semanas`, `galeria_trofeus` e `galeria_cidades`. Conferido só leitura no mesmo dia: as 3 públicas abertas para anon e authenticated, a interna fechada, a Galeria com 0 troféu (tudo é pré-temporada) e as 52 semanas com as 3 semanas travadas de outubro (São Paulo 75, Flamengo 20, Corinthians 20, Palmeiras 17), batendo com `fechamento_semana`. Para testar a tela, falta o `?galeriaFalsa`, porque a Galeria fica vazia de verdade até o zerar;
 - resto das divisões: a linha na Home ("9º na Série A, 4 pontos da zona"), as frases do narrador no fechamento do mês e o card de fim de temporada;
-- boneco montável (avatar do Perfil, seção 14.2).
+- ~~boneco montável~~: desenho decidido em 05/11/2026 (`docs/jogo.md` seção 14.5).
 
 **Trilho D — Construção**, cada item depois do desenho dele no trilho C, com plano pela skill `planejar-tarefa`.
+- **Boneco montável (D5, `docs/jogo.md` seção 14.5):**
+  1. ~~D5a, peças e catálogo puro~~: no `main` desde 05/11/2026 (PR #125, prints aprovados pelo Kauê). `src/jogo/vestiario.ts` (também em `_shared`), o desenho em `src/telas/bonecoMontavel.ts` e a vitrine `?vitrineBoneco`. Nada do app usa ainda.
+  2. ~~D5-lista, nomes de jogadores na `palavras_bloqueadas`~~: PR #124; migração `20261106100000` no ar (conferido no `migration list` em 05/11/2026).
+  3. **D5b, servidor (próximo):** tabela da vestimenta com RLS, gravação só por função que passa pelo `validar` com as peças liberadas contadas no banco (nível, `lances_gols`, bônus do aquecimento), boneco sorteado na conta nova, "Ver meus dados", "Apagar meus dados", contas paradas, junção de contas (fica o de quem gerou o código) e o zerar da pré-temporada (sobrevive). Migração e função: dry-run antes e **revisão de segurança antes de aplicar**.
+  4. **D5c, telas:** Perfil (crachá de 84 px e bloco Vestiário), Home (busto de 52 px), vestiário, peça trancada e peça nova. O desenho entra por `import()`, para o bundle inicial não crescer.
 
 ## Conferir primeiro
 
@@ -77,7 +82,7 @@ select * from public.classificacao_temporada where mes = '2026-11-01' order by p
 
 ## Pode começar já
 
-0. **Apelidos de jogadores famosos** (06/11/2026, PR aberto): migração `20261106100000_apelidos_famosos.sql` acrescenta ~250 nomes e apelidos a `palavras_bloqueadas`; teste `src/dados/apelidosFamosos.test.ts`. **Falta:** o Kauê aprovar o PR e aplicar a migração (dry-run antes); depois, conferência só leitura de quantos apelidos já gravados batem com a lista (só o número; apagar pelo `#admin`, se for o caso). A frase própria do card (14.6, D1) deve usar o mesmo filtro no servidor, sem cópia da lista no celular.
+0. ~~**Apelidos de jogadores famosos**~~ (PR #124, migração no ar em 05/11/2026; trilho D5): migração `20261106100000_apelidos_famosos.sql` acrescenta ~250 nomes e apelidos a `palavras_bloqueadas`; teste `src/dados/apelidosFamosos.test.ts`. **Falta:** a conferência só leitura de quantos apelidos já gravados batem com a lista (só o número; apagar pelo `#admin`, se for o caso). A frase própria do card (14.6, D1) deve usar o mesmo filtro no servidor, sem cópia da lista no celular.
 1. ~~**Telas das divisões:**~~ feito em 02/11/2026: aba Temporada no Ranking (só leitura de `temporada`, `classificacao_temporada`, `temporada_serie` e `fechamento_semana`). Ficaram para depois: a linha na Home ("9º na Série A, 4 pontos da zona"), as frases do narrador no fechamento do mês e o card de fim de temporada. Conferir no celular em 09/11 depois das 12h (1ª semana de novembro com pontos) e em 07/12 (dezembro com A e B, novembro em "Mês passado").
 2. ~~**Ranking incremental:**~~ feito em 02/11/2026 (migração `20261102100000_ranking_por_minuto`): fila + rotina `ranking-minuto`. No ar desde 02/11/2026 às 15h24: migração, `fechar-partida` v18 e site. Conferido no mesmo dia:
    - as 3 partidas das 15h34 às 15h37 entraram no ranking em 20 a 50 s (aviso na versão 3);
