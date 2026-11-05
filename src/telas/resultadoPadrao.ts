@@ -95,13 +95,15 @@ export function htmlResultado(p: PartesDoResultado): string {
       </section>
 
       <div data-convite-push></div>
-      <div data-convite-cidade></div>
       <div class="res-apoio" data-apoio></div>
 
       <div class="res-acoes">
         <button class="botao botao-sec" type="button" data-acao="inicio">Início</button>
         <button class="botao" type="button" data-acao="mais-uma">${esc(p.maisUma)}</button>
       </div>
+
+      <!-- No fim da página, depois de tudo: entra tarde (rede) e não empurra nada. -->
+      <div data-convite-cidade></div>
     </main>`;
 }
 

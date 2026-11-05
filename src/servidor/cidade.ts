@@ -4,7 +4,7 @@
 import { ErroServidor, comTempoLimite, garantirSessao, supabase } from './api';
 import { sincronizarTorcedor } from './torcedor';
 import { prefs } from '../estado';
-import type { Municipio } from '../jogo/cidade';
+import { codigoDoErroDeEscolher, type Municipio } from '../jogo/cidade';
 
 export interface CidadeEscolhida {
   codigo: number;
@@ -39,8 +39,7 @@ export async function escolherCidade(codigo: number | null): Promise<void> {
   const sb = await supabase();
   const { error } = await comTempoLimite(sb.rpc('escolher_cidade', { p_codigo: codigo }));
   if (error) {
-    const codigoErro = ['cidade_invalida', 'sem_torcedor', 'sessao_encerrada', 'muitas_trocas'].find((c) => error.message.includes(c));
-    throw new ErroServidor(codigoErro ?? (error.code === '42501' ? 'sessao_encerrada' : 'falha'));
+    throw new ErroServidor(codigoDoErroDeEscolher(error));
   }
 }
 

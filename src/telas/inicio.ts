@@ -55,7 +55,7 @@ import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
 import { ligarArquibancada } from './arquibancada';
 import { anotarCarreira } from './carreira';
 import * as realCidade from '../servidor/rankingCidades';
-import { deveLembrarDaCidade, linhaDaCidadeNaHome } from '../jogo/rankingCidades';
+import { acimaNaUltimaVisita, deveLembrarDaCidade, guardarCidadeVista, linhaDaCidadeNaHome, type CidadeVista } from '../jogo/rankingCidades';
 import { fraseDaCidade } from '../narrador/cidade';
 import { seloPre, faixa, numero as numeroBloco, posicaoHtml } from './blocos';
 import { arteEscada, arteGrade, htmlDaCasa, htmlDoLanceDoDia, htmlDosCards } from './cardsJogos';
@@ -663,12 +663,13 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     if (!time || lembreteMostrado) return;
     servidorCidade()
       .then(async (api) => ({ api, minha: await api.minhaCidadeSemana(semana) }))
-      .then(async ({ minha }) => {
+      .then(async ({ api, minha }) => {
         if (saiu) return;
         if (minha) {
-          const vistos = memoria<Record<string, boolean>>(CHAVE_CIDADE_VISTA) ?? {};
-          const antes = minha.codigo in vistos ? vistos[minha.codigo] : null;
-          if (minha.rival_acima !== null) memoria(CHAVE_CIDADE_VISTA, { [minha.codigo]: minha.rival_acima });
+          // O rival guardado só vale na mesma semana: de outra semana, não há "SUBIU!".
+          const guardado = memoria<CidadeVista>(CHAVE_CIDADE_VISTA);
+          const antes = acimaNaUltimaVisita(guardado, semana, minha.codigo);
+          if (minha.rival_acima !== null) memoria(CHAVE_CIDADE_VISTA, guardarCidadeVista(guardado, semana, minha.codigo, minha.rival_acima));
           const frase = fraseDaCidade(minha, antes);
           elCidade.innerHTML = `<a class="bloco-cidade-link" href="#ranking-cidades" data-acao="ver-cidades"><strong>${esc(linhaDaCidadeNaHome(minha))}</strong>${frase ? `<span class="adesivo">${esc(frase)}</span>` : ''}</a>`;
           elCidade.hidden = false;
@@ -678,6 +679,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         const hoje = diaBrasilia();
         const jogou = FALSA_CIDADE || (((await (await import('../servidor/api')).minhaCarreira().catch(() => null))?.xp ?? 0) > 0);
         if (saiu || !deveLembrarDaCidade({ temCidade: false, jogouAlguma: jogou, ultimo: prefs.get().cidadeLembrete, hoje })) return;
+        // Sessão encerrada em outro aparelho também volta "sem cidade": sem sessão válida, não lembra.
+        if (!(await api.sessaoValida()) || saiu) return;
         prefs.set({ cidadeLembrete: hoje });
         lembreteMostrado = true;
         elCidade.innerHTML = '<a class="bloco-cidade-link" href="#cidade" data-acao="escolher-cidade"><strong>Defende sua cidade também?</strong><span class="adesivo">Escolher minha cidade</span></a>';
