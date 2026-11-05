@@ -1,0 +1,453 @@
+/* Tela "SEU CARD" (jogo.md 14.6, visual.md 4.6): folha de tela cheia com o card no meio, as pontas dos outros estilos dos
+   lados, 8 quadradinhos (5 de ligar e desligar, 3 de ação) e os botões de salvar e compartilhar. */
+
+.cc {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  background: var(--gramado);
+  color: var(--cal);
+  overflow: hidden;
+}
+
+.cc::backdrop {
+  background: #000;
+}
+
+.cc-corpo {
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: calc(8px + env(safe-area-inset-top)) 16px calc(12px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+
+/* ---------- topo ---------- */
+.cc-topo {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: var(--e2);
+}
+
+.cc-fechar {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
+  color: var(--cal);
+  font-size: 18px;
+  touch-action: manipulation;
+}
+
+.cc-titulo {
+  font: 700 20px var(--fonte-rotulo);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cc-formatos {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
+}
+
+.cc-formatos button {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--cal);
+  font: 700 14px var(--fonte-rotulo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+
+.cc-formatos button[aria-checked='true'] {
+  background: var(--cal);
+  color: var(--tinta);
+}
+
+/* ---------- palco do card ---------- */
+.cc-palco {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 160px;
+  margin: 0 -16px;
+  overflow: hidden;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+  outline-offset: -2px;
+}
+
+.cc-palco.arrasta {
+  cursor: grabbing;
+}
+
+.cc-trilho {
+  --dx: 0px;
+  position: absolute;
+  inset: 0;
+}
+
+.cc-slide {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--cw, 0px);
+  height: var(--ch, 0px);
+  margin: calc(var(--ch, 0px) / -2) 0 0 calc(var(--cw, 0px) / -2);
+  border-radius: var(--raio);
+  background: var(--placa-alta);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transform: translateX(calc(var(--p) * (var(--cw, 0px) + var(--vao, 12px)) + var(--dx)));
+  overflow: hidden;
+}
+
+.cc-slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  transition: opacity var(--medio);
+}
+
+.cc-slide img:not([src]) {
+  visibility: hidden;
+}
+
+/* As pontas ficam apagadas para o card do meio mandar. */
+.cc-slide:not([data-pos='0']) img {
+  opacity: 0.55;
+}
+
+.cc-trilho.anima .cc-slide {
+  transition: transform var(--medio) var(--mola-firme);
+}
+
+.cc-montando {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 700 16px var(--fonte-rotulo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  pointer-events: none;
+}
+
+.cc-palco[data-vazio] .cc-slide {
+  opacity: 0.6;
+}
+
+/* ---------- pontinhos e dica ---------- */
+.cc-pontos {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  font: 700 14px var(--fonte-rotulo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.cc-pontos span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cc-pontos span::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.45;
+}
+
+.cc-pontos .on {
+  color: var(--cal);
+}
+
+.cc-pontos .on::before {
+  opacity: 1;
+}
+
+.cc-dica {
+  display: grid;
+  place-items: center;
+  min-height: 34px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--texto-suave);
+}
+
+/* ---------- 8 quadradinhos ---------- */
+.cc-grade {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--e2);
+}
+
+.cc-q {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 62px;
+  padding: 6px 2px;
+  border: 0;
+  border-radius: var(--raio);
+  font: 700 12.5px/1.1 var(--fonte-rotulo);
+  letter-spacing: 0.03em;
+  text-align: center;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  transition: transform var(--lento) var(--mola);
+}
+
+.cc-q .ico {
+  font-size: 22px;
+}
+
+.cc-q:active:not(:disabled) {
+  transform: scale(0.95);
+  transition-duration: 0s;
+}
+
+/* Desligado: placa escura. */
+.cc-liga {
+  background: var(--placa);
+  color: var(--cal);
+  box-shadow: var(--sombra-placa), inset 0 0 0 1px var(--linha);
+}
+
+/* Ligado: claro, com o ✓. */
+.cc-liga[aria-pressed='true'] {
+  background: var(--cal);
+  color: var(--tinta);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+.cc-check {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  display: none;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.cc-liga[aria-pressed='true'] .cc-check {
+  display: block;
+}
+
+/* Ação: verde. */
+.cc-acao {
+  background: #1b7a42;
+  color: #fff;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+.cc-acao:disabled {
+  opacity: 0.5;
+}
+
+/* ---------- salvar e compartilhar ---------- */
+.cc-acoes {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: var(--e2);
+  align-items: end;
+}
+
+.cc-salvar,
+.cc-compartilhar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: var(--raio);
+  font: 700 17px var(--fonte-rotulo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  transition: transform var(--lento) var(--mola);
+}
+
+.cc-salvar {
+  min-height: 52px;
+  padding: 0 8px;
+  font-size: 15px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  background: var(--placa-alta);
+  color: var(--cal);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.cc-compartilhar {
+  min-height: 58px;
+  background: var(--amarelo);
+  color: #1a1a1a;
+  font-size: 19px;
+  box-shadow: 0 4px 0 var(--amarelo-escuro);
+}
+
+.cc-salvar .ico,
+.cc-compartilhar .ico {
+  font-size: 22px;
+}
+
+.cc-salvar:active:not(:disabled),
+.cc-compartilhar:active:not(:disabled) {
+  transform: scale(0.96);
+  transition-duration: 0s;
+}
+
+.cc-salvar:disabled,
+.cc-compartilhar:disabled {
+  opacity: 0.5;
+}
+
+/* ---------- folhas de baixo (frase própria, apelido) ---------- */
+.cc-folha .cc-folha-titulo {
+  font: 700 18px var(--fonte-rotulo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cc-rotulo {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.cc-campo {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--e3);
+  border: 2px solid rgba(245, 245, 240, 0.45);
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+  color: var(--cal);
+  font: 17px var(--fonte-texto);
+}
+
+.cc-campo:focus-visible {
+  outline: 2px solid var(--cal);
+  outline-offset: 2px;
+}
+
+.cc-contador {
+  text-align: right;
+  font: 700 14px var(--fonte-rotulo);
+  letter-spacing: 0.04em;
+  color: var(--texto-suave);
+}
+
+.cc-contador.passou {
+  color: var(--caiu);
+}
+
+.cc-erro {
+  padding: var(--e2) var(--e3);
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 1px var(--caiu);
+  color: var(--cal);
+  font-size: 14px;
+}
+
+.cc-erro[hidden] {
+  display: none;
+}
+
+.cc-privacidade {
+  display: flex;
+  gap: var(--e2);
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.cc-privacidade .ico {
+  flex: none;
+  font-size: 18px;
+  margin-top: 1px;
+}
+
+.cc-folha-botoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.cc-principal,
+.cc-linha {
+  min-height: 52px;
+  padding: 0 18px;
+  border-radius: var(--raio);
+  font: 700 17px var(--fonte-rotulo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+
+.cc-principal {
+  border: 0;
+  background: var(--amarelo);
+  color: #1a1a1a;
+  box-shadow: 0 4px 0 var(--amarelo-escuro);
+}
+
+.cc-principal:disabled {
+  opacity: 0.5;
+}
+
+.cc-linha {
+  border: 2px solid rgba(245, 245, 240, 0.45);
+  background: transparent;
+  color: var(--cal);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-trilho.anima .cc-slide,
+  .cc-slide img,
+  .cc-q,
+  .cc-salvar,
+  .cc-compartilhar {
+    transition: none;
+  }
+
+  .cc-folha {
+    animation: none;
+  }
+}
+
+/* "Mandar a medalha": a fileira Card, Stories e Link. */
+.mandar-medalha .formatos.tres {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}

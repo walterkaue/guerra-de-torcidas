@@ -40,6 +40,8 @@ interface Prefs {
   favoritosLances?: string[];
   /** Dia (AAAA-MM-DD) em que a Home lembrou da cidade pela última vez: no máximo 1 vez por semana. */
   cidadeLembrete?: string;
+  /** Escolhas do card personalizável (jogo.md 14.6): estilo, formato e o que ficou desligado. Ler com `lerEscolhas`. */
+  card?: unknown;
 }
 
 function ler(): Prefs {

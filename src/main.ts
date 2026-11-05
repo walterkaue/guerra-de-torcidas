@@ -160,7 +160,10 @@ const timeDoLink = new URLSearchParams(location.search).get('time');
 if (!prefs.get().time && timePorId(timeDoLink)) prefs.set({ time: timeDoLink! });
 
 const app = document.querySelector<HTMLDivElement>('#app');
-if (app) {
+if (import.meta.env.DEV && app && new URLSearchParams(location.search).has('vitrineBoneco')) {
+  // Vitrine do boneco montável (só em desenvolvimento): no lugar do app inteiro, sem servidor nem rotas.
+  void import('./dev/vitrineBoneco').then((m) => m.montarVitrine(app));
+} else if (app) {
   iniciarApp(app);
   // Aparelho que perdeu a conta (desconectado em outro aparelho ou conta apagada): volta à escolha do time, com aviso.
   quandoSairDaConta(() => irPara({ tela: 'times', depois: 'inicio' }));
@@ -175,6 +178,8 @@ if (app) {
       : { tela: 'inicio' });
   const semTriagem = entrada.tela === 'admin' || entrada.tela === 'termos' || entrada.tela === 'entrar';
   irPara(jaJoga && !faixaDoAparelho() && !semTriagem ? { tela: 'triagem', depois: entrada } : entrada);
+  // Só em desenvolvimento: ?cardFalso abre a tela "Seu card" com dados de mentira (src/dev/cardFalso.ts).
+  if (import.meta.env.DEV && new URLSearchParams(location.search).has('cardFalso')) void import('./dev/cardFalso').then((m) => m.abrirCardFalso(document.body));
   if (document.readyState === 'complete') preaquecer();
   else window.addEventListener('load', preaquecer, { once: true });
   window.addEventListener('hashchange', () => {

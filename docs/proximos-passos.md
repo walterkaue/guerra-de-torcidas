@@ -32,12 +32,18 @@ Quatro trilhos, que rodam em paralelo (fila decidida pelo Kauê em 05/11/2026). 
 - **Títulos da Casa:** faltam 35 de 808.
 
 **Trilho C — Desenho no Chat** (o Kauê desenha e decide antes de construir):
-- cards personalizáveis;
+- ~~cards personalizáveis~~: desenhado e construído em 05/11/2026 (seção 14.6 do `docs/jogo.md`, branch `claude/cards-personalizaveis`), com os estilos Telão e Placar seco em Stories e Quadrado, os 8 quadradinhos e a frase própria. Prints em `docs/auditoria/2026-11-05/cards/`; o Kauê aprova antes do merge. Depois: o card do troféu da Galeria entra como mais um tipo em `TIPOS_DE_CARD`. Conferir no celular: Salvar imagem no Android e no iPhone (pela folha de compartilhar), o deslizar e o apelido escolhido pela própria tela;
+- primeiro acesso (ideia do Kauê em 05/11/2026, ainda sem decisão): o "Escolher meu time" da Home sem time é um botão pequeno, com cara de link, embaixo da faixa "Qual é a sua torcida?" (`src/telas/inicio.ts`), e passou batido num teste com um jogador novo. Ideias: a faixa inteira tocável e a escolha do time (apelido opcional) como primeira tela de toda sessão nova, com a triagem e o aquecimento antes da Home; quem chega por link de desafio, Time do Dia ou lance continua entrando direto;
 - Galeria de Troféus e ranking de 52 semanas (a regra já está na seção 5 do `docs/jogo.md`). **O servidor está no ar desde 05/11/2026** (migração `20261106000000_galeria_52_semanas.sql`, PR #122), com as funções `ranking_52_semanas`, `galeria_trofeus` e `galeria_cidades`. Conferido só leitura no mesmo dia: as 3 públicas abertas para anon e authenticated, a interna fechada, a Galeria com 0 troféu (tudo é pré-temporada) e as 52 semanas com as 3 semanas travadas de outubro (São Paulo 75, Flamengo 20, Corinthians 20, Palmeiras 17), batendo com `fechamento_semana`. Para testar a tela, falta o `?galeriaFalsa`, porque a Galeria fica vazia de verdade até o zerar;
 - resto das divisões: a linha na Home ("9º na Série A, 4 pontos da zona"), as frases do narrador no fechamento do mês e o card de fim de temporada;
-- boneco montável (avatar do Perfil, seção 14.2).
+- ~~boneco montável~~: desenho decidido em 05/11/2026 (`docs/jogo.md` seção 14.5).
 
 **Trilho D — Construção**, cada item depois do desenho dele no trilho C, com plano pela skill `planejar-tarefa`.
+- **Boneco montável (D5, `docs/jogo.md` seção 14.5):**
+  1. ~~D5a, peças e catálogo puro~~: no `main` desde 05/11/2026 (PR #125, prints aprovados pelo Kauê). `src/jogo/vestiario.ts` (também em `_shared`), o desenho em `src/telas/bonecoMontavel.ts` e a vitrine `?vitrineBoneco`. Nada do app usa ainda.
+  2. ~~D5-lista, nomes de jogadores na `palavras_bloqueadas`~~: PR #124; migração `20261106100000` no ar (conferido no `migration list` em 05/11/2026).
+  3. **D5b, servidor (próximo):** tabela da vestimenta com RLS, gravação só por função que passa pelo `validar` com as peças liberadas contadas no banco (nível, `lances_gols`, bônus do aquecimento), boneco sorteado na conta nova, "Ver meus dados", "Apagar meus dados", contas paradas, junção de contas (fica o de quem gerou o código) e o zerar da pré-temporada (sobrevive). Migração e função: dry-run antes e **revisão de segurança antes de aplicar**.
+  4. **D5c, telas:** Perfil (crachá de 84 px e bloco Vestiário), Home (busto de 52 px), vestiário, peça trancada e peça nova. O desenho entra por `import()`, para o bundle inicial não crescer.
 
 ## Conferir primeiro
 
@@ -77,8 +83,8 @@ select * from public.classificacao_temporada where mes = '2026-11-01' order by p
 
 ## Pode começar já
 
-0. **Lista de apelidos barrados no `#admin`** (06/11/2026, PR aberto): migração `20261106200000_apelidos_filtrados.sql` (função `apelidos_filtrados`, só administrador) e lista na seção "Apagar apelido". **Falta:** o Kauê aprovar o PR, aplicar a migração (dry-run antes) e publicar o site; depois, abrir `#admin` e apagar o apelido que bate com a lista de jogadores famosos (PR #124).
-0. **Apelidos de jogadores famosos** (06/11/2026, PR aberto): migração `20261106100000_apelidos_famosos.sql` acrescenta ~250 nomes e apelidos a `palavras_bloqueadas`; teste `src/dados/apelidosFamosos.test.ts`. **Falta:** o Kauê aprovar o PR e aplicar a migração (dry-run antes); depois, conferência só leitura de quantos apelidos já gravados batem com a lista (só o número; apagar pelo `#admin`, se for o caso). A frase própria do card (14.6, D1) deve usar o mesmo filtro no servidor, sem cópia da lista no celular.
+0. **Lista de apelidos barrados no `#admin`** (06/11/2026, PR #127; migração `20261106200000_apelidos_filtrados.sql` no ar): função `apelidos_filtrados` (só administrador) e lista na seção "Apagar apelido". **Falta:** o site com a tela (merge do PR) e, depois, o Kauê abrir `#admin` e apagar o apelido que bate com a lista de jogadores famosos (1 em 06/11).
+0. ~~**Apelidos de jogadores famosos**~~ (PR #124, migração no ar em 05/11/2026; trilho D5): migração `20261106100000_apelidos_famosos.sql` acrescenta ~250 nomes e apelidos a `palavras_bloqueadas`; teste `src/dados/apelidosFamosos.test.ts`. **Falta:** a conferência só leitura de quantos apelidos já gravados batem com a lista (só o número; apagar pelo `#admin`, se for o caso). A frase própria do card (14.6, D1) deve usar o mesmo filtro no servidor, sem cópia da lista no celular.
 1. ~~**Telas das divisões:**~~ feito em 02/11/2026: aba Temporada no Ranking (só leitura de `temporada`, `classificacao_temporada`, `temporada_serie` e `fechamento_semana`). Ficaram para depois: a linha na Home ("9º na Série A, 4 pontos da zona"), as frases do narrador no fechamento do mês e o card de fim de temporada. Conferir no celular em 09/11 depois das 12h (1ª semana de novembro com pontos) e em 07/12 (dezembro com A e B, novembro em "Mês passado").
 2. ~~**Ranking incremental:**~~ feito em 02/11/2026 (migração `20261102100000_ranking_por_minuto`): fila + rotina `ranking-minuto`. No ar desde 02/11/2026 às 15h24: migração, `fechar-partida` v18 e site. Conferido no mesmo dia:
    - as 3 partidas das 15h34 às 15h37 entraram no ranking em 20 a 50 s (aviso na versão 3);

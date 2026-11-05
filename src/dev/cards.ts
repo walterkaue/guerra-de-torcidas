@@ -1,6 +1,7 @@
 // Amostra dos cards "Telão do estádio" (só dev: /dev/cards.html): cada jogo, com vitória e derrota, para um time
 // de cor 1 clara, um escuro e um de cor parecida com o gramado, de dia e de noite. `?times=sao-paulo` e
-// `?luz=dia` filtram. `window.cards` guarda os canvas, para salvar por script.
+// `?luz=dia` filtram. `?personalizados` desenha os cards personalizáveis (Telão e Placar seco × Stories e Quadrado ×
+// tudo ligado e tudo desligado), com nomes como `lances-telao-stories-ligado`. `window.cards` guarda os canvas, para salvar por script.
 
 import '../style.css';
 import { timePorId, proTime, type Time } from '../dados/times';
@@ -8,7 +9,10 @@ import { desenharCard, prontoParaDesenhar, seloNivel } from '../jogo/card';
 import { desenharCardCrava } from '../jogo/cardCrava';
 import { desenharCardDia } from '../jogo/cardDia';
 import { desenharCardProva } from '../jogo/cardProva';
+import { desenharCardPersonalizado } from '../jogo/cardPersonalizadoDesenho';
+import { TIPOS_DE_CARD, planoDoCard, type Chave, type DadosDoCard, type EstiloCard, type FormatoCard } from '../jogo/cardPersonalizado';
 import type { Luz } from '../jogo/home';
+import type { ItemDaMedalha } from '../jogo/medalhaTextos';
 import type { Pistas, Tom } from '../jogo/timeDoDia';
 
 const busca = new URLSearchParams(location.search);
@@ -115,10 +119,98 @@ declare global {
   }
 }
 
+// ---------- cards personalizáveis (?personalizados) ----------
+
+const ITEM: ItemDaMedalha = { itemId: 'lance-1', tipo: 'lance', titulo: 'O primeiro gol de Tóquio', clube: 'Flamengo', adversario: 'Liverpool', ano: '1981', caminho: '#lance/lance-1' };
+const GRADE_DO_DIA = '⬛🟨⬛⬛🟨🟩\n🟨🟨⬛🟩🟨🟩\n🟩🟨🟨🟩🟨🟩\n🟩🟩🟩🟩🟩🟩';
+const LINKS = (t: Time) => `torcida.kauewalter.com.br/?d=ab12cd34&time=${t.id}`;
+
+function dadosPersonalizados(t: Time, luz: Luz): Record<string, DadosDoCard> {
+  const comum = (jogo: string, destaque: string, quem: string, lance: string, placarEmoji: string, frase: string, extra: Pick<DadosDoCard, "conteudo"> & Partial<DadosDoCard>): DadosDoCard => ({
+    tipo: 'jogo-x1' as const,
+    time: t,
+    jogo,
+    destaque,
+    quem: { comApelido: `Zé da Geral ${proTime(t)}`, semApelido: quem },
+    lance,
+    placarEmoji,
+    frase,
+    novoRecorde: true,
+    link: LINKS(t),
+    nivel: 'Craque',
+    luz,
+    ...extra,
+  });
+  const lances = [
+    { titulo: 'Gol de placa no último minuto', desfecho: 'gol' as const, recriou: true, pontos: 40 },
+    { titulo: 'Defesa no susto', desfecho: 'defesa' as const, recriou: false, pontos: 25 },
+    { titulo: 'Bola na barreira', desfecho: 'barreira' as const, recriou: false, pontos: 0 },
+  ];
+  const resultados = ['exato', 'saldo', 'vencedor', 'exato', 'errou', 'vencedor', 'saldo', 'errou', 'vencedor', 'exato'] as const;
+  return {
+    lances: comum('Lances do Jogo', '+65', 'Fiz 65 pontos pro time', 'Gol de placa no último minuto', '⚽🧤🧱', 'Aula de bola parada! Dá pra mandar no grupo.', {
+      conteudo: { jogo: 'lances', lances, tituloUnico: null, medalha: 'Bronze no lance Gol do título!' },
+    }),
+    penaltis: comum('Pênaltis', '+85', 'Fiz 85 pontos pro time', 'Venci a máquina por 4 a 3', '⚽⚽⚽⚽🧤', 'Fechou a conta! Pode mandar no grupo.', {
+      conteudo: { jogo: 'penaltis', golsJogador: 4, golsMaquina: 3 },
+    }),
+    prova: comum('Prova de Boleiro', '+150', 'Fiz 150 pontos pro time', 'Prova de Boleiro: cheguei na 6ª e parei, 58 pro time', '✅✅✅💡✅✋', 'Parou na hora certa. Esperteza pura.', {
+      conteudo: { jogo: 'prova', resumo: 'cheguei na 6ª e parei', escada: '✅✅✅💡✅✋' },
+    }),
+    dia: comum('Time do Dia #34', '+55', 'Fiz 55 pontos pro time', 'Time do Dia #34: achei em 4/6', GRADE_DO_DIA, 'Achou! Faro de quem acompanha tudo.', {
+      tipo: 'jogo',
+      conteudo: { jogo: 'dia', numero: 34, placar: '4/6', pistas: [linha(L, L, P, L, L, C), linha(P, P, L, C, P, C), linha(C, P, P, C, P, C), linha(C, C, C, C, C, C)] },
+    }),
+    'crava-meus': comum('Crava a Rodada · 34ª rodada', '10 CRAVADOS', 'Meus palpites pro time', '34ª rodada: meus palpites', '', '', {
+      tipo: 'jogo',
+      novoRecorde: false,
+      avisoFixo: 'Palpite de resenha: não vale nada além da zoeira.',
+      conteudo: { jogo: 'crava-meus', rodada: 34, linhas: PALPITES },
+    }),
+    'crava-resultado': comum('Crava a Rodada · 34ª rodada', '+124', 'Fiz 124 pontos pro time', '34ª rodada: 3 exatos, 2 no saldo', '🎯🎯🎯✅✅❌❌', 'Cravou! Tem gente abrindo a calculadora.', {
+      tipo: 'jogo',
+      avisoFixo: 'Palpite de resenha: não vale nada além da zoeira.',
+      conteudo: { jogo: 'crava-resultado', rodada: 34, resultados: resultados.map((acerto, i) => ({ acerto, certeza: i === 0 })) },
+    }),
+    medalha: comum('Lances do Jogo', 'OURO', 'Medalha pro time', 'Já sou ouro no primeiro gol de Tóquio — Flamengo x Liverpool (1981)', '🥇', 'Medalha no peito e zoeira no grupo.', {
+      tipo: 'jogo-x1',
+      novoRecorde: false,
+      conteudo: { jogo: 'medalha', medalha: 'ouro', item: ITEM },
+    }),
+  };
+}
+
+async function personalizados(): Promise<void> {
+  const estilos: EstiloCard[] = ['telao', 'placar'];
+  const formatos: FormatoCard[] = ['stories', 'quadrado'];
+  const luz = LUZES[0];
+  for (const id of TIMES_DA_AMOSTRA) {
+    const time = timePorId(id)!;
+    const todos = dadosPersonalizados(time, luz);
+    for (const [jogo, d] of Object.entries(todos)) {
+      for (const estilo of estilos) {
+        for (const formato of formatos) {
+          for (const modo of ['ligado', 'desligado'] as const) {
+            const ligados = new Set<Chave>(modo === 'ligado' ? TIPOS_DE_CARD[d.tipo].map((q) => q.chave) : []);
+            const plano = planoDoCard(d, { estilo, formato, ligados });
+            const canvas = desenharCardPersonalizado(d, plano);
+            const nome = `${TIMES_DA_AMOSTRA.length > 1 ? `${id}-` : ''}${jogo}-${estilo === 'telao' ? 'telao' : 'placar'}-${formato}-${modo}`;
+            window.cards.push({ nome, canvas });
+            canvas.style.cssText = `width:${formato === 'stories' ? 270 : 270}px;height:${formato === 'stories' ? 480 : 270}px`;
+            canvas.title = nome;
+            document.body.append(canvas);
+          }
+        }
+      }
+    }
+  }
+}
+
 document.body.style.cssText = 'margin:0;padding:16px;display:grid;grid-template-columns:repeat(auto-fill,270px);gap:12px';
 window.cards = [];
 await prontoParaDesenhar();
-for (const id of TIMES_DA_AMOSTRA) {
+if (busca.has('personalizados')) await personalizados();
+else for (const id of TIMES_DA_AMOSTRA) {
   const time = timePorId(id)!;
   for (const luz of LUZES) {
     for (const a of AMOSTRAS) {
