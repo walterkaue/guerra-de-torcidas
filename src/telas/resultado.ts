@@ -18,7 +18,9 @@ import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { bomMomentoDosLances } from '../jogo/apoio';
 import { oferecerApoio } from './apoio';
 import { convidarParaAvisos } from './convitePush';
+import { linhaMelhoresDoDia, textoForaDasMelhores } from '../jogo/lancesTextos';
 import { numero, placa, selo } from './blocos';
+import { lancesUnificados } from './corte';
 import { contar, htmlResultado, htmlSelosDaPosicao, ligarResultado } from './resultadoPadrao';
 import { vibrar } from './toque';
 
@@ -114,14 +116,20 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     ['5 de 5', p.cincoDeCinco],
   ];
 
+  const unificada = lancesUnificados();
+
   // Quando a partida não entrou no ranking, a explicação vem no lugar do efeito.
   const situacao = !d.valendo
     ? (d.aviso ?? 'Partida sem valer pontos.')
     : d.servidor?.sobSuspeita
       ? 'Essa ficou fora do ranking até a gente conferir.'
       : !d.servidor?.contaNoRanking
-        ? 'Não superou suas 5 melhores de hoje: o ranking não muda.'
+        ? unificada
+          ? textoForaDasMelhores(d.servidor?.melhoresDoDia)
+          : 'Não superou suas 5 melhores de hoje: o ranking não muda.'
         : null;
+  // Regra de 16/11: o dia vale as 3 melhores partidas de Lances (pênaltis, faltas e cara a cara juntos).
+  const melhoresDoDia = unificada && !situacao ? linhaMelhoresDoDia(d.servidor?.melhoresDoDia) : null;
 
   // Desafio por link: placar dos dois lado a lado. Mais pontos vence; empate fica com quem desafiou.
   const cmp = d.servidor?.comparacao;
@@ -166,10 +174,10 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
         ? `<div class="numeros${detalhes.length === 3 ? ' tres' : ''}">${detalhes.map(([nome, v]) => numero(`+${v}`, nome)).join('')}</div>`
         : ''
     }${blocoDesafio}`,
-    frases: d.frasesFinais,
+    frases: melhoresDoDia ? [...d.frasesFinais, melhoresDoDia] : d.frasesFinais,
     aviso: situacao ? { texto: situacao, forte: !d.valendo } : null,
     selos:
-      htmlSelosDaPosicao(d.servidor?.desempenho ?? null, 'penaltis') +
+      htmlSelosDaPosicao(d.servidor?.desempenho ?? null, unificada ? 'lances' : 'penaltis') +
       (esperaRanking ? selo('No ranking em 1 min', undefined, 'data-selo-ranking') : '') +
       (!situacao && !esperaRanking ? selo('Contou pro ranking') : ''),
     zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,

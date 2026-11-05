@@ -93,8 +93,18 @@ function card(id: JogoDaHome, nome: string, oQueE: string, arte: string, classe:
   </button>`;
 }
 
-/** Os quatro cards, em tamanhos diferentes: Lances e Crava largos, Prova e Time do Dia lado a lado. */
-export function htmlDosCards(oQueELances: string, linhaLances: string): string {
+/** Botão compacto "Lance do Dia" (regra de 16/11/2026), logo abaixo do card dos Lances. Nasce desligado até o catálogo chegar. */
+export function htmlDoLanceDoDia(): string {
+  return `<button class="lance-do-dia" type="button" data-acao="lance-do-dia" disabled>
+    <span class="rotulo">Lance do Dia</span><strong data-lance-do-dia>…</strong>
+  </button>`;
+}
+
+/**
+ * Os quatro cards, em tamanhos diferentes: Lances e Crava largos, Prova e Time do Dia lado a lado.
+ * `aposLances`: HTML que entra logo depois do card dos Lances (o Lance do Dia).
+ */
+export function htmlDosCards(oQueELances: string, linhaLances: string, aposLances = ''): string {
   return [
     card(
       'penaltis',
@@ -104,6 +114,7 @@ export function htmlDosCards(oQueELances: string, linhaLances: string): string {
       'largo',
       linhaLances,
     ),
+    aposLances,
     card('prova', 'Prova de Boleiro', '8 perguntas, para quando quiser', arteEscada(0), 'metade', ''),
     card('dia', 'Time do Dia', 'O clube secreto em 6 chutes', arteGrade([]), 'metade', ''),
     card(

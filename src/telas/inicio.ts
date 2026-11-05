@@ -1,7 +1,7 @@
 // Tela inicial (docs/visual.md, seção 3): cabeçalho com avatar, arquibancada do time, cabo de guerra contra o
 // rival com a sua posição, "Jogar agora", cards dos jogos com desenho e estado vivo, e o giro da semana.
 
-import { desafioDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
+import { desafioDoLink, desafioLancesDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
 import { LANCES_POR_CLUBE } from '../dados/lancesResumo';
 import { ID_OUTRO, TIMES, corDeTexto, corDoRivalNoDuelo, timePorId, type Time } from '../dados/times';
 import { faixaDoAparelho, prefs } from '../estado';
@@ -19,18 +19,24 @@ import {
   motivoDoJogo,
   placarCravado,
   proximoJogo,
+  rotuloDoLanceDoDia,
+  textoDoConviteLances,
+  TITULO_CONVITE_LANCES,
   tituloDaCasa,
   tonsDosChutes,
   type JogoDaHome,
   type SituacaoDoDia,
 } from '../jogo/home';
 import { linhaPosicaoSemana, linhaRecorde, setaDaPosicao } from '../jogo/posicao';
-import { linhaPenaltis, statusCrava } from '../jogo/statusJogos';
+import { linhaMelhoresDoDia } from '../jogo/lancesTextos';
+import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MELHORES_DO_DIA, lanceDoDia } from '../jogo/regraLances';
+import { faltamDosLances, linhaLancesUnificados, linhaPenaltis, statusCrava } from '../jogo/statusJogos';
 import { escolherFrase } from '../narrador/escolher';
 import { rivalDaSemana, situacaoDoDuelo } from '../narrador/rival';
 import { contextoDoTime } from '../narrador/sessao';
 import {
   estadoDoDia,
+  meusLancesHoje,
   meusRecordes,
   minhaPosicaoSemana,
   ouvirRanking,
@@ -38,6 +44,7 @@ import {
   rankingDaSemana,
   verDesafio,
   registrarAquecimento,
+  verDesafioLances,
   verDesafioProva,
   type LinhaRanking,
 } from '../servidor/api';
@@ -51,14 +58,15 @@ import * as realCidade from '../servidor/rankingCidades';
 import { deveLembrarDaCidade, linhaDaCidadeNaHome } from '../jogo/rankingCidades';
 import { fraseDaCidade } from '../narrador/cidade';
 import { seloPre, faixa, numero as numeroBloco, posicaoHtml } from './blocos';
-import { arteEscada, arteGrade, htmlDaCasa, htmlDosCards } from './cardsJogos';
+import { arteEscada, arteGrade, htmlDaCasa, htmlDoLanceDoDia, htmlDosCards } from './cardsJogos';
+import { lancesUnificados } from './corte';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
 import { qualidade } from './qualidade';
 
 export const TETO_DIARIO = 5;
-const SERVIDOR = { rankingDaSemana, minhaPosicaoSemana, partidasFechadasHoje, estadoDoDia, jogosDoCrava, meusDadosDoCrava, meusRecordes };
+const SERVIDOR = { rankingDaSemana, minhaPosicaoSemana, partidasFechadasHoje, estadoDoDia, jogosDoCrava, meusDadosDoCrava, meusRecordes, meusLancesHoje, verDesafioLances };
 // Em desenvolvimento, ?homeFalsa troca o servidor por um de mentira (src/dev/homeFalsa.ts) e ?diaFalso
 // usa o Time do Dia de mentira também no card (src/dev/diaFalso.ts).
 const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
@@ -127,6 +135,9 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const time = timePorId(prefs.get().time);
   const codigoDesafio = desafioDoLink();
   const codigoProva = desafioProvaDoLink();
+  // Regra de 16/11/2026 (docs/jogo.md, 14.7): card, "Jogar agora", Lance do Dia e X1 dos Lances. Antes do corte, nada muda.
+  const unificada = lancesUnificados();
+  const codigoLances = unificada ? desafioLancesDoLink() : undefined;
   const semana = semanaBrasilia();
   let pararRanking: (() => void) | null = null;
   let saiu = false;
@@ -191,7 +202,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       ${prefs.get().aquecimento?.cardNaHome && !prefs.get().aquecimento?.visto ? `<button class="card-aquecimento" type="button" data-acao="aquecimento"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}><span class="rotulo">Aquecimento</span><strong>Conheça os outros jogos</strong><small>1 min</small></button>` : ''}
 
       <section class="grade-jogos" aria-label="Jogos"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>
-        ${htmlDosCards(esc(linhaDosLances(time, LANCES_POR_CLUBE)), linhaPenaltis(null, TETO_DIARIO))}
+        ${htmlDosCards(esc(linhaDosLances(time, LANCES_POR_CLUBE)), unificada ? linhaLancesUnificados(null, MELHORES_DO_DIA) : linhaPenaltis(null, TETO_DIARIO), unificada ? htmlDoLanceDoDia() : '')}
       </section>
 
       <button class="giro faixa-tv" type="button" data-acao="ranking" aria-label="Ver o ranking da semana" hidden>
@@ -230,6 +241,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   let desafioAberto: string | undefined;
   const jogar = (desafio?: string) =>
     irPara(time ? { tela: 'partida', desafio } : { tela: 'times', depois: 'partida', desafio });
+  /** X1 dos Lances (?l=) já conferido: o "Jogar agora" também aceita. */
+  let desafioLancesAberto: string | undefined;
+  const jogarLances = (desafio?: string) =>
+    irPara(time ? { tela: 'lances', desafio } : { tela: 'times', depois: 'lances', desafio });
   const jogarProva = (desafio?: string) =>
     irPara(time ? { tela: 'prova', desafio } : { tela: 'times', depois: 'prova', desafio });
   const abrir: Record<JogoDaHome, () => void> = {
@@ -244,7 +259,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     b.addEventListener('click', () => abrir[b.dataset.jogo as JogoDaHome]()),
   );
   root.querySelector('[data-acao="jogar-agora"]')?.addEventListener('click', () =>
-    desafioAberto ? jogar(desafioAberto) : abrir[proximoJogo(situacao)](),
+    desafioAberto ? jogar(desafioAberto) : desafioLancesAberto ? jogarLances(desafioLancesAberto) : abrir[proximoJogo(situacao)](),
   );
   root.querySelector('[data-acao="aquecimento"]')?.addEventListener('click', () => irPara({ tela: 'aquecimento', depois: { tela: 'inicio' } }));
   root.querySelector('[data-acao="perfil"]')?.addEventListener('click', () => irPara({ tela: 'perfil' }));
@@ -291,13 +306,17 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const arte = (jogo: JogoDaHome, html: string) => (elCard(jogo).querySelector<HTMLElement>('[data-arte]')!.innerHTML = html);
 
   // Sem time ainda, ninguém jogou nada: vale a ordem normal, com a escolha do time na frente.
-  const situacao: SituacaoDoDia = { cravaFechaEm: null, chutesDoDia: time ? null : 0, faltamPartidas: time ? null : TETO_DIARIO };
+  const situacao: SituacaoDoDia = {
+    cravaFechaEm: null,
+    chutesDoDia: time ? null : 0,
+    faltamPartidas: time ? null : unificada ? LANCES_PARTIDAS_POR_DIA_UNIFICADO : TETO_DIARIO,
+  };
   // A linha do botão só aparece com as respostas na mão, para não trocar de jogo diante dos olhos.
   let respostas = time ? 3 : 0;
   const elMotivo = root.querySelector<HTMLElement>('[data-motivo]')!;
   const atualizarBotao = () => {
-    if (desafioAberto) elMotivo.textContent = 'Aceitar o X1 que te mandaram';
-    else if (respostas === 0) elMotivo.textContent = motivoDoJogo(proximoJogo(situacao), situacao, TETO_DIARIO);
+    if (desafioAberto || desafioLancesAberto) elMotivo.textContent = 'Aceitar o X1 que te mandaram';
+    else if (respostas === 0) elMotivo.textContent = motivoDoJogo(proximoJogo(situacao), situacao, TETO_DIARIO, unificada);
   };
   const respondeu = () => {
     respostas = Math.max(0, respostas - 1);
@@ -331,8 +350,24 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     if (tique % GIRO_SEGUNDOS === 0) girar();
   }, 1000);
 
-  // Lances: o teto do dia (somado com a Prova).
-  if (time) {
+  // Lances, regra nova: as 10 partidas valendo por dia (pênaltis, faltas e cara a cara somados) e as 3 melhores.
+  if (time && unificada) {
+    servidor()
+      .then((api) => api.meusLancesHoje())
+      .then((h) => {
+        if (saiu || !h) return;
+        const faltam = faltamDosLances(h);
+        situacao.faltamPartidas = faltam;
+        status('penaltis', linhaMelhoresDoDia(h.melhores) ?? linhaLancesUnificados(faltam, MELHORES_DO_DIA));
+      })
+      .catch(() => {
+        // sem internet: fica a regra geral
+      })
+      .finally(() => !saiu && respondeu());
+  }
+
+  // Lances, regra de antes: o teto do dia (somado com a Prova).
+  if (time && !unificada) {
     servidor()
       .then((api) => api.partidasFechadasHoje(diaBrasilia()))
       .then((n) => {
@@ -429,6 +464,63 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       .catch(() => {
         // sem internet: o desafio fica para quando voltar
         if (!saiu) caixa.hidden = true;
+      });
+  }
+
+  // ---------- Lance do Dia (regra de 16/11/2026) ----------
+  // O catálogo dos lances fica fora do bundle da Home: vem depois de desenhar. O mesmo lance para todos, sem bônus.
+  const botaoDoDia = root.querySelector<HTMLButtonElement>('[data-acao="lance-do-dia"]');
+  const catalogoDosLances = unificada ? Promise.all([import('../dados/lances'), import('../dados/adversarios')]) : null;
+  if (botaoDoDia && catalogoDosLances) {
+    catalogoDosLances
+      .then(([{ LANCES }, { SELECAO }]) => {
+        const id = lanceDoDia(diaBrasilia(), LANCES.map((l) => l.id));
+        const lance = LANCES.find((l) => l.id === id);
+        if (saiu || !lance) {
+          botaoDoDia.hidden = true;
+          return;
+        }
+        const clube = lance.clube === 'selecao' ? SELECAO.nome : (timePorId(lance.clube)?.nome ?? '');
+        const rotulo = rotuloDoLanceDoDia(lance.titulo, clube);
+        botaoDoDia.querySelector<HTMLElement>('[data-lance-do-dia]')!.textContent = rotulo.split(' · ').slice(1).join(' · ');
+        botaoDoDia.setAttribute('aria-label', rotulo);
+        botaoDoDia.disabled = false;
+        botaoDoDia.addEventListener('click', () => irPara(time ? { tela: 'lances', lance: lance.id } : { tela: 'times', depois: 'lances' }));
+      })
+      .catch(() => {
+        // sem o catálogo (rede): o botão some
+        botaoDoDia.hidden = true;
+      });
+  }
+
+  // ---------- convite de X1 dos Lances (link ?l=) ----------
+  if (codigoLances && catalogoDosLances) {
+    const caixa = root.querySelector<HTMLElement>('.convite-desafio')!;
+    servidor()
+      .then((api) => api.verDesafioLances(codigoLances))
+      .then(async (d) => {
+        if (!d || saiu) return; // código que não existe, ou sem resposta: a caixa some
+        const [{ LANCES }] = await catalogoDosLances;
+        if (saiu) return;
+        const t = timePorId(d.time_id);
+        const titulo = LANCES.find((l) => l.id === d.lance_id)?.titulo ?? null;
+        const texto = textoDoConviteLances({
+          quem: d.apelido,
+          time: t && t.id !== ID_OUTRO ? t.nome : null,
+          pontos: d.pontos,
+          titulo,
+        });
+        caixa.innerHTML = `
+          <p class="rotulo">${esc(TITULO_CONVITE_LANCES)}</p>
+          <p>${esc(texto)}</p>
+          <button class="botao-linha" type="button" data-acao="desafio-lances">Aceitar o X1</button>`;
+        caixa.hidden = false;
+        desafioLancesAberto = d.id;
+        atualizarBotao();
+        caixa.querySelector('[data-acao="desafio-lances"]')!.addEventListener('click', () => jogarLances(d.id));
+      })
+      .catch(() => {
+        // sem internet: o desafio fica para quando voltar (a caixa continua escondida)
       });
   }
 

@@ -9,7 +9,9 @@ import { prefs } from '../estado';
 import { desenharCardProva, linhaDoCard } from '../jogo/cardProva';
 import { conviteX1Prova } from '../jogo/convites';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
+import { textoForaDasMelhores } from '../jogo/lancesTextos';
 import { numero, placa, selo } from './blocos';
+import { lancesUnificados } from './corte';
 import { contar, htmlResultado, htmlSelosDaPosicao, ligarResultado } from './resultadoPadrao';
 
 const SITE = 'https://torcida.kauewalter.com.br';
@@ -40,7 +42,9 @@ ${conviteX1Prova(total, false)} ${link}`;
   const situacao = fim.sobSuspeita
     ? 'Essa ficou fora do ranking até a gente conferir.'
     : !fim.contaNoRanking
-      ? 'Não superou suas 5 melhores de hoje: o ranking não muda.'
+      ? lancesUnificados()
+        ? textoForaDasMelhores() // a Prova tem as 3 dela: sem a lista dos Lances
+        : 'Não superou suas 5 melhores de hoje: o ranking não muda.'
       : null;
 
   const cmp = fim.comparacao;

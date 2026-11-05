@@ -23,6 +23,8 @@ import {
   resolverCobranca,
   resolverDefesa,
   totalizar,
+  PONTOS,
+  PONTOS_UNIFICADOS,
   type EscolhaParOuImpar,
   type GestoCobranca,
   type Paridade,
@@ -31,6 +33,8 @@ import {
   type ResultadoDefesa,
 } from '../jogo/penaltis';
 import { pedirNumeroDoNarrador } from '../jogo/numeroNarrador';
+import { avisoLimiteDoDia } from '../jogo/lancesTextos';
+import { lancesUnificados } from './corte';
 import * as SERVIDOR from '../servidor/api';
 import {
   ErroServidor,
@@ -130,6 +134,8 @@ export const AVISO_SEM_PONTOS = 'Sem conexão: essa partida não vale pontos.';
 export const AVISO_CAIU = 'Caiu a conexão: essa partida não vale mais pontos.';
 /** Cada X1 dos pênaltis vale uma vez por pessoa (jogo.md, seção 6): na segunda, vira partida normal. */
 export const X1_JA_JOGADO = 'Esse X1 você já jogou. Vai uma partida nova!';
+/** X1 de partida criada antes de 16/11/2026 (ou de lance que mudou de faixa) não pode ser aceito depois (jogo.md, 14.7). */
+export const X1_EXPIROU = 'Esse X1 expirou. Vai uma partida nova!';
 
 export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   const time: Time = timePorId(prefs.get().time) ?? TIMES[TIMES.length - 1];
@@ -147,8 +153,13 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   let lanceALance = false;
   let dicaDoServidor: number | null = null;
   let desafio: DesafioRecebido | null = null;
+  // Tabela de pontos da partida no aparelho (fallback local e total): a de 16/11 depois do corte, senão a de sempre.
+  const tabela = lancesUnificados() ? PONTOS_UNIFICADOS : PONTOS;
+  /** O servidor disse `limite_do_dia`: a partida segue como treino, e a primeira cobrança lembra disso. */
+  let passouDoLimite = false;
   /** Abriu de novo um X1 já jogado (vale uma vez por pessoa): a partida é normal, e a abertura avisa. */
   let x1JaJogado = false;
+  let x1Expirou = false;
   let aviso: string | null = null;
   let fechamento: Promise<FechamentoDoServidor> | null = null;
   const narrador = criarNarrador(time, prefs.get().apelido);
@@ -346,7 +357,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     if (extra === 1) mostrarDica(elInstrucao, dicas.pedir('pen_morte_subita'));
     else if (dicaGuardada && extra <= 0) mostrarDica(elInstrucao, dicaGuardada);
     else if (partidasJogadas === 2) mostrarDica(elInstrucao, dicas.pedir('pen_cavadinha'));
-    if (rodada === 0) narrar(narrador.falar('abertura'), disputa ? chamadaDaDisputa(disputa) : x1JaJogado ? X1_JA_JOGADO : undefined);
+    if (rodada === 0 && passouDoLimite) mostrarDica(elInstrucao, dicas.pedir('lan_dez_valendo'));
+    if (rodada === 0) narrar(narrador.falar('abertura'), disputa ? chamadaDaDisputa(disputa) : x1Expirou ? X1_EXPIROU : x1JaJogado ? X1_JA_JOGADO : undefined);
     else if (rodada === COBRANCAS) narrar(narrador.falar('morte_subita', { placar: placarAtual() }));
     else if (cobrancaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['cobranca']) }));
   }
@@ -390,7 +402,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       }
       caiuALigacao();
     }
-    return resolverCobranca(semente, i, gq, dificuldade);
+    return resolverCobranca(semente, i, gq, dificuldade, tabela);
   }
 
   async function resultadoDaDefesa(zona: number, i: number): Promise<ResultadoDefesa> {
@@ -403,7 +415,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       }
       caiuALigacao();
     }
-    return resolverDefesa(semente, i, zona, dificuldade, desafio?.cobrancas?.[i]);
+    return resolverDefesa(semente, i, zona, dificuldade, desafio?.cobrancas?.[i], tabela);
   }
 
   let latencia = latenciaInicial();
@@ -637,10 +649,11 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       try {
         p = await pedir(codigoDesafio);
       } catch (e) {
-        if (!(e instanceof ErroServidor) || !codigoDesafio || !['proprio_desafio', 'desafio_nao_encontrado', 'desafio_ja_jogado'].includes(e.codigo)) throw e;
-        // Link do próprio desafio, link quebrado ou X1 já jogado: vira partida normal, valendo.
+        if (!(e instanceof ErroServidor) || !codigoDesafio || !['proprio_desafio', 'desafio_nao_encontrado', 'desafio_ja_jogado', 'desafio_expirado'].includes(e.codigo)) throw e;
+        // Link do próprio desafio, link quebrado, X1 já jogado ou expirado: vira partida normal, valendo.
         x1JaJogado = e.codigo === 'desafio_ja_jogado';
-        if (x1JaJogado) history.replaceState(null, '', location.pathname);
+        x1Expirou = e.codigo === 'desafio_expirado';
+        if (x1JaJogado || x1Expirou) history.replaceState(null, '', location.pathname);
         p = await pedir();
       }
       // Servidor antigo manda a semente; no lance a lance ela fica lá (a local só serve se cair a conexão).
@@ -659,9 +672,15 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     } catch (e) {
       if (e instanceof ErroServidor && e.codigo === 'saiu_da_conta') return; // a navegação já levou à escolha do time
       console.warn('Partida sem valer pontos:', e instanceof ErroServidor ? e.codigo : e);
-      mostrarAviso(e instanceof ErroServidor && e.codigo === 'muitas_partidas'
-        ? 'Calma! Muitas partidas em 1 minuto: esta não vale pontos.'
-        : comMotivo(AVISO_SEM_PONTOS, e));
+      if (e instanceof ErroServidor && e.codigo === 'limite_do_dia') {
+        // Regra de 16/11: 10 partidas valendo por dia. Esta segue no aparelho, de treino.
+        passouDoLimite = true;
+        mostrarAviso(avisoLimiteDoDia(true));
+      } else {
+        mostrarAviso(e instanceof ErroServidor && e.codigo === 'muitas_partidas'
+          ? 'Calma! Muitas partidas em 1 minuto: esta não vale pontos.'
+          : comMotivo(AVISO_SEM_PONTOS, e));
+      }
     }
     servidorPronto = true;
     talvezComecar();
@@ -697,7 +716,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
 
   async function encerrar(escolha?: EscolhaParOuImpar, parOuImpar?: ResultadoParOuImpar): Promise<void> {
     acabou = true;
-    let resultado = totalizar(cobrancas, defesas, parOuImpar);
+    let resultado = totalizar(cobrancas, defesas, parOuImpar, tabela);
     let servidor: FechamentoDoServidor | undefined;
     const fechando = fecharNoServidor(escolha);
     if (fechando) {

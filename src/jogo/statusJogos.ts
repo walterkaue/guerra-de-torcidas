@@ -10,6 +10,22 @@ export function linhaPenaltis(faltam: number | null, teto: number): string {
   return `${faltam === 1 ? 'falta 1 partida que conta' : `faltam ${faltam} partidas que contam`} hoje`;
 }
 
+/**
+ * Regra de 16/11/2026 (docs/jogo.md, 14.7): quantas das 10 partidas valendo de hoje ainda dá para fazer.
+ * Os pênaltis, as faltas e o cara a cara somam no mesmo limite. Null sem resposta do servidor.
+ */
+export function faltamDosLances(h: { feitas: number; limite: number } | null | undefined): number | null {
+  if (!h || !(h.limite > 0)) return null;
+  return Math.max(0, h.limite - h.feitas);
+}
+
+/** A linha de baixo do card e do "Jogar agora" na regra nova: "faltam 3 partidas valendo hoje". */
+export function linhaLancesUnificados(faltam: number | null, melhores: number): string {
+  if (faltam === null) return `As ${melhores} melhores do dia contam`;
+  if (faltam <= 0) return 'hoje já deu: o treino segue liberado';
+  return `${faltam === 1 ? 'falta 1 partida valendo' : `faltam ${faltam} partidas valendo`} hoje`;
+}
+
 /** "5h 12m", "40m": quanto falta para o próximo Time do Dia. */
 export function formatarVolta(ms: number): string {
   const min = Math.max(1, Math.ceil(ms / 60_000));

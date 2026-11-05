@@ -11,6 +11,8 @@ import {
   motivoDoJogo,
   placarCravado,
   proximoJogo,
+  rotuloDoLanceDoDia,
+  textoDoConviteLances,
   tituloDaCasa,
   tonsDosChutes,
   type LinhaDoGiro,
@@ -91,6 +93,23 @@ describe('Jogar agora', () => {
     expect(motivoDoJogo('dia', { ...tudo, chutesDoDia: 2 }, 5)).toBe('Time do Dia: 2 de 6 chutes hoje');
     expect(motivoDoJogo('penaltis', tudo, 5)).toBe('Lances do Jogo: faltam 3 partidas que contam hoje');
     expect(motivoDoJogo('prova', tudo, 5)).toBe('Prova de Boleiro: 8 perguntas, para quando quiser');
+  });
+
+  it('na regra nova, o motivo dos Lances conta as 10 partidas valendo e o Teto antigo some', () => {
+    expect(motivoDoJogo('penaltis', { ...tudo, faltamPartidas: 7 }, 5, true)).toBe('Lances do Jogo: faltam 7 partidas valendo hoje');
+    expect(motivoDoJogo('penaltis', { ...tudo, faltamPartidas: 7 }, 5)).toBe('Lances do Jogo: faltam 7 partidas que contam hoje');
+  });
+});
+
+describe('Lance do Dia e convite do X1 dos Lances', () => {
+  it('o botão traz título e clube, sem prometer bônus', () => {
+    expect(rotuloDoLanceDoDia('Gol do título', 'Flamengo')).toBe('Lance do Dia · Gol do título · Flamengo');
+  });
+  it('o convite é curto e neutro de gênero', () => {
+    expect(textoDoConviteLances({ quem: 'Zé', time: 'Flamengo', pontos: 96, titulo: 'Gol do título' })).toBe(
+      'Zé (Flamengo): 96 pontos no lance Gol do título. Mesmo lance, 3 tentativas. Faz mais?',
+    );
+    expect(textoDoConviteLances({ pontos: 40, titulo: null })).toBe('Alguém: 40 pontos num lance. Mesmo lance, 3 tentativas. Faz mais?');
   });
 });
 
