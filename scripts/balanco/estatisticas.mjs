@@ -1,5 +1,86 @@
 // Balanço entre minigames (docs/jogo.md, seção 11): as contas, sem banco. Puro e testado.
 
+import { LANCES } from '../../src/dados/lances.ts';
+import { TABELA_LANCES_ANTES, TABELA_LANCES_UNIFICADA } from '../../src/jogo/lances.ts';
+import { TETO_PARTIDA_UNIFICADO } from '../../src/jogo/penaltis.ts';
+import { DIA_DO_CORTE, ehUnificada } from '../../src/jogo/regraLances.ts';
+
+// ---- Lances do Jogo unificados (jogo.md, 14.7): a regra de uma partida sai da criada_em, nunca de "agora". ----
+
+/** Teto dos pênaltis no relatório de antes do corte (a tabela antiga chegava a 220; o relatório sempre usou 150). */
+export const TETO_PENALTIS_ANTES = 150;
+export const TETO_LANCES_ANTES = TABELA_LANCES_ANTES.teto; // 120
+export const TETO_UNIFICADO = TABELA_LANCES_UNIFICADA.teto; // 150, igual ao dos pênaltis
+if (TETO_UNIFICADO !== TETO_PARTIDA_UNIFICADO) throw new Error('teto unificado dos Lances e dos pênaltis divergem');
+
+export { DIA_DO_CORTE };
+export const REGRAS = ['antes', 'nova'];
+export const NOME_REGRA = { antes: 'antes de 16/11', nova: 'a partir de 16/11' };
+
+/** 'antes' ou 'nova', pela hora em que a partida foi criada. Sem data (dado antigo): 'antes'. */
+export function regraDaPartida(criadaEm) {
+  if (!criadaEm || Number.isNaN(new Date(criadaEm).getTime())) return 'antes';
+  return ehUnificada(criadaEm) ? 'nova' : 'antes';
+}
+
+/** Tipo do lance pelo catálogo: 'falta', 'cara_a_cara' (finalização) ou 'desconhecido'. */
+export function tipoDoLance(lanceId, catalogo = LANCES) {
+  const l = catalogo.find((x) => x.id === lanceId);
+  if (!l) return 'desconhecido';
+  return l.tipo === 'falta' ? 'falta' : l.tipo === 'finalizacao' ? 'cara_a_cara' : 'desconhecido';
+}
+
+/** Acrescenta `regra` e `tipo` ('penaltis', 'falta', 'cara_a_cara', 'desconhecido') a uma partida de pênaltis ou lances. */
+export function classificarPartida(p, catalogo = LANCES) {
+  const tipo = p.minigame === 'penaltis' ? 'penaltis' : tipoDoLance(p.lanceId, catalogo);
+  return { ...p, regra: regraDaPartida(p.criada), tipo };
+}
+
+/**
+ * Linhas de pênaltis/Lances do relatório para uma regra: { id, base, regra, nome, unidade, teto, faixa, quais(p) }.
+ * Antes: Lances do Jogo (faltas + cara a cara, teto 120), Pênaltis (teto 150) e os dois tipos de lance.
+ * Nova: Lances (pênaltis + faltas + cara a cara, teto 150) e os três tipos. "Fora do catálogo" só se houver.
+ */
+export function unidadesLances(regra, partidas = []) {
+  const nova = regra === 'nova';
+  const noRegra = (p) => p.regra === regra;
+  const tipo = (t) => (p) => noRegra(p) && p.tipo === t;
+  const tetoLance = nova ? TETO_UNIFICADO : TETO_LANCES_ANTES;
+  const tetoPen = nova ? TETO_UNIFICADO : TETO_PENALTIS_ANTES;
+  const u = (base, nome, teto, quais) => ({
+    id: `${base}_${regra}`,
+    base,
+    regra,
+    nome: `${nome} [${NOME_REGRA[regra]}]`,
+    unidade: 'partida',
+    teto,
+    faixa: true,
+    quais,
+  });
+  const linhas = nova
+    ? [u('lances', 'Lances (pênaltis + faltas + cara a cara)', tetoLance, noRegra)]
+    : [u('lances', 'Lances do Jogo (faltas + cara a cara)', tetoLance, (p) => noRegra(p) && p.minigame === 'lances')];
+  linhas.push(
+    u('penaltis', 'Pênaltis', tetoPen, tipo('penaltis')),
+    u('faltas', 'Faltas', tetoLance, tipo('falta')),
+    u('cara_a_cara', 'Cara a cara', tetoLance, tipo('cara_a_cara')),
+  );
+  if (partidas.some(tipo('desconhecido'))) linhas.push(u('desconhecido', 'Lance fora do catálogo', tetoLance, tipo('desconhecido')));
+  return linhas;
+}
+
+/**
+ * Peso na semana sem misturar as regras: semanas antes do corte mantêm 'penaltis' e 'lances' separados; a partir
+ * do corte os dois viram 'lances' ("Lances"). Devolve só as regras pedidas que têm linhas: [{ regra, minigames, peso }].
+ */
+export function pesoNaSemanaPorRegra(linhas, regras = REGRAS) {
+  const dobrar = (l) => ({ ...l, minigame: l.minigame === 'penaltis' ? 'lances' : l.minigame });
+  const ehNova = (l) => String(l.semana).slice(0, 10) >= DIA_DO_CORTE;
+  const grupos = { antes: linhas.filter((l) => !ehNova(l)), nova: linhas.filter(ehNova).map(dobrar) };
+  const minis = { antes: ['penaltis', 'prova', 'dia', 'crava', 'lances'], nova: ['lances', 'prova', 'dia', 'crava'] };
+  return regras.filter((r) => grupos[r].length).map((r) => ({ regra: r, minigames: minis[r], peso: pesoNaSemana(grupos[r], minis[r]) }));
+}
+
 /** Alvo de mediana por partida (pênaltis, Prova e Time do Dia). */
 export const FAIXA = { min: 45, max: 75 };
 /** Abaixo disto, os números não dizem nada: "pouca amostra". */
@@ -10,11 +91,8 @@ export const MIN_AMOSTRA = 20;
  * tem outra unidade). `teto`: quanto vale a partida perfeita (conta quantas chegaram lá).
  */
 export const UNIDADES = [
-  { id: 'penaltis', nome: 'Pênaltis', unidade: 'partida', teto: 150, faixa: true },
   { id: 'prova', nome: 'Prova de Boleiro', unidade: 'partida', teto: 150, faixa: true },
   { id: 'dia', nome: 'Time do Dia', unidade: 'dia', teto: 100, faixa: true },
-  // Por fora do teto de 5: o dia vale a melhor partida (jogo.md, seção 7.3).
-  { id: 'lances', nome: 'Lances do Jogo', unidade: 'partida', teto: 120, faixa: false },
   // Já com o peso ×2: placar exato (10) × certeza (2) × peso (2).
   { id: 'crava_palpite', nome: 'Crava (por palpite)', unidade: 'palpite', teto: 40, faixa: false },
   { id: 'crava_rodada', nome: 'Crava (por pessoa na rodada)', unidade: 'pessoa na rodada', teto: 300, faixa: false },
