@@ -10,7 +10,7 @@
 | Código | `main` com 100 arquivos de teste, todos passando (1.929 testes com os PRs #108 e #110, em 05/11) |
 | Publicação | Site no ar (`main` de 05/11, 8h07, com os PRs #108 e #110; deploy do GitHub Pages com sucesso). 39 migrações aplicadas (as duas dos Lances unificados, `20261105100000` e `20261105200000`, pelo Kauê em 05/11 de manhã; `migration list` com local = remoto). 13 funções publicadas (`lances` v3, `nova-partida` v21, `lance-penalti` v7 e `fechar-partida` v22 em 05/11, às 8h16) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
-| Tamanho | Em 04/11/2026, com o PR #96: bundle inicial de 59 KB gzip (limite: ~300 KB). Somando todo o JS e o CSS, 251 KB gzip. A conta de 02/11 deu 216 KB, mas pode não ter usado o mesmo método |
+| Tamanho | Em 05/11/2026, com as telas dos Lances unificados: `index-*.js` de 50,3 kB gzip (era 48,5; a Home passou a ler a regra de corte e o catálogo dos lances vem por `import()`). Em 04/11/2026, com o PR #96: bundle inicial de 59 KB gzip (limite: ~300 KB). Somando todo o JS e o CSS, 251 KB gzip. A conta de 02/11 deu 216 KB, mas pode não ter usado o mesmo método |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
 | Uso | Retrato de 04/11, 21h: 18 pessoas já jogaram; 48 partidas de pênaltis, 10 de faltas e cara a cara, 32 de Prova. Pênaltis trazem 74% dos pontos do ranking (eram 82% num retrato anterior). Amostra pequena |
 
@@ -31,7 +31,10 @@
 - **Catálogo recalibrado** (fator 0,418; todo fácil vira difícil e todo médio vira craque, lista em `docs/propostas/lances-faixas-unificadas.md`).
 - **Falta nesta frente, nesta ordem:**
   1. Teste no celular e bloco 7 (ver "Conferir primeiro", item 10).
-  2. **As telas novas, com prazo duro no domingo 15/11.** Uma sessão começou em 05/11, com a lista do que ler e chamar na descrição do PR #108. O merge publica o site. Sem elas, a partir de 16/11 faltas e cara a cara respondem 426 `atualize_o_app` no site de hoje e param de funcionar; os pênaltis continuam.
+  2. **As telas novas, com prazo duro no domingo 15/11:** construídas em 05/11/2026 no branch `claude/lances-unificados-telas` (PR aberto, revisado pelo subagente `revisor`); detalhe em `docs/jogo.md` 14.7, "Como está nas telas". **Falta só o merge, que publica o site.** Sem ele, a partir de 16/11 faltas e cara a cara respondem 426 `atualize_o_app` no site de hoje e param de funcionar; os pênaltis continuam.
+     - **Até domingo, nada muda na tela:** a tela decide pelo relógio do aparelho. Para ver a de segunda antes, em dev: `?lancesFalsos&corte=depois`, `?homeFalsa&corte=depois&l=código` e `?penaltiFalso&corte=depois&limite`.
+     - **Conferido em 390×844 e 360 px antes e depois do corte (pelo DOM, com os servidores de mentira):** tela única, Lance do Dia, X1 por link (ok e expirado), limite que vira treino (Lances e pênaltis), resultado, Conquistas e o "?". **Não testado de verdade:** a partida até o fim no aparelho (o painel do navegador estava escondido) e o servidor de produção com a regra nova (só existe a partir de 16/11).
+     - **Segunda 16/11, de manhã, no celular (o Kauê):** abrir o site (recarregar se estava aberto), jogar uma falta (3 tentativas do mesmo lance) e uma disputa de pênaltis, mandar o link do X1 para outra conta (aba anônima) e aceitar, e ver "Seus 3 melhores de hoje" e o Lance do Dia na Home.
   3. Segunda 16/11, antes das 12h: bloco 8 (ver "Conferir primeiro", item 10).
 - **Para voltar atrás:** antes de 16/11, as funções antigas funcionam com as migrações no ar (só o X1 de pênaltis repetido dá erro e joga sem valer pontos). Depois de 16/11, não volte as funções: já haverá partidas com a faixa gravada.
 
