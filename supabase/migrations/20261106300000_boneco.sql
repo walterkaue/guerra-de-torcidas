@@ -72,8 +72,9 @@ as $$
 $$;
 
 -- Conta sem boneco (nova ou de antes do D5b): grava o sorteado entre as peças do começo, na 1ª leitura. Duas leituras
--- ao mesmo tempo não brigam (on conflict do nothing): fica o que chegou primeiro, e as duas devolvem o mesmo. O teste
--- (PGlite, uma conexão) só prova em sequência; a corrida em Postgres de verdade fica para a revisão de segurança.
+-- ao mesmo tempo não brigam (on conflict do nothing): fica o que chegou primeiro, e as duas devolvem o mesmo (o select
+-- é outra instrução, com retrato novo, e enxerga a linha da outra). O teste (PGlite, uma conexão) só prova em
+-- sequência; a corrida foi provada em Postgres 17 com várias conexões na revisão de segurança de 05/11/2026.
 -- Devolve {"erro": "sessao" | "sem_torcedor"} ou {"vestimenta": jsonb}.
 create or replace function public.boneco_criar(p_torcedor uuid, p_sessao uuid, p_vestimenta jsonb)
 returns jsonb
@@ -114,7 +115,8 @@ begin
     return jsonb_build_object('erro', 'sem_torcedor');
   end if;
   -- Numa instrução só: no on conflict do update, a segunda gravação espera a linha da primeira e reavalia o where
-  -- sobre ela, então as duas contam. (Raciocínio do READ COMMITTED; o teste só prova em sequência.)
+  -- sobre ela, então as duas contam. (Provado em Postgres 17 na revisão de segurança de 05/11/2026: 60 gravações ao
+  -- mesmo tempo, 30 passam.)
   insert into public.torcedor_boneco as b (torcedor_id, vestimenta, gravacoes, janela_desde)
   values (p_torcedor, p_vestimenta, 1, now())
   on conflict (torcedor_id) do update
