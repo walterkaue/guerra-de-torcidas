@@ -19,6 +19,8 @@ import {
   type ResultadoCobranca,
   type ResultadoDefesa,
   type SementesPartida,
+  type TabelaPenaltis,
+  PONTOS,
 } from './penaltis.ts';
 
 /** O que a partida espera agora. Na defesa vem só a dica: alvo e "erra" ficam no servidor. */
@@ -46,6 +48,7 @@ export function passoAtual(
   gestos: Gestos,
   dificuldade: number,
   gravadas?: readonly GestoCobranca[],
+  tabela: TabelaPenaltis = PONTOS,
 ): Passo {
   const nc = gestos.cobrancas.length;
   const nd = gestos.defesas.length;
@@ -54,8 +57,8 @@ export function passoAtual(
   const defesas: ResultadoDefesa[] = [];
   for (let i = 0; i < nd; i++) {
     if (!precisaDeOutraRodada(cobrancas, defesas)) throw new LanceForaDeOrdem(`rodada ${i + 1} não deveria existir`);
-    cobrancas.push(resolverCobranca(sementeDoLance(semente, 'cobranca', i), i, gestos.cobrancas[i], dificuldade));
-    defesas.push(resolverDefesa(sementeDoLance(semente, 'defesa', i), i, gestos.defesas[i], dificuldade, gravadas?.[i]));
+    cobrancas.push(resolverCobranca(sementeDoLance(semente, 'cobranca', i), i, gestos.cobrancas[i], dificuldade, tabela));
+    defesas.push(resolverDefesa(sementeDoLance(semente, 'defesa', i), i, gestos.defesas[i], dificuldade, gravadas?.[i], tabela));
   }
   if (nc > nd) {
     if (!precisaDeOutraRodada(cobrancas, defesas)) throw new LanceForaDeOrdem(`rodada ${nc} não deveria existir`);
@@ -72,23 +75,25 @@ export function jogarLance(
   lance: Lance,
   dificuldade: number,
   gravadas?: readonly GestoCobranca[],
+  /** Tabela pela data de criação da partida: os pontos de cada lance vão para a tela. */
+  tabela: TabelaPenaltis = PONTOS,
 ): Jogada {
-  const passo = passoAtual(semente, gestos, dificuldade, gravadas);
+  const passo = passoAtual(semente, gestos, dificuldade, gravadas, tabela);
   if (passo.tipo !== lance.tipo) throw new LanceForaDeOrdem(`esperava ${passo.tipo}, veio ${lance.tipo}`);
   if (lance.tipo === 'cobranca') {
     const gesto = normalizarCobranca(lance.gesto);
     const novos: Gestos = { cobrancas: [...gestos.cobrancas, gesto], defesas: [...gestos.defesas] };
     return {
       gestos: novos,
-      cobranca: resolverCobranca(sementeDoLance(semente, 'cobranca', passo.i), passo.i, gesto, dificuldade),
-      proximo: passoAtual(semente, novos, dificuldade, gravadas),
+      cobranca: resolverCobranca(sementeDoLance(semente, 'cobranca', passo.i), passo.i, gesto, dificuldade, tabela),
+      proximo: passoAtual(semente, novos, dificuldade, gravadas, tabela),
     };
   }
   const zona = normalizarDefesa(lance.zona);
   const novos: Gestos = { cobrancas: [...gestos.cobrancas], defesas: [...gestos.defesas, zona] };
   return {
     gestos: novos,
-    defesa: resolverDefesa(sementeDoLance(semente, 'defesa', passo.i), passo.i, zona, dificuldade, gravadas?.[passo.i]),
-    proximo: passoAtual(semente, novos, dificuldade, gravadas),
+    defesa: resolverDefesa(sementeDoLance(semente, 'defesa', passo.i), passo.i, zona, dificuldade, gravadas?.[passo.i], tabela),
+    proximo: passoAtual(semente, novos, dificuldade, gravadas, tabela),
   };
 }

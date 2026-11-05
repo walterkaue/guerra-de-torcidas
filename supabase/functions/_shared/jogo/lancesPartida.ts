@@ -8,17 +8,23 @@
 // (o celular importa os tipos) e a detecção de partidas impossíveis dos Lances.
 
 import {
+  FAIXAS,
   LANCES_POR_PARTIDA,
   resolverLance,
   goleiroAntesDoChute,
+  TABELA_LANCES_ANTES,
   type CenaLance,
   type Faixa,
   type Lance,
   type ResultadoLance,
+  type TabelaLances,
 } from './lances.ts';
 import { normalizarCobranca, type GestoCobranca } from './penaltis.ts';
 
-/** Partidas valendo por dia (ajustável em config_deteccao, chave `lances_por_dia`). */
+/**
+ * Partidas valendo por dia antes dos Lances unificados (ajustável em config_deteccao, chave `lances_por_dia`).
+ * A partir de 16/11/2026 vale LANCES_PARTIDAS_POR_DIA_UNIFICADO (regraLances.ts), somando os três tipos.
+ */
 export const LANCES_PARTIDAS_POR_DIA = 6;
 
 export class LanceForaDeOrdem extends Error {}
@@ -53,6 +59,22 @@ export interface GestosLances {
   /** Uma semente por lance (0 a 2^32 - 1). Nunca sai do servidor. */
   sementes: number[];
   cobrancas: GestoCobranca[];
+  /**
+   * Faixa de cada lance, decidida ao começar (regra nova: catálogo recalibrado ou faixa corrigida pela taxa real).
+   * Sem ela (partidas de antes), vale a do catálogo. Mudança de faixa depois nunca mexe nesta partida.
+   */
+  faixas?: Faixa[];
+  /** X1 recebido: o código do desafio (fica aqui porque partidas.desafio_id é dos pênaltis). */
+  desafio?: string;
+}
+
+/** As cenas da partida com a faixa gravada ao começar (se houver). Faixa fora da lista é recusada. */
+export function cenasComFaixa(cenas: readonly Lance[], faixas?: readonly Faixa[] | null): Lance[] {
+  if (!faixas) return [...cenas];
+  if (faixas.length !== cenas.length || !faixas.every((f) => FAIXAS.includes(f))) {
+    throw new LanceForaDeOrdem('faixas guardadas com formato errado');
+  }
+  return cenas.map((c, i) => ({ ...c, faixa: faixas[i] }));
 }
 
 export interface JogadaLance {
@@ -62,8 +84,8 @@ export interface JogadaLance {
   goleiroProximo: number | null;
 }
 
-function jogado(semente: number, i: number, cena: Lance, gesto: GestoCobranca): LanceJogado {
-  return { ...resolverLance(semente, i, cena, gesto), lanceId: cena.id, faixa: cena.faixa, gesto };
+function jogado(semente: number, i: number, cena: Lance, gesto: GestoCobranca, tabela: TabelaLances): LanceJogado {
+  return { ...resolverLance(semente, i, cena, gesto, tabela), lanceId: cena.id, faixa: cena.faixa, gesto };
 }
 
 function conferir(cenas: readonly Lance[], sementes: readonly number[]): void {
@@ -76,17 +98,29 @@ function conferir(cenas: readonly Lance[], sementes: readonly number[]): void {
  * Joga o lance `i`. Só aceita o próximo da fila (nem repetido, nem pulando) e no máximo 3.
  * `cenas` vem do catálogo do servidor, pelos ids escolhidos ao começar; o celular nunca manda a cena.
  */
-export function jogarLanceDoJogo(cenas: readonly Lance[], gestos: GestosLances, i: number, gestoBruto: GestoCobranca): JogadaLance {
+export function jogarLanceDoJogo(
+  cenas: readonly Lance[],
+  gestos: GestosLances,
+  i: number,
+  gestoBruto: GestoCobranca,
+  tabela: TabelaLances = TABELA_LANCES_ANTES,
+): JogadaLance {
   const { sementes } = gestos;
   conferir(cenas, sementes);
   if (!Number.isInteger(i) || i !== gestos.cobrancas.length || i >= LANCES_POR_PARTIDA) {
     throw new LanceForaDeOrdem(`esperava o lance ${gestos.cobrancas.length}, veio ${i}`);
   }
   const gesto = normalizarCobranca(gestoBruto);
-  const novos: GestosLances = { lances: [...gestos.lances], sementes: [...sementes], cobrancas: [...gestos.cobrancas, gesto] };
+  const novos: GestosLances = {
+    lances: [...gestos.lances],
+    sementes: [...sementes],
+    cobrancas: [...gestos.cobrancas, gesto],
+    ...(gestos.faixas ? { faixas: [...gestos.faixas] } : {}),
+    ...(gestos.desafio ? { desafio: gestos.desafio } : {}),
+  };
   return {
     gestos: novos,
-    lance: jogado(sementes[i], i, cenas[i], gesto),
+    lance: jogado(sementes[i], i, cenas[i], gesto, tabela),
     goleiroProximo: i + 1 < LANCES_POR_PARTIDA ? goleiroParaOCelular(sementes[i + 1], i + 1, cenas[i + 1]) : null,
   };
 }
@@ -96,24 +130,39 @@ export function fecharPartidaLances(
   sementes: readonly number[],
   cenas: readonly Lance[],
   gestos: readonly GestoCobranca[],
+  tabela: TabelaLances = TABELA_LANCES_ANTES,
 ): ResultadoPartidaLancesServidor {
   conferir(cenas, sementes);
   if (gestos.length !== LANCES_POR_PARTIDA) throw new LanceForaDeOrdem('a partida tem 3 lances, com um gesto para cada');
-  const lances = cenas.map((c, i) => jogado(sementes[i], i, c, normalizarCobranca(gestos[i])));
+  const lances = cenas.map((c, i) => jogado(sementes[i], i, c, normalizarCobranca(gestos[i]), tabela));
   return {
     lances,
     gols: lances.filter((l) => l.desfecho === 'gol').length,
     recriados: lances.filter((l) => l.recriou).length,
-    pontos: lances.reduce((s, l) => s + l.pontos, 0),
+    // Guarda do teto: com as tabelas de hoje a soma nunca passa dele.
+    pontos: Math.min(tabela.teto, lances.reduce((s, l) => s + l.pontos, 0)),
   };
 }
 
+/** Regra nova: a partida é um lance só, tentado 3 vezes. */
+export const tentativasDoLance = (id: string): string[] => Array.from({ length: LANCES_POR_PARTIDA }, () => id);
+export const ehLanceRepetido = (ids: readonly string[]): boolean =>
+  ids.length === LANCES_POR_PARTIDA && ids.every((id) => id === ids[0]);
+
 // ---------- formato das respostas da função `lances` ----------
 
-/** acao 'nova': começa uma partida valendo com os 3 lances escolhidos (pode repetir). */
+/**
+ * acao 'nova': começa uma partida valendo. Regra nova (desde 16/11/2026): `{ lance: id }` ou `{ desafio: código }`,
+ * e a partida são 3 tentativas desse lance. Antes do corte também vale a lista antiga `{ lances: [id, id, id] }`.
+ */
 export interface RespostaNovaLances {
   partidaId: string;
   expiraEm: string;
+  /** Os 3 ids da partida (na regra nova, o mesmo 3 vezes) e a faixa de cada um nesta partida. */
+  lances?: string[];
+  faixas?: Faixa[];
+  /** X1 recebido: quem desafiou e os pontos a bater (empate fica com quem desafiou). */
+  desafio?: { codigo: string; timeId: string; apelido: string | null; pontos: number } | null;
   /** Onde o goleiro começa no 1º lance (x de -1 a 1, arredondado). */
   goleiroX: number;
   /** Partidas valendo que ainda dá para começar hoje, já contando esta. */
@@ -152,6 +201,12 @@ export interface FechamentoLances {
   /** Medalhas que esta partida fez subir (bronze, prata ou ouro num lance). */
   medalhas: MedalhaNova[];
   restantesHoje: number;
+  /** Regra nova: as 3 melhores partidas de Lances de hoje (pênaltis, faltas e cara a cara), em pontos. */
+  melhoresDoDia?: number[];
+  /** Regra nova, partida normal: o código do X1 que esta partida gerou. */
+  desafio?: { codigo: string } | null;
+  /** X1 recebido: o placar de quem desafiou e se esta partida venceu (mais pontos; empate fica com quem desafiou). */
+  comparacao?: { desafiante: string | null; pontosDesafiante: number; venceu: boolean } | null;
 }
 
 /** acao 'lance': o resultado de um lance; `fim` só vem no 3º. */

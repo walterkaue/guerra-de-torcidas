@@ -129,6 +129,18 @@ export interface ResultadoPartida {
   pontos: Pontuacao;
 }
 
+/** Uma tabela de pontos dos pênaltis. `teto` limita o total da partida (a tabela de antes não tinha). */
+export interface TabelaPenaltis {
+  gol: number;
+  angulo: number;
+  cavadinha: number;
+  defesa: number;
+  vitoria: number;
+  cincoDeCinco: number;
+  teto?: number;
+}
+
+/** Tabela de antes dos Lances unificados (partidas criadas até 15/11/2026). Teto real: 220. */
 export const PONTOS = {
   gol: 10,
   angulo: 5,
@@ -137,6 +149,24 @@ export const PONTOS = {
   vitoria: 20,
   cincoDeCinco: 25,
 } as const;
+
+/** Teto de uma partida nos Lances unificados (jogo.md, seção 14.7), igual nos três tipos e na Prova. */
+export const TETO_PARTIDA_UNIFICADO = 150;
+
+/**
+ * Tabela dos Lances unificados (decidida em 04/11/2026, "mais baixa" de docs/propostas/lances-unificados.md),
+ * para partidas criadas a partir de 16/11/2026. O maior caminho possível dá 136 (5 cavadinhas, 5 defesas, vitória
+ * e os dois 5 de 5); o teto de 150 é a guarda no fechamento, para uma tabela futura não passar sem ninguém ver.
+ */
+export const PONTOS_UNIFICADOS: TabelaPenaltis = {
+  gol: 7,
+  angulo: 4,
+  cavadinha: 6,
+  defesa: 7,
+  vitoria: 15,
+  cincoDeCinco: 10,
+  teto: TETO_PARTIDA_UNIFICADO,
+};
 
 const SAL_COBRANCA = 0xc0b;
 const SAL_DEFESA = 0xdef;
@@ -236,6 +266,7 @@ export function resolverCobranca(
   i: number,
   gestoBruto: GestoCobranca,
   dificuldade: number,
+  tabela: TabelaPenaltis = PONTOS,
 ): ResultadoCobranca {
   const g = normalizarCobranca(gestoBruto);
   const rnd = criarAleatorio(misturar(semente, SAL_COBRANCA, i));
@@ -290,7 +321,7 @@ export function resolverCobranca(
 
   if (defendeu) return { ...base, desfecho: 'defesa', angulo, raspouTrave: false, pontos: 0 };
 
-  const pontos = PONTOS.gol + (angulo ? PONTOS.angulo : 0) + (cavadinha ? PONTOS.cavadinha : 0);
+  const pontos = tabela.gol + (angulo ? tabela.angulo : 0) + (cavadinha ? tabela.cavadinha : 0);
   return { ...base, desfecho: 'gol', angulo, raspouTrave, pontos };
 }
 
@@ -331,6 +362,7 @@ export function resolverDefesa(
   zonaBruta: GestoDefesa,
   dificuldade: number,
   gravada?: GestoCobranca,
+  tabela: TabelaPenaltis = PONTOS,
 ): ResultadoDefesa {
   const plano = planejarDefesa(semente, i, dificuldade, gravada);
   const contraGravada = !!plano.gravada;
@@ -357,7 +389,7 @@ export function resolverDefesa(
   // Defender chute gravado fraco (força abaixo de 32, inclui cavadinha) não rende pontos.
   const valePontos = !gravada || normalizarCobranca(gravada).forca >= FORCA_MINIMA_DESAFIO;
   return defendeu
-    ? { desfecho: 'defesa', alvo: plano.alvo, zonaGoleiro, contraGravada, pontos: valePontos ? PONTOS.defesa : 0 }
+    ? { desfecho: 'defesa', alvo: plano.alvo, zonaGoleiro, contraGravada, pontos: valePontos ? tabela.defesa : 0 }
     : { desfecho: 'gol', alvo: plano.alvo, zonaGoleiro, contraGravada, pontos: 0 };
 }
 
@@ -407,6 +439,8 @@ export function simularPartida(
   numeroNarrador?: number,
   /** Desafio por link: cobranças gravadas de quem desafiou. Faltando (morte súbita), bate a máquina. */
   gravadas?: readonly GestoCobranca[],
+  /** Tabela pela data de criação da partida (tabelaPenaltisDaPartida, em regraLances.ts). */
+  tabela: TabelaPenaltis = PONTOS,
 ): ResultadoPartida {
   const n = gestos.cobrancas.length;
   if (n !== gestos.defesas.length || n < COBRANCAS || n > RODADAS_MAX) {
@@ -418,8 +452,8 @@ export function simularPartida(
   for (let i = 0; i < n; i++) {
     // Rodada a mais do que a regra permite (ex.: morte súbita depois de desempatar) é recusada.
     if (!precisaDeOutraRodada(cobrancas, defesas)) throw new Error(`Rodada ${i + 1} não deveria existir.`);
-    cobrancas.push(resolverCobranca(sementeDoLance(semente, 'cobranca', i), i, gestos.cobrancas[i], d));
-    defesas.push(resolverDefesa(sementeDoLance(semente, 'defesa', i), i, gestos.defesas[i], d, gravadas?.[i]));
+    cobrancas.push(resolverCobranca(sementeDoLance(semente, 'cobranca', i), i, gestos.cobrancas[i], d, tabela));
+    defesas.push(resolverDefesa(sementeDoLance(semente, 'defesa', i), i, gestos.defesas[i], d, gravadas?.[i], tabela));
   }
   if (precisaDeOutraRodada(cobrancas, defesas)) throw new Error('Faltam rodadas de morte súbita.');
 
@@ -430,13 +464,18 @@ export function simularPartida(
   } else if (gestos.parOuImpar) {
     throw new Error('Par ou ímpar sem empate.');
   }
-  return totalizar(cobrancas, defesas, parOuImpar);
+  return totalizar(cobrancas, defesas, parOuImpar, tabela);
 }
 
+/**
+ * Soma a partida. As cobranças e defesas têm de ter sido resolvidas com a mesma `tabela` (os pontos de cada
+ * defesa já vêm nela). Com `tabela.teto`, o total nunca passa dele.
+ */
 export function totalizar(
   cobrancas: ResultadoCobranca[],
   defesas: ResultadoDefesa[],
   parOuImpar?: ResultadoParOuImpar,
+  tabela: TabelaPenaltis = PONTOS,
 ): ResultadoPartida {
   const golsJogador = contarGols(cobrancas);
   const golsMaquina = contarSofridos(defesas);
@@ -454,16 +493,18 @@ export function totalizar(
     defesas.slice(0, COBRANCAS).filter((d) => d.desfecho === 'defesa' && d.pontos > 0).length === COBRANCAS;
 
   const pontos: Pontuacao = {
-    gols: golsJogador * PONTOS.gol,
-    angulos: cobrancas.filter((c) => c.desfecho === 'gol' && c.angulo).length * PONTOS.angulo,
-    cavadinhas: cobrancas.filter((c) => c.desfecho === 'gol' && c.cavadinha).length * PONTOS.cavadinha,
+    gols: golsJogador * tabela.gol,
+    angulos: cobrancas.filter((c) => c.desfecho === 'gol' && c.angulo).length * tabela.angulo,
+    cavadinhas: cobrancas.filter((c) => c.desfecho === 'gol' && c.cavadinha).length * tabela.cavadinha,
     defesas: defesas.reduce((soma, d) => soma + d.pontos, 0),
-    vitoria: venceu ? PONTOS.vitoria : 0,
-    cincoDeCinco: (cincoCobrancas ? PONTOS.cincoDeCinco : 0) + (cincoDefesas ? PONTOS.cincoDeCinco : 0),
+    vitoria: venceu ? tabela.vitoria : 0,
+    cincoDeCinco: (cincoCobrancas ? tabela.cincoDeCinco : 0) + (cincoDefesas ? tabela.cincoDeCinco : 0),
     total: 0,
   };
-  pontos.total =
+  const soma =
     pontos.gols + pontos.angulos + pontos.cavadinhas + pontos.defesas + pontos.vitoria + pontos.cincoDeCinco;
+  // Guarda do teto (Lances unificados): com a tabela de 16/11 nunca dispara; a tabela de antes não tem teto.
+  pontos.total = tabela.teto === undefined ? soma : Math.min(soma, tabela.teto);
 
   return {
     cobrancas,
