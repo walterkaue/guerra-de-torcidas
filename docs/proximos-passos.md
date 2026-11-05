@@ -44,6 +44,8 @@ Quatro trilhos, que rodam em paralelo (fila decidida pelo Kauê em 05/11/2026). 
   2. ~~D5-lista, nomes de jogadores na `palavras_bloqueadas`~~: PR #124; migração `20261106100000` no ar (conferido no `migration list` em 05/11/2026).
   3. **D5b, servidor (próximo):** tabela da vestimenta com RLS, gravação só por função que passa pelo `validar` com as peças liberadas contadas no banco (nível, `lances_gols`, bônus do aquecimento), boneco sorteado na conta nova, "Ver meus dados", "Apagar meus dados", contas paradas, junção de contas (fica o de quem gerou o código) e o zerar da pré-temporada (sobrevive). Migração e função: dry-run antes e **revisão de segurança antes de aplicar**.
   4. **D5c, telas:** Perfil (crachá de 84 px e bloco Vestiário), Home (busto de 52 px), vestiário, peça trancada e peça nova. O desenho entra por `import()`, para o bundle inicial não crescer.
+     - **D5c1, vestiário e peça trancada:** branch `claude/vestiario-tela`, com fonte falsa (`?vestiarioFalso`). Prints em `docs/auditoria/2026-11-05/vestiario/`, **esperando a aprovação do Kauê antes do merge**. A rota `#vestiario` existe, mas sem link.
+     - **D5c2, ligação:** a fonte do servidor em `src/telas/vestiario/fonte.ts` (`definirFonteDoVestiario`), com as funções do D5b, e o botão "Abrir vestiário" do Perfil. Depois, Home, crachá e peça nova.
 
 ## Conferir primeiro
 
