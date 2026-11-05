@@ -765,7 +765,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
   - **O que conta como aparelho:** cada sessão do Auth.
   - **A lista:** `meus_aparelhos()` mostra quando o aparelho entrou, quando foi usado e o navegador (nunca o IP).
   - **Desconectar:** `desconectar_aparelho` apaga a sessão de outro aparelho da conta. O passe (JWT) que esse aparelho já tem vale até 1 hora, mas não grava nada (revisão de segurança de 03/11/2026):
-    - as funções do servidor (partidas, Prova, Time do Dia, Lances, código) conferem a sessão pelo Auth (`getUser`);
+    - as funções do servidor (partidas, Prova, Time do Dia, Lances, código, boneco) conferem a sessão pelo Auth (`getUser`); a do boneco confere de novo no banco, pelo `session_id` do passe (`boneco_sessao`, seção 14.5);
     - `salvar_torcedor`, `salvar_faixa_etaria`, `salvar_inscricao_push`, `remover_inscricao_push`, `apagar_meus_dados`, `meus_aparelhos` e `desconectar_aparelho` conferem `sessao_ativa()`;
     - palpites, certezas e "Achei um erro" têm políticas restritivas com `sessao_ativa()`;
     - `ver_meus_dados` e o status do código não respondem.
@@ -904,7 +904,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - **O que libera, lido do banco (`boneco_estado`):** nível pelo XP da `carreira_de` (`carreira_partidas` e `carreira_bonus`) e `nivelDe`; medalhas por item pela `medalhas_de` (`lances_gols`: gols, recriados, vitórias; item `penaltis:<id>` é disputa); Seleção pelo `clube` no catálogo do servidor (item fora do catálogo conta medalha, mas não é da Seleção); aquecimento pela linha `aquecimento` de `carreira_bonus`.
 - **Função `boneco`** (`supabase/functions/boneco/`, caminho em `fluxo.ts`):
   - `{ acao: 'meu_boneco' }` devolve `vestimenta`, `liberadas` (ids, as do começo inclusive) e `proxima` (`{ id, condicao }` ou null). Conta sem boneco, nova ou de antes do D5b, ganha na 1ª leitura o sorteado entre as peças do começo (`sortearDoComeco`), gravado por `boneco_criar`; duas leituras ao mesmo tempo ficam com o mesmo. Nenhuma tela no caminho da 1ª partida. A leitura passa de novo pelo `validar`.
-  - `{ acao: 'salvar_boneco', vestimenta }`: pedido acima de 2 KB nem é lido; `conferirFormato` recusa (400 `formato`) o que não tem exatamente as chaves de `PADRAO`, valor fora do catálogo, número fora de `^[0-9]{1,2}$` ou JSON acima de 512 caracteres. Depois, `validar` troca peça trancada pela padrão, sem erro (`trocou: true` na resposta), e `boneco_gravar` grava e devolve o que gravou.
+  - `{ acao: 'salvar_boneco', vestimenta }`: pedido acima de 2 KB é recusado com 413 (pelo `Content-Length`, antes de ler, e de novo pelo tamanho lido; `supabase/functions/boneco/pedido.ts`); `conferirFormato` recusa (400 `formato`) o que não tem exatamente as chaves de `PADRAO`, valor fora do catálogo, número fora de `^[0-9]{1,2}$` ou JSON acima de 512 caracteres. Depois, `validar` troca peça trancada pela padrão, sem erro (`trocou: true` na resposta), e `boneco_gravar` grava e devolve o que gravou.
   - **Limite:** 30 gravações por hora por torcedor (429 `limite`), em janela fixa a partir da 1ª gravação dela, contado na mesma instrução que grava. O sorteio da conta nova não conta.
   - **Sessão:** o Auth confere a conta e a sessão (`getUser`), e o banco confere de novo o `session_id` do passe em `auth.sessions` (`boneco_sessao`, também `not_after`) antes de ler, sortear ou gravar. Aparelho desconectado recebe 401 `sessao` e não grava.
   - Sem time escolhido não há torcedor: 404 `sem_torcedor`.

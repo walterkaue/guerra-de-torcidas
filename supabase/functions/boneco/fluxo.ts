@@ -92,7 +92,8 @@ const ERROS: Record<string, [number, string]> = {
 
 async function chamar(s: Servicos, nome: string, args: Record<string, unknown>): Promise<Record<string, unknown>> {
   const { data, error } = await s.rpc(nome, args);
-  if (error || !data || typeof data !== 'object') throw new Error(`${nome} falhou`);
+  // A mensagem do banco vai só para o log da função (servir responde 500 interno, sem detalhe).
+  if (error || !data || typeof data !== 'object') throw new Error(`${nome} falhou: ${error?.message ?? 'sem resposta'}`);
   const r = data as Record<string, unknown>;
   if (typeof r.erro === 'string') {
     const [status, codigo] = ERROS[r.erro] ?? [500, 'interno'];

@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { bancoDeTeste, cortarLancesNoFuturo } from './banco';
 import { ErroBoneco, meuBoneco, salvarBoneco, type Servicos } from '../functions/boneco/fluxo';
+import { conferirTamanho, lerPedido, sessaoDoPasse, TAMANHO_DO_PEDIDO } from '../functions/boneco/pedido';
 import { CORPOS, PADRAO, PECAS, type Vestimenta } from '../../src/jogo/vestiario';
 
 const TEMPO = 120_000;
@@ -136,7 +137,8 @@ describe('primeira leitura', () => {
     expect(rows[0].gravacoes).toBe(0);
   });
 
-  it('duas leituras ao mesmo tempo ficam com o mesmo boneco', async () => {
+  // O PGlite tem uma conexão só: isto prova duas leituras em sequência. A corrida de verdade fica para o D5b-seg.
+  it('duas leituras seguidas ficam com o mesmo boneco', async () => {
     const eu = await torcedor();
     const [a, b] = await Promise.all([ler(eu), ler(eu)]);
     expect(a.vestimenta).toEqual(b.vestimenta);
@@ -372,6 +374,17 @@ describe('o celular não chega na tabela', () => {
     await ler(eu);
     await expect(celular(eu, 'select * from public.torcedor_boneco')).rejects.toThrow(/permission denied/);
     await expect(celular(eu, `insert into public.torcedor_boneco (torcedor_id, vestimenta) values ($1, '{}')`, [eu])).rejects.toThrow(/permission denied/);
+    // Mesmo com permissão de tabela (os privilégios padrão da Supabase dão), a política restritiva barra tudo.
+    await db.exec('grant select, insert, update, delete on public.torcedor_boneco to authenticated');
+    try {
+      expect((await celular(eu, 'select * from public.torcedor_boneco')).rows).toHaveLength(0);
+      await expect(celular(eu, `insert into public.torcedor_boneco (torcedor_id, vestimenta) values ($1, '{}')`, [eu])).rejects.toThrow(/row-level security/);
+      expect((await celular(eu, `update public.torcedor_boneco set vestimenta = '{}' where torcedor_id = $1 returning 1`, [eu])).rows).toHaveLength(0);
+      expect((await celular(eu, `delete from public.torcedor_boneco where torcedor_id = $1 returning 1`, [eu])).rows).toHaveLength(0);
+    } finally {
+      await db.exec('revoke select, insert, update, delete on public.torcedor_boneco from authenticated');
+    }
+    expect(await guardada(eu)).toBeDefined();
     for (const f of [
       `public.boneco_estado('${eu}', '${eu}')`,
       `public.boneco_criar('${eu}', '${eu}', '{}')`,
@@ -481,5 +494,43 @@ describe('o que não lê a tabela', () => {
     for (const arquivo of ['scripts/metricas.mjs', 'scripts/balanco/balanco.mjs']) {
       expect(readFileSync(join(raiz, arquivo), 'utf8')).not.toMatch(/boneco/);
     }
+  });
+});
+
+describe('pedido da função (pedido.ts)', () => {
+  const passe = (payload: unknown) => `Bearer cabeca.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.assinatura`;
+  const SESSAO = '0f8fad5b-d9cb-469f-a165-70867728950e';
+  const codigo = (f: () => unknown) => {
+    try {
+      f();
+    } catch (e) {
+      if (e instanceof ErroBoneco) return `${e.status} ${e.codigo}`;
+      throw e;
+    }
+    return 'sem erro';
+  };
+
+  it('lê o session_id do passe, em base64url sem preenchimento', () => {
+    expect(sessaoDoPasse(passe({ sub: 'x', session_id: SESSAO }))).toBe(SESSAO);
+    expect(sessaoDoPasse(passe({ session_id: SESSAO, nome: 'ção?>~' }))).toBe(SESSAO);
+  });
+
+  it('passe sem sessão, com sessão malformada ou ilegível é 401', () => {
+    for (const a of [null, '', 'Bearer', 'Bearer abc', passe({ sub: 'x' }), passe({ session_id: 7 }), passe({ session_id: 'nao-e-uuid' }),
+      passe({ session_id: `${SESSAO}' or 1=1` }), 'Bearer a.%%%.b']) {
+      expect(codigo(() => sessaoDoPasse(a))).toBe('401 sem_login');
+    }
+  });
+
+  it('pedido grande é 413 antes e depois de ler', () => {
+    expect(codigo(() => conferirTamanho(String(TAMANHO_DO_PEDIDO + 1)))).toBe('413 formato');
+    expect(codigo(() => conferirTamanho(String(TAMANHO_DO_PEDIDO)))).toBe('sem erro');
+    expect(codigo(() => conferirTamanho(null))).toBe('sem erro');
+    expect(codigo(() => lerPedido('x'.repeat(TAMANHO_DO_PEDIDO + 1)))).toBe('413 formato');
+  });
+
+  it('JSON inválido ou que não é objeto vira {} (acao_invalida)', () => {
+    for (const t of ['', '{', 'null', '[]', '7', '"meu_boneco"']) expect(lerPedido(t)).toEqual({});
+    expect(lerPedido(JSON.stringify({ acao: 'meu_boneco' }))).toEqual({ acao: 'meu_boneco' });
   });
 });
