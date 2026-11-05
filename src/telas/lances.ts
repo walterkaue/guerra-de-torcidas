@@ -16,9 +16,9 @@ import { ID_OUTRO, TIMES, corDeTexto, proTime, timePorId, type Time } from '../d
 import { prefs } from '../estado';
 import { sementeNova } from '../jogo/aleatorio';
 import { lancesUnificados } from './corte';
-import { desenharCardLances } from '../jogo/cardLances';
+import { tipoDoJogo, type DadosDoCard } from '../jogo/cardPersonalizado';
+import { linhaDoTorcedor } from '../jogo/cardTextos';
 import { motivoDoConfete } from '../jogo/confete';
-import { prontoParaDesenhar, seloNivel } from '../jogo/card';
 import type { FechamentoLances } from '../jogo/lancesPartida';
 import {
   AVISO_LIMITE_DO_DIA,
@@ -61,6 +61,7 @@ import * as SERVIDOR from '../servidor/api';
 import { ErroServidor, type PedidoLances } from '../servidor/api';
 import { comMotivo } from '../servidor/motivo';
 import { sincronizarTorcedor } from '../servidor/torcedor';
+import { sorteadorDeFrase } from './cardPersonalizado';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { abas, aoTocarNoEstado, cabecalhoTela, estado, faixa, marcarAba, numero, placa, selo, trilha } from './blocos';
 import { ligarEfeitoNoRanking } from './efeitoRanking';
@@ -938,17 +939,21 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     }
     limparJogo = () => pararEfeito?.();
 
-    // Card "Telão do estádio": o Card, o Stories e o Link saem do resultado padrão.
-    const card = (async () => {
-      await prontoParaDesenhar();
-      const canvas = desenharCardLances({
-        time,
-        apelido,
-        paraTime,
-        frase: frase ?? '',
-        novoRecorde: !!desempenho?.novoRecorde,
-        link: link.replace('https://', ''),
-        pontos,
+    // Card personalizável (jogo.md 14.6): o Card abre a tela "Seu card" e o Stories manda o card com as escolhas guardadas.
+    const dados = (async (): Promise<DadosDoCard> => ({
+      tipo: tipoDoJogo(!!codigoX1),
+      time,
+      jogo: 'Lances do Jogo',
+      destaque: `+${pontos}`,
+      quem: { comApelido: linhaDoTorcedor(apelido, pontos, paraTime), semApelido: linhaDoTorcedor(undefined, pontos, paraTime) },
+      lance: nova ? tituloDoLance : `Seus ${lances.length} lances`,
+      placarEmoji: emojisDaPartida(desfechos),
+      frase: frase ?? '',
+      novoRecorde: !!desempenho?.novoRecorde,
+      link: link.replace('https://', ''),
+      nivel: await nivelParaCard(),
+      conteudo: {
+        jogo: 'lances',
         lances: lances.map((l, i) => ({
           titulo: nova ? rotuloDaTentativa(i) : l.titulo,
           desfecho: resultados[i].desfecho,
@@ -957,13 +962,12 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         })),
         tituloUnico: nova ? tituloDoLance : null,
         medalha: medalhas[0] ?? null,
-      });
-      const nivel = await nivelParaCard();
-      if (nivel) seloNivel(canvas, nivel);
-      return canvas;
-    })();
+      },
+    }))();
     ligarResultado(root, {
-      card,
+      dados,
+      sortearFrase: sorteadorDeFrase('lance_fim', { ...contextoDoTime(time, apelido), pontos }),
+      quemComApelido: (a) => linhaDoTorcedor(a, pontos, paraTime),
       textoShare,
       link,
       emoji,

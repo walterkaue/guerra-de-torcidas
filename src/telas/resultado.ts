@@ -6,14 +6,17 @@ import { esc, irPara, type DadosResultado, type Rota } from '../app';
 import { SELECAO } from '../dados/adversarios';
 import { ID_OUTRO, proTime, timePorId, TIMES } from '../dados/times';
 import { prefs } from '../estado';
-import { desenharCard, prontoParaDesenhar, seloNivel } from '../jogo/card';
+import { tipoDoJogo, type DadosDoCard } from '../jogo/cardPersonalizado';
+import { linhaDoTorcedor } from '../jogo/cardTextos';
 import { conviteX1Penaltis } from '../jogo/convites';
 import { ID_SELECAO, lembrancaDaDisputa } from '../jogo/disputas';
 import { placarEmoji } from '../jogo/emoji';
 import { escolherFrase } from '../narrador/escolher';
+import { eventosDoFim } from '../narrador/lance';
 import { contextoDoTime } from '../narrador/sessao';
 import { motivoDoConfete } from '../jogo/confete';
 import { minhasMedalhas } from '../servidor/api';
+import { sorteadorDeFrase } from './cardPersonalizado';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { bomMomentoDosLances } from '../jogo/apoio';
 import { oferecerApoio } from './apoio';
@@ -182,26 +185,35 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
       : null;
 
   // ---------- card ----------
-  const card = (async () => {
-    await prontoParaDesenhar();
-    const canvas = desenharCard({
-      time,
-      apelido,
-      paraTime,
-      golsJogador: r.golsJogador,
-      golsMaquina: r.golsMaquina,
-      pontos: p.total,
-      frase: d.frasesFinais[0] ?? '',
-      novoRecorde: !!d.servidor?.desempenho?.novoRecorde,
-      link: link.replace('https://', ''),
-    });
-    const nivel = await nivelParaCard();
-    if (nivel) seloNivel(canvas, nivel);
-    return canvas;
-  })();
+  // Card personalizável (jogo.md 14.6): o Card abre a tela "Seu card" e o Stories manda o card com as escolhas guardadas.
+  const dados = (async (): Promise<DadosDoCard> => ({
+    tipo: tipoDoJogo(!!codigo),
+    time,
+    jogo: 'Bate Contra Mim',
+    destaque: `+${p.total}`,
+    quem: { comApelido: linhaDoTorcedor(apelido, p.total, paraTime), semApelido: linhaDoTorcedor(undefined, p.total, paraTime) },
+    lance: `${r.golsJogador} x ${r.golsMaquina}`,
+    // As duas linhas de emoji do texto (cobranças e defesas), sem o nome dos lados nem o link.
+    placarEmoji: emoji
+      .split('\n')
+      .filter((l) => l.startsWith('Cobranças:') || l.startsWith('Defesas:'))
+      .join('\n'),
+    frase: d.frasesFinais[0] ?? '',
+    novoRecorde: !!d.servidor?.desempenho?.novoRecorde,
+    link: link.replace('https://', ''),
+    nivel: await nivelParaCard(),
+    conteudo: { jogo: 'penaltis', golsJogador: r.golsJogador, golsMaquina: r.golsMaquina },
+  }))();
 
   ligarResultado(root, {
-    card,
+    dados,
+    sortearFrase: sorteadorDeFrase(eventosDoFim(r)[0], {
+      ...contextoDoTime(time, apelido),
+      placar: `${r.golsJogador} x ${r.golsMaquina}`,
+      pontos: p.total,
+      numero: d.numeroNarrador,
+    }),
+    quemComApelido: (a) => linhaDoTorcedor(a, p.total, paraTime),
     textoShare,
     link,
     emoji,

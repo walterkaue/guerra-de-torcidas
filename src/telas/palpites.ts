@@ -6,11 +6,12 @@
 import { esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, TIMES, corDeTexto, proTime, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
-import { prontoParaDesenhar } from '../jogo/card';
-import { desenharCardCrava, type DadosCardCrava } from '../jogo/cardCrava';
+import type { DadosDoCard } from '../jogo/cardPersonalizado';
+import { linhaDoTorcedor } from '../jogo/cardTextos';
 import {
   GOLS_MAX,
   EMOJI_ACERTO,
+  linhaEmoji,
   ordinalRodada,
   palpiteContra,
   pontosDaRodada,
@@ -41,6 +42,8 @@ import { ErroServidor } from '../servidor/api';
 import * as real from '../servidor/crava';
 import type { ComoCravaram, Jogo, MeusDados, MinhaPosicao, Rodada } from '../servidor/crava';
 import { sincronizarTorcedor as sincronizarReal } from '../servidor/torcedor';
+import { abrirCardPersonalizado } from './cardPersonalizado';
+import { nivelParaCard } from './carreira';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
 import { dicasDoAparelho, mostrarDica } from './dicas';
@@ -673,67 +676,80 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   );
 
   // ---------- cards ----------
-  const avisar = (botao: HTMLElement, texto: string) => {
-    const antes = botao.textContent;
-    botao.textContent = texto;
-    setTimeout(() => (botao.textContent = antes), 1800);
-  };
-
-  async function compartilhar(botao: HTMLElement, dados: DadosCardCrava, texto: string): Promise<void> {
-    try {
-      await prontoParaDesenhar();
-      const canvas = desenharCardCrava(dados);
-      const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, 'image/png'));
-      const arquivo = blob ? new File([blob], 'crava-a-rodada.png', { type: 'image/png' }) : null;
-      if (arquivo && navigator.canShare?.({ files: [arquivo] })) await navigator.share({ files: [arquivo], text: texto });
-      else if (navigator.share) await navigator.share({ text: texto });
-      else {
-        await navigator.clipboard.writeText(texto);
-        avisar(botao, 'Copiado!');
-      }
-    } catch {
-      // cancelou o compartilhamento
-    }
-  }
-
+  // Os dois botões abrem a tela "Seu card" (jogo.md 14.6); o aviso fixo do Crava sai sempre.
   const timeDoCard = (): Time => time ?? timePorId(ID_OUTRO)!;
   const link = () => (time && !outro ? `${LINK}?time=${time.id}` : LINK);
+  const semHttps = (l: string) => l.replace('https://', '');
 
-  $('[data-acao="card-meus"]').addEventListener('click', (ev) => {
+  $('[data-acao="card-meus"]').addEventListener('click', () => {
     if (rodada === null) return;
+    const rodadaDoCard = rodada;
     const certeza = certezaDaRodada();
     const linhas = daRodada()
       .filter((j) => meus.palpites.has(j.id))
       .map((j) => ({ mandante: nomeDo(j.mandante_id), visitante: nomeDo(j.visitante_id), placar: meus.palpites.get(j.id)!, certeza: j.id === certeza }));
     if (!linhas.length) return;
-    void compartilhar(
-      ev.currentTarget as HTMLElement,
-      { tipo: 'meus', time: timeDoCard(), paraTime, rodada, linhas, link: link().replace('https://', '') },
-      textoMeusPalpites(rodada, linhas, link()),
-    );
+    const meusPalpites = (apelido?: string) => `${apelido ? `${apelido} · meus palpites` : 'Meus palpites'}${paraTime ? ` ${paraTime}` : ''}`;
+    abrirCardPersonalizado({
+      raiz: root,
+      dados: (async (): Promise<DadosDoCard> => ({
+        tipo: 'jogo',
+        time: timeDoCard(),
+        jogo: `Crava a Rodada · ${ordinalRodada(rodadaDoCard)}`,
+        destaque: `${linhas.length} ${linhas.length === 1 ? 'CRAVADO' : 'CRAVADOS'}`,
+        quem: { comApelido: meusPalpites(prefs.get().apelido), semApelido: meusPalpites() },
+        lance: `${ordinalRodada(rodadaDoCard)} rodada`,
+        placarEmoji: '',
+        frase: '',
+        novoRecorde: false,
+        link: semHttps(link()),
+        avisoFixo: AVISO_RESENHA,
+        nivel: await nivelParaCard(),
+        conteudo: { jogo: 'crava-meus', rodada: rodadaDoCard, linhas },
+      }))(),
+      texto: textoMeusPalpites(rodadaDoCard, linhas, link()),
+      link: link(),
+      quemComApelido: meusPalpites,
+    });
   });
 
-  $('[data-acao="card-resultado"]').addEventListener('click', (ev) => {
+  $('[data-acao="card-resultado"]').addEventListener('click', () => {
     if (rodada === null) return;
+    const rodadaDoCard = rodada;
     const ordem = new Map(daRodada().map((j, i) => [j.id, i]));
     const resultados = resultadosDaRodada().sort((a, b) => ordem.get(a.jogoId)! - ordem.get(b.jogoId)!);
     const pontos = resultados.reduce((s, r) => s + r.torcida, 0);
-    void compartilhar(
-      ev.currentTarget as HTMLElement,
-      {
-        tipo: 'resultado',
+    const novoRecorde = recordeCrava(pontosPorRodada(), rodadaDoCard).novo;
+    const apelido = prefs.get().apelido;
+    abrirCardPersonalizado({
+      raiz: root,
+      dados: (async (): Promise<DadosDoCard> => ({
+        tipo: 'jogo',
         time: timeDoCard(),
-        apelido: prefs.get().apelido,
-        rodada,
-        pontos,
-        paraTime,
-        resultados,
-        novoRecorde: recordeCrava(pontosPorRodada(), rodada).novo,
+        jogo: `Crava a Rodada · ${ordinalRodada(rodadaDoCard)}`,
+        destaque: `+${pontos}`,
+        quem: { comApelido: linhaDoTorcedor(apelido, pontos, paraTime), semApelido: linhaDoTorcedor(undefined, pontos, paraTime) },
+        lance: `${ordinalRodada(rodadaDoCard)} rodada`,
+        placarEmoji: linhaEmoji(resultados),
         frase: elAdesivo.hidden ? '' : (elAdesivo.textContent ?? ''),
-        link: link().replace('https://', ''),
-      },
-      textoResultadoRodada(rodada, pontos, paraTime, resultados, link()),
-    );
+        novoRecorde,
+        link: semHttps(link()),
+        avisoFixo: AVISO_RESENHA,
+        nivel: await nivelParaCard(),
+        conteudo: { jogo: 'crava-resultado', rodada: rodadaDoCard, resultados },
+      }))(),
+      texto: textoResultadoRodada(rodadaDoCard, pontos, paraTime, resultados, link()),
+      link: link(),
+      // O mesmo evento do narrador que a tela usa para o grito do fim da rodada.
+      sortearFrase: () =>
+        falar('crava_rodada_fim', {
+          rodada: ordinalRodada(rodadaDoCard),
+          acertos: resultados.filter((r) => r.acerto && r.acerto !== 'errou').length,
+          jogos: resultados.length,
+          pontos,
+        }),
+      quemComApelido: (a) => linhaDoTorcedor(a, pontos, paraTime),
+    });
   });
 
   $('[data-acao="como-cravar"]').addEventListener('click', () => abrirRegras(root, 'crava'));

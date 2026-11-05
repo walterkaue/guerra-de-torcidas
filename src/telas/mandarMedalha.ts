@@ -1,15 +1,27 @@
 // "Mandar a medalha" (docs/jogo.md 7.3, "Card de medalha"): folha que abre de baixo, como a ficha do lance, com o
-// card só da medalha (jogo/cardMedalha.ts), "Mandar no grupo" (texto com emoji antigo e o link do lance), Stories (o
-// card como arquivo) e Link. Abre no resultado, quando a pessoa sobe de medalha, e ao tocar numa medalha nas Conquistas.
+// card só da medalha (o card personalizável, jogo/cardPersonalizado.ts), "Mandar no grupo" (texto com emoji antigo e o
+// link do lance), Card (abre a tela "Seu card"), Stories (o card com as escolhas guardadas) e Link. Abre no resultado, quando a pessoa sobe de medalha, e ao tocar numa medalha nas Conquistas.
 
 import '../estilos/trofeus.css';
 import { esc } from '../app';
 import { corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
 import { prefs } from '../estado';
-import { mostrarCard, prontoParaDesenhar } from '../jogo/card';
-import { desenharCardMedalha } from '../jogo/cardMedalha';
+import { mostrarCard } from '../jogo/card';
+import { textoDoCompartilhar, type DadosDoCard } from '../jogo/cardPersonalizado';
 import type { Medalha } from '../jogo/lances';
-import { fraseDaMedalha, itemDaMedalha, linkDaMedalha, textoDeMandarMedalha } from '../jogo/medalhaTextos';
+import {
+  ADESIVO_DA_MEDALHA,
+  MEDALHA_NO_CARD,
+  fraseDaMedalha,
+  itemDaMedalha,
+  jogoDoItem,
+  linkDaMedalha,
+  noTitulo,
+  quemNaMedalha,
+  textoDeMandarMedalha,
+} from '../jogo/medalhaTextos';
+import { abrirCardPersonalizado, desenharComAsEscolhas } from './cardPersonalizado';
+import { nivelParaCard } from './carreira';
 import { icone } from './icones';
 
 const semMovimento = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -40,7 +52,8 @@ export function abrirMandarMedalha(o: { raiz: HTMLElement; itemId: string; medal
       <div class="mm-card" aria-busy="true"><img class="card" alt="${esc(`Card da medalha: ${frase}`)}" /></div>
       <section class="mandar" aria-label="Compartilhar a medalha">
         <a class="botao botao-zap" data-sem-aviso target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(texto)}">Mandar no grupo</a>
-        <div class="formatos dois">
+        <div class="formatos tres">
+          <button type="button" data-acao="card">${icone('imagem')}Card</button>
           <button type="button" data-acao="share">${icone('celular')}Stories</button>
           <button type="button" data-acao="copiar">${icone('corrente')}Link</button>
         </div>
@@ -59,20 +72,26 @@ export function abrirMandarMedalha(o: { raiz: HTMLElement; itemId: string; medal
     if (e.target === d) fechar();
   });
 
-  const card = (async () => {
-    await prontoParaDesenhar();
-    return desenharCardMedalha({
-      time,
-      apelido: prefs.get().apelido,
-      paraTime,
-      medalha: o.medalha,
-      item,
-      link: link.replace('https://', ''),
-    });
-  })();
+  const EMOJI_DA_MEDALHA: Record<Medalha, string> = { ouro: '🥇', prata: '🥈', bronze: '🥉' };
+  const dados = (async (): Promise<DadosDoCard> => ({
+    tipo: 'medalha',
+    time,
+    jogo: item.tipo === 'disputa' ? 'Pênaltis' : 'Lances do Jogo',
+    destaque: MEDALHA_NO_CARD[o.medalha],
+    quem: { comApelido: quemNaMedalha(prefs.get().apelido, paraTime), semApelido: quemNaMedalha(undefined, paraTime) },
+    lance: `${noTitulo(item.titulo, item.tipo)} · ${jogoDoItem(item)}`,
+    placarEmoji: EMOJI_DA_MEDALHA[o.medalha],
+    frase: ADESIVO_DA_MEDALHA[o.medalha],
+    novoRecorde: false,
+    link: link.replace('https://', ''),
+    nivel: await nivelParaCard(),
+    conteudo: { jogo: 'medalha', medalha: o.medalha, item },
+  }))();
+  // A prévia e o Stories usam o card com as escolhas guardadas (as da tela "Seu card").
+  const card = dados.then(desenharComAsEscolhas);
   const caixa = d.querySelector<HTMLElement>('.mm-card')!;
   void card
-    .then((canvas) => mostrarCard(caixa.querySelector('img')!, canvas))
+    .then(({ canvas }) => mostrarCard(caixa.querySelector('img')!, canvas))
     .catch(() => {})
     .finally(() => caixa.removeAttribute('aria-busy'));
 
@@ -84,19 +103,23 @@ export function abrirMandarMedalha(o: { raiz: HTMLElement; itemId: string; medal
   const btnShare = d.querySelector<HTMLButtonElement>('[data-acao="share"]')!;
   btnShare.addEventListener('click', async () => {
     try {
-      const canvas = await card;
+      const { canvas, comLink } = await card;
+      const enviado = textoDoCompartilhar(texto, link, comLink);
       const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, 'image/png'));
       const arquivo = blob ? new File([blob], 'medalha-guerra-de-torcidas.png', { type: 'image/png' }) : null;
-      if (arquivo && navigator.canShare?.({ files: [arquivo] })) await navigator.share({ files: [arquivo], text: texto });
-      else if (navigator.share) await navigator.share({ text: texto, url: link });
+      if (arquivo && navigator.canShare?.({ files: [arquivo] })) await navigator.share({ files: [arquivo], text: enviado });
+      else if (navigator.share) await navigator.share({ text: enviado, url: link });
       else {
-        await navigator.clipboard.writeText(texto);
+        await navigator.clipboard.writeText(enviado);
         avisar(btnShare, 'Copiado!');
       }
     } catch {
       // cancelou o compartilhamento
     }
   });
+  d.querySelector('[data-acao="card"]')!.addEventListener('click', () =>
+    abrirCardPersonalizado({ raiz: d, dados, texto, link, quemComApelido: (a) => quemNaMedalha(a, paraTime) }),
+  );
   const btnCopiar = d.querySelector<HTMLButtonElement>('[data-acao="copiar"]')!;
   btnCopiar.addEventListener('click', async () => {
     try {
