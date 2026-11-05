@@ -652,7 +652,7 @@ Cuidado extra: o narrador **nunca** fala de quem fez o gol de verdade (nem nome,
 Nas jogadas, os Lances usam as frases da seção 3 que servem para qualquer chute: `gol`, `gol_angulo`, `cavadinha`, `cavadinha_falhou`, `trave_gol`, `trave`, `fora_cima`, `fora_lado` e `goleiro_pegou` (com as mesmas etiquetas). `abertura` e `decisiva` não entram, porque falam de pênalti. As frases abaixo são só dos Lances.
 
 ### `lance_abertura` — começo da partida de 3 lances
-- Três lances, três chances de fazer história {pro_time}!
+- Três chutes, três chances de fazer história {pro_time}!
 - A história tá aí de novo. Agora a perna é sua!
 - Bola parada, torcida em pé. Bora recriar!
 - ⭐ O narrador já viu esse filme. Quer ver o final de novo!
@@ -672,8 +672,8 @@ Nas jogadas, os Lances usam as frases da seção 3 que servem para qualquer chut
 
 ### `lance_fim` — fim da partida de 3 lances
 - Fim dos lances: {pontos} {pro_time}!
-- Três lances, {pontos} pontos na conta {do_time}.
-- Fechou com {pontos}! Escolhe outros lances e vai de novo.
+- Três chutes, {pontos} pontos na conta {do_time}.
+- Fechou com {pontos}! Escolhe um lance e vai de novo.
 - Acabou a sessão de história! {pontos} pontos no placar.
 
 ## 13. Aviso de domingo (push)

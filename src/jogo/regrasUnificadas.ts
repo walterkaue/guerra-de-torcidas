@@ -7,7 +7,8 @@ import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MEDALHAS_PENALTIS, MELHORES_DO_DIA }
 
 export type LinhaDePontos = readonly [rotulo: string, valor: string];
 
-const NOME_DA_FAIXA: Record<Faixa, string> = { facil: 'fácil', media: 'média', dificil: 'difícil', craque: 'craque' };
+// "Gol em lance médio" (a faixa se chama Média, mas aqui o adjetivo é do lance).
+const NOME_DA_FAIXA: Record<Faixa, string> = { facil: 'fácil', media: 'médio', dificil: 'difícil', craque: 'craque' };
 
 /** Tabela de pontos dos pênaltis, pela tabela da partida. */
 export function pontosDosPenaltis(t: TabelaPenaltis = PONTOS_UNIFICADOS): LinhaDePontos[] {

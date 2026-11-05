@@ -792,13 +792,15 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     // Telão e lista: as 3 tentativas do mesmo lance, o título do lance uma vez só.
     const tituloDoLance = lances[0].titulo;
     const cmp = nova ? (fim?.comparacao ?? null) : null;
-    const fraseX1 = cmp
-      ? (escolherFrase(
+    // O X1 recebido não gera outro código: frase que fala do link (dos pênaltis) cai na neutra.
+    const doNarrador = cmp
+      ? escolherFrase(
           cmp.venceu ? 'desafio_vitoria' : 'desafio_derrota',
           { ...contextoDoTime(time, apelido), desafiante: cmp.desafiante ?? 'quem te chamou' },
           Math.random,
-        )?.texto ?? fraseNeutraDoX1(cmp.venceu))
-      : null;
+        )?.texto
+      : undefined;
+    const fraseX1 = cmp ? (doNarrador && !/link/i.test(doNarrador) ? doNarrador : fraseNeutraDoX1(cmp.venceu)) : null;
     const duelo = cmp
       ? (() => {
           const p = placarDoX1(pontos, cmp);

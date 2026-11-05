@@ -1066,9 +1066,13 @@
   flex: 1;
   min-width: 0;
   font-size: 15px;
+  line-height: 1.25;
+  /* Título e clube em até duas linhas: no 390 px o título sozinho já enche uma. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .lance-do-dia:disabled { opacity: 0.7; }
 .lance-do-dia:not(:disabled):active { transform: translateY(1px); }
