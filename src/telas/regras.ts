@@ -94,10 +94,10 @@ function dosLancesUnificados(): Regras {
   return {
     titulo: 'Lances do Jogo',
     passos: [
-      ['Escolha um lance.', `Um toque em Jogar no álbum, e a partida são ${LANCES_POR_PARTIDA} tentativas dele. Pode ser pênalti, falta ou cara a cara.`],
+      ['Escolha um lance.', `Um toque em Jogar. Na falta e no cara a cara, a partida são ${LANCES_POR_PARTIDA} tentativas do mesmo lance; nos pênaltis, a disputa de sempre.`],
       ['O gesto é o do pênalti.', 'Arraste da bola até o gol: direção, força e curva. Na falta, a bola tem de passar da barreira. No cara a cara, o goleiro pode sair do gol e a cavadinha encobre quem saiu.'],
       ['Recriar o lance.', `Gol na área marcada onde o gol de verdade entrou vale mais ${t.recriou}.`],
-      ['X1.', 'Toda partida valendo vira um link de X1: quem recebe joga o mesmo lance e tenta bater seus pontos. Passou do limite do dia, a partida vira treino, sem ponto nem medalha.'],
+      ['X1.', 'Depois de uma partida valendo, mande o link do X1: quem recebe joga o mesmo lance e tenta bater seus pontos. Passou do limite do dia, a partida vira treino, sem ponto nem medalha.'],
     ],
     pontos: pontosDosLances(t),
     nota: notaDosLances(t),

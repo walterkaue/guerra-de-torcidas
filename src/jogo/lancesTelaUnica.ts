@@ -65,7 +65,7 @@ export const clubeValido = (itens: readonly ItemUnico[], tipo: TipoDaTela, clube
 // ---------- textos ----------
 
 /** A linha do hub: o número do bônus vem da tabela nova. */
-export const LINHA_DO_HUB = `Escolha um lance: 3 tentativas. Gol no canto do lance de verdade vale +${TABELA_LANCES_UNIFICADA.recriou}.`;
+export const LINHA_DO_HUB = `Faltas e cara a cara: 3 tentativas do mesmo lance. Gol no canto do lance de verdade vale +${TABELA_LANCES_UNIFICADA.recriou}.`;
 
 export const TENTATIVAS_POR_PARTIDA = 3;
 
@@ -101,7 +101,8 @@ export function placarDoX1(pontos: number, c: ComparacaoX1): { voce: number; out
 
 /** Frase neutra do X1 quando o narrador não tem uma que sirva. Sem zoeira com a pessoa. */
 export function fraseNeutraDoX1(venceu: boolean): string {
-  return venceu ? 'Venceu o X1! Manda o placar pro grupo.' : 'Esse X1 ficou com quem chamou. Bora pra revanche?';
+  // Na derrota, nada de "revanche" ali: o X1 recebido não gera link; jogar de novo gera o seu.
+  return venceu ? 'Venceu o X1! Manda o placar pro grupo.' : 'Esse X1 ficou com quem chamou. Joga de novo e manda o seu.';
 }
 
 /** Texto que acompanha o link no WhatsApp: com X1 chama alguém; sem, só convida. */

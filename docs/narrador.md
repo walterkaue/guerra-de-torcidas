@@ -673,7 +673,7 @@ Nas jogadas, os Lances usam as frases da seção 3 que servem para qualquer chut
 ### `lance_fim` — fim da partida de 3 lances
 - Fim dos lances: {pontos} {pro_time}!
 - Três chutes, {pontos} pontos na conta {do_time}.
-- Fechou com {pontos}! Escolhe um lance e vai de novo.
+- Fechou com {pontos}! Escolhe o próximo e vai de novo.
 - Acabou a sessão de história! {pontos} pontos no placar.
 
 ## 13. Aviso de domingo (push)

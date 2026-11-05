@@ -211,7 +211,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   let limparJogo: (() => void) | null = null;
   let filtroAlbum: FiltroAlbum = 'todos';
   const medalhasDoAlbum = criarMedalhasDoAlbum(() => servidor().then((s) => s.minhasMedalhas()));
-  /** As 6 partidas valendo do dia já foram (o servidor disse): o treino e o álbum avisam. */
+  /** As partidas valendo do dia já foram (o servidor disse; 6 até 15/11, 10 depois): o treino e o álbum avisam. */
   let valendoEsgotado = false;
   // ?disputasFalsas enche a lista em desenvolvimento, enquanto o catálogo está em rascunho (src/dev/disputasFalsas.ts).
   let catalogoDisputas: readonly Disputa[] = DISPUTAS;
@@ -759,12 +759,19 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   }
 
   // ---------- resultado ----------
-  function resultado(lances: Lance[], resultados: ResultadoLance[], frase: string | null, fim: FechamentoLances | null, aviso: string | null): void {
+  /** `nova`: a regra com que a partida começou (vem de `jogo()`; a meia-noite pode ter passado no meio). */
+  function resultado(
+    lances: Lance[],
+    resultados: ResultadoLance[],
+    frase: string | null,
+    fim: FechamentoLances | null,
+    aviso: string | null,
+    nova: boolean = unificada(),
+  ): void {
     limparJogo?.();
     limparJogo = null;
     const pontos = resultados.reduce((s, r) => s + r.pontos, 0);
     const valendo = !!fim;
-    const nova = unificada();
     const outro = time.id === ID_OUTRO;
     const paraTime = proTime(time);
     const apelido = prefs.get().apelido;
@@ -792,15 +799,13 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     // Telão e lista: as 3 tentativas do mesmo lance, o título do lance uma vez só.
     const tituloDoLance = lances[0].titulo;
     const cmp = nova ? (fim?.comparacao ?? null) : null;
-    // O X1 recebido não gera outro código: frase que fala do link (dos pênaltis) cai na neutra.
-    const doNarrador = cmp
-      ? escolherFrase(
-          cmp.venceu ? 'desafio_vitoria' : 'desafio_derrota',
-          { ...contextoDoTime(time, apelido), desafiante: cmp.desafiante ?? 'quem te chamou' },
-          Math.random,
-        )?.texto
-      : undefined;
-    const fraseX1 = cmp ? (doNarrador && !/link/i.test(doNarrador) ? doNarrador : fraseNeutraDoX1(cmp.venceu)) : null;
+    // O X1 recebido não gera outro código, e as frases de derrota do narrador (feitas para os pênaltis) chamam pro X1
+    // ou pro link dali: na derrota, a frase neutra, que leva a jogar de novo para ter o próprio link.
+    const doNarrador =
+      cmp?.venceu
+        ? escolherFrase('desafio_vitoria', { ...contextoDoTime(time, apelido), desafiante: cmp.desafiante ?? 'quem te chamou' }, Math.random)?.texto
+        : undefined;
+    const fraseX1 = cmp ? (doNarrador ?? fraseNeutraDoX1(cmp.venceu)) : null;
     const duelo = cmp
       ? (() => {
           const p = placarDoX1(pontos, cmp);
@@ -980,7 +985,11 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
    * Na regra nova a partida são 3 tentativas do mesmo lance (`lances = [l, l, l]`).
    */
   function jogo(lances: Lance[], treino: boolean, op: { x1?: string; alvoX1?: { apelido: string | null; pontos: number } } = {}): void {
-    const nova = unificada();
+    // A regra sai do formato da partida, decidido aqui e levado até o resultado. Três lances diferentes vêm do hub
+    // de antes (aberto no domingo e usado depois da meia-noite): seguem o formato antigo, e o servidor responde 426
+    // depois do corte, o que leva à tela única. Mandar `{ lance }` com A, B e C na tela trocaria a cena dos chutes.
+    const mesmoLance = lances.every((l) => l.id === lances[0].id);
+    const nova = unificada() && (treino || mesmoLance);
     // Regra nova: a faixa de cada lance é a do catálogo recalibrado; o servidor confirma a que vale ao começar.
     if (nova) lances = lances.map((l) => ({ ...l, faixa: faixaNaTela(l, true).faixa }));
     const tabela = nova ? TABELA_LANCES_UNIFICADA : undefined;
@@ -1071,7 +1080,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       tirarDica(elInstrucao);
       elInstrucao.textContent = texto;
     }
-    /** Dicas do começo do lance (o goleiro que saiu, o cara a cara, o treino depois das 6 valendo). */
+    /** Dicas do começo do lance (o goleiro que saiu, o cara a cara, o treino depois das partidas valendo do dia). */
     function dicaDoComeco(l: Lance): void {
       if (dicaGuardada) {
         mostrarDica(elInstrucao, dicaGuardada);
@@ -1309,7 +1318,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         acabou = true;
         somApito(true);
         const pontos = resultados.reduce((s, r) => s + r.pontos, 0);
-        resultado(lances, resultados, narrador.falar('lance_fim', { pontos }), servidorOk ? fechamento : null, aviso);
+        resultado(lances, resultados, narrador.falar('lance_fim', { pontos }), servidorOk ? fechamento : null, aviso, nova);
       }
     }
 

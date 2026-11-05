@@ -56,7 +56,7 @@ describe('itens da tela única', () => {
 
 describe('textos da tela única', () => {
   it('a linha do hub traz o +8', () => {
-    expect(LINHA_DO_HUB).toBe('Escolha um lance: 3 tentativas. Gol no canto do lance de verdade vale +8.');
+    expect(LINHA_DO_HUB).toBe('Faltas e cara a cara: 3 tentativas do mesmo lance. Gol no canto do lance de verdade vale +8.');
   });
 
   it('tentativas', () => {

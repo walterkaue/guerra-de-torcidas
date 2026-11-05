@@ -39,6 +39,7 @@ import { dicasDoAparelho, mostrarDica, tirarDica, vezesVista } from './dicas';
 import { DICAS } from '../jogo/dicas';
 import { coresEmAmarelo, primeiraDica, temSeta, terceiroChuteSemVerde } from '../jogo/dicasGatilhos';
 import { abrirRegras } from './regras';
+import { lancesUnificados } from './corte';
 import { papelPicadoNaTela } from './papelPicado';
 
 const SITE = 'https://torcida.kauewalter.com.br';
@@ -396,7 +397,10 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
           ${e.acertou ? '' : numero('0', 'pontos hoje', 'apagado')}
         </div>`,
       frases: frasesFinais,
-      aviso: e.acertou ? { texto: `+${e.pontos} na semana, além das 5 partidas do dia.`, forte: false } : null,
+      // Desde 16/11 (jogo.md 14.7) o dia vale 3 partidas de Lances e 3 da Prova: o texto não fala mais em 5.
+      aviso: e.acertou
+        ? { texto: lancesUnificados() ? `+${e.pontos} na semana, por fora das partidas do dia.` : `+${e.pontos} na semana, além das 5 partidas do dia.`, forte: false }
+        : null,
       selos: htmlSelosDaPosicao(e.desempenho, 'dia'),
       zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
       // Time do Dia é um por dia: o botão principal leva ao próximo jogo (Lances do Jogo).

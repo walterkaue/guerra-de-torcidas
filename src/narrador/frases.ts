@@ -536,7 +536,7 @@ export const FRASES = {
   lance_fim: [
     { t: "Fim dos lances: {pontos} {pro_time}!" },
     { t: "Três chutes, {pontos} pontos na conta {do_time}." },
-    { t: "Fechou com {pontos}! Escolhe um lance e vai de novo." },
+    { t: "Fechou com {pontos}! Escolhe o próximo e vai de novo." },
     { t: "Acabou a sessão de história! {pontos} pontos no placar." },
   ],
 } satisfies Record<string, readonly Frase[]>;
