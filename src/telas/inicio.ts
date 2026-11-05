@@ -476,7 +476,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''} te chamou no X1:
           <strong>${d.pontos} pontos</strong>, ${d.gols_jogador} x ${d.gols_maquina} contra a máquina.</p>
           ${ficha}
-          <p class="convite-como">Você defende as cobranças dele e bate as suas. Quem fizer mais pontos ganha.</p>
+          <p class="convite-como">Você defende as cobranças de quem te chamou e bate as suas. Quem fizer mais pontos ganha.</p>
           <button class="botao-linha" type="button" data-acao="desafio">Aceitar o X1</button>`;
         desafioAberto = d.id;
         atualizarBotao();

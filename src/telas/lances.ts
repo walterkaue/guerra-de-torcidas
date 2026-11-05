@@ -527,13 +527,13 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   };
   const metaDaDisputa = (d: Disputa): string => `${clubeDoLance(d.clube).nome} · ${contraAdversario(d.adversario)} · ${d.data.slice(0, 4)}`;
 
-  /** "Seus 3 melhores de hoje": três números; vazio ou sem resposta do servidor, "—". */
+  /** "Seus 3 melhores de hoje": três números; casa vazia, "Vaga" (decidido em 05/11/2026); sem resposta do servidor, "—". */
   function blocosDasMelhores(melhores: readonly number[] | null): string {
     const rotulos = ['Melhor', '2ª melhor', '3ª melhor'];
     return rotulos
       .map((rotulo, i) => {
         const v = melhores?.[i];
-        return numero(v === undefined ? '—' : String(v), rotulo, v === undefined ? 'apagado' : i === 0 ? 'destaque' : undefined);
+        return numero(v === undefined ? (melhores ? 'Vaga' : '—') : String(v), rotulo, v === undefined ? 'apagado' : i === 0 ? 'destaque' : undefined);
       })
       .join('');
   }

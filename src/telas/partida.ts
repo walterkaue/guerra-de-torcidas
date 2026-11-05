@@ -644,6 +644,32 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     el.hidden = false;
   }
 
+  /** Veste a partida com a disputa (placar, cores do adversário e, na da Seleção, o lado da Seleção). */
+  function vestirDisputa(d: Disputa): void {
+    if (d.clube === ID_SELECAO) {
+      nomeDoLado = SELECAO.nome;
+      coresDoLado = SELECAO.cores;
+      root.querySelector('.placar-jogo .lado-jogador .sigla')!.textContent = nomeDoLado;
+    }
+    root.querySelector('.placar-jogo .lado:last-child .sigla')!.textContent = d.adversario;
+    vestir(coresDoAdversario(d.adversario));
+  }
+
+  /**
+   * Depois do corte não há Disputa livre (seção 14.7): se o X1 do link não valeu e a partida ainda não tem disputa
+   * (quem chegou pelo link sem passar pela Home), joga a disputa daquele X1, se houver, ou a primeira do seu time
+   * (senão, da Seleção). Sem isso, a partida normal voltaria 400 `disputa_obrigatoria` e iria de treino.
+   */
+  async function disputaDoX1QueNaoValeu(codigo: string): Promise<Disputa | undefined> {
+    let id: string | null | undefined;
+    if (!FALSO) id = await SERVIDOR.verDesafio(codigo).then((r) => r?.disputa_id, () => null);
+    return (
+      (id ? DISPUTAS.find((d) => d.id === id) : undefined) ??
+      DISPUTAS.find((d) => d.clube === time.id) ??
+      DISPUTAS.find((d) => d.clube === ID_SELECAO)
+    );
+  }
+
   /** Pede a semente ao servidor. Sem resposta, a partida segue local e sem valer pontos. */
   async function preparar(): Promise<void> {
     instruir('Preparando a partida…');
@@ -669,6 +695,10 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         x1JaJogado = e.codigo === 'desafio_ja_jogado';
         x1Expirou = e.codigo === 'desafio_expirado';
         if (x1JaJogado || x1Expirou) tirarCodigoDoEndereco();
+        if (!disputa && lancesUnificados()) {
+          disputa = await disputaDoX1QueNaoValeu(codigoDesafio);
+          if (disputa) vestirDisputa(disputa);
+        }
         p = await pedir();
       }
       // Servidor antigo manda a semente; no lance a lance ela fica lá (a local só serve se cair a conexão).
@@ -681,18 +711,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         // O convite já foi aceito: tira o ?d= do endereço para não oferecer de novo.
         tirarCodigoDoEndereco();
         // A disputa do X1 vale mesmo se o aparelho não a tinha na rota; fora do catálogo daqui, cai no cenário de sempre.
-        if (!disputa && desafio.disputaId) {
-          disputa = DISPUTAS.find((d) => d.id === desafio!.disputaId);
-          if (disputa?.clube === ID_SELECAO) {
-            nomeDoLado = SELECAO.nome;
-            coresDoLado = SELECAO.cores;
-            root.querySelector('.placar-jogo .lado-jogador .sigla')!.textContent = nomeDoLado;
-          }
-        }
-        if (disputa) {
-          root.querySelector('.placar-jogo .lado:last-child .sigla')!.textContent = disputa.adversario;
-          vestir(coresDoAdversario(disputa.adversario));
-        } else {
+        if (!disputa && desafio.disputaId) disputa = DISPUTAS.find((d) => d.id === desafio!.disputaId);
+        if (disputa) vestirDisputa(disputa);
+        else {
           root.querySelector('.placar-jogo .lado:last-child .sigla')!.textContent = desafio.apelido ?? 'X1';
           const t = timePorId(desafio.timeId);
           if (t) vestir(t.cores);
