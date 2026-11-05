@@ -881,7 +881,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
   - **Relógio adiantado antes do corte:** o servidor aceita o formato novo, com a tabela antiga.
   - Em dev: `?corte=depois` ou `?corte=antes`.
 - **Tela única** (`src/telas/lances.ts`; conta pura em `src/jogo/lancesTelaUnica.ts` e `ordenarTelaUnica` em `src/jogo/lancesTextos.ts`):
-  - **No topo:** "Seus 3 melhores de hoje" (3 números, "—" vazio) e "Valendo hoje: N de 10".
+  - **No topo:** "Seus 3 melhores de hoje" (3 números; casa vazia "Vaga", desde 05/11/2026; "—" sem resposta do servidor) e "Valendo hoje: N de 10".
   - **Filtros:** tipo (Todos · Pênaltis · Faltas · Cara a cara, pela aba da rota); clube (abre no time da pessoa); Todos / Meus troféus / Perto do próximo; e ⭐.
   - **Itens e ordem:** todas as disputas do catálogo e os lances (a Disputa livre saiu em 05/11/2026). Favoritos → seu time → Seleção → outros. Quem é de "Outro time": o filtro de clube abre na Seleção.
   - **Card:** a faixa do catálogo recalibrado com os pontos novos ("Difícil · 36"), o placar na disputa, a trilha e o selo "Lance do Dia".
@@ -904,12 +904,11 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - **Home:**
   - Card dos Lances com as 3 melhores do dia, só as da própria pessoa.
   - "Jogar agora" pelas partidas valendo que faltam das 10; abre a tela única no filtro Pênaltis (como o fim do Aquecimento).
-  - Casa vazia do top 3: "Vaga".
   - **Botão "Lance do Dia":** `lanceDoDia`, o mesmo para todos e sem bônus, sorteado entre todos os itens (ids das disputas e dos lances, em ordem alfabética); abre a ficha do item. O catálogo vem por `import()` depois de desenhar.
 - **Pênaltis:**
   - **429:** joga sem valer pontos, com o aviso do limite.
   - **410 `desafio_expirado`:** vira partida nova ("Esse X1 expirou. Vai uma partida nova!").
-  - **X1 recebido:** joga a disputa de quem chamou, com o cenário dela.
+  - **X1 recebido:** joga a disputa de quem chamou, com o cenário dela (pelo convite da Home, que lê `ver_desafio`, ou pela resposta da `nova-partida`). Pelo link direto, sem passar pela Home (quem ainda não tinha time), a arquibancada da Seleção não entra, porque a cena já foi montada; placar, cores, narrador e medalha entram. Depois do corte, X1 que não vale (expirado, já jogado, próprio) vira partida normal **da disputa daquele X1**, ou da primeira do time, ou da Seleção.
   - **400 `disputa_obrigatoria`** (relógio do aparelho atrasado depois do corte): joga sem valer pontos.
   - **Tabela local:** a nova.
   - **Resultado:** "Não entrou nas suas 3 melhores de hoje" e o selo de posição dos Lances.
