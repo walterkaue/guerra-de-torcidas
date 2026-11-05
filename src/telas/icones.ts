@@ -33,6 +33,11 @@ const TRACOS = {
   corrente: '<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1m2 3.7a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/>',
   semRede: '<path d="M3 3l18 18M8.5 16.5a5 5 0 017 0M5 12.9a10 10 0 015.2-2.7M19 12.9a10 10 0 00-2.3-1.6M2 9a15 15 0 014.4-2.8M22 9a15 15 0 00-9.3-3.9M12 20h.01"/>',
+  cadeado: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+  cabelo: '<path d="M5 20v-7a7 7 0 0114 0v7M5 13c4 0 6-2.5 7-5.5 1 3 3 5.5 7 5.5"/>',
+  camisa: '<path d="M9 3 3 6l2.5 4.5L8 9.5V21h8V9.5l2.5 1L21 6l-6-3a3 3 0 01-6 0z"/>',
+  apito: '<circle cx="9" cy="15" r="5"/><path d="M13 11.5 21 8v4.5l-4.5 1M9 15h.01"/>',
+  campo: '<rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M12 5v14"/><circle cx="12" cy="12" r="3"/>',
 } as const;
 
 export type NomeIcone = keyof typeof TRACOS;

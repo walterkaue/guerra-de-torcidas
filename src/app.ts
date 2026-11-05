@@ -71,7 +71,9 @@ export type Rota =
    */
   | { tela: 'lances'; aba?: 'penaltis' | 'falta' | 'finalizacao'; desafio?: string; lance?: string }
   /** Casa do [time]: sem id, o índice dos clubes. */
-  | { tela: 'casa'; id?: string };
+  | { tela: 'casa'; id?: string }
+  /** Vestiário do boneco montável (docs/jogo.md 14.5): escolher peças, cores e número, e salvar. */
+  | { tela: 'vestiario' };
 
 type Limpeza = (() => void) | void;
 type Renderizador = (root: HTMLElement, rota: Rota) => Limpeza;
