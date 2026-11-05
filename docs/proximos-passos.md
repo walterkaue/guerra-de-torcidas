@@ -12,7 +12,7 @@
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
 | Tamanho | Em 04/11/2026, com o PR #96: bundle inicial de 59 KB gzip (limite: ~300 KB). Somando todo o JS e o CSS, 251 KB gzip. A conta de 02/11 deu 216 KB, mas pode não ter usado o mesmo método |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
-| Uso | 7 jogadores, 4 na semana, 87 partidas. Pênaltis trazem 82% dos pontos. Amostra pequena |
+| Uso | Retrato de 04/11, 21h: 18 pessoas já jogaram; 48 partidas de pênaltis, 10 de faltas e cara a cara, 32 de Prova. Pênaltis trazem 74% dos pontos do ranking (eram 82% num retrato anterior). Amostra pequena |
 
 ## Em andamento
 
@@ -23,7 +23,9 @@
 - **Conferir no celular (o Kauê, no site no ar):** fazer o aquecimento de ponta a ponta num aparelho limpo (limpar os dados do site), ver o palpite da estação 5 em Palpites e os +20 XP na Carreira; vibração e papel picado; a mão animada em movimento; um link de desafio num aparelho limpo, que deve ir direto ao desafio e deixar o card na Home.
 - **Não testado à mão:** as dicas de morte súbita, cavadinha pega no meio, altura errada e 3 cobranças sem efeito (cobertas por teste das condições, não pela tela); a zona do gol de verdade nos Lances só foi vista pelo DOM.
 
-**Troféus dos lances e `#admin` no Grafismo de TV (`docs/jogo.md` seção 14.3):** construído em 04/11/2026, branch `claude/trofeus-lances`, PR aberto esperando o merge do Kauê. Prints em `docs/auditoria/2026-11-04/trofeus/`, aprovados pelo Kauê antes de aplicar.
+**Lances do Jogo unificados (`docs/jogo.md` seção 14.7):** decidido pelo Kauê em 04/11/2026. A proposta com os números está em `docs/propostas/lances-unificados.md` (só leitura e simulação; nada mudou no jogo). Falta o Kauê escolher as tabelas, o limite e a segunda de entrada (seção 10 da proposta). Depois disso, a implementação vai pelo plano da seção 8 da proposta: servidor (migração, `lances`, `nova-partida`, `fechar-partida`) e telas, publicados antes da segunda de corte.
+
+**Troféus dos lances e `#admin` no Grafismo de TV (`docs/jogo.md` seção 14.3):** no ar desde 04/11/2026 (PR #101, merge às 20h18; deploy conferido às 20h20). Prints em `docs/auditoria/2026-11-04/trofeus/`, aprovados pelo Kauê antes de aplicar.
 - **O que entra:**
   - **Trilha:** bloco `trilha()` em `src/telas/blocos.ts`; a conta pura (`trilhaDoLance`, `linhaRumo`, `filtrarAlbum`) fica em `src/jogo/lancesTextos.ts`, com testes.
   - **Álbum:** filtros e favoritos em `src/telas/albumLances.ts`. Os favoritos ficam em `prefs.favoritosLances`, só no aparelho.
@@ -160,6 +162,11 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
    - Em Logs → Auth, o `/signup` anônimo das 9h17min53s respondeu 200, e não houve nenhum 4xx ou 5xx em 24 horas. Ou seja, o token passou pela checagem.
 
 **Decisões:**
+- **Lances do Jogo unificados (14.7):** escolher entre as opções de `docs/propostas/lances-unificados.md`, seção 10:
+  - **Pênaltis:** 8 · +4 · +6 · 8 · +15 · +12 (proposta, mediana 63). A alternativa "mais baixa" dá 57.
+  - **Faltas:** 24 · 30 · 36 · 42 · +8 (proposta B). A inicial dá mediana de 23 a 40.
+  - **Limite e data:** limite de 10 por dia e a segunda de entrada.
+  - **Conferir à parte:** 8 lances parecem não deixar recriar (o ouro deles é impossível hoje). A lista está na seção 5 da proposta.
 - ~~**Fáceis de clube:**~~ decidido e aplicado em 02/11/2026: 27 rebaixadas para média, 18 médias subiram a fácil (CSV e banco, só `degrau`, partidas fechadas intactas). **Faltam 9 fáceis novas** para o pipeline do Gemini: athletico-pr 2, chapecoense 2, bahia 1, bragantino 1, coritiba 1, remo 1, vasco 1 (com fonte e revisão no `#admin`). Até lá esses clubes têm 1 ou 2 fáceis e sobra de média; quando cada fácil nova for aprovada no `#admin`, aposentar a média que sobra desse clube (a de menor acerto ou a mais parecida com outra), para manter 3 fáceis, 3 médias, 2 difíceis e 2 de craque (decidido em 02/11/2026). O id guarda o degrau de nascimento (o validador só exige o clube no começo).
 - **Data do zerar da pré-temporada:** até 06/12 para estrear em dezembro. A Crava termina em 2/12, e o balanço roda antes de zerar.
 - ~~**Torcida sem ninguém nas 52 semanas:**~~ decidido em 02/11/2026: vale 0 ponto também lá. Implementar na tela das 52 semanas.

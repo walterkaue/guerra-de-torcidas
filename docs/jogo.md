@@ -118,7 +118,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - Torcida com menos de 30 torcedores ativos: as vagas vazias contam como **80% da média geral da semana**.
 - **A tabela mexe em até 1 minuto** (desde 02/11/2026): o servidor refaz o ranking a cada minuto, com a mesma conta. A tela de resultado mostra "Subiu de 5º pra 3º" quando chega a tabela calculada depois da partida; se nada mudar em cerca de 1 minuto, fica "Contou pro ranking da semana".
 - **Pontos de campeonato** pela posição na divisão, estilo Fórmula 1: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1.
-- **Teto diário:** só as 5 melhores partidas do dia de cada jogador contam, **somando todos os minigames de partida** (pênaltis, quiz). O desafio diário (uma vez por dia), o Crava a Rodada (teto próprio por rodada) e os Lances do Jogo (vale a melhor partida do dia, teto 120; seção 7.3) ficam por fora (decidido em 19/10; Lances em 21/10).
+- **Teto diário:** só as 5 melhores partidas do dia de cada jogador contam, **somando todos os minigames de partida** (pênaltis, quiz). O desafio diário (uma vez por dia), o Crava a Rodada (teto próprio por rodada) e os Lances do Jogo (vale a melhor partida do dia, teto 120; seção 7.3) ficam por fora (decidido em 19/10; Lances em 21/10). **Muda com a seção 14.7 (Lances do Jogo unificados), na segunda em que ela entrar.**
 
 ### MVP, antes das divisões
 - Enquanto a Série A e a Série B não existem (fase 1.5), o ranking da semana é **um só, com os 20 times**: Campeão da semana (30 melhores) e Maior torcida. Ainda sem pontos de campeonato.
@@ -216,7 +216,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Disputas históricas:** disputas de pênaltis que o clube **venceu**, com o adversário de verdade já escolhido (nome, artigo e cores, sem escudo) e a ficha do jogo ("Final de 2018: foi 4 x 3. E hoje?"). Os chutes **não** são pré-definidos: o formato é o de hoje (semente, goleiro e batedor da máquina, morte súbita, par ou ímpar).
 - Cada torcedor vê as disputas **do time do coração** e as da **Seleção Brasileira** (pelo menos 2, para todo mundo). Meta: 3 por clube; clube com menos disputas marcantes é completado pelas da Seleção.
 - **Disputa livre** contra a Máquina continua (é o jogo de hoje): obrigatória para quem é de "Outro time" e para quem só quer bater pênalti.
-- **Só cenário:** motor, dificuldade da semana, detecção, desafio por link e pontuação dos pênaltis não mudam, e os pênaltis continuam **dentro** do teto de 5 partidas. A partida guarda qual disputa foi jogada (`disputa_id`), para a ficha, o card e as medalhas.
+- **Só cenário:** motor, dificuldade da semana, detecção, desafio por link e pontuação dos pênaltis não mudam, e os pênaltis continuam **dentro** do teto de 5 partidas. **Muda com a seção 14.7 (Lances do Jogo unificados), na segunda em que ela entrar.** A partida guarda qual disputa foi jogada (`disputa_id`), para a ficha, o card e as medalhas.
 - Adversários de fora da Série A (outras divisões e clubes estrangeiros) ganham cadastro próprio: nome, artigo e cores.
 - **Como está no código (31/10/2026, primeira etapa):**
   - **Catálogo:** `dados/disputas/` (formato e conferência no `README.md` da pasta; validado por `npm test`), com o mesmo caminho dos lances: nasce `rascunho`, uma segunda sessão confere, e `npm run catalogo-disputas` gera `src/dados/disputas.ts` só com `revisada` ou `ativa`. Sem nenhuma revisada, a aba mostra "Em breve".
@@ -380,7 +380,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 | **8 de 8 (sem nenhum erro)** | | **+24** |
 
 - Máximo: 150. Pessoa mediana: estimativa ~29 com o banco de hoje, ~35 com as fáceis recalibradas e ~57 para quem manda bem; alvo continua 45 a 75; se o balanço com 20 partidas novas ficar abaixo, a próxima alavanca é 4 erros.
-- Conta dentro do teto diário (5 melhores partidas do dia, somando com os pênaltis).
+- Conta dentro do teto diário (5 melhores partidas do dia, somando com os pênaltis). **Muda com a seção 14.7 (Lances do Jogo unificados), na segunda em que ela entrar.**
 
 ### Anti-trapaça
 - Perguntas e respostas ficam em tabelas que o celular **não lê** (RLS sem leitura; só funções do servidor acessam).
@@ -465,7 +465,7 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Tipos no MVP:** **falta** (bola fora da área, com barreira) e **cara a cara** (finalização na área ou perto dela, com o goleiro podendo sair do gol). **Defesa fica fora do MVP:** repete a defesa dos pênaltis e, com lance fixo, a resposta seria decorada. As ideias de defesas históricas ficam guardadas.
 - **Gesto igual ao do pênalti:** direção, força e efeito, com cavadinha. O que muda é de onde a bola sai, a barreira e o goleiro.
 - **Álbum de lances:** a pessoa escolhe os lances, com filtros por clube (abre no time do coração) e por tipo. Pode jogar lance de qualquer clube e da Seleção; os pontos vão sempre para o time dela.
-- **Partida = 3 lances** escolhidos pela pessoa (pode repetir o mesmo lance). Cerca de 30 s.
+- **Partida = 3 lances** escolhidos pela pessoa (pode repetir o mesmo lance). Cerca de 30 s. **Muda com a seção 14.7 (Lances do Jogo unificados), na segunda em que ela entrar.**
 - **Valendo:** até **6 partidas por dia** (18 lances; ajustável). O dia vale a **melhor partida**.
 - **Treino:** ilimitado, roda só no celular, sem pontos e sem medalhas.
 - Torcida da seleção (31/10/2026): nos lances da seleção brasileira, a arquibancada da partida fica verde e amarela, sem brasão nem escudo; os pontos continuam indo para o clube da pessoa.
@@ -799,3 +799,25 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - **Resultado da Prova:** uma frase só, `prova_perfeita` no 8 de 8 e `prova_fim` nos outros casos; `prova_parou` deixou de ser chamada (o texto continua no banco de frases).
 - **Vibração (ajuste de 04/11/2026, depois do teste do Kauê):** toda estação vibra no padrão de gol (60-40-90 ms), acertando ou não; o de acerto (22 ms) quase não se sentia. Como no resto do jogo, só no Android: o iPhone não tem vibração no navegador.
 - **Desfecho sem rede:** fica em `pendente` no aparelho e a Home manda de novo em silêncio. Um `completou` guardado nunca é trocado por outro desfecho, para o XP não se perder.
+
+### 14.7 Lances do Jogo unificados
+> Decisão do Kauê em 04/11/2026. Números finais pela proposta `docs/propostas/lances-unificados.md`.
+
+- Pênaltis, Faltas e Cara a cara viram um jogo só, com a mesma regra de pontos, escolha e troféus.
+- Teto de 150 por partida nos três tipos (igual à Prova). Mediana-alvo ~60.
+- Pênaltis: 5 cobranças + 5 defesas alternadas, desempate (morte súbita e par ou ímpar) dentro do teto; tabela reequilibrada para caber em 150.
+- Faltas e Cara a cara: a partida são 3 tentativas do mesmo lance; gols sobem para o teto chegar a 150 (proposta inicial 12, 22, 32, 42 por faixa e +8 por recriar).
+- O dia vale as 3 melhores partidas de Lances, de qualquer tipo (máx. 450).
+- A Prova de Boleiro também passa a valer as 3 melhores partidas do dia (máx. 450), no lugar do teto de 5 que dividia com os Pênaltis. Time do Dia e Crava não mudam.
+- Escolha em um toque: cada item do álbum tem só 'Jogar'. Saem o monte-sua-partida de 3, a barra de vagas, 'Pôr na partida' e 'Treinar'.
+- Limite anti-abuso de partidas de Lances valendo por dia; depois dele a partida vira treino sozinha (sem ponto nem medalha).
+- Tela única: filtro de tipo (Todos · Pênaltis · Faltas · Cara a cara), clube (abre no seu time), Meus troféus, Perto do próximo e ⭐; lista em favoritos → seu time → Seleção → outros; Disputa livre primeiro; 'Seus 3 melhores de hoje' no topo.
+- Troféus em todos os itens: Faltas e Cara a cara 5 · 20 · 50 gols, ouro com 10 recriados (medalhas já ganhas continuam); Pênaltis (cada disputa histórica e a Disputa livre) 10 · 50 · 100 gols, ouro com 10 vitórias.
+- Lance do Dia na Home (o mesmo para todos, não multiplica pontos); X1 em qualquer lance; card de Lances na Home com o top 3 do dia.
+- Entra numa segunda 0h; partidas fechadas não mudam.
+
+**Proposta de números (04/11/2026, esperando a decisão do Kauê; detalhes e simulação na proposta):**
+- **Pênaltis:** gol 8, ângulo +4, cavadinha +6, defesa 8, vitória +15, 5 de 5 +12 (teto 149, com a morte súbita). Mediana 63 nas partidas reais e no modelo (hoje, 80).
+- **Faltas e Cara a cara:** gol 24 / 30 / 36 / 42 por faixa e +8 por recriar (teto 150). Mediana 34 nas partidas reais, 44 para quem aprendeu e 64 com a mira do robô. Com a pontaria de hoje, nenhuma tabela que caiba em 150 chega a 60; a proposta inicial dá 23 a 40.
+- **Limite:** 10 partidas de Lances valendo por dia, somando os três tipos.
+- **Ainda não está no código:** até a segunda de entrada, valem as seções 5, 6, 7.1 e 7.3 como estão.
