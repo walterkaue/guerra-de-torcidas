@@ -178,6 +178,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
    - corrigir a faixa de cada lance pela taxa de acerto real, depois de 50 tentativas valendo (seção 7.3);
    - o `resultado.ts` dos pênaltis passar a usar `src/telas/efeitoRanking.ts`, que hoje repete a lógica dele (desde 03/11 os dois mostram o efeito como selo + nota, então a troca ficou mais simples).
 1. **Cidade, Galeria e 52 semanas:** nessa ordem, depois das telas das divisões.
+   - **Cidade (plano aprovado em 04/11/2026):** servidor e lista do IBGE num PR (migrações `20261105000000` e `20261105000100`); a tela de escolha (convite depois da 1ª partida, Perfil, Ver meus dados, linha da Política) e a aba Cidades com o bloco da Home em dois PRs paralelos. Publicar a migração antes das telas. Detalhe na seção 5 do `docs/jogo.md`.
 2. **Perguntas:** o piloto recomendou parar nas 529 sem fonte do staging. A meta de 800 precisa de perguntas nascidas de páginas reais. A importação continua com o Kauê.
 3. ~~**Limpeza de anônimos:**~~ feita no PR #84 (`20261103000000_contas_paradas.sql`), guardando os pontos em `pontos_apagados`. No ar desde 02/11/2026 (rotina `apagar-contas-paradas`, dia 1º às 4h). Na simulação de 02/11, 0 conta sairia: a anônima mais antiga é de 19/10/2026, então a primeira limpeza possível é em 1º/05/2027. As travas do PR #86 estão no ar desde 02/11/2026.
 4. **Grafismo de TV, fase 2:** painel `#admin` no visual da seção 4.6 do `docs/visual.md`. O confete da vitória dos Pênaltis pode ir para o `resultadoPadrao.ts`, para os outros jogos usarem.
