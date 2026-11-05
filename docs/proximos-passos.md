@@ -8,7 +8,7 @@
 | Área | Estado em 02/11/2026 |
 |---|---|
 | Código | `main` com 91 arquivos de teste e 1.840 testes passando (PR #101, troféus dos lances, em 04/11) |
-| Publicação | Site no ar (`main` de 04/11, 20h18, com o PR #101; a publicação no GitHub Pages terminou sem erro). Antes, o PR #98 (13h05) teve o deploy conferido e o site servia o build testado. 35 migrações aplicadas (a 35ª, do aquecimento, em 04/11, antes do merge do PR #98). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
+| Publicação | Site no ar (`main` de 04/11, 20h18, com o PR #101; deploy conferido: o site serve `index-D0wxorIX.js`, o build com a trilha). Antes, o PR #98 (13h05) teve o deploy conferido e o site servia o build testado. 35 migrações aplicadas (a 35ª, do aquecimento, em 04/11, antes do merge do PR #98). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
 | Tamanho | Em 04/11/2026, com o PR #96: bundle inicial de 59 KB gzip (limite: ~300 KB). Somando todo o JS e o CSS, 251 KB gzip. A conta de 02/11 deu 216 KB, mas pode não ter usado o mesmo método |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
