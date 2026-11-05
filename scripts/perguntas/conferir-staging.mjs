@@ -192,7 +192,7 @@ function consultar(sql) {
     writeFileSync(arq, sql);
     // O projeto ligado (supabase/.temp) só existe no checkout principal, não nos worktrees.
     const cwd = raizDoCheckout(PASTA) ?? undefined;
-    const saida = execFileSync(npx, ['supabase', 'db', 'query', '--linked', '-o', 'json', '-f', arq], { encoding: 'utf8', cwd, shell: process.platform === 'win32', stdio: ['ignore', 'pipe', 'ignore'] });
+    const saida = execFileSync(npx, ['supabase', 'db', 'query', '--remote', '--read-only', '-o', 'json', '-f', arq], { encoding: 'utf8', cwd, shell: process.platform === 'win32', stdio: ['ignore', 'pipe', 'ignore'] });
     const d = JSON.parse(saida.slice(saida.indexOf('{')));
     return d.rows ?? [];
   } finally {

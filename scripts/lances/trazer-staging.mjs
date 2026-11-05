@@ -83,7 +83,7 @@ function consultar(sql) {
   try {
     const arq = join(dir, 'q.sql');
     writeFileSync(arq, sql);
-    const saida = execFileSync(npx, ['supabase', 'db', 'query', '--linked', '-o', 'json', '-f', arq], { encoding: 'utf8', shell: process.platform === 'win32' });
+    const saida = execFileSync(npx, ['supabase', 'db', 'query', '--remote', '--read-only', '-o', 'json', '-f', arq], { encoding: 'utf8', shell: process.platform === 'win32' });
     const inicio = Math.min(...['[', '{'].map((c) => saida.indexOf(c)).filter((i) => i >= 0));
     const d = JSON.parse(saida.slice(inicio));
     return Array.isArray(d) ? d : (d.rows ?? []);

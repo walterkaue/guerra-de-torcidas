@@ -322,7 +322,7 @@ const pesoTexto = (o) => {
   tabela(['Pessoa · regra', 'Lances (pên. + faltas)', 'Prova', 'Time do Dia', 'Crava'], linhas);
 }
 
-export const CONSULTA = `-- Só leitura. Rode no SQL Editor ou com npx supabase db query --linked -o json -f arquivo.sql.
+export const CONSULTA = `-- Só leitura. Rode no SQL Editor ou com npx supabase db query --remote --read-only -o json -f arquivo.sql.
 -- Troca o id de cada pessoa por j1, j2… (ordem da primeira partida).
 with pess as (select torcedor_id, 'j' || dense_rank() over (order by min(criada_em)) as j from public.partidas group by torcedor_id),
 sem as (select distinct semana from public.partidas where semana is not null)
