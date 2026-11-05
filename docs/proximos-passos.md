@@ -77,6 +77,7 @@ select * from public.classificacao_temporada where mes = '2026-11-01' order by p
 
 ## Pode começar já
 
+0. **Apelidos de jogadores famosos** (06/11/2026, PR aberto): migração `20261106100000_apelidos_famosos.sql` acrescenta ~250 nomes e apelidos a `palavras_bloqueadas`; teste `src/dados/apelidosFamosos.test.ts`. **Falta:** o Kauê aprovar o PR e aplicar a migração (dry-run antes); depois, conferência só leitura de quantos apelidos já gravados batem com a lista (só o número; apagar pelo `#admin`, se for o caso). A frase própria do card (14.6, D1) deve usar o mesmo filtro no servidor, sem cópia da lista no celular.
 1. ~~**Telas das divisões:**~~ feito em 02/11/2026: aba Temporada no Ranking (só leitura de `temporada`, `classificacao_temporada`, `temporada_serie` e `fechamento_semana`). Ficaram para depois: a linha na Home ("9º na Série A, 4 pontos da zona"), as frases do narrador no fechamento do mês e o card de fim de temporada. Conferir no celular em 09/11 depois das 12h (1ª semana de novembro com pontos) e em 07/12 (dezembro com A e B, novembro em "Mês passado").
 2. ~~**Ranking incremental:**~~ feito em 02/11/2026 (migração `20261102100000_ranking_por_minuto`): fila + rotina `ranking-minuto`. No ar desde 02/11/2026 às 15h24: migração, `fechar-partida` v18 e site. Conferido no mesmo dia:
    - as 3 partidas das 15h34 às 15h37 entraram no ranking em 20 a 50 s (aviso na versão 3);
