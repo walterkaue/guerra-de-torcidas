@@ -1,6 +1,7 @@
 // Placa "Rumo às medalhas" no resultado dos Lances (jogo.md, 14.3): uma linha por lance ("+1 rumo ao ouro · 24/50")
 // com a trilha compacta. Lê minhas_medalhas() depois da partida, quando o gatilho já anotou os gols. Ao subir de
-// medalha: papel picado nas cores do time, vibração e o selo da medalha. Falhou a leitura: a placa não aparece.
+// medalha: o selo, o botão "Mandar a medalha" (card só da medalha, jogo.md 7.3) e a comemoração do resultado
+// (confete e vibração, uma vez por resultado: resultadoPadrao.ts). Falhou a leitura: a placa não aparece.
 
 import '../estilos/trofeus.css';
 import { esc } from '../app';
@@ -8,8 +9,7 @@ import type { Medalha } from '../jogo/lances';
 import { NOME_DA_MEDALHA, linhaRumoDisputa, linhasRumoDaPartida, trilhaDaDisputa, trilhaDoLance, type LinhaMedalha } from '../jogo/lancesTextos';
 import { itemPenaltis } from '../jogo/regraLances';
 import { placa, trilha } from './blocos';
-import { papelPicadoNaTela } from './papelPicado';
-import { vibrar } from './toque';
+import { botaoMandarMedalha, ligarMandarMedalha } from './mandarMedalha';
 
 export interface LanceJogado {
   id: string;
@@ -42,6 +42,7 @@ export function placaRumo(
         <div class="rumo-topo"><span class="rumo-titulo">${esc(jogado.titulo)}</span>${medalha ? seloDaMedalha(medalha) : ''}</div>
         <p class="rumo-texto">${esc(linha.texto)}</p>
         ${trilha(t, { compacta: true })}
+        ${medalha ? botaoMandarMedalha(lanceId, medalha) : ''}
       </li>`;
   });
   return { html: `<ul class="rumo-lista">${itens.join('')}</ul>`, subiu: subiu || novas.length > 0 };
@@ -55,7 +56,8 @@ export async function mostrarRumoDasMedalhas(o: {
   alvo: HTMLElement;
   jogados: readonly LanceJogado[];
   novas: readonly { lanceId: string; medalha: Medalha }[];
-  cores: readonly string[];
+  /** Subiu de medalha: a comemoração do resultado (confete e vibração, uma vez por resultado). */
+  aoSubir?: () => void;
   ler: () => Promise<readonly LinhaMedalha[]>;
 }): Promise<void> {
   let depois: readonly LinhaMedalha[];
@@ -69,10 +71,8 @@ export async function mostrarRumoDasMedalhas(o: {
   if (!p) return;
   o.alvo.innerHTML = placa(p.html, { titulo: 'Rumo às medalhas', filete: true, classe: 'rumo-placa' });
   o.alvo.hidden = false;
-  if (p.subiu) {
-    vibrar('gol');
-    papelPicadoNaTela(o.alvo, o.cores);
-  }
+  ligarMandarMedalha(o.alvo, o.alvo);
+  if (p.subiu) o.aoSubir?.();
 }
 
 /** O que a partida de pênaltis deu à disputa: os gols que contam (8 primeiras cobranças) e se venceu. */
@@ -99,18 +99,20 @@ export function placaRumoDisputa(j: PartidaDaDisputa, depois: readonly LinhaMeda
         <div class="rumo-topo"><span class="rumo-titulo">${esc(j.titulo)}</span>${linha.subiu ? seloDaMedalha(linha.subiu) : ''}</div>
         <p class="rumo-texto">${esc(linha.texto)}</p>
         ${trilha(trilhaDaDisputa(fim.gols, fim.vitorias), { compacta: true })}
+        ${linha.subiu ? botaoMandarMedalha(itemPenaltis(j.id), linha.subiu) : ''}
       </li></ul>`;
   return { html, subiu: !!linha.subiu };
 }
 
 /**
  * Preenche `alvo` no resultado da disputa histórica. Só chame com partida que contou (servidor fechou e sem
- * suspeita). Leitura que falha, ou tela que já mudou: não mostra nada. Subiu de medalha: papel picado e vibração.
+ * suspeita). Leitura que falha, ou tela que já mudou: não mostra nada. Subiu de medalha: `aoSubir` e o botão.
  */
 export async function mostrarRumoDaDisputa(o: {
   alvo: HTMLElement;
   partida: PartidaDaDisputa;
-  cores: readonly string[];
+  /** Subiu de medalha: a comemoração do resultado (confete e vibração, uma vez por resultado). */
+  aoSubir?: () => void;
   ler: () => Promise<readonly LinhaMedalha[]>;
 }): Promise<void> {
   let depois: readonly LinhaMedalha[];
@@ -124,8 +126,6 @@ export async function mostrarRumoDaDisputa(o: {
   if (!p) return;
   o.alvo.innerHTML = placa(p.html, { titulo: 'Rumo às medalhas', filete: true, classe: 'rumo-placa' });
   o.alvo.hidden = false;
-  if (p.subiu) {
-    vibrar('gol');
-    papelPicadoNaTela(o.alvo, o.cores);
-  }
+  ligarMandarMedalha(o.alvo, o.alvo);
+  if (p.subiu) o.aoSubir?.();
 }

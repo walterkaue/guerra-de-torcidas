@@ -1,6 +1,7 @@
 // Aba Conquistas do Ranking (docs/jogo.md, seção 7.3, "Medalhas e Conquistas"): as medalhas da própria
 // pessoa por clube e por lance, e a vitrine das torcidas (soma por time, sem ninguém identificado).
-// Medalha é coleção: não vale ponto. Só leitura; baixa sob demanda quando a aba é aberta.
+// Medalha é coleção: não vale ponto. Só leitura; baixa sob demanda quando a aba é aberta. Tocar numa medalha abre
+// "Mandar a medalha", com o card só dela.
 // Visual do Grafismo de TV (docs/jogo.md 14.2): placas com faixa, números em bloco, estados com "Tentar de novo".
 
 import '../estilos/conquistas.css';
@@ -27,6 +28,8 @@ import * as real from '../servidor/api';
 import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
 import { aoTocarNoEstado, estado, faixa, numero, trilha } from './blocos';
 import { lancesUnificados } from './corte';
+import { icone } from './icones';
+import { ligarMandarMedalha } from './mandarMedalha';
 
 type Servidor = Pick<typeof real, 'minhasMedalhas' | 'vitrineMedalhas'>;
 // Em desenvolvimento, ?lancesFalsos troca o servidor por um de mentira (src/dev/lancesFalsos.ts).
@@ -81,7 +84,12 @@ function linhaDoLance(l: MedalhaDoLanceMontada): string {
   return `<li class="conq-linha conq-lance">
     <span class="cor" style="--c1:${t.cores[0]};--c2:${t.cores[1]}" aria-hidden="true"></span>
     <span class="conq-nome">${esc(l.titulo)}<small>${esc(t.nome)}${detalheDoItem(l)}</small></span>
-    ${m ? `<span class="conq-selo ${m}">${bolinha(m)}${NOME_DA_MEDALHA[m]}</span>` : '<span class="conq-selo sem">Sem medalha</span>'}
+    ${
+      m
+        ? `<button type="button" class="conq-selo ${m}" data-mandar-medalha="${esc(l.lanceId)}" data-medalha="${m}"
+            aria-label="${esc(`${NOME_DA_MEDALHA[m]} em ${l.titulo}: mandar a medalha`)}">${bolinha(m)}${NOME_DA_MEDALHA[m]}${icone('trofeu')}</button>`
+        : '<span class="conq-selo sem">Sem medalha</span>'
+    }
     <div class="conq-trilha">${trilha(trilhaDoItem(l.lanceId, { gols: l.gols, recriados: l.recriados, vitorias: l.vitorias }), { compacta: true })}</div>
   </li>`;
 }
@@ -107,6 +115,8 @@ export function desenharConquistas(el: HTMLElement): () => void {
   el.querySelector('[data-acao="jogar"]')!.addEventListener('click', () => irPara(lancesUnificados() ? { tela: 'lances' } : { tela: 'lances', aba: 'falta' }));
   const minhas = el.querySelector<HTMLElement>('[data-minhas]')!;
   const vitrine = el.querySelector<HTMLElement>('[data-vitrine]')!;
+  // Tocar numa medalha abre "Mandar a medalha" (card só da medalha, docs/jogo.md 7.3).
+  ligarMandarMedalha(minhas, el);
 
   /** Põe a faixa da placa e o conteúdo (ou um estado, com o botão ligado quando há como tentar de novo). */
   const pintar = (placa: HTMLElement, titulo: string, html: string, tentar?: () => void): void => {
