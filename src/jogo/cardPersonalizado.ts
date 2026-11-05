@@ -162,7 +162,8 @@ export interface DadosDoCard {
   quem: { comApelido: string; semApelido: string };
   /** O que foi jogado, no Placar seco: título do lance, "Prova de Boleiro: cheguei na 6ª", "33ª rodada". */
   lance: string;
-  /** O placar em emoji, uma linha (a mesma do texto de compartilhar; no card é desenho, então vale qualquer emoji). */
+  /** O placar em emoji: uma linha, ou poucas separadas por "
+" (a grade do Time do Dia). No card é desenho, então vale qualquer emoji. */
   placarEmoji: string;
   /** Frase do narrador escolhida para este resultado (pode ser vazia). */
   frase: string;
