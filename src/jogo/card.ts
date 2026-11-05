@@ -27,6 +27,16 @@ const FIM_DO_MEIO = 1500;
 const RODAPE = 1590;
 const TELAO = { x: 90, y: 430, l: 900, a: 510, borda: 24 };
 const FAIXAS_DO_GRAMADO = 6;
+
+/** As alturas do cenário (do alto ao rodapé). O Quadrado do card personalizável usa um cenário mais baixo. */
+export interface Geo {
+  altura: number;
+  ceu: number;
+  altArq: number;
+  fimMeio: number;
+  rodape: number;
+}
+export const GEO_STORIES: Geo = { altura: A, ceu: CEU, altArq: ALT_ARQUIBANCADA, fimMeio: FIM_DO_MEIO, rodape: RODAPE };
 /** Na qualidade Leve, o desenho espera a contagem dos pontos da tela de resultado terminar. */
 const ESPERA_NA_LEVE_MS = 900;
 
@@ -98,7 +108,7 @@ export function quebrarTexto(c: CanvasRenderingContext2D, texto: string, largura
 }
 
 /** Selo amarelo "NOVO RECORDE!", levemente torto (adesivo de transmissão), centrado em (x, y). */
-function seloRecorde(c: CanvasRenderingContext2D, x: number, y: number): void {
+export function seloRecorde(c: CanvasRenderingContext2D, x: number, y: number): void {
   c.save();
   c.translate(x, y);
   c.rotate(-0.14);
@@ -119,20 +129,16 @@ function seloRecorde(c: CanvasRenderingContext2D, x: number, y: number): void {
   c.restore();
 }
 
-/**
- * Nível da carreira no card, só quando a pessoa escolhe (docs/jogo.md, seção 5, "Longo prazo"): um selo
- * entre o gramado e o rodapé, acima do link. Desenha por cima de qualquer card pronto.
- */
-export function seloNivel(canvas: HTMLCanvasElement, nivel: string): void {
-  const c = canvas.getContext('2d')!;
+/** A pílula do nível da carreira, centrada em (L/2, cy). `texto` já vem completo ("CARREIRA · CRAQUE"). */
+export function pilulaDoNivel(c: CanvasRenderingContext2D, texto: string, cy: number, tam = 42): void {
   c.save();
   c.setTransform(1, 0, 0, 1, 0, 0);
-  const texto = `CARREIRA · ${nivel.toUpperCase()}`;
-  c.font = `700 42px ${ROTULO}`;
-  const largura = c.measureText(texto).width + 64;
+  c.font = `700 ${tam}px ${ROTULO}`;
+  const largura = Math.min(c.measureText(texto).width + tam * 1.5, L - 60);
+  const alt = tam * 1.7;
   c.fillStyle = '#04130a';
   c.beginPath();
-  c.roundRect(L / 2 - largura / 2, RODAPE - 36, largura, 72, 36);
+  c.roundRect(L / 2 - largura / 2, cy - alt / 2, largura, alt, alt / 2);
   c.fill();
   c.strokeStyle = AMARELO;
   c.lineWidth = 3;
@@ -140,58 +146,80 @@ export function seloNivel(canvas: HTMLCanvasElement, nivel: string): void {
   c.fillStyle = AMARELO;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
-  c.fillText(texto, L / 2, RODAPE + 2);
+  c.fillText(texto, L / 2, cy + tam * 0.05, largura - tam);
   c.restore();
 }
 
-function fundo(c: CanvasRenderingContext2D, time: Time, luz: Luz): void {
+/**
+ * Nível da carreira no card, só quando a pessoa escolhe (docs/jogo.md, seção 5, "Longo prazo"): um selo
+ * entre o gramado e o rodapé, acima do link. Desenha por cima de qualquer card pronto.
+ */
+export function seloNivel(canvas: HTMLCanvasElement, nivel: string): void {
+  pilulaDoNivel(canvas.getContext('2d')!, `CARREIRA · ${nivel.toUpperCase()}`, RODAPE);
+}
+
+export function fundo(c: CanvasRenderingContext2D, time: Time, luz: Luz, g: Geo = GEO_STORIES): void {
   // Gramado de transmissão, com as faixas de corte em perspectiva, do pé da arquibancada ao rodapé.
-  const alt = (RODAPE - ALT_ARQUIBANCADA) / FAIXAS_DO_GRAMADO;
+  const alt = (g.rodape - g.altArq) / FAIXAS_DO_GRAMADO;
   for (let i = 0; i < FAIXAS_DO_GRAMADO; i++) {
     c.fillStyle = i % 2 ? '#0e4625' : '#0b3d1f';
-    c.fillRect(0, ALT_ARQUIBANCADA + i * alt, L, alt + 1);
+    c.fillRect(0, g.altArq + i * alt, L, alt + 1);
   }
   // A faixa mais perto da câmera é mais viva, com a linha lateral branca.
   c.fillStyle = '#1b7a3b';
-  c.fillRect(0, FIM_DO_MEIO, L, RODAPE - FIM_DO_MEIO);
+  c.fillRect(0, g.fimMeio, L, g.rodape - g.fimMeio);
   c.fillStyle = '#f5f5f0';
-  c.fillRect(0, FIM_DO_MEIO, L, 8);
+  c.fillRect(0, g.fimMeio, L, 8);
   c.fillStyle = '#062815';
-  c.fillRect(0, RODAPE, L, A - RODAPE);
+  c.fillRect(0, g.rodape, L, g.altura - g.rodape);
 
   c.save();
   c.scale(ESCALA, ESCALA);
-  desenharArquibancada(c, { W: L / ESCALA, H: ALT_ARQUIBANCADA / ESCALA, topo: CEU / ESCALA, postes: [46, 314] }, 0, time.cores, luz);
+  desenharArquibancada(c, { W: L / ESCALA, H: g.altArq / ESCALA, topo: g.ceu / ESCALA, postes: [46, 314] }, 0, time.cores, luz);
   c.restore();
 
   // Placas lisas de beira de campo nas cores do time (sem marca, sem texto).
   const larg = L / 6;
   c.fillStyle = '#0a0a0a';
-  c.fillRect(0, ALT_ARQUIBANCADA - 4, L, 58);
+  c.fillRect(0, g.altArq - 4, L, 58);
   for (let i = 0; i < 6; i++) {
     c.fillStyle = time.cores[i % 2];
-    c.fillRect(i * larg + 3, ALT_ARQUIBANCADA, larg - 6, 50);
+    c.fillRect(i * larg + 3, g.altArq, larg - 6, 50);
   }
 }
 
-function linhaDoTopo(c: CanvasRenderingContext2D, jogo: string, luz: Luz): void {
+/** A linha do topo já pronta ("GUERRA DE TORCIDAS · LANCES DO JOGO"). */
+export function textoDoTopo(c: CanvasRenderingContext2D, texto: string, luz: Luz, y = 124, tam = 42, largura = L - 340): void {
   c.textAlign = 'center';
   c.textBaseline = 'alphabetic';
-  c.font = `700 42px ${ROTULO}`;
+  c.font = `700 ${tam}px ${ROTULO}`;
   c.fillStyle = luz === 'dia' ? '#0b2a18' : '#ffffff';
-  c.fillText(`GUERRA DE TORCIDAS · ${jogo.toUpperCase()}`, L / 2, 124, L - 340);
+  c.fillText(texto, L / 2, y, largura);
 }
 
-/** Painel escuro de moldura grossa, pendurado por dois cabos na viga da cobertura. Devolve a área do conteúdo. */
-function telao(c: CanvasRenderingContext2D, time: Time, maior: number): Caixa {
-  const { x, l, borda } = TELAO;
-  const y = TELAO.y - maior;
-  const a = TELAO.a + maior;
-  // Viga da cobertura.
+function linhaDoTopo(c: CanvasRenderingContext2D, jogo: string, luz: Luz): void {
+  textoDoTopo(c, `GUERRA DE TORCIDAS · ${jogo.toUpperCase()}`, luz);
+}
+
+/** Viga da cobertura, de ponta a ponta, a `ceu` de altura. */
+export function viga(c: CanvasRenderingContext2D, ceu = CEU): void {
   c.fillStyle = '#1b1f24';
-  c.fillRect(0, CEU - 14, L, 30);
+  c.fillRect(0, ceu - 14, L, 30);
   c.fillStyle = '#59616b';
-  c.fillRect(0, CEU - 14, L, 5);
+  c.fillRect(0, ceu - 14, L, 5);
+}
+
+/** Altura do telão com só o nome do time (placar desligado no card personalizável). */
+const ALT_SO_NOME = 290;
+
+/**
+ * Painel escuro de moldura grossa, pendurado por dois cabos na viga da cobertura (que fica à parte, em `viga`).
+ * Devolve a área do conteúdo. Com `soNome`, o telão é baixo e leva só o nome do time, grande.
+ */
+export function telao(c: CanvasRenderingContext2D, time: Time, maior: number, soNome = false): Caixa {
+  const { x, l, borda } = TELAO;
+  const a = soNome ? ALT_SO_NOME : TELAO.a + maior;
+  const y = soNome ? TELAO.y + TELAO.a - ALT_SO_NOME : TELAO.y - maior;
   // Cabos.
   c.fillStyle = '#1b1f24';
   for (const cabo of [x + 150, x + l - 150]) {
@@ -219,35 +247,42 @@ function telao(c: CanvasRenderingContext2D, time: Time, maior: number): Caixa {
   c.fillStyle = AMARELO;
   c.textAlign = 'center';
   c.textBaseline = 'alphabetic';
+  if (soNome) {
+    c.font = `400 112px ${PLACAR}`;
+    c.fillText(time.nome.toUpperCase(), L / 2, y + a / 2 + 40, l - borda * 2 - 80);
+    return { x: x + borda + 30, y: y + a / 2, l: l - (borda + 30) * 2, a: 0 };
+  }
   c.font = `400 84px ${PLACAR}`;
   c.fillText(time.nome.toUpperCase(), L / 2, y + borda + 94, l - borda * 2 - 80);
   const yConteudo = y + borda + 118;
   return { x: x + borda + 30, y: yConteudo, l: l - (borda + 30) * 2, a: y + a - borda - 18 - yConteudo };
 }
 
-function pontos(c: CanvasRenderingContext2D, destaque: string, quem: string): void {
-  const yBase = 1178;
+/** O destaque grande (em amarelo, com sombra) e, embaixo, a linha de quem fez. */
+export function blocoDoNumero(c: CanvasRenderingContext2D, destaque: string, quem: string | null, yBase = 1178, tam = 212, tamQuem = 54): void {
   c.textAlign = 'center';
   c.textBaseline = 'alphabetic';
-  c.font = `400 212px ${PLACAR}`;
+  c.font = `400 ${tam}px ${PLACAR}`;
   c.fillStyle = '#04130a';
-  c.fillText(destaque, L / 2 + 7, yBase + 7, L - 120);
+  c.fillText(destaque, L / 2 + tam / 30, yBase + tam / 30, L - 120);
   c.fillStyle = AMARELO;
   c.fillText(destaque, L / 2, yBase, L - 120);
-  c.font = `800 54px ${FONTE}`;
+  if (!quem) return;
+  c.font = `800 ${tamQuem}px ${FONTE}`;
   c.fillStyle = '#ffffff';
-  c.fillText(quem, L / 2, yBase + 80, L - 130);
+  c.fillText(quem, L / 2, yBase + tamQuem * 1.5, L - 130);
 }
 
-/** Adesivo do narrador: papel, borda na cor do time e levemente torto, como na Home e no resultado. */
-function adesivo(c: CanvasRenderingContext2D, time: Time, frase: string): void {
+/** Adesivo do narrador: papel, borda na cor do time e levemente torto, como na Home e no resultado. Centro em (L/2, y). */
+export function adesivo(c: CanvasRenderingContext2D, time: Time, frase: string, y = 1395, tam = 40): void {
   if (!frase) return;
+  const passo = tam * 1.25;
   c.save();
-  c.font = `800 40px ${FONTE}`;
+  c.font = `800 ${tam}px ${FONTE}`;
   const linhas = quebrarTexto(c, frase, L - 210).slice(0, 2);
-  const largura = Math.max(...linhas.map((l) => c.measureText(l).width)) + 76;
-  const altura = linhas.length * 50 + 40;
-  c.translate(L / 2, 1395);
+  const largura = Math.max(...linhas.map((l) => c.measureText(l).width)) + tam * 1.9;
+  const altura = linhas.length * passo + tam;
+  c.translate(L / 2, y);
   c.rotate(-0.035);
   c.fillStyle = 'rgba(0,0,0,0.35)';
   c.beginPath();
@@ -255,7 +290,7 @@ function adesivo(c: CanvasRenderingContext2D, time: Time, frase: string): void {
   c.fill();
   c.fillStyle = PAPEL;
   c.strokeStyle = corDaBorda(time.cores);
-  c.lineWidth = 9;
+  c.lineWidth = tam * 0.22;
   c.beginPath();
   c.roundRect(-largura / 2, -altura / 2, largura, altura, 10);
   c.fill();
@@ -263,22 +298,27 @@ function adesivo(c: CanvasRenderingContext2D, time: Time, frase: string): void {
   c.fillStyle = '#17181a';
   c.textAlign = 'center';
   c.textBaseline = 'middle';
-  linhas.forEach((l, i) => c.fillText(l, 0, (i - (linhas.length - 1) / 2) * 50 + 2));
+  linhas.forEach((l, i) => c.fillText(l, 0, (i - (linhas.length - 1) / 2) * passo + 2));
   c.restore();
 }
 
-function rodape(c: CanvasRenderingContext2D, link: string, avisoFixo?: string): void {
+/** Link, aviso da pré-temporada e a linha fixa; o que não vier não ocupa lugar. `yLink` é a linha de base do primeiro. */
+export function rodape(c: CanvasRenderingContext2D, link: string | null, avisoFixo: string | undefined | null, yLink = 1696, escala = 1): void {
   c.textAlign = 'center';
   c.textBaseline = 'alphabetic';
-  c.fillStyle = '#ffffff';
-  c.font = `700 46px ${ROTULO}`;
-  c.fillText(link.replace(/^https?:\/\//, ''), L / 2, 1696, L - 120);
+  let y = yLink;
+  if (link) {
+    c.fillStyle = '#ffffff';
+    c.font = `700 ${46 * escala}px ${ROTULO}`;
+    c.fillText(link.replace(/^https?:\/\//, ''), L / 2, y, L - 120);
+    y += 56 * escala;
+  }
   c.fillStyle = 'rgba(255,255,255,0.8)';
-  c.font = `600 28px ${FONTE}`;
-  c.fillText(AVISO_PRE_TEMPORADA, L / 2, 1752, L - 120);
+  c.font = `600 ${28 * escala}px ${FONTE}`;
+  c.fillText(AVISO_PRE_TEMPORADA, L / 2, y, L - 120);
   if (avisoFixo) {
-    c.font = `700 28px ${FONTE}`;
-    c.fillText(avisoFixo, L / 2, 1800, L - 120);
+    c.font = `700 ${28 * escala}px ${FONTE}`;
+    c.fillText(avisoFixo, L / 2, y + 48 * escala, L - 120);
   }
 }
 
@@ -292,41 +332,46 @@ export function desenharModelo(m: ModeloCard, conteudo: (c: CanvasRenderingConte
 
   fundo(c, m.time, luz);
   linhaDoTopo(c, m.jogo, luz);
+  viga(c);
   const caixa = telao(c, m.time, m.telaoMaior ?? 0);
   c.save();
   conteudo(c, caixa);
   c.restore();
   // Por cima da quina do telão, sem encostar no nome do time.
   if (m.novoRecorde) seloRecorde(c, TELAO.x + TELAO.l - 110, TELAO.y - (m.telaoMaior ?? 0) - 26);
-  pontos(c, m.destaque, m.quem);
+  blocoDoNumero(c, m.destaque, m.quem);
   adesivo(c, m.time, m.frase);
   rodape(c, m.link, m.avisoFixo);
   return canvas;
 }
 
 /** O placar de um jogo que tem dois lados: Pênaltis e as sessões dos Lances. */
+/** O placar dentro do telão (Pênaltis e as sessões de dois lados). */
+export function conteudoPenaltis(c: CanvasRenderingContext2D, { x, y, l, a }: Caixa, golsJogador: number, golsMaquina: number): void {
+  const meio = x + l / 2;
+  c.textBaseline = 'alphabetic';
+  c.fillStyle = '#ffffff';
+  c.font = `400 214px ${PLACAR}`;
+  const nosso = String(golsJogador);
+  const deles = String(golsMaquina);
+  const placar = `${nosso} x ${deles}`;
+  const total = c.measureText(placar).width;
+  const inicio = meio - total / 2;
+  // Cada rótulo fica embaixo do seu número.
+  const noNosso = inicio + c.measureText(nosso).width / 2;
+  const noDeles = inicio + total - c.measureText(deles).width / 2;
+  c.textAlign = 'left';
+  c.fillText(placar, inicio, y + a - 62);
+  c.font = `700 42px ${ROTULO}`;
+  c.textAlign = 'center';
+  c.fillStyle = 'rgba(255,255,255,0.85)';
+  c.fillText('VOCÊ', noNosso, y + a - 6);
+  c.fillText('MÁQUINA', noDeles, y + a - 6);
+}
+
+/** O placar de um jogo que tem dois lados: Pênaltis e as sessões dos Lances. */
 export function desenharCard(d: DadosCard): HTMLCanvasElement {
-  return desenharModelo(modeloDePontos(d, d.jogo ?? 'Bate Contra Mim', d.pontos), (c, { x, y, l, a }) => {
-    const meio = x + l / 2;
-    c.textBaseline = 'alphabetic';
-    c.fillStyle = '#ffffff';
-    c.font = `400 214px ${PLACAR}`;
-    const nosso = String(d.golsJogador);
-    const deles = String(d.golsMaquina);
-    const placar = `${nosso} x ${deles}`;
-    const total = c.measureText(placar).width;
-    const inicio = meio - total / 2;
-    // Cada rótulo fica embaixo do seu número.
-    const noNosso = inicio + c.measureText(nosso).width / 2;
-    const noDeles = inicio + total - c.measureText(deles).width / 2;
-    c.textAlign = 'left';
-    c.fillText(placar, inicio, y + a - 62);
-    c.font = `700 42px ${ROTULO}`;
-    c.textAlign = 'center';
-    c.fillStyle = 'rgba(255,255,255,0.85)';
-    c.fillText('VOCÊ', noNosso, y + a - 6);
-    c.fillText('MÁQUINA', noDeles, y + a - 6);
-  });
+  return desenharModelo(modeloDePontos(d, d.jogo ?? 'Bate Contra Mim', d.pontos), (c, caixa) => conteudoPenaltis(c, caixa, d.golsJogador, d.golsMaquina));
 }
 
 /** Espera as fontes do card e uma folga da tela: no celular simples, o resultado aparece antes do desenho. */
@@ -353,3 +398,10 @@ export async function mostrarCard(img: HTMLImageElement, canvas: HTMLCanvasEleme
   ultimaUrl = blob ? URL.createObjectURL(blob) : '';
   img.src = ultimaUrl || canvas.toDataURL('image/png');
 }
+
+/** Onde fica o alto do telão (a quina para o selo de recorde), no tamanho do Stories. */
+export function topoDoTelao(maior: number, soNome = false): number {
+  return soNome ? TELAO.y + TELAO.a - ALT_SO_NOME : TELAO.y - maior;
+}
+export const TELAO_X = TELAO.x;
+export const TELAO_L = TELAO.l;

@@ -2,7 +2,7 @@
 // do desfecho (bola, luva, barreira ou xis, desenhados, nunca emoji) e o título curto do lance.
 // Título de lance nunca leva nome de pessoa (já vem assim do catálogo). Só no resultado valendo.
 
-import { AMARELO, PLACAR, ROTULO, FONTE, desenharModelo, modeloDePontos, type DadosBase } from './card';
+import { AMARELO, PLACAR, ROTULO, FONTE, desenharModelo, modeloDePontos, type Caixa, type DadosBase } from './card';
 import type { DesfechoLance } from './lances.ts';
 
 export interface LanceDoCard {
@@ -100,26 +100,33 @@ function desenharDesfecho(c: CanvasRenderingContext2D, d: DesfechoLance, cx: num
   c.restore();
 }
 
-export function desenharCardLances(d: DadosCardLances): HTMLCanvasElement {
-  return desenharModelo(modeloDePontos(d, 'Lances do Jogo', d.pontos), (c, { x, y, l, a }) => {
+/** O que os Lances desenham dentro do telão. */
+export interface ConteudoLances {
+  lances: readonly LanceDoCard[];
+  medalha?: string | null;
+  tituloUnico?: string | null;
+}
+
+/** Os lances dentro do telão: usado pelo card dos Lances e pelo Telão personalizável. */
+export function conteudoLances(c: CanvasRenderingContext2D, { x, y, l, a }: Caixa, dados: ConteudoLances): void {
     c.textBaseline = 'alphabetic';
     c.textAlign = 'center';
     c.fillStyle = 'rgba(255,255,255,0.85)';
     c.font = `700 34px ${ROTULO}`;
     c.fillText('LANCES DO JOGO', x + l / 2, y + 30);
 
-    const temMedalha = !!d.medalha;
-    const temTitulo = !!d.tituloUnico;
+    const temMedalha = !!dados.medalha;
+    const temTitulo = !!dados.tituloUnico;
     const alturaTitulo = temTitulo ? 46 : 0;
-    if (d.tituloUnico) {
+    if (dados.tituloUnico) {
       c.fillStyle = '#ffffff';
       c.font = `700 36px ${FONTE}`;
-      c.fillText(cortarTexto(c, d.tituloUnico, l), x + l / 2, y + 74, l);
+      c.fillText(cortarTexto(c, dados.tituloUnico, l), x + l / 2, y + 74, l);
     }
     const topo = y + 52 + alturaTitulo;
-    const linha = Math.min(78, (a - 52 - alturaTitulo - (temMedalha ? 46 : 0)) / Math.max(1, d.lances.length));
+    const linha = Math.min(78, (a - 52 - alturaTitulo - (temMedalha ? 46 : 0)) / Math.max(1, dados.lances.length));
     const raio = linha * 0.4;
-    d.lances.forEach((lance, i) => {
+    dados.lances.forEach((lance, i) => {
       const cy = topo + i * linha + linha / 2;
       desenharDesfecho(c, lance.desfecho, x + raio + 6, cy, raio);
       c.textAlign = 'right';
@@ -140,11 +147,14 @@ export function desenharCardLances(d: DadosCardLances): HTMLCanvasElement {
       }
     });
 
-    if (d.medalha) {
+    if (dados.medalha) {
       c.textAlign = 'center';
       c.fillStyle = AMARELO;
       c.font = `400 40px ${PLACAR}`;
-      c.fillText(cortarTexto(c, d.medalha.toUpperCase(), l), x + l / 2, y + a - 4, l);
+      c.fillText(cortarTexto(c, dados.medalha.toUpperCase(), l), x + l / 2, y + a - 4, l);
     }
-  });
+}
+
+export function desenharCardLances(d: DadosCardLances): HTMLCanvasElement {
+  return desenharModelo(modeloDePontos(d, 'Lances do Jogo', d.pontos), (c, caixa) => conteudoLances(c, caixa, d));
 }
