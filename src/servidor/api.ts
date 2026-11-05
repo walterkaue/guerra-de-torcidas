@@ -393,7 +393,7 @@ export interface ResumoDesafio {
   gols_jogador: number;
   gols_maquina: number;
   pontos: number;
-  /** A disputa histórica do X1 (desde 20261105300000; null no X1 livre de antes do corte). */
+  /** A disputa histórica do X1 (desde 20261105400000; null no X1 livre de antes do corte). */
   disputa_id?: string | null;
 }
 

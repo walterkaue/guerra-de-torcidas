@@ -20,8 +20,8 @@ import {
   tabelaPenaltisDaPartida,
 } from './regraLances.ts';
 
-// O corte mora na migração mais nova que o redefine (20261105300000 antecipou para 09/11); as medalhas, na de 14.7.
-const MIGRACAO = readFileSync(new URL('../../supabase/migrations/20261105300000_lances_sem_livre.sql', import.meta.url), 'utf8');
+// O corte mora na migração mais nova que o redefine (20261105400000 antecipou para 09/11); as medalhas, na de 14.7.
+const MIGRACAO = readFileSync(new URL('../../supabase/migrations/20261105400000_lances_sem_livre.sql', import.meta.url), 'utf8');
 const MIGRACAO_MEDALHAS = readFileSync(new URL('../../supabase/migrations/20261105100000_lances_unificados.sql', import.meta.url), 'utf8');
 
 describe('data de corte', () => {

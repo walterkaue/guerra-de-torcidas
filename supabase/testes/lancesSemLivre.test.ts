@@ -1,4 +1,4 @@
-// Lances sem Disputa livre e corte antecipado (20261105300000): corte em 09/11/2026; penaltis_comecar recusa partida
+// Lances sem Disputa livre e corte antecipado (20261105400000): corte em 09/11/2026; penaltis_comecar recusa partida
 // sem disputa a partir do corte e grava no X1 a disputa de quem chamou; a livre não tem mais medalha e as linhas
 // 'penaltis:livre' saem de lances_gols; ver_desafio devolve a disputa. Roda o SQL de verdade (PGlite).
 
@@ -6,7 +6,7 @@ import type { PGlite } from '@electric-sql/pglite';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { aplicarMigracao, bancoDeTeste } from './banco';
 
-const MIGRACAO = '20261105300000_lances_sem_livre.sql';
+const MIGRACAO = '20261105400000_lances_sem_livre.sql';
 const SEMENTES = `'{"cobrancas":[1,2,3,4,5,6,7,8],"defesas":[1,2,3,4,5,6,7,8]}'::jsonb`;
 const TEMPO = 60_000;
 

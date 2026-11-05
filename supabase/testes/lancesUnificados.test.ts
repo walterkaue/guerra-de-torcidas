@@ -223,7 +223,7 @@ describe('limite do dia', () => {
       [eu],
     );
     expect(segredo[0].gestos.desafio).toBe('zzzzzzzz');
-    // O X1 recebido grava a disputa de quem chamou (20261105300000).
+    // O X1 recebido grava a disputa de quem chamou (20261105400000).
     expect(guardadas).toContainEqual({ modo: 'desafio', desafio_id: 'abcdefgh', disputa_id: 'final-2018', minigame: 'penaltis' });
     expect(guardadas.filter((g) => g.disputa_id === 'final-2018')).toHaveLength(5);
     // Modo e código têm de combinar.
@@ -354,7 +354,7 @@ describe('medalhas dos pênaltis', () => {
     for (let k = 0; k < 2; k++) await partida(db, eu, 70, { disputa: 'final-1995', resultado: penaltis(5, true) });
     // Outra disputa: 20 partidas de 5 gols = 100 gols, 9 vitórias (prata, falta 1 vitória para o ouro).
     for (let k = 0; k < 20; k++) await partida(db, eu, 70, { disputa: 'semi-2001', resultado: penaltis(5, k < 9) });
-    // Partida livre (antes do corte) não anota nada desde 20261105300000_lances_sem_livre.sql.
+    // Partida livre (antes do corte) não anota nada desde 20261105400000_lances_sem_livre.sql.
     await partida(db, eu, 70, { resultado: penaltis(5, true) });
     // Suspeita não conta; antes de 31/10 não conta.
     await partida(db, eu, 70, { resultado: penaltis(5, true), suspeita: true });
