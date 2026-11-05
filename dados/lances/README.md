@@ -16,6 +16,7 @@ Regras: `docs/jogo.md`, seção 7.3 ("Catálogo") e seção 8 ("Nomes reais"). U
 | `bola_x`, `bola_z` | onde a bola estava, em metros: x a partir do meio do gol (positivo = direita de quem bate), z até a linha do gol |
 | `barreira`, `barreira_mira_x` | só na falta: jogadores (2 a 6) e o ponto da linha do gol que a barreira tapa (m) |
 | `goleiro_saida` | só no cara a cara: quantos metros o goleiro saiu |
+| `goleiro_x` | opcional: onde o goleiro começa, de -0,6 a 0,6 (negativo = lado esquerdo de quem bate). Vazio = o padrão do motor. Use quando o gol de verdade entrou no meio: com o goleiro parado no centro, o motor defende todo chute do terço do meio. É estimativa de cena, diga na observação |
 | `canto` | onde entrou o gol de verdade, visto de trás de quem bate: `alto-esquerda`, `alto-meio`, `alto-direita`, `baixo-esquerda`, `baixo-meio`, `baixo-direita` (gol aí = "Recriou o lance") |
 | `chegada`, `chegada_de` | só no cara a cara: "A jogada", como a bola chegou (até 90 caracteres, **sem nome**), e de onde ela vem: `tras` (passe ou lançamento de trás), `esquerda`, `direita` ou `rebote` |
 | `faixa` | a que o robô de calibragem calcula (o teste avisa se não bater) |

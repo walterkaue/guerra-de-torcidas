@@ -10,6 +10,9 @@ export const COLUNAS = [
   'fonte', 'fonte2', 'verificada_em', 'status', 'observacao',
 ];
 
+/** Colunas que podem faltar num arquivo antigo: `goleiro_x` = onde o goleiro começa, de -0,6 a 0,6 (vazio = o padrão do motor). */
+export const COLUNAS_OPCIONAIS = ['goleiro_x'];
+
 /** Os 20 clubes e a Seleção, coleção extra aberta a todos. */
 export const CLUBES_LANCE = [...CLUBES, 'selecao'];
 export const TIPOS = ['falta', 'finalizacao'];
@@ -67,6 +70,7 @@ export function cenaDoLance(l) {
   };
   if (l.barreira !== '') cena.barreira = { jogadores: numero(l.barreira), miraX: numero(l.barreira_mira_x) };
   if (l.goleiro_saida !== '') cena.goleiroSaida = numero(l.goleiro_saida);
+  if (l.goleiro_x !== undefined && l.goleiro_x !== '') cena.goleiroX = numero(l.goleiro_x);
   return cena;
 }
 
@@ -114,6 +118,7 @@ export function validarLance(l) {
     if (l.barreira !== '' || l.barreira_mira_x !== '') erros.push('cara a cara não tem barreira');
     if (l.goleiro_saida !== '' && !Number.isFinite(numero(l.goleiro_saida))) erros.push('goleiro_saida não é número');
   }
+  if (l.goleiro_x !== undefined && l.goleiro_x !== '' && !(Math.abs(numero(l.goleiro_x)) <= 0.6)) erros.push('goleiro_x vai de -0,6 a 0,6');
   if (!(l.canto in CANTOS)) erros.push(`canto "${l.canto}" (${Object.keys(CANTOS).join(', ')})`);
   // "A jogada" (como a bola chegou): obrigatória no cara a cara, sem nome de pessoa.
   if (l.tipo === 'finalizacao') {
