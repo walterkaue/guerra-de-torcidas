@@ -7,11 +7,12 @@ import './estilos/prova.css';
 import './estilos/timeDoDia.css';
 import './estilos/lances.css';
 import './estilos/protecao.css';
-import { iniciarApp, irPara, linkDoTimeDoDia, registrarTela, type Rota } from './app';
+import { desafioDoLink, desafioLancesDoLink, desafioProvaDoLink, iniciarApp, irPara, linkDoTimeDoDia, registrarTela, type Rota } from './app';
 import { faixaDoAparelho, prefs } from './estado';
 import { timePorId } from './dados/times';
 import { ROTA_ENTRAR, codigoDoEndereco } from './jogo/codigoTorcedor';
 import { itemDoEndereco } from './jogo/enderecoDoLance';
+import { comecaPelaEscolha } from './jogo/primeiroAcesso';
 import { quandoSairDaConta } from './servidor/api';
 import { apoioLiberado, telaApoio } from './telas/apoio';
 import { telaInicio } from './telas/inicio';
@@ -177,7 +178,11 @@ if (import.meta.env.DEV && app && new URLSearchParams(location.search).has('vitr
         : { tela: 'times', depois: 'timeDoDia' }
       : { tela: 'inicio' });
   const semTriagem = entrada.tela === 'admin' || entrada.tela === 'termos' || entrada.tela === 'entrar';
-  irPara(jaJoga && !faixaDoAparelho() && !semTriagem ? { tela: 'triagem', depois: entrada } : entrada);
+  // Primeiro acesso (docs/jogo.md 14.8): quem é novo começa pela escolha do time; a triagem e o aquecimento vêm
+  // logo depois dela (times.ts), e só então a Home. Link de desafio segue direto para o convite na Home.
+  const comDesafio = !!(desafioDoLink() || desafioProvaDoLink() || desafioLancesDoLink());
+  if (comecaPelaEscolha({ jaTinhaTime: jaJoga, tela: entrada.tela, comDesafio })) irPara({ tela: 'times', depois: 'inicio', primeira: true });
+  else irPara(jaJoga && !faixaDoAparelho() && !semTriagem ? { tela: 'triagem', depois: entrada } : entrada);
   // Só em desenvolvimento: ?cardFalso abre a tela "Seu card" com dados de mentira (src/dev/cardFalso.ts).
   if (import.meta.env.DEV && new URLSearchParams(location.search).has('cardFalso')) void import('./dev/cardFalso').then((m) => m.abrirCardFalso(document.body));
   if (document.readyState === 'complete') preaquecer();

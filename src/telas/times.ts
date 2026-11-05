@@ -9,6 +9,8 @@ import { cabecalhoTela } from './blocos';
 
 export function telaTimes(root: HTMLElement, rota: Rota): void {
   const depois = rota.tela === 'times' ? (rota.depois ?? 'partida') : 'partida';
+  // Primeiro acesso (docs/jogo.md 14.8): a primeira tela de quem é novo, sem voltar (não há Home atrás dela ainda).
+  const primeira = rota.tela === 'times' && !!rota.primeira;
   const atual = prefs.get();
   // Aparelho que perdeu a conta: avisa uma vez e limpa a marca.
   const saiuDaConta = !!atual.saiuDaConta;
@@ -16,7 +18,8 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
 
   root.innerHTML = `
     <main class="tela times">
-      ${cabecalhoTela({ titulo: 'Qual é a sua torcida?', voltar: true, pre: false })}
+      ${cabecalhoTela({ titulo: 'Qual é a sua torcida?', voltar: !primeira, pre: false })}
+      ${primeira ? '<p class="campo-dica">Sem cadastro: escolha o time e já entra jogando. O apelido é opcional.</p>' : ''}
       ${saiuDaConta ? '<p class="aviso-caixa" role="note">Este aparelho saiu da conta: foi desconectado em outro aparelho ou a conta foi apagada. Escolha seu time pra começar de novo, ou entre com um código.</p>' : ''}
       ${rota.tela === 'times' && rota.desafio ? '<p class="campo-dica">É só escolher o time: o X1 que te mandaram começa em seguida.</p>' : ''}
 
@@ -39,7 +42,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
       </label>
 
       <button class="botao" type="button" data-acao="confirmar" ${atual.time ? '' : 'disabled'}>
-        ${depois === 'partida' || depois === 'prova' || depois === 'timeDoDia' || depois === 'lances' ? 'Bora pro jogo' : 'Salvar'}
+        ${primeira || depois === 'partida' || depois === 'prova' || depois === 'timeDoDia' || depois === 'lances' ? 'Bora pro jogo' : 'Salvar'}
       </button>
       ${atual.sincronizado ? '' : '<button class="link-feedback" type="button" data-acao="outro-aparelho">Já jogo em outro aparelho</button>'}
     </main>

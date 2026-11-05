@@ -134,8 +134,54 @@
   color: var(--cal);
 }
 
-.bloco-time-faixa.sem-time h2 {
-  font-size: 24px;
+/* Sem time, a faixa é um botão: maior, com o convite em pílula clara (o amarelo fica com "Jogar agora"). */
+.bloco-time-faixa.sem-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  bottom: 16px;
+  border: 0;
+  /* A tarja inclinada é o ::before de .faixa-tv; sem isto, o fundo de botão aparece nos cantos. */
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.bloco-time-faixa.sem-time .faixa-titulo {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 28px;
+  margin-top: 6px;
+  line-height: 1.05;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.bloco-time-faixa.sem-time .faixa-convite {
+  margin-top: 8px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--cal);
+  color: var(--tinta);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 17px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.bloco-time-faixa.sem-time:active .faixa-convite {
+  transform: translateY(1px);
+}
+
+.arquibancada:has(.sem-time) {
+  cursor: pointer;
 }
 
 .bloco-time-faixa::after {

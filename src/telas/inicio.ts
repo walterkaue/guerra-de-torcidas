@@ -123,11 +123,12 @@ const pelo = (t: Time) => (t.artigo === 'a' ? 'pela' : 'pelo');
 /** Tarja da arquibancada: o time de quem joga, ou a pergunta de quem ainda não escolheu. */
 function tarjaDoTime(time: Time | undefined): string {
   if (!time) {
-    return `<div class="bloco-time-faixa faixa-tv sem-time">
-        <p class="rotulo">Sem cadastro. Abre e joga.</p>
-        <h2>Qual é a sua torcida?</h2>
-      </div>
-      <button class="link-trocar" type="button" data-acao="trocar">Escolher meu time</button>`;
+    // A faixa inteira é o botão (antes era um link pequeno embaixo dela, que passava batido).
+    return `<button class="bloco-time-faixa faixa-tv sem-time" type="button" data-acao="trocar">
+        <span class="rotulo">Sem cadastro. Abre e joga.</span>
+        <span class="faixa-titulo">Qual é a sua torcida?</span>
+        <span class="faixa-convite">Escolher meu time ›</span>
+      </button>`;
   }
   return `<div class="bloco-time-faixa faixa-tv">
         <p class="rotulo">${time.id === ID_OUTRO ? 'Você joga pelo' : `Você joga ${pelo(time)}`}</p>
@@ -278,6 +279,12 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   root.querySelectorAll('[data-acao="trocar"]').forEach((b) =>
     b.addEventListener('click', () => irPara({ tela: 'times', depois: 'inicio' })),
   );
+  // Sem time, a arquibancada inteira também leva à escolha (a faixa é o botão de verdade, para teclado e leitor).
+  // O toque no próprio botão já navegou: o clique que sobe até a seção não navega de novo.
+  if (!time)
+    root.querySelector('.arquibancada')?.addEventListener('click', (e) => {
+      if (!(e.target as Element).closest('button')) irPara({ tela: 'times', depois: 'inicio' });
+    });
   root.querySelector('[data-acao="ranking"]')?.addEventListener('click', () => irPara({ tela: 'ranking' }));
   // Casa do [time]: abre a do seu time (se ainda não estiver pronta, a tela mostra o índice).
   root.querySelector('[data-acao="casa"]')?.addEventListener('click', () =>

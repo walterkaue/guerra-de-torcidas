@@ -34,7 +34,15 @@ export function telaEntrarComCodigo(root: HTMLElement, rota: Rota): () => void {
   let enviando = false;
   let paraHome: number | undefined;
 
-  const voltar = () => irPara({ tela: de === 'times' ? 'times' : de === 'perfil' || temTime ? 'perfil' : 'inicio' });
+  // Volta à escolha do time de onde veio; quem ainda não tinha time está no primeiro acesso (jogo.md 14.8).
+  const voltar = () =>
+    irPara(
+      de === 'times'
+        ? temTime
+          ? { tela: 'times' }
+          : { tela: 'times', depois: 'inicio', primeira: true }
+        : { tela: de === 'perfil' || temTime ? 'perfil' : 'inicio' },
+    );
 
   root.innerHTML = `
     <main class="tela entrar-codigo">
