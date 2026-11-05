@@ -42,8 +42,8 @@ Quatro trilhos, que rodam em paralelo (fila decidida pelo Kauê em 05/11/2026). 
 - **Boneco montável (D5, `docs/jogo.md` seção 14.5):**
   1. ~~D5a, peças e catálogo puro~~: no `main` desde 05/11/2026 (PR #125, prints aprovados pelo Kauê). `src/jogo/vestiario.ts` (também em `_shared`), o desenho em `src/telas/bonecoMontavel.ts` e a vitrine `?vitrineBoneco`. Nada do app usa ainda.
   2. ~~D5-lista, nomes de jogadores na `palavras_bloqueadas`~~: PR #124; migração `20261106100000` no ar (conferido no `migration list` em 05/11/2026).
-  3. **D5b, servidor:** PR aberto em 05/11/2026, **sem aplicar**. Migração `20261106300000_boneco.sql` (tabela `torcedor_boneco`, `boneco_estado`, `boneco_criar`, `boneco_gravar`, "Ver meus dados" e a junção), função `boneco` (`meu_boneco`, `salvar_boneco`) e o cliente `src/servidor/boneco.ts`, sem tela. Dry-run feito. Detalhe em `docs/jogo.md` 14.5, "Como está no servidor".
-  4. **D5b-seg, revisão de segurança (próximo):** antes de aplicar a migração e publicar a função. Olhar a sessão conferida duas vezes (Auth e `boneco_sessao`), o formato recusado, o limite de 30 por hora, a RLS e a junção. Depois: migração → função → site, e a conferência só leitura do PR.
+  3. ~~D5b, servidor~~: no ar desde 05/11/2026 (PR #130). Migração `20261106300000_boneco.sql` aplicada, função `boneco` publicada (`meu_boneco`, `salvar_boneco`) e o cliente `src/servidor/boneco.ts`, sem tela. Detalhe em `docs/jogo.md` 14.5, "Como está no servidor".
+  4. ~~D5b-seg, revisão de segurança~~: feita em 05/11/2026, sem furo; a corrida foi provada em Postgres 17. **Falta:** a conferência só de leitura do PR #130 (RLS, permissões e contagem).
   5. **D5c, telas:** Perfil (crachá de 84 px e bloco Vestiário), Home (busto de 52 px), vestiário, peça trancada e peça nova. O desenho entra por `import()`, para o bundle inicial não crescer.
 
 ## Conferir primeiro
