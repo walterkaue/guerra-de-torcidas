@@ -3,7 +3,7 @@
 // ?caiNoLance=3 faz o 3º lance falhar (confere o aviso de conexão caída).
 // &limite: depois do corte (?corte=depois), o servidor responde 429 limite_do_dia (a partida vira treino).
 // &x1Expirado (com ?d=): o X1 responde 410 desafio_expirado (partida normal, com o aviso na abertura).
-// Depois do corte o fechamento traz melhoresDoDia e restantesHoje, e a tabela é a de 16/11.
+// Depois do corte o fechamento traz melhoresDoDia e restantesHoje, e a tabela é a de 09/11.
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { sementeNova } from '../jogo/aleatorio';

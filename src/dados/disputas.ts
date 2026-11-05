@@ -1,5 +1,5 @@
 // GERADO por scripts/disputas/catalogo.mjs a partir de dados/disputas/*.csv. Não edite aqui: mude o CSV e rode `npm run catalogo-disputas`.
-import type { Disputa } from '../jogo/disputas';
+import type { Disputa } from '../jogo/disputas.ts';
 
 export const DISPUTAS: readonly Disputa[] = [
   {"id":"athletico-pr-2018-sul-americana","clube":"athletico-pr","titulo":"O título da Sul-Americana","ficha":"12/12/2018, final da Copa Sul-Americana, na Arena da Baixada: 1 a 1 com o Junior, mesmo placar da ida, com gol de Pablo. Nos pênaltis, 4 a 3 e primeira taça da competição.","competicao":"Copa Sul-Americana","fase":"Final","data":"2018-12-12","adversario":"Junior Barranquilla","placar":"4 x 3"},

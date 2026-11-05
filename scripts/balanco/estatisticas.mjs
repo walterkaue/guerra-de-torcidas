@@ -15,7 +15,7 @@ if (TETO_UNIFICADO !== TETO_PARTIDA_UNIFICADO) throw new Error('teto unificado d
 
 export { DIA_DO_CORTE };
 export const REGRAS = ['antes', 'nova'];
-export const NOME_REGRA = { antes: 'antes de 16/11', nova: 'a partir de 16/11' };
+export const NOME_REGRA = { antes: 'antes de 09/11', nova: 'a partir de 09/11' };
 
 /** 'antes' ou 'nova', pela hora em que a partida foi criada. Sem data (dado antigo): 'antes'. */
 export function regraDaPartida(criadaEm) {

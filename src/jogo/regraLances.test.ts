@@ -19,32 +19,34 @@ import {
   tabelaPenaltisDaPartida,
 } from './regraLances.ts';
 
-const MIGRACAO = readFileSync(new URL('../../supabase/migrations/20261105100000_lances_unificados.sql', import.meta.url), 'utf8');
+// O corte mora na migração mais nova que o redefine (20261105300000 antecipou para 09/11); as medalhas, na de 14.7.
+const MIGRACAO = readFileSync(new URL('../../supabase/migrations/20261105300000_lances_sem_livre.sql', import.meta.url), 'utf8');
+const MIGRACAO_MEDALHAS = readFileSync(new URL('../../supabase/migrations/20261105100000_lances_unificados.sql', import.meta.url), 'utf8');
 
 describe('data de corte', () => {
-  it('é segunda 16/11/2026, 0h de Brasília, igual no banco', () => {
-    expect(LANCES_UNIFICADOS_DESDE.toISOString()).toBe('2026-11-16T03:00:00.000Z');
+  it('é segunda 09/11/2026, 0h de Brasília, igual no banco', () => {
+    expect(LANCES_UNIFICADOS_DESDE.toISOString()).toBe('2026-11-09T03:00:00.000Z');
     expect(new Date(`${DIA_DO_CORTE}T12:00:00Z`).getUTCDay()).toBe(1);
-    expect(MIGRACAO).toContain(`timestamptz '2026-11-16 00:00:00-03'`);
+    expect(MIGRACAO).toContain(`timestamptz '2026-11-09 00:00:00-03'`);
     expect(MIGRACAO).toContain(`date '${DIA_DO_CORTE}'`);
   });
 
   it('a regra sai da hora de criação', () => {
-    expect(ehUnificada('2026-11-16T02:59:59.999Z')).toBe(false);
-    expect(ehUnificada('2026-11-16T03:00:00.000Z')).toBe(true);
-    expect(tabelaPenaltisDaPartida('2026-11-15T23:00:00-03:00')).toBe(PONTOS);
-    expect(tabelaPenaltisDaPartida('2026-11-16T00:00:01-03:00')).toBe(PONTOS_UNIFICADOS);
-    expect(tabelaLancesDaPartida('2026-11-10T12:00:00Z')).toBe(TABELA_LANCES_ANTES);
+    expect(ehUnificada('2026-11-09T02:59:59.999Z')).toBe(false);
+    expect(ehUnificada('2026-11-09T03:00:00.000Z')).toBe(true);
+    expect(tabelaPenaltisDaPartida('2026-11-08T23:00:00-03:00')).toBe(PONTOS);
+    expect(tabelaPenaltisDaPartida('2026-11-09T00:00:01-03:00')).toBe(PONTOS_UNIFICADOS);
+    expect(tabelaLancesDaPartida('2026-11-03T12:00:00Z')).toBe(TABELA_LANCES_ANTES);
     expect(tabelaLancesDaPartida('2026-12-01T12:00:00Z')).toBe(TABELA_LANCES_UNIFICADA);
   });
 
   it('partida criada antes do corte e fechada depois das 00h05 conta no dia em que começou', () => {
-    const domingo = { dia: '2026-11-15', semana: '2026-11-09' };
-    const segunda = { dia: '2026-11-16', semana: '2026-11-16' };
-    expect(periodoNoCorte('2026-11-15T23:58:00-03:00', segunda)).toEqual(domingo);
-    expect(periodoNoCorte('2026-11-15T23:58:00-03:00', domingo)).toEqual(domingo);
-    expect(periodoNoCorte('2026-11-16T00:01:00-03:00', segunda)).toEqual(segunda);
-    expect(periodoNoCorte('2026-11-20T10:00:00-03:00', { dia: '2026-11-20', semana: '2026-11-16' })).toEqual({ dia: '2026-11-20', semana: '2026-11-16' });
+    const domingo = { dia: '2026-11-08', semana: '2026-11-02' };
+    const segunda = { dia: '2026-11-09', semana: '2026-11-09' };
+    expect(periodoNoCorte('2026-11-08T23:58:00-03:00', segunda)).toEqual(domingo);
+    expect(periodoNoCorte('2026-11-08T23:58:00-03:00', domingo)).toEqual(domingo);
+    expect(periodoNoCorte('2026-11-09T00:01:00-03:00', segunda)).toEqual(segunda);
+    expect(periodoNoCorte('2026-11-13T10:00:00-03:00', { dia: '2026-11-13', semana: '2026-11-09' })).toEqual({ dia: '2026-11-13', semana: '2026-11-09' });
   });
 });
 
@@ -126,19 +128,19 @@ describe('faixa da partida', () => {
   const lance: Pick<Lance, 'faixa' | 'faixaUnificada'> = { faixa: 'facil', faixaUnificada: 'dificil' };
 
   it('antes do corte, a do catálogo; depois, a recalibrada (senão a do catálogo), ou a corrigida se pagar menos', () => {
-    expect(faixaDaPartida(lance, '2026-11-15T12:00:00-03:00', 'craque')).toBe('facil');
-    expect(faixaDaPartida(lance, '2026-11-16T12:00:00-03:00', null)).toBe('dificil');
-    expect(faixaDaPartida(lance, '2026-11-16T12:00:00-03:00', 'media')).toBe('media');
-    expect(faixaDaPartida(lance, '2026-11-16T12:00:00-03:00', 'facil')).toBe('facil');
-    expect(faixaDaPartida({ faixa: 'media' }, '2026-11-16T12:00:00-03:00')).toBe('media');
+    expect(faixaDaPartida(lance, '2026-11-08T12:00:00-03:00', 'craque')).toBe('facil');
+    expect(faixaDaPartida(lance, '2026-11-09T12:00:00-03:00', null)).toBe('dificil');
+    expect(faixaDaPartida(lance, '2026-11-09T12:00:00-03:00', 'media')).toBe('media');
+    expect(faixaDaPartida(lance, '2026-11-09T12:00:00-03:00', 'facil')).toBe('facil');
+    expect(faixaDaPartida({ faixa: 'media' }, '2026-11-09T12:00:00-03:00')).toBe('media');
   });
 
   it('a taxa real nunca sobe a faixa: errar de propósito não leva um lance a Craque', () => {
-    expect(faixaDaPartida(lance, '2026-11-16T12:00:00-03:00', 'craque')).toBe('dificil');
-    expect(faixaDaPartida(lance, '2026-11-16T12:00:00-03:00', 'dificil')).toBe('dificil');
-    expect(faixaDaPartida({ faixa: 'facil' }, '2026-11-16T12:00:00-03:00', 'media')).toBe('facil');
+    expect(faixaDaPartida(lance, '2026-11-09T12:00:00-03:00', 'craque')).toBe('dificil');
+    expect(faixaDaPartida(lance, '2026-11-09T12:00:00-03:00', 'dificil')).toBe('dificil');
+    expect(faixaDaPartida({ faixa: 'facil' }, '2026-11-09T12:00:00-03:00', 'media')).toBe('facil');
     // Contas que só erram: 8 pessoas, 80 tentativas, nenhum gol. A faixa fica a do catálogo.
-    expect(faixaDaPartida(lance, '2026-11-16T12:00:00-03:00', faixaCorrigida(0, 80, 8))).toBe('dificil');
+    expect(faixaDaPartida(lance, '2026-11-09T12:00:00-03:00', faixaCorrigida(0, 80, 8))).toBe('dificil');
   });
 
   it('o X1 só vale enquanto a faixa gravada nele não pagar mais que a de agora', () => {
@@ -173,9 +175,9 @@ describe('medalhas dos pênaltis', () => {
   });
 
   it('os números batem com o banco (medalha_do_item)', () => {
-    expect(MIGRACAO).toMatch(/p_gols >= 100 and p_vitorias >= 10 then 'ouro'/);
-    expect(MIGRACAO).toMatch(/p_gols >= 50 then 'prata'/);
-    expect(MIGRACAO).toMatch(/p_gols >= 10 then 'bronze'/);
+    expect(MIGRACAO_MEDALHAS).toMatch(/p_gols >= 100 and p_vitorias >= 10 then 'ouro'/);
+    expect(MIGRACAO_MEDALHAS).toMatch(/p_gols >= 50 then 'prata'/);
+    expect(MIGRACAO_MEDALHAS).toMatch(/p_gols >= 10 then 'bronze'/);
   });
 });
 
@@ -183,12 +185,12 @@ describe('Lance do Dia', () => {
   const ids = LANCES.map((l) => l.id);
 
   it('é o mesmo para todos no mesmo dia e não depende da ordem do catálogo', () => {
-    const a = lanceDoDia('2026-11-16', ids);
+    const a = lanceDoDia('2026-11-09', ids);
     expect(a).not.toBeNull();
     expect(ids).toContain(a);
-    expect(lanceDoDia('2026-11-16', [...ids].reverse())).toBe(a);
-    expect(lanceDoDia('16/11/2026', ids)).toBeNull();
-    expect(lanceDoDia('2026-11-16', [])).toBeNull();
+    expect(lanceDoDia('2026-11-09', [...ids].reverse())).toBe(a);
+    expect(lanceDoDia('09/11/2026', ids)).toBeNull();
+    expect(lanceDoDia('2026-11-09', [])).toBeNull();
   });
 
   it('muda ao longo do mês', () => {

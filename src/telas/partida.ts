@@ -134,7 +134,7 @@ export const AVISO_SEM_PONTOS = 'Sem conexão: essa partida não vale pontos.';
 export const AVISO_CAIU = 'Caiu a conexão: essa partida não vale mais pontos.';
 /** Cada X1 dos pênaltis vale uma vez por pessoa (jogo.md, seção 6): na segunda, vira partida normal. */
 export const X1_JA_JOGADO = 'Esse X1 você já jogou. Vai uma partida nova!';
-/** X1 de partida criada antes de 16/11/2026 (ou de lance que mudou de faixa) não pode ser aceito depois (jogo.md, 14.7). */
+/** X1 de partida criada antes de 09/11/2026 (ou de lance que mudou de faixa) não pode ser aceito depois (jogo.md, 14.7). */
 export const X1_EXPIROU = 'Esse X1 expirou. Vai uma partida nova!';
 
 export function telaPartida(root: HTMLElement, rota: Rota): () => void {
@@ -153,7 +153,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   let lanceALance = false;
   let dicaDoServidor: number | null = null;
   let desafio: DesafioRecebido | null = null;
-  // Tabela de pontos da partida no aparelho (fallback local e total): a de 16/11 depois do corte, senão a de sempre.
+  // Tabela de pontos da partida no aparelho (fallback local e total): a de 09/11 depois do corte, senão a de sempre.
   const tabela = lancesUnificados() ? PONTOS_UNIFICADOS : PONTOS;
   /** O servidor disse `limite_do_dia`: a partida segue como treino, e a primeira cobrança lembra disso. */
   let passouDoLimite = false;
@@ -673,7 +673,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       if (e instanceof ErroServidor && e.codigo === 'saiu_da_conta') return; // a navegação já levou à escolha do time
       console.warn('Partida sem valer pontos:', e instanceof ErroServidor ? e.codigo : e);
       if (e instanceof ErroServidor && e.codigo === 'limite_do_dia') {
-        // Regra de 16/11: 10 partidas valendo por dia. Esta segue no aparelho, de treino.
+        // Regra de 09/11: 10 partidas valendo por dia. Esta segue no aparelho, de treino.
         passouDoLimite = true;
         mostrarAviso(avisoLimiteDoDia(true));
       } else {

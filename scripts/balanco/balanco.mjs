@@ -35,7 +35,7 @@ export const PROVA_TRES_ERROS_DESDE = process.env.PROVA_DESDE ?? '2026-11-02T03:
 const PROVA_ANTES = process.argv.includes('--prova-antes');
 
 // Lances do Jogo unificados (jogo.md, 14.7): regras diferentes não se misturam na mesma linha. Por padrão o relatório
-// mostra "antes de 16/11" e "a partir de 16/11" (as que tiverem partidas); --regra antes|nova (ou --regra=nova) mostra só uma.
+// mostra "antes de 09/11" e "a partir de 09/11" (as que tiverem partidas); --regra antes|nova (ou --regra=nova) mostra só uma.
 export function lerRegraArg(argv = process.argv) {
   const i = argv.findIndex((a) => a === '--regra' || a.startsWith('--regra='));
   if (i < 0) return null;
@@ -157,7 +157,7 @@ export function montarBalanco(dados, { regra = null } = {}) {
   });
   texto.push(
     `Pontos por partida (alvo: mediana entre ${FAIXA.min} e ${FAIXA.max} nos jogos de partida; abaixo de ${MIN_AMOSTRA}, "pouca amostra")`,
-    'Regras dos Lances (jogo.md, 14.7): partidas criadas antes de 16/11 e a partir de 16/11 ficam em linhas separadas.',
+    'Regras dos Lances (jogo.md, 14.7): partidas criadas antes de 09/11 e a partir de 09/11 ficam em linhas separadas.',
     tabelaTexto(['Minigame', 'Unidade', 'Qtd', 'Jogadores', 'Média', 'Mediana', '25%', '75%', '90%', 'Máx', 'No teto', 'Alerta'], linhas),
   );
 

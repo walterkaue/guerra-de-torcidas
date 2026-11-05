@@ -3,7 +3,7 @@
 import { MELHORES_DO_DIA } from './regraLances';
 
 /**
- * A frase da média do Campeão da semana. Regra nova (desde 16/11/2026): por dia, cada pessoa conta as 3 melhores
+ * A frase da média do Campeão da semana. Regra nova (desde 09/11/2026): por dia, cada pessoa conta as 3 melhores
  * partidas de Lances (pênaltis, faltas e cara a cara juntos) e as 3 melhores da Prova. Antes, as 5 melhores.
  */
 export function textoDaMedia(unificada: boolean): string {

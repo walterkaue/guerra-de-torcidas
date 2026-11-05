@@ -3,7 +3,7 @@
 // lancesUnificados() (src/telas/corte.ts): antes do corte, a lista de 3 lances, tabela antiga e limite 6; depois,
 // `{ lance }` (3 tentativas do mesmo lance, tabela nova, limite 10, 3 melhores do dia) e o X1.
 //   ?lancesFalsos=limite   a 1ª partida já responde "limite_do_dia" (já jogou as de hoje)
-//   &corte=depois          finge o relógio depois de 16/11/2026 (&corte=antes, o de hoje)
+//   &corte=depois          finge o relógio depois de 09/11/2026 (&corte=antes, o de hoje)
 //   &x1=ok|proprio|expirado|nao   como o X1 por link (?l=CODIGO) responde (padrão ok): aceita, 409, 410 ou 404
 //   ?caiNoLance=2          o 2º lance de cada partida falha (confere o aviso de conexão caída)
 //   ?latencia=800          demora da resposta (padrão 180 ms)

@@ -1,7 +1,7 @@
 // Migração dos Lances unificados (20261105100000): teto com as duas regras pelo dia, limite do dia somando pênaltis e
 // Lances com trava, X1 dos Lances, medalhas dos pênaltis (com o preenchimento), tentativas por lance, posição e recorde
 // que recomeçam no corte, e permissões. Roda o SQL de verdade (PGlite).
-// O corte de verdade é 16/11/2026. Para testar o "depois" sem esperar, um segundo banco troca a data de corte.
+// O corte de verdade é 09/11/2026. Para testar o "depois" sem esperar, um segundo banco troca a data de corte.
 
 import type { PGlite } from '@electric-sql/pglite';
 import { createHash } from 'node:crypto';
@@ -50,7 +50,7 @@ interface Opcoes {
 
 /** Cria e fecha uma partida pelo fechar_partida de verdade. Devolve o id e o código do X1 (se houver). */
 async function partida(db: PGlite, quem: string, pontos: number, o: Opcoes = {}): Promise<{ id: string; codigo: string | null }> {
-  const dia = o.dia ?? '2026-11-17';
+  const dia = o.dia ?? '2026-11-10';
   const { rows } = await db.query<{ id: string; time_id: string }>(
     `insert into public.partidas (torcedor_id, modo, semente, dificuldade, expira_em, minigame, disputa_id, criada_em)
      values ($1, $5, 1, 0, now() + interval '15 minutes', $2, $3, coalesce($4::timestamptz, now()))
@@ -109,33 +109,33 @@ const lances = (id: string, desfechos: ('gol' | 'defesa')[]) => ({
   lances: desfechos.map((d) => ({ lanceId: id, faixa: 'media', desfecho: d, recriou: false, gesto: { dir: 0, forca: 60, efeito: 0 } })),
 });
 
-describe('corte pelo dia (data de corte de verdade, 16/11/2026)', () => {
+describe('corte pelo dia (data de corte de verdade, 09/11/2026)', () => {
   let db: PGlite;
   beforeAll(async () => {
     db = await bancoDeTeste();
   }, TEMPO);
 
-  it('a data de corte é segunda 16/11/2026, 0h de Brasília', async () => {
+  it('a data de corte é segunda 09/11/2026, 0h de Brasília', async () => {
     const { rows } = await db.query<{ desde: Date; dia: string }>(
       `select public.lances_unificados_desde() as desde, public.lances_dia_do_corte()::text as dia`,
     );
-    expect(rows[0].desde.toISOString()).toBe('2026-11-16T03:00:00.000Z');
-    expect(rows[0].dia).toBe('2026-11-16');
+    expect(rows[0].desde.toISOString()).toBe('2026-11-09T03:00:00.000Z');
+    expect(rows[0].dia).toBe('2026-11-09');
   });
 
   it('antes do corte: 5 melhores de pênaltis e Prova, e a melhor dos Lances à parte', async () => {
     const eu = await torcedor(db);
-    const dia = '2026-11-15';
-    for (const p of [50, 60, 70, 80, 90]) await partida(db, eu, p, { dia, criada: '2026-11-15T12:00:00-03:00' });
-    await partida(db, eu, 85, { minigame: 'prova', dia, criada: '2026-11-15T12:00:00-03:00' });
-    await partida(db, eu, 40, { minigame: 'lances', dia, criada: '2026-11-15T12:00:00-03:00' });
-    await partida(db, eu, 96, { minigame: 'lances', dia, criada: '2026-11-15T12:00:00-03:00' });
+    const dia = '2026-11-08';
+    for (const p of [50, 60, 70, 80, 90]) await partida(db, eu, p, { dia, criada: '2026-11-08T12:00:00-03:00' });
+    await partida(db, eu, 85, { minigame: 'prova', dia, criada: '2026-11-08T12:00:00-03:00' });
+    await partida(db, eu, 40, { minigame: 'lances', dia, criada: '2026-11-08T12:00:00-03:00' });
+    await partida(db, eu, 96, { minigame: 'lances', dia, criada: '2026-11-08T12:00:00-03:00' });
     expect(await noTeto(db, eu, dia)).toEqual(['lances:96', 'penaltis:60', 'penaltis:70', 'penaltis:80', 'penaltis:90', 'prova:85']);
   });
 
   it('a partir do corte: 3 melhores de pênaltis + Lances e 3 melhores da Prova', async () => {
     const eu = await torcedor(db);
-    const dia = '2026-11-16';
+    const dia = '2026-11-09';
     for (const p of [50, 60, 70]) await partida(db, eu, p, { dia });
     for (const p of [65, 120]) await partida(db, eu, p, { minigame: 'lances', dia });
     for (const p of [10, 20, 30, 40]) await partida(db, eu, p, { minigame: 'prova', dia });
@@ -144,20 +144,20 @@ describe('corte pelo dia (data de corte de verdade, 16/11/2026)', () => {
 
   it('no dia da regra nova, partida de Lances acima de 150 não fecha (função velha no ar depois do corte)', async () => {
     const eu = await torcedor(db);
-    await expect(partida(db, eu, 151, { dia: '2026-11-16' })).rejects.toThrow(/acima_do_teto/);
-    await expect(partida(db, eu, 151, { minigame: 'lances', dia: '2026-11-17' })).rejects.toThrow(/acima_do_teto/);
-    await expect(partida(db, eu, 150, { dia: '2026-11-16' })).resolves.toBeDefined();
+    await expect(partida(db, eu, 151, { dia: '2026-11-09' })).rejects.toThrow(/acima_do_teto/);
+    await expect(partida(db, eu, 151, { minigame: 'lances', dia: '2026-11-10' })).rejects.toThrow(/acima_do_teto/);
+    await expect(partida(db, eu, 150, { dia: '2026-11-09' })).resolves.toBeDefined();
     // Antes do corte a tabela velha passa de 150; a Prova tem a guarda dela.
-    await expect(partida(db, eu, 190, { dia: '2026-11-15', criada: '2026-11-15T12:00:00-03:00' })).resolves.toBeDefined();
-    await expect(partida(db, eu, 151, { minigame: 'prova', dia: '2026-11-16' })).resolves.toBeDefined();
+    await expect(partida(db, eu, 190, { dia: '2026-11-08', criada: '2026-11-08T12:00:00-03:00' })).resolves.toBeDefined();
+    await expect(partida(db, eu, 151, { minigame: 'prova', dia: '2026-11-09' })).resolves.toBeDefined();
   });
 
   it('liberar uma suspeita de um dia antigo refaz o teto com a regra daquele dia', async () => {
     const eu = await torcedor(db);
-    const dia = '2026-11-14';
-    for (const p of [10, 20, 30]) await partida(db, eu, p, { dia, criada: '2026-11-14T12:00:00-03:00' });
-    const { id } = await partida(db, eu, 99, { minigame: 'lances', dia, criada: '2026-11-14T12:00:00-03:00', suspeita: true });
-    await partida(db, eu, 50, { minigame: 'lances', dia, criada: '2026-11-14T12:00:00-03:00' });
+    const dia = '2026-11-07';
+    for (const p of [10, 20, 30]) await partida(db, eu, p, { dia, criada: '2026-11-07T12:00:00-03:00' });
+    const { id } = await partida(db, eu, 99, { minigame: 'lances', dia, criada: '2026-11-07T12:00:00-03:00', suspeita: true });
+    await partida(db, eu, 50, { minigame: 'lances', dia, criada: '2026-11-07T12:00:00-03:00' });
     await db.query('update public.partidas set sob_suspeita = false where id = $1', [id]);
     await db.query('select public.atualizar_teto($1, $2)', [eu, dia]);
     // Regra de antes: os 3 pênaltis (cabem nas 5) e só a melhor dos Lances.
@@ -194,7 +194,7 @@ describe('limite do dia', () => {
         [eu, k],
       );
     }
-    const { codigo } = await partida(db, outro, 70, { resultado: penaltis(3, true), desafio: { cobrancas: [], gols_jogador: 3, gols_maquina: 2 }, codigos: ['abcdefgh'], dia: '2026-01-06' });
+    const { codigo } = await partida(db, outro, 70, { disputa: 'final-2018', resultado: penaltis(3, true), desafio: { cobrancas: [], gols_jogador: 3, gols_maquina: 2 }, codigos: ['abcdefgh'], dia: '2026-01-06' });
     expect(codigo).toBe('abcdefgh');
     await db.query(
       `select * from public.penaltis_comecar($1, 7, 0.5, now() + interval '15 minutes', 'desafio', 'abcdefgh', null, 3::smallint, ${SEMENTES})`,
@@ -208,7 +208,7 @@ describe('limite do dia', () => {
     expect(rows[0]).toMatchObject({ feitas: 10, limite: 10 });
     await expect(db.query(`select * from public.lances_comecar($1, 1, now() + interval '15 minutes', '{}'::jsonb)`, [eu])).rejects.toThrow(/limite_do_dia/);
     await expect(
-      db.query(`select * from public.penaltis_comecar($1, 1, 0.5, now() + interval '15 minutes', 'normal', null, null, 3::smallint, ${SEMENTES})`, [eu]),
+      db.query(`select * from public.penaltis_comecar($1, 1, 0.5, now() + interval '15 minutes', 'normal', null, 'final-2018', 3::smallint, ${SEMENTES})`, [eu]),
     ).rejects.toThrow(/limite_do_dia/);
     // Outra pessoa não é afetada; a partida guarda modo, desafio e disputa.
     await expect(db.query(`select * from public.lances_comecar($1, 1, now() + interval '15 minutes', '{}'::jsonb)`, [outro])).resolves.toBeDefined();
@@ -223,8 +223,9 @@ describe('limite do dia', () => {
       [eu],
     );
     expect(segredo[0].gestos.desafio).toBe('zzzzzzzz');
-    expect(guardadas).toContainEqual({ modo: 'desafio', desafio_id: 'abcdefgh', disputa_id: null, minigame: 'penaltis' });
-    expect(guardadas.filter((g) => g.disputa_id === 'final-2018')).toHaveLength(4);
+    // O X1 recebido grava a disputa de quem chamou (20261105300000).
+    expect(guardadas).toContainEqual({ modo: 'desafio', desafio_id: 'abcdefgh', disputa_id: 'final-2018', minigame: 'penaltis' });
+    expect(guardadas.filter((g) => g.disputa_id === 'final-2018')).toHaveLength(5);
     // Modo e código têm de combinar.
     await expect(
       db.query(`select * from public.lances_comecar($1, 1, now() + interval '15 minutes', '{}'::jsonb, 'desafio', null)`, [outro]),
@@ -347,22 +348,24 @@ describe('medalhas dos pênaltis', () => {
     db = await bancoDeTeste();
   }, TEMPO);
 
-  it('gols e vitórias por disputa e pela livre; 10 · 50 · 100 gols e ouro com 10 vitórias', async () => {
+  it('gols e vitórias por disputa; 10 · 50 · 100 gols e ouro com 10 vitórias; a livre não tem medalha', async () => {
     const eu = await torcedor(db, 'gremio');
     // Disputa histórica: 2 partidas de 5 gols (bronze).
     for (let k = 0; k < 2; k++) await partida(db, eu, 70, { disputa: 'final-1995', resultado: penaltis(5, true) });
-    // Livre: 20 partidas de 5 gols = 100 gols, 9 vitórias (prata, falta 1 vitória para o ouro).
-    for (let k = 0; k < 20; k++) await partida(db, eu, 70, { resultado: penaltis(5, k < 9) });
+    // Outra disputa: 20 partidas de 5 gols = 100 gols, 9 vitórias (prata, falta 1 vitória para o ouro).
+    for (let k = 0; k < 20; k++) await partida(db, eu, 70, { disputa: 'semi-2001', resultado: penaltis(5, k < 9) });
+    // Partida livre (antes do corte) não anota nada desde 20261105300000_lances_sem_livre.sql.
+    await partida(db, eu, 70, { resultado: penaltis(5, true) });
     // Suspeita não conta; antes de 31/10 não conta.
     await partida(db, eu, 70, { resultado: penaltis(5, true), suspeita: true });
     await partida(db, eu, 70, { resultado: penaltis(5, true), criada: '2026-10-30T12:00:00-03:00' });
     const minhas = await como(db, eu, 'authenticated', 'select * from public.minhas_medalhas() order by lance_id');
     expect(minhas).toEqual([
       { lance_id: 'penaltis:final-1995', gols: 10, recriados: 0, vitorias: 2, medalha: 'bronze' },
-      { lance_id: 'penaltis:livre', gols: 100, recriados: 0, vitorias: 9, medalha: 'prata' },
+      { lance_id: 'penaltis:semi-2001', gols: 100, recriados: 0, vitorias: 9, medalha: 'prata' },
     ]);
-    await partida(db, eu, 70, { resultado: penaltis(1, true) });
-    const [ouro] = await como<{ medalha: string; vitorias: number }>(db, eu, 'authenticated', `select medalha, vitorias from public.minhas_medalhas() where lance_id = 'penaltis:livre'`);
+    await partida(db, eu, 70, { disputa: 'semi-2001', resultado: penaltis(1, true) });
+    const [ouro] = await como<{ medalha: string; vitorias: number }>(db, eu, 'authenticated', `select medalha, vitorias from public.minhas_medalhas() where lance_id = 'penaltis:semi-2001'`);
     expect(ouro).toEqual({ medalha: 'ouro', vitorias: 10 });
     const vitrine = await como(db, eu, 'authenticated', `select * from public.vitrine_medalhas() where time_id = 'gremio'`);
     expect(vitrine).toEqual([{ time_id: 'gremio', bronze: 1, prata: 0, ouro: 1 }]);
@@ -376,10 +379,10 @@ describe('medalhas dos pênaltis', () => {
   it('as medalhas dos lances continuam com 5 · 20 · 50 e "Ver meus dados" separa gols e vitórias', async () => {
     const eu = await torcedor(db);
     for (let k = 0; k < 2; k++) await partida(db, eu, 30, { minigame: 'lances', resultado: lances('x', ['gol', 'gol', 'gol']) });
-    await partida(db, eu, 70, { resultado: penaltis(4, true) });
+    await partida(db, eu, 70, { disputa: 'final-1995', resultado: penaltis(4, true) });
     const minhas = await como(db, eu, 'authenticated', 'select * from public.minhas_medalhas() order by lance_id');
     expect(minhas).toEqual([
-      { lance_id: 'penaltis:livre', gols: 4, recriados: 0, vitorias: 1, medalha: null },
+      { lance_id: 'penaltis:final-1995', gols: 4, recriados: 0, vitorias: 1, medalha: null },
       { lance_id: 'x', gols: 6, recriados: 0, vitorias: 0, medalha: 'bronze' },
     ]);
     const [dados] = await como<{ ver_meus_dados: Record<string, number> }>(db, eu, 'authenticated', 'select public.ver_meus_dados()');

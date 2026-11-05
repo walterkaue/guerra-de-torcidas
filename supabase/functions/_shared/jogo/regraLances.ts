@@ -1,6 +1,6 @@
 // CÓPIA GERADA de src/jogo por scripts/compartilhar.mjs. Não edite aqui: mude em src/jogo e rode `npm run compartilhar`.
 // Lances do Jogo unificados (docs/jogo.md, seção 14.7): Pênaltis, Faltas e Cara a cara num jogo só, a partir da
-// segunda 16/11/2026, 0h de Brasília. Módulo puro, compartilhado com o servidor (npm run compartilhar).
+// segunda 09/11/2026, 0h de Brasília. Módulo puro, compartilhado com o servidor (npm run compartilhar).
 // A regra de uma partida sai SEMPRE da data em que ela foi criada no servidor, nunca do relógio de agora: assim a
 // partida aberta no domingo à noite fecha com a regra com que começou, e mudar a regra nunca mexe em partida fechada.
 
@@ -8,10 +8,10 @@ import { misturar } from './aleatorio.ts';
 import { FAIXAS, faixaPorChance, TABELA_LANCES_ANTES, TABELA_LANCES_UNIFICADA, type Faixa, type Lance, type TabelaLances } from './lances.ts';
 import { PONTOS, PONTOS_UNIFICADOS, type TabelaPenaltis } from './penaltis.ts';
 
-/** Segunda 16/11/2026, 0h de Brasília (UTC−3). Igual a public.lances_unificados_desde() no banco (teste confere). */
-export const LANCES_UNIFICADOS_DESDE = new Date('2026-11-16T03:00:00.000Z');
+/** Segunda 09/11/2026, 0h de Brasília (UTC−3). Igual a public.lances_unificados_desde() no banco (teste confere). */
+export const LANCES_UNIFICADOS_DESDE = new Date('2026-11-09T03:00:00.000Z');
 /** O mesmo corte como dia de Brasília: partidas com `dia` a partir dele seguem a regra nova no teto e na posição. */
-export const DIA_DO_CORTE = '2026-11-16';
+export const DIA_DO_CORTE = '2026-11-09';
 
 /** Partidas de Lances valendo por dia na regra nova, somando pênaltis, faltas e cara a cara (o X1 recebido conta). */
 export const LANCES_PARTIDAS_POR_DIA_UNIFICADO = 10;

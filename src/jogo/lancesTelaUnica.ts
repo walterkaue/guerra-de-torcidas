@@ -1,4 +1,4 @@
-// Contas e textos da tela única dos Lances (docs/jogo.md, seção 14.7), que entra na segunda 16/11/2026, 0h de
+// Contas e textos da tela única dos Lances (docs/jogo.md, seção 14.7), que entra na segunda 09/11/2026, 0h de
 // Brasília: lista de itens (Disputa livre, disputas históricas, faltas e cara a cara), filtro de tipo e de clube,
 // textos do X1 e da partida de 3 tentativas. Módulo puro, sem DOM, testado em lancesTelaUnica.test.ts.
 

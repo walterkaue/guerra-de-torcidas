@@ -1,4 +1,4 @@
-// Lances do Jogo (docs/jogo.md, seção 7.3 e 14.7). Antes do corte de 16/11/2026 (0h de Brasília): hub com três abas. Pênaltis abre o jogo de sempre (telas/partida.ts,
+// Lances do Jogo (docs/jogo.md, seção 7.3 e 14.7). Antes do corte de 09/11/2026 (0h de Brasília): hub com três abas. Pênaltis abre o jogo de sempre (telas/partida.ts,
 // valendo pontos), livre ou com o cenário de uma disputa histórica (seção 6); Faltas e Cara a cara têm o álbum
 // (filtro de clube, ficha, partida de 3 e treino). A partida de 3 vale pontos na pré-temporada, lance a lance com
 // o servidor (função `lances`, como os pênaltis): a semente nunca vem para o celular, cada chute manda o gesto e a
@@ -211,7 +211,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   let limparJogo: (() => void) | null = null;
   let filtroAlbum: FiltroAlbum = 'todos';
   const medalhasDoAlbum = criarMedalhasDoAlbum(() => servidor().then((s) => s.minhasMedalhas()));
-  /** As partidas valendo do dia já foram (o servidor disse; 6 até 15/11, 10 depois): o treino e o álbum avisam. */
+  /** As partidas valendo do dia já foram (o servidor disse; 6 até 08/11, 10 depois): o treino e o álbum avisam. */
   let valendoEsgotado = false;
   // ?disputasFalsas enche a lista em desenvolvimento, enquanto o catálogo está em rascunho (src/dev/disputasFalsas.ts).
   let catalogoDisputas: readonly Disputa[] = DISPUTAS;

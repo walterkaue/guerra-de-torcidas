@@ -73,7 +73,7 @@ export function situacaoDoResultado(d: {
   contaNoRanking: boolean;
   sobSuspeita: boolean;
   melhorDoDia: number | null;
-  /** Regra nova (desde 16/11/2026): as 3 melhores de Lances de hoje, que o servidor devolve no fechamento. */
+  /** Regra nova (desde 09/11/2026): as 3 melhores de Lances de hoje, que o servidor devolve no fechamento. */
   melhoresDoDia?: readonly number[] | null;
 }): SituacaoDoResultado {
   if (!d.fechou) return { tipo: 'sem_pontos', texto: d.aviso ?? 'Partida sem valer pontos.' };

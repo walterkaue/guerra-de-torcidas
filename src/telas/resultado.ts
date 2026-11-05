@@ -128,7 +128,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
           ? textoForaDasMelhores(d.servidor?.melhoresDoDia)
           : 'Não superou suas 5 melhores de hoje: o ranking não muda.'
         : null;
-  // Regra de 16/11: o dia vale as 3 melhores partidas de Lances (pênaltis, faltas e cara a cara juntos).
+  // Regra de 09/11: o dia vale as 3 melhores partidas de Lances (pênaltis, faltas e cara a cara juntos).
   const melhoresDoDia = unificada && !situacao ? linhaMelhoresDoDia(d.servidor?.melhoresDoDia) : null;
 
   // Desafio por link: placar dos dois lado a lado. Mais pontos vence; empate fica com quem desafiou.

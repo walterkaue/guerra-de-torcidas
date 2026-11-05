@@ -88,7 +88,7 @@ function dosLances(): Regras {
   };
 }
 
-/** Lances do Jogo depois de 16/11/2026 (docs/jogo.md, 14.7): um lance, 3 tentativas, pênaltis no mesmo jogo. */
+/** Lances do Jogo depois de 09/11/2026 (docs/jogo.md, 14.7): um lance, 3 tentativas, pênaltis no mesmo jogo. */
 function dosLancesUnificados(): Regras {
   const t = TABELA_LANCES_UNIFICADA;
   return {
