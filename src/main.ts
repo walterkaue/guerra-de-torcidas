@@ -178,6 +178,8 @@ if (import.meta.env.DEV && app && new URLSearchParams(location.search).has('vitr
       : { tela: 'inicio' });
   const semTriagem = entrada.tela === 'admin' || entrada.tela === 'termos' || entrada.tela === 'entrar';
   irPara(jaJoga && !faixaDoAparelho() && !semTriagem ? { tela: 'triagem', depois: entrada } : entrada);
+  // Só em desenvolvimento: ?cardFalso abre a tela "Seu card" com dados de mentira (src/dev/cardFalso.ts).
+  if (import.meta.env.DEV && new URLSearchParams(location.search).has('cardFalso')) void import('./dev/cardFalso').then((m) => m.abrirCardFalso(document.body));
   if (document.readyState === 'complete') preaquecer();
   else window.addEventListener('load', preaquecer, { once: true });
   window.addEventListener('hashchange', () => {

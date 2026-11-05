@@ -20,6 +20,9 @@ const COR_DO_ACERTO: Record<Acerto, string> = { exato: AMARELO, saldo: '#2e9d4f'
 /** Lista longa: o telão sobe sobre a torcida para os palpites não ficarem miúdos. */
 const LINHAS_NO_TELAO_NORMAL = 6;
 const TELAO_MAIOR = 140;
+
+/** Quanto o telão sobe para uma lista de palpites desse tamanho. */
+export const telaoMaiorDoCrava = (linhas: number): number => (linhas > LINHAS_NO_TELAO_NORMAL ? TELAO_MAIOR : 0);
 /** Cada bolinha da grade de acertos. */
 const PASSO_DOS_ACERTOS = 104;
 
@@ -40,7 +43,7 @@ function estrela(c: CanvasRenderingContext2D, x: number, y: number, r: number): 
   c.fill();
 }
 
-function palpites(c: CanvasRenderingContext2D, { x, y, l, a }: Caixa, todas: readonly LinhaMeuPalpite[]): void {
+export function conteudoPalpites(c: CanvasRenderingContext2D, { x, y, l, a }: Caixa, todas: readonly LinhaMeuPalpite[]): void {
   const linhas = todas.slice(0, 10);
   const passo = Math.min(a / linhas.length, 62);
   const tamanho = Math.min(46, Math.round(passo * 0.86));
@@ -62,7 +65,7 @@ function palpites(c: CanvasRenderingContext2D, { x, y, l, a }: Caixa, todas: rea
   });
 }
 
-function acertos(c: CanvasRenderingContext2D, { x, y, l, a }: Caixa, resultados: readonly Pick<PontosDoJogo, 'acerto' | 'certeza'>[]): void {
+export function conteudoAcertos(c: CanvasRenderingContext2D, { x, y, l, a }: Caixa, resultados: readonly Pick<PontosDoJogo, 'acerto' | 'certeza'>[]): void {
   const validos = resultados.filter((r) => r.acerto !== null);
   const certos = validos.filter((r) => r.acerto !== 'errou').length;
   const porLinha = 5;
@@ -116,9 +119,9 @@ export function desenharCardCrava(d: DadosCardCrava): HTMLCanvasElement {
       quem: `Meus palpites${d.paraTime ? ` ${d.paraTime}` : ''}`,
       frase: '',
       novoRecorde: false,
-      telaoMaior: n > LINHAS_NO_TELAO_NORMAL ? TELAO_MAIOR : 0,
+      telaoMaior: telaoMaiorDoCrava(n),
     };
-    return desenharModelo(modelo, (c, caixa) => palpites(c, caixa, d.linhas));
+    return desenharModelo(modelo, (c, caixa) => conteudoPalpites(c, caixa, d.linhas));
   }
-  return desenharModelo({ ...modeloDePontos(d, jogo, d.pontos), ...comum }, (c, caixa) => acertos(c, caixa, d.resultados));
+  return desenharModelo({ ...modeloDePontos(d, jogo, d.pontos), ...comum }, (c, caixa) => conteudoAcertos(c, caixa, d.resultados));
 }

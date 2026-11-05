@@ -3,7 +3,7 @@
 // Flamengo x Liverpool (1981)"; embaixo, OURO no lugar dos pontos e o link do lance no rodapé. Nunca nome de pessoa.
 
 import type { Medalha } from './lances';
-import { FONTE, PLACAR, ROTULO, desenharModelo, quebrarTexto, type DadosBase } from './card';
+import { FONTE, PLACAR, ROTULO, desenharModelo, quebrarTexto, type Caixa, type DadosBase } from './card';
 import { cortarTexto } from './cardLances';
 import { ADESIVO_DA_MEDALHA, MEDALHA_NO_CARD, jogoDoItem, noTitulo, quemNaMedalha, type ItemDaMedalha } from './medalhaTextos';
 
@@ -20,7 +20,7 @@ export const CORES_DA_MEDALHA: Record<Medalha, { claro: string; escuro: string; 
 };
 
 /** Quanto o telão sobe sobre a torcida para caber a medalha e 3 linhas de título. */
-const TELAO_MAIOR = 70;
+export const TELAO_MAIOR_DA_MEDALHA = 70;
 
 /** A medalha: fita em V nas cores do time, disco com borda e uma estrela em relevo. Centro em (cx, cy). */
 export function desenharMedalha(
@@ -83,8 +83,41 @@ export function desenharMedalha(
   c.restore();
 }
 
+/** A medalha desenhada e o título do lance, dentro do telão. */
+export function conteudoMedalha(c: CanvasRenderingContext2D, { x, y, l, a }: Caixa, medalha: Medalha, cores: readonly [string, string], item: ItemDaMedalha): void {
+  const tom = CORES_DA_MEDALHA[medalha];
+
+  const raio = Math.min(118, a * 0.3);
+  const cxMedalha = x + raio + 8;
+  desenharMedalha(c, medalha, cores, cxMedalha, y + a / 2 + raio * 0.45, raio);
+
+  // Texto à direita da medalha, centrado na altura do telão.
+  const tx = cxMedalha + raio + 40;
+  const largura = x + l - tx;
+  c.textAlign = 'left';
+  c.textBaseline = 'alphabetic';
+  c.font = `700 48px ${FONTE}`;
+  const titulo = quebrarTexto(c, noTitulo(item.titulo, item.tipo), largura);
+  const linhasTitulo = titulo.length > 3 ? [...titulo.slice(0, 2), cortarTexto(c, titulo.slice(2).join(' '), largura)] : titulo;
+  c.font = `700 38px ${ROTULO}`;
+  const jogo = quebrarTexto(c, jogoDoItem(item).toUpperCase(), largura).slice(0, 2);
+  const altura = 84 + linhasTitulo.length * 58 + 14 + jogo.length * 44;
+  let cy = y + (a - altura) / 2;
+
+  c.fillStyle = tom.claro;
+  c.font = `400 86px ${PLACAR}`;
+  c.fillText(`JÁ SOU ${MEDALHA_NO_CARD[medalha]}`, tx, (cy += 78), largura);
+  cy += 8;
+  c.fillStyle = '#ffffff';
+  c.font = `700 48px ${FONTE}`;
+  for (const linha of linhasTitulo) c.fillText(linha, tx, (cy += 58), largura);
+  cy += 14;
+  c.fillStyle = 'rgba(255,255,255,0.8)';
+  c.font = `700 38px ${ROTULO}`;
+  for (const linha of jogo) c.fillText(linha, tx, (cy += 44), largura);
+}
+
 export function desenharCardMedalha(d: DadosCardMedalha): HTMLCanvasElement {
-  const tom = CORES_DA_MEDALHA[d.medalha];
   return desenharModelo(
     {
       ...d,
@@ -93,37 +126,8 @@ export function desenharCardMedalha(d: DadosCardMedalha): HTMLCanvasElement {
       quem: quemNaMedalha(d.apelido, d.paraTime),
       frase: ADESIVO_DA_MEDALHA[d.medalha],
       novoRecorde: false,
-      telaoMaior: TELAO_MAIOR,
+      telaoMaior: TELAO_MAIOR_DA_MEDALHA,
     },
-    (c, { x, y, l, a }) => {
-      const raio = Math.min(118, a * 0.3);
-      const cxMedalha = x + raio + 8;
-      desenharMedalha(c, d.medalha, d.time.cores, cxMedalha, y + a / 2 + raio * 0.45, raio);
-
-      // Texto à direita da medalha, centrado na altura do telão.
-      const tx = cxMedalha + raio + 40;
-      const largura = x + l - tx;
-      c.textAlign = 'left';
-      c.textBaseline = 'alphabetic';
-      c.font = `700 48px ${FONTE}`;
-      const titulo = quebrarTexto(c, noTitulo(d.item.titulo, d.item.tipo), largura);
-      const linhasTitulo = titulo.length > 3 ? [...titulo.slice(0, 2), cortarTexto(c, titulo.slice(2).join(' '), largura)] : titulo;
-      c.font = `700 38px ${ROTULO}`;
-      const jogo = quebrarTexto(c, jogoDoItem(d.item).toUpperCase(), largura).slice(0, 2);
-      const altura = 84 + linhasTitulo.length * 58 + 14 + jogo.length * 44;
-      let cy = y + (a - altura) / 2;
-
-      c.fillStyle = tom.claro;
-      c.font = `400 86px ${PLACAR}`;
-      c.fillText(`JÁ SOU ${MEDALHA_NO_CARD[d.medalha]}`, tx, (cy += 78), largura);
-      cy += 8;
-      c.fillStyle = '#ffffff';
-      c.font = `700 48px ${FONTE}`;
-      for (const linha of linhasTitulo) c.fillText(linha, tx, (cy += 58), largura);
-      cy += 14;
-      c.fillStyle = 'rgba(255,255,255,0.8)';
-      c.font = `700 38px ${ROTULO}`;
-      for (const linha of jogo) c.fillText(linha, tx, (cy += 44), largura);
-    },
+    (c, caixa) => conteudoMedalha(c, caixa, d.medalha, d.time.cores, d.item),
   );
 }

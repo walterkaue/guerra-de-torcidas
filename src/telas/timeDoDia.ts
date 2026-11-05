@@ -4,8 +4,8 @@
 import { esc, irPara, type Rota } from '../app';
 import { corDeTexto, ID_OUTRO, proTime, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
-import { prontoParaDesenhar, seloNivel } from '../jogo/card';
-import { desenharCardDia } from '../jogo/cardDia';
+import type { DadosDoCard } from '../jogo/cardPersonalizado';
+import { linhaDoTorcedor } from '../jogo/cardTextos';
 import { conviteDia } from '../jogo/convites';
 import {
   AMOSTRA_COR,
@@ -19,7 +19,7 @@ import {
   type NomePista,
   type Tentativa,
 } from '../jogo/timeDoDia';
-import { criarNarrador } from '../narrador/sessao';
+import { contextoDoTime, criarNarrador } from '../narrador/sessao';
 import {
   ErroServidor,
   estadoDoDia,
@@ -28,6 +28,7 @@ import {
   type EstadoDoDia,
 } from '../servidor/api';
 import { sincronizarTorcedor } from '../servidor/torcedor';
+import { sorteadorDeFrase } from './cardPersonalizado';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { bomMomentoDoDia } from '../jogo/apoio';
 import { oferecerApoio } from './apoio';
@@ -429,27 +430,30 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     // Carreira: só com o servidor (o XP sai de lá); reabrir o dia já feito não mostra nada (XP igual).
     if (e.desempenho) mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]'));
 
-    const card = (async () => {
-      await prontoParaDesenhar();
-      const canvas = desenharCardDia({
-        time,
-        apelido: prefs.get().apelido,
-        paraTime,
-        numero: e.numero,
-        placar,
-        pistas: e.tentativas.map((t) => t.pistas),
-        pontos: e.pontos,
-        frase: frasesFinais[0] ?? '',
-        novoRecorde,
-        link: link.replace('https://', ''),
-      });
-      const nivel = await nivelParaCard();
-      if (nivel) seloNivel(canvas, nivel);
-      return canvas;
-    })();
+    // Card personalizável (jogo.md 14.6): o Card abre a tela "Seu card" e o Stories manda o card com as escolhas guardadas.
+    const apelido = prefs.get().apelido;
+    const dados = (async (): Promise<DadosDoCard> => ({
+      tipo: 'jogo',
+      time,
+      jogo: `Time do Dia #${e.numero}`,
+      destaque: `+${e.pontos}`,
+      quem: { comApelido: linhaDoTorcedor(apelido, e.pontos, paraTime), semApelido: linhaDoTorcedor(undefined, e.pontos, paraTime) },
+      lance: `Time do Dia #${e.numero} · ${placar}`,
+      placarEmoji: grade,
+      frase: frasesFinais[0] ?? '',
+      novoRecorde,
+      link: link.replace('https://', ''),
+      nivel: await nivelParaCard(),
+      conteudo: { jogo: 'dia', numero: e.numero, placar, pistas: e.tentativas.map((t) => t.pistas) },
+    }))();
 
     ligarResultado(root, {
-      card,
+      dados,
+      sortearFrase: sorteadorDeFrase(
+        e.acertou ? (n === 1 ? 'dia_acertou_primeira' : 'dia_acertou') : 'dia_errou',
+        { ...contextoDoTime(time, apelido), tentativas: n },
+      ),
+      quemComApelido: (a) => linhaDoTorcedor(a, e.pontos, paraTime),
       textoShare,
       link,
       emoji: `${linha}\n${grade}`,

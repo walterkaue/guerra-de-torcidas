@@ -3,11 +3,14 @@
 // "Mandar no grupo" (sem o texto das perguntas) e Mais uma / Revanche como ação principal.
 
 import { esc, irPara, type Rota } from '../app';
-import { prontoParaDesenhar, seloNivel } from '../jogo/card';
 import { ID_OUTRO, proTime, timePorId, TIMES } from '../dados/times';
 import { prefs } from '../estado';
-import { desenharCardProva, linhaDoCard } from '../jogo/cardProva';
+import { tipoDoJogo, type DadosDoCard } from '../jogo/cardPersonalizado';
+import { linhaDoTorcedor } from '../jogo/cardTextos';
+import { linhaDoCard } from '../jogo/cardProva';
+import { contextoDoTime } from '../narrador/sessao';
 import { conviteX1Prova } from '../jogo/convites';
+import { sorteadorDeFrase } from './cardPersonalizado';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { textoForaDasMelhores } from '../jogo/lancesTextos';
 import { numero, placa, selo } from './blocos';
@@ -104,26 +107,30 @@ ${conviteX1Prova(total, false)} ${link}`;
   // Carreira: só quando o servidor fechou a prova (o XP sai de lá).
   if (fim.desempenho) mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]'));
 
-  const card = (async () => {
-    await prontoParaDesenhar();
-    const canvas = desenharCardProva({
-      time,
-      apelido,
-      paraTime: outro ? null : paraTime,
-      resumo: fim.resumo,
-      pontos: total,
-      escada: fim.escada,
-      frase: frases[0] ?? '',
-      novoRecorde,
-      link: link.replace('https://', ''),
-    });
-    const nivel = await nivelParaCard();
-    if (nivel) seloNivel(canvas, nivel);
-    return canvas;
-  })();
+  // Card personalizável (jogo.md 14.6): o Card abre a tela "Seu card" e o Stories manda o card com as escolhas guardadas.
+  const paraOCard = outro ? null : paraTime;
+  const dados = (async (): Promise<DadosDoCard> => ({
+    tipo: tipoDoJogo(!!codigo),
+    time,
+    jogo: 'Prova de Boleiro',
+    destaque: `+${total}`,
+    quem: { comApelido: linhaDoTorcedor(apelido, total, paraOCard), semApelido: linhaDoTorcedor(undefined, total, paraOCard) },
+    lance: `Prova de Boleiro: ${fim.resumo}`,
+    placarEmoji: fim.escada,
+    frase: frases[0] ?? '',
+    novoRecorde,
+    link: link.replace('https://', ''),
+    nivel: await nivelParaCard(),
+    conteudo: { jogo: 'prova', resumo: fim.resumo, escada: fim.escada },
+  }))();
 
   ligarResultado(root, {
-    card,
+    dados,
+    sortearFrase:
+      fim.fim === 'perfeita'
+        ? sorteadorDeFrase('prova_perfeita', contextoDoTime(time, apelido))
+        : sorteadorDeFrase('prova_fim', { ...contextoDoTime(time, apelido), pontos: total }),
+    quemComApelido: (a) => linhaDoTorcedor(a, total, paraOCard),
     textoShare,
     link,
     emoji: `${linha}

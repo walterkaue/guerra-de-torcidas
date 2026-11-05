@@ -1,16 +1,17 @@
 // Resultado padrão dos 5 jogos (docs/jogo.md 14.2, docs/visual.md 4.6), sempre nesta ordem:
 // placar → pontos pro time → detalhe em placas → frase do narrador → selos → Carreira →
-// "Mandar no grupo" com Card, Stories, Emoji e Link → Início e "Mais uma".
+// "Mandar no grupo" com Card (abre a tela "Seu card"), Stories, Emoji e Link → Início e "Mais uma".
 // O que cada jogo tem de próprio entra como placa no detalhe, sem quebrar a ordem.
 // Comemoração (ligarConfete): papel picado nas cores do time e vibração, uma vez por resultado, em vitória, recorde
 // novo, partida nas 3 melhores do dia, Time do Dia acertado e medalha nova (jogo/confete.ts).
 
 import { esc } from '../app';
 import { corDeTexto, type Time } from '../dados/times';
-import { mostrarCard } from '../jogo/card';
+import { textoDoCompartilhar, type DadosDoCard } from '../jogo/cardPersonalizado';
 import { criarComemoracao, pedacosDoConfete, type MotivoDoConfete } from '../jogo/confete';
 import { selosDaPosicao, type Desempenho, type Minigame } from '../jogo/posicao';
 import { seloPre, selo } from './blocos';
+import { abrirCardPersonalizado, desenharComAsEscolhas } from './cardPersonalizado';
 import { convidarParaCidade } from './conviteCidade';
 import { icone } from './icones';
 import { qualidade } from './qualidade';
@@ -88,12 +89,11 @@ export function htmlResultado(p: PartesDoResultado): string {
       <section class="mandar" aria-label="Compartilhar">
         <a class="botao botao-zap" data-sem-aviso target="_blank" rel="noopener" href="${p.zap}">Mandar no grupo</a>
         <div class="formatos">
-          <button type="button" data-acao="card" aria-expanded="false">${icone('imagem')}Card</button>
+          <button type="button" data-acao="card">${icone('imagem')}Card</button>
           <button type="button" data-acao="share">${icone('celular')}Stories</button>
           <button type="button" data-acao="emoji">${icone('sorriso')}Emoji</button>
           <button type="button" data-acao="copiar">${icone('corrente')}Link</button>
         </div>
-        <div class="res-card" data-card hidden><img class="card" alt="Card do resultado" /></div>
       </section>
 
       <div data-convite-push></div>
@@ -193,8 +193,12 @@ export function contar(el: HTMLElement | null, total: number): void {
 }
 
 export interface Compartilhar {
-  /** Card desenhado (o Card mostra, o Stories manda o arquivo). */
-  card: Promise<HTMLCanvasElement>;
+  /** O que o card pode mostrar (o Card abre a tela "Seu card", o Stories manda o card com as escolhas guardadas). */
+  dados: Promise<DadosDoCard>;
+  /** Sorteia outra frase do narrador para este resultado; sem ela, "Sortear outra frase" fica desligado. */
+  sortearFrase?: () => string | null;
+  /** Refaz a linha de quem fez com um apelido escolhido na própria tela do card. */
+  quemComApelido?: (apelido: string) => string;
   textoShare: string;
   link: string;
   emoji: string;
@@ -214,33 +218,30 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
   // Resultado da 1ª partida de qualquer jogo: convite para a cidade (uma vez por aparelho).
   void convidarParaCidade(root.querySelector<HTMLElement>('[data-convite-cidade]'));
 
-  const caixa = root.querySelector<HTMLElement>('[data-card]')!;
-  const img = caixa.querySelector<HTMLImageElement>('img')!;
-  let desenhado = false;
-  const btnCard = botao('card');
-  btnCard.addEventListener('click', async () => {
-    const abrir = caixa.hidden;
-    caixa.hidden = !abrir;
-    btnCard.setAttribute('aria-expanded', String(abrir));
-    if (abrir && !desenhado) {
-      desenhado = true;
-      await mostrarCard(img, await o.card).catch(() => {});
-    }
-    if (abrir) caixa.scrollIntoView({ behavior: semMovimento() ? 'auto' : 'smooth', block: 'nearest' });
-  });
+  botao('card').addEventListener('click', () =>
+    abrirCardPersonalizado({
+      raiz: root,
+      dados: o.dados,
+      texto: o.textoShare,
+      link: o.link,
+      sortearFrase: o.sortearFrase,
+      quemComApelido: o.quemComApelido,
+    }),
+  );
 
   const btnShare = botao('share');
   btnShare.addEventListener('click', async () => {
     try {
-      const canvas = await o.card;
+      const { canvas, comLink } = await desenharComAsEscolhas(await o.dados);
+      const texto = textoDoCompartilhar(o.textoShare, o.link, comLink);
       const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, 'image/png'));
       const arquivo = blob ? new File([blob], 'guerra-de-torcidas.png', { type: 'image/png' }) : null;
       if (arquivo && navigator.canShare?.({ files: [arquivo] })) {
-        await navigator.share({ files: [arquivo], text: o.textoShare });
+        await navigator.share({ files: [arquivo], text: texto });
       } else if (navigator.share) {
-        await navigator.share({ text: o.textoShare, url: o.link });
+        await navigator.share(comLink ? { text: texto, url: o.link } : { text: texto });
       } else {
-        await navigator.clipboard.writeText(o.textoShare);
+        await navigator.clipboard.writeText(texto);
         avisar(btnShare, 'Copiado!');
       }
     } catch {
