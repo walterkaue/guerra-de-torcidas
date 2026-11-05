@@ -26,7 +26,7 @@ Quatro trilhos, que rodam em paralelo (fila decidida pelo Kauê em 05/11/2026). 
 - **Para voltar atrás:** antes de 09/11, as funções antigas funcionam com as migrações no ar (só o X1 de pênaltis repetido dá erro e joga sem valer pontos; a Disputa livre continua até o corte). Depois de 09/11, não volte as funções: já haverá partidas com a faixa gravada.
 
 **Trilho B — Conteúdo.**
-- **Disputas que faltam** para a meta de 3 por clube: só falta 1 do Mirassol (64 publicadas desde o lote 2, PR #115; a Seleção tem 5). Mesmo caminho do catálogo (`dados/disputas/README.md`): rascunho, conferência numa sessão nova e `npm run catalogo-disputas`. **Disputa nova publicada: a `nova-partida` vai antes do site** (desde o corte, ela só aceita id do catálogo dela).
+- ~~**Disputas que faltam** para a meta de 3 por clube~~: fechado em 05/11/2026 com o lote 2 (PR #115, 64 publicadas; a Seleção tem 5). O Mirassol fica com 2: não há outra vitória profissional nos pênaltis com duas fontes aceitas, e o Kauê decidiu não descer para torneio menor (o que falta é completado pela Seleção, `docs/jogo.md` seção 6). Disputa nova segue `dados/disputas/README.md`: rascunho, conferência numa sessão nova, `npm run catalogo-disputas` e, na seção "Publicação" (PR #118), **a `nova-partida` antes do site** (desde o corte, ela só aceita id do catálogo dela).
 - **Robôs do Gemini:** reavaliar no domingo 08/11, 17h ("Conferir primeiro", item 9).
 - **Perguntas até 800:** 280 no ar; a meta pede perguntas nascidas de páginas reais ("Depois", item 2). Faltam 9 fáceis de clube (ver "Decisões").
 - **Títulos da Casa:** faltam 35 de 808.
