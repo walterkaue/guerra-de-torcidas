@@ -145,8 +145,8 @@ describe('medalhas', () => {
     await partida(fora, 30, { minigame: 'lances', lances: gols(3, 'w') });
     const minhas = await como<{ lance_id: string; gols: number; recriados: number; medalha: string | null }>(eu, 'authenticated', 'select * from public.minhas_medalhas() order by lance_id');
     expect(minhas).toEqual([
-      { lance_id: 'x', gols: 51, recriados: 4, medalha: 'prata' },
-      { lance_id: 'y', gols: 5, recriados: 0, medalha: 'bronze' },
+      { lance_id: 'x', gols: 51, recriados: 4, vitorias: 0, medalha: 'prata' },
+      { lance_id: 'y', gols: 5, recriados: 0, vitorias: 0, medalha: 'bronze' },
     ]);
     for (let k = 0; k < 6; k++) await partida(eu, 30, { minigame: 'lances', lances: gols(1, 'x', true) });
     const ouro = await como<{ medalha: string }>(eu, 'authenticated', `select medalha from public.minhas_medalhas() where lance_id = 'x'`);
@@ -204,7 +204,8 @@ describe('hoje e permissões', () => {
     await db.query(
       `insert into public.partidas (torcedor_id, modo, semente, dificuldade, expira_em, minigame) values ($1, 'normal', 1, 0, now() + interval '15 minutes', 'lances')`, [eu]);
     const [h] = await como<{ feitas: number; limite: number; melhor: number | null }>(eu, 'authenticated', 'select * from public.meus_lances_hoje()');
-    expect(h).toEqual({ feitas: 1, limite: 6, melhor: null });
+    // Antes do corte dos Lances unificados (16/11), `melhores` vem vazio (20261105100000).
+    expect(h).toEqual({ feitas: 1, limite: 6, melhor: null, melhores: [] });
   });
 
   it('o celular não lê lances_gols nem as funções internas; a vitrine e as próprias, sim', async () => {
