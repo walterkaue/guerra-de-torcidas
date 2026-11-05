@@ -48,7 +48,7 @@ export type Rota =
   /** `apelido` já leva ao campo do apelido (Perfil, "Escolher apelido"). */
   /** `desafio`: o código do X1 que segue junto (pênaltis com `partida`, Prova com `prova`, Lances com `lances`). */
   | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia' | 'lances' | 'perfil'; desafio?: string; apelido?: boolean }
-  /** `disputa`: disputa histórica escolhida na aba Pênaltis (só cenário; sem ela, a disputa livre). */
+  /** `disputa`: disputa histórica escolhida na aba Pênaltis (só cenário; sem ela, a Disputa livre até 08/11; desde 09/11 é obrigatória). */
   | { tela: 'partida'; desafio?: string; disputa?: Disputa }
   | { tela: 'resultado'; dados: DadosResultado }
   | { tela: 'prova'; desafio?: string }

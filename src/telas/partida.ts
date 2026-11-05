@@ -154,6 +154,12 @@ export const X1_EXPIROU = 'Esse X1 expirou. Vai uma partida nova!';
 export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   const time: Time = timePorId(prefs.get().time) ?? TIMES[TIMES.length - 1];
   const codigoDesafio = rota.tela === 'partida' ? rota.desafio : undefined;
+  // Depois do corte não há Disputa livre (seção 14.7): partida sem disputa nem X1 (o botão da livre na tela de antes,
+  // aberta de domingo para segunda) vai para a escolha, no filtro Pênaltis, em vez de virar treino com 400.
+  if (lancesUnificados() && !codigoDesafio && !(rota.tela === 'partida' && rota.disputa)) {
+    queueMicrotask(() => irPara({ tela: 'lances', aba: 'penaltis' }));
+    return () => {};
+  }
   // Disputa histórica: só cenário (adversário e chamada). O resto é a partida de sempre. No X1 recebido, quem aceita
   // joga a disputa de quem chamou: ela vem pela rota (convite da Home) ou, no link direto, pela resposta da nova-partida.
   let disputa: Disputa | undefined = rota.tela === 'partida' ? rota.disputa : undefined;
@@ -373,7 +379,12 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     else if (dicaGuardada && extra <= 0) mostrarDica(elInstrucao, dicaGuardada);
     else if (partidasJogadas === 2) mostrarDica(elInstrucao, dicas.pedir('pen_cavadinha'));
     if (rodada === 0 && passouDoLimite) mostrarDica(elInstrucao, dicas.pedir('lan_dez_valendo'));
-    if (rodada === 0) narrar(narrador.falar('abertura'), disputa ? chamadaDaDisputa(disputa) : x1Expirou ? X1_EXPIROU : x1JaJogado ? X1_JA_JOGADO : undefined);
+    if (rodada === 0) {
+      // X1 que não valeu e virou partida normal: o aviso vem primeiro, e a chamada da disputa junto, se houver.
+      const avisoX1 = x1Expirou ? X1_EXPIROU : x1JaJogado ? X1_JA_JOGADO : undefined;
+      const chamada = disputa ? chamadaDaDisputa(disputa) : undefined;
+      narrar(narrador.falar('abertura'), avisoX1 && chamada ? `${avisoX1} ${chamada}` : (avisoX1 ?? chamada));
+    }
     else if (rodada === COBRANCAS) narrar(narrador.falar('morte_subita', { placar: placarAtual() }));
     else if (cobrancaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['cobranca']) }));
   }

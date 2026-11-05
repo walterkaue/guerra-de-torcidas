@@ -87,9 +87,11 @@ export interface PartidaDaDisputa {
  * Placa da disputa histórica ("+3 rumo ao bronze · 8/10") com a trilha compacta. `depois` é a leitura de
  * minhas_medalhas() logo depois do fechamento; o "antes" sai dela menos o que a partida deu. Puro: só HTML.
  */
-export function placaRumoDisputa(j: PartidaDaDisputa, depois: readonly LinhaMedalha[]): { html: string; subiu: boolean } {
+export function placaRumoDisputa(j: PartidaDaDisputa, depois: readonly LinhaMedalha[]): { html: string; subiu: boolean } | null {
   const d = depois.find((l) => l.lance_id === itemPenaltis(j.id));
   const vit = j.venceu ? 1 : 0;
+  // A partida deu gol ou vitória e o servidor não anotou (disputa que ele não conhece): sem linha, para não inventar.
+  if (!d && (j.gols > 0 || vit > 0)) return null;
   const fim = { gols: d?.gols ?? j.gols, vitorias: d?.vitorias ?? vit };
   const antes = { gols: Math.max(0, fim.gols - j.gols), vitorias: Math.max(0, fim.vitorias - vit) };
   const linha = linhaRumoDisputa(antes, fim);
@@ -119,6 +121,7 @@ export async function mostrarRumoDaDisputa(o: {
   }
   if (!o.alvo.isConnected) return;
   const p = placaRumoDisputa(o.partida, depois);
+  if (!p) return;
   o.alvo.innerHTML = placa(p.html, { titulo: 'Rumo às medalhas', filete: true, classe: 'rumo-placa' });
   o.alvo.hidden = false;
   if (p.subiu) {

@@ -92,7 +92,7 @@ export const desafioNaFaixa = (faixaDoDesafio: Faixa, faixaAgora: Faixa): boolea
 // ---------- medalhas dos pênaltis ----------
 export type MedalhaPenaltis = 'bronze' | 'prata' | 'ouro';
 
-/** Por disputa histórica e pela Disputa livre: 10 · 50 · 100 gols; o ouro pede também 10 vitórias. */
+/** Por disputa histórica (a Disputa livre não tem medalha): 10 · 50 · 100 gols; o ouro pede também 10 vitórias. */
 export const MEDALHAS_PENALTIS: readonly { medalha: MedalhaPenaltis; gols: number; vitorias: number }[] = [
   { medalha: 'bronze', gols: 10, vitorias: 0 },
   { medalha: 'prata', gols: 50, vitorias: 0 },

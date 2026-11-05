@@ -472,7 +472,7 @@ export async function meusLancesHoje(): Promise<LancesHoje | null> {
 }
 
 export interface MedalhaDoLance {
-  /** Id do lance, ou `penaltis:<disputa>` / `penaltis:livre` nas disputas de pênaltis (desde a migração do PR #108). */
+  /** Id do lance, ou `penaltis:<disputa>` nas disputas de pênaltis (a `penaltis:livre` saiu em 05/11/2026) (desde a migração do PR #108). */
   lance_id: string;
   gols: number;
   recriados: number;

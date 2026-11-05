@@ -463,9 +463,9 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         }
         // O X1 leva a disputa de quem chamou. O catálogo fica fora do bundle da Home; fora dele, o convite segue sem a ficha.
         if (d.disputa_id) {
-          const { DISPUTAS } = await import('../dados/disputas');
+          const catalogo = await import('../dados/disputas').catch(() => null);
           if (saiu) return;
-          disputaDoX1 = DISPUTAS.find((x) => x.id === d.disputa_id);
+          disputaDoX1 = catalogo?.DISPUTAS.find((x) => x.id === d.disputa_id);
         }
         const disputa = disputaDoX1;
         const ficha = disputa ? `<p class="convite-como">Disputa: ${esc(disputa.titulo)}. ${esc(chamadaDaDisputa(disputa))}</p>` : '';

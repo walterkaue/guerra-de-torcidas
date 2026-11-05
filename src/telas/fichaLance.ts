@@ -1,6 +1,6 @@
 // Ficha do lance que abre de baixo (jogo.md, 14.3): favoritar, a ficha factual, a situação, a trilha de medalhas,
 // os recriados, o que falta pro ouro, a prévia da linha do resultado e os botões Treinar e Pôr na partida.
-// Na tela única (14.7, depois do corte) a ficha serve também às disputas de pênaltis e à Disputa livre (barra de
+// Na tela única (14.7, depois do corte) a ficha serve também às disputas de pênaltis (barra de
 // Vitórias, sem a prévia do gol) e só tem ⭐ e "Jogar". Um <dialog> com showModal: fecha no ✕, no toque fora e
 // no Esc. Os números das medalhas vêm de quem abre.
 
@@ -18,7 +18,7 @@ export interface NumerosDoLance {
 }
 
 export interface OpcoesDaFicha {
-  /** Id do item nas medalhas: o do lance, `penaltis:<disputa>` ou `penaltis:livre`. */
+  /** Id do item nas medalhas: o do lance, `penaltis:<disputa>`. */
   id: string;
   titulo: string;
   /** A ficha factual (texto corrido). */

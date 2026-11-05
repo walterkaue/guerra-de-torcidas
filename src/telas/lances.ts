@@ -1,5 +1,5 @@
 // Lances do Jogo (docs/jogo.md, seção 7.3 e 14.7). Antes do corte de 09/11/2026 (0h de Brasília): hub com três abas. Pênaltis abre o jogo de sempre (telas/partida.ts,
-// valendo pontos), livre ou com o cenário de uma disputa histórica (seção 6); Faltas e Cara a cara têm o álbum
+// valendo pontos), livre (até 08/11) ou com o cenário de uma disputa histórica (seção 6); Faltas e Cara a cara têm o álbum
 // (filtro de clube, ficha, partida de 3 e treino). A partida de 3 vale pontos na pré-temporada, lance a lance com
 // o servidor (função `lances`, como os pênaltis): a semente nunca vem para o celular, cada chute manda o gesto e a
 // bola só sai quando o resultado chega. Caiu a conexão: a partida segue aqui, sem valer pontos. O treino roda

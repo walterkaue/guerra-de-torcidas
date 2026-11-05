@@ -317,8 +317,9 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     link,
     emoji,
     // Revanche: na disputa histórica, joga a mesma de novo; senão (inclusive depois de um X1, que vale uma vez por
-    // pessoa: jogo.md, seção 6), partida nova contra a máquina.
-    maisUma: () => irPara({ tela: 'partida', disputa: d.disputa }),
+    // pessoa: jogo.md, seção 6), partida nova contra a máquina. Depois do corte não há Disputa livre (seção 14.7):
+    // sem disputa (livre começada no domingo e fechada na segunda), volta à escolha, no filtro Pênaltis.
+    maisUma: () => irPara(d.disputa || !lancesUnificados() ? { tela: 'partida', disputa: d.disputa } : { tela: 'lances', aba: 'penaltis' }),
     inicio: () => irPara({ tela: 'inicio' }),
   });
 
