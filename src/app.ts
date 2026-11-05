@@ -47,7 +47,14 @@ export type Rota =
   | { tela: 'feedback'; de?: string }
   /** `apelido` já leva ao campo do apelido (Perfil, "Escolher apelido"). */
   /** `desafio`: o código do X1 que segue junto (pênaltis com `partida`, Prova com `prova`, Lances com `lances`). */
-  | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia' | 'lances' | 'perfil'; desafio?: string; apelido?: boolean }
+  /** `primeira`: primeiro acesso (docs/jogo.md 14.8), a primeira tela de quem é novo: sem voltar, com "Bora pro jogo". */
+  | {
+      tela: 'times';
+      depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia' | 'lances' | 'perfil';
+      desafio?: string;
+      apelido?: boolean;
+      primeira?: boolean;
+    }
   /** `disputa`: disputa histórica escolhida na aba Pênaltis (só cenário; sem ela, a Disputa livre até 08/11; desde 09/11 é obrigatória). */
   | { tela: 'partida'; desafio?: string; disputa?: Disputa }
   | { tela: 'resultado'; dados: DadosResultado }
