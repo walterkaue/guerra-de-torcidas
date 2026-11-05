@@ -8,7 +8,7 @@ import { join } from 'node:path';
 const PASTA = join(import.meta.dirname, '..', 'migrations');
 
 const ESBOCO_SUPABASE = `
-  create role anon; create role authenticated; create role service_role;
+  create role anon; create role authenticated; create role service_role; create role supabase_read_only_user;
   create schema auth;
   create table auth.users (id uuid primary key, is_anonymous boolean not null default true, email text,
     created_at timestamptz not null default now());

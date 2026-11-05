@@ -25,6 +25,7 @@ const OUTROS_ADVERSARIOS: Record<string, Adversario> = {
   Barcelona: { artigo: 'o', cores: ['#a50044', '#004d98'] },
   'Boca Juniors': { artigo: 'o', cores: ['#003a70', '#ffd200'] },
   CSA: { artigo: 'o', cores: ['#0b3d91', '#ffffff'] },
+  Caxias: { artigo: 'o', cores: ['#7a1c2e', '#ffffff'] },
   Ceará: { artigo: 'o', cores: ['#111111', '#ffffff'] },
   Chile: { artigo: 'o', cores: ['#d52b1e', '#ffffff'] },
   Chivas: { artigo: 'o', cores: ['#c8102e', '#ffffff'] },
@@ -60,6 +61,7 @@ const OUTROS_ADVERSARIOS: Record<string, Adversario> = {
   Sousa: { artigo: 'o', cores: ['#005833', '#ffffff'] },
   'Sporting Cristal': { artigo: 'o', cores: ['#6cc4ee', '#ffffff'] },
   'Vila Nova': { artigo: 'o', cores: ['#c8102e', '#ffffff'] },
+  'Vélez Sarsfield': { artigo: 'o', cores: ['#ffffff', '#0b3d91'] },
   'Águilas Doradas': { artigo: 'o', cores: ['#d4a017', '#111111'] },
 };
 

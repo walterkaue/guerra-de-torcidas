@@ -14,7 +14,7 @@ const pasta = mkdtempSync(join(tmpdir(), 'metricas-'));
 const consulta = (sql) => {
   const arquivo = join(pasta, 'consulta.sql');
   writeFileSync(arquivo, sql);
-  return execFileSync(npx, ['supabase', 'db', 'query', '--linked', '-o', 'table', '-f', arquivo], {
+  return execFileSync(npx, ['supabase', 'db', 'query', '--remote', '--read-only', '-o', 'table', '-f', arquivo], {
     encoding: 'utf8',
     shell: process.platform === 'win32',
   });

@@ -87,7 +87,7 @@ export function lerDados() {
   try {
     const arquivo = join(pasta, 'balanco.sql');
     writeFileSync(arquivo, montarSql(PROVA_TRES_ERROS_DESDE, PROVA_ANTES));
-    const saida = execFileSync(npx, ['supabase', 'db', 'query', '--linked', '-o', 'json', '-f', arquivo], {
+    const saida = execFileSync(npx, ['supabase', 'db', 'query', '--remote', '--read-only', '-o', 'json', '-f', arquivo], {
       encoding: 'utf8',
       shell: process.platform === 'win32',
       stdio: ['ignore', 'pipe', 'inherit'],
