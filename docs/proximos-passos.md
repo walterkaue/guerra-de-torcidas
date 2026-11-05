@@ -7,8 +7,8 @@
 
 | Área | Estado em 02/11/2026 |
 |---|---|
-| Código | `main` com 91 arquivos de teste e 1.832 testes passando (PR #98, aquecimento, em 04/11) |
-| Publicação | Site no ar (`main` de 04/11, 13h05, com o PR #98; o deploy foi conferido e o site serve o build testado). 35 migrações aplicadas (a 35ª, do aquecimento, em 04/11, antes do merge do PR #98). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
+| Código | `main` com 91 arquivos de teste e 1.840 testes passando (PR #101, troféus dos lances, em 04/11) |
+| Publicação | Site no ar (`main` de 04/11, 20h18, com o PR #101; deploy conferido: o site serve `index-D0wxorIX.js`, o build com a trilha). Antes, o PR #98 (13h05) teve o deploy conferido e o site servia o build testado. 35 migrações aplicadas (a 35ª, do aquecimento, em 04/11, antes do merge do PR #98). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
 | Tamanho | Em 04/11/2026, com o PR #96: bundle inicial de 59 KB gzip (limite: ~300 KB). Somando todo o JS e o CSS, 251 KB gzip. A conta de 02/11 deu 216 KB, mas pode não ter usado o mesmo método |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
@@ -25,7 +25,7 @@
 
 **Lances do Jogo unificados (`docs/jogo.md` seção 14.7):** decidido pelo Kauê em 04/11/2026. A proposta com os números está em `docs/propostas/lances-unificados.md` (só leitura e simulação; nada mudou no jogo). Falta o Kauê escolher as tabelas, o limite e a segunda de entrada (seção 10 da proposta). Depois disso, a implementação vai pelo plano da seção 8 da proposta: servidor (migração, `lances`, `nova-partida`, `fechar-partida`) e telas, publicados antes da segunda de corte.
 
-**Troféus dos lances e `#admin` no Grafismo de TV (`docs/jogo.md` seção 14.3):** no ar desde 04/11/2026 (PR #101, merge às 20h18; deploy conferido às 20h20). Prints em `docs/auditoria/2026-11-04/trofeus/`, aprovados pelo Kauê antes de aplicar.
+**Troféus dos lances e `#admin` no Grafismo de TV (`docs/jogo.md` seção 14.3):** construído e no ar desde 04/11/2026, às 20h18 (PR #101). Prints em `docs/auditoria/2026-11-04/trofeus/`, aprovados pelo Kauê antes de aplicar.
 - **O que entra:**
   - **Trilha:** bloco `trilha()` em `src/telas/blocos.ts`; a conta pura (`trilhaDoLance`, `linhaRumo`, `filtrarAlbum`) fica em `src/jogo/lancesTextos.ts`, com testes.
   - **Álbum:** filtros e favoritos em `src/telas/albumLances.ts`. Os favoritos ficam em `prefs.favoritosLances`, só no aparelho.
@@ -187,7 +187,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 1. **Cidade, Galeria e 52 semanas:** nessa ordem, depois das telas das divisões.
 2. **Perguntas:** o piloto recomendou parar nas 529 sem fonte do staging. A meta de 800 precisa de perguntas nascidas de páginas reais. A importação continua com o Kauê.
 3. ~~**Limpeza de anônimos:**~~ feita no PR #84 (`20261103000000_contas_paradas.sql`), guardando os pontos em `pontos_apagados`. No ar desde 02/11/2026 (rotina `apagar-contas-paradas`, dia 1º às 4h). Na simulação de 02/11, 0 conta sairia: a anônima mais antiga é de 19/10/2026, então a primeira limpeza possível é em 1º/05/2027. As travas do PR #86 estão no ar desde 02/11/2026.
-4. **Grafismo de TV, fase 2:** painel `#admin` no visual da seção 4.6 do `docs/visual.md`. O confete da vitória dos Pênaltis pode ir para o `resultadoPadrao.ts`, para os outros jogos usarem.
+4. **Grafismo de TV, fase 2:** ~~painel `#admin` no visual da seção 4.6 do `docs/visual.md`~~ feito no PR #101 (04/11/2026). Falta: o confete da vitória dos Pênaltis pode ir para o `resultadoPadrao.ts`, para os outros jogos usarem.
 
 ## Antes de divulgar
 
