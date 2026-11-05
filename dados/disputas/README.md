@@ -32,3 +32,10 @@ Para cada disputa em `rascunho`:
 5. Marcar `revisada` com `verificada_em`, ou apagar a linha se a disputa não se sustentar.
 
 Depois da conferência, `npm run catalogo-disputas` atualiza `src/dados/disputas.ts`, que é o que o jogo lê (só entra disputa `revisada` ou `ativa`).
+
+## Publicação
+
+Desde o corte (09/11/2026), a `nova-partida` só abre disputa que está no catálogo dela (`supabase/functions/_shared/dados/disputas.ts`); fora dele, a partida é recusada com 400 `disputa_obrigatoria` (`docs/jogo.md`, seção 14.7). Por isso, depois do `npm run catalogo-disputas`:
+1. `npm run compartilhar` copia o catálogo para o servidor (o `npm test` barra a cópia desatualizada).
+2. Publicar as funções (`npm run deploy:funcoes`) **antes** do merge do PR. Site antes da função: a disputa nova aparece no celular e é recusada ao começar.
+3. Merge do PR (o GitHub Pages publica o site).
