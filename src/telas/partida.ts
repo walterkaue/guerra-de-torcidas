@@ -128,6 +128,8 @@ const DUR_ANTES_DO_REPLAY = 1000;
 // O código do motivo vai no fim (servidor/motivo.ts): "Sem internet" também cobre CAPTCHA, login e função fora.
 export const AVISO_SEM_PONTOS = 'Sem conexão: essa partida não vale pontos.';
 export const AVISO_CAIU = 'Caiu a conexão: essa partida não vale mais pontos.';
+/** Cada X1 dos pênaltis vale uma vez por pessoa (jogo.md, seção 6): na segunda, vira partida normal. */
+export const X1_JA_JOGADO = 'Esse X1 você já jogou. Vai uma partida nova!';
 
 export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   const time: Time = timePorId(prefs.get().time) ?? TIMES[TIMES.length - 1];
@@ -145,6 +147,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   let lanceALance = false;
   let dicaDoServidor: number | null = null;
   let desafio: DesafioRecebido | null = null;
+  /** Abriu de novo um X1 já jogado (vale uma vez por pessoa): a partida é normal, e a abertura avisa. */
+  let x1JaJogado = false;
   let aviso: string | null = null;
   let fechamento: Promise<FechamentoDoServidor> | null = null;
   const narrador = criarNarrador(time, prefs.get().apelido);
@@ -342,7 +346,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     if (extra === 1) mostrarDica(elInstrucao, dicas.pedir('pen_morte_subita'));
     else if (dicaGuardada && extra <= 0) mostrarDica(elInstrucao, dicaGuardada);
     else if (partidasJogadas === 2) mostrarDica(elInstrucao, dicas.pedir('pen_cavadinha'));
-    if (rodada === 0) narrar(narrador.falar('abertura'), disputa && chamadaDaDisputa(disputa));
+    if (rodada === 0) narrar(narrador.falar('abertura'), disputa ? chamadaDaDisputa(disputa) : x1JaJogado ? X1_JA_JOGADO : undefined);
     else if (rodada === COBRANCAS) narrar(narrador.falar('morte_subita', { placar: placarAtual() }));
     else if (cobrancaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['cobranca']) }));
   }
@@ -633,8 +637,10 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       try {
         p = await pedir(codigoDesafio);
       } catch (e) {
-        if (!(e instanceof ErroServidor) || !codigoDesafio || !['proprio_desafio', 'desafio_nao_encontrado'].includes(e.codigo)) throw e;
-        // Link do próprio desafio ou link quebrado: vira partida normal, valendo.
+        if (!(e instanceof ErroServidor) || !codigoDesafio || !['proprio_desafio', 'desafio_nao_encontrado', 'desafio_ja_jogado'].includes(e.codigo)) throw e;
+        // Link do próprio desafio, link quebrado ou X1 já jogado: vira partida normal, valendo.
+        x1JaJogado = e.codigo === 'desafio_ja_jogado';
+        if (x1JaJogado) history.replaceState(null, '', location.pathname);
         p = await pedir();
       }
       // Servidor antigo manda a semente; no lance a lance ela fica lá (a local só serve se cair a conexão).

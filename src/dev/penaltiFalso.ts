@@ -12,11 +12,14 @@ import { ErroServidor, type FechamentoDoServidor, type LanceDoServidor, type Par
 const latencia = Number(new URLSearchParams(location.search).get('latencia')) || 180;
 const espera = () => new Promise((ok) => setTimeout(ok, latencia));
 const caiNoLance = Number(new URLSearchParams(location.search).get('caiNoLance')) || 0;
+// ?d=abcdefgh&x1JaJogado: o X1 responde "desafio_ja_jogado" (confere a partida normal com o aviso na abertura).
+const x1JaJogado = new URLSearchParams(location.search).has('x1JaJogado');
 
 let estado: { semente: SementesPorLance; dificuldade: number; gestos: Gestos; lances: number } | null = null;
 
-export async function novaPartida(): Promise<PartidaDoServidor> {
+export async function novaPartida(codigo?: string): Promise<PartidaDoServidor> {
   await espera();
+  if (codigo && x1JaJogado) throw new ErroServidor('desafio_ja_jogado');
   estado = { semente: sortearSementes(sementeNova), dificuldade: 0.5, gestos: { cobrancas: [], defesas: [] }, lances: 0 };
   return {
     partidaId: 'falsa',
