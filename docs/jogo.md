@@ -68,6 +68,7 @@ Minigames de futebol de 30 segundos em que **cada ponto que você faz vai para o
 
 ### Apelido
 - Opcional, até 20 caracteres, passa por um filtro simples de palavras (lista no código) antes de ser gravado no servidor.
+- **Desde 06/11/2026, nomes e apelidos de jogadores famosos estão bloqueados** (Seleção, elencos da Série A e ídolos dos 20 clubes; migração `20261106100000_apelidos_famosos.sql`), porque o boneco montável tem número livre e "boneco + número + apelido famoso" imitaria uma pessoa real. Nome comum sozinho (Gabriel, Lucas, Ronaldo) passa; entra o nome com sobrenome ou o apelido conhecido. Apelidos já gravados não mudam; o `#admin` apaga se for o caso.
 - **No MVP nenhum ranking público mostra apelido.** Ele aparece só no card que o próprio jogador compartilha e no desafio que ele manda. Ranking individual (Craque do Dia, Craques da torcida) só depois da moderação da fase 2.
 
 ### Troca de time ou cidade
