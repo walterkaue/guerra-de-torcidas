@@ -99,6 +99,8 @@ registrarTela('termos', sobDemanda('Abrindo os termos…', () => import('./telas
 // Apoie o jogo (#apoie): atrás do interruptor de src/config/apoio.ts e só para 18+.
 registrarTela('apoie', telaApoio);
 registrarTela('casa', sobDemanda('Abrindo a Casa…', () => import('./telas/casa/tela').then((m) => m.telaCasa as Tela)));
+// Vestiário do boneco montável (#vestiario): só baixa quando alguém abre.
+registrarTela('vestiario', sobDemanda('Abrindo o vestiário…', () => import('./telas/vestiario/tela').then((m) => m.telaVestiario as Tela)));
 
 /**
  * Baixa as telas de jogo por trás, com o navegador ocioso, para o toque em "Jogar" abrir na hora.
@@ -118,11 +120,12 @@ function preaquecer(): void {
   );
 }
 
-/** Rota do endereço: #admin, #apoie, #termos, #casa, #casa/<id>, #lance/<id> e #disputa/<id>. */
+/** Rota do endereço: #admin, #apoie, #termos, #vestiario, #casa, #casa/<id>, #lance/<id> e #disputa/<id>. */
 function rotaDoHash(): Rota | undefined {
   if (location.hash === '#admin') return { tela: 'admin' };
   if (location.hash === '#termos') return { tela: 'termos' };
   if (location.hash === '#cidade') return { tela: 'cidade' };
+  if (location.hash === '#vestiario') return { tela: 'vestiario' };
   if (/^#entrar(\/|$)/.test(location.hash)) {
     // Link do QR: o código sai do endereço e do histórico na hora; a pessoa toca em "Entrar".
     let codigo: string | undefined;
@@ -181,7 +184,13 @@ if (import.meta.env.DEV && app && new URLSearchParams(location.search).has('vitr
   // Primeiro acesso (docs/jogo.md 14.8): quem é novo começa pela escolha do time; a triagem e o aquecimento vêm
   // logo depois dela (times.ts), e só então a Home. Link de desafio segue direto para o convite na Home.
   const comDesafio = !!(desafioDoLink() || desafioProvaDoLink() || desafioLancesDoLink());
-  if (comecaPelaEscolha({ jaTinhaTime: jaJoga, tela: entrada.tela, comDesafio })) irPara({ tela: 'times', depois: 'inicio', primeira: true });
+  // Só em desenvolvimento: ?vestiarioFalso liga a fonte falsa e abre o vestiário (src/dev/vestiarioFalso.ts).
+  if (import.meta.env.DEV && new URLSearchParams(location.search).has('vestiarioFalso'))
+    void import('./dev/vestiarioFalso').then((m) => {
+      m.ligarVestiarioFalso(new URLSearchParams(location.search));
+      irPara({ tela: 'vestiario' });
+    });
+  else if (comecaPelaEscolha({ jaTinhaTime: jaJoga, tela: entrada.tela, comDesafio })) irPara({ tela: 'times', depois: 'inicio', primeira: true });
   else irPara(jaJoga && !faixaDoAparelho() && !semTriagem ? { tela: 'triagem', depois: entrada } : entrada);
   // Só em desenvolvimento: ?cardFalso abre a tela "Seu card" com dados de mentira (src/dev/cardFalso.ts).
   if (import.meta.env.DEV && new URLSearchParams(location.search).has('cardFalso')) void import('./dev/cardFalso').then((m) => m.abrirCardFalso(document.body));

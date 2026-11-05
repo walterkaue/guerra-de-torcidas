@@ -1,0 +1,524 @@
+/* Vestiário do boneco montável (docs/jogo.md 14.5, visual.md 4.6): o boneco grande no topo, as 5 abas do mesmo
+   tamanho, o conteúdo da aba (só ele rola) e o rodapé com Sortear e Salvar. Celular primeiro, toque e nunca hover. */
+
+.tela.vest {
+  height: 100dvh;
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+/* ---------- topo: o boneco sobre o fundo escolhido ---------- */
+.vest-topo {
+  position: relative;
+  flex: none;
+  height: 48dvh;
+  min-height: 260px;
+  background: var(--placa);
+}
+
+.vest-boneco {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.vest-boneco canvas,
+.vest-previa canvas {
+  display: block;
+}
+
+.vest-cab {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: calc(8px + env(safe-area-inset-top)) 12px 18px;
+  background: linear-gradient(180deg, rgba(10, 19, 14, 0.82) 0%, rgba(10, 19, 14, 0.82) 60%, rgba(10, 19, 14, 0));
+}
+
+.vest-titulo {
+  flex: 1;
+  min-width: 0;
+  padding-top: 4px;
+  font: 400 26px/1.05 var(--fonte-placar);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.vest-contador {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: var(--raio-p);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa), inset 0 0 0 1px var(--linha);
+  font: 700 15px/1.2 var(--fonte-rotulo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.vest-previa {
+  flex: none;
+  width: 52px;
+  height: 52px;
+}
+
+.pula {
+  animation: vest-pula 250ms var(--mola-firme);
+}
+
+@keyframes vest-pula {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-6px);
+  }
+}
+
+/* ---------- abas ---------- */
+.vest-abas {
+  flex: none;
+  margin: var(--e3) var(--e4) 0;
+}
+
+.vest-abas button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 54px;
+  padding: 4px 2px;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+}
+
+.vest-abas .ico {
+  font-size: 20px;
+}
+
+/* ---------- conteúdo da aba (só ele rola) ---------- */
+.vest-conteudo {
+  flex: 1 1 0;
+  min-height: 0;
+  padding: var(--e3) var(--e4);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.vest-grupo-cab {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--e2);
+}
+
+.vest-grupo-cab:first-child {
+  margin-top: 0;
+}
+
+.vest-grupo-titulo {
+  font: 700 15px/1.2 var(--fonte-rotulo);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.vest-nota {
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--texto-suave);
+}
+
+.vest-grade {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--e2);
+}
+
+.vest-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cal);
+  touch-action: manipulation;
+}
+
+.vest-mini {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  padding: 4px 0;
+  border-radius: 10px;
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  transition: transform var(--lento) var(--mola);
+}
+
+.vest-mini canvas {
+  display: block;
+}
+
+.vest-item:active .vest-mini {
+  transform: scale(0.95);
+  transition-duration: 0s;
+}
+
+.vest-item[aria-pressed='true'] .vest-mini {
+  box-shadow: 0 0 0 3px var(--amarelo);
+}
+
+/* Trancada: só a miniatura apaga; o nome continua com o contraste inteiro. */
+.vest-item.trancada .vest-mini canvas {
+  opacity: 0.4;
+}
+
+.vest-cadeado {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--placa);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  font-size: 15px;
+  color: var(--cal);
+}
+
+.vest-nome {
+  font: 700 13px/1.1 var(--fonte-rotulo);
+  letter-spacing: 0.02em;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- amostras redondas (pele e cor do cabelo) ---------- */
+.vest-amostras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 4px 4px 6px;
+}
+
+.vest-amostra {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cor);
+  box-shadow: inset 0 0 0 2px rgba(245, 245, 240, 0.35);
+  touch-action: manipulation;
+}
+
+.vest-amostra[aria-pressed='true'] {
+  box-shadow:
+    0 0 0 3px var(--placa),
+    0 0 0 6px var(--amarelo);
+}
+
+/* ---------- número da camisa ---------- */
+.vest-numero {
+  display: flex;
+  justify-content: center;
+  gap: var(--e2);
+  padding: var(--e1) 0;
+}
+
+.vest-quadro {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 80px;
+  padding-top: 4px;
+  border-radius: 10px;
+  background: var(--cal);
+  color: var(--tinta);
+  font: 400 54px/1 var(--fonte-placar);
+}
+
+.vest-quadro.vazio {
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 2px var(--linha);
+}
+
+.vest-teclado {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--e2);
+}
+
+.vest-teclado-fim {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: var(--e2);
+}
+
+.vest-tecla {
+  min-height: 48px;
+  border: 0;
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  color: var(--cal);
+  font: 700 22px/1 var(--fonte-rotulo);
+  letter-spacing: 0.04em;
+  touch-action: manipulation;
+}
+
+.vest-tecla:active:not(:disabled) {
+  background: var(--cal);
+  color: var(--tinta);
+}
+
+.vest-tecla:disabled {
+  opacity: 0.5;
+}
+
+.vest-sem,
+.vest-apagar {
+  font-size: 17px;
+  text-transform: uppercase;
+}
+
+.vest-sem[aria-pressed='true'] {
+  background: var(--cal);
+  color: var(--tinta);
+}
+
+/* ---------- rodapé ---------- */
+.vest-rodape {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--e2) var(--e4) calc(var(--e3) + env(safe-area-inset-bottom));
+  background: var(--placa);
+  box-shadow: 0 -1px 0 var(--linha);
+}
+
+/* O aviso flutua sobre o conteúdo, logo acima dos botões: vazio, não ocupa espaço. */
+.vest-aviso {
+  position: absolute;
+  left: var(--e4);
+  right: var(--e4);
+  bottom: calc(100% + var(--e2));
+  padding: var(--e2) var(--e3);
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+  box-shadow: var(--sombra-alta);
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--texto);
+}
+
+.vest-aviso:empty {
+  display: none;
+}
+
+.vest-botoes {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: var(--e2);
+}
+
+.vest-sortear,
+.vest-salvar {
+  min-height: 54px;
+  border: 0;
+  border-radius: var(--raio);
+  font: 700 19px var(--fonte-rotulo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  transition: transform var(--lento) var(--mola);
+}
+
+.vest-sortear {
+  background: var(--placa-alta);
+  color: var(--cal);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.vest-salvar {
+  background: var(--amarelo);
+  color: #1a1a1a;
+  box-shadow: 0 4px 0 var(--amarelo-escuro);
+}
+
+.vest-sortear:active:not(:disabled),
+.vest-salvar:active:not(:disabled) {
+  transform: scale(0.96);
+  transition-duration: 0s;
+}
+
+.vest-sortear:disabled,
+.vest-salvar:disabled {
+  opacity: 0.6;
+}
+
+/* ---------- folha de baixo (peça trancada e "Sair sem salvar?") ---------- */
+.vest-folha {
+  position: fixed;
+  inset: auto 0 0 0;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90dvh;
+  padding: 0;
+  border: 0;
+  border-radius: var(--raio-g) var(--raio-g) 0 0;
+  background: var(--placa);
+  color: var(--cal);
+  box-shadow: var(--sombra-alta), inset 0 4px 0 var(--c1, var(--cal));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: vest-folha-sobe var(--medio) var(--mola-firme);
+}
+
+.vest-folha::backdrop {
+  background: rgba(0, 0, 0, 0.62);
+}
+
+@keyframes vest-folha-sobe {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.vest-folha-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  padding: var(--e5) var(--e4) calc(var(--e4) + env(safe-area-inset-bottom));
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.vest-folha-peca {
+  display: flex;
+  align-items: center;
+  gap: var(--e4);
+}
+
+.vest-folha-mini {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.vest-folha-mini canvas {
+  display: block;
+  opacity: 0.5;
+}
+
+.vest-folha-texto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  min-width: 0;
+}
+
+.vest-folha-nome {
+  font: 400 26px/1.1 var(--fonte-placar);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.vest-folha-condicao {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 700 17px/1.2 var(--fonte-rotulo);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.vest-folha-condicao .ico {
+  flex: none;
+  font-size: 18px;
+}
+
+.vest-xp {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vest-xp-linha {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--e2);
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.vest-xp-linha strong {
+  color: var(--cal);
+}
+
+.vest-falta {
+  font-size: 15px;
+}
+
+.vest-junto {
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.vest-junto span {
+  font-weight: 700;
+  color: var(--cal);
+}
+
+.vest-folha-botoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pula,
+  .vest-folha {
+    animation: none;
+  }
+
+  .vest-mini,
+  .vest-sortear,
+  .vest-salvar {
+    transition: none;
+  }
+}
+
+html[data-sem-movimento='1'] .pula,
+html[data-sem-movimento='1'] .vest-folha {
+  animation: none;
+}
