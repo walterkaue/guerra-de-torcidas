@@ -6,6 +6,7 @@
 import { admin, ErroHttp, lerCorpo, servir, usuario } from '../_shared/comum.ts';
 import { lerSementes, type GestoCobranca, type Gestos } from '../_shared/jogo/penaltis.ts';
 import { jogarLance, LanceForaDeOrdem, type Lance } from '../_shared/jogo/penaltisLance.ts';
+import { tabelaPenaltisDaPartida } from '../_shared/jogo/regraLances.ts';
 
 const numero = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
@@ -29,7 +30,7 @@ servir(async (req) => {
 
   const { data: partida, error: eP } = await sb
     .from('partidas')
-    .select('id, modo, desafio_id, semente, dificuldade, expira_em, fechada_em, minigame')
+    .select('id, modo, desafio_id, semente, dificuldade, criada_em, expira_em, fechada_em, minigame')
     .eq('id', corpo.partidaId)
     .eq('torcedor_id', uid)
     .maybeSingle();
@@ -57,7 +58,8 @@ servir(async (req) => {
   try {
     // Sem sementes por lance é partida criada antes de 03/11/2026: segue com a semente única da partida.
     const sementes = lerSementes(segredo.sementes, Number(partida.semente));
-    jogada = jogarLance(sementes, segredo.gestos as Gestos, lance, Number(partida.dificuldade), gravadas);
+    // Os pontos de cada lance saem da tabela da hora em que a partida foi criada (Lances unificados, seção 14.7).
+    jogada = jogarLance(sementes, segredo.gestos as Gestos, lance, Number(partida.dificuldade), gravadas, tabelaPenaltisDaPartida(partida.criada_em));
   } catch (e) {
     if (e instanceof LanceForaDeOrdem) throw new ErroHttp(409, 'lance_fora_de_ordem');
     throw e;
