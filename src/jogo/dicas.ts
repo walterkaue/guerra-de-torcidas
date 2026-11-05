@@ -22,6 +22,8 @@ export const DICAS = {
   lan_cavadinha_sem_sair: 'Cavadinha só encobre goleiro que saiu.',
   lan_recriar: 'Acerte a área marcada e recrie o lance: +6.',
   lan_seis_valendo: 'Hoje as 6 valendo já foram. Treine à vontade.',
+  // Regra nova (seção 14.7, desde 16/11/2026): o limite soma pênaltis, faltas e cara a cara.
+  lan_dez_valendo: 'Hoje as 10 valendo já foram. Treine à vontade.',
   // Prova de Boleiro
   prova_parar_ou_seguir: 'Parar leva tudo o que juntou. Seguir arrisca.',
   prova_primeiro_erro: 'Errou, mas a prova segue. Restam 2 vidas.',

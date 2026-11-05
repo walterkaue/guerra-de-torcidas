@@ -19,7 +19,7 @@ import {
   type RespostaNovaLances,
 } from '../jogo/lancesPartida';
 import type { GestoCobranca } from '../jogo/penaltis';
-import { ErroServidor, type LancesHoje, type MedalhaDoLance, type VitrineDoTime } from '../servidor/api';
+import { ErroServidor, type LancesHoje, type MedalhaDoLance, type PedidoLances, type VitrineDoTime } from '../servidor/api';
 import { semanaBrasilia } from '../servidor/tempo';
 
 const parametros = new URLSearchParams(location.search);
@@ -49,8 +49,9 @@ const medalhasFalsas = new Map<string, { gols: number; recriados: number }>(
 
 let estado: { cenas: Lance[]; gestos: GestosLances; chamadas: number } | null = null;
 
-export async function novaPartidaLances(ids: string[]): Promise<RespostaNovaLances> {
+export async function novaPartidaLances(pedido: string[] | PedidoLances): Promise<RespostaNovaLances> {
   await espera();
+  const ids = Array.isArray(pedido) ? pedido : 'lances' in pedido ? pedido.lances : 'lance' in pedido ? [pedido.lance, pedido.lance, pedido.lance] : [];
   if (feitas >= LANCES_PARTIDAS_POR_DIA) throw new ErroServidor('limite_do_dia');
   const cenas = ids.map((id) => LANCES.find((l) => l.id === id)).filter((l): l is Lance => !!l);
   if (cenas.length !== 3) throw new ErroServidor('lances_invalidos');

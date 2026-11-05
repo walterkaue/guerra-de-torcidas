@@ -57,7 +57,7 @@ function linhaDoClube(c: MedalhasDoClube): string {
 }
 
 function linhaDoLance(l: MedalhaDoLanceMontada): string {
-  const t = clubeDoLance(l.clube);
+  const t = clubeDoLance(l.clube ?? 'selecao');
   const m = l.progresso.medalha;
   return `<li class="conq-linha conq-lance">
     <span class="cor" style="--c1:${t.cores[0]};--c2:${t.cores[1]}" aria-hidden="true"></span>

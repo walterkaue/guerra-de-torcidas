@@ -322,6 +322,8 @@ export interface PartidaDoServidor {
   dificuldade: number;
   expiraEm: string;
   desafio: DesafioRecebido | null;
+  /** Regra nova (desde 16/11/2026): partidas de Lances valendo que ainda dá para começar hoje, já contando esta. */
+  restantesHoje?: number | null;
 }
 
 /** `disputa`: id da disputa histórica escolhida; só marca a partida, não muda nada do jogo. */
@@ -366,6 +368,10 @@ export interface FechamentoDoServidor {
     golsMaquinaDesafiante: number;
     venceu: boolean;
   } | null;
+  /** Regra nova (desde 16/11/2026): as 3 melhores partidas de Lances de hoje (pênaltis, faltas e cara a cara). */
+  melhoresDoDia?: number[];
+  /** Regra nova: partidas de Lances valendo que ainda dá para começar hoje (null antes do corte). */
+  restantesHoje?: number | null;
 }
 
 export function fecharPartida(partidaId: string, gestos: Gestos): Promise<FechamentoDoServidor> {
@@ -393,9 +399,36 @@ export async function verDesafio(id: string): Promise<ResumoDesafio | null> {
 // Lances do Jogo valendo (função "lances", docs/jogo.md, seção 7.3): lance a lance, como os pênaltis.
 // ---------------------------------------------------------------------------
 
-/** Começa uma partida valendo com os 3 lances escolhidos (ids do catálogo; pode repetir). */
-export function novaPartidaLances(lances: string[]): Promise<RespostaNovaLances> {
-  return chamar('lances', { acao: 'nova', lances });
+/**
+ * O que começar (docs/jogo.md, seção 14.7):
+ * - `{ lance }`: regra nova, 3 tentativas do mesmo lance (antes do corte o servidor aceita, com a tabela antiga);
+ * - `{ desafio }`: X1 dos Lances recebido (só na regra nova; 404, 409 ou 410 se não der);
+ * - `{ lances }` (ou a lista pura): formato antigo de 3 lances escolhidos; depois do corte responde 426 `atualize_o_app`.
+ */
+export type PedidoLances = { lance: string } | { desafio: string } | { lances: string[] };
+
+/** Começa uma partida valendo. A lista pura de ids é o formato antigo, como `{ lances }`. */
+export function novaPartidaLances(pedido: PedidoLances | string[]): Promise<RespostaNovaLances> {
+  return chamar('lances', { acao: 'nova', ...(Array.isArray(pedido) ? { lances: pedido } : pedido) });
+}
+
+export interface ResumoDesafioLances {
+  id: string;
+  time_id: string;
+  apelido: string | null;
+  lance_id: string;
+  pontos: number;
+  gols: number;
+  recriados: number;
+  faixa: string;
+}
+
+/** Resumo do X1 dos Lances para quem abre o link (?l=): quem chamou, o lance e os pontos a bater. */
+export async function verDesafioLances(id: string): Promise<ResumoDesafioLances | null> {
+  const sb = await supabase();
+  const { data, error } = await comTempoLimite(sb.rpc('ver_desafio_lances', { p_id: id }));
+  if (error) throw new ErroServidor('falha');
+  return ((data as ResumoDesafioLances[] | null) ?? [])[0] ?? null;
 }
 
 /** Um lance: o celular manda só o gesto; o servidor resolve com a semente que só ele conhece. */
@@ -412,9 +445,14 @@ export interface LancesHoje {
   feitas: number;
   limite: number;
   melhor: number | null;
+  /** Regra nova: as 3 que contam hoje, em pontos (pênaltis, faltas e cara a cara). Antes do corte, só faltas e cara a cara. */
+  melhores?: number[];
 }
 
-/** Partidas valendo começadas hoje (Brasília), o limite do dia e a melhor do dia. Null sem resposta. */
+/**
+ * Partidas valendo começadas hoje (Brasília), o limite do dia e a melhor do dia. Null sem resposta.
+ * Desde 16/11/2026 conta pênaltis, faltas e cara a cara juntos (limite 10).
+ */
 export async function meusLancesHoje(): Promise<LancesHoje | null> {
   await garantirSessao();
   const sb = await supabase();
@@ -424,9 +462,12 @@ export async function meusLancesHoje(): Promise<LancesHoje | null> {
 }
 
 export interface MedalhaDoLance {
+  /** Id do lance, ou `penaltis:<disputa>` / `penaltis:livre` nas disputas de pênaltis (desde a migração do PR #108). */
   lance_id: string;
   gols: number;
   recriados: number;
+  /** Vitórias nas disputas de pênaltis (0 nos lances). */
+  vitorias?: number;
   medalha: Medalha | null;
 }
 
