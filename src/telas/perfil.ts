@@ -3,6 +3,7 @@
 // Baixa sob demanda: não pesa no JS inicial da Home.
 
 import '../estilos/perfil.css';
+import '../estilos/cidade.css';
 import { esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, corDeTexto, timePorId } from '../dados/times';
 import { faixaDoAparelho, prefs } from '../estado';
@@ -22,6 +23,8 @@ import { icone } from './icones';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { NOME_DO_NIVEL, escolha, escolherQualidade, qualidade } from './qualidade';
 import { vibrar } from './toque';
+import { minhaCidade } from '../servidor/cidade';
+import { rotuloDaCidade } from '../jogo/cidade';
 
 const SERVIDOR = { minhaPosicaoSemana, minhaPosicaoMinigame, minhaPosicaoCrava, jogosDoCrava, meusRecordes };
 // Em desenvolvimento, ?homeFalsa troca o servidor por um de mentira (src/dev/homeFalsa.ts).
@@ -71,6 +74,11 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
               : ''
           }
         </div>
+      </section>
+
+      <section class="placa perfil-bloco" aria-label="Sua cidade">
+        ${faixa('Cidade')}
+        <p class="cidade-perfil" data-cidade aria-live="polite">Buscando…</p>
       </section>
 
       ${
@@ -176,6 +184,8 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
     });
   }
 
+  void carregarCidade(root.querySelector<HTMLElement>('[data-cidade]')!);
+
   // Sem time ainda, não cria login só para isso.
   if (time) {
     carregarCarreiraPerfil(
@@ -185,6 +195,24 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
     );
     void carregarSemana(root.querySelector<HTMLElement>('[data-semana]')!);
     void carregarRecordes(root.querySelector<HTMLElement>('[data-recordes]')!);
+  }
+
+  /** "Sua cidade: Caraguatatuba · SP  trocar", ou o convite para escolher. */
+  async function carregarCidade(el: HTMLElement): Promise<void> {
+    const irParaEscolha = () => irPara({ tela: 'cidade', depois: aqui });
+    try {
+      const c = await minhaCidade();
+      if (saiu) return;
+      el.innerHTML = c
+        ? `Sua cidade: <strong>${esc(rotuloDaCidade(c.nome, c.uf))}</strong> <button class="link-mini" type="button" data-acao="cidade">trocar</button>`
+        : '<button class="ajuste" type="button" data-acao="cidade">Escolher sua cidade</button>';
+    } catch {
+      if (saiu) return;
+      el.innerHTML = 'Não consegui ver sua cidade agora. <button class="link-mini" type="button" data-acao="cidade-de-novo">tentar de novo</button>';
+      el.querySelector('[data-acao="cidade-de-novo"]')!.addEventListener('click', () => void carregarCidade(el));
+      return;
+    }
+    el.querySelector('[data-acao="cidade"]')!.addEventListener('click', irParaEscolha);
   }
 
   /** Erro com "Tentar de novo", que refaz a mesma busca. */

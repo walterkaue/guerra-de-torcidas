@@ -8,6 +8,7 @@ import { corDeTexto, type Time } from '../dados/times';
 import { mostrarCard } from '../jogo/card';
 import { selosDaPosicao, type Desempenho, type Minigame } from '../jogo/posicao';
 import { seloPre, selo } from './blocos';
+import { convidarParaCidade } from './conviteCidade';
 import { icone } from './icones';
 
 const semMovimento = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -94,6 +95,7 @@ export function htmlResultado(p: PartesDoResultado): string {
       </section>
 
       <div data-convite-push></div>
+      <div data-convite-cidade></div>
       <div class="res-apoio" data-apoio></div>
 
       <div class="res-acoes">
@@ -138,6 +140,9 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
     setTimeout(() => (botao.innerHTML = antes), 1800);
   };
   const botao = (acao: string) => root.querySelector<HTMLButtonElement>(`[data-acao="${acao}"]`)!;
+
+  // Resultado da 1ª partida de qualquer jogo: convite para a cidade (uma vez por aparelho).
+  void convidarParaCidade(root.querySelector<HTMLElement>('[data-convite-cidade]'));
 
   const caixa = root.querySelector<HTMLElement>('[data-card]')!;
   const img = caixa.querySelector<HTMLImageElement>('img')!;

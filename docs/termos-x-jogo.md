@@ -14,7 +14,7 @@
 |---|---|---|---|
 | 1 | Apagar contas paradas | **Passou a cumprir** (02/11/2026, PR do parecer) | Feito: rotina mensal de 6 meses e prazo no texto |
 | 2 | Aviso de mudança na tela inicial | **Passou a cumprir** (02/11/2026) | Feito: faixa na Home |
-| 3 | Ranking de cidades | **Resolvido no texto** (02/11/2026) | A linha saiu da Política até a cidade existir |
+| 3 | Ranking de cidades | **Volta a valer com a cidade** (04/11/2026) | A linha "Sua cidade" voltou à Política junto com a tela de escolha (`#cidade`). Só cumpre de verdade depois que a migração da cidade (parte A) estiver aplicada e o ranking de cidades no ar |
 | 4 | Checagem da Cloudflare | **Cumpre** (CAPTCHA ligado e conferido em 02/11/2026) | O texto fica |
 | 5 | "Só você lê os seus" | **Resolvido no texto** (02/11/2026) | O texto diz o que o administrador lê |
 | 6 | Depois de "Apagar meus dados" | **Resolvido no texto** (02/11/2026) | O texto diz que ficam só totais anônimos |
@@ -70,7 +70,7 @@
 | Partidas, respostas e palpites | **Cumpre** | `partidas`, `prova_respostas`, `palpites`. |
 | Faixa de idade | **Cumpre** | Coluna `faixa_etaria` (`20261031100000_faixa_etaria.sql`); só a pessoa lê a sua (`base.sql:41`). Nas métricas, só a contagem por faixa. |
 | Apelido: "aparecer só para quem você manda um desafio" | **Cumpre** | O desafio devolve o apelido a quem abre o link (`base.sql:213`, `prova.sql:58`). Atenção: o apelido também fica salvo no desafio e na tela de quem recebe (`src/telas/inicio.ts:362`). |
-| Sua cidade: "somar no ranking de cidades, nunca com seu apelido" | **Não cumpre** | **Não existe campo de cidade.** Nenhuma coluna `cidade` em `torcedores`, nenhuma tela de escolha, nenhum ranking de cidades (só aparece no `docs/jogo.md` seções 3 e 5, como plano). A única `cidade` do banco é a do clube do Time do Dia (`20261020200000_time_do_dia.sql:14`). Saídas: tirar a linha do texto até a cidade existir; ou construir a cidade. Se construir, o texto acompanha: mínimo de 5 jogadores por cidade já está decidido. |
+| Sua cidade: "somar no ranking de cidades e estados, nunca com seu apelido" | **Cumpre ao aplicar a migração da cidade** (04/11/2026) | A linha voltou ao texto. Tela de escolha em `src/telas/cidade.ts` (`#cidade`), chamadas `escolher_cidade` e `minha_cidade` em `src/servidor/cidade.ts`, lista do IBGE em `public/dados/municipios.json`. "Ver meus dados" mostra a cidade. A cidade não aparece junto do apelido em tela nenhuma. Enquanto o servidor da parte A não estiver publicado, a escolha falha com aviso e a linha não é verdade. `DATA_DA_VERSAO` mudou para 04/11/2026 (aviso "Os Termos mudaram"). |
 | Endereço do navegador, 1 aviso por semana, só 18+ | **Cumpre** | `salvar_inscricao_push` recusa quem não é 18+ (`20261031100000_faixa_etaria.sql`); o envio desinscreve outras faixas (`supabase/functions/enviar-push/index.ts:47-58`); um aviso por domingo às 18h (`20261026000300_push.sql`, cron `0 21 * * 0`). "Se você pedir": o convite é opcional (`src/telas/convitePush.ts`). |
 | Mensagem do "Achei um erro" | **Cumpre em parte** | A mensagem é guardada (`20261019220000_feedback.sql`). Mas junto vão a **tela** em que a pessoa estava e o **navegador/aparelho** (até 300 caracteres do `userAgent`, `src/servidor/api.ts:476`). O texto só cita a mensagem. Saídas: dizer "mais a tela e o tipo de aparelho"; ou parar de enviar o navegador. |
 

@@ -43,8 +43,15 @@ export function dataCurta(iso: string): string {
 
 export const NADA_GUARDADO = 'O servidor não guarda nada deste aparelho.';
 
-/** Linhas da ficha. Vazio quando não há nada no servidor (sem sessão ou sem time escolhido). */
-export function linhasDosMeusDados(d: MeusDados | null, nomeDoTime: (id: string) => string): LinhaDosDados[] {
+/**
+ * Linhas da ficha. Vazio quando não há nada no servidor (sem sessão ou sem time escolhido).
+ * `cidade`: a do torcedor (null = sem cidade); `undefined` = não deu pra consultar, e a linha não aparece.
+ */
+export function linhasDosMeusDados(
+  d: MeusDados | null,
+  nomeDoTime: (id: string) => string,
+  cidade?: { nome: string; uf: string } | null,
+): LinhaDosDados[] {
   const t = d?.torcedor;
   if (!d || !t) return [];
   const total = Object.values(d.partidas).reduce((s, n) => s + n, 0);
@@ -54,6 +61,7 @@ export function linhasDosMeusDados(d: MeusDados | null, nomeDoTime: (id: string)
   return [
     { rotulo: 'Time', valor: nomeDoTime(t.time_id) },
     { rotulo: 'Apelido', valor: t.apelido ?? 'nenhum' },
+    ...(cidade === undefined ? [] : [{ rotulo: 'Cidade', valor: cidade ? `${cidade.nome} · ${cidade.uf}` : 'nenhuma' }]),
     { rotulo: 'Faixa de idade', valor: FAIXA[t.faixa_etaria ?? ''] ?? 'não respondeu' },
     { rotulo: 'No jogo desde', valor: dataCurta(t.criado_em) },
     { rotulo: 'Partidas', valor: total ? `${plural(total, 'partida', 'partidas')} (${porJogo.join(', ')})` : 'nenhuma' },

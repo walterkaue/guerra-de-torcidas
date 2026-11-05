@@ -35,6 +35,7 @@
 | --- | --- | --- |
 | Um código aleatório do seu aparelho | Saber quais pontos são seus | Não, é automático |
 | Seu time | Mandar seus pontos para a torcida certa | Sim |
+| Sua cidade | Somar no ranking de cidades e estados, nunca com seu apelido | Não |
 | Suas partidas, respostas e palpites | Contar os pontos e conferir se não houve trapaça | Sim, ao jogar |
 | Sua faixa de idade (menos de 16, 16 ou 17, 18 ou mais) | Desligar, para menores de 18, os avisos, o apoio ao jogo e o link de sócio | Sim, uma vez |
 | Apelido | Aparecer só para quem você manda um desafio | Não |

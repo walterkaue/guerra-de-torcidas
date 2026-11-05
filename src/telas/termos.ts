@@ -9,12 +9,13 @@ import { limparAparelho, prefs } from '../estado';
 import { linhasDosMeusDados, NADA_GUARDADO, resumoDaMensagem, type MeusDados } from '../jogo/meusDados';
 import { DATA_DA_VERSAO, termosEmHtml } from '../jogo/termos';
 import { apagarMeusDados, ErroServidor, verMeusDados } from '../servidor/api';
+import { minhaCidade } from '../servidor/cidade';
 import { cancelarInscricaoDoAparelho } from './convitePush';
 import { cabecalhoTela, estado, faixa } from './blocos';
 
 /** Ficha do "Ver meus dados": só leitura, do que o servidor devolveu. */
-function htmlDosMeusDados(d: MeusDados | null): string {
-  const linhas = linhasDosMeusDados(d, (id) => timePorId(id)?.nome ?? id);
+function htmlDosMeusDados(d: MeusDados | null, cidade?: { nome: string; uf: string } | null): string {
+  const linhas = linhasDosMeusDados(d, (id) => timePorId(id)?.nome ?? id, cidade);
   if (!linhas.length) return `<p>${NADA_GUARDADO}</p>`;
   const mensagens = (d?.mensagens ?? []).map(resumoDaMensagem);
   return `<p>O que o servidor guarda deste aparelho:</p>
@@ -86,7 +87,8 @@ export function telaTermos(root: HTMLElement, rota: Rota): void {
     ver.disabled = true;
     dados.innerHTML = estado('carregando', 'Buscando no servidor…');
     try {
-      dados.innerHTML = htmlDosMeusDados(await verMeusDados());
+      const [ficha, cidade] = await Promise.all([verMeusDados(), minhaCidade().catch(() => undefined)]);
+      dados.innerHTML = htmlDosMeusDados(ficha, cidade);
     } catch {
       dados.innerHTML = estado('erro', 'Não deu pra buscar agora.', { detalhe: 'Confere a internet e toca em Ver meus dados de novo.', acao: '' });
     }

@@ -34,6 +34,13 @@ describe('ver meus dados', () => {
     ]);
   });
 
+  it('mostra a cidade quando o servidor respondeu, e some quando não deu pra consultar', () => {
+    const com = linhasDosMeusDados(dados, nome, { nome: 'Caraguatatuba', uf: 'SP' });
+    expect(com.find((l) => l.rotulo === 'Cidade')?.valor).toBe('Caraguatatuba · SP');
+    expect(linhasDosMeusDados(dados, nome, null).find((l) => l.rotulo === 'Cidade')?.valor).toBe('nenhuma');
+    expect(linhasDosMeusDados(dados, nome).some((l) => l.rotulo === 'Cidade')).toBe(false);
+  });
+
   it('em linguagem simples', () => {
     expect(valor('Time')).toBe('Bahia');
     expect(valor('Faixa de idade')).toBe('16 ou 17');
