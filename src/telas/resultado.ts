@@ -295,8 +295,9 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     textoShare,
     link,
     emoji,
-    // Revanche: no desafio ou na disputa histórica, joga a mesma de novo; senão, partida nova contra a máquina.
-    maisUma: () => irPara({ tela: 'partida', desafio: d.desafio?.id, disputa: d.disputa }),
+    // Revanche: na disputa histórica, joga a mesma de novo; senão (inclusive depois de um X1, que vale uma vez por
+    // pessoa: jogo.md, seção 6), partida nova contra a máquina.
+    maisUma: () => irPara({ tela: 'partida', disputa: d.disputa }),
     inicio: () => irPara({ tela: 'inicio' }),
   });
 

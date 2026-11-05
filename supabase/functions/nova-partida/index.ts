@@ -6,6 +6,9 @@
 // cara (10, contados ao começar, inclusive o X1 recebido). Passou do limite: 429 'limite_do_dia', e o celular joga
 // a partida como treino. A partida começa numa transação só no banco (penaltis_comecar), com a mesma trava por
 // torcedor da função lances.
+// X1 uma vez por pessoa (05/11/2026): quem já começou uma partida com o código recebe 409 'desafio_ja_jogado' (na
+// segunda vez, as zonas das cobranças gravadas já seriam conhecidas), e o celular abre uma partida normal. A
+// conferência é da penaltis_comecar, dentro da trava, para dois pedidos ao mesmo tempo não abrirem duas partidas.
 // Corpo: { desafio?: string, disputa?: string }  (código do desafio por link; id da disputa histórica)
 
 import { admin, configDeteccao, ErroHttp, lerCorpo, servir, sortear, usuario } from '../_shared/comum.ts';
@@ -68,6 +71,7 @@ servir(async (req) => {
     p_criada_em: agora.toISOString(),
   });
   if (error) {
+    if (error.message?.includes('desafio_ja_jogado')) throw new ErroHttp(409, 'desafio_ja_jogado');
     if (error.message?.includes('limite_do_dia')) throw new ErroHttp(429, 'limite_do_dia');
     if (error.message?.includes('muitas_partidas')) throw new ErroHttp(429, 'muitas_partidas');
     throw error;
