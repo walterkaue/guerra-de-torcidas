@@ -1,16 +1,16 @@
 # Próximos passos
 
-> Retrato do projeto em 04/11/2026, para retomar em qualquer conversa. Regras e decisões continuam no `docs/jogo.md`; aqui só fica o que vem a seguir.
+> Retrato do projeto em 05/11/2026, para retomar em qualquer conversa. Regras e decisões continuam no `docs/jogo.md`; aqui só fica o que vem a seguir.
 > Ao fechar um item, atualize este arquivo no mesmo PR. Para começar, siga a divisão de trabalho do `CLAUDE.md`.
 
 ## Onde estamos
 
 | Área | Estado em 02/11/2026 |
 |---|---|
-| Código | `main` com 96 arquivos de teste e 1.874 testes passando (Cidade, PRs #107, #104 e #105, em 04/11) |
-| Publicação | Site no ar (`main` de 04/11, 22h31, com a Cidade; deploy conferido: o site serve `index-Dj46QTmt.js`, o mesmo build testado com os PRs juntos). 37 migrações aplicadas (as duas da Cidade, `20261105000000` e `20261105000100`, pelo Kauê em 04/11 por volta das 22h30, antes dos merges). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
+| Código | `main` com 100 arquivos de teste, todos passando (1.929 testes com os PRs #108 e #110, em 05/11) |
+| Publicação | Site no ar (`main` de 05/11, 8h07, com os PRs #108 e #110; deploy do GitHub Pages com sucesso). 39 migrações aplicadas (as duas dos Lances unificados, `20261105100000` e `20261105200000`, pelo Kauê em 05/11 de manhã; `migration list` com local = remoto). 13 funções publicadas (`lances` v3, `nova-partida` v21, `lance-penalti` v7 e `fechar-partida` v22 em 05/11, às 8h16) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
-| Tamanho | Em 04/11/2026, com o PR #96: bundle inicial de 59 KB gzip (limite: ~300 KB). Somando todo o JS e o CSS, 251 KB gzip. A conta de 02/11 deu 216 KB, mas pode não ter usado o mesmo método |
+| Tamanho | Em 05/11/2026, com as telas dos Lances unificados: `index-*.js` de 50,3 kB gzip (era 48,5; a Home passou a ler a regra de corte e o catálogo dos lances vem por `import()`). Em 04/11/2026, com o PR #96: bundle inicial de 59 KB gzip (limite: ~300 KB). Somando todo o JS e o CSS, 251 KB gzip. A conta de 02/11 deu 216 KB, mas pode não ter usado o mesmo método |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
 | Uso | Retrato de 04/11, 21h: 18 pessoas já jogaram; 48 partidas de pênaltis, 10 de faltas e cara a cara, 32 de Prova. Pênaltis trazem 74% dos pontos do ranking (eram 82% num retrato anterior). Amostra pequena |
 
@@ -23,9 +23,20 @@
 - **Conferir no celular (o Kauê, no site no ar):** fazer o aquecimento de ponta a ponta num aparelho limpo (limpar os dados do site), ver o palpite da estação 5 em Palpites e os +20 XP na Carreira; vibração e papel picado; a mão animada em movimento; um link de desafio num aparelho limpo, que deve ir direto ao desafio e deixar o card na Home.
 - **Não testado à mão:** as dicas de morte súbita, cavadinha pega no meio, altura errada e 3 cobranças sem efeito (cobertas por teste das condições, não pela tela); a zona do gol de verdade nos Lances só foi vista pelo DOM.
 
-**Lances do Jogo unificados (`docs/jogo.md` seção 14.7):** números decididos pelo Kauê em 04/11/2026; entra na segunda 16/11, 0h, pela data de criação da partida. O servidor está construído no branch `claude/lances-unificados-servidor` (PR aberto): migração `20261105100000_lances_unificados.sql` e as funções `lances`, `nova-partida`, `lance-penalti` e `fechar-partida`. **Não aplicado nem publicado.** A revisão de segurança foi feita no próprio PR #108 (faixa corrigida só desce, X1 expira se o lance desceu de faixa, limite pelo dia da partida, junção antes do corte, guarda de 150 no banco). Ordem de publicação e conferência só de leitura estão no PR: migração → as 4 funções → site com as telas, tudo antes de 16/11.
-- **Catálogo recalibrado no mesmo PR** (fator 0,418; todo fácil vira difícil e todo médio vira craque, lista em `docs/propostas/lances-faixas-unificadas.md`).
-- **Falta nesta frente:** as telas (outra sessão, com a lista do que ler e chamar no PR do servidor).
+**Lances do Jogo unificados (`docs/jogo.md` seção 14.7):** números decididos pelo Kauê em 04/11/2026; entra na segunda 16/11, 0h, pela data de criação da partida. **Servidor no ar desde 05/11/2026, 8h16.** Até 16/11 o jogo funciona exatamente como antes.
+- **Merges:** PR #108 (servidor, revisado na segurança) e PR #110 (X1 dos pênaltis vale uma vez por pessoa), às 8h07 de 05/11. O site saiu com o deploy do #110; o do #108 foi cancelado pelo seguinte, o que é normal.
+- **Banco:** as migrações `20261105100000_lances_unificados.sql` e `20261105200000_x1_penaltis_uma_vez.sql`, aplicadas pelo Kauê; `migration list` com local = remoto. A conferência só de leitura (blocos 1 a 6 da descrição do PR #108, com o 1b do #110) não mostrou divergência.
+- **Funções:** `lances` v3, `nova-partida` v21, `lance-penalti` v7 e `fechar-partida` v22, publicadas da `main` com o #110 às 8h16.
+- **Decidido na revisão:** a taxa real só desce a faixa de um lance, nunca acima da do catálogo (confirmado pelo Kauê em 05/11); o X1 dos Lances expira se o lance desceu de faixa; cada X1 dos pênaltis vale uma vez por pessoa.
+- **Catálogo recalibrado** (fator 0,418; todo fácil vira difícil e todo médio vira craque, lista em `docs/propostas/lances-faixas-unificadas.md`).
+- **Falta nesta frente, nesta ordem:**
+  1. Teste no celular e bloco 7 (ver "Conferir primeiro", item 10).
+  2. ~~**As telas novas, com prazo duro no domingo 15/11:**~~ construídas em 05/11/2026 no PR #112 (revisado pelo subagente `revisor`) e mescladas no mesmo dia, com a aprovação do Kauê; o merge publicou o site. Detalhe em `docs/jogo.md` 14.7, "Como está nas telas". Até 15/11 o site mostra as telas de antes; a partir de 16/11, as novas (sem elas, faltas e cara a cara respondiam 426 `atualize_o_app`).
+     - **Até domingo, nada muda na tela:** a tela decide pelo relógio do aparelho. Para ver a de segunda antes, em dev: `?lancesFalsos&corte=depois`, `?homeFalsa&corte=depois&l=código` e `?penaltiFalso&corte=depois&limite`.
+     - **Conferido em 390×844 e 360 px antes e depois do corte (pelo DOM, com os servidores de mentira):** tela única, Lance do Dia, X1 por link (ok e expirado), limite que vira treino (Lances e pênaltis), resultado, Conquistas e o "?". **Não testado de verdade:** a partida até o fim no aparelho (o painel do navegador estava escondido) e o servidor de produção com a regra nova (só existe a partir de 16/11).
+     - **Segunda 16/11, de manhã, no celular (o Kauê):** abrir o site (recarregar se estava aberto), jogar uma falta (3 tentativas do mesmo lance) e uma disputa de pênaltis, mandar o link do X1 para outra conta (aba anônima) e aceitar, e ver "Seus 3 melhores de hoje" e o Lance do Dia na Home.
+  3. Segunda 16/11, antes das 12h: bloco 8 (ver "Conferir primeiro", item 10).
+- **Para voltar atrás:** antes de 16/11, as funções antigas funcionam com as migrações no ar (só o X1 de pênaltis repetido dá erro e joga sem valer pontos). Depois de 16/11, não volte as funções: já haverá partidas com a faixa gravada.
 
 **Troféus dos lances e `#admin` no Grafismo de TV (`docs/jogo.md` seção 14.3):** construído e no ar desde 04/11/2026, às 20h18 (PR #101). Prints em `docs/auditoria/2026-11-04/trofeus/`, aprovados pelo Kauê antes de aplicar.
 - **O que entra:**
@@ -152,6 +163,13 @@ from staging_gt.uso_gemini group by 1, 2 order by 1, 2;
 select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2026-11-03' group by 1;
 ```
 
+**10. Lances unificados no ar (publicados em 05/11/2026, 8h16):** os blocos da conferência estão na descrição do PR #108. Só leitura.
+- **Agora, no celular:**
+  - jogue uma partida de pênaltis e uma de faltas: tudo igual a antes;
+  - aceite um X1 de pênaltis numa aba anônima (outra conta) e jogue; abra o mesmo link de novo: deve aparecer "Esse X1 você já jogou. Vai uma partida nova!", valendo; perca um X1 e toque em Revanche: deve abrir uma partida nova contra a máquina;
+  - depois, rode o bloco 7 e veja os logs de `lances` e `nova-partida` em Edge Functions, sem erro 500 (o 409 `desafio_ja_jogado` é esperado).
+- **Segunda 16/11, antes das 12h** (quando a semana de 09/11 trava): rode o bloco 8. Cada consulta tem o esperado escrito nela; se o 8c mostrar linha, ainda dá para corrigir antes da trava.
+
 ## Só o Kauê faz
 
 **Robôs do Gemini: publicados em 02/11/2026** (funções `gerar-conteudo` e `auditar-conteudo`, tabela `uso_gemini` e os 5+5 crons; o PR dos robôs, #75, já entrou). A migração `20261102000000` foi aplicada à mão e registrada com `migration repair`, para não arrastar a da temporada. A `termos_x_jogo` do PR #74 tinha o mesmo número `20261102000000` e foi renumerada para `20261102000100` (PR #76). As duas e a da temporada estão no banco desde 02/11.
@@ -164,7 +182,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
    - Em Logs → Auth, o `/signup` anônimo das 9h17min53s respondeu 200, e não houve nenhum 4xx ou 5xx em 24 horas. Ou seja, o token passou pela checagem.
 
 **Decisões:**
-- ~~**Lances do Jogo unificados (14.7):**~~ decidido em 04/11/2026 (`docs/jogo.md` 14.7, "Números decididos"): pênaltis "mais baixa", faltas B, limite 10, entra em 16/11. Falta o Kauê publicar o servidor depois da revisão de segurança (migração e 4 funções, nessa ordem).
+- ~~**Lances do Jogo unificados (14.7):**~~ decidido em 04/11/2026 (`docs/jogo.md` 14.7, "Números decididos"): pênaltis "mais baixa", faltas B, limite 10, entra em 16/11. Servidor publicado em 05/11/2026 (PRs #108 e #110). Também decidido em 05/11: a faixa corrigida só desce e cada X1 dos pênaltis vale uma vez por pessoa.
 - ~~**Fáceis de clube:**~~ decidido e aplicado em 02/11/2026: 27 rebaixadas para média, 18 médias subiram a fácil (CSV e banco, só `degrau`, partidas fechadas intactas). **Faltam 9 fáceis novas** para o pipeline do Gemini: athletico-pr 2, chapecoense 2, bahia 1, bragantino 1, coritiba 1, remo 1, vasco 1 (com fonte e revisão no `#admin`). Até lá esses clubes têm 1 ou 2 fáceis e sobra de média; quando cada fácil nova for aprovada no `#admin`, aposentar a média que sobra desse clube (a de menor acerto ou a mais parecida com outra), para manter 3 fáceis, 3 médias, 2 difíceis e 2 de craque (decidido em 02/11/2026). O id guarda o degrau de nascimento (o validador só exige o clube no começo).
 - **Data do zerar da pré-temporada:** até 06/12 para estrear em dezembro. A Crava termina em 2/12, e o balanço roda antes de zerar.
 - ~~**Torcida sem ninguém nas 52 semanas:**~~ decidido em 02/11/2026: vale 0 ponto também lá. Implementar na tela das 52 semanas.
@@ -180,7 +198,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 
 0. **Lances, segunda etapa:**
    - card só da medalha ("Já sou ouro no…");
-   - corrigir a faixa de cada lance pela taxa de acerto real, depois de 50 tentativas valendo (seção 7.3);
+   - ~~corrigir a faixa de cada lance pela taxa de acerto real~~: feito no PR #108 e no ar em 05/11/2026; vale para partidas a partir de 16/11, com 30 tentativas de pelo menos 8 pessoas, e a faixa só desce;
    - o `resultado.ts` dos pênaltis passar a usar `src/telas/efeitoRanking.ts`, que hoje repete a lógica dele (desde 03/11 os dois mostram o efeito como selo + nota, então a troca ficou mais simples).
 1. **Cidade, Galeria e 52 semanas:** nessa ordem, depois das telas das divisões.
    - ~~**Cidade:**~~ no ar desde 04/11/2026, às 22h31 (PRs #107, #104 e #105; detalhe na seção 5 do `docs/jogo.md`). Conferido no banco: 5.571 municípios, o gatilho `guardar_pontos_da_cidade` em `auth.users`, RLS nas 5 tabelas novas, as 6 funções das telas e a `ranking-minuto` sem falha depois da troca de `atualizar_rankings`. A Política mudou (`DATA_DA_VERSAO` 04/11/2026), então todo mundo vê "Os Termos mudaram"; levar a frase da cidade ao advogado.

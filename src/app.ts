@@ -46,6 +46,7 @@ export type Rota =
   | { tela: 'termos'; de?: Rota; apagar?: boolean }
   | { tela: 'feedback'; de?: string }
   /** `apelido` já leva ao campo do apelido (Perfil, "Escolher apelido"). */
+  /** `desafio`: o código do X1 que segue junto (pênaltis com `partida`, Prova com `prova`, Lances com `lances`). */
   | { tela: 'times'; depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia' | 'lances' | 'perfil'; desafio?: string; apelido?: boolean }
   /** `disputa`: disputa histórica escolhida na aba Pênaltis (só cenário; sem ela, a disputa livre). */
   | { tela: 'partida'; desafio?: string; disputa?: Disputa }
@@ -57,7 +58,11 @@ export type Rota =
   | { tela: 'aquecimento'; depois?: Rota }
   /** Escolher a cidade (docs/jogo.md, seção 3); ao escolher ou voltar, segue para `depois` (sem ela, o Perfil). */
   | { tela: 'cidade'; depois?: Rota }
-  | { tela: 'lances'; aba?: 'penaltis' | 'falta' | 'finalizacao' }
+  /**
+   * Lances do Jogo. `aba`: o tipo que abre (na tela única, o filtro de tipo). Regra nova (seção 14.7): `desafio` é o
+   * código do X1 dos Lances (link ?l=), que começa a partida direto; `lance` abre a ficha desse lance (Lance do Dia).
+   */
+  | { tela: 'lances'; aba?: 'penaltis' | 'falta' | 'finalizacao'; desafio?: string; lance?: string }
   /** Casa do [time]: sem id, o índice dos clubes. */
   | { tela: 'casa'; id?: string };
 
@@ -110,6 +115,12 @@ export function desafioDoLink(): string | undefined {
 export function desafioProvaDoLink(): string | undefined {
   const p = new URLSearchParams(location.search).get('p');
   return p && /^[a-z0-9]{8}$/i.test(p) ? p.toLowerCase() : undefined;
+}
+
+/** Código do X1 dos Lances que veio no link (?l=), até ser aceito (regra nova, seção 14.7). */
+export function desafioLancesDoLink(): string | undefined {
+  const l = new URLSearchParams(location.search).get('l');
+  return l && /^[a-z0-9]{8}$/i.test(l) ? l.toLowerCase() : undefined;
 }
 
 /** O link do Time do Dia (?dia) abre direto no jogo. */

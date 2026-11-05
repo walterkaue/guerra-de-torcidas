@@ -18,6 +18,7 @@ import { semanaBrasilia } from '../servidor/tempo';
 import { montarAparelhos } from './aparelhosLigados';
 import { aoTocarNoEstado, cabecalhoTela, estado, faixa, numero, placa, posicaoHtml, selo } from './blocos';
 import { carregarCarreiraPerfil } from './carreira';
+import { lancesUnificados } from './corte';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { icone } from './icones';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
@@ -47,6 +48,9 @@ const NOME_DO_RECORDE: Record<MinigameDoRecorde, string> = {
 
 export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
   const { apelido, nivelNoCard, semVibracao } = prefs.get();
+  // Lances unificados (jogo.md 14.7): a partir do corte, posição e recorde dos pênaltis são os dos Lances (o
+  // servidor junta os dois), então o Perfil mostra só "Lances".
+  const unificada = lancesUnificados();
   const time = timePorId(prefs.get().time);
   const dono = time ?? timePorId(ID_OUTRO)!;
   let saiu = false;
@@ -249,7 +253,7 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
           ${geral?.posicao ? numero(geral.pontos.toLocaleString('pt-BR'), geral.pontos === 1 ? 'ponto' : 'pontos') : numero('0', 'pontos', 'apagado')}
         </div>
         <div class="numeros tres">
-          ${posicao(penaltis, 'Pênaltis')}
+          ${unificada ? '' : posicao(penaltis, 'Pênaltis')}
           ${posicao(prova, 'Prova')}
           ${posicao(dia, 'Time do Dia hoje')}
           ${posicao(lances, 'Lances')}
@@ -265,6 +269,7 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
       const recordes = await (await servidor()).meusRecordes();
       if (saiu) return;
       el.innerHTML = `<div class="numeros tres">${(Object.keys(NOME_DO_RECORDE) as MinigameDoRecorde[])
+        .filter((m) => !(unificada && m === 'penaltis'))
         .map((m) => {
           const r = recordes[m];
           return r === null || r === undefined

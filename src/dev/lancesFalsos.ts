@@ -1,13 +1,21 @@
 // Só em desenvolvimento (npm run dev, com ?lancesFalsos na URL): imita a função "lances" e as RPCs de medalhas
-// no próprio navegador, com o motor local, para conferir as telas sem banco nem login.
-//   ?lancesFalsos=limite   a 1ª partida já responde "limite_do_dia" (já jogou as 6 de hoje)
+// no próprio navegador, com o motor local, para conferir as telas sem banco nem login. Decide a regra por
+// lancesUnificados() (src/telas/corte.ts): antes do corte, a lista de 3 lances, tabela antiga e limite 6; depois,
+// `{ lance }` (3 tentativas do mesmo lance, tabela nova, limite 10, 3 melhores do dia) e o X1.
+//   ?lancesFalsos=limite   a 1ª partida já responde "limite_do_dia" (já jogou as de hoje)
+//   &corte=depois          finge o relógio depois de 16/11/2026 (&corte=antes, o de hoje)
+//   &x1=ok|proprio|expirado|nao   como o X1 por link (?l=CODIGO) responde (padrão ok): aceita, 409, 410 ou 404
 //   ?caiNoLance=2          o 2º lance de cada partida falha (confere o aviso de conexão caída)
 //   ?latencia=800          demora da resposta (padrão 180 ms)
+// A lista antiga de 3 ids depois do corte responde 426 `atualize_o_app`, como o servidor.
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { LANCES } from '../dados/lances';
+import { DISPUTAS } from '../dados/disputas';
 import { sementeNova } from '../jogo/aleatorio';
-import { medalhaDoLance, type Lance } from '../jogo/lances';
+import { TABELA_LANCES_ANTES, TABELA_LANCES_UNIFICADA, medalhaDoLance, type Faixa, type Lance } from '../jogo/lances';
+import { ITEM_LIVRE, faixaNaTela } from '../jogo/lancesTextos';
+import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MELHORES_DO_DIA, itemPenaltis, medalhaDaDisputa } from '../jogo/regraLances';
 import {
   LANCES_PARTIDAS_POR_DIA,
   goleiroParaOCelular,
@@ -19,24 +27,40 @@ import {
   type RespostaNovaLances,
 } from '../jogo/lancesPartida';
 import type { GestoCobranca } from '../jogo/penaltis';
-import { ErroServidor, type LancesHoje, type MedalhaDoLance, type VitrineDoTime } from '../servidor/api';
+import {
+  ErroServidor,
+  type LancesHoje,
+  type MedalhaDoLance,
+  type PedidoLances,
+  type ResumoDesafioLances,
+  type VitrineDoTime,
+} from '../servidor/api';
 import { semanaBrasilia } from '../servidor/tempo';
+import { lancesUnificados } from '../telas/corte';
+import { DISPUTAS_FALSAS } from './disputasFalsas';
 
 const parametros = new URLSearchParams(location.search);
 const latencia = Number(parametros.get('latencia')) || 180;
 const caiNoLance = Number(parametros.get('caiNoLance')) || 0;
 const noLimite = parametros.get('lancesFalsos') === 'limite';
+const x1 = parametros.get('x1') ?? 'ok';
 const espera = () => new Promise((ok) => setTimeout(ok, latencia));
+const unificada = () => lancesUnificados();
+const limiteDoDia = () => (unificada() ? LANCES_PARTIDAS_POR_DIA_UNIFICADO : LANCES_PARTIDAS_POR_DIA);
 
-let feitas = noLimite ? LANCES_PARTIDAS_POR_DIA : 0;
+let feitas = noLimite ? limiteDoDia() : 0;
 let melhor: number | null = null;
 let recorde: number | null = null;
+/** Pontos das partidas falsas de hoje (na regra nova, as 3 melhores contam). */
+const doDia: number[] = [];
+const melhoresDoDia = () => [...doDia].sort((a, b) => b - a).slice(0, MELHORES_DO_DIA);
+const CODIGO_FALSO = 'ABCD2345';
 // Medalhas de mentira, nos lances do Flamengo primeiro (o time de teste): sem gol, bronze, 23 gols com 4 recriados,
 // 52 com 6 (faltam recriados), ouro completo, e dois quase na próxima medalha (4 e 19 gols) para ver a subida.
 // A partida falsa soma os gols dela aqui, então "+1 rumo ao…" e a comemoração aparecem de verdade.
 const peso = (l: Lance) => (l.tipo !== 'falta' ? 0 : l.clube === 'flamengo' ? 2 : 1);
 const ordemDoAlbum = [...LANCES].sort((a, b) => peso(b) - peso(a));
-const medalhasFalsas = new Map<string, { gols: number; recriados: number }>(
+const medalhasFalsas = new Map<string, { gols: number; recriados: number; vitorias: number }>(
   [
     [5, 1],
     [23, 4],
@@ -44,24 +68,64 @@ const medalhasFalsas = new Map<string, { gols: number; recriados: number }>(
     [4, 0],
     [52, 6],
     [19, 3],
-  ].map(([gols, recriados], i) => [ordemDoAlbum[i].id, { gols, recriados }]),
+  ].map(([gols, recriados], i) => [ordemDoAlbum[i].id, { gols, recriados, vitorias: 0 }]),
 );
+// Pênaltis na tela única: a Disputa livre (12 gols, 3 vitórias) e uma disputa do catálogo (55 gols, 10 vitórias).
+const disputaDoCatalogo = (parametros.has('disputasFalsas') ? DISPUTAS_FALSAS : DISPUTAS)[0]?.id;
+medalhasFalsas.set(ITEM_LIVRE, { gols: 12, recriados: 0, vitorias: 3 });
+if (disputaDoCatalogo) medalhasFalsas.set(itemPenaltis(disputaDoCatalogo), { gols: 55, recriados: 0, vitorias: 10 });
 
-let estado: { cenas: Lance[]; gestos: GestosLances; chamadas: number } | null = null;
+/** O lance do X1 falso: o primeiro do álbum (um do Flamengo). */
+const lanceDoX1 = () => ordemDoAlbum[0];
 
-export async function novaPartidaLances(ids: string[]): Promise<RespostaNovaLances> {
+let estado: { cenas: Lance[]; gestos: GestosLances; chamadas: number; desafio: boolean } | null = null;
+
+/** O X1 falso, como `ver_desafio_lances` o devolve (null: link quebrado). */
+export async function verDesafioLances(id: string): Promise<ResumoDesafioLances | null> {
   await espera();
-  if (feitas >= LANCES_PARTIDAS_POR_DIA) throw new ErroServidor('limite_do_dia');
-  const cenas = ids.map((id) => LANCES.find((l) => l.id === id)).filter((l): l is Lance => !!l);
-  if (cenas.length !== 3) throw new ErroServidor('lances_invalidos');
+  if (!id || x1 === 'nao') return null;
+  const l = lanceDoX1();
+  return { id, time_id: 'palmeiras', apelido: 'Camisa10', lance_id: l.id, pontos: 96, gols: 3, recriados: 1, faixa: faixaNaTela(l, unificada()).faixa };
+}
+
+export async function novaPartidaLances(pedido: string[] | PedidoLances): Promise<RespostaNovaLances> {
+  await espera();
+  const nova = unificada();
+  const p: PedidoLances = Array.isArray(pedido) ? { lances: pedido } : pedido;
+  let cenas: Lance[];
+  let desafio: RespostaNovaLances['desafio'] = null;
+  if ('desafio' in p) {
+    if (!nova) throw new ErroServidor('lances_invalidos');
+    if (x1 === 'nao') throw new ErroServidor('desafio_nao_encontrado');
+    if (x1 === 'proprio') throw new ErroServidor('proprio_desafio');
+    if (x1 === 'expirado') throw new ErroServidor('desafio_expirado');
+    desafio = { codigo: p.desafio, timeId: 'palmeiras', apelido: 'Camisa10', pontos: 96 };
+    const l = lanceDoX1();
+    cenas = [l, l, l];
+  } else if ('lance' in p) {
+    const l = LANCES.find((o) => o.id === p.lance);
+    if (!l) throw new ErroServidor('lances_invalidos');
+    cenas = [l, l, l];
+  } else {
+    if (nova) throw new ErroServidor('atualize_o_app');
+    cenas = p.lances.map((id) => LANCES.find((l) => l.id === id)).filter((l): l is Lance => !!l);
+    if (cenas.length !== 3) throw new ErroServidor('lances_invalidos');
+  }
+  if (feitas >= limiteDoDia()) throw new ErroServidor('limite_do_dia');
+  // A faixa que vale na partida (na regra nova, a do catálogo recalibrado), gravada nela.
+  const faixas: Faixa[] = cenas.map((l) => faixaNaTela(l, nova).faixa);
+  cenas = cenas.map((l, i) => ({ ...l, faixa: faixas[i] }));
   feitas++;
   const sementes = cenas.map(() => sementeNova());
-  estado = { cenas, gestos: { lances: ids, sementes, cobrancas: [] }, chamadas: 0 };
+  estado = { cenas, gestos: { lances: cenas.map((l) => l.id), sementes, cobrancas: [] }, chamadas: 0, desafio: !!desafio };
   return {
     partidaId: 'falsa',
     expiraEm: new Date(Date.now() + 15 * 60_000).toISOString(),
+    lances: cenas.map((l) => l.id),
+    faixas,
+    ...(desafio ? { desafio } : {}),
     goleiroX: goleiroParaOCelular(sementes[0], 0, cenas[0]),
-    restantesHoje: LANCES_PARTIDAS_POR_DIA - feitas,
+    restantesHoje: limiteDoDia() - feitas,
   };
 }
 
@@ -70,24 +134,29 @@ export async function lanceDoJogo(_id: string, i: number, gesto: GestoCobranca):
   const e = estado;
   if (!e) throw new ErroServidor('partida_nao_encontrada');
   if (++e.chamadas === caiNoLance) throw new ErroServidor('tempo_esgotado');
-  const j = jogarLanceDoJogo(e.cenas, e.gestos, i, gesto);
+  const tabela = unificada() ? TABELA_LANCES_UNIFICADA : TABELA_LANCES_ANTES;
+  const j = jogarLanceDoJogo(e.cenas, e.gestos, i, gesto, tabela);
   e.gestos = j.gestos;
   let fim: FechamentoLances | null = null;
   if (i === 2) {
-    const resultado = fecharPartidaLances(e.gestos.sementes, e.cenas, e.gestos.cobrancas);
+    const resultado = fecharPartidaLances(e.gestos.sementes, e.cenas, e.gestos.cobrancas, tabela);
     const novas: { lanceId: string; medalha: 'bronze' | 'prata' | 'ouro' }[] = [];
     resultado.lances.forEach((r, k) => {
       if (r.desfecho !== 'gol') return;
       const id = e.cenas[k].id;
-      const antes = medalhasFalsas.get(id) ?? { gols: 0, recriados: 0 };
-      const depois = { gols: antes.gols + 1, recriados: antes.recriados + (r.recriou ? 1 : 0) };
+      const antes = medalhasFalsas.get(id) ?? { gols: 0, recriados: 0, vitorias: 0 };
+      const depois = { gols: antes.gols + 1, recriados: antes.recriados + (r.recriou ? 1 : 0), vitorias: 0 };
       medalhasFalsas.set(id, depois);
       const m = medalhaDoLance(depois.gols, depois.recriados);
       if (m && m !== medalhaDoLance(antes.gols, antes.recriados)) novas.push({ lanceId: id, medalha: m });
     });
     const antes = melhor;
-    const conta = antes === null || resultado.pontos > antes;
+    let conta = antes === null || resultado.pontos > antes;
     if (conta) melhor = resultado.pontos;
+    if (unificada()) {
+      doDia.push(resultado.pontos);
+      conta = melhoresDoDia().includes(resultado.pontos);
+    }
     const novoRecorde = recorde !== null && resultado.pontos > recorde;
     recorde = Math.max(recorde ?? 0, resultado.pontos);
     fim = {
@@ -100,7 +169,14 @@ export async function lanceDoJogo(_id: string, i: number, gesto: GestoCobranca):
       confirmadaEm: new Date().toISOString(),
       desempenho: { posicao: 3, total: 14, recorde, novo_recorde: novoRecorde },
       medalhas: novas,
-      restantesHoje: LANCES_PARTIDAS_POR_DIA - feitas,
+      restantesHoje: limiteDoDia() - feitas,
+      ...(unificada()
+        ? {
+            melhoresDoDia: melhoresDoDia(),
+            desafio: e.desafio ? null : { codigo: CODIGO_FALSO },
+            comparacao: e.desafio ? { desafiante: 'Camisa10', pontosDesafiante: 96, venceu: resultado.pontos > 96 } : null,
+          }
+        : {}),
     };
   }
   return { lance: j.lance, goleiroProximo: j.goleiroProximo, fim };
@@ -108,12 +184,16 @@ export async function lanceDoJogo(_id: string, i: number, gesto: GestoCobranca):
 
 export async function meusLancesHoje(): Promise<LancesHoje | null> {
   await espera();
-  return { feitas, limite: LANCES_PARTIDAS_POR_DIA, melhor };
+  return { feitas, limite: limiteDoDia(), melhor, ...(unificada() ? { melhores: melhoresDoDia() } : {}) };
 }
 
 export async function minhasMedalhas(): Promise<MedalhaDoLance[]> {
   await espera();
-  return [...medalhasFalsas].map(([lance_id, n]) => ({ lance_id, ...n, medalha: medalhaDoLance(n.gols, n.recriados) }));
+  return [...medalhasFalsas].map(([lance_id, n]) => ({
+    lance_id,
+    ...n,
+    medalha: lance_id.startsWith('penaltis:') ? medalhaDaDisputa(n.gols, n.vitorias) : medalhaDoLance(n.gols, n.recriados),
+  }));
 }
 
 export async function vitrineMedalhas(): Promise<VitrineDoTime[]> {

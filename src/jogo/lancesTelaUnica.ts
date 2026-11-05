@@ -1,0 +1,117 @@
+// Contas e textos da tela única dos Lances (docs/jogo.md, seção 14.7), que entra na segunda 16/11/2026, 0h de
+// Brasília: lista de itens (Disputa livre, disputas históricas, faltas e cara a cara), filtro de tipo e de clube,
+// textos do X1 e da partida de 3 tentativas. Módulo puro, sem DOM, testado em lancesTelaUnica.test.ts.
+
+import { TABELA_LANCES_UNIFICADA, type Lance } from './lances';
+import { ITEM_LIVRE, type ItemDaLista } from './lancesTextos';
+import { itemPenaltis } from './regraLances';
+import type { Disputa } from './disputas';
+
+export type TipoDoItem = 'penaltis' | 'falta' | 'finalizacao';
+export type TipoDaTela = 'todos' | TipoDoItem;
+
+export const TIPOS_DA_TELA: { id: TipoDaTela; texto: string }[] = [
+  { id: 'todos', texto: 'Todos' },
+  { id: 'penaltis', texto: 'Pênaltis' },
+  { id: 'falta', texto: 'Faltas' },
+  { id: 'finalizacao', texto: 'Cara a cara' },
+];
+
+/** A aba da rota (penaltis, falta, finalizacao) abre o filtro do tipo; sem aba, Todos. */
+export function tipoDaAba(aba?: string): TipoDaTela {
+  return aba === 'penaltis' || aba === 'falta' || aba === 'finalizacao' ? aba : 'todos';
+}
+
+/** Um item da tela única: a Disputa livre, uma disputa do catálogo ou um lance. `id` é a chave das medalhas. */
+export interface ItemUnico extends ItemDaLista {
+  tipo: TipoDoItem;
+}
+
+/** Disputa livre primeiro, depois todas as disputas do catálogo e os lances de falta e cara a cara. */
+export function itensDaTelaUnica(
+  lances: readonly Pick<Lance, 'id' | 'clube' | 'tipo'>[],
+  disputas: readonly Pick<Disputa, 'id' | 'clube'>[],
+): ItemUnico[] {
+  return [
+    { id: ITEM_LIVRE, clube: null, tipo: 'penaltis' },
+    ...disputas.map((d): ItemUnico => ({ id: itemPenaltis(d.id), clube: d.clube, tipo: 'penaltis' })),
+    ...lances.map((l): ItemUnico => ({ id: l.id, clube: l.clube, tipo: l.tipo })),
+  ];
+}
+
+/** Itens do tipo escolhido. A Disputa livre não tem clube: aparece em Todos e em Pênaltis, de qualquer clube. */
+export function itensDoTipo<T extends ItemUnico>(itens: readonly T[], tipo: TipoDaTela): T[] {
+  return itens.filter((i) => tipo === 'todos' || i.tipo === tipo);
+}
+
+/** Aplica tipo e clube ('todos' = todos os clubes). */
+export function itensDoFiltro<T extends ItemUnico>(itens: readonly T[], tipo: TipoDaTela, clube: string): T[] {
+  return itensDoTipo(itens, tipo).filter((i) => clube === 'todos' || i.clube === null || i.clube === clube);
+}
+
+/** Ids dos clubes que têm item no tipo escolhido (sem repetir, sem a Disputa livre). */
+export function clubesDoTipo(itens: readonly ItemUnico[], tipo: TipoDaTela): string[] {
+  return [...new Set(itensDoTipo(itens, tipo).flatMap((i) => (i.clube ? [i.clube] : [])))];
+}
+
+/** O clube que a tela abre: o da pessoa, se tiver item; senão "todos". */
+export const clubeInicial = (itens: readonly ItemUnico[], timeId: string): string =>
+  itens.some((i) => i.clube === timeId) ? timeId : 'todos';
+
+/** Mantém o clube escolhido se ele ainda tem item no tipo; senão volta a "todos". */
+export const clubeValido = (itens: readonly ItemUnico[], tipo: TipoDaTela, clube: string): string =>
+  clube === 'todos' || clubesDoTipo(itens, tipo).includes(clube) ? clube : 'todos';
+
+// ---------- textos ----------
+
+/** A linha do hub: o número do bônus vem da tabela nova. */
+export const LINHA_DO_HUB = `Faltas e cara a cara: 3 tentativas do mesmo lance. Gol no canto do lance de verdade vale +${TABELA_LANCES_UNIFICADA.recriou}.`;
+
+export const TENTATIVAS_POR_PARTIDA = 3;
+
+/** HUD da partida: "Tentativa 2 de 3". */
+export const textoDaTentativa = (i: number, total = TENTATIVAS_POR_PARTIDA): string => `Tentativa ${i + 1} de ${total}`;
+
+/** Linha da lista de tentativas do resultado: "Tentativa 1". */
+export const rotuloDaTentativa = (i: number): string => `Tentativa ${i + 1}`;
+
+/** O alvo no HUD do X1: "X1: Fulano fez 96". Sem apelido, "Alguém". */
+export const alvoDoX1 = (apelido: string | null | undefined, pontos: number): string => `X1: ${apelido?.trim() || 'Alguém'} fez ${pontos}`;
+
+/** Quando o X1 não vale, a partida é normal do mesmo lance; a linha do narrador na abertura. */
+const AVISOS_DO_X1: Record<string, string> = {
+  desafio_nao_encontrado: 'Esse X1 não existe mais. Vai uma partida normal!',
+  proprio_desafio: 'Esse X1 é seu. Vai uma partida normal!',
+  desafio_expirado: 'Esse X1 expirou. Vai uma partida normal!',
+};
+
+/** O aviso de um erro de X1 que vira partida normal, ou null se o erro é outro (aí a partida segue o caminho dos erros). */
+export const avisoDoErroDoX1 = (codigo: string): string | null => AVISOS_DO_X1[codigo] ?? null;
+
+export interface ComparacaoX1 {
+  desafiante: string | null;
+  pontosDesafiante: number;
+  venceu: boolean;
+}
+
+/** O que mostrar no placar do X1: quem fez quanto, lado a lado. */
+export function placarDoX1(pontos: number, c: ComparacaoX1): { voce: number; outro: number; nomeDoOutro: string; venceu: boolean } {
+  return { voce: pontos, outro: c.pontosDesafiante, nomeDoOutro: c.desafiante?.trim() || 'Quem te chamou', venceu: c.venceu };
+}
+
+/** Frase neutra do X1 quando o narrador não tem uma que sirva. Sem zoeira com a pessoa. */
+export function fraseNeutraDoX1(venceu: boolean): string {
+  // Na derrota, nada de "revanche" ali: o X1 recebido não gera link; jogar de novo gera o seu.
+  return venceu ? 'Venceu o X1! Manda o placar pro grupo.' : 'Esse X1 ficou com quem chamou. Joga de novo e manda o seu.';
+}
+
+/** Texto que acompanha o link no WhatsApp: com X1 chama alguém; sem, só convida. */
+export function conviteLances(pontos: number, paraTime: string | null, comX1: boolean): string {
+  const quanto = paraTime ? `${pontos} ${paraTime}` : `${pontos} ${pontos === 1 ? 'ponto' : 'pontos'}`;
+  return comX1 ? `Te chamei no X1 dos Lances: fiz ${quanto}. Faz mais?` : `Fiz ${quanto} nos Lances do Jogo. Joga também:`;
+}
+
+/** As 3 tentativas do resultado: o título da placa é o do lance, as linhas são "Tentativa N". */
+export function linhasDeTentativas(n: number): string[] {
+  return Array.from({ length: n }, (_, i) => rotuloDaTentativa(i));
+}

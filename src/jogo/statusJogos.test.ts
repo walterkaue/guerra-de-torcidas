@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { JogoBasico } from './cravaTela';
-import { formatarFecha, formatarVolta, linhaPenaltis, statusCrava } from './statusJogos';
+import { faltamDosLances, formatarFecha, formatarVolta, linhaLancesUnificados, linhaPenaltis, statusCrava } from './statusJogos';
 
 const agora = new Date('2026-10-23T12:00:00Z');
 const jogo = (id: string, rodada: number, horasAteInicio: number, extra: Partial<JogoBasico> = {}): JogoBasico => ({
@@ -19,6 +19,21 @@ describe('linha dos Pênaltis', () => {
     expect(linhaPenaltis(1, 5)).toBe('falta 1 partida que conta hoje');
     expect(linhaPenaltis(0, 5)).toBe('hoje só as 5 melhores contam');
     expect(linhaPenaltis(null, 5)).toBe('As 5 melhores do dia contam');
+  });
+});
+
+describe('linha dos Lances na regra nova', () => {
+  it('faltam = limite - feitas, nunca negativo, null sem resposta', () => {
+    expect(faltamDosLances({ feitas: 4, limite: 10 })).toBe(6);
+    expect(faltamDosLances({ feitas: 12, limite: 10 })).toBe(0);
+    expect(faltamDosLances({ feitas: 0, limite: 0 })).toBeNull();
+    expect(faltamDosLances(null)).toBeNull();
+  });
+  it('conta as partidas valendo de hoje', () => {
+    expect(linhaLancesUnificados(6, 3)).toBe('faltam 6 partidas valendo hoje');
+    expect(linhaLancesUnificados(1, 3)).toBe('falta 1 partida valendo hoje');
+    expect(linhaLancesUnificados(0, 3)).toBe('hoje já deu: o treino segue liberado');
+    expect(linhaLancesUnificados(null, 3)).toBe('As 3 melhores do dia contam');
   });
 });
 

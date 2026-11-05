@@ -3,12 +3,13 @@
 // import.meta.env.DEV).
 // ?cenario= escolhe o "Jogar agora": crava (rodada fecha em 5 h sem palpite), dia (ainda não jogou, é o padrão),
 // chutes (2 chutes usados), lances (Time do Dia feito), prova (nada mais conta hoje) ou cravado (tudo feito).
+// Com ?corte=depois: meusLancesHoje falso (4 de 10; prova e cravado esgotam as 10; ?semMelhores zera o dia) e ?l=codigo (X1 dos Lances).
 
 import { ID_OUTRO, TIMES } from '../dados/times';
 import { NOMES_PISTAS, type Pistas, type Tentativa, type Tom } from '../jogo/timeDoDia';
 import type { Carreira } from '../jogo/carreira';
 import type { PosicaoSemana } from '../jogo/posicao';
-import type { LinhaRanking, MinigameDoRecorde, RespostaDoDia } from '../servidor/api';
+import type { LancesHoje, LinhaRanking, MinigameDoRecorde, RespostaDoDia, ResumoDesafioLances } from '../servidor/api';
 import type { Jogo, MeusDados, MinhaPosicao } from '../servidor/crava';
 
 const params = new URLSearchParams(location.search);
@@ -99,3 +100,18 @@ export const minhaPosicaoMinigame = (minigame: 'penaltis' | 'prova' | 'dia' | 'l
   espera({ penaltis: { posicao: 2, total: 9, pontos: 85 }, prova: { posicao: null, total: 6, pontos: 0 }, dia: { posicao: 1, total: 5, pontos: 70 }, lances: { posicao: 4, total: 9, pontos: 62 } }[minigame]);
 
 export const minhaPosicaoCrava = (): Promise<MinhaPosicao | null> => espera({ posicao: 37, total: 412, pontos: 44 });
+
+// Regra de 16/11/2026 (use ?corte=depois): as partidas valendo de hoje dos Lances. ?cenario=prova ou cravado esgota as 10.
+// ?semMelhores mostra o dia sem nenhuma partida ainda.
+export const meusLancesHoje = (): Promise<LancesHoje | null> => {
+  if (params.has('semMelhores')) return espera({ feitas: 0, limite: 10, melhor: null, melhores: [] });
+  const esgotado = cenario === 'prova' || cenario === 'cravado';
+  return espera({ feitas: esgotado ? 10 : 4, limite: 10, melhor: 96, melhores: [96, 72, 54] });
+};
+
+// ?l=qualquercodigo: o X1 dos Lances de mentira (o lance é o primeiro do catálogo). ?l=naoexiste não acha nada.
+export async function verDesafioLances(id: string): Promise<ResumoDesafioLances | null> {
+  if (id === 'naoexiste') return espera(null);
+  const { LANCES } = await import('../dados/lances');
+  return espera({ id, time_id: 'flamengo', apelido: 'Zé da Geral', lance_id: LANCES[0].id, pontos: 96, gols: 3, recriados: 1, faixa: 'dificil' });
+}

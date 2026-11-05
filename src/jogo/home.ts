@@ -5,7 +5,8 @@
 import { ID_OUTRO, type Artigo, type Time } from '../dados/times';
 import { faseDoJogo, rodadaEmFoco, type JogoBasico } from './cravaTela';
 import { PERGUNTAS, levar } from './prova';
-import { formatarFecha, formatarVolta, linhaPenaltis } from './statusJogos';
+import { formatarFecha, formatarVolta, linhaLancesUnificados, linhaPenaltis } from './statusJogos';
+import { MELHORES_DO_DIA } from './regraLances';
 import { NOMES_PISTAS, TENTATIVAS, type Pistas, type Tom } from './timeDoDia';
 
 // ---------- Casa ----------
@@ -24,6 +25,23 @@ export function linhaDosLances(time: Pick<Time, 'id' | 'nome' | 'artigo'> | unde
   if (!time || !n) return 'Pênaltis, faltas e cara a cara';
   return `Pênaltis, faltas e cara a cara\n${n} ${n === 1 ? 'lance histórico' : 'lances históricos'} ${time.artigo === 'a' ? 'da' : 'do'} ${time.nome}`;
 }
+
+// ---------- Lance do Dia e X1 dos Lances (regra de 16/11/2026, docs/jogo.md 14.7) ----------
+
+/** O botão da Home: "Lance do Dia · Gol do título · Flamengo". Sem promessa de bônus: o lance é só um convite. */
+export function rotuloDoLanceDoDia(titulo: string, clube: string): string {
+  return `Lance do Dia · ${titulo} · ${clube}`;
+}
+
+/** O que o convite do X1 dos Lances (link ?l=) diz; `titulo` null quando o lance não está no catálogo. */
+export function textoDoConviteLances(d: { quem?: string | null; time?: string | null; pontos: number; titulo: string | null }): string {
+  const quem = d.quem || 'Alguém';
+  const noLance = d.titulo ? `no lance ${d.titulo}` : 'num lance';
+  return `${quem}${d.time ? ` (${d.time})` : ''}: ${d.pontos} pontos ${noLance}. Mesmo lance, 3 tentativas. Faz mais?`;
+}
+
+/** Título do convite do X1 dos Lances. */
+export const TITULO_CONVITE_LANCES = 'Te chamaram no X1 nos Lances do Jogo';
 
 // ---------- luz da arquibancada ----------
 
@@ -61,12 +79,14 @@ export function proximoJogo(s: SituacaoDoDia): JogoDaHome {
 }
 
 /** A linha de baixo do botão: só informa o motivo, sem pressa nem cobrança. */
-export function motivoDoJogo(jogo: JogoDaHome, s: SituacaoDoDia, teto: number): string {
+export function motivoDoJogo(jogo: JogoDaHome, s: SituacaoDoDia, teto: number, unificada = false): string {
   if (jogo === 'crava') return `Crava a Rodada: fecha em ${formatarFecha(s.cravaFechaEm ?? 0)}, sem palpite seu`;
   if (jogo === 'dia') {
     return s.chutesDoDia ? `Time do Dia: ${linhaChutes(s.chutesDoDia)}` : 'Time do Dia: ainda não jogou hoje';
   }
-  if (jogo === 'penaltis') return `Lances do Jogo: ${linhaPenaltis(s.faltamPartidas, teto)}`;
+  if (jogo === 'penaltis') {
+    return `Lances do Jogo: ${unificada ? linhaLancesUnificados(s.faltamPartidas, MELHORES_DO_DIA) : linhaPenaltis(s.faltamPartidas, teto)}`;
+  }
   return 'Prova de Boleiro: 8 perguntas, para quando quiser';
 }
 

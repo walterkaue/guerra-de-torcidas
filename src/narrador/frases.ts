@@ -515,7 +515,7 @@ export const FRASES = {
     { t: "Hoje o time venceu. Revanche amanhã, 00h." },
   ],
   lance_abertura: [
-    { t: "Três lances, três chances de fazer história {pro_time}!" },
+    { t: "Três chutes, três chances de fazer história {pro_time}!" },
     { t: "A história tá aí de novo. Agora a perna é sua!" },
     { t: "Bola parada, torcida em pé. Bora recriar!" },
     { t: "O narrador já viu esse filme. Quer ver o final de novo!", rara: true },
@@ -535,8 +535,8 @@ export const FRASES = {
   ],
   lance_fim: [
     { t: "Fim dos lances: {pontos} {pro_time}!" },
-    { t: "Três lances, {pontos} pontos na conta {do_time}." },
-    { t: "Fechou com {pontos}! Escolhe outros lances e vai de novo." },
+    { t: "Três chutes, {pontos} pontos na conta {do_time}." },
+    { t: "Fechou com {pontos}! Escolhe o próximo e vai de novo." },
     { t: "Acabou a sessão de história! {pontos} pontos no placar." },
   ],
 } satisfies Record<string, readonly Frase[]>;

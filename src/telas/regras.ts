@@ -7,8 +7,8 @@ import { esc } from '../app';
 import { ID_OUTRO, corDeTexto, proTime, timePorId } from '../dados/times';
 import { prefs } from '../estado';
 import { GOLS_MAX, PESO_TORCIDA, PONTOS_ACERTO, TETO_RODADA } from '../jogo/crava';
-import { BONUS_RECRIOU, FAIXAS, LANCES_POR_PARTIDA, PONTOS_FAIXA } from '../jogo/lances';
-import { PONTOS as PONTOS_PENALTIS, RODADAS_EXTRAS_MAX } from '../jogo/penaltis';
+import { BONUS_RECRIOU, FAIXAS, LANCES_POR_PARTIDA, PONTOS_FAIXA, TABELA_LANCES_UNIFICADA } from '../jogo/lances';
+import { PONTOS as PONTOS_PENALTIS, PONTOS_UNIFICADOS, RODADAS_EXTRAS_MAX } from '../jogo/penaltis';
 import {
   BONUS_PERFEITA,
   DEGRAU_DA_POSICAO,
@@ -22,7 +22,9 @@ import {
   type Degrau,
 } from '../jogo/prova';
 import { PONTOS as PONTOS_DIA, TENTATIVAS } from '../jogo/timeDoDia';
+import { notaDosLances, notaDosPenaltis, pontosDosLances, pontosDosPenaltis } from '../jogo/regrasUnificadas';
 import { faixa, placa } from './blocos';
+import { lancesUnificados } from './corte';
 import { bolinha } from './icones';
 
 export type JogoComRegras = 'penaltis' | 'lances' | 'prova' | 'dia' | 'crava';
@@ -42,6 +44,7 @@ const bonus = (n: number) => `+${n}`;
 const NOME_DO_DEGRAU: Record<Degrau, string> = { ...NOME_DEGRAU, 2: 'Nível médio' };
 
 function dosPenaltis(): Regras {
+  const unificada = lancesUnificados();
   return {
     titulo: 'Pênaltis',
     passos: [
@@ -50,19 +53,24 @@ function dosPenaltis(): Regras {
       ['Defender.', 'O batedor corre. Olhe o pé de apoio, em amarelo, e toque no gol onde ele vai pular. Ele nem sempre é honesto, e o tempo pra reagir é curto.'],
       ['Desempate.', `5 cobranças e 5 defesas, alternadas. Empatou? Morte súbita: uma de cada, até ${RODADAS_EXTRAS_MAX} rodadas. Ainda empatado, par ou ímpar com o narrador.`],
     ],
-    pontos: [
-      ['Gol', String(PONTOS_PENALTIS.gol)],
-      ['Gol no ângulo', bonus(PONTOS_PENALTIS.angulo)],
-      ['Cavadinha que entra', bonus(PONTOS_PENALTIS.cavadinha)],
-      ['Defesa', String(PONTOS_PENALTIS.defesa)],
-      ['Vitória na disputa', bonus(PONTOS_PENALTIS.vitoria)],
-      ['5 de 5 (cobranças ou defesas)', bonus(PONTOS_PENALTIS.cincoDeCinco)],
-    ],
-    nota: 'Gols e defesas da morte súbita valem o normal. O bônus de 5 de 5 olha só as 5 primeiras.',
+    pontos: unificada
+      ? pontosDosPenaltis(PONTOS_UNIFICADOS)
+      : [
+          ['Gol', String(PONTOS_PENALTIS.gol)],
+          ['Gol no ângulo', bonus(PONTOS_PENALTIS.angulo)],
+          ['Cavadinha que entra', bonus(PONTOS_PENALTIS.cavadinha)],
+          ['Defesa', String(PONTOS_PENALTIS.defesa)],
+          ['Vitória na disputa', bonus(PONTOS_PENALTIS.vitoria)],
+          ['5 de 5 (cobranças ou defesas)', bonus(PONTOS_PENALTIS.cincoDeCinco)],
+        ],
+    nota: unificada
+      ? notaDosPenaltis(PONTOS_UNIFICADOS)
+      : 'Gols e defesas da morte súbita valem o normal. O bônus de 5 de 5 olha só as 5 primeiras.',
   };
 }
 
 function dosLances(): Regras {
+  if (lancesUnificados()) return dosLancesUnificados();
   const nomes: Record<(typeof FAIXAS)[number], string> = { facil: 'Fácil', media: 'Média', dificil: 'Difícil', craque: 'Craque' };
   return {
     titulo: 'Lances do Jogo',
@@ -77,6 +85,22 @@ function dosLances(): Regras {
       ['Recriou o lance', bonus(BONUS_RECRIOU)],
     ],
     nota: 'Cada lance tem a sua dificuldade, que não muda ao longo da semana. O dia vale a melhor partida.',
+  };
+}
+
+/** Lances do Jogo depois de 16/11/2026 (docs/jogo.md, 14.7): um lance, 3 tentativas, pênaltis no mesmo jogo. */
+function dosLancesUnificados(): Regras {
+  const t = TABELA_LANCES_UNIFICADA;
+  return {
+    titulo: 'Lances do Jogo',
+    passos: [
+      ['Escolha um lance.', `Um toque em Jogar. Na falta e no cara a cara, a partida são ${LANCES_POR_PARTIDA} tentativas do mesmo lance; nos pênaltis, a disputa de sempre.`],
+      ['O gesto é o do pênalti.', 'Arraste da bola até o gol: direção, força e curva. Na falta, a bola tem de passar da barreira. No cara a cara, o goleiro pode sair do gol e a cavadinha encobre quem saiu.'],
+      ['Recriar o lance.', `Gol na área marcada onde o gol de verdade entrou vale mais ${t.recriou}.`],
+      ['X1.', 'Depois de uma partida valendo, mande o link do X1: quem recebe joga o mesmo lance e tenta bater seus pontos. Passou do limite do dia, a partida vira treino, sem ponto nem medalha.'],
+    ],
+    pontos: pontosDosLances(t),
+    nota: notaDosLances(t),
   };
 }
 

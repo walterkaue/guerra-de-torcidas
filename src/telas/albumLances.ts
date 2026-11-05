@@ -4,8 +4,8 @@
 import '../estilos/trofeus.css';
 import { esc } from '../app';
 import { prefs } from '../estado';
-import { trilhaDoLance, type FiltroAlbum, type LinhaMedalha } from '../jogo/lancesTextos';
-import { abas, trilha } from './blocos';
+import { trilhaDoItem, type FiltroAlbum, type LinhaMedalha } from '../jogo/lancesTextos';
+import { abas, selo, trilha } from './blocos';
 import type { NumerosDoLance } from './fichaLance';
 import { icone } from './icones';
 
@@ -39,7 +39,7 @@ export function criarMedalhasDoAlbum(ler: () => Promise<readonly LinhaMedalha[]>
   const carregar = (): Promise<void> => {
     promessa ??= ler().then(
       (linhas) => {
-        mapa = new Map(linhas.map((l) => [l.lance_id, { gols: l.gols, recriados: l.recriados }]));
+        mapa = new Map(linhas.map((l) => [l.lance_id, { gols: l.gols, recriados: l.recriados, vitorias: l.vitorias ?? 0 }]));
         situacao = 'ok';
       },
       () => {
@@ -74,7 +74,11 @@ export interface DadosDoCard {
   titulo: string;
   meta: string;
   pontos: string;
-  faixa: string;
+  /** Faixa do lance (cor do chip). Na disputa e na livre, sem faixa: use `pontosClasse`. */
+  faixa?: string;
+  pontosClasse?: string;
+  /** Selo ao lado do título (o Lance do Dia). */
+  selo?: string;
   estilo: string;
   favorito: boolean;
   /** null: medalhas ainda não chegaram ou falharam (card sem trilha). */
@@ -85,10 +89,10 @@ export interface DadosDoCard {
 export function cardDoAlbum(d: DadosDoCard): string {
   return `<li class="lance placa filete" style="${d.estilo}">
       <button type="button" class="lance-topo lance-card" aria-haspopup="dialog" data-ficha="${esc(d.id)}">
-        <span class="lance-titulo">${d.favorito ? `<span class="lance-estrela" role="img" aria-label="Favorito">${icone('estrela')}</span>` : ''}${esc(d.titulo)}</span>
+        <span class="lance-titulo">${d.favorito ? `<span class="lance-estrela" role="img" aria-label="Favorito">${icone('estrela')}</span>` : ''}${esc(d.titulo)}${d.selo ? ` <span class="lance-selo">${selo(esc(d.selo), 'ouro')}</span>` : ''}</span>
         <span class="lance-meta">${esc(d.meta)}</span>
-        <span class="lance-pontos faixa-${d.faixa}">${esc(d.pontos)}</span>
-        ${d.numeros ? trilha(trilhaDoLance(d.numeros.gols, d.numeros.recriados), { compacta: true }) : ''}
+        <span class="lance-pontos ${d.pontosClasse ?? `faixa-${d.faixa}`}">${esc(d.pontos)}</span>
+        ${d.numeros ? trilha(trilhaDoItem(d.id, d.numeros), { compacta: true }) : ''}
       </button>
     </li>`;
 }

@@ -145,6 +145,10 @@
   margin-top: var(--e1);
 }
 
+.ficha-lance .lance-acoes.so-jogar {
+  grid-template-columns: 1fr;
+}
+
 .ficha-lance .lance-acoes .botao,
 .ficha-lance .lance-acoes .botao-linha {
   min-height: 52px;
@@ -183,6 +187,12 @@
 
 .lance-card:active {
   background: rgba(245, 245, 240, 0.05);
+}
+
+.lance-selo {
+  display: inline-block;
+  margin-left: 4px;
+  vertical-align: 1px;
 }
 
 .lance-estrela {

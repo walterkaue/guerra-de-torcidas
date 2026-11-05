@@ -2,7 +2,18 @@
 // compartilhar, escolha do texto do resultado, progresso das medalhas e a vitrine das torcidas.
 // Puro: sem DOM, sem servidor e sem relógio. A tela e o card só desenham o que sai daqui.
 
-import { MEDALHAS, medalhaDoLance, type DesfechoLance, type Medalha } from './lances.ts';
+import {
+  MEDALHAS,
+  medalhaDoLance,
+  TABELA_LANCES_ANTES,
+  TABELA_LANCES_UNIFICADA,
+  type DesfechoLance,
+  type Faixa,
+  type Lance,
+  type Medalha,
+} from './lances.ts';
+import { LANCES_PARTIDAS_POR_DIA } from './lancesPartida.ts';
+import { itemPenaltis, LANCES_PARTIDAS_POR_DIA_UNIFICADO, MEDALHAS_PENALTIS, medalhaDaDisputa, MELHORES_DO_DIA } from './regraLances.ts';
 
 export const NOME_DA_MEDALHA: Record<Medalha, string> = { bronze: 'Bronze', prata: 'Prata', ouro: 'Ouro' };
 
@@ -62,9 +73,12 @@ export function situacaoDoResultado(d: {
   contaNoRanking: boolean;
   sobSuspeita: boolean;
   melhorDoDia: number | null;
+  /** Regra nova (desde 16/11/2026): as 3 melhores de Lances de hoje, que o servidor devolve no fechamento. */
+  melhoresDoDia?: readonly number[] | null;
 }): SituacaoDoResultado {
   if (!d.fechou) return { tipo: 'sem_pontos', texto: d.aviso ?? 'Partida sem valer pontos.' };
   if (d.sobSuspeita) return { tipo: 'suspeita', texto: 'Essa ficou fora do ranking até a gente conferir.' };
+  if (!d.contaNoRanking && d.melhoresDoDia !== undefined) return { tipo: 'melhor_do_dia', texto: textoForaDasMelhores(d.melhoresDoDia) };
   if (!d.contaNoRanking) {
     return {
       tipo: 'melhor_do_dia',
@@ -77,7 +91,45 @@ export function situacaoDoResultado(d: {
   return { tipo: 'ranking', texto: null };
 }
 
-export const AVISO_LIMITE_DO_DIA = 'Hoje já deu: 6 partidas valendo. O treino continua liberado.';
+export const AVISO_LIMITE_DO_DIA = `Hoje já deu: ${LANCES_PARTIDAS_POR_DIA} partidas valendo. O treino continua liberado.`;
+
+/**
+ * Aviso de quando o servidor diz `limite_do_dia`. Regra nova (seção 14.7): o limite soma pênaltis, faltas e cara a
+ * cara, e a partida segue como treino, sem ponto nem medalha.
+ */
+export function avisoLimiteDoDia(unificada: boolean): string {
+  if (!unificada) return AVISO_LIMITE_DO_DIA;
+  return `Hoje já deu: ${LANCES_PARTIDAS_POR_DIA_UNIFICADO} partidas valendo. Essa vai de treino: sem ponto nem medalha.`;
+}
+
+const listaDePontos = (melhores: readonly number[]) => melhores.join(' · ');
+
+/**
+ * "Suas 3 melhores hoje: 96 · 72 · 54" (regra nova: o dia vale as 3 melhores partidas de Lances). Sem nenhuma
+ * ainda, a regra; null sem resposta do servidor.
+ */
+export function linhaMelhoresDoDia(melhores: readonly number[] | null | undefined): string | null {
+  if (!melhores) return null;
+  const top = melhores.slice(0, MELHORES_DO_DIA);
+  if (!top.length) return `Suas ${MELHORES_DO_DIA} melhores do dia contam`;
+  return `${top.length === MELHORES_DO_DIA ? `Suas ${MELHORES_DO_DIA} melhores` : top.length === 1 ? 'Sua melhor' : 'Suas melhores'} hoje: ${listaDePontos(top)}`;
+}
+
+/** A partida não entrou nas 3 melhores de hoje (Lances ou Prova, regra nova). Com a lista, mostra quais contam. */
+export function textoForaDasMelhores(melhores?: readonly number[] | null): string {
+  const top = (melhores ?? []).slice(0, MELHORES_DO_DIA);
+  if (!top.length) return `Não superou suas ${MELHORES_DO_DIA} melhores de hoje: o ranking não muda.`;
+  return `Não entrou nas suas ${MELHORES_DO_DIA} melhores de hoje: ${listaDePontos(top)}.`;
+}
+
+/**
+ * A faixa e os pontos de um gol que o álbum mostra. Na regra nova, a do catálogo recalibrado (`faixaUnificada`);
+ * a partida pode jogar numa faixa abaixo dela (taxa real) e a resposta da função `lances` traz a que vale.
+ */
+export function faixaNaTela(l: Pick<Lance, 'faixa' | 'faixaUnificada'>, unificada: boolean): { faixa: Faixa; pontos: number } {
+  const faixa = unificada ? (l.faixaUnificada ?? l.faixa) : l.faixa;
+  return { faixa, pontos: (unificada ? TABELA_LANCES_UNIFICADA : TABELA_LANCES_ANTES).faixa[faixa] };
+}
 
 /** "Valendo hoje: 2 de 6" (null sem resposta do servidor). */
 export function linhaValendoHoje(h: { feitas: number; limite: number } | null): string | null {
@@ -92,8 +144,8 @@ export const textoDaMedalhaNova = (medalha: Medalha, titulo: string): string => 
 
 export interface Progresso {
   medalha: Medalha | null;
-  /** Null quando já é ouro. */
-  proxima: { medalha: Medalha; faltamGols: number; faltamRecriados: number } | null;
+  /** Null quando já é ouro. `faltamVitorias` só nas disputas de pênaltis (progressoDaDisputa). */
+  proxima: { medalha: Medalha; faltamGols: number; faltamRecriados: number; faltamVitorias?: number } | null;
   texto: string;
 }
 
@@ -146,8 +198,10 @@ export interface Trilha {
   ouroCompleto: boolean;
   /** Ao lado da trilha: "23 gols · faltam 27". */
   rotulo: string;
-  /** Barra própria de recriados: o ouro pede 10. */
+  /** Barra própria de recriados: o ouro pede 10. Nas disputas de pênaltis, as vitórias (o mesmo que `extraDoOuro`). */
   recriadosDoOuro: { feitos: number; pede: number };
+  /** A barra própria do ouro com o rótulo: "Recriados" nos lances, "Vitórias" nas disputas de pênaltis. */
+  extraDoOuro: { rotulo: 'Recriados' | 'Vitórias'; feitos: number; pede: number };
   /** "Faltam 27 gols, 6 recriando, pro ouro." */
   faltaProOuro: string;
 }
@@ -186,6 +240,7 @@ export function trilhaDoLance(golsBrutos: number, recriadosBrutos: number): Tril
     ouroCompleto: !p.proxima,
     rotulo,
     recriadosDoOuro: { feitos: Math.min(recriados, OURO.recriados), pede: OURO.recriados },
+    extraDoOuro: { rotulo: 'Recriados', feitos: Math.min(recriados, OURO.recriados), pede: OURO.recriados },
     faltaProOuro: !p.proxima
       ? 'Ouro completo!'
       : `Faltam ${plural(faltaGols, 'gol', 'gols')}${faltaRec ? `, ${faltaRec} recriando,` : ''} pro ouro.`,
@@ -239,6 +294,94 @@ export function previaDoProximoGol(gols: number, recriados: number): string {
   return linhaRumo({ gols, recriados }, { gols: gols + 1, recriados: recriados + (recria ? 1 : 0) }).texto;
 }
 
+// ---------- medalhas das disputas de pênaltis (seção 14.7) ----------
+// Por disputa histórica e pela Disputa livre: bronze 10 gols, prata 50, ouro 100 com 10 vitórias. Os números vêm de
+// minhas_medalhas() (gols e vitórias do item `penaltis:<disputa>`), como nos lances.
+
+const OURO_PENALTIS = MEDALHAS_PENALTIS[MEDALHAS_PENALTIS.length - 1];
+
+/** Quanto falta para a próxima medalha de uma disputa: gols e, no ouro, vitórias. */
+export function progressoDaDisputa(golsBrutos: number, vitoriasBrutas: number): Progresso {
+  const gols = Math.max(0, golsBrutos);
+  const vitorias = Math.max(0, vitoriasBrutas);
+  const medalha = medalhaDaDisputa(gols, vitorias);
+  const alvo = MEDALHAS_PENALTIS.find((m) => gols < m.gols || vitorias < m.vitorias);
+  if (!alvo) return { medalha, proxima: null, texto: 'Ouro conquistado.' };
+  const faltamGols = Math.max(0, alvo.gols - gols);
+  const faltamVitorias = Math.max(0, alvo.vitorias - vitorias);
+  const partes = [
+    ...(faltamGols ? [plural(faltamGols, 'gol', 'gols')] : []),
+    ...(faltamVitorias ? [plural(faltamVitorias, 'vitória', 'vitórias')] : []),
+  ];
+  const nome = NOME_DA_MEDALHA[alvo.medalha].toLowerCase();
+  return {
+    medalha,
+    proxima: { medalha: alvo.medalha, faltamGols, faltamRecriados: 0, faltamVitorias },
+    texto: `Faltam ${partes.join(' e ')} pro ${nome}.`,
+  };
+}
+
+/** Trilha de uma disputa de pênaltis: 10 · 50 · 100 gols e a barra de vitórias no lugar da de recriados. */
+export function trilhaDaDisputa(golsBrutos: number, vitoriasBrutas: number): Trilha {
+  const gols = Math.max(0, golsBrutos);
+  const vitorias = Math.max(0, vitoriasBrutas);
+  const p = progressoDaDisputa(gols, vitorias);
+  let anterior = 0;
+  let enche = 0;
+  const marcos = MEDALHAS_PENALTIS.map((m): MarcoDaTrilha => {
+    const conquistada = gols >= m.gols && vitorias >= m.vitorias;
+    const doTrecho = Math.min(fracao(gols, anterior, m.gols), m.vitorias ? vitorias / m.vitorias : 1);
+    const ehProxima = !conquistada && p.proxima?.medalha === m.medalha;
+    enche += (conquistada ? 1 : ehProxima ? doTrecho : 0) / MEDALHAS_PENALTIS.length;
+    anterior = m.gols;
+    return { medalha: m.medalha, gols: m.gols, conquistada, parcial: ehProxima ? doTrecho : 0 };
+  });
+  let rotulo = plural(gols, 'gol', 'gols');
+  if (p.proxima) {
+    // Gols de sobra, faltando vitórias: o que falta é vencer.
+    rotulo += p.proxima.faltamGols
+      ? ` · faltam ${p.proxima.faltamGols}`
+      : ` · faltam ${plural(p.proxima.faltamVitorias ?? 0, 'vitória', 'vitórias')}`;
+  } else rotulo += ' · ouro completo';
+  const feitas = Math.min(vitorias, OURO_PENALTIS.vitorias);
+  const faltaVit = Math.max(0, OURO_PENALTIS.vitorias - vitorias);
+  const faltaGols = Math.max(0, OURO_PENALTIS.gols - gols);
+  const falta = [...(faltaGols ? [plural(faltaGols, 'gol', 'gols')] : []), ...(faltaVit ? [plural(faltaVit, 'vitória', 'vitórias')] : [])];
+  return {
+    gols,
+    recriados: 0,
+    marcos,
+    enche: Math.min(1, enche),
+    medalha: p.medalha,
+    proxima: p.proxima?.medalha ?? null,
+    ouroCompleto: !p.proxima,
+    rotulo,
+    recriadosDoOuro: { feitos: feitas, pede: OURO_PENALTIS.vitorias },
+    extraDoOuro: { rotulo: 'Vitórias', feitos: feitas, pede: OURO_PENALTIS.vitorias },
+    faltaProOuro: !p.proxima ? 'Ouro completo!' : `Faltam ${falta.join(' e ')} pro ouro.`,
+  };
+}
+
+/** Os números de um item da lista: lance (gols e recriados) ou disputa de pênaltis (gols e vitórias). */
+export interface NumerosDoItem {
+  gols: number;
+  recriados: number;
+  vitorias?: number;
+}
+
+/** O item de medalha é de pênaltis (`penaltis:<disputa>` ou `penaltis:livre`)? */
+export const ehItemPenaltis = (id: string): boolean => id.startsWith('penaltis:');
+
+/** Medalha e progresso de qualquer item: lance ou disputa de pênaltis, pelo id. */
+export function progressoDoItem(id: string, n: NumerosDoItem): Progresso {
+  return ehItemPenaltis(id) ? progressoDaDisputa(n.gols, n.vitorias ?? 0) : progressoDaMedalha(n.gols, n.recriados);
+}
+
+/** Trilha de qualquer item: lance ou disputa de pênaltis, pelo id. */
+export function trilhaDoItem(id: string, n: NumerosDoItem): Trilha {
+  return ehItemPenaltis(id) ? trilhaDaDisputa(n.gols, n.vitorias ?? 0) : trilhaDoLance(n.gols, n.recriados);
+}
+
 export type FiltroAlbum = 'todos' | 'meus' | 'perto';
 
 /**
@@ -270,24 +413,85 @@ export function filtrarAlbum<T extends { id: string }>(
     .map(({ l }) => l);
 }
 
+/** Um item da tela única (regra nova): lance de falta ou cara a cara, disputa histórica ou a Disputa livre. */
+export interface ItemDaLista {
+  /** A chave das medalhas: o id do lance, `penaltis:<disputa>` ou `penaltis:livre` (itemPenaltis). */
+  id: string;
+  /** Id de times.ts ou "selecao"; null na Disputa livre. */
+  clube: string | null;
+}
+
+/** Id do item da Disputa livre na lista e nas medalhas. */
+export const ITEM_LIVRE = itemPenaltis(null);
+
+/**
+ * A tela única dos Lances (seção 14.7): "Todos" e "Meus troféus" com a Disputa livre primeiro e depois favoritos →
+ * seu time → Seleção → outros (cada grupo na ordem de chegada). "Meus troféus" mostra só itens com medalha.
+ * "Perto do próximo" ordena pelo que falta para a próxima medalha (gols; na disputa com os gols feitos, as
+ * vitórias), com os favoritos no topo e o ouro completo no fim. Sem medalhas lidas, passe um mapa vazio.
+ */
+export function ordenarTelaUnica<T extends ItemDaLista>(
+  itens: readonly T[],
+  medalhas: ReadonlyMap<string, NumerosDoItem>,
+  filtro: FiltroAlbum,
+  favoritos: ReadonlySet<string>,
+  timeId: string,
+): T[] {
+  const de = (id: string) => medalhas.get(id) ?? { gols: 0, recriados: 0, vitorias: 0 };
+  const progresso = (id: string) => progressoDoItem(id, de(id));
+  const falta = (id: string) => {
+    const p = progresso(id).proxima;
+    if (!p) return Infinity;
+    return p.faltamGols || p.faltamVitorias || 0;
+  };
+  const fav = (id: string) => (favoritos.has(id) ? 0 : 1);
+  const grupo = (i: ItemDaLista) => (i.id === ITEM_LIVRE ? -1 : i.clube === timeId ? 0 : i.clube === 'selecao' ? 1 : 2);
+  return itens
+    .map((item, i) => ({ item, i }))
+    .filter(({ item }) => filtro !== 'meus' || progresso(item.id).medalha !== null)
+    .sort((a, b) => {
+      if (filtro === 'perto') {
+        if (fav(a.item.id) !== fav(b.item.id)) return fav(a.item.id) - fav(b.item.id);
+        const fa = falta(a.item.id);
+        const fb = falta(b.item.id);
+        if (fa !== fb) return fa < fb ? -1 : 1;
+        if (de(a.item.id).gols !== de(b.item.id).gols) return de(b.item.id).gols - de(a.item.id).gols;
+        return a.i - b.i;
+      }
+      const livre = (x: ItemDaLista) => (x.id === ITEM_LIVRE ? 0 : 1);
+      if (livre(a.item) !== livre(b.item)) return livre(a.item) - livre(b.item);
+      if (fav(a.item.id) !== fav(b.item.id)) return fav(a.item.id) - fav(b.item.id);
+      if (grupo(a.item) !== grupo(b.item)) return grupo(a.item) - grupo(b.item);
+      return a.i - b.i;
+    })
+    .map(({ item }) => item);
+}
+
 export interface LinhaMedalha {
   lance_id: string;
   gols: number;
   recriados: number;
+  /** Regra nova: vitórias nas disputas de pênaltis (os itens `penaltis:…`); 0 nos lances. */
+  vitorias?: number;
   medalha: Medalha | null;
 }
 
 export interface FichaDoLance {
   titulo: string;
-  clube: string;
+  /** Null na Disputa livre (não entra no "Por clube"). */
+  clube: string | null;
 }
 
 export interface MedalhaDoLanceMontada {
   lanceId: string;
   titulo: string;
-  clube: string;
+  clube: string | null;
   gols: number;
   recriados: number;
+  /** Só nas disputas de pênaltis. */
+  vitorias: number;
+  /** Item de pênaltis (disputa histórica ou livre): medalha por 10 · 50 · 100 gols e 10 vitórias. */
+  penaltis: boolean;
   progresso: Progresso;
 }
 
@@ -305,6 +509,8 @@ const pesoDe = (m: Medalha | null) => (m ? PESO[m] : 0);
 /**
  * Monta "Suas medalhas": por clube (quantas de cada) e por lance (título, gols, quanto falta). Lance que
  * saiu do catálogo e lance sem nenhum gol não aparecem. Ordena por medalha maior, depois por gols.
+ * Os itens de pênaltis (`penaltis:…`) só entram se `ficha` devolver algo para eles (a tela decide pela regra nova);
+ * a medalha deles segue a régua dos pênaltis, e a Disputa livre (clube null) fica fora do "Por clube".
  */
 export function montarMedalhas(
   linhas: readonly LinhaMedalha[],
@@ -315,8 +521,11 @@ export function montarMedalhas(
   for (const l of linhas) {
     const f = ficha(l.lance_id);
     if (!f || l.gols <= 0) continue;
-    const progresso = progressoDaMedalha(l.gols, l.recriados);
-    porLance.push({ lanceId: l.lance_id, titulo: f.titulo, clube: f.clube, gols: l.gols, recriados: l.recriados, progresso });
+    const penaltis = ehItemPenaltis(l.lance_id);
+    const vitorias = penaltis ? (l.vitorias ?? 0) : 0;
+    const progresso = progressoDoItem(l.lance_id, { gols: l.gols, recriados: l.recriados, vitorias });
+    porLance.push({ lanceId: l.lance_id, titulo: f.titulo, clube: f.clube, gols: l.gols, recriados: l.recriados, vitorias, penaltis, progresso });
+    if (f.clube === null) continue;
     const c = clubes.get(f.clube) ?? { clube: f.clube, bronze: 0, prata: 0, ouro: 0, lances: 0 };
     c.lances++;
     if (progresso.medalha) c[progresso.medalha]++;

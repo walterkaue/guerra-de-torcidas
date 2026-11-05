@@ -505,6 +505,8 @@ Uma partida começada antes da virada conta na semana antiga se terminar até 00
 - **Dificuldade fixa por lance:** não sobe ao longo da semana, para "o melhor do dia" de segunda valer o mesmo que o de domingo.
 
 ### Tela (21/10/2026; valendo desde 03/11/2026)
+> Vale até domingo 15/11/2026. Desde segunda 16/11, a tela única da seção 14.7 ("Como está nas telas").
+
 - **Valendo desde 03/11/2026** (servidor abaixo, em "Como está no servidor"). Antes disso a partida rodava só no celular, sem pontos. As abas Faltas e Cara a cara mostram o aviso da pré-temporada (seção 5) no lugar do "Em teste", e a barra da partida mostra "Valendo hoje: 2 de 6".
 - **Partida valendo:** ao começar, o celular pede a partida ao servidor; cada chute manda o gesto e a bola só sai quando o resultado chega (o batedor corre durante a espera). O goleiro começa onde o servidor diz.
 - **Caiu a conexão** (no começo ou no meio): a partida segue no celular, com sorteio próprio, e não vale pontos ("Caiu a conexão…", com o código do motivo, como nos pênaltis). Com as 6 do dia usadas: "Hoje já deu: 6 partidas valendo. O treino continua liberado.", com o botão Treinar.
@@ -772,7 +774,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 > Decisão do Kauê em 04/11/2026.
 
 - Rota T2, 'trilha de 3 medalhas'. Em cada card do álbum, três bolinhas (5, 20 e 50 gols) ligadas por uma linha que se enche; as conquistadas na cor da medalha (bronze, prata, ouro), a próxima preenchida em parte, com '23 gols · faltam 27' ao lado. Ouro completo ganha brilho.
-- Ficha do lance abre de baixo: ⭐ favoritar, a ficha factual, a situação, a trilha com os marcos, uma barra própria de recriados (o ouro pede 10), 'Faltam X gols, Y recriando, pro ouro', prévia da linha do resultado, Treinar e Pôr na partida.
+- Ficha do lance abre de baixo: ⭐ favoritar, a ficha factual, a situação, a trilha com os marcos, uma barra própria de recriados (o ouro pede 10), 'Faltam X gols, Y recriando, pro ouro', prévia da linha do resultado, Treinar e Pôr na partida (até 15/11; desde 16/11 só 'Jogar', seção 14.7).
 - Álbum com filtros 'Todos', 'Meus troféus', 'Perto do próximo' (ordena pelo que falta) e ⭐ Favoritos primeiro. Favoritos ficam só no aparelho.
 - No resultado dos Lances, uma linha por lance: '+1 rumo ao ouro · 24/50'. Ao subir de medalha: papel picado, vibração e o selo da medalha.
 - Na aba Conquistas, as medalhas por lance usam a mesma trilha no lugar da frase 'Faltam 27 gols…'.
@@ -800,7 +802,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - Tutoriais: saem os quadros 'Como jogar', 'Como cravar' e as listas de regras da Prova e do Time do Dia, e o 'Não exibir novamente'. No lugar, dicas curtas na faixa de instrução, na hora do erro, no máximo 2 vezes cada dica por aparelho e 1 por lance. O botão '?' de cada jogo guarda as regras completas e a tabela de pontos, no visual do Grafismo de TV.
 - Dicas (quando aparece → frase):
   - **Pênaltis:** arraste que não vira chute → "Arraste pra cima, na direção do gol." · chute por cima por força demais → "Forte demais vai por cima. Arraste mais curto." · chute fraco que o goleiro pegou → "Fraquinho, o goleiro pega. Arraste mais longo." · 3 cobranças seguidas sem efeito → "Curve o fim do arraste pra bola fazer curva." · 1ª cobrança da 2ª partida → "Arraste curtinho e reto é cavadinha." · cavadinha pega por goleiro parado no meio → "Cavadinha não engana goleiro parado no meio." · tempo da defesa acabou sem toque → "Toque no gol antes do chute sair." · lado certo, altura errada → "Lado certo! Agora acerte a altura." · começo da morte súbita (sempre) → "Empatou! Morte súbita: um de cada." · 1º par ou ímpar → "Escolha par ou ímpar e um número."
-  - **Faltas e cara a cara:** bola na barreira → "Na barreira! Mire no canto ou suba a bola." · 2ª na barreira (outra partida) → "Força média faz a bola subir e cair." · goleiro pegou chute no meio → "Goleiro tava ali. Mire nos cantos." · 1º cara a cara, depois de A jogada → "Escolha o canto ou tente a cavadinha." · 1ª vez com goleiro saindo 3 m+ → "Goleiro saiu do gol: cavadinha encobre." · cavadinha pega por goleiro que não saiu → "Cavadinha só encobre goleiro que saiu." · 1º gol que não recriou (mostra a zona do gol de verdade) → "Acerte a área marcada e recrie o lance: +6." · já jogou as 6 valendo → "Hoje as 6 valendo já foram. Treine à vontade."
+  - **Faltas e cara a cara:** bola na barreira → "Na barreira! Mire no canto ou suba a bola." · 2ª na barreira (outra partida) → "Força média faz a bola subir e cair." · goleiro pegou chute no meio → "Goleiro tava ali. Mire nos cantos." · 1º cara a cara, depois de A jogada → "Escolha o canto ou tente a cavadinha." · 1ª vez com goleiro saindo 3 m+ → "Goleiro saiu do gol: cavadinha encobre." · cavadinha pega por goleiro que não saiu → "Cavadinha só encobre goleiro que saiu." · 1º gol que não recriou (mostra a zona do gol de verdade) → "Acerte a área marcada e recrie o lance: +6." · já jogou as 6 valendo → "Hoje as 6 valendo já foram. Treine à vontade." (Desde 16/11, seção 14.7: "recrie o lance: +8." e "Hoje as 10 valendo já foram. Treine à vontade.", essa também nos pênaltis.)
   - **Prova:** 1º Parar ou seguir, no quadro → "Parar leva tudo o que juntou. Seguir arrisca." · 1º erro → "Errou, mas a prova segue. Restam 2 vidas." · 1ª vez na última vida → "Última vida: errou, acaba e leva 75%." · 1ª difícil sem ajuda usada → "Travou? Use uma ajuda. O relógio não para." · 1º tempo esgotado → "Acabou o tempo: conta como erro." · Arquibancada com menos de 30 respostas → "Pouca gente respondeu: vale como Tira uma."
   - **Time do Dia:** 1ª vez (linha de exemplo se pintando) → "Adivinhe o clube secreto em 6 chutes." · depois do 1º chute → "Verde é igual. Amarelo é perto." · 1ª seta → "↑ o secreto é maior; ↓ é menor." · 1ª vez cores em amarelo → "Cores em amarelo: uma bate." · 3º chute errado sem nenhum verde → "Comece fechando o estado e a série." · busca sem resultado → "Só clubes das Séries A, B e C de 2026."
   - **Crava:** 1º palpite cravado → "Dá pra mudar até a bola rolar." · 1ª rodada antes do 1º jogo (aponta a estrela) → "A estrela dobra os pontos de 1 jogo." · 1ª certeza travada → "A certeza travou: a rodada já começou." · 1ª vez com V/E/D → "Posição, pontos e os últimos 5 jogos." · 1º jogo com bola rolando → "Bola rolando: veja como a torcida cravou." · 1ª rodada encerrada → "Rodada fechada! Mande o resultado no grupo." A faixa "Aqui é só resenha" continua fixa.
@@ -848,7 +850,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - Lance do Dia na Home (o mesmo para todos, não multiplica pontos); X1 em qualquer lance; card de Lances na Home com o top 3 do dia.
 - Entra numa segunda 0h; partidas fechadas não mudam.
 
-#### Como está no servidor (05/11/2026; revisão de segurança feita no PR #108, ainda não publicado)
+#### Como está no servidor (05/11/2026; revisão de segurança feita no PR #108; no ar desde 05/11/2026, 8h16, com o PR #110)
 - **Data de corte:** `LANCES_UNIFICADOS_DESDE` em `src/jogo/regraLances.ts` e `lances_unificados_desde()` / `lances_dia_do_corte()` no banco (um teste confere que são iguais). Tudo decide pela **hora de criação** da partida, que a função passa ao banco ao começar. Partida criada antes do corte e fechada depois das 00h05 da segunda conta no domingo (`periodoNoCorte`), então teto e posição separam as regras pelo dia.
 - **Motor:** tabelas versionadas (`PONTOS` e `PONTOS_UNIFICADOS` em `penaltis.ts`; `TABELA_LANCES_ANTES` e `TABELA_LANCES_UNIFICADA` em `lances.ts`), escolhidas por `tabelaPenaltisDaPartida` / `tabelaLancesDaPartida`. Guarda do teto no total da partida.
 - **Faltas e cara a cara (função `lances`):** `nova` recebe `{ lance }` (3 tentativas do mesmo lance) ou `{ desafio }` (X1). A lista antiga de 3 ids só vale antes do corte; depois responde 426 `atualize_o_app`. A faixa é decidida ao começar (`faixaDaPartida`: corrigida pela taxa real, senão `faixaUnificada` do catálogo, senão a de sempre) e fica gravada no segredo da partida.
@@ -863,4 +865,52 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - **Relatórios:** `npm run balanco` com Lances juntos e por tipo, teto 150 e separação pela data de corte (`--regra antes|nova` mostra só uma).
 - **Ordem de publicação (obrigatória):** a migração primeiro, depois as funções `lances`, `nova-partida`, `lance-penalti` e `fechar-partida`, e o site com as telas antes de 16/11. A migração no ar não quebra as funções antigas; o contrário quebra (as funções novas chamam `penaltis_comecar` e os parâmetros novos de `lances_comecar`). Depois que houver partidas com a faixa gravada, as funções não voltam à versão anterior.
 - **Catálogo recalibrado (05/11/2026, depois do PR #106):** `scripts/lances/recalibrar.mjs` grava `dados/lances/faixas-unificadas.json` (chance do robô × fator humano medido, **0,418**: 9 gols em 30 tentativas, contra 21,5 do robô), e o `npm run catalogo-lances` põe `faixaUnificada` em cada lance. Resultado: todo fácil vira difícil e todo médio vira craque (31 difíceis e 20 craques; lista em `docs/propostas/lances-faixas-unificadas.md`). A correção por lance (30 tentativas de 8 pessoas) devolve os mais fáceis às faixas de baixo conforme as pessoas aprenderem.
-- **Falta:** as telas (outra sessão).
+
+#### Como está nas telas (05/11/2026; PR das telas, no site antes de 16/11)
+- **Qual tela:**
+  - `lancesUnificados()`, em `src/telas/corte.ts`, decide pelo relógio do aparelho. Até domingo 15/11, ficam as telas de antes, sem mudança.
+  - **Relógio atrasado depois do corte:** a lista antiga recebe 426 `atualize_o_app`, e a tela única passa a valer até recarregar.
+  - **Relógio adiantado antes do corte:** o servidor aceita o formato novo, com a tabela antiga.
+  - Em dev: `?corte=depois` ou `?corte=antes`.
+- **Tela única** (`src/telas/lances.ts`; conta pura em `src/jogo/lancesTelaUnica.ts` e `ordenarTelaUnica` em `src/jogo/lancesTextos.ts`):
+  - **No topo:** "Seus 3 melhores de hoje" (3 números, "—" vazio) e "Valendo hoje: N de 10".
+  - **Filtros:** tipo (Todos · Pênaltis · Faltas · Cara a cara, pela aba da rota); clube (abre no time da pessoa); Todos / Meus troféus / Perto do próximo; e ⭐.
+  - **Itens e ordem:** a Disputa livre (sempre primeiro, em qualquer clube), todas as disputas do catálogo e os lances. Depois, favoritos → seu time → Seleção → outros.
+  - **Card:** a faixa do catálogo recalibrado com os pontos novos ("Difícil · 36"), o placar na disputa, a trilha e o selo "Lance do Dia".
+  - **Ficha:** só ⭐ e "Jogar". Nas disputas, a trilha 10 · 50 · 100 e a barra de Vitórias.
+- **Partida:**
+  - 3 tentativas do mesmo lance (`{ lance }`), com "Tentativa N de 3" no topo. A faixa vem da resposta do servidor: a da taxa real, se ela desceu.
+  - **Limite do dia (429):** a mesma partida segue de treino, com "Hoje já deu: 10 partidas valendo. Essa vai de treino: sem ponto nem medalha." e a dica "Hoje as 10 valendo já foram. Treine à vontade.".
+  - **Sem treino livre.**
+- **Resultado:**
+  - "Gols N de 3" e as 3 tentativas sob o título do lance.
+  - "Suas 3 melhores hoje: 96 · 72 · 54", ou "Não entrou nas suas 3 melhores de hoje: …".
+  - **Compartilhar:** o link do X1 (`?l=código`), com "Te chamei no X1 dos Lances: fiz N pro [time]. Faz mais?".
+  - **Botões:** "Jogar de novo" (o mesmo lance) e "Ver os lances".
+  - **Telão:** o título uma vez e as 3 tentativas.
+- **X1 dos Lances:**
+  - **Convite na Home:** a Home lê `ver_desafio_lances` e mostra "<quem> (<time>): N pontos no lance <título>. Mesmo lance, 3 tentativas. Faz mais?".
+  - **Aceitar:** "Aceitar o X1" (ou "Jogar agora") vai direto à partida (`{ desafio }`), com "X1: <apelido> fez N" no topo. O `?l=` sai do endereço.
+  - **Erros:** 404, 409 e 410 viram partida normal do mesmo lance, com uma linha do narrador ("Esse X1 expirou. Vai uma partida normal!").
+  - **Resultado:** o placar dos dois. Frase do narrador que fala em link cai na neutra, porque o X1 recebido não gera outro código.
+- **Home:**
+  - Card dos Lances com as 3 melhores do dia, só as da própria pessoa.
+  - "Jogar agora" pelas partidas valendo que faltam das 10.
+  - **Botão "Lance do Dia":** `lanceDoDia`, o mesmo para todos e sem bônus; abre a ficha do lance. O catálogo vem por `import()` depois de desenhar.
+- **Pênaltis:**
+  - **429:** joga sem valer pontos, com o aviso do limite.
+  - **410 `desafio_expirado`:** vira partida nova ("Esse X1 expirou. Vai uma partida nova!").
+  - **Tabela local:** a nova.
+  - **Resultado:** "Não entrou nas suas 3 melhores de hoje" e o selo de posição dos Lances.
+- **Outros textos:**
+  - **Prova:** fala em 3 melhores.
+  - **Ranking:** "por dia, de cada um valem as 3 melhores partidas de Lances e as 3 da Prova".
+  - **"?":** as tabelas novas, lidas do código (`src/jogo/regrasUnificadas.ts`).
+  - **Conquistas:** as disputas de pênaltis entram; a Disputa livre fica sem clube.
+  - **Perfil:** só "Lances" na posição e no recorde, porque o servidor junta com os pênaltis.
+  - **Narrador:** "Três chutes…" e "Escolhe um lance…" servem às duas regras.
+- **Medalhas dos pênaltis antes do corte:** os itens `penaltis:…` existem no banco desde a migração, mas só aparecem nas telas a partir de 16/11. A vitrine das torcidas já os soma.
+- **Em dev:**
+  - `?lancesFalsos&corte=depois`, com `=limite` e `&x1=ok|proprio|expirado|nao`;
+  - `?homeFalsa&corte=depois`, com `&l=código` e `&semMelhores`;
+  - `?penaltiFalso&corte=depois`, com `&limite` e `&x1Expirado`.

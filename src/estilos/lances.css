@@ -330,3 +330,41 @@
 .lances-jogo .grito {
   top: 50%;
 }
+
+/* ---------- tela única (depois do corte, jogo.md 14.7) ---------- */
+/* "Seus 3 melhores de hoje": três números e a linha de quantas valendo já foram. */
+.melhores-hoje {
+  gap: var(--e3);
+}
+
+.melhores-hoje .numeros {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* O alvo do X1 no HUD: uma linha própria embaixo do placar. */
+.lances-placar {
+  flex-wrap: wrap;
+}
+
+.x1-alvo {
+  flex: 0 0 100%;
+  font: 700 13px var(--fonte-rotulo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.x1-alvo[hidden] {
+  display: none;
+}
+
+/* Resultado: as 3 melhores do dia, embaixo da lista de tentativas. */
+.melhores-linha {
+  font: 700 14px var(--fonte-rotulo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
