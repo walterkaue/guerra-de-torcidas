@@ -12,6 +12,7 @@ import {
   faixaDaPartida,
   itemPenaltis,
   LANCES_UNIFICADOS_DESDE,
+  disputaDaPartida,
   lanceDoDia,
   medalhaDaDisputa,
   periodoNoCorte,
@@ -178,6 +179,34 @@ describe('medalhas dos pênaltis', () => {
     expect(MIGRACAO_MEDALHAS).toMatch(/p_gols >= 100 and p_vitorias >= 10 then 'ouro'/);
     expect(MIGRACAO_MEDALHAS).toMatch(/p_gols >= 50 then 'prata'/);
     expect(MIGRACAO_MEDALHAS).toMatch(/p_gols >= 10 then 'bronze'/);
+  });
+});
+
+describe('disputa da partida de pênaltis (sem Disputa livre desde o corte)', () => {
+  const catalogo = new Set(['flamengo-2022-copa-do-brasil', 'selecao-2016-olimpiada']);
+  const antes = '2026-11-08T23:59:59-03:00';
+  const depois = '2026-11-09T00:00:00-03:00';
+
+  it('antes do corte: id do catálogo vale; sem id ou fora do catálogo vira partida livre', () => {
+    expect(disputaDaPartida({ agora: antes, pedida: 'flamengo-2022-copa-do-brasil', catalogo })).toEqual({ disputa: 'flamengo-2022-copa-do-brasil' });
+    expect(disputaDaPartida({ agora: antes, pedida: undefined, catalogo })).toEqual({ disputa: null });
+    expect(disputaDaPartida({ agora: antes, pedida: 'inventada-2099', catalogo })).toEqual({ disputa: null });
+    expect(disputaDaPartida({ agora: antes, pedida: 42, catalogo })).toEqual({ disputa: null });
+  });
+
+  it('a partir do corte (09/11, 0h de Brasília): sem disputa do catálogo, 400 disputa_obrigatoria', () => {
+    expect(disputaDaPartida({ agora: depois, pedida: 'selecao-2016-olimpiada', catalogo })).toEqual({ disputa: 'selecao-2016-olimpiada' });
+    expect(disputaDaPartida({ agora: depois, pedida: undefined, catalogo })).toEqual({ erro: { status: 400, codigo: 'disputa_obrigatoria' } });
+    expect(disputaDaPartida({ agora: depois, pedida: 'inventada-2099', catalogo })).toEqual({ erro: { status: 400, codigo: 'disputa_obrigatoria' } });
+  });
+
+  it('X1: vale a disputa de quem chamou, seja qual for a pedida; sem ela, depois do corte, o X1 expira', () => {
+    const desafio = { disputaId: 'flamengo-2022-copa-do-brasil' };
+    expect(disputaDaPartida({ agora: depois, pedida: 'selecao-2016-olimpiada', catalogo, desafio })).toEqual({ disputa: 'flamengo-2022-copa-do-brasil' });
+    expect(disputaDaPartida({ agora: antes, pedida: undefined, catalogo, desafio: { disputaId: null } })).toEqual({ disputa: null });
+    expect(disputaDaPartida({ agora: depois, pedida: 'selecao-2016-olimpiada', catalogo, desafio: { disputaId: null } })).toEqual({
+      erro: { status: 410, codigo: 'desafio_expirado' },
+    });
   });
 });
 

@@ -6,7 +6,7 @@ import type { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { bancoDeTeste } from './banco';
+import { bancoDeTeste, cortarLancesNoFuturo } from './banco';
 
 const DIA = '2026-11-04';
 const SEMANA = '2026-11-02';
@@ -70,6 +70,7 @@ const gols = (n: number, id = 'a', recriou = false) => Array.from({ length: n },
 
 beforeAll(async () => {
   db = await bancoDeTeste();
+  await cortarLancesNoFuturo(db); // regra antiga dos Lances, seja qual for o dia de hoje
 }, TEMPO);
 
 describe('minigame lances', () => {

@@ -107,6 +107,29 @@ export function medalhaDaDisputa(gols: number, vitorias: number): MedalhaPenalti
 /** Id do item de medalha dos pênaltis (o mesmo que o banco grava em lances_gols.lance_id). */
 export const itemPenaltis = (disputaId: string | null | undefined): string => `penaltis:${disputaId ?? 'livre'}`;
 
+// ---------- disputa da partida de pênaltis (sem Disputa livre desde o corte) ----------
+export type DisputaDaPartida =
+  | { disputa: string | null }
+  | { erro: { status: 400; codigo: 'disputa_obrigatoria' } | { status: 410; codigo: 'desafio_expirado' } };
+
+/**
+ * A disputa com que uma partida de pênaltis começa (decisão do Kauê em 05/11/2026, seção 14.7). No X1, a da partida de
+ * quem chamou (a medalha vai para ela); senão, a pedida, só se está no catálogo (uma disputa inventada abriria
+ * medalhas sem fim na vitrine). Antes do corte, sem disputa vira partida livre; a partir dele, não há Disputa livre:
+ * 400 'disputa_obrigatoria', ou 410 'desafio_expirado' no X1 sem disputa (só existiria um de antes do corte).
+ * A nova-partida decide por aqui, e a penaltis_comecar confere de novo no banco.
+ */
+export function disputaDaPartida(o: {
+  agora: Date | string;
+  pedida: unknown;
+  catalogo: ReadonlySet<string>;
+  desafio?: { disputaId: string | null } | null;
+}): DisputaDaPartida {
+  const disputa = o.desafio ? o.desafio.disputaId : typeof o.pedida === 'string' && o.catalogo.has(o.pedida) ? o.pedida : null;
+  if (disputa || !ehUnificada(o.agora)) return { disputa };
+  return { erro: o.desafio ? { status: 410, codigo: 'desafio_expirado' } : { status: 400, codigo: 'disputa_obrigatoria' } };
+}
+
 // ---------- Lance do Dia ----------
 const SAL_LANCE_DO_DIA = 0x1d1a;
 

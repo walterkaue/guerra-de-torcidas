@@ -18,17 +18,12 @@
 
 import { admin, configDeteccao, ErroHttp, lerCorpo, servir, sortear, usuario } from '../_shared/comum.ts';
 import { sortearSementes } from '../_shared/jogo/penaltis.ts';
-import { ehUnificada } from '../_shared/jogo/regraLances.ts';
+import { disputaDaPartida, ehUnificada } from '../_shared/jogo/regraLances.ts';
 import { dificuldadeAgora } from '../_shared/tempo.ts';
 import { DISPUTAS } from '../_shared/dados/disputas.ts';
 
-const IDS_DISPUTAS = new Set(DISPUTAS.map((d) => d.id));
-
-/**
- * Disputa histórica é só cenário (jogo.md, seção 6): só vale id do catálogo (uma disputa inventada abriria medalhas
- * sem fim na vitrine). Fora dele, null: antes do corte vira partida livre; depois, 'disputa_obrigatoria'.
- */
-const disputaDoCorpo = (v: unknown): string | null => (typeof v === 'string' && IDS_DISPUTAS.has(v) ? v : null);
+/** Disputa histórica é só cenário (jogo.md, seção 6); só vale id do catálogo (disputaDaPartida, em regraLances.ts). */
+const IDS_DISPUTAS: ReadonlySet<string> = new Set(DISPUTAS.map((d) => d.id));
 
 servir(async (req) => {
   const sb = admin();
@@ -58,13 +53,10 @@ servir(async (req) => {
     desafio = { ...data, disputa_id: (origem.disputa_id as string | null) ?? null };
   }
 
-  // No X1, a disputa de quem chamou; senão, a do corpo (só do catálogo).
-  const disputa = desafio ? desafio.disputa_id : disputaDoCorpo(corpo.disputa);
-  if (ehUnificada(agora) && !disputa) {
-    // Depois do corte toda partida de pênaltis é de uma disputa; um X1 sem disputa não existe (o de antes expira).
-    if (desafio) throw new ErroHttp(410, 'desafio_expirado');
-    throw new ErroHttp(400, 'disputa_obrigatoria');
-  }
+  // No X1, a disputa de quem chamou; senão, a do corpo (só do catálogo). Sem Disputa livre a partir do corte.
+  const decisao = disputaDaPartida({ agora, pedida: corpo.disputa, catalogo: IDS_DISPUTAS, desafio: desafio && { disputaId: desafio.disputa_id } });
+  if ('erro' in decisao) throw new ErroHttp(decisao.erro.status, decisao.erro.codigo);
+  const disputa = decisao.disputa;
 
   const cfg = await configDeteccao(sb);
   // partidas.semente é obrigatória, mas as partidas novas não a usam: valem as sementes por lance, guardadas

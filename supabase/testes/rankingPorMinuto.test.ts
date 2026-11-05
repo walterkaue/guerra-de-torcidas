@@ -4,7 +4,7 @@
 
 import type { PGlite } from '@electric-sql/pglite';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { bancoDeTeste } from './banco';
+import { bancoDeTeste, cortarLancesNoFuturo } from './banco';
 
 const SEMANA = '2026-10-19'; // segunda
 const SEMANA_B = '2026-10-26'; // segunda seguinte
@@ -159,6 +159,7 @@ describe('mesma conta do recálculo completo', () => {
 
   beforeAll(async () => {
     db = await bancoDeTeste();
+    await cortarLancesNoFuturo(db); // regra antiga dos Lances, seja qual for o dia de hoje
     admin = uuid();
     await db.query('insert into auth.users (id) values ($1)', [admin]);
     await db.query('insert into public.administradores (usuario_id) values ($1)', [admin]);
@@ -273,6 +274,7 @@ describe('semana virando, rotina vazia e fila', () => {
 
   beforeAll(async () => {
     db = await bancoDeTeste();
+    await cortarLancesNoFuturo(db); // regra antiga dos Lances, seja qual for o dia de hoje
   }, TEMPO);
 
   it('duas semanas na mesma fila: uma rotina refaz as duas; fechar_semana consome a fila sem rotina', async () => {

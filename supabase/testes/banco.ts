@@ -61,3 +61,20 @@ export async function bancoDeTeste(antesDe?: string): Promise<PGlite> {
   }
   return db;
 }
+
+/**
+ * Muda a data de corte dos Lances unificados (seção 14.7) só neste banco. As funções leem o corte a cada chamada, e
+ * as partidas dos testes nascem com now(): sem isso, um teste da regra antiga quebra sozinho a partir do corte de
+ * verdade (09/11/2026), só porque o relógio passou dele.
+ */
+export async function cortarLancesEm(db: PGlite, instante: string, dia: string): Promise<void> {
+  await db.exec(`
+    create or replace function public.lances_unificados_desde() returns timestamptz language sql immutable set search_path = ''
+      as $$ select timestamptz '${instante}' $$;
+    create or replace function public.lances_dia_do_corte() returns date language sql immutable set search_path = ''
+      as $$ select date '${dia}' $$;
+  `);
+}
+
+/** Regra antiga dos Lances em qualquer dia em que o teste rodar (corte em 2099). */
+export const cortarLancesNoFuturo = (db: PGlite): Promise<void> => cortarLancesEm(db, '2099-01-05 00:00:00-03', '2099-01-05');

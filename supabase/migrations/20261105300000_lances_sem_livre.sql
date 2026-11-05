@@ -1,6 +1,6 @@
 -- Lances do Jogo sem Disputa livre e com corte antecipado (decisão do Kauê em 05/11/2026; docs/jogo.md, seção 14.7).
 -- Nenhuma coluna ou tabela é apagada ou renomeada. Apaga só as linhas 'penaltis:livre' de lances_gols, que nunca
--- apareceram em tela nenhuma.
+-- apareceram como medalha (só nos totais de "Ver meus dados").
 --
 --   1. Corte antecipado: segunda 09/11/2026, 0h de Brasília (era 16/11). Igual a LANCES_UNIFICADOS_DESDE e
 --      DIA_DO_CORTE em src/jogo/regraLances.ts (o teste confere o texto desta migração).
@@ -158,7 +158,9 @@ begin
 end;
 $$;
 
--- As linhas da Disputa livre (preenchidas desde 31/10 pela 20261105100000) nunca apareceram em tela nenhuma.
+-- As linhas da Disputa livre (preenchidas desde 31/10 pela 20261105100000) nunca apareceram como medalha; saem também
+-- dos totais de "Ver meus dados" (gols_lances e vitorias_penaltis), que leem lances_gols. Não voltam: o gatilho agora
+-- ignora partida sem disputa.
 delete from public.lances_gols where lance_id = 'penaltis:livre';
 
 -- ---------------------------------------------------------------------------

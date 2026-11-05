@@ -3,7 +3,7 @@
 
 import type { PGlite } from '@electric-sql/pglite';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { aplicarMigracao, bancoDeTeste } from './banco';
+import { aplicarMigracao, bancoDeTeste, cortarLancesNoFuturo } from './banco';
 
 const MIGRACAO = '20261020300000_pre_temporada.sql';
 const SEMANA = '2026-10-19'; // segunda
@@ -83,6 +83,7 @@ describe('pré-temporada: configuração', () => {
   let db: PGlite;
   beforeAll(async () => {
     db = await bancoDeTeste();
+    await cortarLancesNoFuturo(db); // regra antiga dos Lances, seja qual for o dia de hoje
   }, TEMPO);
 
   it('Prova e Time do Dia fora do amistoso, Crava desde a 32ª', async () => {
@@ -102,6 +103,7 @@ describe('ranking da semana com o Time do Dia', () => {
   let db: PGlite;
   beforeAll(async () => {
     db = await bancoDeTeste();
+    await cortarLancesNoFuturo(db); // regra antiga dos Lances, seja qual for o dia de hoje
   }, TEMPO);
 
   it('soma o Time do Dia por cima das partidas, no time de quando jogou', async () => {
@@ -167,6 +169,7 @@ describe('posições e recorde', () => {
 
   beforeAll(async () => {
     db = await bancoDeTeste();
+    await cortarLancesNoFuturo(db); // regra antiga dos Lances, seja qual for o dia de hoje
     ana = await torcedor(db, 'flamengo');
     beto = await torcedor(db, 'palmeiras');
     caio = await torcedor(db, 'outro');
