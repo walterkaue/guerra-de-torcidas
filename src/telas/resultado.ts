@@ -12,20 +12,23 @@ import { ID_SELECAO, lembrancaDaDisputa } from '../jogo/disputas';
 import { placarEmoji } from '../jogo/emoji';
 import { escolherFrase } from '../narrador/escolher';
 import { contextoDoTime } from '../narrador/sessao';
-import { ouvirRanking, rankingCalculadoEm, rankingDaSemana, type LinhaRanking } from '../servidor/api';
+import { minhasMedalhas, ouvirRanking, rankingCalculadoEm, rankingDaSemana, type LinhaRanking } from '../servidor/api';
 import { ESPERA_RANKING_MS, tabelaIncluiPartida } from '../jogo/rankingMinuto';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { bomMomentoDosLances } from '../jogo/apoio';
 import { oferecerApoio } from './apoio';
 import { convidarParaAvisos } from './convitePush';
-import { linhaMelhoresDoDia, textoForaDasMelhores } from '../jogo/lancesTextos';
+import { golsDaDisputa, linhaMelhoresDoDia, textoForaDasMelhores } from '../jogo/lancesTextos';
 import { numero, placa, selo } from './blocos';
 import { lancesUnificados } from './corte';
 import { contar, htmlResultado, htmlSelosDaPosicao, ligarResultado } from './resultadoPadrao';
+import { mostrarRumoDaDisputa } from './rumoMedalhas';
 import { vibrar } from './toque';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
+// Em desenvolvimento, ?penaltiFalso lê as medalhas de mentira (src/dev/penaltiFalso.ts).
+const PENALTI_FALSO = import.meta.env.DEV && new URLSearchParams(location.search).has('penaltiFalso');
 const semMovimento = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 /** Confete curto nas cores do time (só na vitória e só para quem não pediu menos movimento). */
@@ -88,7 +91,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
   const r = d.resultado;
   const p = r.pontos;
   const paraTime = proTime(time);
-  const nomeAdversario = d.desafio ? (d.desafio.apelido ?? 'Quem te chamou') : (d.disputa?.adversario ?? 'Máquina');
+  // Na disputa histórica (inclusive no X1 recebido) o adversário é o de verdade; o duelo do X1 mostra quem chamou.
+  const nomeAdversario = d.disputa?.adversario ?? (d.desafio ? (d.desafio.apelido ?? 'Quem te chamou') : 'Máquina');
   // Na disputa da Seleção o placar é da Seleção; os pontos continuam indo para o time.
   const nomeDoLado = d.disputa?.clube === ID_SELECAO ? SELECAO.nome : outro ? 'Você' : time.nome;
 
@@ -152,6 +156,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
       )
     : '';
 
+  // Disputa histórica que contou (servidor fechou e sem suspeita): a linha rumo à medalha. Treino e sem conexão não têm.
+  const contouProMedalha = !!d.disputa && !!d.servidor && d.valendo && !d.servidor.sobSuspeita;
   const detalhes = etiquetas.filter(([, v]) => v > 0);
   // O efeito no ranking chega depois (até 1 minuto): começa como selo de espera.
   const esperaRanking = !situacao && !!d.servidor && !outro;
@@ -173,7 +179,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
       detalhes.length
         ? `<div class="numeros${detalhes.length === 3 ? ' tres' : ''}">${detalhes.map(([nome, v]) => numero(`+${v}`, nome)).join('')}</div>`
         : ''
-    }${blocoDesafio}`,
+    }${blocoDesafio}${contouProMedalha ? '<div data-rumo hidden></div>' : ''}`,
     frases: melhoresDoDia ? [...d.frasesFinais, melhoresDoDia] : d.frasesFinais,
     aviso: situacao ? { texto: situacao, forte: !d.valendo } : null,
     selos:
@@ -186,6 +192,13 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
   });
 
   contar(root.querySelector<HTMLElement>('[data-contador]'), p.total);
+  if (contouProMedalha && d.disputa)
+    void mostrarRumoDaDisputa({
+      alvo: root.querySelector<HTMLElement>('[data-rumo]')!,
+      partida: { id: d.disputa.id, titulo: d.disputa.titulo, gols: golsDaDisputa(r.cobrancas), venceu: r.venceu },
+      cores: [time.cores[0], time.cores[1], '#ffd23f'],
+      ler: PENALTI_FALSO ? () => import('../dev/penaltiFalso').then((m) => m.minhasMedalhas()) : () => minhasMedalhas(),
+    });
   // Fim da morte súbita: o coração para ou explode (docs/jogo.md 14.2).
   if (r.decisao === 'morte_subita') vibrar(r.venceu ? 'gol' : 'erro');
   // Carreira: só quando o servidor fechou a partida (o XP sai de lá).

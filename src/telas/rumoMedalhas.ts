@@ -5,7 +5,8 @@
 import '../estilos/trofeus.css';
 import { esc } from '../app';
 import type { Medalha } from '../jogo/lances';
-import { NOME_DA_MEDALHA, linhasRumoDaPartida, trilhaDoLance, type LinhaMedalha } from '../jogo/lancesTextos';
+import { NOME_DA_MEDALHA, linhaRumoDisputa, linhasRumoDaPartida, trilhaDaDisputa, trilhaDoLance, type LinhaMedalha } from '../jogo/lancesTextos';
+import { itemPenaltis } from '../jogo/regraLances';
 import { placa, trilha } from './blocos';
 import { papelPicadoNaTela } from './papelPicado';
 import { vibrar } from './toque';
@@ -66,6 +67,58 @@ export async function mostrarRumoDasMedalhas(o: {
   if (!o.alvo.isConnected) return;
   const p = placaRumo(o.jogados, depois, o.novas);
   if (!p) return;
+  o.alvo.innerHTML = placa(p.html, { titulo: 'Rumo às medalhas', filete: true, classe: 'rumo-placa' });
+  o.alvo.hidden = false;
+  if (p.subiu) {
+    vibrar('gol');
+    papelPicadoNaTela(o.alvo, o.cores);
+  }
+}
+
+/** O que a partida de pênaltis deu à disputa: os gols que contam (8 primeiras cobranças) e se venceu. */
+export interface PartidaDaDisputa {
+  id: string;
+  titulo: string;
+  gols: number;
+  venceu: boolean;
+}
+
+/**
+ * Placa da disputa histórica ("+3 rumo ao bronze · 8/10") com a trilha compacta. `depois` é a leitura de
+ * minhas_medalhas() logo depois do fechamento; o "antes" sai dela menos o que a partida deu. Puro: só HTML.
+ */
+export function placaRumoDisputa(j: PartidaDaDisputa, depois: readonly LinhaMedalha[]): { html: string; subiu: boolean } {
+  const d = depois.find((l) => l.lance_id === itemPenaltis(j.id));
+  const vit = j.venceu ? 1 : 0;
+  const fim = { gols: d?.gols ?? j.gols, vitorias: d?.vitorias ?? vit };
+  const antes = { gols: Math.max(0, fim.gols - j.gols), vitorias: Math.max(0, fim.vitorias - vit) };
+  const linha = linhaRumoDisputa(antes, fim);
+  const html = `<ul class="rumo-lista"><li class="rumo-linha">
+        <div class="rumo-topo"><span class="rumo-titulo">${esc(j.titulo)}</span>${linha.subiu ? seloDaMedalha(linha.subiu) : ''}</div>
+        <p class="rumo-texto">${esc(linha.texto)}</p>
+        ${trilha(trilhaDaDisputa(fim.gols, fim.vitorias), { compacta: true })}
+      </li></ul>`;
+  return { html, subiu: !!linha.subiu };
+}
+
+/**
+ * Preenche `alvo` no resultado da disputa histórica. Só chame com partida que contou (servidor fechou e sem
+ * suspeita). Leitura que falha, ou tela que já mudou: não mostra nada. Subiu de medalha: papel picado e vibração.
+ */
+export async function mostrarRumoDaDisputa(o: {
+  alvo: HTMLElement;
+  partida: PartidaDaDisputa;
+  cores: readonly string[];
+  ler: () => Promise<readonly LinhaMedalha[]>;
+}): Promise<void> {
+  let depois: readonly LinhaMedalha[];
+  try {
+    depois = await o.ler();
+  } catch {
+    return;
+  }
+  if (!o.alvo.isConnected) return;
+  const p = placaRumoDisputa(o.partida, depois);
   o.alvo.innerHTML = placa(p.html, { titulo: 'Rumo às medalhas', filete: true, classe: 'rumo-placa' });
   o.alvo.hidden = false;
   if (p.subiu) {
