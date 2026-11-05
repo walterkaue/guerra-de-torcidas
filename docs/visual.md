@@ -94,7 +94,8 @@ Home nova, decidida em 31/10/2026. De cima para baixo:
 Card 'Telão do estádio' (decidido em 31/10/2026): arquibancada do clube no alto com a luz pelo horário da Home; telão pendurado com o resultado de cada jogo (placar nos Lances, escada na Prova, bolinhas sem revelar o clube no Time do Dia, palpites ou acertos no Crava); '+pontos pro time' em Anton amarelo como protagonista; adesivo do narrador; gramado e rodapé com selo da Carreira, link e aviso da pré-temporada. Sem escudo, camisa ou pessoa; legível na miniatura do WhatsApp. A arquibancada do card é sempre a do clube, mesmo em lance da seleção. Todo minigame novo usa este modelo, com seu conteúdo dentro do telão.
 
 ### Ranking
-- Abas: Semana, Temporada, 52 semanas, Cidades.
+- Abas: Semana, Temporada, Cidades, 52 semanas (a de 52 semanas ainda não existe).
+- **Aba Cidades:** seletor Esta semana/Passada (provisória e travada como na aba Semana) e sub-abas Seu estado (cidades do estado da pessoa), Top nacional (20 primeiras) e Estados. Linha: posição, nome (com UF no top), jogadores na semana e média dos 30 melhores; a sua cidade (ou estado) destacada como nas torcidas. Sem cidade escolhida, abre em Top nacional com convite para `#cidade`. Só entram 5+ jogadores; abaixo disso, "Faltam 2 pra sua cidade entrar no ranking. Chama a galera.". Nenhum apelido.
 - Tabela da Série A com faixa amarela no líder e vermelha na zona de rebaixamento, sua torcida destacada.
 - Explicação curta de como conta, no rodapé.
 
@@ -104,8 +105,8 @@ Card 'Telão do estádio' (decidido em 31/10/2026): arquibancada do clube no alt
 
 ### No MVP (até a fase 1.5 chegar)
 - **Sem divisões ainda:** onde está "Série A", mostrar o ranking geral da semana com os 20 times (Campeão da semana, com a Maior torcida como segunda aba). Sem faixa de rebaixamento.
-- **Sem cidade ainda:** o bloco do time não mostra cidade.
-- **Ranking** mostra as abas Semana e Temporada (desde 02/11/2026); 52 semanas e Cidades ainda não.
+- **Cidade na Home:** um bloco só, abaixo do duelo. Com cidade: "Sua cidade está em 3º em SP" (ou o "Faltam N") e a frase `cidade_*` do narrador, levando à aba Cidades. Sem cidade, depois da 1ª partida: lembrete "Defende sua cidade também?" que leva a `#cidade`, no máximo 1 vez por semana (`cidadeLembrete`). O bloco do time em si não mostra cidade.
+- **Ranking** mostra as abas Semana, Temporada (desde 02/11/2026) e Cidades; 52 semanas ainda não.
 - **Ranking público só de torcidas:** nenhum apelido aparece em ranking; cada pessoa vê só a própria posição.
 
 ### Bonecos
