@@ -64,6 +64,11 @@ export interface Lance extends CenaLance {
   /** Cara a cara: como a bola chegou ("A jogada"), sem nomes, e de onde ela vem. */
   chegada?: string;
   chegadaDe?: 'tras' | 'esquerda' | 'direita' | 'rebote';
+  /**
+   * Faixa dos Lances unificados (seção 14.7): o catálogo recalibrado pelo acerto real das pessoas, que vale para
+   * partidas criadas a partir de 16/11/2026. Sem ela, vale `faixa`. A partida grava a faixa usada (nunca muda depois).
+   */
+  faixaUnificada?: Faixa;
 }
 
 /** Pontos de um gol em cada faixa de dificuldade; "Recriou o lance" soma o bônus. */
@@ -72,6 +77,26 @@ export const BONUS_RECRIOU = 6;
 export const LANCES_POR_PARTIDA = 3;
 /** Máximo de uma partida (3 gols de craque recriando o lance): 3 × 40 = 120. */
 export const TETO_PARTIDA = LANCES_POR_PARTIDA * (PONTOS_FAIXA.craque + BONUS_RECRIOU);
+
+/** Uma tabela de pontos dos Lances: gol por faixa, bônus de recriar e o teto da partida. */
+export interface TabelaLances {
+  faixa: Readonly<Record<Faixa, number>>;
+  recriou: number;
+  teto: number;
+}
+
+/** A tabela de antes (partidas criadas até 15/11/2026): 3 lances escolhidos, teto 120. */
+export const TABELA_LANCES_ANTES: TabelaLances = { faixa: PONTOS_FAIXA, recriou: BONUS_RECRIOU, teto: TETO_PARTIDA };
+
+/**
+ * Lances unificados (seção 14.7, opção B de docs/propostas/lances-unificados.md): partida = 3 tentativas do mesmo
+ * lance, teto 150 = 3 × (42 + 8).
+ */
+export const TABELA_LANCES_UNIFICADA: TabelaLances = {
+  faixa: { facil: 24, media: 30, dificil: 36, craque: 42 },
+  recriou: 8,
+  teto: 150,
+};
 
 /** Faixa pela chance de acerto: fácil ≥ 75%, média 50–75%, difícil 30–50%, craque < 30% (como na Prova de Boleiro). */
 export function faixaPorChance(chance: number): Faixa {
@@ -247,7 +272,13 @@ export function caminhoDoChute(
 }
 
 /** Resolve o lance i de uma partida: o gesto do jogador contra a barreira e o goleiro da máquina. */
-export function resolverLance(semente: number, i: number, cena: CenaLance, gestoBruto: GestoCobranca): ResultadoLance {
+export function resolverLance(
+  semente: number,
+  i: number,
+  cena: CenaLance,
+  gestoBruto: GestoCobranca,
+  tabela: TabelaLances = TABELA_LANCES_ANTES,
+): ResultadoLance {
   const g = normalizarCobranca(gestoBruto);
   const sorteio = sortear(semente, i, cena);
   const { tremX, tremY, leu } = sorteio;
@@ -311,7 +342,7 @@ export function resolverLance(semente: number, i: number, cena: CenaLance, gesto
 
   if (defendeu) return { ...base, angulo, desfecho: 'defesa', tFim: tk };
   const recriou = zonaBola === cena.zonaHistorica;
-  const pontos = PONTOS_FAIXA[cena.faixa] + (recriou ? BONUS_RECRIOU : 0);
+  const pontos = tabela.faixa[cena.faixa] + (recriou ? tabela.recriou : 0);
   return { ...base, angulo, raspouTrave, recriou, desfecho: 'gol', pontos };
 }
 

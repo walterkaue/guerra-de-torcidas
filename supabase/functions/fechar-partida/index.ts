@@ -5,7 +5,8 @@
 // só se aproveita a escolha do par ou ímpar.
 // Corpo: { partidaId: string, gestos: Gestos }
 
-import { admin, configDeteccao, ErroHttp, lerCorpo, lerDesempenho, servir, sortear, usuario } from '../_shared/comum.ts';
+import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
+import { admin, codigoDesafio, configDeteccao, ErroHttp, lerCorpo, lerDesempenho, servir, usuario } from '../_shared/comum.ts';
 import { motivoSuspeita } from '../_shared/jogo/deteccao.ts';
 import {
   lerSementes,
@@ -15,6 +16,7 @@ import {
   type Gestos,
   type ResultadoPartida,
 } from '../_shared/jogo/penaltis.ts';
+import { ehUnificada, periodoNoCorte, tabelaPenaltisDaPartida } from '../_shared/jogo/regraLances.ts';
 import { periodoDaPartida } from '../_shared/tempo.ts';
 
 const numero = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
@@ -41,10 +43,18 @@ function lerGestos(v: unknown): Gestos {
   return lidos;
 }
 
-/** Código do desafio: 8 letras/números minúsculos, sem caracteres que confundem. */
-function codigoDesafio(): string {
-  const alfabeto = 'abcdefghjkmnpqrstuvwxyz23456789';
-  return Array.from({ length: 8 }, () => alfabeto[sortear(alfabeto.length)]).join('');
+/** Regra nova: as 3 melhores partidas de Lances de hoje e quantas ainda valem (null antes do corte). */
+async function lancesHoje(sb: SupabaseClient, uid: string): Promise<{ melhoresDoDia: number[]; restantesHoje: number | null }> {
+  if (!ehUnificada(new Date())) return { melhoresDoDia: [], restantesHoje: null };
+  try {
+    const { data, error } = await sb.rpc('lances_hoje', { p_torcedor: uid });
+    if (error) throw error;
+    const l = (data as { feitas: number; limite: number; melhores: number[] }[] | null)?.[0];
+    return { melhoresDoDia: l?.melhores ?? [], restantesHoje: l ? Math.max(0, l.limite - l.feitas) : null };
+  } catch (e) {
+    console.error(e);
+    return { melhoresDoDia: [], restantesHoje: null };
+  }
 }
 
 servir(async (req) => {
@@ -105,12 +115,15 @@ servir(async (req) => {
       Number(partida.dificuldade),
       segredo.numero_narrador,
       desafio?.cobrancas,
+      // A tabela da hora em que a partida foi criada (Lances unificados, seção 14.7).
+      tabelaPenaltisDaPartida(partida.criada_em),
     );
   } catch {
     throw new ErroHttp(400, 'gestos_invalidos');
   }
 
-  const { dia, semana } = periodoDaPartida(new Date(partida.criada_em), agora);
+  // Partida criada antes do corte e fechada depois das 00h05 da segunda conta no dia em que começou.
+  const { dia, semana } = periodoNoCorte(partida.criada_em, periodoDaPartida(new Date(partida.criada_em), agora));
 
   const posicao = async () => {
     const { data } = await sb
@@ -175,6 +188,7 @@ servir(async (req) => {
   const confirmadaEm = new Date().toISOString();
   const rankingDepois = await posicao();
   const desempenho = await lerDesempenho(sb, 'desempenho_partida', { p_partida: partida.id });
+  const hoje = await lancesHoje(sb, uid);
 
   return {
     resultado,
@@ -185,6 +199,8 @@ servir(async (req) => {
     ranking: { antes: rankingAntes, depois: rankingDepois },
     confirmadaEm,
     desempenho,
+    melhoresDoDia: hoje.melhoresDoDia,
+    restantesHoje: hoje.restantesHoje,
     desafio: codigo ? { codigo } : null,
     // Desafio: mais pontos vence; empate em pontos fica com quem desafiou (chegou primeiro).
     comparacao: desafio && {

@@ -127,3 +127,9 @@ export async function lerDesempenho(
   const l = ((data ?? []) as { posicao: number | null; total: number; recorde: number | null; novo_recorde: boolean }[])[0];
   return l ? { posicao: l.posicao, total: l.total, recorde: l.recorde, novoRecorde: !!l.novo_recorde } : null;
 }
+
+/** Código de desafio por link (X1): 8 letras/números minúsculos, sem caracteres que confundem. */
+export function codigoDesafio(): string {
+  const alfabeto = 'abcdefghjkmnpqrstuvwxyz23456789';
+  return Array.from({ length: 8 }, () => alfabeto[sortear(alfabeto.length)]).join('');
+}

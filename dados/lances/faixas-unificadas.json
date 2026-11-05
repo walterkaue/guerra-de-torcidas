@@ -1,0 +1,317 @@
+{
+  "aviso": "GERADO por scripts/lances/recalibrar.mjs. Faixa dos Lances unificados (seção 14.7), só para partidas criadas a partir de 16/11/2026.",
+  "medidoEm": "2026-11-05",
+  "fator": 0.418,
+  "origem": "retrato da proposta (04/11/2026)",
+  "tentativas": 30,
+  "gols": 9,
+  "golsDoRobo": 21.524,
+  "lances": {
+    "flamengo-1981-toquio": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.765,
+      "chancePessoa": 0.32
+    },
+    "flamengo-2001-falta-do-tri": {
+      "antes": "dificil",
+      "unificada": "craque",
+      "chanceRobo": 0.395,
+      "chancePessoa": 0.165
+    },
+    "flamengo-2019-virada-em-lima": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.869,
+      "chancePessoa": 0.363
+    },
+    "vasco-1998-falta-no-monumental": {
+      "antes": "craque",
+      "unificada": "craque",
+      "chanceRobo": 0.263,
+      "chancePessoa": 0.11
+    },
+    "vasco-2000-virada-do-seculo": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.958,
+      "chancePessoa": 0.4
+    },
+    "sao-paulo-2011-gol-100": {
+      "antes": "media",
+      "unificada": "craque",
+      "chanceRobo": 0.653,
+      "chancePessoa": 0.273
+    },
+    "sao-paulo-1992-falta-de-toquio": {
+      "antes": "media",
+      "unificada": "craque",
+      "chanceRobo": 0.666,
+      "chancePessoa": 0.279
+    },
+    "sao-paulo-2005-gol-do-tri": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.753,
+      "chancePessoa": 0.315
+    },
+    "corinthians-1977-fim-do-jejum": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.818,
+      "chancePessoa": 0.342
+    },
+    "corinthians-1995-falta-da-copa": {
+      "antes": "media",
+      "unificada": "craque",
+      "chanceRobo": 0.533,
+      "chancePessoa": 0.223
+    },
+    "corinthians-2012-gol-da-america": {
+      "antes": "media",
+      "unificada": "dificil",
+      "chanceRobo": 0.731,
+      "chancePessoa": 0.306
+    },
+    "palmeiras-2021-tri-da-america": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.873,
+      "chancePessoa": 0.365
+    },
+    "palmeiras-2022-falta-da-recopa": {
+      "antes": "media",
+      "unificada": "craque",
+      "chanceRobo": 0.669,
+      "chancePessoa": 0.28
+    },
+    "fluminense-2023-bomba-da-meia-lua": {
+      "antes": "dificil",
+      "unificada": "craque",
+      "chanceRobo": 0.451,
+      "chancePessoa": 0.189
+    },
+    "fluminense-2023-o-artilheiro-abre": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.821,
+      "chancePessoa": 0.343
+    },
+    "fluminense-1984-o-gol-do-bi": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.758,
+      "chancePessoa": 0.317
+    },
+    "botafogo-2024-com-um-a-menos": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.904,
+      "chancePessoa": 0.378
+    },
+    "botafogo-2024-fecha-a-conta": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.829,
+      "chancePessoa": 0.347
+    },
+    "botafogo-1989-gol-da-libertacao": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.86,
+      "chancePessoa": 0.36
+    },
+    "santos-1961-gol-de-placa": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.814,
+      "chancePessoa": 0.34
+    },
+    "santos-2011-o-chute-do-tri": {
+      "antes": "media",
+      "unificada": "craque",
+      "chanceRobo": 0.653,
+      "chancePessoa": 0.273
+    },
+    "gremio-2017-a-cobertura": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.78,
+      "chancePessoa": 0.326
+    },
+    "gremio-1983-quase-sem-angulo": {
+      "antes": "media",
+      "unificada": "craque",
+      "chanceRobo": 0.704,
+      "chancePessoa": 0.294
+    },
+    "gremio-1995-o-rebote-do-olimpico": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.953,
+      "chancePessoa": 0.398
+    },
+    "internacional-2006-o-toque-do-mundo": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.77,
+      "chancePessoa": 0.322
+    },
+    "internacional-1975-gol-iluminado": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.914,
+      "chancePessoa": 0.382
+    },
+    "internacional-2010-a-arrancada": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.791,
+      "chancePessoa": 0.331
+    },
+    "palmeiras-2021-a-cabecada-do-bi": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.844,
+      "chancePessoa": 0.353
+    },
+    "selecao-2002-falta-de-shizuoka": {
+      "antes": "media",
+      "unificada": "craque",
+      "chanceRobo": 0.576,
+      "chancePessoa": 0.241
+    },
+    "selecao-1997-a-curva-da-falta": {
+      "antes": "craque",
+      "unificada": "craque",
+      "chanceRobo": 0.255,
+      "chancePessoa": 0.107
+    },
+    "selecao-1970-o-quarto-gol-do-tri": {
+      "antes": "media",
+      "unificada": "craque",
+      "chanceRobo": 0.545,
+      "chancePessoa": 0.228
+    },
+    "cruzeiro-1976-falta-de-santiago": {
+      "antes": "media",
+      "unificada": "craque",
+      "chanceRobo": 0.541,
+      "chancePessoa": 0.226
+    },
+    "cruzeiro-1997-o-rebote-do-bi": {
+      "antes": "dificil",
+      "unificada": "craque",
+      "chanceRobo": 0.405,
+      "chancePessoa": 0.169
+    },
+    "atletico-mg-1971-a-cabecada-do-titulo": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.839,
+      "chancePessoa": 0.351
+    },
+    "atletico-mg-2013-a-cabecada-dos-penaltis": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.856,
+      "chancePessoa": 0.358
+    },
+    "bahia-1989-a-cabecada-do-empate": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.819,
+      "chancePessoa": 0.342
+    },
+    "bahia-1989-a-virada-na-fonte-nova": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.891,
+      "chancePessoa": 0.373
+    },
+    "coritiba-1985-a-falta-do-titulo": {
+      "antes": "media",
+      "unificada": "craque",
+      "chanceRobo": 0.56,
+      "chancePessoa": 0.234
+    },
+    "coritiba-2013-a-virada-do-tetra": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.818,
+      "chancePessoa": 0.342
+    },
+    "athletico-pr-2021-o-voleio-do-bi": {
+      "antes": "media",
+      "unificada": "craque",
+      "chanceRobo": 0.539,
+      "chancePessoa": 0.225
+    },
+    "athletico-pr-2019-o-gol-da-copa": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.794,
+      "chancePessoa": 0.332
+    },
+    "bragantino-1990-o-gol-da-final-caipira": {
+      "antes": "media",
+      "unificada": "craque",
+      "chanceRobo": 0.666,
+      "chancePessoa": 0.279
+    },
+    "bragantino-2021-a-vaga-na-final": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.801,
+      "chancePessoa": 0.335
+    },
+    "vitoria-2026-o-golaco-do-empate": {
+      "antes": "media",
+      "unificada": "craque",
+      "chanceRobo": 0.605,
+      "chancePessoa": 0.253
+    },
+    "vitoria-2026-o-contra-ataque-do-titulo": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.771,
+      "chancePessoa": 0.322
+    },
+    "mirassol-2025-o-drible-da-libertadores": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.886,
+      "chancePessoa": 0.371
+    },
+    "mirassol-2025-o-gol-relampago": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.861,
+      "chancePessoa": 0.36
+    },
+    "remo-2025-o-chute-do-empate": {
+      "antes": "dificil",
+      "unificada": "craque",
+      "chanceRobo": 0.453,
+      "chancePessoa": 0.189
+    },
+    "remo-2025-a-cabecada-do-acesso": {
+      "antes": "facil",
+      "unificada": "dificil",
+      "chanceRobo": 0.835,
+      "chancePessoa": 0.349
+    },
+    "chapecoense-2016-a-virada-no-confronto": {
+      "antes": "media",
+      "unificada": "craque",
+      "chanceRobo": 0.706,
+      "chancePessoa": 0.295
+    },
+    "chapecoense-2016-o-gol-em-buenos-aires": {
+      "antes": "media",
+      "unificada": "dificil",
+      "chanceRobo": 0.738,
+      "chancePessoa": 0.308
+    }
+  }
+}
