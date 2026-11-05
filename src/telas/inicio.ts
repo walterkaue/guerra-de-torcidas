@@ -280,7 +280,11 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     b.addEventListener('click', () => irPara({ tela: 'times', depois: 'inicio' })),
   );
   // Sem time, a arquibancada inteira também leva à escolha (a faixa é o botão de verdade, para teclado e leitor).
-  if (!time) root.querySelector('.arquibancada')?.addEventListener('click', () => irPara({ tela: 'times', depois: 'inicio' }));
+  // O toque no próprio botão já navegou: o clique que sobe até a seção não navega de novo.
+  if (!time)
+    root.querySelector('.arquibancada')?.addEventListener('click', (e) => {
+      if (!(e.target as Element).closest('button')) irPara({ tela: 'times', depois: 'inicio' });
+    });
   root.querySelector('[data-acao="ranking"]')?.addEventListener('click', () => irPara({ tela: 'ranking' }));
   // Casa do [time]: abre a do seu time (se ainda não estiver pronta, a tela mostra o índice).
   root.querySelector('[data-acao="casa"]')?.addEventListener('click', () =>

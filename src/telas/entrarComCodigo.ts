@@ -34,11 +34,11 @@ export function telaEntrarComCodigo(root: HTMLElement, rota: Rota): () => void {
   let enviando = false;
   let paraHome: number | undefined;
 
-  // Volta à escolha do time de onde veio; quem ainda não tem time no servidor está no primeiro acesso (jogo.md 14.8).
+  // Volta à escolha do time de onde veio; quem ainda não tinha time está no primeiro acesso (jogo.md 14.8).
   const voltar = () =>
     irPara(
       de === 'times'
-        ? prefs.get().sincronizado
+        ? temTime
           ? { tela: 'times' }
           : { tela: 'times', depois: 'inicio', primeira: true }
         : { tela: de === 'perfil' || temTime ? 'perfil' : 'inicio' },

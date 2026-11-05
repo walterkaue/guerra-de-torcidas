@@ -142,6 +142,8 @@
   gap: 2px;
   bottom: 16px;
   border: 0;
+  /* A tarja inclinada é o ::before de .faixa-tv; sem isto, o fundo de botão aparece nos cantos. */
+  background: none;
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -155,6 +157,7 @@
   margin-top: 6px;
   line-height: 1.05;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .bloco-time-faixa.sem-time .faixa-convite {
