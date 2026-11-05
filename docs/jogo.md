@@ -898,6 +898,21 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - **Desenho (`src/telas/bonecoMontavel.ts` e `bonecoFundos.ts`):** regras e tamanhos em `docs/bonecos.md`, seção 6. Só carrega por `import()` quando for usado; nada do app importa ainda, e o bundle inicial não mudou (51,49 kB gzip, contra 51,48).
 - **Em dev:** `?vitrineBoneco` (com `&so=`, `&estado=` e `&time=`). Prints em `docs/auditoria/2026-11-05/boneco/`, aprovados pelo Kauê em 05/11/2026.
 
+#### Como está no servidor (05/11/2026, D5b; PR aberto, migração ainda não aplicada: antes vem a revisão de segurança, D5b-seg)
+- **Onde mora a regra:** só em `src/jogo/vestiario.ts`. A função do servidor `boneco` lê a cópia em `_shared` (`npm run compartilhar`) e o catálogo dos Lances e das disputas; o SQL só entrega os dados e grava. Nada do que o celular calcula é aceito: ele manda só a vestimenta que quer vestir.
+- **Tabela `torcedor_boneco`** (migração `20261106300000_boneco.sql`): `torcedor_id` (chave, some com a conta), `vestimenta` (jsonb, objeto de até 1.024 caracteres), `atualizado_em`, e `gravacoes` e `janela_desde` para o limite. RLS ligada e política restritiva: o celular não lê, não grava e não chama as funções internas.
+- **O que libera, lido do banco (`boneco_estado`):** nível pelo XP da `carreira_de` (`carreira_partidas` e `carreira_bonus`) e `nivelDe`; medalhas por item pela `medalhas_de` (`lances_gols`: gols, recriados, vitórias; item `penaltis:<id>` é disputa); Seleção pelo `clube` no catálogo do servidor (item fora do catálogo conta medalha, mas não é da Seleção); aquecimento pela linha `aquecimento` de `carreira_bonus`.
+- **Função `boneco`** (`supabase/functions/boneco/`, caminho em `fluxo.ts`):
+  - `{ acao: 'meu_boneco' }` devolve `vestimenta`, `liberadas` (ids, as do começo inclusive) e `proxima` (`{ id, condicao }` ou null). Conta sem boneco, nova ou de antes do D5b, ganha na 1ª leitura o sorteado entre as peças do começo (`sortearDoComeco`), gravado por `boneco_criar`; duas leituras ao mesmo tempo ficam com o mesmo. Nenhuma tela no caminho da 1ª partida. A leitura passa de novo pelo `validar`.
+  - `{ acao: 'salvar_boneco', vestimenta }`: pedido acima de 2 KB nem é lido; `conferirFormato` recusa (400 `formato`) o que não tem exatamente as chaves de `PADRAO`, valor fora do catálogo, número fora de `^[0-9]{1,2}$` ou JSON acima de 512 caracteres. Depois, `validar` troca peça trancada pela padrão, sem erro (`trocou: true` na resposta), e `boneco_gravar` grava e devolve o que gravou.
+  - **Limite:** 30 gravações por hora por torcedor (429 `limite`), em janela fixa a partir da 1ª gravação dela, contado na mesma instrução que grava. O sorteio da conta nova não conta.
+  - **Sessão:** o Auth confere a conta e a sessão (`getUser`), e o banco confere de novo o `session_id` do passe em `auth.sessions` (`boneco_sessao`, também `not_after`) antes de ler, sortear ou gravar. Aparelho desconectado recebe 401 `sessao` e não grava.
+  - Sem time escolhido não há torcedor: 404 `sem_torcedor`.
+- **Cliente:** `lerBoneco()` e `salvarBoneco(vestimenta)` em `src/servidor/boneco.ts`, sem tela (D5c).
+- **Contas:** "Ver meus dados" ganha `boneco` (sim ou não) e a linha "Boneco do avatar: escolhas de visual, sem foto". "Apagar meus dados" e as contas paradas levam o boneco pela cascata. Na junção (`juntar_torcedores`), fica o do dono; sem o dele, o da conta que entrou (as peças dela continuam liberadas, porque carreira e medalhas vêm junto). O zerar da pré-temporada não toca a tabela; `npm run metricas` e o balanço não a leem.
+- **Termos:** linha nova na Política (versão de 05/11/2026). A escolha de tom de pele e corpo está nos pontos a confirmar com o advogado (`docs/termos-x-jogo.md`).
+- **Testes:** `supabase/testes/boneco.test.ts` (fluxo da função contra o SQL de verdade) e `conferirFormato` em `src/jogo/vestiario.test.ts`.
+
 ### 14.6 Cards personalizáveis
 > Decisão do Kauê em 05/11/2026 (Rota 1).
 

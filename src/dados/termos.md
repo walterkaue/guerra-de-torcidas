@@ -39,6 +39,7 @@
 | Suas partidas, respostas e palpites | Contar os pontos e conferir se não houve trapaça | Sim, ao jogar |
 | Sua faixa de idade (menos de 16, 16 ou 17, 18 ou mais) | Desligar, para menores de 18, os avisos, o apoio ao jogo e o link de sócio | Sim, uma vez |
 | Apelido | Aparecer só para quem você manda um desafio | Não |
+| As escolhas do seu boneco (corpo, tom de pele, cabelo, número e peças). Não é foto | Mostrar o seu avatar nos seus aparelhos, e para nada mais. Some com "Apagar meus dados" | Não: o jogo sorteia um, e você muda se quiser |
 | Endereço de aviso do navegador | Mandar 1 aviso por semana, se você pedir (só para 18 ou mais) | Não |
 | O que você manda no "Achei um erro", mais a tela em que estava e o tipo de navegador e aparelho (até 300 caracteres) | Achar e corrigir o problema | Não |
 
