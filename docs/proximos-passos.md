@@ -33,7 +33,7 @@ Quatro trilhos, que rodam em paralelo (fila decidida pelo Kauê em 05/11/2026). 
 
 **Trilho C — Desenho no Chat** (o Kauê desenha e decide antes de construir):
 - cards personalizáveis;
-- Galeria de Troféus e ranking de 52 semanas (a regra já está na seção 5 do `docs/jogo.md`);
+- Galeria de Troféus e ranking de 52 semanas (a regra já está na seção 5 do `docs/jogo.md`). **O servidor já está pronto** (migração `20261106000000_galeria_52_semanas.sql`, PR de 05/11/2026, ainda não aplicada: fazemos juntos), com as funções `ranking_52_semanas`, `galeria_trofeus` e `galeria_cidades`. Para testar a tela, falta o `?galeriaFalsa`, porque a Galeria fica vazia de verdade até o zerar;
 - resto das divisões: a linha na Home ("9º na Série A, 4 pontos da zona"), as frases do narrador no fechamento do mês e o card de fim de temporada;
 - boneco montável (avatar do Perfil, seção 14.2).
 
@@ -145,7 +145,8 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 - ~~**Lances do Jogo unificados (14.7):**~~ decidido em 04/11/2026 (`docs/jogo.md` 14.7, "Números decididos"): pênaltis "mais baixa", faltas B, limite 10, entra em 16/11 (antecipado em 05/11 para 09/11). Servidor publicado em 05/11/2026 (PRs #108 e #110). Também decidido em 05/11: a faixa corrigida só desce, cada X1 dos pênaltis vale uma vez por pessoa, o troféu das disputas aparece já e a Disputa livre sai no corte.
 - ~~**Fáceis de clube:**~~ decidido e aplicado em 02/11/2026: 27 rebaixadas para média, 18 médias subiram a fácil (CSV e banco, só `degrau`, partidas fechadas intactas). **Faltam 9 fáceis novas** para o pipeline do Gemini: athletico-pr 2, chapecoense 2, bahia 1, bragantino 1, coritiba 1, remo 1, vasco 1 (com fonte e revisão no `#admin`). Até lá esses clubes têm 1 ou 2 fáceis e sobra de média; quando cada fácil nova for aprovada no `#admin`, aposentar a média que sobra desse clube (a de menor acerto ou a mais parecida com outra), para manter 3 fáceis, 3 médias, 2 difíceis e 2 de craque (decidido em 02/11/2026). O id guarda o degrau de nascimento (o validador só exige o clube no começo).
 - **Data do zerar da pré-temporada:** até 06/12 para estrear em dezembro. A Crava termina em 2/12, e o balanço roda antes de zerar.
-- ~~**Torcida sem ninguém nas 52 semanas:**~~ decidido em 02/11/2026: vale 0 ponto também lá. Implementar na tela das 52 semanas.
+- ~~**Torcida sem ninguém nas 52 semanas:**~~ decidido em 02/11/2026: vale 0 ponto também lá. Já está em `ranking_52_semanas` (migração `20261106000000`).
+- ~~**Campeão da semana com Série A e B e campeã de estado:**~~ decidido em 05/11/2026: o 1º de cada série; a campeã de estado é a cidade (`docs/jogo.md` seção 5, "Longo prazo").
 - ~~**Prazo para apagar contas anônimas paradas:**~~ decidido em 02/11/2026 com o parecer: 6 meses sem jogar, rotina mensal (PR #84).
 - ~~Itens de `docs/termos-x-jogo.md`~~: os 10 resolvidos em 02/11/2026 (PRs #74 e #84).
 - Supabase Pro antes de divulgar.
@@ -160,7 +161,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
    - card só da medalha ("Já sou ouro no…");
    - ~~corrigir a faixa de cada lance pela taxa de acerto real~~: feito no PR #108 e no ar em 05/11/2026; vale para partidas a partir de 09/11, com 30 tentativas de pelo menos 8 pessoas, e a faixa só desce;
    - o `resultado.ts` dos pênaltis passar a usar `src/telas/efeitoRanking.ts`, que hoje repete a lógica dele (desde 03/11 os dois mostram o efeito como selo + nota, então a troca ficou mais simples).
-1. **Cidade, Galeria e 52 semanas:** nessa ordem, depois das telas das divisões.
+1. **Cidade, Galeria e 52 semanas:** nessa ordem, depois das telas das divisões. Servidor da Galeria e das 52 semanas pronto em 05/11/2026 (migração `20261106000000`, ainda não aplicada); as telas esperam o desenho do trilho C.
    - ~~**Cidade:**~~ no ar desde 04/11/2026, às 22h31 (PRs #107, #104 e #105; detalhe na seção 5 do `docs/jogo.md`). Conferido no banco: 5.571 municípios, o gatilho `guardar_pontos_da_cidade` em `auth.users`, RLS nas 5 tabelas novas, as 6 funções das telas e a `ranking-minuto` sem falha depois da troca de `atualizar_rankings`. A Política mudou (`DATA_DA_VERSAO` 04/11/2026), então todo mundo vê "Os Termos mudaram"; levar a frase da cidade ao advogado.
      - **Conferir no celular (o Kauê):** escolher a cidade pelo convite do resultado e pelo Perfil; tocar duas vezes no lembrete da Home (o `#cidade` tem de abrir as duas); a aba Cidades em Seu estado, Top nacional e Estados (só aparece cidade com 5+ jogadores na semana); Ver meus dados com a cidade.
      - **Ficou para depois (baixo):** o "SUBIU!" da Home usa o rival guardado sem olhar a semana; o convite entra depois de uma chamada de rede e empurra os botões; quem teve a sessão encerrada em outro aparelho vê o lembrete como se não tivesse cidade; na junção de contas fica a cidade de quem gerou o código; faltam testes do mapeamento de erros de `escolherCidade`.
