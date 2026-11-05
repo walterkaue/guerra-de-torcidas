@@ -903,14 +903,15 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     root.querySelector('[data-acao="album"]')!.addEventListener('click', hub);
 
     // XP da carreira e posição: só quando o servidor fechou a partida (o XP sai de lá).
-    if (fim)
-      mostrarCarreiraNoResultado(
+    const carreira = fim
+      ? mostrarCarreiraNoResultado(
         root.querySelector<HTMLElement>('[data-carreira]'),
         // Em desenvolvimento, ?homeFalsa lê a carreira de mentira (src/dev/homeFalsa.ts).
         import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa')
           ? () => import('../dev/homeFalsa').then((m) => m.minhaCarreira())
           : undefined,
-      );
+      )
+      : Promise.resolve(null);
     // Confete e vibração, uma vez por resultado: X1 vencido, recorde novo, entrou nas 3 melhores do dia ou medalha nova.
     const comemorar = ligarConfete(root, time);
     comemorar(
@@ -921,14 +922,28 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         subiuMedalha: contouProMedalha && medalhas.length > 0,
       }),
     );
+    // As medalhas são lidas uma vez e servem ao "Rumo às medalhas" e à "Peça nova no vestiário".
+    const medalhasLidas = fim && contouProMedalha ? servidor().then((s) => s.minhasMedalhas()) : undefined;
     if (fim && contouProMedalha)
       void mostrarRumoDasMedalhas({
         alvo: root.querySelector<HTMLElement>('[data-rumo]')!,
         jogados: lances.map((l, i) => ({ id: l.id, titulo: l.titulo, gol: resultados[i].desfecho === 'gol', recriou: resultados[i].recriou })),
         novas: fim.medalhas,
         aoSubir: () => comemorar('medalha'),
-        ler: () => servidor().then((s) => s.minhasMedalhas()),
+        ler: () => medalhasLidas!,
       });
+    // Peça nova no vestiário: só com a partida fechada pelo servidor e que contou (import() lazy: fora do bundle inicial).
+    void import('./pecaNovaBloco').then((m) =>
+      m.pecaNovaDoResultado({
+        alvo: root.querySelector<HTMLElement>('[data-peca-nova]'),
+        contou: !!fim && contouProMedalha,
+        carreira,
+        medalhas: medalhasLidas,
+        jogadas: lances.map((l, i) => ({ item: l.id, gols: resultados[i].desfecho === 'gol' ? 1 : 0, recriados: resultados[i].recriou ? 1 : 0, vitorias: 0 })),
+        comemorar,
+        bronzeNoDev: true,
+      }),
+    );
     // Efeito no ranking: selo "No ranking em 1 min" que vira "Subiu de 5º pra 3º" (mesmo fluxo dos pênaltis).
     let pararEfeito: (() => void) | null = null;
     if (esperaRanking && fim) {

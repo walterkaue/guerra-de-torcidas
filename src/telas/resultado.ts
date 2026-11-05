@@ -22,6 +22,7 @@ import { bomMomentoDosLances } from '../jogo/apoio';
 import { oferecerApoio } from './apoio';
 import { convidarParaAvisos } from './convitePush';
 import { golsDaDisputa, linhaMelhoresDoDia, textoForaDasMelhores } from '../jogo/lancesTextos';
+import { itemPenaltis } from '../jogo/regraLances';
 import { numero, placa, selo } from './blocos';
 import { lancesUnificados } from './corte';
 import { ligarEfeitoNoRanking } from './efeitoRanking';
@@ -151,22 +152,41 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
       entrouNasMelhores: unificada && !!d.servidor && !situacao,
     }),
   );
+  // As medalhas são lidas uma vez e servem ao "Rumo às medalhas" e à "Peça nova no vestiário".
+  const medalhasLidas =
+    contouProMedalha && d.disputa
+      ? PENALTI_FALSO
+        ? import('../dev/penaltiFalso').then((m) => m.minhasMedalhas())
+        : minhasMedalhas()
+      : undefined;
   if (contouProMedalha && d.disputa)
     void mostrarRumoDaDisputa({
       alvo: root.querySelector<HTMLElement>('[data-rumo]')!,
       partida: { id: d.disputa.id, titulo: d.disputa.titulo, gols: golsDaDisputa(r.cobrancas), venceu: r.venceu },
       aoSubir: () => comemorar('medalha'),
-      ler: PENALTI_FALSO ? () => import('../dev/penaltiFalso').then((m) => m.minhasMedalhas()) : () => minhasMedalhas(),
+      ler: () => medalhasLidas!,
     });
   // Fim da morte súbita: o coração para (na vitória, quem explode é a comemoração de cima, docs/jogo.md 14.2).
   if (r.decisao === 'morte_subita' && !r.venceu) vibrar('erro');
   // Carreira: só quando o servidor fechou a partida (o XP sai de lá).
-  if (d.servidor)
-    mostrarCarreiraNoResultado(
+  const carreira = d.servidor
+    ? mostrarCarreiraNoResultado(
       root.querySelector<HTMLElement>('[data-carreira]'),
       // Em desenvolvimento, ?homeFalsa lê a carreira de mentira (src/dev/homeFalsa.ts).
       FALSA ? () => import('../dev/homeFalsa').then((m) => m.minhaCarreira()) : undefined,
-    );
+    )
+    : Promise.resolve(null);
+  // Peça nova no vestiário: só com a disputa fechada pelo servidor, valendo e sem suspeita (import() lazy).
+  void import('./pecaNovaBloco').then((m) =>
+    m.pecaNovaDoResultado({
+      alvo: root.querySelector<HTMLElement>('[data-peca-nova]'),
+      contou: !!d.servidor && d.valendo && !d.servidor.sobSuspeita,
+      carreira,
+      medalhas: medalhasLidas,
+      jogadas: d.disputa ? [{ item: itemPenaltis(d.disputa.id), gols: golsDaDisputa(r.cobrancas), recriados: 0, vitorias: r.venceu ? 1 : 0 }] : [],
+      comemorar,
+    }),
+  );
   // Bom momento para oferecer o aviso de domingo: vitória que valeu pra torcida.
   if (r.venceu && d.valendo) convidarParaAvisos(root.querySelector<HTMLElement>('[data-convite-push]'));
   oferecerApoio(

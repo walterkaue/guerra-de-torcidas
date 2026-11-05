@@ -97,7 +97,8 @@ ${conviteX1Prova(total, false)} ${link}`;
 
   contar(root.querySelector<HTMLElement>('[data-contador]'), total);
   // Confete e vibração, uma vez por resultado: 8 de 8 ou X1 vencido, recorde novo ou entrou nas 3 melhores da Prova.
-  ligarConfete(root, time)(
+  const comemorar = ligarConfete(root, time);
+  comemorar(
     motivoDoConfete({
       venceu: fim.fim === 'perfeita' || !!cmp?.venceu,
       novoRecorde,
@@ -105,7 +106,11 @@ ${conviteX1Prova(total, false)} ${link}`;
     }),
   );
   // Carreira: só quando o servidor fechou a prova (o XP sai de lá).
-  if (fim.desempenho) mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]'));
+  const carreira = fim.desempenho ? mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]')) : Promise.resolve(null);
+  // Peça nova no vestiário: só o nível muda na Prova (import() lazy).
+  void import('./pecaNovaBloco').then((m) =>
+    m.pecaNovaDoResultado({ alvo: root.querySelector<HTMLElement>('[data-peca-nova]'), contou: !!fim.desempenho && !situacao, carreira, comemorar }),
+  );
 
   // Card personalizável (jogo.md 14.6): o Card abre a tela "Seu card" e o Stories manda o card com as escolhas guardadas.
   const paraOCard = outro ? null : paraTime;

@@ -413,8 +413,9 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     // Bom momento para oferecer o aviso de domingo: acertou o time do dia.
     if (e.acertou) convidarParaAvisos(root.querySelector<HTMLElement>('[data-convite-push]'));
     oferecerApoio(root.querySelector<HTMLElement>('[data-apoio]'), bomMomentoDoDia({ acertou: e.acertou }));
+    const comemorar = ligarConfete(root, time);
     if (primeiraVez)
-      ligarConfete(root, time)(motivoDoConfete({ acertouTimeDoDia: e.acertou, novoRecorde: !!e.desempenho?.novoRecorde }));
+      comemorar(motivoDoConfete({ acertouTimeDoDia: e.acertou, novoRecorde: !!e.desempenho?.novoRecorde }));
 
     const elRelogio = root.querySelector<HTMLElement>('[data-relogio]')!;
     clearInterval(relogio);
@@ -428,7 +429,11 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     }, 1000);
 
     // Carreira: só com o servidor (o XP sai de lá); reabrir o dia já feito não mostra nada (XP igual).
-    if (e.desempenho) mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]'));
+    const carreira = e.desempenho ? mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]')) : Promise.resolve(null);
+    // Peça nova no vestiário: só o nível muda no Time do Dia (import() lazy; reabrir o dia feito tem XP igual: nada).
+    void import('./pecaNovaBloco').then((m) =>
+      m.pecaNovaDoResultado({ alvo: root.querySelector<HTMLElement>('[data-peca-nova]'), contou: !!e.desempenho, carreira, comemorar }),
+    );
 
     // Card personalizável (jogo.md 14.6): o Card abre a tela "Seu card" e o Stories manda o card com as escolhas guardadas.
     const apelido = prefs.get().apelido;

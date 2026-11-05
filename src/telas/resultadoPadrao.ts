@@ -85,6 +85,7 @@ export function htmlResultado(p: PartesDoResultado): string {
       </section>
 
       <div data-carreira hidden></div>
+      <div data-peca-nova hidden></div>
 
       <section class="mandar" aria-label="Compartilhar">
         <a class="botao botao-zap" data-sem-aviso target="_blank" rel="noopener" href="${p.zap}">Mandar no grupo</a>
