@@ -487,6 +487,34 @@ describe('galeria_trofeus: pré-temporada fora', () => {
     await semana('2026-11-02', todos);
     expect(await trofeus()).toEqual([]);
   }, TEMPO);
+
+  // O ciclo de scripts/zerar-pre-temporada.sql: antes, tudo é teste (novembro e o dezembro herdado); o zerar
+  // apaga fechamento_semana e temporada e abre a estreia no mês seguinte ao da semana dele.
+  it('ciclo do zerar: antes nada conta; depois, as semanas até a estreia e a da estreia contam, série única', async () => {
+    await mes('2026-11-01', { pre: true, fechada: true });
+    await mes('2026-12-01', { pre: true });
+    await semana('2026-11-02', todos);
+    await semana('2026-11-09', todos);
+    expect(await trofeus()).toEqual([]);
+
+    // Zerar numa quarta, 18/11 (semana de 16/11): a estreia abre em dezembro.
+    await db.exec('delete from public.fechamento_semana; delete from public.temporada;');
+    await db.query(`select public.abrir_estreia('2026-11-18T15:00:00Z')`);
+    const { rows: meses } = await db.query<{ mes: unknown; pre_temporada: boolean }>(
+      'select mes, pre_temporada from public.temporada',
+    );
+    expect(meses.map((m) => [dia(m.mes), m.pre_temporada])).toEqual([['2026-12-01', false]]);
+
+    const depois = ['2026-11-16', '2026-11-23', '2026-11-30', '2026-12-07'];
+    for (const s of depois) await semana(s, todos);
+    const campeoes = so(await trofeus(), 'campeao_semana');
+    expect(campeoes.map((t) => t.semana).sort()).toEqual(depois);
+    expect(new Set(campeoes.map((t) => t.serie))).toEqual(new Set(['unica']));
+    for (const s of depois) {
+      const { rows } = await db.query<{ pre: boolean }>('select public.semana_pre_temporada($1) as pre', [s]);
+      expect(rows[0].pre, s).toBe(false);
+    }
+  }, TEMPO);
 });
 
 describe('galeria_trofeus: filtro', () => {
@@ -643,6 +671,27 @@ describe('permissões', () => {
         [f],
       );
       expect(rows[0].n, `public em ${f}`).toBe(0);
+    }
+  }, TEMPO);
+
+  it('semana_pre_temporada é interna: anon e authenticated não; service_role e o papel de leitura sim', async () => {
+    const f = 'public.semana_pre_temporada(date)';
+    const pode = async (papel: string) =>
+      (await db.query<{ ok: boolean }>('select has_function_privilege($1, $2::regprocedure, $3) as ok', [papel, f, 'execute']))
+        .rows[0].ok;
+    expect(await pode('anon')).toBe(false);
+    expect(await pode('authenticated')).toBe(false);
+    expect(await pode('service_role')).toBe(true);
+    expect(await pode('supabase_read_only_user')).toBe(true);
+  }, TEMPO);
+
+  it('o papel de leitura do Supabase CLI executa as três funções públicas', async () => {
+    for (const f of ['public.ranking_52_semanas()', 'public.galeria_trofeus(text)', 'public.galeria_cidades(text, integer)']) {
+      const { rows } = await db.query<{ ok: boolean }>(
+        'select has_function_privilege($1, $2::regprocedure, $3) as ok',
+        ['supabase_read_only_user', f, 'execute'],
+      );
+      expect(rows[0].ok, f).toBe(true);
     }
   }, TEMPO);
 
