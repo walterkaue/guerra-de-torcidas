@@ -1,35 +1,67 @@
 // Filtro da frase própria (docs/jogo.md 14.6): o mesmo do apelido, no aparelho, e o limite de 60 letras.
+// Nenhuma palavra da lista fica escrita aqui: o teste lê as migrações.
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   FRASE_MAX,
-  PALAVRAS_BLOQUEADAS,
-  PALAVRAS_INTEIRAS,
+  MARCAS_BLOQUEADAS,
+  MARCAS_INTEIRAS,
   TEXTOS_DA_FRASE,
   conferirFrasePropria,
   fraseBloqueada,
   letrasDaFrase,
+  marca,
   normalizarFrase,
 } from './filtroDeFrase';
 
-const MIGRACAO = fileURLToPath(new URL('../../supabase/migrations/20261019000000_base.sql', import.meta.url));
+const MIGRACOES = fileURLToPath(new URL('../../supabase/migrations/', import.meta.url));
 
-/** As palavras do `insert into public.palavras_bloqueadas` da migração. */
-function palavrasDaMigracao(): string[] {
-  const sql = readFileSync(MIGRACAO, 'utf8');
-  const bloco = sql.split('insert into public.palavras_bloqueadas (palavra) values')[1].split(';')[0];
-  return [...bloco.matchAll(/\('([^']+)'\)/g)].map((m) => m[1]);
+/** As palavras de todo `insert into public.palavras_bloqueadas` das migrações, por arquivo. */
+function palavrasDasMigracoes(): Map<string, string[]> {
+  const porArquivo = new Map<string, string[]>();
+  for (const f of readdirSync(MIGRACOES).filter((f) => f.endsWith('.sql')).sort()) {
+    const sql = readFileSync(`${MIGRACOES}${f}`, 'utf8');
+    expect(sql, `${f} apaga palavra da lista: o filtro do aparelho precisa saber`).not.toMatch(/delete\s+from\s+public\.palavras_bloqueadas/i);
+    const partes = sql.split('insert into public.palavras_bloqueadas (palavra) values').slice(1);
+    const palavras = partes.flatMap((parte) => [...parte.split(';')[0].replace(/--[^\n]*/g, '').matchAll(/\('([^']+)'\)/g)].map((m) => m[1]));
+    if (palavras.length) porArquivo.set(f, palavras);
+  }
+  return porArquivo;
 }
 
 describe('lista de palavras', () => {
-  it('é a mesma da migração do apelido, palavra por palavra', () => {
-    expect([...PALAVRAS_BLOQUEADAS].sort()).toEqual(palavrasDaMigracao().sort());
+  const porArquivo = palavrasDasMigracoes();
+  const todas = [...new Set([...porArquivo.values()].flat())];
+
+  it('lê as duas migrações da lista (palavrão, ofensa, aposta e os jogadores famosos)', () => {
+    expect(porArquivo.size).toBeGreaterThanOrEqual(2);
+    expect(todas.length).toBeGreaterThan(250);
   });
 
-  it('as da seção 7 que faltam no apelido entram como palavra inteira', () => {
-    expect(PALAVRAS_INTEIRAS).toEqual(expect.arrayContaining(['apostas', 'bets', 'cotacoes', 'banca', 'bolao valendo', 'green', 'red']));
+  it('tem a marca de cada palavra das migrações, e nada além delas', () => {
+    expect([...MARCAS_BLOQUEADAS].sort()).toEqual(todas.map(marca).sort());
+  });
+
+  it('marcas sem colisão e as da seção 7 fora da lista do apelido', () => {
+    expect(new Set(todas.map(marca)).size).toBe(todas.length);
+    for (const m of MARCAS_INTEIRAS) expect(MARCAS_BLOQUEADAS.has(m)).toBe(false);
+    expect([...MARCAS_INTEIRAS].sort()).toEqual(['apostas', 'bets', 'cotacoes', 'banca', 'bolao valendo', 'green', 'red'].map(marca).sort());
+  });
+
+  it('cada palavra da lista barra, sozinha e dentro de uma frase', () => {
+    for (const p of todas) {
+      expect(fraseBloqueada(p), p).toBe(true);
+      expect(fraseBloqueada(`hoje ${p} de novo`), p).toBe(true);
+    }
+  });
+
+  it('nome de jogador famoso barra, até com espaço ou maiúscula', () => {
+    const famosos = porArquivo.get([...porArquivo.keys()].find((f) => f.includes('apelidos_famosos'))!)!;
+    const longo = famosos.find((p) => p.length >= 8)!;
+    const separado = `${longo.slice(0, 4)} ${longo.slice(4)}`.toUpperCase();
+    expect(fraseBloqueada(`Golaço do ${separado}`)).toBe(true);
   });
 });
 
