@@ -12,7 +12,8 @@ import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { textoForaDasMelhores } from '../jogo/lancesTextos';
 import { numero, placa, selo } from './blocos';
 import { lancesUnificados } from './corte';
-import { contar, htmlResultado, htmlSelosDaPosicao, ligarResultado } from './resultadoPadrao';
+import { motivoDoConfete } from '../jogo/confete';
+import { contar, htmlResultado, htmlSelosDaPosicao, ligarConfete, ligarResultado } from './resultadoPadrao';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 const maiuscula = (s: string) => s.charAt(0).toLocaleUpperCase('pt-BR') + s.slice(1);
@@ -92,6 +93,14 @@ ${conviteX1Prova(total, false)} ${link}`;
   });
 
   contar(root.querySelector<HTMLElement>('[data-contador]'), total);
+  // Confete e vibração, uma vez por resultado: 8 de 8 ou X1 vencido, recorde novo ou entrou nas 3 melhores da Prova.
+  ligarConfete(root, time)(
+    motivoDoConfete({
+      venceu: fim.fim === 'perfeita' || !!cmp?.venceu,
+      novoRecorde,
+      entrouNasMelhores: lancesUnificados() && !!fim.desempenho && !situacao,
+    }),
+  );
   // Carreira: só quando o servidor fechou a prova (o XP sai de lá).
   if (fim.desempenho) mostrarCarreiraNoResultado(root.querySelector<HTMLElement>('[data-carreira]'));
 

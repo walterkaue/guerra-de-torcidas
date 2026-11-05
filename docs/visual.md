@@ -84,7 +84,7 @@ Home nova, decidida em 31/10/2026. De cima para baixo:
 - Contraste: texto sobre a cor do time usa sempre `corDeTexto` (escuro em time de cor clara, branco no resto).
 
 ### Resultado (todos os minigames)
-- Placar gigante, "VITÓRIA" ou "DERROTA", confete nas cores do time quando vence.
+- Placar gigante, "VITÓRIA" ou "DERROTA", confete nas cores do time quando há o que comemorar (desde 05/11/2026 em todos os jogos, pelo `resultadoPadrao.ts`: vitória, recorde novo, partida nas 3 melhores do dia, Time do Dia acertado e medalha nova; uma vez por resultado, com vibração).
 - **"+85 PRO [TIME]"** contando de 0 até o total, com os bônus em etiquetas (com o artigo certo: "pra Chapecoense").
 - **O efeito na torcida:** "subiu de 5º pra 3º na Série A" com barra enchendo, e quanto falta para o próximo.
 - **Sua posição naquele minigame** na semana e o **recorde pessoal**; quando bate o recorde, selo "NOVO RECORDE!" (que entra no card).
@@ -167,9 +167,9 @@ Amostra aprovada em 26/10 (página "Qualidade Alta, Média e Leve"). Código em 
 
 ## 4.4 Papel picado
 
-- Explode nas cores do time (cor muito escura vira branco, para aparecer) no **gol** (Pênaltis e Lances) e no **acerto** da Prova de Boleiro e do Time do Dia (no Time do Dia, só na primeira vez que o fim aparece).
+- Explode nas cores do time (cor muito escura vira branco, para aparecer) no **gol** (Pênaltis e Lances) e no **acerto** da Prova de Boleiro. No resultado (Time do Dia acertado e medalha nova, inclusive), quem comemora desde 05/11/2026 é o confete da tela de vitória.
 - Retângulos que "viram" (a largura oscila) em vez de girar: um preenchimento por peça, pool fixo, nenhum objeto novo por quadro. Dura 1,4 s e some no fim.
-- **Alta 40 peças, Média 24, Leve nenhuma.** Nada com movimento reduzido. O confete da tela de vitória continua como era.
+- **Alta 40 peças, Média 24, Leve nenhuma.** Nada com movimento reduzido. O confete da tela de vitória (chuva do alto, ~1,6 s) é outro: Alta 90, Média 60, Leve 36, nenhum com movimento reduzido.
 
 ## 4.5 Troca de tela
 

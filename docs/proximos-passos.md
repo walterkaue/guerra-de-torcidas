@@ -157,16 +157,16 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 ## Depois
 
 0. **Lances, segunda etapa:**
-   - card só da medalha ("Já sou ouro no…");
+   - ~~card só da medalha ("Já sou ouro no…")~~: feito em 05/11/2026 (seção 7.3 do `docs/jogo.md`), "Mandar a medalha" no resultado e nas Conquistas, com o link `#lance/<id>`; prints em `docs/auditoria/2026-11-05/medalha-confete/`;
    - ~~corrigir a faixa de cada lance pela taxa de acerto real~~: feito no PR #108 e no ar em 05/11/2026; vale para partidas a partir de 09/11, com 30 tentativas de pelo menos 8 pessoas, e a faixa só desce;
-   - o `resultado.ts` dos pênaltis passar a usar `src/telas/efeitoRanking.ts`, que hoje repete a lógica dele (desde 03/11 os dois mostram o efeito como selo + nota, então a troca ficou mais simples).
+   - ~~o `resultado.ts` dos pênaltis passar a usar `src/telas/efeitoRanking.ts`~~: feito em 05/11/2026, sem mudar a tela (o efeito ganhou teste próprio).
 1. **Cidade, Galeria e 52 semanas:** nessa ordem, depois das telas das divisões.
    - ~~**Cidade:**~~ no ar desde 04/11/2026, às 22h31 (PRs #107, #104 e #105; detalhe na seção 5 do `docs/jogo.md`). Conferido no banco: 5.571 municípios, o gatilho `guardar_pontos_da_cidade` em `auth.users`, RLS nas 5 tabelas novas, as 6 funções das telas e a `ranking-minuto` sem falha depois da troca de `atualizar_rankings`. A Política mudou (`DATA_DA_VERSAO` 04/11/2026), então todo mundo vê "Os Termos mudaram"; levar a frase da cidade ao advogado.
      - **Conferir no celular (o Kauê):** escolher a cidade pelo convite do resultado e pelo Perfil; tocar duas vezes no lembrete da Home (o `#cidade` tem de abrir as duas); a aba Cidades em Seu estado, Top nacional e Estados (só aparece cidade com 5+ jogadores na semana); Ver meus dados com a cidade.
      - **Ficou para depois (baixo):** o "SUBIU!" da Home usa o rival guardado sem olhar a semana; o convite entra depois de uma chamada de rede e empurra os botões; quem teve a sessão encerrada em outro aparelho vê o lembrete como se não tivesse cidade; na junção de contas fica a cidade de quem gerou o código; faltam testes do mapeamento de erros de `escolherCidade`.
 2. **Perguntas:** o piloto recomendou parar nas 529 sem fonte do staging. A meta de 800 precisa de perguntas nascidas de páginas reais. A importação continua com o Kauê.
 3. ~~**Limpeza de anônimos:**~~ feita no PR #84 (`20261103000000_contas_paradas.sql`), guardando os pontos em `pontos_apagados`. No ar desde 02/11/2026 (rotina `apagar-contas-paradas`, dia 1º às 4h). Na simulação de 02/11, 0 conta sairia: a anônima mais antiga é de 19/10/2026, então a primeira limpeza possível é em 1º/05/2027. As travas do PR #86 estão no ar desde 02/11/2026.
-4. **Grafismo de TV, fase 2:** ~~painel `#admin` no visual da seção 4.6 do `docs/visual.md`~~ feito no PR #101 (04/11/2026). Falta: o confete da vitória dos Pênaltis pode ir para o `resultadoPadrao.ts`, para os outros jogos usarem.
+4. **Grafismo de TV, fase 2:** ~~painel `#admin` no visual da seção 4.6 do `docs/visual.md`~~ feito no PR #101 (04/11/2026). ~~O confete da vitória dos Pênaltis no `resultadoPadrao.ts`~~: feito em 05/11/2026, em todos os jogos (vitória, recorde novo, 3 melhores do dia, Time do Dia acertado e medalha nova, uma vez por resultado).
 
 ## Antes de divulgar
 
