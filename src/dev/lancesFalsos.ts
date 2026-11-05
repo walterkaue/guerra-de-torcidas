@@ -14,7 +14,7 @@ import { LANCES } from '../dados/lances';
 import { DISPUTAS } from '../dados/disputas';
 import { sementeNova } from '../jogo/aleatorio';
 import { TABELA_LANCES_ANTES, TABELA_LANCES_UNIFICADA, medalhaDoLance, type Faixa, type Lance } from '../jogo/lances';
-import { ITEM_LIVRE, faixaNaTela } from '../jogo/lancesTextos';
+import { faixaNaTela } from '../jogo/lancesTextos';
 import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MELHORES_DO_DIA, itemPenaltis, medalhaDaDisputa } from '../jogo/regraLances';
 import {
   LANCES_PARTIDAS_POR_DIA,
@@ -70,10 +70,20 @@ const medalhasFalsas = new Map<string, { gols: number; recriados: number; vitori
     [19, 3],
   ].map(([gols, recriados], i) => [ordemDoAlbum[i].id, { gols, recriados, vitorias: 0 }]),
 );
-// Pênaltis na tela única: a Disputa livre (12 gols, 3 vitórias) e uma disputa do catálogo (55 gols, 10 vitórias).
-const disputaDoCatalogo = (parametros.has('disputasFalsas') ? DISPUTAS_FALSAS : DISPUTAS)[0]?.id;
-medalhasFalsas.set(ITEM_LIVRE, { gols: 12, recriados: 0, vitorias: 3 });
-if (disputaDoCatalogo) medalhasFalsas.set(itemPenaltis(disputaDoCatalogo), { gols: 55, recriados: 0, vitorias: 10 });
+// Medalhas dos pênaltis, por disputa do catálogo (antes e depois do corte), nas do Flamengo e da Seleção primeiro: a 1ª com
+// 55 gols e 10 vitórias (prata, perto do ouro), a 2ª com 9 gols (um gol de subir pro bronze), a 3ª com 12 gols e 3 vitórias
+// (bronze) e a 4ª com 30 gols. Não existe mais Disputa livre.
+const pesoDaDisputa = (c: string) => (c === 'flamengo' ? 0 : c === 'selecao' ? 1 : 2);
+const catalogoDeDisputas = [...(parametros.has('disputasFalsas') ? DISPUTAS_FALSAS : DISPUTAS)].sort((a, b) => pesoDaDisputa(a.clube) - pesoDaDisputa(b.clube));
+[
+  { gols: 55, vitorias: 10 },
+  { gols: 9, vitorias: 0 },
+  { gols: 12, vitorias: 3 },
+  { gols: 30, vitorias: 2 },
+].forEach((n, i) => {
+  const d = catalogoDeDisputas[i];
+  if (d) medalhasFalsas.set(itemPenaltis(d.id), { ...n, recriados: 0 });
+});
 
 /** O lance do X1 falso: o primeiro do álbum (um do Flamengo). */
 const lanceDoX1 = () => ordemDoAlbum[0];
