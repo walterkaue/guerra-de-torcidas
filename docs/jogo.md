@@ -884,6 +884,19 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 
 **Construção (trilho D5, prompts em `claude/prompts-boneco.md`):** D5a peças desenhadas e catálogo puro (vitrine para o Kauê aprovar); D5-lista nomes de jogadores na `palavras_bloqueadas`; D5b servidor; revisão de segurança do D5b antes de aplicar; D5c telas (Perfil, Home, vestiário, peça trancada, peça nova). Depois, "Meu boneco" e Pôster no card (14.6).
 
+#### Como está no código (05/11/2026, D5a: peças e catálogo, ainda sem servidor nem telas)
+- **Catálogo puro (`src/jogo/vestiario.ts`, também em `supabase/functions/_shared/jogo/` pelo `npm run compartilhar`, junto com `carreira.ts`):**
+  - **Vestimenta `v: 1`:** só códigos curtos (`corpo` h|m, `pele` 0–5, `cabelo`, `corCabelo` 0–5, `camisa`, `numero`, `cabeca`, `punho`, `braco`, `peito`, `pescoco`, `chuteira`, `pose`, `fundo`, `moldura`), nunca cores nem rótulos. `PADRAO` é o que entra no lugar de uma peça trancada ou inválida, campo a campo: uni1, nada na cabeça, punho, braço, peito e pescoço, chuteira neutra, pose parada, Gramado, sem moldura; pele, cabelo ou corpo inválido vira o 1º da lista.
+  - **`PECAS`:** as 26 peças, com id fixo (nunca muda depois de publicado), aba, nome, campo, valor e condição. 7 são do começo (uni1, uni2, testeira, munhequeira e os 3 fundos). Pose e chuteiras ficam na aba Acessório; fundos e molduras, na aba Fundo.
+  - **`pecasLiberadas(estado)`:** o estado é o índice do nível da Carreira, as medalhas por item (`tipo` lance ou disputa, gols, recriados, vitórias, `daSelecao`) e `aquecido`. A medalha sai de `medalhaDoLance` e `medalhaDaDisputa`, a mesma regra da trilha (um teste compara com `trilhaDoLance` e `trilhaDaDisputa`). "1º bronze" vale para qualquer item com bronze ou mais; "Item da Seleção" chega pronto em `daSelecao`, decidido por quem monta o estado pelo catálogo.
+  - **`validar(x, liberadas)`:** aceita qualquer JSON e devolve uma vestimenta nova: `v` diferente de 1 vira o PADRAO, chave a mais some, valor desconhecido ou peça trancada volta ao padrão, número fora de `^[0-9]{1,2}$` vira "sem número". Peça do começo vale sempre.
+  - **`sortearComPecas(liberadas)` e `sortearDoComeco()`:** sorteio só com o que a pessoa tem (pose sempre parada; 1 em 4 sem número).
+  - **`proximaPeca(estado)`:** primeiro a do próximo nível da Carreira (na ordem da tabela); sem peça de nível trancada, a mais fácil das outras: Aquecimento, 1º bronze, 1ª prata, 1º ouro, ouro nos pênaltis, ouro da Seleção, 5 ouros.
+  - **`textoDaCondicao`:** "Libera no Titular", "Libera no 1º bronze", "Libera na 1ª prata", "Libera com um ouro nos pênaltis", "Libera com o Aquecimento completo"…
+  - **`novasPecas(antes, depois)`:** para o "Peça nova no vestiário".
+- **Desenho (`src/telas/bonecoMontavel.ts` e `bonecoFundos.ts`):** regras e tamanhos em `docs/bonecos.md`, seção 6. Só carrega por `import()` quando for usado; nada do app importa ainda, e o bundle inicial não mudou (51,49 kB gzip, contra 51,48).
+- **Em dev:** `?vitrineBoneco` (com `&so=`, `&estado=` e `&time=`). Prints em `docs/auditoria/2026-11-05/boneco/`, para o Kauê aprovar antes do merge.
+
 ### 14.7 Lances do Jogo unificados
 > Decisão do Kauê em 04/11/2026. Números finais pela proposta `docs/propostas/lances-unificados.md`.
 

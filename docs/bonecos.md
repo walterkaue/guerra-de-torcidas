@@ -54,3 +54,18 @@ O jogo é em **canvas 2D**, então o boneco é desenhado no canvas, não em SVG 
 - Trigonometria (`Math.sin`, `Math.cos`) pode ser usada **só no desenho**. O motor `penaltis.ts` continua sem trigonometria.
 - Meta: 60 fps num Android intermediário. Se cair, simplificar primeiro a arquibancada, depois o degradê.
 - Bundle: os bonecos são código, sem imagens; o total continua abaixo de 300 KB gzip.
+
+## 6. Boneco montável (avatar da pessoa, 05/11/2026)
+
+O avatar do Perfil, da Home e do vestiário (`docs/jogo.md`, seção 14.5). Os bonecos das partidas continuam sorteados e não mudam.
+
+- **Mesmo estilo:** o boneco das partidas, de frente, com as peças por cima. Formas chapadas, sem contorno, degradê só na pele e no calção, rosto liso. Sempre fictício: camisa lisa sem nome, nada que imite jogador real.
+- **Peças do começo:** corpo (h ou m, só a forma), 6 tons de pele, 7 cabelos × 6 cores, uniforme 1 e 2 nas cores do time, número, testeira, munhequeira, fundos Gramado, Arquibancada e Estádio à noite.
+- **Peças que liberam:** colete de treino (lima ou laranja, o que mais contrasta com a camisa), chuteira nas cores do time (a cor do time mais longe do meião), pose "braços pra cima" (só no card), braçadeira de capitão (lisa, amarela, sem letra, no braço da direita da tela), faixa de campeão (diagonal, branca com filete dourado), munhequeira bronze, chuteira dourada (sem marca), apito no pescoço (cordão e apito prateado), uniforme de goleiro (cores de goleiro do jogo, com luvas), 8 fundos e as molduras dourada e Galeria (anel escuro com 5 bolinhas douradas).
+- **Número:** na frente da camisa, em Anton, na cor `corDeTexto` da camisa. O colete e a faixa cobrem o número; com apito, ele desce um pouco para não bater. No busto de 40 px pode sumir.
+- **Fundos:** formas simples em canvas, sem escudo, bandeira, marca, texto, número ou pessoa. A Barreira são placas lisas de treino; o Verde e amarelo são faixas diagonais, nunca losango com círculo.
+- **Recortes e tamanhos:** busto em círculo, com o fundo recortado e a moldura por fora (40, 52 e 84 px; 280 na vitrine). Corpo inteiro com o fundo atrás, sem moldura (76 × 112, 104 × 154 e ~390 × 404).
+- **Pose:** de frente, mãos na cintura (`POSES_DE_FRENTE.parado`); `bracos` só quando a vestimenta pede (card). O `poseParado` das partidas é de costas.
+- **Técnica:** `desenharBoneco(ctx, vestimenta, coresDoTime, recorte, largura, altura)` em `src/telas/bonecoMontavel.ts` (fundos em `bonecoFundos.ts`). Desenha uma vez num canvas fora da tela, no tamanho × devicePixelRatio, guarda até 24 imagens e depois só faz `drawImage`. Nenhum filtro nem `shadowBlur`. Com número, a imagem só vai ao cache com a Anton carregada: chame `prepararFonteDoNumero()` e redesenhe. As peças entram por ganchos opcionais (`Camadas`) no `desenharBoneco` de `bonecos.ts`; sem eles, o desenho das partidas é o mesmo.
+- **Legibilidade (o que ainda é fraco):** braçadeira e munhequeira quase somem abaixo de 52 px; o Telão vira pontilhado no busto pequeno; colete contra camisa de goleiro amarela tem contraste baixo.
+- **Vitrine:** `?vitrineBoneco` em dev (`src/dev/vitrineBoneco.ts`, fora do bundle), com `&so=prancha|bustos|tamanhos|uniformes|fundos|molduras|times`, `&estado=novo|meio|tudo` e `&time=<id>`. Prints em `docs/auditoria/2026-11-05/boneco/`.
