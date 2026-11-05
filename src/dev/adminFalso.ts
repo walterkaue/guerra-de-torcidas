@@ -117,6 +117,7 @@ export function clienteFalso() {
         suspeitas_fila: VAZIO ? [] : FILA_SUSPEITAS,
         apelido_contar: 2,
         apelido_apagar: 2,
+        apelidos_filtrados: VAZIO ? [] : [{ texto: 'Apelido Barrado', quantos: 2 }, { texto: 'Outro Barrado 10', quantos: 1 }],
       };
       return espera({ data: dados[nome] ?? null, error: null });
     },
