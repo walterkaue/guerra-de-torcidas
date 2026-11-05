@@ -5,7 +5,8 @@ import type { EventoNarrador } from '../narrador/frases';
 
 /** Resposta de `minha_cidade_semana` (uma linha; vazio = sem cidade escolhida). */
 export interface MinhaCidade {
-  codigo: string;
+  /** Código do IBGE: o servidor devolve `integer`. */
+  codigo: number;
   nome: string;
   uf: string;
   ativos: number;
@@ -14,7 +15,7 @@ export interface MinhaCidade {
   posicao_estado: number | null;
   cidades_no_estado: number;
   media30: number | null;
-  rival_codigo: string | null;
+  rival_codigo: number | null;
   rival_nome: string | null;
   rival_media30: number | null;
   rival_acima: boolean | null;
@@ -24,7 +25,7 @@ export interface MinhaCidade {
 
 export interface LinhaCidade {
   posicao: number;
-  codigo: string;
+  codigo: number;
   nome: string;
   uf: string;
   ativos: number;
@@ -71,7 +72,9 @@ export interface DueloCidade {
   frente: boolean;
 }
 
-const formatarDif = (n: number) => {
+export const formatarDif = (n: number) => {
+  // As médias têm duas casas: abaixo de meio ponto, o arredondado daria "0 pontos".
+  if (Math.abs(n) < 0.5) return 'menos de 1 ponto';
   const v = Math.round(Math.abs(n));
   return `${v.toLocaleString('pt-BR')} ${v === 1 ? 'ponto' : 'pontos'}`;
 };

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { deveLembrarDaCidade, linhaDaCidadeNaHome, seloDaSemana, situacaoDaCidade, textoFaltam, type MinhaCidade } from './rankingCidades';
 
 const base: MinhaCidade = {
-  codigo: '3550308', nome: 'São Paulo', uf: 'SP', ativos: 12, minimo: 5, faltam: 0, posicao_estado: 3, cidades_no_estado: 9,
-  media30: 80, rival_codigo: '1', rival_nome: 'Campinas', rival_media30: 90, rival_acima: true, uf_posicao: 2, estados_no_ranking: 7,
+  codigo: 3550308, nome: 'São Paulo', uf: 'SP', ativos: 12, minimo: 5, faltam: 0, posicao_estado: 3, cidades_no_estado: 9,
+  media30: 80, rival_codigo: 1, rival_nome: 'Campinas', rival_media30: 90, rival_acima: true, uf_posicao: 2, estados_no_ranking: 7,
 };
 const faltam: MinhaCidade = { ...base, faltam: 2, posicao_estado: null, media30: null };
 
@@ -32,6 +32,10 @@ describe('narrador da cidade', () => {
     expect(situacaoDaCidade(na, true)?.evento).toBe('cidade_passou');
     expect(situacaoDaCidade({ ...na, posicao_estado: 1 }, null, true)?.evento).toBe('cidade_campea');
     expect(situacaoDaCidade({ ...na, posicao_estado: 1 }, null, false)?.evento).toBe('cidade_frente');
+  });
+  it('diferença abaixo de meio ponto não vira "0 pontos"', () => {
+    expect(situacaoDaCidade({ ...base, media30: 89.7 }, null)?.dif).toBe('menos de 1 ponto');
+    expect(situacaoDaCidade({ ...base, media30: 89.4 }, null)?.dif).toBe('1 ponto');
   });
   it('abaixo do mínimo ou sem rival, sem frase', () => {
     expect(situacaoDaCidade(faltam, null)).toBeNull();

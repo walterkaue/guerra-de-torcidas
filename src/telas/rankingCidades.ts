@@ -171,7 +171,7 @@ export function desenharCidades(el: HTMLElement): () => void {
     pararAviso = null;
     if (FALSA) return;
     const ouvida = semana;
-    ouvirRanking(ouvida, () => void carregar())
+    ouvirRanking(ouvida, () => void carregar(), undefined, 'ranking-cidades')
       .then((f) => (saiu || ouvida !== semana ? f() : (pararAviso = f)))
       .catch(() => {
         // sem Realtime: fica a foto do momento
