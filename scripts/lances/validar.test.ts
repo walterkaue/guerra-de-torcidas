@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { calibrar, validarCena } from '../../src/jogo/lances';
-import { gerarCatalogo, gerarResumo, lerTodos } from './catalogo.mjs';
+import { faixaPorChance } from '../../src/jogo/lances';
+import { gerarCatalogo, gerarResumo, lerFaixasUnificadas, lerTodos } from './catalogo.mjs';
 import { CANTOS, cenaDoLance, lerLances, validarConjunto, validarLance } from './validar.mjs';
 
 const boa = {
@@ -112,7 +113,21 @@ describe('catálogo em dados/lances', () => {
 
   it('src/dados/lances.ts está em dia com os CSVs (rode npm run catalogo-lances)', () => {
     const gerado = readFileSync(new URL('../../src/dados/lances.ts', import.meta.url), 'utf8');
-    expect(gerado).toBe(gerarCatalogo(lerTodos()));
+    expect(gerado).toBe(gerarCatalogo(lerTodos(), lerFaixasUnificadas()));
+  });
+
+  it('faixas dos Lances unificados: uma por lance publicado, pela chance do robô vezes o fator (rode scripts/lances/recalibrar.mjs)', () => {
+    const arquivo = JSON.parse(readFileSync(new URL('../../dados/lances/faixas-unificadas.json', import.meta.url), 'utf8'));
+    expect(arquivo.fator).toBeGreaterThan(0);
+    expect(arquivo.fator).toBeLessThanOrEqual(1.5);
+    const publicados = lerTodos().filter((l) => l.status === 'revisada' || l.status === 'ativa');
+    expect(Object.keys(arquivo.lances).sort()).toEqual(publicados.map((l) => l.id).sort());
+    for (const l of publicados) {
+      const f = arquivo.lances[l.id];
+      expect([l.id, f.antes]).toEqual([l.id, l.faixa]);
+      expect([l.id, f.unificada]).toEqual([l.id, faixaPorChance(f.chancePessoa)]);
+      expect(Math.abs(f.chancePessoa - f.chanceRobo * arquivo.fator)).toBeLessThan(0.002);
+    }
   });
 
   it('src/dados/lancesResumo.ts está em dia com os CSVs (rode npm run catalogo-lances)', () => {
