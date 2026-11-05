@@ -451,6 +451,10 @@ verify_jwt = true
 [functions.codigo-torcedor]
 verify_jwt = true
 
+# Boneco montável (docs/jogo.md, seção 14.5): uma função com ações (meu_boneco, salvar_boneco).
+[functions.boneco]
+verify_jwt = true
+
 [functions.gerar-conteudo]
 enabled = true
 verify_jwt = false

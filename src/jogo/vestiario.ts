@@ -260,6 +260,40 @@ export function validar(vestimenta: unknown, liberadas: Iterable<string>): Vesti
   return saida;
 }
 
+/** Teto da vestimenta em JSON, em caracteres. A maior possível tem cerca de 230; o servidor recusa acima disto. */
+export const TAMANHO_MAXIMO = 512;
+
+const LISTAS: Record<Exclude<keyof Vestimenta, 'v' | 'numero'>, readonly unknown[]> = {
+  corpo: CORPOS,
+  pele: PELES,
+  cabelo: CABELOS,
+  corCabelo: CORES_DE_CABELO,
+  camisa: CAMISAS,
+  cabeca: CABECAS,
+  punho: PUNHOS,
+  braco: BRACOS,
+  peito: PEITOS,
+  pescoco: PESCOCOS,
+  chuteira: CHUTEIRAS,
+  pose: POSES,
+  fundo: FUNDOS,
+  moldura: MOLDURAS,
+};
+const CHAVES = Object.keys(PADRAO).sort().join(',');
+
+/**
+ * O formato que o servidor aceita em salvar_boneco, antes de olhar o que está liberado: exatamente as chaves de PADRAO,
+ * cada valor dentro do catálogo, número no formato ou null e JSON pequeno. Fora disso, recusa (não conserta).
+ * Peça trancada passa aqui: quem troca pela padrão é o `validar`.
+ */
+export function conferirFormato(x: unknown): x is Vestimenta {
+  if (!ehObjeto(x) || x.v !== 1) return false;
+  if (Object.keys(x).sort().join(',') !== CHAVES) return false;
+  if (!(x.numero === null || (typeof x.numero === 'string' && FORMATO_DO_NUMERO.test(x.numero)))) return false;
+  for (const [campo, lista] of Object.entries(LISTAS)) if (!lista.includes(x[campo])) return false;
+  return JSON.stringify(x).length <= TAMANHO_MAXIMO;
+}
+
 function indice(sortear: () => number, n: number): number {
   return Math.min(n - 1, Math.max(0, Math.floor(sortear() * n)));
 }

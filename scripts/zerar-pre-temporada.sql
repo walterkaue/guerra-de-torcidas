@@ -7,6 +7,8 @@
 -- As medalhas dos Lances e dos pênaltis (lances_gols) também nunca zeram e não têm chave para partidas: não acrescente
 -- delete nelas (docs/jogo.md, seção 7.3, "Medalhas e Conquistas"). O mesmo vale para lances_tentativas (a taxa real
 -- que corrige a faixa de cada lance, seção 14.7). Os X1 dos Lances (lances_desafios) saem junto com as partidas.
+-- O boneco do avatar (torcedor_boneco, seção 14.5) também fica: tem chave só para torcedores. Não acrescente delete
+-- nele, nem em torcedores (a cascata levaria o boneco).
 -- NÃO rode direto: use `npm run zerar-pre-temporada`, que lembra do balanço, mostra o que vai sumir
 -- e pede confirmação.
 
