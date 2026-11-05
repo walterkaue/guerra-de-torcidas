@@ -182,57 +182,173 @@ export interface EstadoDoVestiario {
   aquecido: boolean;
 }
 
-// ---------- funções (parte 2 do plano D5a) ----------
+// ---------- funções ----------
+
+const ORDEM_DA_MEDALHA: Record<Medalha, number> = { bronze: 1, prata: 2, ouro: 3 };
+
+/** Número inteiro >= 0; negativo, NaN, infinito ou não inteiro vira 0. */
+const inteiro = (x: unknown): number => (typeof x === 'number' && Number.isInteger(x) && x > 0 ? x : 0);
+
+function medalhaDoItem(m: MedalhaDoItem): Medalha | null {
+  return m.tipo === 'disputa' ? medalhaDaDisputa(inteiro(m.gols), inteiro(m.vitorias)) : medalhaDoLance(inteiro(m.gols), inteiro(m.recriados));
+}
+
+function cumpre(c: Condicao, estado: EstadoDoVestiario, medalhas: readonly (Medalha | null)[]): boolean {
+  switch (c.tipo) {
+    case 'comeco':
+      return true;
+    case 'nivel':
+      return inteiro(estado.nivel) >= c.nivel;
+    case 'medalha':
+      return medalhas.some((m) => m !== null && ORDEM_DA_MEDALHA[m] >= ORDEM_DA_MEDALHA[c.medalha]);
+    case 'ouroDisputa':
+      return estado.medalhas.some((m, i) => m.tipo === 'disputa' && medalhas[i] === 'ouro');
+    case 'ouroSelecao':
+      return estado.medalhas.some((m, i) => m.daSelecao === true && medalhas[i] === 'ouro');
+    case 'ouros':
+      return medalhas.filter((m) => m === 'ouro').length >= inteiro(c.quantos);
+    case 'aquecido':
+      return estado.aquecido === true;
+  }
+}
 
 /** Ids das peças liberadas, na ordem de PECAS. Medalha pela mesma regra da trilha (medalhaDoLance / medalhaDaDisputa). */
 export function pecasLiberadas(estado: EstadoDoVestiario): string[] {
-  void estado;
-  void NIVEIS;
-  void medalhaDoLance;
-  void medalhaDaDisputa;
-  throw new Error('a fazer: parte 2');
+  const medalhas = estado.medalhas.map(medalhaDoItem);
+  return PECAS.filter((p) => cumpre(p.condicao, estado, medalhas)).map((p) => p.id);
 }
+
+const CAMPOS_DE_PECA: readonly (readonly [CampoDaPeca, readonly string[]])[] = [
+  ['camisa', CAMISAS],
+  ['cabeca', CABECAS],
+  ['punho', PUNHOS],
+  ['braco', BRACOS],
+  ['peito', PEITOS],
+  ['pescoco', PESCOCOS],
+  ['chuteira', CHUTEIRAS],
+  ['pose', POSES],
+  ['fundo', FUNDOS],
+  ['moldura', MOLDURAS],
+];
+
+const ehObjeto = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x);
+const dentro = <T>(lista: readonly T[], x: unknown, padrao: T): T => (lista.includes(x as T) ? (x as T) : padrao);
 
 /**
  * A mesma vestimenta, com toda peça trancada, desconhecida ou fora do formato trocada pela de PADRAO (campo a campo).
  * Aceita qualquer coisa (JSON do aparelho): chave a mais some, `v` diferente de 1 vira o PADRAO inteiro.
  */
 export function validar(vestimenta: unknown, liberadas: Iterable<string>): Vestimenta {
-  void vestimenta;
-  void liberadas;
-  throw new Error('a fazer: parte 2');
+  if (!ehObjeto(vestimenta) || vestimenta.v !== 1) return { ...PADRAO };
+  const livres = new Set(liberadas);
+  const x = vestimenta;
+  const saida: Vestimenta = {
+    ...PADRAO,
+    corpo: dentro(CORPOS, x.corpo, PADRAO.corpo),
+    pele: dentro(PELES, x.pele, PADRAO.pele),
+    cabelo: dentro(CABELOS, x.cabelo, PADRAO.cabelo),
+    corCabelo: dentro(CORES_DE_CABELO, x.corCabelo, PADRAO.corCabelo),
+    numero: typeof x.numero === 'string' && FORMATO_DO_NUMERO.test(x.numero) ? x.numero : null,
+  };
+  const escrita = saida as unknown as Record<string, unknown>;
+  for (const [campo, lista] of CAMPOS_DE_PECA) {
+    const valor = x[campo];
+    if (valor === PADRAO[campo] || !lista.includes(valor as string)) continue;
+    const peca = PECAS.find((p) => p.campo === campo && p.valor === valor);
+    if (peca && (peca.condicao.tipo === 'comeco' || livres.has(peca.id))) escrita[campo] = valor;
+  }
+  return saida;
 }
+
+function indice(sortear: () => number, n: number): number {
+  return Math.min(n - 1, Math.max(0, Math.floor(sortear() * n)));
+}
+const escolher = <T>(lista: readonly T[], sortear: () => number): T => lista[indice(sortear, lista.length)];
 
 /** Vestimenta sorteada só com as peças liberadas (botão Sortear do vestiário). */
 export function sortearComPecas(liberadas: Iterable<string>, sortear: () => number = Math.random): Vestimenta {
-  void liberadas;
-  void sortear;
-  throw new Error('a fazer: parte 2');
+  const livres = new Set(liberadas);
+  const tem = (p: Peca) => p.condicao.tipo === 'comeco' || livres.has(p.id);
+  const valores = (campo: CampoDaPeca): string[] => PECAS.filter((p) => p.campo === campo && tem(p)).map((p) => p.valor);
+  const opcional = (campo: CampoDaPeca): string => escolher([String(PADRAO[campo]), ...valores(campo)], sortear);
+
+  const corpo = escolher(CORPOS, sortear);
+  const pele = escolher(PELES, sortear);
+  const cabelo = escolher(CABELOS, sortear);
+  const corCabelo = escolher(CORES_DE_CABELO, sortear);
+  const camisa = escolher(valores('camisa'), sortear);
+  const cabeca = opcional('cabeca');
+  const punho = opcional('punho');
+  const braco = opcional('braco');
+  const peito = opcional('peito');
+  const pescoco = opcional('pescoco');
+  const chuteira = opcional('chuteira');
+  const fundo = escolher(valores('fundo'), sortear);
+  const moldura = opcional('moldura');
+  let numero: string | null = null;
+  if (sortear() >= 0.25) {
+    const doisDigitos = sortear() >= 0.5;
+    const n = indice(sortear, doisDigitos ? 100 : 10);
+    numero = doisDigitos ? String(n).padStart(2, '0') : String(n);
+  }
+  return { v: 1, corpo, pele, cabelo, corCabelo, camisa, numero, cabeca, punho, braco, peito, pescoco, chuteira, pose: 'parado', fundo, moldura } as Vestimenta;
 }
 
 /** Vestimenta da conta nova: só peças do começo. */
 export function sortearDoComeco(sortear: () => number = Math.random): Vestimenta {
-  void sortear;
-  throw new Error('a fazer: parte 2');
+  return sortearComPecas([], sortear);
 }
 
-/** Próxima peça a liberar, para o bloco do Perfil; null quando todas já liberaram. */
+const ORDEM_DA_FACILIDADE = ['aquecido', 'bronze', 'prata', 'ouro', 'ouroDisputa', 'ouroSelecao', 'ouros'];
+/** Ordem das peças que não são de nível na "Próxima": a sort é estável, então empate fica na ordem de PECAS. */
+const facilidade = (p: Peca): number =>
+  ORDEM_DA_FACILIDADE.indexOf(p.condicao.tipo === 'medalha' ? p.condicao.medalha : p.condicao.tipo);
+
+/**
+ * Próxima peça a liberar, para o bloco do Perfil; null quando todas já liberaram. Primeiro a do próximo nível da
+ * Carreira; sem peça de nível trancada, a mais fácil das outras.
+ */
 export function proximaPeca(estado: EstadoDoVestiario): { peca: Peca; condicao: string } | null {
-  void estado;
-  throw new Error('a fazer: parte 2');
+  const livres = new Set(pecasLiberadas(estado));
+  const trancadas = PECAS.filter((p) => !livres.has(p.id));
+  if (trancadas.length === 0) return null;
+  const atual = inteiro(estado.nivel);
+  let escolhida: Peca | undefined;
+  for (const p of trancadas) {
+    if (p.condicao.tipo !== 'nivel' || p.condicao.nivel <= atual) continue;
+    if (!escolhida || (escolhida.condicao.tipo === 'nivel' && p.condicao.nivel < escolhida.condicao.nivel)) escolhida = p;
+  }
+  // Sem peça de nível trancada: a mais fácil primeiro (Aquecimento, 1º bronze, 1ª prata, 1º ouro, depois os ouros específicos).
+  const peca = escolhida ?? [...trancadas].sort((a, b) => facilidade(a) - facilidade(b))[0];
+  return { peca, condicao: textoDaCondicao(peca) };
 }
 
 /** "Libera no Titular", "Libera no 1º ouro", "Libera com o Aquecimento completo"… Nunca nome de pessoa. */
 export function textoDaCondicao(peca: Peca): string {
-  void peca;
-  throw new Error('a fazer: parte 2');
+  const c = peca.condicao;
+  switch (c.tipo) {
+    case 'comeco':
+      return 'Do começo';
+    case 'nivel':
+      return `Libera no ${NIVEIS[c.nivel].nome}`;
+    case 'medalha':
+      return c.medalha === 'bronze' ? 'Libera no 1º bronze' : c.medalha === 'prata' ? 'Libera na 1ª prata' : 'Libera no 1º ouro';
+    case 'ouroDisputa':
+      return 'Libera com um ouro nos pênaltis';
+    case 'ouroSelecao':
+      return 'Libera com um ouro da Seleção';
+    case 'ouros':
+      return `Libera com ${c.quantos} ouros`;
+    case 'aquecido':
+      return 'Libera com o Aquecimento completo';
+  }
 }
 
 /** O que liberou entre duas leituras (ids de `depois` que não estavam em `antes`), na ordem de PECAS. */
 export function novasPecas(antes: Iterable<string>, depois: Iterable<string>): Peca[] {
-  void antes;
-  void depois;
-  throw new Error('a fazer: parte 2');
+  const a = new Set(antes);
+  const d = new Set(depois);
+  return PECAS.filter((p) => d.has(p.id) && !a.has(p.id));
 }
 
 export const pecaPorId = (id: string): Peca | undefined => PECAS.find((p) => p.id === id);
