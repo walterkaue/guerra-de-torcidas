@@ -1,8 +1,9 @@
 // De onde a tela do Vestiário lê e para onde grava (docs/jogo.md 14.5). Uma interface pequena para a tela não
-// saber do servidor: nesta etapa só existe a fonte falsa de dev (fonteFalsa.ts); a do servidor entra no D5c2.
+// saber do servidor: a do servidor (fonteServidor.ts) é a padrão; em dev, ?vestiarioFalso troca pela falsa.
 
 import type { Vestimenta } from '../../jogo/vestiario';
 import type { EstadoDaTela } from '../../jogo/vestiarioTela';
+import { fonteDoServidor } from './fonteServidor';
 
 export interface DadosDoVestiario {
   /** A vestimenta gravada (já validada pelo servidor). */
@@ -21,9 +22,9 @@ export interface FonteDoVestiario {
 
 let fonteAtual: FonteDoVestiario | null = null;
 
-/** Quem liga o vestiário escolhe a fonte (a falsa em dev; a do servidor no D5c2). */
+/** Troca a fonte (a falsa, em dev); null volta à do servidor. */
 export function definirFonteDoVestiario(f: FonteDoVestiario | null): void {
   fonteAtual = f;
 }
 
-export const fonteDoVestiario = (): FonteDoVestiario | null => fonteAtual;
+export const fonteDoVestiario = (): FonteDoVestiario => fonteAtual ?? fonteDoServidor;
