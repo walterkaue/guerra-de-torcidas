@@ -7,8 +7,8 @@
 
 | Área | Estado em 02/11/2026 |
 |---|---|
-| Código | `main` com 91 arquivos de teste e 1.840 testes passando (PR #101, troféus dos lances, em 04/11) |
-| Publicação | Site no ar (`main` de 04/11, 20h18, com o PR #101; deploy conferido: o site serve `index-D0wxorIX.js`, o build com a trilha). Antes, o PR #98 (13h05) teve o deploy conferido e o site servia o build testado. 35 migrações aplicadas (a 35ª, do aquecimento, em 04/11, antes do merge do PR #98). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
+| Código | `main` com 96 arquivos de teste e 1.874 testes passando (Cidade, PRs #107, #104 e #105, em 04/11) |
+| Publicação | Site no ar (`main` de 04/11, 22h31, com a Cidade; deploy conferido: o site serve `index-Dj46QTmt.js`, o mesmo build testado com os PRs juntos). 37 migrações aplicadas (as duas da Cidade, `20261105000000` e `20261105000100`, pelo Kauê em 04/11 por volta das 22h30, antes dos merges). 13 funções publicadas (`codigo-torcedor` v1 em 03/11; `lances` v2, `nova-partida` v20, `lance-penalti` v6 e `fechar-partida` v21) |
 | Rotinas | Sem falhas; `ranking-minuto` rodou 108 vezes sem erro entre 15h24 e 17h12 de 02/11 |
 | Tamanho | Em 04/11/2026, com o PR #96: bundle inicial de 59 KB gzip (limite: ~300 KB). Somando todo o JS e o CSS, 251 KB gzip. A conta de 02/11 deu 216 KB, mas pode não ter usado o mesmo método |
 | Conteúdo | Casa com 20 clubes revisados, faltam 35 de 808 títulos; 280 perguntas no ar (meta do lançamento: 800) |
@@ -183,7 +183,9 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
    - corrigir a faixa de cada lance pela taxa de acerto real, depois de 50 tentativas valendo (seção 7.3);
    - o `resultado.ts` dos pênaltis passar a usar `src/telas/efeitoRanking.ts`, que hoje repete a lógica dele (desde 03/11 os dois mostram o efeito como selo + nota, então a troca ficou mais simples).
 1. **Cidade, Galeria e 52 semanas:** nessa ordem, depois das telas das divisões.
-   - **Cidade (plano aprovado em 04/11/2026):** servidor e lista do IBGE num PR (migrações `20261105000000` e `20261105000100`); a tela de escolha (convite depois da 1ª partida, Perfil, Ver meus dados, linha da Política) e a aba Cidades com o bloco da Home em dois PRs paralelos. Publicar a migração antes das telas. Detalhe na seção 5 do `docs/jogo.md`.
+   - ~~**Cidade:**~~ no ar desde 04/11/2026, às 22h31 (PRs #107, #104 e #105; detalhe na seção 5 do `docs/jogo.md`). Conferido no banco: 5.571 municípios, o gatilho `guardar_pontos_da_cidade` em `auth.users`, RLS nas 5 tabelas novas, as 6 funções das telas e a `ranking-minuto` sem falha depois da troca de `atualizar_rankings`. A Política mudou (`DATA_DA_VERSAO` 04/11/2026), então todo mundo vê "Os Termos mudaram"; levar a frase da cidade ao advogado.
+     - **Conferir no celular (o Kauê):** escolher a cidade pelo convite do resultado e pelo Perfil; tocar duas vezes no lembrete da Home (o `#cidade` tem de abrir as duas); a aba Cidades em Seu estado, Top nacional e Estados (só aparece cidade com 5+ jogadores na semana); Ver meus dados com a cidade.
+     - **Ficou para depois (baixo):** o "SUBIU!" da Home usa o rival guardado sem olhar a semana; o convite entra depois de uma chamada de rede e empurra os botões; quem teve a sessão encerrada em outro aparelho vê o lembrete como se não tivesse cidade; na junção de contas fica a cidade de quem gerou o código; faltam testes do mapeamento de erros de `escolherCidade`.
 2. **Perguntas:** o piloto recomendou parar nas 529 sem fonte do staging. A meta de 800 precisa de perguntas nascidas de páginas reais. A importação continua com o Kauê.
 3. ~~**Limpeza de anônimos:**~~ feita no PR #84 (`20261103000000_contas_paradas.sql`), guardando os pontos em `pontos_apagados`. No ar desde 02/11/2026 (rotina `apagar-contas-paradas`, dia 1º às 4h). Na simulação de 02/11, 0 conta sairia: a anônima mais antiga é de 19/10/2026, então a primeira limpeza possível é em 1º/05/2027. As travas do PR #86 estão no ar desde 02/11/2026.
 4. **Grafismo de TV, fase 2:** ~~painel `#admin` no visual da seção 4.6 do `docs/visual.md`~~ feito no PR #101 (04/11/2026). Falta: o confete da vitória dos Pênaltis pode ir para o `resultadoPadrao.ts`, para os outros jogos usarem.
