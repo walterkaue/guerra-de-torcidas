@@ -536,7 +536,7 @@ export interface Aparencia {
 
 /** Do mais claro ao mais escuro. */
 export const TONS_DE_PELE = ['#f1cfb3', '#e0ac85', '#c68d63', '#a3693f', '#7a4a2a', '#4f2f1c'];
-const CORES_DE_CABELO = ['#17110d', '#2b1d14', '#4a2f1d', '#6e4a2c', '#a8783f', '#c99c5e'];
+export const CORES_DE_CABELO = ['#17110d', '#2b1d14', '#4a2f1d', '#6e4a2c', '#a8783f', '#c99c5e'];
 /** Peso de cada cabelo para homens e para mulheres (todo cabelo pode sair para qualquer um). */
 const CABELOS: [Cabelo, number, number][] = [
   ['raspado', 3, 0.6],
@@ -633,12 +633,12 @@ const uniformesDoTime = ([cor1, cor2]: readonly [string, string]): [Uniforme, Un
 export const CORES_DE_GOLEIRO = ['#ffd23f', '#b8f135', '#2fd4e0', '#ff6fb1', '#a78bfa'];
 
 /** O tom de goleiro que mais se afasta de todas as cores dadas (o primeiro da lista que passar de 150). */
-function corDeGoleiro(evitar: readonly string[]): string {
+export function corDeGoleiro(evitar: readonly string[]): string {
   const folga = (c: string) => Math.min(...evitar.map((e) => distancia(c, e)));
   return CORES_DE_GOLEIRO.find((c) => folga(c) > 150) ?? CORES_DE_GOLEIRO.reduce((a, b) => (folga(b) > folga(a) ? b : a));
 }
 
-const uniformeDeGoleiro = (camisa: string): Uniforme => ({ camisa, calcao: '#1b1b1b', meiao: camisa, chuteira: '#161616', luva: camisa });
+export const uniformeDeGoleiro = (camisa: string): Uniforme => ({ camisa, calcao: '#1b1b1b', meiao: camisa, chuteira: '#161616', luva: camisa });
 
 export interface UniformesDaPartida {
   jogador: Uniforme;
@@ -1359,7 +1359,7 @@ function cabeca(c: CanvasRenderingContext2D, b: Boneco, p: Pose, soCabeloDeTras:
  * Desenha o boneco na pose, com os pés na origem. Batedor de costas, goleiro de frente.
  * `realcePeDeApoio` pinta de amarelo a chuteira do pé de apoio (a dica da defesa).
  */
-export function desenharBoneco(c: CanvasRenderingContext2D, b: Boneco, p: Pose, realcePeDeApoio = false): void {
+export function desenharBoneco(c: CanvasRenderingContext2D, b: Boneco, p: Pose, realcePeDeApoio = false, camadas?: Camadas): void {
   const d = prepararDegrades(c, b);
   resolver(b, p);
   if (b.deFrente && b.cabeloAtras) cabeca(c, b, p, true);
@@ -1371,13 +1371,55 @@ export function desenharBoneco(c: CanvasRenderingContext2D, b: Boneco, p: Pose, 
   if (p[BD + 4] < 0) braco(c, b, d, p, 1);
   pescoco(c, b, p);
   tronco(c, b, d, p);
+  camadas?.tronco?.(c, b, p);
   // Perna dobrada para a câmera: a canela passa na frente do calção e da camiseta.
   if (p[PNE + 6] > 0) canela(c, b, d, p, 0, realcePeDeApoio);
   if (p[PND + 6] > 0) canela(c, b, d, p, 1, false);
   cabeca(c, b, p, false);
+  camadas?.cabeca?.(c, b, p);
   if (p[BE + 4] >= 0) braco(c, b, d, p, 0);
   if (p[BD + 4] >= 0) braco(c, b, d, p, 1);
+  camadas?.fim?.(c, b, p);
 }
+
+/**
+ * Ganchos opcionais para desenhar por cima do boneco (o boneco montável, src/telas/bonecoMontavel.ts).
+ * Cada um roda com as juntas da pose já resolvidas em `b.j`. Sem ganchos, nada muda no desenho.
+ */
+export interface Camadas {
+  /** Logo depois do tronco e do calção (colete, faixa, número). */
+  tronco?: (c: CanvasRenderingContext2D, b: Boneco, p: Pose) => void;
+  /** Depois da cabeça e do cabelo (testeira). */
+  cabeca?: (c: CanvasRenderingContext2D, b: Boneco, p: Pose) => void;
+  /** Por último, depois dos braços (munhequeira, braçadeira, brilho da chuteira). */
+  fim?: (c: CanvasRenderingContext2D, b: Boneco, p: Pose) => void;
+}
+
+/** Medidas e índices que o boneco montável precisa para pôr peças nas juntas (só leitura). */
+export const GEOMETRIA = { COXA, CANELA, PE, BRACO, ANTEBRACO, TRONCO, PESCOCO, ALTURA_PELVE } as const;
+export const INDICE = { TR, TRK, OMK, CB, BE, BD, PNE, PND } as const;
+export const JUNTA = { PELVE: J_PELVE, PESCOCO: J_PESCOCO, CABECA: J_CABECA, OMBRO: J_OMBRO, COTOVELO: J_COTOVELO, PUNHO: J_PUNHO, TORNOZELO: J_TORNOZELO } as const;
+/** Escala que nunca zera, mantendo o sinal (a mesma dos membros). */
+export const escalaDoOsso = comSinal;
+
+/** Poses de frente do boneco montável (avatar e card): mãos na cintura e braços para cima em V. */
+export const POSES_DE_FRENTE = {
+  parado: frente({
+    bE: [-40, 1, 46, 0.95, 1],
+    bD: [40, 1, -46, 0.95, 1],
+    pE: [-6, 1, -2, 1, -35, 0.5, -1],
+    pD: [6, 1, 2, 1, 35, 0.5, -1],
+  }),
+  /** Os dois braços para cima, abertos em V. */
+  bracos: frente({
+    y: -50,
+    trk: 1.02,
+    bE: [-152, 1, -158, 1, 1],
+    bD: [152, 1, 158, 1, 1],
+    pE: [-8, 1, -3, 1, -35, 0.5, -1],
+    pD: [8, 1, 3, 1, 35, 0.5, -1],
+  }),
+};
 
 /** Todas as poses-chave, para a vitrine de desenvolvimento. */
 export const POSES_DO_BATEDOR = { ...B, correB };

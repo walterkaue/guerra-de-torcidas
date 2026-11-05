@@ -840,6 +840,64 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
 - **Vibração (ajuste de 04/11/2026, depois do teste do Kauê):** toda estação vibra no padrão de gol (60-40-90 ms), acertando ou não; o de acerto (22 ms) quase não se sentia. Como no resto do jogo, só no Android: o iPhone não tem vibração no navegador.
 - **Desfecho sem rede:** fica em `pendente` no aparelho e a Home manda de novo em silêncio. Um `completou` guardado nunca é trocado por outro desfecho, para o XP não se perder.
 
+### 14.5 Boneco montável (fase 3)
+> Decisão do Kauê em 05/11/2026: caminho B, "Vestiário", com a tela da Rota 2 (canvas "Rotas visuais: blocos de informação", linha "Fase 3 · Boneco montável"). Histórico da proposta: `claude/boneco-montavel.md` no projeto do Claude.
+
+- **Sem foto enviada pelo jogador** (dado pessoal de menores, moderação, armazenamento). O avatar é um boneco no estilo "Silhueta premium" (`docs/bonecos.md`), **sempre fictício**: rosto liso (sem olhos, boca ou barba), camisa lisa sem nome, nada que imite jogador real, nem pela combinação de número, pele e cabelo.
+- **Onde aparece:** busto no avatar da Home (52 px, com o fundo e a moldura escolhidos) e no crachá do Perfil (84 px); corpo inteiro no bloco "Vestiário" do Perfil, no vestiário e, depois, no card (quadradinho "Meu boneco" e estilo Pôster, 14.6). **Nunca** em lista de outras pessoas, ranking ou vitrine de torcida. Os bonecos das partidas continuam sorteados (não é o caminho C: "seu boneco em campo" fica no backlog, E06).
+
+**Peças do começo (todo mundo tem, de graça):** corpo (homem ou mulher, só a forma do desenho; todo cabelo e acessório serve nos dois); os 6 tons de pele do jogo (só a amostra, sem nome de cor); os 7 cabelos em 6 cores; uniforme 1 ou 2 nas cores do time do coração (trocar de time troca as cores sozinho); número; testeira e munhequeira nas cores do time; fundos Gramado, Arquibancada do time e Estádio à noite.
+
+**Número (decidido em 05/11/2026):** 1 ou 2 dígitos, de 0 a 9 e de 00 a 99. "7" e "07" são escolhas diferentes, "0" e "00" valem, e dá para ficar sem número. Nenhum número é bloqueado: o que identifica um jogador é o nome, e por isso **nomes e apelidos de jogadores famosos entram na `palavras_bloqueadas`** (apelido e frase própria do card). Nome comum sozinho (Gabriel, Lucas) não entra; entra com o sobrenome conhecido.
+
+**O que libera depois (nunca pago, sem sorteio, sem prazo; condições contadas no servidor):**
+
+| Condição | Libera |
+|---|---|
+| Reserva (100 XP) | colete de treino por cima da camisa · fundo Banco de reservas |
+| Titular (1.000) | chuteira nas cores do time · pose "braços pra cima" (só no card) · fundo Túnel |
+| Craque (5.000) | braçadeira de capitão · fundo Holofotes |
+| Ídolo (15.000) | faixa de campeão no peito · fundo Papel picado |
+| Lenda (30.000) | moldura dourada do avatar · fundo Telão |
+| 1º bronze em qualquer item | munhequeira bronze |
+| 1ª prata | fundo Barreira |
+| 1º ouro | chuteira dourada (genérica, sem marca) · fundo Rede balançando |
+| Ouro numa disputa de pênaltis | uniforme de goleiro (cores de goleiro do jogo, com luvas) |
+| Ouro num item da Seleção | fundo verde e amarelo (sem brasão nem bandeira) |
+| 5 ouros | moldura Galeria |
+| Aquecimento completo | apito no pescoço |
+
+- O contador "N de 26 peças" conta as peças do vestiário (roupas, acessórios, chuteiras, pose, fundos e molduras), não pele, cabelo, corpo e número. É coleção, como a trilha das medalhas: sem prazo, raridade ou peça que some.
+- Peça trancada aparece com cadeado e a condição ("Libera no Titular", "Libera no 1º ouro"); o texto nunca cita nome de pessoa. Nada por posição no ranking nem por sequência de dias. Poses só genéricas.
+- O apito vem do Aquecimento, que é registrado pelo aparelho (risco aceito do +20 XP, 14.4): aceitável para uma peça só visual.
+
+**Tela (Rota 2, aprovada em 05/11/2026):**
+- **Perfil:** crachá com o busto de 84 px no lugar do ícone; logo abaixo, bloco **Vestiário** baixo (~120 px): corpo inteiro pequeno, "N de 26 peças", a próxima peça a liberar ("Próxima: chuteira nas cores do time, no Titular") e o botão "Abrir vestiário". A Carreira continua visível sem rolar em 390 × 844.
+- **Home:** avatar do cabeçalho em busto de 52 px, com fundo e moldura; tocar abre o Perfil, como hoje.
+- **Vestiário (tela cheia):** boneco grande em corpo inteiro no topo, parado, sobre o fundo escolhido, com voltar, "VESTIÁRIO", "N de 26" e a prévia do busto da Home. Embaixo, abas do mesmo tamanho com ícone e texto curto: **Corpo** (corpo e pele), **Cabelo** (estilo e cor), **Camisa** (uniforme 1, 2 e goleiro; número em dois quadros e "Sem número"), **Acessório** e **Fundo** (fundos e molduras). Só a parte de baixo rola. Botões **Sortear** (escuro; só com peças que a pessoa tem) e **Salvar** (amarelo), na proporção 1 : 1,4.
+- **Sair sem salvar:** voltar com mudança pergunta "Sair sem salvar?" (Salvar · Sair); sem mudança, sai direto. Não grava a cada toque: cada gravação passa pelo servidor.
+- **Peça trancada:** folha que abre de baixo, com o nome, a condição, a barra de XP (peça de nível) ou o que falta na medalha, o que mais libera junto e um botão só, "Entendi". Nenhuma compra, sorteio ou prazo.
+- **Peça nova no vestiário:** no resultado de qualquer jogo, quando uma peça libera: bloco com o boneco vestindo a peça, a lista do que liberou e "Vestir agora" (abre o vestiário com ela), com papel picado e vibração. Cada peça é anunciada uma vez por aparelho.
+- **Movimento:** pulinho ao trocar peça; pose de braços pra cima com vibração curta ao vestir peça nova. Nada com movimento reduzido; a vibração respeita o botão Vibração.
+- **Primeira vez:** cada conta ganha um boneco sorteado entre as peças do começo, sem tela no caminho da 1ª partida (um toque e joga). No Perfil, o convite "Monte seu boneco" fica até a primeira visita ao vestiário.
+
+**Onde fica guardado (decidido em 05/11/2026):** no servidor, em códigos curtos (sem cores e sem rótulo de pele ou corpo), para acompanhar o Código do torcedor entre aparelhos. O servidor confere se cada peça está liberada antes de gravar e troca a trancada pela padrão. Entra no "Ver meus dados", some no "Apagar meus dados" e na limpeza de contas paradas, nunca vai para métricas (nem por contagem) e sobrevive ao zerar da pré-temporada, como a Carreira. Na junção de contas fica o boneco de quem gerou o código (ou o da outra conta, se o dono não tiver). A Política de Privacidade ganha uma linha, e **a escolha de tom de pele e corpo entra na lista do advogado** (pode ser lida como dado sensível na LGPD; defesa: escolha estética, sem pergunta de identidade, sem rótulo, sem métrica, apagável).
+
+**Construção (trilho D5, prompts em `claude/prompts-boneco.md`):** D5a peças desenhadas e catálogo puro (vitrine para o Kauê aprovar); D5-lista nomes de jogadores na `palavras_bloqueadas`; D5b servidor; revisão de segurança do D5b antes de aplicar; D5c telas (Perfil, Home, vestiário, peça trancada, peça nova). Depois, "Meu boneco" e Pôster no card (14.6).
+
+#### Como está no código (05/11/2026, D5a: peças e catálogo, ainda sem servidor nem telas)
+- **Catálogo puro (`src/jogo/vestiario.ts`, também em `supabase/functions/_shared/jogo/` pelo `npm run compartilhar`, junto com `carreira.ts`):**
+  - **Vestimenta `v: 1`:** só códigos curtos (`corpo` h|m, `pele` 0–5, `cabelo`, `corCabelo` 0–5, `camisa`, `numero`, `cabeca`, `punho`, `braco`, `peito`, `pescoco`, `chuteira`, `pose`, `fundo`, `moldura`), nunca cores nem rótulos. `PADRAO` é o que entra no lugar de uma peça trancada ou inválida, campo a campo: uni1, nada na cabeça, punho, braço, peito e pescoço, chuteira neutra, pose parada, Gramado, sem moldura; pele, cabelo ou corpo inválido vira o 1º da lista.
+  - **`PECAS`:** as 26 peças, com id fixo (nunca muda depois de publicado), aba, nome, campo, valor e condição. 7 são do começo (uni1, uni2, testeira, munhequeira e os 3 fundos). Pose e chuteiras ficam na aba Acessório; fundos e molduras, na aba Fundo.
+  - **`pecasLiberadas(estado)`:** o estado é o índice do nível da Carreira, as medalhas por item (`tipo` lance ou disputa, gols, recriados, vitórias, `daSelecao`) e `aquecido`. A medalha sai de `medalhaDoLance` e `medalhaDaDisputa`, a mesma regra da trilha (um teste compara com `trilhaDoLance` e `trilhaDaDisputa`). "1º bronze" vale para qualquer item com bronze ou mais; "Item da Seleção" chega pronto em `daSelecao`, decidido por quem monta o estado pelo catálogo.
+  - **`validar(x, liberadas)`:** aceita qualquer JSON e devolve uma vestimenta nova: `v` diferente de 1 vira o PADRAO, chave a mais some, valor desconhecido ou peça trancada volta ao padrão, número fora de `^[0-9]{1,2}$` vira "sem número". Peça do começo vale sempre.
+  - **`sortearComPecas(liberadas)` e `sortearDoComeco()`:** sorteio só com o que a pessoa tem (pose sempre parada; 1 em 4 sem número).
+  - **`proximaPeca(estado)`:** primeiro a do próximo nível da Carreira (na ordem da tabela); sem peça de nível trancada, a mais fácil das outras: Aquecimento, 1º bronze, 1ª prata, 1º ouro, ouro nos pênaltis, ouro da Seleção, 5 ouros.
+  - **`textoDaCondicao`:** "Libera no Titular", "Libera no 1º bronze", "Libera na 1ª prata", "Libera com um ouro nos pênaltis", "Libera com o Aquecimento completo"…
+  - **`novasPecas(antes, depois)`:** para o "Peça nova no vestiário".
+- **Desenho (`src/telas/bonecoMontavel.ts` e `bonecoFundos.ts`):** regras e tamanhos em `docs/bonecos.md`, seção 6. Só carrega por `import()` quando for usado; nada do app importa ainda, e o bundle inicial não mudou (51,49 kB gzip, contra 51,48).
+- **Em dev:** `?vitrineBoneco` (com `&so=`, `&estado=` e `&time=`). Prints em `docs/auditoria/2026-11-05/boneco/`, aprovados pelo Kauê em 05/11/2026.
+
 ### 14.7 Lances do Jogo unificados
 > Decisão do Kauê em 04/11/2026. Números finais pela proposta `docs/propostas/lances-unificados.md`.
 
