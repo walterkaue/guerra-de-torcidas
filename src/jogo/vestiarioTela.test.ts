@@ -106,8 +106,17 @@ describe('toque numa peça', () => {
     const de = tocarPeca(v, peca('colete'), livres);
     expect(de.tipo === 'vestiu' && de.vestimenta.peito).toBe('nenhum');
   });
-  it('camisa e fundo não ficam vazios', () => {
+  it('moldura e pose também saem com o segundo toque', () => {
+    const tudo = new Set(PECAS.map((p) => p.id));
+    const com = { ...PADRAO, moldura: 'dourada' as const, pose: 'bracos' as const };
+    const m = tocarPeca(com, peca('moldura_dourada'), tudo);
+    expect(m.tipo === 'vestiu' && m.vestimenta.moldura).toBe('nenhuma');
+    const p = tocarPeca(com, peca('pose_bracos'), tudo);
+    expect(p.tipo === 'vestiu' && p.vestimenta.pose).toBe('parado');
+  });
+  it('camisa e fundo não ficam vazios (a mesma vestimenta volta, sem mudança)', () => {
     const r = tocarPeca(PADRAO, peca('uni1'), livres);
+    expect(r.tipo === 'vestiu' && r.vestimenta).toBe(PADRAO);
     expect(r.tipo === 'vestiu' && r.vestimenta.camisa).toBe('uni1');
     const f = tocarPeca(PADRAO, peca('fundo_gramado'), livres);
     expect(f.tipo === 'vestiu' && f.vestimenta.fundo).toBe('gramado');
@@ -181,6 +190,23 @@ describe('folha da peça trancada', () => {
       ],
     });
     expect(f.falta).toEqual(['O ouro sai com 100 gols e 10 vitórias numa mesma disputa de pênaltis.', 'Faltam 40 gols e 7 vitórias na disputa mais perto.']);
+  });
+  it('singular de recriando e vitória', () => {
+    const lance = folhaDaTrancada(peca('chuteira_dourada'), { ...semNada, medalhas: [{ tipo: 'lance', gols: 50, recriados: 9, vitorias: 0, daSelecao: false }] });
+    expect(lance.falta?.[1]).toBe('Falta 1 recriando no lance mais perto.');
+    const disputa = folhaDaTrancada(peca('goleiro'), { ...semNada, medalhas: [{ tipo: 'disputa', gols: 100, recriados: 0, vitorias: 9, daSelecao: false }] });
+    expect(disputa.falta?.[1]).toBe('Falta 1 vitória na disputa mais perto.');
+  });
+  it('ouro da Seleção só olha os itens da Seleção', () => {
+    const f = folhaDaTrancada(peca('fundo_verde_amarelo'), {
+      ...semNada,
+      medalhas: [
+        { tipo: 'lance', gols: 49, recriados: 10, vitorias: 0, daSelecao: false },
+        { tipo: 'lance', gols: 30, recriados: 10, vitorias: 0, daSelecao: true },
+      ],
+    });
+    expect(f.falta).toEqual(['Vale o ouro em qualquer lance ou disputa da Seleção.', 'Faltam 20 gols no lance mais perto.']);
+    expect(folhaDaTrancada(peca('fundo_verde_amarelo'), semNada).falta?.[1]).toBe('Ainda sem gol valendo num item da Seleção.');
   });
   it('5 ouros conta quantos já tem', () => {
     const ouro = { tipo: 'lance' as const, gols: 50, recriados: 10, vitorias: 0, daSelecao: false };

@@ -12,6 +12,7 @@ import {
   CORPOS,
   PELES,
   CORES_DE_CABELO,
+  textoDaCondicao,
   type Aba,
   type Peca,
   type Vestimenta,
@@ -97,7 +98,8 @@ interface Miniatura {
 export function telaVestiario(root: HTMLElement, _rota: Rota): () => void {
   const fonte = fonteDoVestiario();
   if (!fonte) {
-    // Produção, nesta etapa: ainda não existe fonte do servidor. Volta ao Perfil.
+    // Produção, nesta etapa: ainda não existe fonte do servidor. Volta ao Perfil (e tira o #vestiario do endereço).
+    if (location.hash === '#vestiario') history.replaceState(null, '', `${location.pathname}${location.search}`);
     irPara({ tela: 'perfil' });
     return () => {};
   }
@@ -224,7 +226,7 @@ function montar(
 
   function desenharPrevia(): void {
     const c = ajustar(canvasPrevia, 52, 52);
-    desenharBoneco(c, atual, cores, 'busto', 52, 52);
+    desenharBoneco(c, parado(atual), cores, 'busto', 52, 52);
   }
 
   function pintar(m: Miniatura): void {
@@ -295,7 +297,15 @@ function montar(
     return b;
   }
 
-  function itemDaGrade(nome: string, rotuloExtra: string | null, canvas: HTMLCanvasElement, marcado: (() => boolean) | null, aoTocar: () => void, trancada = false): HTMLButtonElement {
+  function itemDaGrade(
+    nome: string,
+    rotuloExtra: string | null,
+    canvas: HTMLCanvasElement,
+    marcado: (() => boolean) | null,
+    aoTocar: () => void,
+    trancada = false,
+    condicao?: string,
+  ): HTMLButtonElement {
     const b = botao('vest-item');
     if (rotuloExtra) b.setAttribute('aria-label', rotuloExtra);
     const mini = e('span', 'vest-mini');
@@ -307,6 +317,7 @@ function montar(
       mini.append(cad);
     }
     b.append(mini, e('span', 'vest-nome', nome));
+    if (condicao) b.append(e('span', 'vest-condicao', condicao));
     if (marcado) {
       const marca = () => b.setAttribute('aria-pressed', String(marcado()));
       marca();
@@ -349,15 +360,17 @@ function montar(
     const canvas = miniaturaDaPeca(p);
     return itemDaGrade(
       p.nome,
-      livre ? null : `${p.nome}, trancada`,
+      livre ? null : `${p.nome}, trancada. ${textoDaCondicao(p)}`,
       canvas,
       livre ? () => pecaVestida(atual, p) : null,
       () => {
         const t = tocarPeca(atual, p, liberadas);
-        if (t.tipo === 'vestiu') mudar(t.vestimenta);
-        else abrirFolha(t.peca);
+        if (t.tipo === 'trancada') abrirFolha(t.peca);
+        // Camisa ou fundo que já está vestido: nada muda, nada pula.
+        else if (t.vestimenta !== atual) mudar(t.vestimenta);
       },
       !livre,
+      livre ? undefined : textoDaCondicao(p),
     );
   }
 
@@ -513,6 +526,8 @@ function montar(
     d.addEventListener('click', (ev) => {
       if (ev.target === d) porToque();
     });
+    // Se o navegador fechar o dialog sem `cancel` (voltar do Android pelo CloseWatcher), a camada sai junto.
+    d.addEventListener('close', () => porToque());
     const btnSalvarSair = d.querySelector<HTMLButtonElement>('[data-salvar-sair]')!;
     const btnSair = d.querySelector<HTMLButtonElement>('[data-sair]')!;
     btnSair.addEventListener('click', sair);
@@ -532,14 +547,21 @@ function montar(
   // ---------- rodapé ----------
 
   function marcarBotoes(): void {
+    root.querySelector('.vest')?.classList.toggle('salvando', salvando);
     btnSalvar.disabled = salvando;
     btnSortear.disabled = salvando;
     btnSalvar.textContent = salvando ? 'Salvando…' : 'Salvar';
   }
 
   /** Grava pelo servidor. Devolve se deu certo; em erro, a escolha fica na tela para tentar de novo. */
-  async function salvar(): Promise<boolean> {
-    if (salvando) return false;
+  let emAndamento: Promise<boolean> | null = null;
+  /** Um salvamento por vez: quem toca Salvar no meio de outro espera o mesmo resultado. */
+  function salvar(): Promise<boolean> {
+    emAndamento ??= gravar().finally(() => (emAndamento = null));
+    return emAndamento;
+  }
+
+  async function gravar(): Promise<boolean> {
     salvando = true;
     marcarBotoes();
     avisar('');

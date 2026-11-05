@@ -71,6 +71,8 @@ export function abrirFolhaTrancada(o: OpcoesDaFolha): () => void {
     if (e.target === d) porToque();
   });
   d.querySelector('[data-entendi]')!.addEventListener('click', porToque);
+  // Se o navegador fechar o dialog sem `cancel` (voltar do Android pelo CloseWatcher), a camada sai junto.
+  d.addEventListener('close', () => porToque());
   d.showModal();
   o.desenhar(canvas, w, h);
   return desmontar;

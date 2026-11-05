@@ -213,6 +213,19 @@
   overflow-wrap: anywhere;
 }
 
+/* Condição da trancada embaixo do nome ("Libera no Craque"). */
+.vest-condicao {
+  font: 600 12px/1.15 var(--fonte-rotulo);
+  color: var(--texto-suave);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* Gravando: as peças não respondem (o rodapé já fica desabilitado). */
+.vest.salvando .vest-conteudo {
+  pointer-events: none;
+}
+
 /* ---------- amostras redondas (pele e cor do cabelo) ---------- */
 .vest-amostras {
   display: flex;
