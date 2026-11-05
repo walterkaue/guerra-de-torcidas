@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { textoDaBusca, textoDaConfirmacao, textoDoFeito } from './adminApelido';
+import { textoDaBusca, textoDaConfirmacao, textoDaLista, textoDoFeito } from './adminApelido';
 
 describe('apagar apelido no #admin', () => {
   it('a busca diz quantos usam, no singular e no plural', () => {
@@ -16,5 +16,11 @@ describe('apagar apelido no #admin', () => {
   it('o fim diz quantos mudaram', () => {
     expect(textoDoFeito(2)).toBe('Apelido apagado de 2 torcedores.');
     expect(textoDoFeito(0)).toBe('Ninguém usava mais esse apelido.');
+  });
+
+  it('a lista diz quantos apelidos o filtro barra, no singular e no plural', () => {
+    expect(textoDaLista(1)).toContain('1 apelido gravado é barrado');
+    expect(textoDaLista(3)).toContain('3 apelidos gravados são barrados');
+    expect(textoDaLista(0)).toBe('Nenhum apelido gravado é barrado pelo filtro de hoje.');
   });
 });
