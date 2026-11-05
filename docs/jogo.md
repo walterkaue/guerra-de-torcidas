@@ -895,7 +895,7 @@ Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · B
   - **`textoDaCondicao`:** "Libera no Titular", "Libera no 1º bronze", "Libera na 1ª prata", "Libera com um ouro nos pênaltis", "Libera com o Aquecimento completo"…
   - **`novasPecas(antes, depois)`:** para o "Peça nova no vestiário".
 - **Desenho (`src/telas/bonecoMontavel.ts` e `bonecoFundos.ts`):** regras e tamanhos em `docs/bonecos.md`, seção 6. Só carrega por `import()` quando for usado; nada do app importa ainda, e o bundle inicial não mudou (51,49 kB gzip, contra 51,48).
-- **Em dev:** `?vitrineBoneco` (com `&so=`, `&estado=` e `&time=`). Prints em `docs/auditoria/2026-11-05/boneco/`, para o Kauê aprovar antes do merge.
+- **Em dev:** `?vitrineBoneco` (com `&so=`, `&estado=` e `&time=`). Prints em `docs/auditoria/2026-11-05/boneco/`, aprovados pelo Kauê em 05/11/2026.
 
 ### 14.7 Lances do Jogo unificados
 > Decisão do Kauê em 04/11/2026. Números finais pela proposta `docs/propostas/lances-unificados.md`.
