@@ -1,4 +1,4 @@
-// Textos de pontos do "?" dos Lances do Jogo depois de 16/11/2026 (docs/jogo.md, seção 14.7). Puro: sem DOM nem
+// Textos de pontos do "?" dos Lances do Jogo depois de 09/11/2026 (docs/jogo.md, seção 14.7). Puro: sem DOM nem
 // relógio. Todo número sai das tabelas do código (PONTOS_UNIFICADOS, TABELA_LANCES_UNIFICADA, MEDALHAS_PENALTIS).
 
 import { FAIXAS, TABELA_LANCES_UNIFICADA, type Faixa, type TabelaLances } from './lances';
@@ -34,7 +34,7 @@ export function pontosDosLances(t: TabelaLances = TABELA_LANCES_UNIFICADA): Linh
 export function textoDasMedalhasDosPenaltis(): string {
   const ouro = MEDALHAS_PENALTIS[MEDALHAS_PENALTIS.length - 1];
   const gols = MEDALHAS_PENALTIS.map((m) => m.gols).join(' · ');
-  return `Medalhas dos pênaltis, por disputa e na livre: ${gols} gols, ouro com ${ouro.vitorias} vitórias.`;
+  return `Medalhas dos pênaltis, por disputa histórica: ${gols} gols, ouro com ${ouro.vitorias} vitórias.`;
 }
 
 /** O que as duas folhas dizem do teto e do dia. */

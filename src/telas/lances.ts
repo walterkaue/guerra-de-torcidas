@@ -1,5 +1,5 @@
-// Lances do Jogo (docs/jogo.md, seção 7.3 e 14.7). Antes do corte de 16/11/2026 (0h de Brasília): hub com três abas. Pênaltis abre o jogo de sempre (telas/partida.ts,
-// valendo pontos), livre ou com o cenário de uma disputa histórica (seção 6); Faltas e Cara a cara têm o álbum
+// Lances do Jogo (docs/jogo.md, seção 7.3 e 14.7). Antes do corte de 09/11/2026 (0h de Brasília): hub com três abas. Pênaltis abre o jogo de sempre (telas/partida.ts,
+// valendo pontos), livre (até 08/11) ou com o cenário de uma disputa histórica (seção 6); Faltas e Cara a cara têm o álbum
 // (filtro de clube, ficha, partida de 3 e treino). A partida de 3 vale pontos na pré-temporada, lance a lance com
 // o servidor (função `lances`, como os pênaltis): a semente nunca vem para o celular, cada chute manda o gesto e a
 // bola só sai quando o resultado chega. Caiu a conexão: a partida segue aqui, sem valer pontos. O treino roda
@@ -21,7 +21,6 @@ import { prontoParaDesenhar, seloNivel } from '../jogo/card';
 import type { FechamentoLances } from '../jogo/lancesPartida';
 import {
   AVISO_LIMITE_DO_DIA,
-  ITEM_LIVRE,
   avisoLimiteDoDia,
   emojisDaPartida,
   faixaNaTela,
@@ -42,6 +41,7 @@ import {
   clubesDoTipo,
   conviteLances,
   fraseNeutraDoX1,
+  idsDoLanceDoDia,
   itensDaTelaUnica,
   itensDoFiltro,
   placarDoX1,
@@ -61,7 +61,7 @@ import { ErroServidor, type PedidoLances } from '../servidor/api';
 import { comMotivo } from '../servidor/motivo';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
-import { abas, aoTocarNoEstado, cabecalhoTela, estado, faixa, marcarAba, numero, placa, selo } from './blocos';
+import { abas, aoTocarNoEstado, cabecalhoTela, estado, faixa, marcarAba, numero, placa, selo, trilha } from './blocos';
 import { ligarEfeitoNoRanking } from './efeitoRanking';
 import { contar, htmlResultado, htmlSelosDaPosicao, ligarResultado } from './resultadoPadrao';
 import {
@@ -104,9 +104,9 @@ import {
 import { dicasDoAparelho, mostrarDica, tirarDica } from './dicas';
 import { abrirRegras } from './regras';
 import { cardDoAlbum, criarMedalhasDoAlbum, favoritosDoAparelho, htmlFiltrosDoAlbum, marcarFavorito } from './albumLances';
-import { abrirFicha, type NumerosDoLance } from './fichaLance';
+import { abrirFicha, blocoDasMedalhas, type NumerosDoLance } from './fichaLance';
 import { mostrarRumoDasMedalhas } from './rumoMedalhas';
-import { filtrarAlbum, type FiltroAlbum } from '../jogo/lancesTextos';
+import { filtrarAlbum, trilhaDoItem, type FiltroAlbum } from '../jogo/lancesTextos';
 
 // Em desenvolvimento, ?lancesFalsos troca o servidor por um de mentira (src/dev/lancesFalsos.ts).
 const FALSO = import.meta.env.DEV && new URLSearchParams(location.search).has('lancesFalsos');
@@ -211,7 +211,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   let limparJogo: (() => void) | null = null;
   let filtroAlbum: FiltroAlbum = 'todos';
   const medalhasDoAlbum = criarMedalhasDoAlbum(() => servidor().then((s) => s.minhasMedalhas()));
-  /** As partidas valendo do dia já foram (o servidor disse; 6 até 15/11, 10 depois): o treino e o álbum avisam. */
+  /** As partidas valendo do dia já foram (o servidor disse; 6 até 08/11, 10 depois): o treino e o álbum avisam. */
   let valendoEsgotado = false;
   // ?disputasFalsas enche a lista em desenvolvimento, enquanto o catálogo está em rascunho (src/dev/disputasFalsas.ts).
   let catalogoDisputas: readonly Disputa[] = DISPUTAS;
@@ -223,6 +223,29 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     });
   }
 
+  /** Os números da disputa nas medalhas, ou null se ainda não chegaram (ou falharam). */
+  const numerosDaDisputa = (d: Disputa): NumerosDoLance | null =>
+    medalhasDoAlbum.estado() === 'ok' ? (medalhasDoAlbum.mapa().get(itemPenaltis(d.id)) ?? { gols: 0, recriados: 0, vitorias: 0 }) : null;
+
+  /** O bloco das medalhas da ficha da disputa: trilha, barra de Vitórias e o que falta pro ouro. */
+  function medalhasDaFichaDaDisputa(d: Disputa): string {
+    const situacao = medalhasDoAlbum.estado();
+    return blocoDasMedalhas(situacao === 'carregando' ? 'carregando' : numerosDaDisputa(d), itemPenaltis(d.id));
+  }
+
+  /** Preenche (ou refaz) a trilha do card e o bloco da ficha de cada disputa da lista, sem fechar nenhuma ficha aberta. */
+  function pintarMedalhasDasDisputas(el: ParentNode): void {
+    el.querySelectorAll<HTMLElement>('[data-trilha-disputa]').forEach((alvo) => {
+      const d = catalogoDisputas.find((x) => x.id === alvo.dataset.trilhaDisputa);
+      const n = d && numerosDaDisputa(d);
+      alvo.innerHTML = n ? trilha(trilhaDoItem(itemPenaltis(d.id), n), { compacta: true }) : '';
+    });
+    el.querySelectorAll<HTMLElement>('[data-medalhas-disputa]').forEach((alvo) => {
+      const d = catalogoDisputas.find((x) => x.id === alvo.dataset.medalhasDisputa);
+      if (d) alvo.innerHTML = medalhasDaFichaDaDisputa(d);
+    });
+  }
+
   /** Uma disputa da lista: tocar abre a ficha e o botão de jogar, como no álbum. */
   function itemDaDisputa(d: Disputa): string {
     const clube = clubeDoLance(d.clube);
@@ -231,10 +254,15 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         <span class="lance-titulo">${esc(d.titulo)}</span>
         <span class="lance-meta">${esc(contraAdversario(d.adversario))} · ${d.data.slice(0, 4)}</span>
         <span class="lance-pontos disputa-placar">${esc(d.placar)}</span>
+        <span data-trilha-disputa="${esc(d.id)}">${(() => {
+          const n = numerosDaDisputa(d);
+          return n ? trilha(trilhaDoItem(itemPenaltis(d.id), n), { compacta: true }) : '';
+        })()}</span>
       </button>
       <div class="lance-ficha" hidden>
         <p>${esc(d.ficha)}</p>
         <p class="lance-situacao">${esc(chamadaDaDisputa(d))}</p>
+        <div class="ficha-medalhas" data-medalhas-disputa="${esc(d.id)}">${medalhasDaFichaDaDisputa(d)}</div>
         <button type="button" class="botao botao-sec" data-disputa="${esc(d.id)}">Jogar essa disputa</button>
       </div>
     </li>`;
@@ -298,6 +326,12 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
             }),
           )}</div>`
         }`;
+      // As medalhas chegam depois: a trilha entra nos cards e nas fichas sem refazer a lista.
+      if (historicas) {
+        void medalhasDoAlbum.carregar().then(() => {
+          if (el.isConnected && aba === 'penaltis') pintarMedalhasDasDisputas(el);
+        });
+      }
       el.querySelectorAll('[data-acao="disputa-livre"]').forEach((b) => b.addEventListener('click', () => irPara({ tela: 'partida' })));
       el.querySelectorAll<HTMLButtonElement>('.lance-topo').forEach((b) =>
         b.addEventListener('click', () => {
@@ -484,45 +518,39 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
 
   // ---------- tela única (depois do corte, jogo.md 14.7) ----------
   const itensDaTela = (): ItemUnico[] => itensDaTelaUnica(LANCES, catalogoDisputas);
-  const idDoLanceDoDia = (): string | null =>
-    lanceDoDia(
-      diaBrasilia(),
-      LANCES.map((l) => l.id),
-    );
+  /** O Lance do Dia sorteia entre todos os itens: disputas e lances (a mesma lista da Home). */
+  const idDoLanceDoDia = (): string | null => lanceDoDia(diaBrasilia(), idsDoLanceDoDia(LANCES, catalogoDisputas));
   const disputaDoItem = (id: string): Disputa | undefined => catalogoDisputas.find((d) => itemPenaltis(d.id) === id);
   const faixaDoCard = (l: Lance): string => {
     const f = faixaNaTela(l, true);
     return `${ROTULO_FAIXA[f.faixa]} · ${f.pontos}`;
   };
   const metaDaDisputa = (d: Disputa): string => `${clubeDoLance(d.clube).nome} · ${contraAdversario(d.adversario)} · ${d.data.slice(0, 4)}`;
-  const TEXTO_LIVRE = 'Bate 5, pega 5, contra a máquina. Empatou? Morte súbita.';
 
-  /** "Seus 3 melhores de hoje": três números; vazio ou sem resposta do servidor, "—". */
+  /** "Seus 3 melhores de hoje": três números; casa vazia, "Vaga" (decidido em 05/11/2026); sem resposta do servidor, "—". */
   function blocosDasMelhores(melhores: readonly number[] | null): string {
     const rotulos = ['Melhor', '2ª melhor', '3ª melhor'];
     return rotulos
       .map((rotulo, i) => {
         const v = melhores?.[i];
-        return numero(v === undefined ? '—' : String(v), rotulo, v === undefined ? 'apagado' : i === 0 ? 'destaque' : undefined);
+        return numero(v === undefined ? (melhores ? 'Vaga' : '—') : String(v), rotulo, v === undefined ? 'apagado' : i === 0 ? 'destaque' : undefined);
       })
       .join('');
   }
 
   function cardDoItem(it: ItemUnico, favs: ReadonlySet<string>, numeros: NumerosDoLance | null, idDoDia: string | null): string {
     const base = { id: it.id, favorito: favs.has(it.id), numeros };
-    if (it.id === ITEM_LIVRE) {
-      return cardDoAlbum({
-        ...base,
-        titulo: 'Disputa livre',
-        meta: 'Contra a máquina',
-        pontos: 'Bate 5, pega 5',
-        pontosClasse: 'disputa-placar',
-        estilo: estilo(time.cores),
-      });
-    }
     const d = disputaDoItem(it.id);
     if (d) {
-      return cardDoAlbum({ ...base, titulo: d.titulo, meta: metaDaDisputa(d), pontos: d.placar, pontosClasse: 'disputa-placar', estilo: estilo(clubeDoLance(d.clube).cores) });
+      return cardDoAlbum({
+        ...base,
+        titulo: d.titulo,
+        meta: metaDaDisputa(d),
+        pontos: d.placar,
+        pontosClasse: 'disputa-placar',
+        selo: it.id === idDoDia ? 'Lance do Dia' : undefined,
+        estilo: estilo(clubeDoLance(d.clube).cores),
+      });
     }
     const l = LANCES.find((o) => o.id === it.id)!;
     const clube = clubeDoLance(l.clube);
@@ -552,10 +580,6 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         refazerListaUnica?.();
       },
     };
-    if (id === ITEM_LIVRE) {
-      abrirFicha({ ...comum, titulo: 'Disputa livre', texto: TEXTO_LIVRE, estilo: estilo(time.cores), meta: 'Contra a máquina', situacao: '', aoJogar: () => irPara({ tela: 'partida' }) });
-      return;
-    }
     const d = disputaDoItem(id);
     if (d) {
       abrirFicha({
@@ -727,7 +751,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     // O Lance do Dia da Home abre a ficha desse lance (uma vez).
     if (rota.tela === 'lances' && rota.lance && !fichaDaRotaAberta) {
       fichaDaRotaAberta = true;
-      if (LANCES.some((l) => l.id === rota.lance)) abrirFichaDoItem(rota.lance);
+      if (LANCES.some((l) => l.id === rota.lance) || disputaDoItem(rota.lance)) abrirFichaDoItem(rota.lance);
     }
   }
 

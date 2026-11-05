@@ -7,13 +7,13 @@ import {
   clubeValido,
   clubesDoTipo,
   conviteLances,
+  idsDoLanceDoDia,
   itensDaTelaUnica,
   itensDoFiltro,
   linhasDeTentativas,
   textoDaTentativa,
   tipoDaAba,
 } from './lancesTelaUnica';
-import { ITEM_LIVRE } from './lancesTextos';
 
 const lances = [
   { id: 'f1', clube: 'flamengo', tipo: 'falta' as const },
@@ -24,21 +24,30 @@ const disputas = [{ id: 'fla-2019-final', clube: 'flamengo' }];
 const itens = itensDaTelaUnica(lances, disputas);
 
 describe('itens da tela única', () => {
-  it('põe a Disputa livre, todas as disputas e os lances', () => {
-    expect(itens.map((i) => i.id)).toEqual([ITEM_LIVRE, 'penaltis:fla-2019-final', 'f1', 'c1', 'f2']);
-    expect(itens[0].clube).toBeNull();
+  it('põe todas as disputas e os lances, sem Disputa livre', () => {
+    expect(itens.map((i) => i.id)).toEqual(['penaltis:fla-2019-final', 'f1', 'c1', 'f2']);
+    expect(itens.some((i) => i.id === 'penaltis:livre' || i.clube === null)).toBe(false);
   });
 
-  it('a Disputa livre aparece em Todos e em Pênaltis, de qualquer clube', () => {
-    expect(itensDoFiltro(itens, 'todos', 'palmeiras').map((i) => i.id)).toEqual([ITEM_LIVRE, 'f2']);
-    expect(itensDoFiltro(itens, 'penaltis', 'palmeiras').map((i) => i.id)).toEqual([ITEM_LIVRE]);
+  it('o filtro de clube e de tipo só devolve itens do clube', () => {
+    expect(itensDoFiltro(itens, 'todos', 'palmeiras').map((i) => i.id)).toEqual(['f2']);
+    expect(itensDoFiltro(itens, 'penaltis', 'palmeiras')).toEqual([]);
+    expect(itensDoFiltro(itens, 'penaltis', 'flamengo').map((i) => i.id)).toEqual(['penaltis:fla-2019-final']);
     expect(itensDoFiltro(itens, 'falta', 'todos').map((i) => i.id)).toEqual(['f1', 'f2']);
     expect(itensDoFiltro(itens, 'finalizacao', 'flamengo')).toEqual([]);
   });
 
-  it('o clube abre no time da pessoa só se ele tiver item', () => {
+  it('o clube abre no time da pessoa se ele tiver item; senão na Seleção (Outro time cai aqui)', () => {
     expect(clubeInicial(itens, 'flamengo')).toBe('flamengo');
-    expect(clubeInicial(itens, 'remo')).toBe('todos');
+    expect(clubeInicial(itens, 'remo')).toBe('selecao');
+    expect(clubeInicial(itens, 'outro')).toBe('selecao');
+    expect(clubeInicial(itens.filter((i) => i.clube !== 'selecao'), 'remo')).toBe('todos');
+  });
+
+  it('o Lance do Dia sorteia entre disputas e lances, na mesma lista para a Home e para a tela', () => {
+    expect(idsDoLanceDoDia(lances, disputas)).toEqual(['penaltis:fla-2019-final', 'f1', 'c1', 'f2']);
+    expect(idsDoLanceDoDia(lances, disputas)).toEqual(itens.map((i) => i.id));
+    expect(idsDoLanceDoDia([], [])).toEqual([]);
   });
 
   it('o clube escolhido volta a "todos" quando não tem item no tipo', () => {

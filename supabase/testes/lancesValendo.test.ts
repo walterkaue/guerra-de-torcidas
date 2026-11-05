@@ -6,7 +6,7 @@ import type { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { bancoDeTeste } from './banco';
+import { bancoDeTeste, cortarLancesNoFuturo } from './banco';
 
 const DIA = '2026-11-04';
 const SEMANA = '2026-11-02';
@@ -70,6 +70,7 @@ const gols = (n: number, id = 'a', recriou = false) => Array.from({ length: n },
 
 beforeAll(async () => {
   db = await bancoDeTeste();
+  await cortarLancesNoFuturo(db); // regra antiga dos Lances, seja qual for o dia de hoje
 }, TEMPO);
 
 describe('minigame lances', () => {
@@ -204,7 +205,7 @@ describe('hoje e permissões', () => {
     await db.query(
       `insert into public.partidas (torcedor_id, modo, semente, dificuldade, expira_em, minigame) values ($1, 'normal', 1, 0, now() + interval '15 minutes', 'lances')`, [eu]);
     const [h] = await como<{ feitas: number; limite: number; melhor: number | null }>(eu, 'authenticated', 'select * from public.meus_lances_hoje()');
-    // Antes do corte dos Lances unificados (16/11), `melhores` vem vazio (20261105100000).
+    // Antes do corte dos Lances unificados (09/11), `melhores` vem vazio (20261105100000).
     expect(h).toEqual({ feitas: 1, limite: 6, melhor: null, melhores: [] });
   });
 

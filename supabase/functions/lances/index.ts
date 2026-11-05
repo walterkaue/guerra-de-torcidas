@@ -2,7 +2,7 @@
 // as sementes nunca saem daqui. Duas ações:
 //   { acao: 'nova', lance: id }                    começa a partida: 3 tentativas do mesmo lance
 //   { acao: 'nova', desafio: código }              X1 recebido: o lance de quem desafiou, com sementes novas
-//   { acao: 'nova', lances: [id, id, id] }         formato antigo (3 lances escolhidos): só antes de 16/11/2026
+//   { acao: 'nova', lances: [id, id, id] }         formato antigo (3 lances escolhidos): só antes de 09/11/2026
 //   { acao: 'lance', partidaId, i, gesto }         resolve o lance i; no 3º, fecha e grava a partida
 // A regra (tabela, limite do dia, faixa) sai da hora em que a partida foi criada (regraLances.ts).
 // A cena vem do catálogo do servidor (_shared/dados/lances.ts), pelo id: o celular nunca manda a cena.

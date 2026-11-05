@@ -162,7 +162,7 @@
   font-size: 16px;
 }
 
-/* Disputa livre: título e linha dentro da placa. */
+/* Disputa livre (tela de antes, até 08/11): título e linha dentro da placa. */
 .lances-conteudo > .placa > div > .lance-titulo,
 .lances-conteudo > .placa > div > .lance-meta {
   display: block;

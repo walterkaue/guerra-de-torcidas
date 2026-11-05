@@ -13,7 +13,6 @@ import { ID_OUTRO, timePorId } from '../dados/times';
 import { prefs } from '../estado';
 import {
   CONQUISTAS_VAZIO,
-  ITEM_LIVRE,
   ehItemPenaltis,
   NOME_DA_MEDALHA,
   montarMedalhas,
@@ -40,14 +39,11 @@ const TIPOS: Medalha[] = ['ouro', 'prata', 'bronze'];
 const clubeDoLance = (clube: string) => (clube === 'selecao' ? SELECAO : (timePorId(clube) ?? SELECAO));
 
 /**
- * Ficha de cada item da lista. Os itens de pênaltis (`penaltis:livre` e `penaltis:<disputa>`) só existem na regra
- * nova (docs/jogo.md, 14.7): antes do corte a ficha não os conhece e eles ficam de fora. Disputa que saiu do
- * catálogo também fica de fora.
+ * Ficha de cada item da lista. Os itens de pênaltis (`penaltis:<disputa>`) entram antes e depois do corte
+ * (docs/jogo.md, 14.7); disputa que saiu do catálogo fica de fora.
  */
 const ficha = (id: string) => {
   if (ehItemPenaltis(id)) {
-    if (!lancesUnificados()) return undefined;
-    if (id === ITEM_LIVRE) return { titulo: 'Disputa livre', clube: null };
     const d = DISPUTAS.find((x) => itemPenaltis(x.id) === id);
     return d && { titulo: d.titulo, clube: d.clube };
   }
@@ -80,11 +76,11 @@ function detalheDoItem(l: MedalhaDoLanceMontada): string {
 }
 
 function linhaDoLance(l: MedalhaDoLanceMontada): string {
-  const t = clubeDoLance(l.clube ?? 'selecao');
+  const t = clubeDoLance(l.clube);
   const m = l.progresso.medalha;
   return `<li class="conq-linha conq-lance">
     <span class="cor" style="--c1:${t.cores[0]};--c2:${t.cores[1]}" aria-hidden="true"></span>
-    <span class="conq-nome">${esc(l.titulo)}<small>${esc(l.clube === null ? 'Pênaltis' : t.nome)}${detalheDoItem(l)}</small></span>
+    <span class="conq-nome">${esc(l.titulo)}<small>${esc(t.nome)}${detalheDoItem(l)}</small></span>
     ${m ? `<span class="conq-selo ${m}">${bolinha(m)}${NOME_DA_MEDALHA[m]}</span>` : '<span class="conq-selo sem">Sem medalha</span>'}
     <div class="conq-trilha">${trilha(trilhaDoItem(l.lanceId, { gols: l.gols, recriados: l.recriados, vitorias: l.vitorias }), { compacta: true })}</div>
   </li>`;
@@ -103,7 +99,7 @@ export function desenharConquistas(el: HTMLElement): () => void {
   el.innerHTML = `<div class="conquistas">
       <section class="placa" aria-label="Suas medalhas" data-minhas aria-live="polite"></section>
       <section class="placa" aria-label="Vitrine das torcidas" data-vitrine aria-live="polite"></section>
-      <p class="explica">Medalha por lance, só com gol em partida valendo: bronze com 5 gols, prata com 20 e ouro com 50, 10 deles recriando o lance.${lancesUnificados() ? ` ${textoDasMedalhasDosPenaltis()}` : ''} Não vale ponto e não zera.</p>
+      <p class="explica">Medalha por lance, só com gol em partida valendo: bronze com 5 gols, prata com 20 e ouro com 50, 10 deles recriando o lance. ${textoDasMedalhasDosPenaltis()} Não vale ponto e não zera.</p>
       <button class="botao-linha conq-jogar" type="button" data-acao="jogar">Jogar os Lances do Jogo</button>
       <div class="rodape-apoio">${htmlBotaoApoio()}</div>
     </div>`;

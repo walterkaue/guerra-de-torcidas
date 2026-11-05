@@ -6,7 +6,8 @@ import { SELECAO, TORCIDA_SELECAO, coresDoAdversario } from '../dados/adversario
 import { corDeTexto, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { sementeNova } from '../jogo/aleatorio';
-import { ID_SELECAO, chamadaDaDisputa } from '../jogo/disputas';
+import { DISPUTAS } from '../dados/disputas';
+import { ID_SELECAO, chamadaDaDisputa, type Disputa } from '../jogo/disputas';
 import { etiquetasDaCobranca, etiquetasDaDefesa, eventoDaCobranca, eventoDaDefesa, eventosDoFim } from '../narrador/lance';
 import { criarNarrador } from '../narrador/sessao';
 import {
@@ -34,6 +35,7 @@ import {
 } from '../jogo/penaltis';
 import { pedirNumeroDoNarrador } from '../jogo/numeroNarrador';
 import { avisoLimiteDoDia } from '../jogo/lancesTextos';
+import { AVISO_DISPUTA_OBRIGATORIA } from '../jogo/lancesTelaUnica';
 import { lancesUnificados } from './corte';
 import * as SERVIDOR from '../servidor/api';
 import {
@@ -97,6 +99,18 @@ const ANG_DICA = [-0.6, 0, 0.6];
 const TRACO_DA_DICA = [6, 6];
 const SEM_TRACO: number[] = [];
 
+/** Tira só o código do X1 (`?d=`) do endereço: o resto (em desenvolvimento, ?penaltiFalso e ?corte) fica. */
+function tirarCodigoDoEndereco(): void {
+  try {
+    const q = new URLSearchParams(location.search);
+    q.delete('d');
+    const resto = q.toString();
+    history.replaceState(null, '', location.pathname + (resto ? `?${resto}` : '') + location.hash);
+  } catch {
+    // sem histórico (navegador restrito): o código fica no endereço, sem estrago
+  }
+}
+
 /** Dia da semana no horário de Brasília (a temporada zera na segunda, 00h BRT). */
 function diaEmBrasilia(): number {
   const nome = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'America/Sao_Paulo' }).format(new Date());
@@ -134,17 +148,24 @@ export const AVISO_SEM_PONTOS = 'Sem conexão: essa partida não vale pontos.';
 export const AVISO_CAIU = 'Caiu a conexão: essa partida não vale mais pontos.';
 /** Cada X1 dos pênaltis vale uma vez por pessoa (jogo.md, seção 6): na segunda, vira partida normal. */
 export const X1_JA_JOGADO = 'Esse X1 você já jogou. Vai uma partida nova!';
-/** X1 de partida criada antes de 16/11/2026 (ou de lance que mudou de faixa) não pode ser aceito depois (jogo.md, 14.7). */
+/** X1 de partida criada antes de 09/11/2026 (ou de lance que mudou de faixa) não pode ser aceito depois (jogo.md, 14.7). */
 export const X1_EXPIROU = 'Esse X1 expirou. Vai uma partida nova!';
 
 export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   const time: Time = timePorId(prefs.get().time) ?? TIMES[TIMES.length - 1];
   const codigoDesafio = rota.tela === 'partida' ? rota.desafio : undefined;
-  // Disputa histórica: só cenário (adversário e chamada). O resto é a partida de sempre; desafio por link não tem cenário.
-  const disputa = rota.tela === 'partida' && !codigoDesafio ? rota.disputa : undefined;
+  // Depois do corte não há Disputa livre (seção 14.7): partida sem disputa nem X1 (o botão da livre na tela de antes,
+  // aberta de domingo para segunda) vai para a escolha, no filtro Pênaltis, em vez de virar treino com 400.
+  if (lancesUnificados() && !codigoDesafio && !(rota.tela === 'partida' && rota.disputa)) {
+    queueMicrotask(() => irPara({ tela: 'lances', aba: 'penaltis' }));
+    return () => {};
+  }
+  // Disputa histórica: só cenário (adversário e chamada). O resto é a partida de sempre. No X1 recebido, quem aceita
+  // joga a disputa de quem chamou: ela vem pela rota (convite da Home) ou, no link direto, pela resposta da nova-partida.
+  let disputa: Disputa | undefined = rota.tela === 'partida' ? rota.disputa : undefined;
   const pelaSelecao = disputa?.clube === ID_SELECAO;
-  const nomeDoLado = pelaSelecao ? SELECAO.nome : time.nome;
-  const coresDoLado = pelaSelecao ? SELECAO.cores : time.cores;
+  let nomeDoLado = pelaSelecao ? SELECAO.nome : time.nome;
+  let coresDoLado: readonly [string, string] = pelaSelecao ? SELECAO.cores : time.cores;
   // Valores locais (partida sem valer pontos); trocados pelos do servidor quando ele responde.
   let semente = sementeNova();
   let dificuldade = dificuldadePorDia(diaEmBrasilia());
@@ -153,7 +174,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   let lanceALance = false;
   let dicaDoServidor: number | null = null;
   let desafio: DesafioRecebido | null = null;
-  // Tabela de pontos da partida no aparelho (fallback local e total): a de 16/11 depois do corte, senão a de sempre.
+  // Tabela de pontos da partida no aparelho (fallback local e total): a de 09/11 depois do corte, senão a de sempre.
   const tabela = lancesUnificados() ? PONTOS_UNIFICADOS : PONTOS;
   /** O servidor disse `limite_do_dia`: a partida segue como treino, e a primeira cobrança lembra disso. */
   let passouDoLimite = false;
@@ -358,7 +379,12 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     else if (dicaGuardada && extra <= 0) mostrarDica(elInstrucao, dicaGuardada);
     else if (partidasJogadas === 2) mostrarDica(elInstrucao, dicas.pedir('pen_cavadinha'));
     if (rodada === 0 && passouDoLimite) mostrarDica(elInstrucao, dicas.pedir('lan_dez_valendo'));
-    if (rodada === 0) narrar(narrador.falar('abertura'), disputa ? chamadaDaDisputa(disputa) : x1Expirou ? X1_EXPIROU : x1JaJogado ? X1_JA_JOGADO : undefined);
+    if (rodada === 0) {
+      // X1 que não valeu e virou partida normal: o aviso vem primeiro, e a chamada da disputa junto, se houver.
+      const avisoX1 = x1Expirou ? X1_EXPIROU : x1JaJogado ? X1_JA_JOGADO : undefined;
+      const chamada = disputa ? chamadaDaDisputa(disputa) : undefined;
+      narrar(narrador.falar('abertura'), avisoX1 && chamada ? `${avisoX1} ${chamada}` : (avisoX1 ?? chamada));
+    }
     else if (rodada === COBRANCAS) narrar(narrador.falar('morte_subita', { placar: placarAtual() }));
     else if (cobrancaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['cobranca']) }));
   }
@@ -629,20 +655,46 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     el.hidden = false;
   }
 
+  /** Veste a partida com a disputa (placar, cores do adversário e, na da Seleção, o lado da Seleção). */
+  function vestirDisputa(d: Disputa): void {
+    if (d.clube === ID_SELECAO) {
+      nomeDoLado = SELECAO.nome;
+      coresDoLado = SELECAO.cores;
+      root.querySelector('.placar-jogo .lado-jogador .sigla')!.textContent = nomeDoLado;
+    }
+    root.querySelector('.placar-jogo .lado:last-child .sigla')!.textContent = d.adversario;
+    vestir(coresDoAdversario(d.adversario));
+  }
+
+  /**
+   * Depois do corte não há Disputa livre (seção 14.7): se o X1 do link não valeu e a partida ainda não tem disputa
+   * (quem chegou pelo link sem passar pela Home), joga a disputa daquele X1, se houver, ou a primeira do seu time
+   * (senão, da Seleção). Sem isso, a partida normal voltaria 400 `disputa_obrigatoria` e iria de treino.
+   */
+  async function disputaDoX1QueNaoValeu(codigo: string): Promise<Disputa | undefined> {
+    let id: string | null | undefined;
+    if (!FALSO) id = await SERVIDOR.verDesafio(codigo).then((r) => r?.disputa_id, () => null);
+    return (
+      (id ? DISPUTAS.find((d) => d.id === id) : undefined) ??
+      DISPUTAS.find((d) => d.clube === time.id) ??
+      DISPUTAS.find((d) => d.clube === ID_SELECAO)
+    );
+  }
+
   /** Pede a semente ao servidor. Sem resposta, a partida segue local e sem valer pontos. */
   async function preparar(): Promise<void> {
     instruir('Preparando a partida…');
     try {
       // Time e apelido precisam estar no servidor; sessão nova (aparelho limpo) regrava.
       const pedir = async (codigo?: string) => {
-        if (FALSO) return (await servidor()).novaPartida(codigo);
+        if (FALSO) return (await servidor()).novaPartida(codigo, codigo ? undefined : disputa?.id);
         await sincronizarTorcedor();
         try {
-          return await SERVIDOR.novaPartida(codigo, disputa?.id);
+          return await SERVIDOR.novaPartida(codigo, codigo ? undefined : disputa?.id);
         } catch (e) {
           if (!(e instanceof ErroServidor) || e.codigo !== 'sem_time') throw e;
           await sincronizarTorcedor(true);
-          return SERVIDOR.novaPartida(codigo, disputa?.id);
+          return SERVIDOR.novaPartida(codigo, codigo ? undefined : disputa?.id);
         }
       };
       let p;
@@ -653,7 +705,11 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         // Link do próprio desafio, link quebrado, X1 já jogado ou expirado: vira partida normal, valendo.
         x1JaJogado = e.codigo === 'desafio_ja_jogado';
         x1Expirou = e.codigo === 'desafio_expirado';
-        if (x1JaJogado || x1Expirou) history.replaceState(null, '', location.pathname);
+        if (x1JaJogado || x1Expirou) tirarCodigoDoEndereco();
+        if (!disputa && lancesUnificados()) {
+          disputa = await disputaDoX1QueNaoValeu(codigoDesafio);
+          if (disputa) vestirDisputa(disputa);
+        }
         p = await pedir();
       }
       // Servidor antigo manda a semente; no lance a lance ela fica lá (a local só serve se cair a conexão).
@@ -664,18 +720,26 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       desafio = p.desafio;
       if (desafio) {
         // O convite já foi aceito: tira o ?d= do endereço para não oferecer de novo.
-        history.replaceState(null, '', location.pathname);
-        root.querySelector('.placar-jogo .lado:last-child .sigla')!.textContent = desafio.apelido ?? 'X1';
-        const t = timePorId(desafio.timeId);
-        if (t) vestir(t.cores);
+        tirarCodigoDoEndereco();
+        // A disputa do X1 vale mesmo se o aparelho não a tinha na rota; fora do catálogo daqui, cai no cenário de sempre.
+        if (!disputa && desafio.disputaId) disputa = DISPUTAS.find((d) => d.id === desafio!.disputaId);
+        if (disputa) vestirDisputa(disputa);
+        else {
+          root.querySelector('.placar-jogo .lado:last-child .sigla')!.textContent = desafio.apelido ?? 'X1';
+          const t = timePorId(desafio.timeId);
+          if (t) vestir(t.cores);
+        }
       }
     } catch (e) {
       if (e instanceof ErroServidor && e.codigo === 'saiu_da_conta') return; // a navegação já levou à escolha do time
       console.warn('Partida sem valer pontos:', e instanceof ErroServidor ? e.codigo : e);
       if (e instanceof ErroServidor && e.codigo === 'limite_do_dia') {
-        // Regra de 16/11: 10 partidas valendo por dia. Esta segue no aparelho, de treino.
+        // Regra de 09/11: 10 partidas valendo por dia. Esta segue no aparelho, de treino.
         passouDoLimite = true;
         mostrarAviso(avisoLimiteDoDia(true));
+      } else if (e instanceof ErroServidor && e.codigo === 'disputa_obrigatoria') {
+        // Relógio do aparelho atrasado: o servidor já está na regra sem a Disputa livre. Esta segue de treino.
+        mostrarAviso(AVISO_DISPUTA_OBRIGATORIA);
       } else {
         mostrarAviso(e instanceof ErroServidor && e.codigo === 'muitas_partidas'
           ? 'Calma! Muitas partidas em 1 minuto: esta não vale pontos.'

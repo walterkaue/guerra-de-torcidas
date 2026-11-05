@@ -1,6 +1,6 @@
 # Próximos passos
 
-> Retrato do projeto em 05/11/2026, para retomar em qualquer conversa. Regras e decisões continuam no `docs/jogo.md`; aqui só fica o que vem a seguir.
+> Retrato do projeto em 05/11/2026 (fila em trilhos paralelos, decidida no mesmo dia), para retomar em qualquer conversa. Regras e decisões continuam no `docs/jogo.md`; aqui só fica o que vem a seguir.
 > Ao fechar um item, atualize este arquivo no mesmo PR. Para começar, siga a divisão de trabalho do `CLAUDE.md`.
 
 ## Onde estamos
@@ -16,74 +16,28 @@
 
 ## Em andamento
 
-**Aquecimento e dicas no gesto (`docs/jogo.md` seção 14.4):** construído e no ar desde 04/11/2026, às 13h05 (PR #98; deploy conferido: o site serve o build com o aquecimento e as regras). Prints em `docs/auditoria/2026-11-04/aquecimento/`, aprovados pelo Kauê antes de aplicar em tudo.
-- **O que entra:** o aquecimento de 5 estações (`src/telas/aquecimento.ts` e `src/telas/aquecimento/`), o card na Home para quem chega por desafio, o selo e o "Rever aquecimento" no Perfil, as 36 dicas na faixa de instrução (`src/jogo/dicas.ts`, `src/jogo/dicasGatilhos.ts`), o "?" com as regras e a tabela de pontos de cada jogo (`src/telas/regras.ts`) e uma frase só no resultado da Prova. Saíram os quadros "Como jogar", "Como cravar", as listas de regras e o "Não exibir".
-- **Servidor:** a migração `20261104100000_aquecimento.sql` (+20 XP uma vez e a contagem da métrica) já está no ar desde 04/11, revisada pelo `revisor` (nada grave). Nenhuma função muda.
-- **Métrica:** `npm run metricas` ganhou a seção "Aquecimento" (completou, pulou e parou, por estação).
-- **Conferir no celular (o Kauê, no site no ar):** fazer o aquecimento de ponta a ponta num aparelho limpo (limpar os dados do site), ver o palpite da estação 5 em Palpites e os +20 XP na Carreira; vibração e papel picado; a mão animada em movimento; um link de desafio num aparelho limpo, que deve ir direto ao desafio e deixar o card na Home.
-- **Não testado à mão:** as dicas de morte súbita, cavadinha pega no meio, altura errada e 3 cobranças sem efeito (cobertas por teste das condições, não pela tela); a zona do gol de verdade nos Lances só foi vista pelo DOM.
+Quatro trilhos, que rodam em paralelo (fila decidida pelo Kauê em 05/11/2026). Cada trilho anda na ordem dele; um não espera o outro, salvo o D, que espera o desenho do C.
 
-**Lances do Jogo unificados (`docs/jogo.md` seção 14.7):** números decididos pelo Kauê em 04/11/2026; entra na segunda 16/11, 0h, pela data de criação da partida. **Servidor no ar desde 05/11/2026, 8h16.** Até 16/11 o jogo funciona exatamente como antes.
-- **Merges:** PR #108 (servidor, revisado na segurança) e PR #110 (X1 dos pênaltis vale uma vez por pessoa), às 8h07 de 05/11. O site saiu com o deploy do #110; o do #108 foi cancelado pelo seguinte, o que é normal.
-- **Banco:** as migrações `20261105100000_lances_unificados.sql` e `20261105200000_x1_penaltis_uma_vez.sql`, aplicadas pelo Kauê; `migration list` com local = remoto. A conferência só de leitura (blocos 1 a 6 da descrição do PR #108, com o 1b do #110) não mostrou divergência.
-- **Funções:** `lances` v3, `nova-partida` v21, `lance-penalti` v7 e `fechar-partida` v22, publicadas da `main` com o #110 às 8h16.
-- **Decidido na revisão:** a taxa real só desce a faixa de um lance, nunca acima da do catálogo (confirmado pelo Kauê em 05/11); o X1 dos Lances expira se o lance desceu de faixa; cada X1 dos pênaltis vale uma vez por pessoa.
-- **Catálogo recalibrado** (fator 0,418; todo fácil vira difícil e todo médio vira craque, lista em `docs/propostas/lances-faixas-unificadas.md`).
-- **Falta nesta frente, nesta ordem:**
-  1. Teste no celular e bloco 7 (ver "Conferir primeiro", item 10).
-  2. ~~**As telas novas, com prazo duro no domingo 15/11:**~~ construídas em 05/11/2026 no PR #112 (revisado pelo subagente `revisor`) e mescladas no mesmo dia, com a aprovação do Kauê; o merge publicou o site. Detalhe em `docs/jogo.md` 14.7, "Como está nas telas". Até 15/11 o site mostra as telas de antes; a partir de 16/11, as novas (sem elas, faltas e cara a cara respondiam 426 `atualize_o_app`).
-     - **Até domingo, nada muda na tela:** a tela decide pelo relógio do aparelho. Para ver a de segunda antes, em dev: `?lancesFalsos&corte=depois`, `?homeFalsa&corte=depois&l=código` e `?penaltiFalso&corte=depois&limite`.
-     - **Conferido em 390×844 e 360 px antes e depois do corte (pelo DOM, com os servidores de mentira):** tela única, Lance do Dia, X1 por link (ok e expirado), limite que vira treino (Lances e pênaltis), resultado, Conquistas e o "?". **Não testado de verdade:** a partida até o fim no aparelho (o painel do navegador estava escondido) e o servidor de produção com a regra nova (só existe a partir de 16/11).
-     - **Segunda 16/11, de manhã, no celular (o Kauê):** abrir o site (recarregar se estava aberto), jogar uma falta (3 tentativas do mesmo lance) e uma disputa de pênaltis, mandar o link do X1 para outra conta (aba anônima) e aceitar, e ver "Seus 3 melhores de hoje" e o Lance do Dia na Home.
-  3. Segunda 16/11, antes das 12h: bloco 8 (ver "Conferir primeiro", item 10).
-- **Para voltar atrás:** antes de 16/11, as funções antigas funcionam com as migrações no ar (só o X1 de pênaltis repetido dá erro e joga sem valer pontos). Depois de 16/11, não volte as funções: já haverá partidas com a faixa gravada.
+**Trilho A — Lances do Jogo (`docs/jogo.md` seção 14.7).** Servidor no ar desde 05/11/2026, 8h16 (PRs #108 e #110); telas no ar desde 05/11 (PR #112).
+1. **Corte antecipado, troféu nos pênaltis e sem Disputa livre** (decisão do Kauê em 05/11/2026; PR #116): corte na segunda **09/11**, 0h (era 16/11); trilha de 3 medalhas das disputas já na tela de antes (aba Pênaltis, ficha, Conquistas e resultado); a partir do corte, só itens históricos, com `disputa_obrigatoria` no servidor e o X1 dos pênaltis jogando a disputa de quem chamou. Migração `20261105400000_lances_sem_livre.sql` (apaga as linhas `penaltis:livre` de `lances_gols`). **Publicação até sábado 07/11, com o Kauê, depois do PR aprovado:** a migração, as funções `nova-partida`, `lances`, `lance-penalti` e `fechar-partida` (as quatro levam a data nova) e o site. A ordem e a conferência só de leitura estão na descrição do PR.
+2. **Segunda 09/11, de manhã, no celular (o Kauê):** abrir o site (recarregar se estava aberto); conferir que a Disputa livre sumiu e que "Jogar agora" abre a tela única no filtro Pênaltis; jogar uma falta (3 tentativas do mesmo lance) e uma disputa de pênaltis (a linha "rumo ao bronze" no resultado); mandar o link do X1 de pênaltis para outra conta (aba anônima) e aceitar (a outra conta tem de jogar a mesma disputa); ver "Seus 3 melhores de hoje" e o Lance do Dia na Home.
+3. **Segunda 09/11, 12h** (quando a semana de 02/11 trava): a conferência só de leitura do PR (o bloco 8 do PR #108 com a data nova, mais as consultas da Disputa livre). Cada consulta tem o esperado escrito nela.
+4. **Limpeza das telas antigas** (depois de 09/11, quando ninguém mais estiver na tela de antes): tirar o hub de 3 abas, a Disputa livre, o "Pôr na partida", a lista antiga de 3 lances nas funções (o 426 `atualize_o_app`) e o `?corte=` de dev. Só código; nenhuma migração.
+- **Para voltar atrás:** antes de 09/11, as funções antigas funcionam com as migrações no ar (só o X1 de pênaltis repetido dá erro e joga sem valer pontos; a Disputa livre continua até o corte). Depois de 09/11, não volte as funções: já haverá partidas com a faixa gravada.
 
-**Troféus dos lances e `#admin` no Grafismo de TV (`docs/jogo.md` seção 14.3):** construído e no ar desde 04/11/2026, às 20h18 (PR #101). Prints em `docs/auditoria/2026-11-04/trofeus/`, aprovados pelo Kauê antes de aplicar.
-- **O que entra:**
-  - **Trilha:** bloco `trilha()` em `src/telas/blocos.ts`; a conta pura (`trilhaDoLance`, `linhaRumo`, `filtrarAlbum`) fica em `src/jogo/lancesTextos.ts`, com testes.
-  - **Álbum:** filtros e favoritos em `src/telas/albumLances.ts`. Os favoritos ficam em `prefs.favoritosLances`, só no aparelho.
-  - **Ficha:** abre de baixo, em `src/telas/fichaLance.ts`.
-  - **Resultado:** a placa "Rumo às medalhas" vem de `src/telas/rumoMedalhas.ts`.
-  - **Aba Conquistas:** usa a mesma trilha.
-  - **`#admin`:** placas, faixas e estados, com as mesmas ações. O CSS saiu de `palpites.css` para `admin.css`.
-- **Servidor:** nada muda. Os números vêm de `minhas_medalhas()`, que é lida de novo depois do 3º lance.
-- **Em dev:** `?lancesFalsos` (com casos de 0, 5, 19, 23, 52 e 52 gols com o ouro completo) e `?adminFalso#admin` (`&vazio`, `&erro`).
-- **Conferir no celular (o Kauê, no site no ar):**
-  - papel picado e vibração ao subir de medalha (não apareceram no navegador de teste, em qualidade Leve);
-  - fechar a ficha tocando fora e com o voltar do Android;
-  - a ⭐ continua depois de fechar o site;
-  - o login do `#admin` (sem Supabase de verdade, não deu para ver).
-- **Ficou para depois (baixo):** `.admin-tabela` em `prova.css` e `.conq-falta` em `conquistas.css` ficaram sem uso.
+**Trilho B — Conteúdo.**
+- **Disputas que faltam** para a meta de 3 por clube: só falta 1 do Mirassol (64 publicadas desde o lote 2, PR #115; a Seleção tem 5). Mesmo caminho do catálogo (`dados/disputas/README.md`): rascunho, conferência numa sessão nova e `npm run catalogo-disputas`. **Disputa nova publicada: a `nova-partida` vai antes do site** (desde o corte, ela só aceita id do catálogo dela).
+- **Robôs do Gemini:** reavaliar no domingo 08/11, 17h ("Conferir primeiro", item 9).
+- **Perguntas até 800:** 280 no ar; a meta pede perguntas nascidas de páginas reais ("Depois", item 2). Faltam 9 fáceis de clube (ver "Decisões").
+- **Títulos da Casa:** faltam 35 de 808.
 
-**Lances do Jogo valendo (faltas e cara a cara):** feito em 03/11/2026 (PR #88). Detalhes na seção "Conferir primeiro", item 7.
+**Trilho C — Desenho no Chat** (o Kauê desenha e decide antes de construir):
+- cards personalizáveis;
+- Galeria de Troféus e ranking de 52 semanas (a regra já está na seção 5 do `docs/jogo.md`);
+- resto das divisões: a linha na Home ("9º na Série A, 4 pontos da zona"), as frases do narrador no fechamento do mês e o card de fim de temporada;
+- boneco montável (avatar do Perfil, seção 14.2).
 
-**Pênaltis com uma semente por lance:** feito em 03/11/2026 (PR #90). Detalhes na seção "Conferir primeiro", item 8.
-
-**Grafismo de TV (auditoria visual, `docs/jogo.md` seção 14.2, `docs/visual.md` seção 4.6):** construído em 03/11/2026 e no ar desde 04/11/2026, às 8h07 (PR #96).
-- **O que entrou:**
-  - blocos em `src/telas/blocos.ts` e `src/estilos/blocos.css`;
-  - resultado padrão em `src/telas/resultadoPadrao.ts`, nos 5 jogos;
-  - todas as telas da auditoria;
-  - prints de depois em `docs/auditoria/2026-11-03/depois/`.
-- **Bugs da auditoria:**
-  - **"Maior torcida" fora de ordem:** não era bug. O servidor ordena pela soma; a ordem errada veio dos dados falsos da auditoria.
-  - **Os outros quatro eram reais e foram corrigidos:**
-    - faixa do Crava cortada: o `overflow-x: hidden` desligava o `sticky`, agora é `clip`;
-    - texto grudado no fim do Crava;
-    - "PÊNALTIS bora jogar mais" no fim do Time do Dia: agora leva aos Lances do Jogo, e a barra fixa não cobre mais o conteúdo;
-    - número "14"/"15" da Prova: eram os segundos do relógio e agora aparecem como "14 s".
-- **Conferir no celular (o Kauê, no site no ar):**
-  - a faixa "Aqui é só resenha" grudada no topo ao rolar o Crava (no Safari antigo, sem `clip`, ela volta a não grudar);
-  - o selo "Pré-temporada" abrindo e fechando ao toque;
-  - os botões Card, Stories, Emoji e Link nos 5 resultados.
-- **Fase 2:** os tutoriais saíram com o aquecimento (14.4), e o painel `#admin` entrou com os troféus dos lances (14.3).
-
-**Código do torcedor (uma carreira em vários aparelhos, `docs/jogo.md` seção 14.1):** feito, publicado e aprovado em 03/11/2026 (PR #92), revisado pelo subagente `revisor` (nenhum achado alto; os médios e quase todos os baixos corrigidos antes de publicar).
-- **No ar:** a migração `20261103400000_codigo_torcedor.sql`, conferida no banco (4 tabelas com RLS, 7 políticas de sessão, permissões certas), a função `codigo-torcedor` v1 com o segredo `TURNSTILE_SECRET_KEY`, e o site (merge às 19h46, publicado às 19h48).
-- **Testado pelo Kauê às 19h50, note + celular:** entrou de primeira, juntou as duas carreiras (o celular já tinha dados) e o Time do Dia jogado no celular apareceu no note. No banco: 1 código usado, 0 erro, 1 junção com dados, 1 conta ligada com 2 aparelhos e 3 recordes herdados. Foi a primeira prova do caminho e-mail técnico → passe → `verifyOtp` contra o Auth real.
-- **Desconectar e QR, testados pelo Kauê às 19h58:** no note, "Desconectar" tirou o celular da conta, e o celular mostrou o aviso "Este aparelho saiu da conta…" na escolha do time. Depois o celular voltou pela câmera, lendo o QR. No banco: 2 códigos usados, 0 erro, a 2ª junção como aparelho novo e a conta de novo com 2 aparelhos (a sessão desconectada sumiu).
-- **Para o advogado:** a proposta de frase para os Termos e a Política está em `docs/termos-x-jogo.md`, seção "Proposta para o advogado: código do torcedor". O texto dos Termos não mudou.
-- **Ficou de fora (baixo, registrado na revisão):** limite por IP (o limite "por aparelho" é por conta anônima; quem segura a força bruta é o freio geral); partida fechada por outro aparelho da conta que entra no mesmo milissegundo da junção.
+**Trilho D — Construção**, cada item depois do desenho dele no trilho C, com plano pela skill `planejar-tarefa`.
 
 ## Conferir primeiro
 
@@ -168,7 +122,13 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
   - jogue uma partida de pênaltis e uma de faltas: tudo igual a antes;
   - aceite um X1 de pênaltis numa aba anônima (outra conta) e jogue; abra o mesmo link de novo: deve aparecer "Esse X1 você já jogou. Vai uma partida nova!", valendo; perca um X1 e toque em Revanche: deve abrir uma partida nova contra a máquina;
   - depois, rode o bloco 7 e veja os logs de `lances` e `nova-partida` em Edge Functions, sem erro 500 (o 409 `desafio_ja_jogado` é esperado).
-- **Segunda 16/11, antes das 12h** (quando a semana de 09/11 trava): rode o bloco 8. Cada consulta tem o esperado escrito nela; se o 8c mostrar linha, ainda dá para corrigir antes da trava.
+- **Segunda 09/11, 12h** (o corte foi antecipado de 16/11 para 09/11 em 05/11/2026): rode a conferência do PR #116 (o bloco 8 com a data nova). Ver trilho A, itens 2 e 3.
+
+**11. Conferir no celular, das frentes já no ar (o Kauê):**
+- **Aquecimento (PR #98):** de ponta a ponta num aparelho limpo (limpar os dados do site); o palpite da estação 5 em Palpites e os +20 XP na Carreira; vibração, papel picado e a mão animada; um link de desafio num aparelho limpo vai direto ao desafio e deixa o card na Home. Não testado à mão: as dicas de morte súbita, cavadinha pega no meio, altura errada e 3 cobranças sem efeito.
+- **Troféus dos lances (PR #101):** papel picado e vibração ao subir de medalha; fechar a ficha tocando fora e com o voltar do Android; a ⭐ continua depois de fechar o site; o login do `#admin`.
+- **Grafismo de TV (PR #96):** a faixa "Aqui é só resenha" grudada no topo ao rolar o Crava; o selo "Pré-temporada" abrindo e fechando; os botões Card, Stories, Emoji e Link nos 5 resultados.
+- **Ficou para depois (baixo):** `.admin-tabela` em `prova.css` e `.conq-falta` em `conquistas.css` sem uso; no Código do torcedor, limite por IP e a partida fechada por outro aparelho no mesmo milissegundo da junção.
 
 ## Só o Kauê faz
 
@@ -182,7 +142,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
    - Em Logs → Auth, o `/signup` anônimo das 9h17min53s respondeu 200, e não houve nenhum 4xx ou 5xx em 24 horas. Ou seja, o token passou pela checagem.
 
 **Decisões:**
-- ~~**Lances do Jogo unificados (14.7):**~~ decidido em 04/11/2026 (`docs/jogo.md` 14.7, "Números decididos"): pênaltis "mais baixa", faltas B, limite 10, entra em 16/11. Servidor publicado em 05/11/2026 (PRs #108 e #110). Também decidido em 05/11: a faixa corrigida só desce e cada X1 dos pênaltis vale uma vez por pessoa.
+- ~~**Lances do Jogo unificados (14.7):**~~ decidido em 04/11/2026 (`docs/jogo.md` 14.7, "Números decididos"): pênaltis "mais baixa", faltas B, limite 10, entra em 16/11 (antecipado em 05/11 para 09/11). Servidor publicado em 05/11/2026 (PRs #108 e #110). Também decidido em 05/11: a faixa corrigida só desce, cada X1 dos pênaltis vale uma vez por pessoa, o troféu das disputas aparece já e a Disputa livre sai no corte.
 - ~~**Fáceis de clube:**~~ decidido e aplicado em 02/11/2026: 27 rebaixadas para média, 18 médias subiram a fácil (CSV e banco, só `degrau`, partidas fechadas intactas). **Faltam 9 fáceis novas** para o pipeline do Gemini: athletico-pr 2, chapecoense 2, bahia 1, bragantino 1, coritiba 1, remo 1, vasco 1 (com fonte e revisão no `#admin`). Até lá esses clubes têm 1 ou 2 fáceis e sobra de média; quando cada fácil nova for aprovada no `#admin`, aposentar a média que sobra desse clube (a de menor acerto ou a mais parecida com outra), para manter 3 fáceis, 3 médias, 2 difíceis e 2 de craque (decidido em 02/11/2026). O id guarda o degrau de nascimento (o validador só exige o clube no começo).
 - **Data do zerar da pré-temporada:** até 06/12 para estrear em dezembro. A Crava termina em 2/12, e o balanço roda antes de zerar.
 - ~~**Torcida sem ninguém nas 52 semanas:**~~ decidido em 02/11/2026: vale 0 ponto também lá. Implementar na tela das 52 semanas.
@@ -198,7 +158,7 @@ select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2
 
 0. **Lances, segunda etapa:**
    - card só da medalha ("Já sou ouro no…");
-   - ~~corrigir a faixa de cada lance pela taxa de acerto real~~: feito no PR #108 e no ar em 05/11/2026; vale para partidas a partir de 16/11, com 30 tentativas de pelo menos 8 pessoas, e a faixa só desce;
+   - ~~corrigir a faixa de cada lance pela taxa de acerto real~~: feito no PR #108 e no ar em 05/11/2026; vale para partidas a partir de 09/11, com 30 tentativas de pelo menos 8 pessoas, e a faixa só desce;
    - o `resultado.ts` dos pênaltis passar a usar `src/telas/efeitoRanking.ts`, que hoje repete a lógica dele (desde 03/11 os dois mostram o efeito como selo + nota, então a troca ficou mais simples).
 1. **Cidade, Galeria e 52 semanas:** nessa ordem, depois das telas das divisões.
    - ~~**Cidade:**~~ no ar desde 04/11/2026, às 22h31 (PRs #107, #104 e #105; detalhe na seção 5 do `docs/jogo.md`). Conferido no banco: 5.571 municípios, o gatilho `guardar_pontos_da_cidade` em `auth.users`, RLS nas 5 tabelas novas, as 6 funções das telas e a `ranking-minuto` sem falha depois da troca de `atualizar_rankings`. A Política mudou (`DATA_DA_VERSAO` 04/11/2026), então todo mundo vê "Os Termos mudaram"; levar a frase da cidade ao advogado.

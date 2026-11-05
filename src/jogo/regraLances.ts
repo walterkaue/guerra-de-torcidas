@@ -1,5 +1,5 @@
 // Lances do Jogo unificados (docs/jogo.md, seção 14.7): Pênaltis, Faltas e Cara a cara num jogo só, a partir da
-// segunda 16/11/2026, 0h de Brasília. Módulo puro, compartilhado com o servidor (npm run compartilhar).
+// segunda 09/11/2026, 0h de Brasília. Módulo puro, compartilhado com o servidor (npm run compartilhar).
 // A regra de uma partida sai SEMPRE da data em que ela foi criada no servidor, nunca do relógio de agora: assim a
 // partida aberta no domingo à noite fecha com a regra com que começou, e mudar a regra nunca mexe em partida fechada.
 
@@ -7,10 +7,10 @@ import { misturar } from './aleatorio.ts';
 import { FAIXAS, faixaPorChance, TABELA_LANCES_ANTES, TABELA_LANCES_UNIFICADA, type Faixa, type Lance, type TabelaLances } from './lances.ts';
 import { PONTOS, PONTOS_UNIFICADOS, type TabelaPenaltis } from './penaltis.ts';
 
-/** Segunda 16/11/2026, 0h de Brasília (UTC−3). Igual a public.lances_unificados_desde() no banco (teste confere). */
-export const LANCES_UNIFICADOS_DESDE = new Date('2026-11-16T03:00:00.000Z');
+/** Segunda 09/11/2026, 0h de Brasília (UTC−3). Igual a public.lances_unificados_desde() no banco (teste confere). */
+export const LANCES_UNIFICADOS_DESDE = new Date('2026-11-09T03:00:00.000Z');
 /** O mesmo corte como dia de Brasília: partidas com `dia` a partir dele seguem a regra nova no teto e na posição. */
-export const DIA_DO_CORTE = '2026-11-16';
+export const DIA_DO_CORTE = '2026-11-09';
 
 /** Partidas de Lances valendo por dia na regra nova, somando pênaltis, faltas e cara a cara (o X1 recebido conta). */
 export const LANCES_PARTIDAS_POR_DIA_UNIFICADO = 10;
@@ -91,7 +91,7 @@ export const desafioNaFaixa = (faixaDoDesafio: Faixa, faixaAgora: Faixa): boolea
 // ---------- medalhas dos pênaltis ----------
 export type MedalhaPenaltis = 'bronze' | 'prata' | 'ouro';
 
-/** Por disputa histórica e pela Disputa livre: 10 · 50 · 100 gols; o ouro pede também 10 vitórias. */
+/** Por disputa histórica (a Disputa livre não tem medalha): 10 · 50 · 100 gols; o ouro pede também 10 vitórias. */
 export const MEDALHAS_PENALTIS: readonly { medalha: MedalhaPenaltis; gols: number; vitorias: number }[] = [
   { medalha: 'bronze', gols: 10, vitorias: 0 },
   { medalha: 'prata', gols: 50, vitorias: 0 },
@@ -106,6 +106,29 @@ export function medalhaDaDisputa(gols: number, vitorias: number): MedalhaPenalti
 
 /** Id do item de medalha dos pênaltis (o mesmo que o banco grava em lances_gols.lance_id). */
 export const itemPenaltis = (disputaId: string | null | undefined): string => `penaltis:${disputaId ?? 'livre'}`;
+
+// ---------- disputa da partida de pênaltis (sem Disputa livre desde o corte) ----------
+export type DisputaDaPartida =
+  | { disputa: string | null }
+  | { erro: { status: 400; codigo: 'disputa_obrigatoria' } | { status: 410; codigo: 'desafio_expirado' } };
+
+/**
+ * A disputa com que uma partida de pênaltis começa (decisão do Kauê em 05/11/2026, seção 14.7). No X1, a da partida de
+ * quem chamou (a medalha vai para ela); senão, a pedida, só se está no catálogo (uma disputa inventada abriria
+ * medalhas sem fim na vitrine). Antes do corte, sem disputa vira partida livre; a partir dele, não há Disputa livre:
+ * 400 'disputa_obrigatoria', ou 410 'desafio_expirado' no X1 sem disputa (só existiria um de antes do corte).
+ * A nova-partida decide por aqui, e a penaltis_comecar confere de novo no banco.
+ */
+export function disputaDaPartida(o: {
+  agora: Date | string;
+  pedida: unknown;
+  catalogo: ReadonlySet<string>;
+  desafio?: { disputaId: string | null } | null;
+}): DisputaDaPartida {
+  const disputa = o.desafio ? o.desafio.disputaId : typeof o.pedida === 'string' && o.catalogo.has(o.pedida) ? o.pedida : null;
+  if (disputa || !ehUnificada(o.agora)) return { disputa };
+  return { erro: o.desafio ? { status: 410, codigo: 'desafio_expirado' } : { status: 400, codigo: 'disputa_obrigatoria' } };
+}
 
 // ---------- Lance do Dia ----------
 const SAL_LANCE_DO_DIA = 0x1d1a;

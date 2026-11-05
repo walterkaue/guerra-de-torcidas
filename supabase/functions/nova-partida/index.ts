@@ -2,22 +2,28 @@
 // pelo relógio do servidor e o número secreto do narrador para um eventual par ou ímpar.
 // As sementes e as cobranças gravadas do desafio NÃO saem daqui: a partida é jogada lance a lance
 // pela função lance-penalti (anti-trapaça antes de divulgar; jogo.md, seção 6).
-// Lances unificados (seção 14.7, desde 16/11/2026): os pênaltis entram no limite do dia junto com faltas e cara a
+// Lances unificados (seção 14.7, desde 09/11/2026): os pênaltis entram no limite do dia junto com faltas e cara a
 // cara (10, contados ao começar, inclusive o X1 recebido). Passou do limite: 429 'limite_do_dia', e o celular joga
 // a partida como treino. A partida começa numa transação só no banco (penaltis_comecar), com a mesma trava por
 // torcedor da função lances.
 // X1 uma vez por pessoa (05/11/2026): quem já começou uma partida com o código recebe 409 'desafio_ja_jogado' (na
 // segunda vez, as zonas das cobranças gravadas já seriam conhecidas), e o celular abre uma partida normal. A
 // conferência é da penaltis_comecar, dentro da trava, para dois pedidos ao mesmo tempo não abrirem duas partidas.
+// Sem Disputa livre a partir do corte (decisão do Kauê em 05/11/2026, seção 14.7): partida de pênaltis valendo sem
+// disputa do catálogo é recusada com 400 'disputa_obrigatoria'. Antes do corte, nada muda (id fora do catálogo vira
+// partida livre, sem erro). No X1 recebido, a partida grava a disputa da partida de quem chamou (a medalha vai para a
+// mesma disputa) e a resposta devolve o id, para o celular montar o cenário dela. A penaltis_comecar confere de novo.
+// Catálogo novo de disputas: publicar a nova-partida ANTES do site, senão a disputa nova é recusada depois do corte.
 // Corpo: { desafio?: string, disputa?: string }  (código do desafio por link; id da disputa histórica)
 
 import { admin, configDeteccao, ErroHttp, lerCorpo, servir, sortear, usuario } from '../_shared/comum.ts';
 import { sortearSementes } from '../_shared/jogo/penaltis.ts';
-import { ehUnificada } from '../_shared/jogo/regraLances.ts';
+import { disputaDaPartida, ehUnificada } from '../_shared/jogo/regraLances.ts';
 import { dificuldadeAgora } from '../_shared/tempo.ts';
+import { DISPUTAS } from '../_shared/dados/disputas.ts';
 
-/** Disputa histórica é só cenário (jogo.md, seção 6): id fora do formato vira partida livre, sem erro. */
-const disputaDoCorpo = (v: unknown): string | null => (typeof v === 'string' && /^[a-z0-9-]{5,80}$/.test(v) ? v : null);
+/** Disputa histórica é só cenário (jogo.md, seção 6); só vale id do catálogo (disputaDaPartida, em regraLances.ts). */
+const IDS_DISPUTAS: ReadonlySet<string> = new Set(DISPUTAS.map((d) => d.id));
 
 servir(async (req) => {
   const sb = admin();
@@ -41,13 +47,16 @@ servir(async (req) => {
     if (data.torcedor_id === uid) throw new ErroHttp(409, 'proprio_desafio');
     // X1 de uma partida criada antes dos Lances unificados tem os pontos da tabela antiga (mesmo que tenha fechado
     // depois do corte): não dá para comparar com a nova. Decide pela hora de criação da partida do desafio.
-    const { data: origem, error: eO } = await sb.from('partidas').select('criada_em').eq('id', data.partida_id).maybeSingle();
+    const { data: origem, error: eO } = await sb.from('partidas').select('criada_em, disputa_id').eq('id', data.partida_id).maybeSingle();
     if (eO) throw eO;
     if (!origem || ehUnificada(origem.criada_em) !== ehUnificada(agora)) throw new ErroHttp(410, 'desafio_expirado');
-    desafio = data;
+    desafio = { ...data, disputa_id: (origem.disputa_id as string | null) ?? null };
   }
 
-  const disputa = desafio ? null : disputaDoCorpo(corpo.disputa);
+  // No X1, a disputa de quem chamou; senão, a do corpo (só do catálogo). Sem Disputa livre a partir do corte.
+  const decisao = disputaDaPartida({ agora, pedida: corpo.disputa, catalogo: IDS_DISPUTAS, desafio: desafio && { disputaId: desafio.disputa_id } });
+  if ('erro' in decisao) throw new ErroHttp(decisao.erro.status, decisao.erro.codigo);
+  const disputa = decisao.disputa;
 
   const cfg = await configDeteccao(sb);
   // partidas.semente é obrigatória, mas as partidas novas não a usam: valem as sementes por lance, guardadas
@@ -72,6 +81,8 @@ servir(async (req) => {
   });
   if (error) {
     if (error.message?.includes('desafio_ja_jogado')) throw new ErroHttp(409, 'desafio_ja_jogado');
+    if (error.message?.includes('disputa_obrigatoria')) throw new ErroHttp(400, 'disputa_obrigatoria');
+    if (error.message?.includes('desafio_expirado')) throw new ErroHttp(410, 'desafio_expirado');
     if (error.message?.includes('limite_do_dia')) throw new ErroHttp(429, 'limite_do_dia');
     if (error.message?.includes('muitas_partidas')) throw new ErroHttp(429, 'muitas_partidas');
     throw error;
@@ -94,6 +105,8 @@ servir(async (req) => {
       golsJogador: desafio.gols_jogador,
       golsMaquina: desafio.gols_maquina,
       pontos: desafio.pontos,
+      // A disputa de quem chamou (null no X1 livre de antes do corte): o celular monta o cenário dela.
+      disputaId: desafio.disputa_id,
     },
   };
 });

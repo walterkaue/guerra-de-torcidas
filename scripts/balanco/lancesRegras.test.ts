@@ -13,8 +13,8 @@ import {
 
 const FALTA = 'flamengo-2001-falta-do-tri';
 const CARA = 'flamengo-1981-toquio';
-const ANTES = '2026-11-15T20:00:00Z';
-const DEPOIS = '2026-11-16T03:00:00Z';
+const ANTES = '2026-11-08T20:00:00Z';
+const DEPOIS = '2026-11-09T03:00:00Z';
 
 type P = { minigame: string; pessoa: string; pontos: number; criada: string; lanceId?: string };
 const lote = (n: number, base: Omit<P, 'pessoa' | 'pontos'>, pontos = 60): P[] =>
@@ -24,8 +24,8 @@ const valor = (csv: { item: string; metrica: string; valor: unknown }[], item: s
   csv.find((l) => l.item === item && l.metrica === metrica)?.valor;
 
 describe('regra e tipo da partida', () => {
-  it('a regra sai da criada_em, com o corte às 3h UTC de 16/11', () => {
-    expect(regraDaPartida('2026-11-16T02:59:59Z')).toBe('antes');
+  it('a regra sai da criada_em, com o corte às 3h UTC de 09/11', () => {
+    expect(regraDaPartida('2026-11-09T02:59:59Z')).toBe('antes');
     expect(regraDaPartida(DEPOIS)).toBe('nova');
     expect(regraDaPartida(undefined)).toBe('antes');
   });
@@ -80,8 +80,8 @@ describe('montarBalanco com as duas regras', () => {
     expect(valor(csv, 'cara_a_cara_nova', 'teto')).toBe(150);
     expect(valor(csv, 'cara_a_cara_nova', 'no_teto')).toBe(6); // 148 + (0..2): os de 150 batem o teto de 150
     expect(csv).toContainEqual({ secao: 'pontos', item: 'faltas_nova', metrica: 'alerta', valor: 'mediana fora de 45–75' });
-    expect(texto).toContain('Lances (pênaltis + faltas + cara a cara) [a partir de 16/11]');
-    expect(texto).toContain('Cara a cara [antes de 16/11]');
+    expect(texto).toContain('Lances (pênaltis + faltas + cara a cara) [a partir de 09/11]');
+    expect(texto).toContain('Cara a cara [antes de 09/11]');
   });
 
   it('o id antigo (penaltis, lances) fica com a regra mais recente', () => {
@@ -120,11 +120,11 @@ describe('montarBalanco com as duas regras', () => {
 
 describe('peso na semana', () => {
   const semana = [
+    { semana: '2026-11-02', pessoa: 'a', minigame: 'penaltis', pontos: 100 },
+    { semana: '2026-11-02', pessoa: 'a', minigame: 'lances', pontos: 50 },
     { semana: '2026-11-09', pessoa: 'a', minigame: 'penaltis', pontos: 100 },
     { semana: '2026-11-09', pessoa: 'a', minigame: 'lances', pontos: 50 },
-    { semana: '2026-11-16', pessoa: 'a', minigame: 'penaltis', pontos: 100 },
-    { semana: '2026-11-16', pessoa: 'a', minigame: 'lances', pontos: 50 },
-    { semana: '2026-11-16', pessoa: 'a', minigame: 'prova', pontos: 50 },
+    { semana: '2026-11-09', pessoa: 'a', minigame: 'prova', pontos: 50 },
   ];
 
   it('a partir do corte, penaltis e lances viram "Lances"; antes ficam separados', () => {

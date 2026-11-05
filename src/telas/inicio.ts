@@ -29,7 +29,9 @@ import {
 } from '../jogo/home';
 import { linhaPosicaoSemana, linhaRecorde, setaDaPosicao } from '../jogo/posicao';
 import { linhaMelhoresDoDia } from '../jogo/lancesTextos';
-import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MELHORES_DO_DIA, lanceDoDia } from '../jogo/regraLances';
+import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MELHORES_DO_DIA, itemPenaltis, lanceDoDia } from '../jogo/regraLances';
+import { idsDoLanceDoDia } from '../jogo/lancesTelaUnica';
+import { chamadaDaDisputa, type Disputa } from '../jogo/disputas';
 import { faltamDosLances, linhaLancesUnificados, linhaPenaltis, statusCrava } from '../jogo/statusJogos';
 import { escolherFrase } from '../narrador/escolher';
 import { rivalDaSemana, situacaoDoDuelo } from '../narrador/rival';
@@ -77,6 +79,9 @@ const FALSA_CIDADE = import.meta.env.DEV && new URLSearchParams(location.search)
 const CHAVE_CIDADE_VISTA = 'gdt:cidade-acima';
 const servidorCidade = async (): Promise<typeof realCidade> => (FALSA_CIDADE ? import('../dev/cidadesFalsas') : realCidade);
 const FALSA_DIA = import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso');
+// Em desenvolvimento, ?penaltiFalso também responde o convite do X1 (src/dev/penaltiFalso.ts).
+const FALSO_PENALTI = import.meta.env.DEV && new URLSearchParams(location.search).has('penaltiFalso');
+const verDesafioDoLink = (id: string) => (FALSO_PENALTI ? import('../dev/penaltiFalso').then((m) => m.verDesafio(id)) : verDesafio(id));
 const servidor = async (): Promise<typeof SERVIDOR> => {
   if (FALSA) return import('../dev/homeFalsa');
   return FALSA_DIA ? { ...SERVIDOR, estadoDoDia: (await import('../dev/diaFalso')).estadoDoDia } : SERVIDOR;
@@ -135,7 +140,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const time = timePorId(prefs.get().time);
   const codigoDesafio = desafioDoLink();
   const codigoProva = desafioProvaDoLink();
-  // Regra de 16/11/2026 (docs/jogo.md, 14.7): card, "Jogar agora", Lance do Dia e X1 dos Lances. Antes do corte, nada muda.
+  // Regra de 09/11/2026 (docs/jogo.md, 14.7): card, "Jogar agora", Lance do Dia e X1 dos Lances. Antes do corte, nada muda.
   const unificada = lancesUnificados();
   const codigoLances = unificada ? desafioLancesDoLink() : undefined;
   const semana = semanaBrasilia();
@@ -239,8 +244,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
   /** Desafio do link já conferido no servidor: o botão grande da home aceita esse X1 em vez de abrir outro jogo. */
   let desafioAberto: string | undefined;
-  const jogar = (desafio?: string) =>
-    irPara(time ? { tela: 'partida', desafio } : { tela: 'times', depois: 'partida', desafio });
+  const jogar = (desafio?: string, disputa?: Disputa) =>
+    irPara(time ? { tela: 'partida', desafio, disputa } : { tela: 'times', depois: 'partida', desafio });
   /** X1 dos Lances (?l=) já conferido: o "Jogar agora" também aceita. */
   let desafioLancesAberto: string | undefined;
   const jogarLances = (desafio?: string) =>
@@ -258,9 +263,16 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   root.querySelectorAll<HTMLElement>('[data-jogo]').forEach((b) =>
     b.addEventListener('click', () => abrir[b.dataset.jogo as JogoDaHome]()),
   );
-  root.querySelector('[data-acao="jogar-agora"]')?.addEventListener('click', () =>
-    desafioAberto ? jogar(desafioAberto) : desafioLancesAberto ? jogarLances(desafioLancesAberto) : abrir[proximoJogo(situacao)](),
-  );
+  /** O X1 dos pênaltis conferido: a disputa de quem chamou, se ela está no catálogo daqui. */
+  let disputaDoX1: Disputa | undefined;
+  root.querySelector('[data-acao="jogar-agora"]')?.addEventListener('click', () => {
+    const proximo = proximoJogo(situacao);
+    if (desafioAberto) jogar(desafioAberto, disputaDoX1);
+    else if (desafioLancesAberto) jogarLances(desafioLancesAberto);
+    // Depois do corte, "Jogar agora" nos Lances abre a tela única no filtro Pênaltis (sem a Disputa livre).
+    else if (proximo === 'penaltis' && unificada) irPara(time ? { tela: 'lances', aba: 'penaltis' } : { tela: 'times', depois: 'lances' });
+    else abrir[proximo]();
+  });
   root.querySelector('[data-acao="aquecimento"]')?.addEventListener('click', () => irPara({ tela: 'aquecimento', depois: { tela: 'inicio' } }));
   root.querySelector('[data-acao="perfil"]')?.addEventListener('click', () => irPara({ tela: 'perfil' }));
   root.querySelectorAll('[data-acao="trocar"]').forEach((b) =>
@@ -442,24 +454,33 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       <p class="rotulo">Te chamaram no X1</p>
       <p>Buscando o desafio…</p>`;
     caixa.hidden = false;
-    verDesafio(codigoDesafio)
-      .then((d) => {
+    verDesafioDoLink(codigoDesafio)
+      .then(async (d) => {
         if (saiu) return;
         if (!d) {
           caixa.hidden = true; // código que não existe: segue a home normal
           return;
         }
+        // O X1 leva a disputa de quem chamou. O catálogo fica fora do bundle da Home; fora dele, o convite segue sem a ficha.
+        if (d.disputa_id) {
+          const catalogo = await import('../dados/disputas').catch(() => null);
+          if (saiu) return;
+          disputaDoX1 = catalogo?.DISPUTAS.find((x) => x.id === d.disputa_id);
+        }
+        const disputa = disputaDoX1;
+        const ficha = disputa ? `<p class="convite-como">Disputa: ${esc(disputa.titulo)}. ${esc(chamadaDaDisputa(disputa))}</p>` : '';
         const t = timePorId(d.time_id);
         const quem = d.apelido ? esc(d.apelido) : 'Alguém';
         caixa.innerHTML = `
           <p class="rotulo">Te chamaram no X1</p>
           <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''} te chamou no X1:
           <strong>${d.pontos} pontos</strong>, ${d.gols_jogador} x ${d.gols_maquina} contra a máquina.</p>
-          <p class="convite-como">Você defende as cobranças dele e bate as suas. Quem fizer mais pontos ganha.</p>
+          ${ficha}
+          <p class="convite-como">Você defende as cobranças de quem te chamou e bate as suas. Quem fizer mais pontos ganha.</p>
           <button class="botao-linha" type="button" data-acao="desafio">Aceitar o X1</button>`;
         desafioAberto = d.id;
         atualizarBotao();
-        caixa.querySelector('[data-acao="desafio"]')!.addEventListener('click', () => jogar(d.id));
+        caixa.querySelector('[data-acao="desafio"]')!.addEventListener('click', () => jogar(d.id, disputa));
       })
       .catch(() => {
         // sem internet: o desafio fica para quando voltar
@@ -467,16 +488,17 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       });
   }
 
-  // ---------- Lance do Dia (regra de 16/11/2026) ----------
+  // ---------- Lance do Dia (regra de 09/11/2026) ----------
   // O catálogo dos lances fica fora do bundle da Home: vem depois de desenhar. O mesmo lance para todos, sem bônus.
   const botaoDoDia = root.querySelector<HTMLButtonElement>('[data-acao="lance-do-dia"]');
-  const catalogoDosLances = unificada ? Promise.all([import('../dados/lances'), import('../dados/adversarios')]) : null;
+  const catalogoDosLances = unificada ? Promise.all([import('../dados/lances'), import('../dados/adversarios'), import('../dados/disputas')]) : null;
   if (botaoDoDia && catalogoDosLances) {
     catalogoDosLances
-      .then(([{ LANCES }, { SELECAO }]) => {
-        const id = lanceDoDia(diaBrasilia(), LANCES.map((l) => l.id));
-        const lance = LANCES.find((l) => l.id === id);
-        if (saiu || !lance) {
+      .then(([{ LANCES }, { SELECAO }, { DISPUTAS }]) => {
+        // Todos os itens da tela única entram no sorteio (disputas e lances), a mesma lista da tela dos Lances.
+        const id = lanceDoDia(diaBrasilia(), idsDoLanceDoDia(LANCES, DISPUTAS));
+        const lance = LANCES.find((l) => l.id === id) ?? DISPUTAS.find((d) => itemPenaltis(d.id) === id);
+        if (saiu || !lance || !id) {
           botaoDoDia.hidden = true;
           return;
         }
@@ -485,7 +507,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         botaoDoDia.querySelector<HTMLElement>('[data-lance-do-dia]')!.textContent = rotulo.split(' · ').slice(1).join(' · ');
         botaoDoDia.setAttribute('aria-label', rotulo);
         botaoDoDia.disabled = false;
-        botaoDoDia.addEventListener('click', () => irPara(time ? { tela: 'lances', lance: lance.id } : { tela: 'times', depois: 'lances' }));
+        botaoDoDia.addEventListener('click', () => irPara(time ? { tela: 'lances', lance: id } : { tela: 'times', depois: 'lances' }));
       })
       .catch(() => {
         // sem o catálogo (rede): o botão some

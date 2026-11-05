@@ -74,7 +74,7 @@ export interface DadosDoCard {
   titulo: string;
   meta: string;
   pontos: string;
-  /** Faixa do lance (cor do chip). Na disputa e na livre, sem faixa: use `pontosClasse`. */
+  /** Faixa do lance (cor do chip). Na disputa, sem faixa: use `pontosClasse`. */
   faixa?: string;
   pontosClasse?: string;
   /** Selo ao lado do título (o Lance do Dia). */

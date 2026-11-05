@@ -308,6 +308,11 @@ export interface DesafioRecebido {
   golsJogador: number;
   golsMaquina: number;
   pontos: number;
+  /**
+   * A disputa histórica de quem chamou (seção 14.7): a partida joga o cenário dela e a medalha vai para ela. Null no
+   * X1 livre de antes do corte; ausente na nova-partida de antes deste campo.
+   */
+  disputaId?: string | null;
   /** Só do servidor antigo: no lance a lance as cobranças gravadas ficam no servidor. */
   cobrancas?: GestoCobranca[];
 }
@@ -322,11 +327,14 @@ export interface PartidaDoServidor {
   dificuldade: number;
   expiraEm: string;
   desafio: DesafioRecebido | null;
-  /** Regra nova (desde 16/11/2026): partidas de Lances valendo que ainda dá para começar hoje, já contando esta. */
+  /** Regra nova (desde 09/11/2026): partidas de Lances valendo que ainda dá para começar hoje, já contando esta. */
   restantesHoje?: number | null;
 }
 
-/** `disputa`: id da disputa histórica escolhida; só marca a partida, não muda nada do jogo. */
+/**
+ * `disputa`: id da disputa histórica escolhida; só marca a partida, não muda nada do jogo. Desde o corte (09/11/2026)
+ * é obrigatória fora do X1: sem ela, 400 `disputa_obrigatoria` (a Disputa livre saiu, seção 14.7).
+ */
 export function novaPartida(desafio?: string, disputa?: string): Promise<PartidaDoServidor> {
   return chamar('nova-partida', { ...(desafio ? { desafio } : {}), ...(disputa ? { disputa } : {}) });
 }
@@ -368,7 +376,7 @@ export interface FechamentoDoServidor {
     golsMaquinaDesafiante: number;
     venceu: boolean;
   } | null;
-  /** Regra nova (desde 16/11/2026): as 3 melhores partidas de Lances de hoje (pênaltis, faltas e cara a cara). */
+  /** Regra nova (desde 09/11/2026): as 3 melhores partidas de Lances de hoje (pênaltis, faltas e cara a cara). */
   melhoresDoDia?: number[];
   /** Regra nova: partidas de Lances valendo que ainda dá para começar hoje (null antes do corte). */
   restantesHoje?: number | null;
@@ -385,6 +393,8 @@ export interface ResumoDesafio {
   gols_jogador: number;
   gols_maquina: number;
   pontos: number;
+  /** A disputa histórica do X1 (desde 20261105400000; null no X1 livre de antes do corte). */
+  disputa_id?: string | null;
 }
 
 /** Resumo do desafio para a tela inicial (sem as cobranças). */
@@ -451,7 +461,7 @@ export interface LancesHoje {
 
 /**
  * Partidas valendo começadas hoje (Brasília), o limite do dia e a melhor do dia. Null sem resposta.
- * Desde 16/11/2026 conta pênaltis, faltas e cara a cara juntos (limite 10).
+ * Desde 09/11/2026 conta pênaltis, faltas e cara a cara juntos (limite 10).
  */
 export async function meusLancesHoje(): Promise<LancesHoje | null> {
   await garantirSessao();
@@ -462,7 +472,7 @@ export async function meusLancesHoje(): Promise<LancesHoje | null> {
 }
 
 export interface MedalhaDoLance {
-  /** Id do lance, ou `penaltis:<disputa>` / `penaltis:livre` nas disputas de pênaltis (desde a migração do PR #108). */
+  /** Id do lance, ou `penaltis:<disputa>` nas disputas de pênaltis (a `penaltis:livre` saiu em 05/11/2026) (desde a migração do PR #108). */
   lance_id: string;
   gols: number;
   recriados: number;

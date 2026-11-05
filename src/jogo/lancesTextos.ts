@@ -13,7 +13,7 @@ import {
   type Medalha,
 } from './lances.ts';
 import { LANCES_PARTIDAS_POR_DIA } from './lancesPartida.ts';
-import { itemPenaltis, LANCES_PARTIDAS_POR_DIA_UNIFICADO, MEDALHAS_PENALTIS, medalhaDaDisputa, MELHORES_DO_DIA } from './regraLances.ts';
+import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MEDALHAS_PENALTIS, medalhaDaDisputa, MELHORES_DO_DIA } from './regraLances.ts';
 
 export const NOME_DA_MEDALHA: Record<Medalha, string> = { bronze: 'Bronze', prata: 'Prata', ouro: 'Ouro' };
 
@@ -73,7 +73,7 @@ export function situacaoDoResultado(d: {
   contaNoRanking: boolean;
   sobSuspeita: boolean;
   melhorDoDia: number | null;
-  /** Regra nova (desde 16/11/2026): as 3 melhores de Lances de hoje, que o servidor devolve no fechamento. */
+  /** Regra nova (desde 09/11/2026): as 3 melhores de Lances de hoje, que o servidor devolve no fechamento. */
   melhoresDoDia?: readonly number[] | null;
 }): SituacaoDoResultado {
   if (!d.fechou) return { tipo: 'sem_pontos', texto: d.aviso ?? 'Partida sem valer pontos.' };
@@ -295,7 +295,7 @@ export function previaDoProximoGol(gols: number, recriados: number): string {
 }
 
 // ---------- medalhas das disputas de pênaltis (seção 14.7) ----------
-// Por disputa histórica e pela Disputa livre: bronze 10 gols, prata 50, ouro 100 com 10 vitórias. Os números vêm de
+// Por disputa histórica: bronze 10 gols, prata 50, ouro 100 com 10 vitórias. Os números vêm de
 // minhas_medalhas() (gols e vitórias do item `penaltis:<disputa>`), como nos lances.
 
 const OURO_PENALTIS = MEDALHAS_PENALTIS[MEDALHAS_PENALTIS.length - 1];
@@ -362,6 +362,27 @@ export function trilhaDaDisputa(golsBrutos: number, vitoriasBrutas: number): Tri
   };
 }
 
+/** Gols de uma partida de pênaltis que contam na medalha da disputa: os das 8 primeiras cobranças (igual ao gatilho do banco). */
+export const golsDaDisputa = (cobrancas: readonly { desfecho: string }[]): number =>
+  cobrancas.slice(0, 8).filter((c) => c.desfecho === 'gol').length;
+
+/**
+ * Linha do resultado da disputa: "+3 rumo ao bronze · 8/10". Com os gols de sobra, falta vencer: "+2 rumo ao ouro ·
+ * 7/10 vitórias". Ouro completo: "+1 · ouro completo · 103 gols". Mesma régua da trilhaDaDisputa.
+ */
+export function linhaRumoDisputa(antes: { gols: number; vitorias: number }, depois: { gols: number; vitorias: number }): LinhaRumo {
+  const ganhou = Math.max(0, depois.gols - antes.gols);
+  const mAntes = medalhaDaDisputa(antes.gols, antes.vitorias);
+  const mDepois = medalhaDaDisputa(depois.gols, depois.vitorias);
+  const subiu = mDepois && mDepois !== mAntes ? mDepois : null;
+  const p = progressoDaDisputa(depois.gols, depois.vitorias);
+  if (!p.proxima) return { texto: `${ganhou ? `+${ganhou} · ` : ''}ouro completo · ${plural(depois.gols, 'gol', 'gols')}`, subiu };
+  const alvo = MEDALHAS_PENALTIS.find((m) => m.medalha === p.proxima!.medalha)!;
+  const nome = `${alvo.medalha === 'prata' ? 'à' : 'ao'} ${NOME_DA_MEDALHA[alvo.medalha].toLowerCase()}`;
+  const conta = depois.gols >= alvo.gols ? `${depois.vitorias}/${alvo.vitorias} vitórias` : `${depois.gols}/${alvo.gols}`;
+  return { texto: `${ganhou ? `+${ganhou} rumo` : 'Rumo'} ${nome} · ${conta}`, subiu };
+}
+
 /** Os números de um item da lista: lance (gols e recriados) ou disputa de pênaltis (gols e vitórias). */
 export interface NumerosDoItem {
   gols: number;
@@ -369,7 +390,7 @@ export interface NumerosDoItem {
   vitorias?: number;
 }
 
-/** O item de medalha é de pênaltis (`penaltis:<disputa>` ou `penaltis:livre`)? */
+/** O item de medalha é de pênaltis (`penaltis:<disputa>`)? */
 export const ehItemPenaltis = (id: string): boolean => id.startsWith('penaltis:');
 
 /** Medalha e progresso de qualquer item: lance ou disputa de pênaltis, pelo id. */
@@ -413,19 +434,16 @@ export function filtrarAlbum<T extends { id: string }>(
     .map(({ l }) => l);
 }
 
-/** Um item da tela única (regra nova): lance de falta ou cara a cara, disputa histórica ou a Disputa livre. */
+/** Um item da tela única (regra nova): lance de falta ou cara a cara, ou disputa histórica. */
 export interface ItemDaLista {
-  /** A chave das medalhas: o id do lance, `penaltis:<disputa>` ou `penaltis:livre` (itemPenaltis). */
+  /** A chave das medalhas: o id do lance, `penaltis:<disputa>` (itemPenaltis). */
   id: string;
-  /** Id de times.ts ou "selecao"; null na Disputa livre. */
-  clube: string | null;
+  /** Id de times.ts ou "selecao". */
+  clube: string;
 }
 
-/** Id do item da Disputa livre na lista e nas medalhas. */
-export const ITEM_LIVRE = itemPenaltis(null);
-
 /**
- * A tela única dos Lances (seção 14.7): "Todos" e "Meus troféus" com a Disputa livre primeiro e depois favoritos →
+ * A tela única dos Lances (seção 14.7): "Todos" e "Meus troféus" com favoritos →
  * seu time → Seleção → outros (cada grupo na ordem de chegada). "Meus troféus" mostra só itens com medalha.
  * "Perto do próximo" ordena pelo que falta para a próxima medalha (gols; na disputa com os gols feitos, as
  * vitórias), com os favoritos no topo e o ouro completo no fim. Sem medalhas lidas, passe um mapa vazio.
@@ -445,7 +463,7 @@ export function ordenarTelaUnica<T extends ItemDaLista>(
     return p.faltamGols || p.faltamVitorias || 0;
   };
   const fav = (id: string) => (favoritos.has(id) ? 0 : 1);
-  const grupo = (i: ItemDaLista) => (i.id === ITEM_LIVRE ? -1 : i.clube === timeId ? 0 : i.clube === 'selecao' ? 1 : 2);
+  const grupo = (i: ItemDaLista) => (i.clube === timeId ? 0 : i.clube === 'selecao' ? 1 : 2);
   return itens
     .map((item, i) => ({ item, i }))
     .filter(({ item }) => filtro !== 'meus' || progresso(item.id).medalha !== null)
@@ -458,8 +476,6 @@ export function ordenarTelaUnica<T extends ItemDaLista>(
         if (de(a.item.id).gols !== de(b.item.id).gols) return de(b.item.id).gols - de(a.item.id).gols;
         return a.i - b.i;
       }
-      const livre = (x: ItemDaLista) => (x.id === ITEM_LIVRE ? 0 : 1);
-      if (livre(a.item) !== livre(b.item)) return livre(a.item) - livre(b.item);
       if (fav(a.item.id) !== fav(b.item.id)) return fav(a.item.id) - fav(b.item.id);
       if (grupo(a.item) !== grupo(b.item)) return grupo(a.item) - grupo(b.item);
       return a.i - b.i;
@@ -478,19 +494,18 @@ export interface LinhaMedalha {
 
 export interface FichaDoLance {
   titulo: string;
-  /** Null na Disputa livre (não entra no "Por clube"). */
-  clube: string | null;
+  clube: string;
 }
 
 export interface MedalhaDoLanceMontada {
   lanceId: string;
   titulo: string;
-  clube: string | null;
+  clube: string;
   gols: number;
   recriados: number;
   /** Só nas disputas de pênaltis. */
   vitorias: number;
-  /** Item de pênaltis (disputa histórica ou livre): medalha por 10 · 50 · 100 gols e 10 vitórias. */
+  /** Item de pênaltis (disputa histórica): medalha por 10 · 50 · 100 gols e 10 vitórias. */
   penaltis: boolean;
   progresso: Progresso;
 }
@@ -510,7 +525,7 @@ const pesoDe = (m: Medalha | null) => (m ? PESO[m] : 0);
  * Monta "Suas medalhas": por clube (quantas de cada) e por lance (título, gols, quanto falta). Lance que
  * saiu do catálogo e lance sem nenhum gol não aparecem. Ordena por medalha maior, depois por gols.
  * Os itens de pênaltis (`penaltis:…`) só entram se `ficha` devolver algo para eles (a tela decide pela regra nova);
- * a medalha deles segue a régua dos pênaltis, e a Disputa livre (clube null) fica fora do "Por clube".
+ * a medalha deles segue a régua dos pênaltis.
  */
 export function montarMedalhas(
   linhas: readonly LinhaMedalha[],
@@ -525,7 +540,6 @@ export function montarMedalhas(
     const vitorias = penaltis ? (l.vitorias ?? 0) : 0;
     const progresso = progressoDoItem(l.lance_id, { gols: l.gols, recriados: l.recriados, vitorias });
     porLance.push({ lanceId: l.lance_id, titulo: f.titulo, clube: f.clube, gols: l.gols, recriados: l.recriados, vitorias, penaltis, progresso });
-    if (f.clube === null) continue;
     const c = clubes.get(f.clube) ?? { clube: f.clube, bronze: 0, prata: 0, ouro: 0, lances: 0 };
     c.lances++;
     if (progresso.medalha) c[progresso.medalha]++;

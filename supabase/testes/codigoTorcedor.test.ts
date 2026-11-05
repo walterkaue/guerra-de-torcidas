@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { bancoDeTeste } from './banco';
+import { bancoDeTeste, cortarLancesNoFuturo } from './banco';
 
 const SEMANA = '2026-10-19'; // segunda
 const DIA = '2026-10-20';
@@ -115,6 +115,7 @@ async function placar(semana = SEMANA) {
 
 beforeAll(async () => {
   db = await bancoDeTeste();
+  await cortarLancesNoFuturo(db); // regra antiga dos Lances, seja qual for o dia de hoje
 }, TEMPO);
 
 describe('gerar código', () => {
@@ -413,6 +414,7 @@ describe('juntar as contas', () => {
 
   it('o zerar da pré-temporada leva os recordes herdados junto', async () => {
     const copia = await bancoDeTeste();
+    await cortarLancesNoFuturo(copia); // regra antiga dos Lances, seja qual for o dia de hoje
     try {
       const a = uuid();
       await copia.query('insert into auth.users (id) values ($1)', [a]);
