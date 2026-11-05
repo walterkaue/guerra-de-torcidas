@@ -28,6 +28,8 @@ interface Prefs {
   faixaSincronizada?: FaixaEtaria;
   /** Versão dos Termos que este aparelho já viu (jogo/termos.ts, avisoDosTermos). */
   termosVistos?: string;
+  /** Dia (aaaa-mm-dd) em que o convite "Defende sua cidade também?" apareceu neste aparelho (uma vez só). */
+  cidadeConvite?: string;
   /** Aquecimento (jogo.md, 14.4): andamento, se já viu, selo e desfecho por mandar. Uma vez por aparelho. */
   aquecimento?: EstadoDoAquecimento;
   /** Dicas da faixa de instrução já vistas e contadores de gatilho (jogo/dicas.ts). */
@@ -36,6 +38,8 @@ interface Prefs {
   saiuDaConta?: boolean;
   /** Lances favoritos do álbum (jogo.md, 14.3): só neste aparelho, nunca vão para o servidor. */
   favoritosLances?: string[];
+  /** Dia (AAAA-MM-DD) em que a Home lembrou da cidade pela última vez: no máximo 1 vez por semana. */
+  cidadeLembrete?: string;
 }
 
 function ler(): Prefs {

@@ -92,6 +92,7 @@ registrarTela('admin', sobDemanda('Carregando o painel…', () => import('./tela
 registrarTela('perfil', sobDemanda('Abrindo seu perfil…', () => import('./telas/perfil').then((m) => m.telaPerfil as Tela)));
 registrarTela('outroAparelho', sobDemanda('Sorteando o código…', () => import('./telas/outroAparelho').then((m) => m.telaOutroAparelho as Tela)));
 registrarTela('entrar', sobDemanda('Abrindo a entrada…', () => import('./telas/entrarComCodigo').then((m) => m.telaEntrarComCodigo as Tela)));
+registrarTela('cidade', sobDemanda('Abrindo as cidades…', () => import('./telas/cidade').then((m) => m.telaCidade as Tela)));
 registrarTela('termos', sobDemanda('Abrindo os termos…', () => import('./telas/termos').then((m) => m.telaTermos as Tela)));
 // Apoie o jogo (#apoie): atrás do interruptor de src/config/apoio.ts e só para 18+.
 registrarTela('apoie', telaApoio);
@@ -119,6 +120,7 @@ function preaquecer(): void {
 function rotaDoHash(): Rota | undefined {
   if (location.hash === '#admin') return { tela: 'admin' };
   if (location.hash === '#termos') return { tela: 'termos' };
+  if (location.hash === '#cidade') return { tela: 'cidade' };
   if (/^#entrar(\/|$)/.test(location.hash)) {
     // Link do QR: o código sai do endereço e do histórico na hora; a pessoa toca em "Entrar".
     let codigo: string | undefined;

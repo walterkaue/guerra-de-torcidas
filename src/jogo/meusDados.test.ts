@@ -34,6 +34,15 @@ describe('ver meus dados', () => {
     ]);
   });
 
+  it('mostra a cidade quando o servidor respondeu, e some quando não deu pra consultar', () => {
+    const cid = { codigo: 3510609, nome: 'Caraguatatuba', uf: 'SP', desde: '2026-11-05T12:00:00Z' };
+    const com = linhasDosMeusDados({ ...dados, cidade: cid, escolhas_de_cidade: 2 }, nome);
+    expect(com.find((l) => l.rotulo === 'Cidade')?.valor).toBe('Caraguatatuba · SP');
+    expect(com.find((l) => l.rotulo === 'Escolhas de cidade')?.valor).toBe('2 vezes');
+    expect(linhasDosMeusDados({ ...dados, cidade: null }, nome).find((l) => l.rotulo === 'Cidade')?.valor).toBe('nenhuma');
+    expect(linhasDosMeusDados(dados, nome).some((l) => l.rotulo === 'Cidade')).toBe(false);
+  });
+
   it('em linguagem simples', () => {
     expect(valor('Time')).toBe('Bahia');
     expect(valor('Faixa de idade')).toBe('16 ou 17');

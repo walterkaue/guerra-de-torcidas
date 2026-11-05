@@ -47,6 +47,9 @@ import { sincronizarTorcedor } from '../servidor/torcedor';
 import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
 import { ligarArquibancada } from './arquibancada';
 import { anotarCarreira } from './carreira';
+import * as realCidade from '../servidor/rankingCidades';
+import { deveLembrarDaCidade, linhaDaCidadeNaHome } from '../jogo/rankingCidades';
+import { fraseDaCidade } from '../narrador/cidade';
 import { seloPre, faixa, numero as numeroBloco, posicaoHtml } from './blocos';
 import { arteEscada, arteGrade, htmlDaCasa, htmlDosCards } from './cardsJogos';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
@@ -61,6 +64,10 @@ const SERVIDOR = { rankingDaSemana, minhaPosicaoSemana, partidasFechadasHoje, es
 const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
 /** O resultado da sincronização fica guardado: redesenha só uma vez por carregamento, senão repetiria sem fim. */
 let jaRedesenhou = false;
+// Em desenvolvimento, ?cidadesFalsas=com|sem|faltam|vazia|erro troca o servidor da cidade por um de mentira.
+const FALSA_CIDADE = import.meta.env.DEV && new URLSearchParams(location.search).has('cidadesFalsas');
+const CHAVE_CIDADE_VISTA = 'gdt:cidade-acima';
+const servidorCidade = async (): Promise<typeof realCidade> => (FALSA_CIDADE ? import('../dev/cidadesFalsas') : realCidade);
 const FALSA_DIA = import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso');
 const servidor = async (): Promise<typeof SERVIDOR> => {
   if (FALSA) return import('../dev/homeFalsa');
@@ -176,6 +183,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         ${time?.id === ID_OUTRO ? '<p class="cabo-nota">Quem joga por "Outro time" fica fora do ranking das torcidas.</p>' : ''}
         <p class="cabo-voce" data-posicao-semana aria-live="polite" hidden></p>
       </section>
+
+      <section class="bloco-cidade" data-cidade aria-live="polite" hidden></section>
 
       <button class="botao botao-jogar" type="button" data-acao="jogar-agora">Jogar agora<small data-motivo>&nbsp;</small></button>
 
@@ -554,8 +563,49 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       });
   };
 
+  // ---------- sua cidade (um bloco só: posição, "Faltam N" ou o lembrete de escolher) ----------
+  const elCidade = root.querySelector<HTMLElement>('[data-cidade]')!;
+  let lembreteMostrado = false;
+  const carregarCidade = () => {
+    // Sem time ainda, não cria login só para isso.
+    if (!time || lembreteMostrado) return;
+    servidorCidade()
+      .then(async (api) => ({ api, minha: await api.minhaCidadeSemana(semana) }))
+      .then(async ({ minha }) => {
+        if (saiu) return;
+        if (minha) {
+          const vistos = memoria<Record<string, boolean>>(CHAVE_CIDADE_VISTA) ?? {};
+          const antes = minha.codigo in vistos ? vistos[minha.codigo] : null;
+          if (minha.rival_acima !== null) memoria(CHAVE_CIDADE_VISTA, { [minha.codigo]: minha.rival_acima });
+          const frase = fraseDaCidade(minha, antes);
+          elCidade.innerHTML = `<a class="bloco-cidade-link" href="#ranking-cidades" data-acao="ver-cidades"><strong>${esc(linhaDaCidadeNaHome(minha))}</strong>${frase ? `<span class="adesivo">${esc(frase)}</span>` : ''}</a>`;
+          elCidade.hidden = false;
+          return;
+        }
+        // Sem cidade: lembrete depois da 1ª partida, no máximo 1 vez por semana.
+        const hoje = diaBrasilia();
+        const jogou = FALSA_CIDADE || (((await (await import('../servidor/api')).minhaCarreira().catch(() => null))?.xp ?? 0) > 0);
+        if (saiu || !deveLembrarDaCidade({ temCidade: false, jogouAlguma: jogou, ultimo: prefs.get().cidadeLembrete, hoje })) return;
+        prefs.set({ cidadeLembrete: hoje });
+        lembreteMostrado = true;
+        elCidade.innerHTML = '<a class="bloco-cidade-link" href="#cidade" data-acao="escolher-cidade"><strong>Defende sua cidade também?</strong><span class="adesivo">Escolher minha cidade</span></a>';
+        elCidade.hidden = false;
+      })
+      .catch(() => {
+        // sem internet: fica sem o bloco
+      });
+  };
+  elCidade.addEventListener('click', (e) => {
+    const a = (e.target as HTMLElement).closest<HTMLElement>('[data-acao]');
+    if (!a) return;
+    e.preventDefault();
+    if (a.dataset.acao === 'ver-cidades') irPara({ tela: 'ranking', aba: 'cidades' });
+    else location.hash = '#cidade';
+  });
+
   const carregar = () => {
     carregarMinhaPosicao();
+    carregarCidade();
     return servidor()
       .then((api) => api.rankingDaSemana(semana))
       .then((l) => !saiu && desenhar(l.length ? l : TIMES.filter((t) => t.id !== ID_OUTRO).map((t, i) => ({

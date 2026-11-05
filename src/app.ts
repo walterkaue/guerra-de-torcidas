@@ -31,7 +31,7 @@ export interface DadosResultado {
 export type Rota =
   | { tela: 'inicio' }
   /** `aba`: abre direto numa aba do Ranking (o atalho do Perfil leva às Conquistas). */
-  | { tela: 'ranking'; aba?: 'conquistas' }
+  | { tela: 'ranking'; aba?: 'conquistas' | 'cidades' }
   | { tela: 'palpites' }
   | { tela: 'perfil' }
   /** Código do torcedor (docs/jogo.md, seção 14.1): mostrar o código deste aparelho. */
@@ -55,6 +55,8 @@ export type Rota =
   | { tela: 'timeDoDia' }
   /** Aquecimento (docs/jogo.md, 14.4): 5 estações de um toque; ao terminar ou pular, segue para `depois` (sem ela, a Home). */
   | { tela: 'aquecimento'; depois?: Rota }
+  /** Escolher a cidade (docs/jogo.md, seção 3); ao escolher ou voltar, segue para `depois` (sem ela, o Perfil). */
+  | { tela: 'cidade'; depois?: Rota }
   | { tela: 'lances'; aba?: 'penaltis' | 'falta' | 'finalizacao' }
   /** Casa do [time]: sem id, o índice dos clubes. */
   | { tela: 'casa'; id?: string };

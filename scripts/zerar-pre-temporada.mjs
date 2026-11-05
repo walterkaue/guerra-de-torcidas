@@ -36,6 +36,7 @@ console.log(
        (select count(*) from public.dia_partidas) as dias_do_time_do_dia,
        (select count(*) from public.crava_pontos) as pontos_do_crava,
        (select count(*) from public.ranking_semana) as linhas_de_ranking,
+       (select count(*) from public.ranking_cidade_semana) as linhas_de_cidades,
        (select count(*) from public.fechamento_semana) as linhas_de_fechamento,
        (select count(*) from public.temporada) as temporadas,
        (select count(*) from public.torcedores) as torcedores_que_ficam,
@@ -47,7 +48,7 @@ console.log('Ficam: times, torcedores, palpites, perguntas e respostas da Prova,
 
 const rl = createInterface({ input: process.stdin, output: process.stdout });
 const resposta = await rl.question(
-  'Apagar TODAS as partidas, desafios, dias do Time do Dia, pontos do Crava, recordes, o ranking, os fechamentos de semana e as temporadas? Digite ZERAR para confirmar: ',
+  'Apagar TODAS as partidas, desafios, dias do Time do Dia, pontos do Crava, recordes, o ranking (times, cidades e estados), os fechamentos de semana e as temporadas? Digite ZERAR para confirmar: ',
 );
 rl.close();
 if (resposta.trim() !== 'ZERAR') {

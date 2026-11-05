@@ -677,7 +677,7 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------------
--- 8. "Ver meus dados": igual ao de 20261103400000_codigo_torcedor.sql, com os gols sem as linhas de vitória dos
+-- 8. "Ver meus dados": igual ao de 20261105000000_cidade.sql (com a cidade), com os gols sem as linhas de vitória dos
 --    pênaltis, as vitórias, as tentativas dos lances e os X1 dos Lances.
 -- ---------------------------------------------------------------------------
 create or replace function public.ver_meus_dados()
@@ -693,6 +693,11 @@ as $$
       select jsonb_build_object('time_id', t.time_id, 'apelido', t.apelido, 'faixa_etaria', t.faixa_etaria, 'criado_em', t.criado_em)
       from public.torcedores t where t.id = eu.id
     ),
+    'cidade', (
+      select jsonb_build_object('codigo', c.codigo, 'nome', c.nome, 'uf', c.uf, 'desde', c.desde)
+      from public.minha_cidade() c
+    ),
+    'escolhas_de_cidade', (select count(*)::integer from public.torcedor_cidades h where h.torcedor_id = eu.id),
     'partidas', (
       select coalesce(jsonb_object_agg(x.minigame, x.n), '{}'::jsonb)
       from (
