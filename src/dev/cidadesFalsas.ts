@@ -1,5 +1,6 @@
-// Só em desenvolvimento: imita o servidor das cidades. ?cidadesFalsas= com | sem | faltam | vazia | erro
-// (com: cidade no ranking; sem: sem cidade escolhida; faltam: abaixo de 5; vazia: ninguém no ranking; erro: falha de rede).
+// Só em desenvolvimento: imita o servidor das cidades. ?cidadesFalsas= com | passou | sem | encerrada | faltam | vazia | erro
+// (com: cidade no ranking; passou: na frente do rival; sem: sem cidade escolhida; encerrada: sem cidade e a sessão
+// foi encerrada em outro aparelho; faltam: abaixo de 5; vazia: ninguém no ranking; erro: falha de rede).
 
 import type { LinhaCidade, LinhaEstado, MinhaCidade } from '../jogo/rankingCidades';
 
@@ -16,7 +17,7 @@ const linhas = (): LinhaCidade[] =>
   NOMES.map(([codigo, nome, uf], i) => ({ posicao: i + 1, codigo, nome, uf, ativos: 40 - i * 3, media30: 96 - i * 6 }));
 
 export const minhaCidadeSemana = (_semana: string): Promise<MinhaCidade | null> => {
-  if (cenario === 'sem') return espera(null);
+  if (cenario === 'sem' || cenario === 'encerrada') return espera(null);
   const comum = { codigo: 3550308, nome: 'São Paulo', uf: 'SP', minimo: 5 };
   if (cenario === 'faltam' || cenario === 'vazia') {
     return espera({
@@ -24,11 +25,15 @@ export const minhaCidadeSemana = (_semana: string): Promise<MinhaCidade | null> 
       rival_media30: null, rival_acima: null, uf_posicao: null, estados_no_ranking: 0,
     });
   }
+  const passou = cenario === 'passou';
   return espera({
     ...comum, ativos: 31, faltam: 0, posicao_estado: 2, cidades_no_estado: 4, media30: 90, rival_codigo: 3509502, rival_nome: 'Campinas',
-    rival_media30: 96, rival_acima: true, uf_posicao: 1, estados_no_ranking: 8,
+    rival_media30: passou ? 80 : 96, rival_acima: !passou, uf_posicao: 1, estados_no_ranking: 8,
   });
 };
+
+/** Sessão ainda vale neste servidor? (`encerrada`: foi desconectada em outro aparelho.) */
+export const sessaoValida = (): Promise<boolean> => espera(cenario !== 'encerrada');
 
 export const rankingCidades = (_s: string, uf: string): Promise<LinhaCidade[]> =>
   espera(cenario === 'vazia' || cenario === 'faltam' ? [] : linhas().filter((l) => l.uf === uf).map((l, i) => ({ ...l, posicao: i + 1 })));

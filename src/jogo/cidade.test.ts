@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buscar, indexar, lerLista, normalizar, rotuloDaCidade, type Municipio } from './cidade';
+import { buscar, codigoDoErroDeEscolher, indexar, lerLista, normalizar, rotuloDaCidade, type Municipio } from './cidade';
 
 const LISTA: Municipio[] = [
   [3509502, 'Campinas', 'SP'],
@@ -46,5 +46,23 @@ describe('cidade', () => {
   it('lerLista descarta o que não tem o formato', () => {
     expect(lerLista([[1, 'A', 'SP'], ['x', 'B', 'SP'], [2, 'C', 'SPP'], 'lixo'])).toEqual([[1, 'A', 'SP']]);
     expect(lerLista({})).toEqual([]);
+  });
+});
+
+describe('erro de escolherCidade', () => {
+  it('reconhece o código pela mensagem do servidor', () => {
+    for (const c of ['cidade_invalida', 'sem_torcedor', 'sessao_encerrada', 'muitas_trocas'] as const) {
+      expect(codigoDoErroDeEscolher({ message: `P0001: ${c}`, code: 'P0001' })).toBe(c);
+    }
+  });
+  it('42501 sem mensagem conhecida é sessão encerrada', () => {
+    expect(codigoDoErroDeEscolher({ message: 'permission denied', code: '42501' })).toBe('sessao_encerrada');
+  });
+  it('a mensagem manda sobre o código SQL', () => {
+    expect(codigoDoErroDeEscolher({ message: 'muitas_trocas', code: '42501' })).toBe('muitas_trocas');
+  });
+  it('o resto é falha', () => {
+    expect(codigoDoErroDeEscolher({ message: 'timeout', code: '57014' })).toBe('falha');
+    expect(codigoDoErroDeEscolher({})).toBe('falha');
   });
 });

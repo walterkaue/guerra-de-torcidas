@@ -64,6 +64,25 @@ export function deveLembrarDaCidade(o: { temCidade: boolean; jogouAlguma: boolea
   return b - a >= INTERVALO_LEMBRETE_DIAS * DIA_MS;
 }
 
+/** O que a Home guardou do rival da cidade: vale só na semana em que foi visto. */
+export interface CidadeVista {
+  semana: string;
+  acima: Record<string, boolean>;
+}
+
+/** Estava acima do rival na última visita *desta semana*? null = sem registro (ou registro de outra semana). */
+export function acimaNaUltimaVisita(guardado: Partial<CidadeVista> | null | undefined, semana: string, codigo: number | string): boolean | null {
+  if (!guardado || guardado.semana !== semana || !guardado.acima) return null;
+  const v = guardado.acima[String(codigo)];
+  return typeof v === 'boolean' ? v : null;
+}
+
+/** Registro novo para guardar; começa do zero quando a semana mudou. */
+export function guardarCidadeVista(guardado: Partial<CidadeVista> | null | undefined, semana: string, codigo: number | string, acima: boolean): CidadeVista {
+  const resto = guardado?.semana === semana && guardado.acima ? guardado.acima : {};
+  return { semana, acima: { ...resto, [String(codigo)]: acima } };
+}
+
 export interface DueloCidade {
   evento: EventoNarrador;
   /** "12 pontos" / "1 ponto": diferença na média dos 30 melhores. */
