@@ -1,9 +1,9 @@
 // Contas e textos da tela única dos Lances (docs/jogo.md, seção 14.7), que entra na segunda 09/11/2026, 0h de
-// Brasília: lista de itens (Disputa livre, disputas históricas, faltas e cara a cara), filtro de tipo e de clube,
+// Brasília: lista de itens (disputas históricas, faltas e cara a cara), filtro de tipo e de clube,
 // textos do X1 e da partida de 3 tentativas. Módulo puro, sem DOM, testado em lancesTelaUnica.test.ts.
 
 import { TABELA_LANCES_UNIFICADA, type Lance } from './lances';
-import { ITEM_LIVRE, type ItemDaLista } from './lancesTextos';
+import { type ItemDaLista } from './lancesTextos';
 import { itemPenaltis } from './regraLances';
 import type { Disputa } from './disputas';
 
@@ -22,41 +22,55 @@ export function tipoDaAba(aba?: string): TipoDaTela {
   return aba === 'penaltis' || aba === 'falta' || aba === 'finalizacao' ? aba : 'todos';
 }
 
-/** Um item da tela única: a Disputa livre, uma disputa do catálogo ou um lance. `id` é a chave das medalhas. */
+/** Um item da tela única: uma disputa do catálogo ou um lance. `id` é a chave das medalhas. */
 export interface ItemUnico extends ItemDaLista {
   tipo: TipoDoItem;
 }
 
-/** Disputa livre primeiro, depois todas as disputas do catálogo e os lances de falta e cara a cara. */
+/** Todas as disputas do catálogo e os lances de falta e cara a cara (a Disputa livre saiu no corte de 09/11). */
 export function itensDaTelaUnica(
   lances: readonly Pick<Lance, 'id' | 'clube' | 'tipo'>[],
   disputas: readonly Pick<Disputa, 'id' | 'clube'>[],
 ): ItemUnico[] {
   return [
-    { id: ITEM_LIVRE, clube: null, tipo: 'penaltis' },
     ...disputas.map((d): ItemUnico => ({ id: itemPenaltis(d.id), clube: d.clube, tipo: 'penaltis' })),
     ...lances.map((l): ItemUnico => ({ id: l.id, clube: l.clube, tipo: l.tipo })),
   ];
 }
 
-/** Itens do tipo escolhido. A Disputa livre não tem clube: aparece em Todos e em Pênaltis, de qualquer clube. */
+/** Itens do tipo escolhido. */
 export function itensDoTipo<T extends ItemUnico>(itens: readonly T[], tipo: TipoDaTela): T[] {
   return itens.filter((i) => tipo === 'todos' || i.tipo === tipo);
 }
 
 /** Aplica tipo e clube ('todos' = todos os clubes). */
 export function itensDoFiltro<T extends ItemUnico>(itens: readonly T[], tipo: TipoDaTela, clube: string): T[] {
-  return itensDoTipo(itens, tipo).filter((i) => clube === 'todos' || i.clube === null || i.clube === clube);
+  return itensDoTipo(itens, tipo).filter((i) => clube === 'todos' || i.clube === clube);
 }
 
-/** Ids dos clubes que têm item no tipo escolhido (sem repetir, sem a Disputa livre). */
+/** Ids dos clubes que têm item no tipo escolhido (sem repetir). */
 export function clubesDoTipo(itens: readonly ItemUnico[], tipo: TipoDaTela): string[] {
   return [...new Set(itensDoTipo(itens, tipo).flatMap((i) => (i.clube ? [i.clube] : [])))];
 }
 
-/** O clube que a tela abre: o da pessoa, se tiver item; senão "todos". */
+/**
+ * O clube que a tela abre: o da pessoa, se tiver item; senão a Seleção, que é de todo mundo (quem é de "Outro time"
+ * cai aqui); sem Seleção na lista, "todos".
+ */
 export const clubeInicial = (itens: readonly ItemUnico[], timeId: string): string =>
-  itens.some((i) => i.clube === timeId) ? timeId : 'todos';
+  itens.some((i) => i.clube === timeId) ? timeId : itens.some((i) => i.clube === 'selecao') ? 'selecao' : 'todos';
+
+/**
+ * Os ids que o Lance do Dia sorteia (jogo.md 14.7): todos os itens da tela única, disputas (`penaltis:<id>`) e
+ * lances. A Home e a tela dos Lances usam esta mesma lista, para mostrarem o mesmo item.
+ */
+export const idsDoLanceDoDia = (
+  lances: readonly Pick<Lance, 'id'>[],
+  disputas: readonly Pick<Disputa, 'id'>[],
+): string[] => [...disputas.map((d) => itemPenaltis(d.id)), ...lances.map((l) => l.id)];
+
+/** Aviso do pênalti que o servidor recusou com 400 `disputa_obrigatoria` (o relógio do aparelho atrasou): vira treino. */
+export const AVISO_DISPUTA_OBRIGATORIA = 'Escolha uma disputa pra valer pontos. Esta é de treino.';
 
 /** Mantém o clube escolhido se ele ainda tem item no tipo; senão volta a "todos". */
 export const clubeValido = (itens: readonly ItemUnico[], tipo: TipoDaTela, clube: string): string =>

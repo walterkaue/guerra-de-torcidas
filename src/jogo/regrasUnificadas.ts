@@ -34,7 +34,7 @@ export function pontosDosLances(t: TabelaLances = TABELA_LANCES_UNIFICADA): Linh
 export function textoDasMedalhasDosPenaltis(): string {
   const ouro = MEDALHAS_PENALTIS[MEDALHAS_PENALTIS.length - 1];
   const gols = MEDALHAS_PENALTIS.map((m) => m.gols).join(' · ');
-  return `Medalhas dos pênaltis, por disputa e na livre: ${gols} gols, ouro com ${ouro.vitorias} vitórias.`;
+  return `Medalhas dos pênaltis, por disputa histórica: ${gols} gols, ouro com ${ouro.vitorias} vitórias.`;
 }
 
 /** O que as duas folhas dizem do teto e do dia. */
