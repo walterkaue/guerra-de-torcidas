@@ -105,7 +105,7 @@ try {
   const sql = join(pasta, 'importar.sql');
   writeFileSync(sql, gerarSql(paraGravar));
   console.log(
-    execFileSync(npx, ['supabase', 'db', 'query', '--linked', '-o', 'table', '-f', sql], {
+    execFileSync(npx, ['supabase', 'db', 'query', '--remote', '--yes', '-o', 'table', '-f', sql], {
       encoding: 'utf8',
       shell: process.platform === 'win32',
     }),

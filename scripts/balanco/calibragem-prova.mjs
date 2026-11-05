@@ -64,7 +64,7 @@ function lerDoBanco() {
   try {
     const arquivo = join(pasta, 'calibragem.sql');
     writeFileSync(arquivo, SQL);
-    const saida = execFileSync(npx, ['supabase', 'db', 'query', '--linked', '-o', 'json', '-f', arquivo], {
+    const saida = execFileSync(npx, ['supabase', 'db', 'query', '--remote', '--read-only', '-o', 'json', '-f', arquivo], {
       encoding: 'utf8',
       shell: process.platform === 'win32',
       stdio: ['ignore', 'pipe', 'inherit'],

@@ -11,7 +11,7 @@ import { createInterface } from 'node:readline/promises';
 
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const consulta = (args) =>
-  execFileSync(npx, ['supabase', 'db', 'query', '--linked', ...args], { encoding: 'utf8', shell: process.platform === 'win32' });
+  execFileSync(npx, ['supabase', 'db', 'query', '--remote', ...args], { encoding: 'utf8', shell: process.platform === 'win32' });
 
 // O balanço de hoje já foi gravado?
 const pasta = fileURLToPath(new URL('../relatorios', import.meta.url));
@@ -27,7 +27,7 @@ if (balancos.includes(`balanco-${hoje}.csv`)) {
 
 console.log('Projeto ligado: o que existe hoje\n');
 console.log(
-  consulta([
+  consulta(['--read-only',
     '-o',
     'table',
     `select
@@ -56,7 +56,7 @@ if (resposta.trim() !== 'ZERAR') {
   process.exit(0);
 }
 
-console.log(consulta(['-o', 'table', '-f', 'scripts/zerar-pre-temporada.sql']));
+console.log(consulta(['--yes', '-o', 'table', '-f', 'scripts/zerar-pre-temporada.sql']));
 console.log('Pronto: pré-temporada zerada (recordes junto). Times, torcedores, carreira e palpites mantidos.');
 console.log('O mês de estreia já abriu: é o mês seguinte ao da semana de hoje (mes_de_estreia, acima).');
 console.log('Não confirme de novo, no #admin, placar de rodada que já tinha fechado antes do zerar: os pontos voltariam.');
