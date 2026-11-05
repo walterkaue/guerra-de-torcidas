@@ -3,6 +3,7 @@
 
 import { ErroServidor, comTempoLimite, garantirSessao, supabase } from './api';
 import { sincronizarTorcedor } from './torcedor';
+import { prefs } from '../estado';
 import type { Municipio } from '../jogo/cidade';
 
 export interface CidadeEscolhida {
@@ -30,6 +31,8 @@ export async function minhaCidade(): Promise<CidadeEscolhida | null> {
 /** Grava a cidade (null tira). Erro `cidade_invalida` se o código não existe. */
 export async function escolherCidade(codigo: number | null): Promise<void> {
   if (FALSA !== null) return (await import('../dev/cidadeFalsa')).escolherCidadeFalsa(FALSA, codigo);
+  // Sem time não há torcedor no servidor: não cria login anônimo só para ouvir "sem_torcedor".
+  if (!prefs.get().time) throw new ErroServidor('sem_torcedor');
   await garantirSessao();
   // O servidor só aceita a cidade de quem já tem torcedor gravado lá (time ou "Outro time").
   await sincronizarTorcedor().catch(() => {});

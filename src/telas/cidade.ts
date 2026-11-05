@@ -23,6 +23,8 @@ export const mensagemDoErro = (codigo: string): string => MENSAGEM[codigo] ?? 'N
 
 export function telaCidade(root: HTMLElement, rota: Rota): () => void {
   const depois: Rota = rota.tela === 'cidade' && rota.depois ? rota.depois : { tela: 'perfil' };
+  // Limpa o #cidade: senão o próximo toque num link "#cidade" não muda o endereço e não abre nada.
+  if (location.hash === '#cidade') history.replaceState(null, '', `${location.pathname}${location.search}`);
   let saiu = false;
   let indice: Indexado[] | null = null;
   let atual: CidadeEscolhida | null = null;
