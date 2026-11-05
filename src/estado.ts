@@ -36,6 +36,8 @@ interface Prefs {
   saiuDaConta?: boolean;
   /** Lances favoritos do álbum (jogo.md, 14.3): só neste aparelho, nunca vão para o servidor. */
   favoritosLances?: string[];
+  /** Dia (AAAA-MM-DD) em que a Home lembrou da cidade pela última vez: no máximo 1 vez por semana. */
+  cidadeLembrete?: string;
 }
 
 function ler(): Prefs {

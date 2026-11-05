@@ -10,6 +10,7 @@ import { ouvirRanking, rankingDaSemana, type LinhaRanking } from '../servidor/ap
 import { semanaConfirmadaEm } from '../jogo/crava';
 import { semanaBrasilia } from '../servidor/tempo';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
+import { desenharCidades } from './rankingCidades';
 import { desenharTemporada } from './temporada';
 import { abas, aoTocarNoEstado, cabecalhoTela, estado } from './blocos';
 
@@ -37,6 +38,7 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
       ${abas('ranking', [
         { id: 'semana', texto: 'Semana' },
         { id: 'temporada', texto: 'Temporada' },
+        { id: 'cidades', texto: 'Cidades' },
         { id: 'conquistas', texto: 'Conquistas' },
       ], 'semana')}
       <div class="painel-ranking" data-painel="semana">
@@ -49,20 +51,23 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
         <p class="explica" data-explica></p>
       </div>
       <div class="painel-ranking" data-painel="temporada" hidden></div>
+      <div class="painel-ranking" data-painel="cidades" hidden></div>
       <div class="painel-ranking" data-painel="conquistas" hidden></div>
       ${barraNavegacao('ranking')}
     </main>`;
   ligarBarraNavegacao(root);
 
   // As abas Temporada e Conquistas só carregam quando são abertas, e a cada abertura começam do zero.
-  type AbaDoRanking = 'semana' | 'temporada' | 'conquistas';
+  type AbaDoRanking = 'semana' | 'temporada' | 'cidades' | 'conquistas';
   const paineis: Record<AbaDoRanking, HTMLElement> = {
     semana: root.querySelector<HTMLElement>('[data-painel="semana"]')!,
     temporada: root.querySelector<HTMLElement>('[data-painel="temporada"]')!,
+    cidades: root.querySelector<HTMLElement>('[data-painel="cidades"]')!,
     conquistas: root.querySelector<HTMLElement>('[data-painel="conquistas"]')!,
   };
   const desenhadores: Partial<Record<AbaDoRanking, (el: HTMLElement) => () => void>> = {
     temporada: desenharTemporada,
+    cidades: desenharCidades,
     // Conquistas baixa sob demanda (lances, medalhas e o CSS dela não pesam na Home).
     conquistas: (el) => {
       let parar: (() => void) | null = null;
@@ -89,7 +94,7 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
   root.querySelectorAll<HTMLButtonElement>('[data-ranking]').forEach((b) =>
     b.addEventListener('click', () => abrirAba(b.dataset.ranking as AbaDoRanking)),
   );
-  if (rota.tela === 'ranking' && rota.aba === 'conquistas') abrirAba('conquistas');
+  if (rota.tela === 'ranking' && rota.aba) abrirAba(rota.aba);
 
   const elTabela = root.querySelector<HTMLElement>('[data-tabela-semana]')!;
   const elExplica = root.querySelector<HTMLElement>('[data-explica]')!;
