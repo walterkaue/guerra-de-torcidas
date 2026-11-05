@@ -142,6 +142,16 @@ describe('corte pelo dia (data de corte de verdade, 16/11/2026)', () => {
     expect(await noTeto(db, eu, dia)).toEqual(['lances:65', 'lances:120', 'penaltis:70', 'prova:20', 'prova:30', 'prova:40']);
   });
 
+  it('no dia da regra nova, partida de Lances acima de 150 não fecha (função velha no ar depois do corte)', async () => {
+    const eu = await torcedor(db);
+    await expect(partida(db, eu, 151, { dia: '2026-11-16' })).rejects.toThrow(/acima_do_teto/);
+    await expect(partida(db, eu, 151, { minigame: 'lances', dia: '2026-11-17' })).rejects.toThrow(/acima_do_teto/);
+    await expect(partida(db, eu, 150, { dia: '2026-11-16' })).resolves.toBeDefined();
+    // Antes do corte a tabela velha passa de 150; a Prova tem a guarda dela.
+    await expect(partida(db, eu, 190, { dia: '2026-11-15', criada: '2026-11-15T12:00:00-03:00' })).resolves.toBeDefined();
+    await expect(partida(db, eu, 151, { minigame: 'prova', dia: '2026-11-16' })).resolves.toBeDefined();
+  });
+
   it('liberar uma suspeita de um dia antigo refaz o teto com a regra daquele dia', async () => {
     const eu = await torcedor(db);
     const dia = '2026-11-14';
@@ -219,6 +229,38 @@ describe('limite do dia', () => {
     await expect(
       db.query(`select * from public.lances_comecar($1, 1, now() + interval '15 minutes', '{}'::jsonb, 'desafio', null)`, [outro]),
     ).rejects.toThrow(/modo_invalido/);
+  }, TEMPO);
+
+  it('o limite conta no dia da hora gravada na partida; hora fora de 1 minuto é recusada', async () => {
+    const db = await bancoDeTeste();
+    await cortarEm(db, '2026-01-05 00:00:00-03', '2026-01-05');
+    const eu = await torcedor(db);
+    // 10 partidas criadas ontem: o limite de ontem está cheio, o de hoje não.
+    await db.query(
+      `insert into public.partidas (torcedor_id, modo, semente, dificuldade, expira_em, minigame, criada_em)
+       select $1, 'normal', 1, 0, now(), 'penaltis', now() - interval '1 day' from generate_series(1, 10)`,
+      [eu],
+    );
+    const [ontem] = (await db.query<{ feitas: number }>(`select * from public.lances_hoje($1, now() - interval '1 day')`, [eu])).rows;
+    const [hoje] = (await db.query<{ feitas: number }>('select * from public.lances_hoje($1)', [eu])).rows;
+    expect(ontem.feitas).toBe(10);
+    expect(hoje.feitas).toBe(0);
+    for (const quando of [`now() - interval '2 minutes'`, `now() + interval '2 minutes'`, 'null']) {
+      await expect(
+        db.query(`select * from public.lances_comecar($1, 1, now() + interval '15 minutes', '{}'::jsonb, 'normal', null, ${quando})`, [eu]),
+      ).rejects.toThrow(/hora_invalida/);
+      await expect(
+        db.query(
+          `select * from public.penaltis_comecar($1, 1, 0.5, now() + interval '15 minutes', 'normal', null, null, 3::smallint, ${SEMENTES}, ${quando})`,
+          [eu],
+        ),
+      ).rejects.toThrow(/hora_invalida/);
+    }
+    const { rows } = await db.query<{ feitas: number }>(
+      `select * from public.lances_comecar($1, 1, now() + interval '15 minutes', '{}'::jsonb, 'normal', null, now() - interval '30 seconds')`,
+      [eu],
+    );
+    expect(rows[0].feitas).toBe(1);
   }, TEMPO);
 
   it('meus_lances_hoje: as 3 melhores que contam hoje, a partir do corte', async () => {
@@ -446,6 +488,24 @@ describe('posição e recorde dos Lances recomeçam no corte', () => {
     const recordes = await como<{ minigame: string; recorde: number }>(db, dono, 'authenticated', 'select * from public.meus_recordes()');
     expect(recordes.find((r) => r.minigame === 'lances')?.recorde).toBe(90);
   });
+
+  it('na junção antes do corte, uma herança menor não substitui a maior', async () => {
+    const velho = await bancoDeTeste();
+    await cortarEm(velho, '2099-01-05 00:00:00-03', '2099-01-05');
+    const dono = await torcedor(velho);
+    const origem = await torcedor(velho);
+    await velho.query(`insert into public.recordes_herdados (torcedor_id, minigame, recorde, herdado_em) values ($1, 'penaltis', 200, '2026-10-20')`, [dono]);
+    await partida(velho, origem, 90, { dia: '2026-11-04', criada: '2026-11-04T12:00:00-03:00' });
+    const impressao = createHash('sha256').update('KKKK3333').digest('hex');
+    await como(velho, null, 'service_role', 'select public.codigo_gerar($1, $2)', [dono, impressao]);
+    await como(velho, null, 'service_role', 'select * from public.codigo_conferir($1, $2)', [origem, impressao]);
+    await como(velho, null, 'service_role', 'select * from public.juntar_torcedores($1, $2, null)', [impressao, origem]);
+    const { rows } = await velho.query<{ recorde: number }>(
+      `select recorde from public.recordes_herdados where torcedor_id = $1 and minigame = 'penaltis'`,
+      [dono],
+    );
+    expect(rows).toEqual([{ recorde: 200 }]);
+  }, TEMPO);
 });
 
 describe('permissões', () => {
@@ -460,6 +520,7 @@ describe('permissões', () => {
       `select * from public.lances_comecar($1, 1, now(), '{}'::jsonb)`,
       `select * from public.penaltis_comecar($1, 1, 0.5, now(), 'normal', null, null, 3::smallint, ${SEMENTES})`,
       'select * from public.lances_hoje($1)',
+      'select * from public.lances_hoje($1, now())',
       'select * from public.medalhas_de($1)',
     ]) {
       await expect(como(db, eu, 'authenticated', sql, [eu])).rejects.toThrow(/permission/);

@@ -34,6 +34,7 @@ import {
 } from '../_shared/jogo/lancesPartida.ts';
 import type { GestoCobranca } from '../_shared/jogo/penaltis.ts';
 import {
+  desafioNaFaixa,
   ehUnificada,
   faixaCorrigida,
   faixaDaPartida,
@@ -131,6 +132,8 @@ async function nova(sb: SupabaseClient, uid: string, corpo: Record<string, unkno
     // tenha fechado depois): não dá mais para aceitar.
     const criada = await criadaDaPartida(sb, desafio.partida_id);
     if (!lance || !criada || !ehUnificada(criada)) throw new ErroHttp(410, 'desafio_expirado');
+    // O lance desceu de faixa depois do X1: o código antigo não pode servir para jogar na faixa que pagava mais.
+    if (!desafioNaFaixa(desafio.faixa, await faixaParaAPartida(sb, lance, agora))) throw new ErroHttp(410, 'desafio_expirado');
     cenas = cenasDosIds(tentativasDoLance(lance.id));
   } else if (typeof corpo.lance === 'string') {
     cenas = cenasDosIds(tentativasDoLance(corpo.lance));
@@ -150,7 +153,8 @@ async function nova(sb: SupabaseClient, uid: string, corpo: Record<string, unkno
   const expiraEm = new Date(agora.getTime() + (cfg.minutos_validade_semente ?? 15) * 60_000);
   // Regra nova: a faixa fica gravada na partida (a corrigida pela taxa real, senão a do catálogo recalibrado).
   // As 3 tentativas são do mesmo lance, então a conta é uma só.
-  // No X1, a faixa de quem desafiou: os dois jogam o mesmo lance com a mesma tabela, mesmo que a faixa mude depois.
+  // No X1, a faixa de quem desafiou: os dois jogam o mesmo lance com a mesma tabela, mesmo que a faixa suba depois
+  // (se ela desceu, o X1 já expirou acima).
   const faixas = unificada
     ? (Array(cenas.length).fill(desafio ? desafio.faixa : await faixaParaAPartida(sb, cenas[0], agora)) as Faixa[])
     : undefined;

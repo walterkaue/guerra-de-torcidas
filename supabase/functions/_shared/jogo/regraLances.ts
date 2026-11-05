@@ -5,7 +5,7 @@
 // partida aberta no domingo à noite fecha com a regra com que começou, e mudar a regra nunca mexe em partida fechada.
 
 import { misturar } from './aleatorio.ts';
-import { faixaPorChance, TABELA_LANCES_ANTES, TABELA_LANCES_UNIFICADA, type Faixa, type Lance, type TabelaLances } from './lances.ts';
+import { FAIXAS, faixaPorChance, TABELA_LANCES_ANTES, TABELA_LANCES_UNIFICADA, type Faixa, type Lance, type TabelaLances } from './lances.ts';
 import { PONTOS, PONTOS_UNIFICADOS, type TabelaPenaltis } from './penaltis.ts';
 
 /** Segunda 16/11/2026, 0h de Brasília (UTC−3). Igual a public.lances_unificados_desde() no banco (teste confere). */
@@ -68,15 +68,26 @@ export function faixaCorrigida(gols: number, tentativas: number, pessoas: number
   return faixaPorChance(gols / tentativas);
 }
 
+/** A faixa `a` paga menos que a `b` (fácil < média < difícil < craque, nas duas tabelas). */
+const pagaMenos = (a: Faixa, b: Faixa) => FAIXAS.indexOf(a) < FAIXAS.indexOf(b);
+
 /**
- * A faixa com que uma partida nova joga o lance: antes do corte, a do catálogo; depois, a corrigida pela taxa real
- * (se houver), senão a do catálogo recalibrado (`faixaUnificada`), senão a do catálogo. A partida grava a faixa
- * usada, e é ela que vale no fechamento.
+ * A faixa com que uma partida nova joga o lance: antes do corte, a do catálogo; depois, a do catálogo recalibrado
+ * (`faixaUnificada`, senão a do catálogo), ou a corrigida pela taxa real quando ela paga MENOS. A taxa real só desce
+ * a faixa, nunca a sobe: errar de propósito com contas anônimas não leva um lance a uma faixa que paga mais
+ * (revisão de segurança do PR #108). A partida grava a faixa usada, e é ela que vale no fechamento.
  */
 export function faixaDaPartida(lance: Pick<Lance, 'faixa' | 'faixaUnificada'>, criadaEm: Date | string, corrigida: Faixa | null = null): Faixa {
   if (!ehUnificada(criadaEm)) return lance.faixa;
-  return corrigida ?? lance.faixaUnificada ?? lance.faixa;
+  const catalogo = lance.faixaUnificada ?? lance.faixa;
+  return corrigida && pagaMenos(corrigida, catalogo) ? corrigida : catalogo;
 }
+
+/**
+ * X1 dos Lances: quem aceita joga na faixa gravada no X1. Ele só vale enquanto essa faixa não pagar mais que a de uma
+ * partida nova do mesmo lance agora; senão, um código antigo guardaria a faixa alta de um lance que já desceu.
+ */
+export const desafioNaFaixa = (faixaDoDesafio: Faixa, faixaAgora: Faixa): boolean => !pagaMenos(faixaAgora, faixaDoDesafio);
 
 // ---------- medalhas dos pênaltis ----------
 export type MedalhaPenaltis = 'bronze' | 'prata' | 'ouro';

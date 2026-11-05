@@ -106,7 +106,9 @@ $$;
 drop function if exists public.meus_lances_hoje();
 drop function if exists public.lances_hoje(uuid);
 
-create function public.lances_hoje(p_torcedor uuid)
+-- p_quando: o instante que decide o dia e a regra. Ao começar uma partida, é a hora gravada nela (p_criada_em), para
+-- o limite contar no mesmo dia em que a partida vai ficar, mesmo com o relógio da função um pouco diferente do banco.
+create function public.lances_hoje(p_torcedor uuid, p_quando timestamptz default now())
 returns table (feitas integer, limite integer, melhor integer, melhores integer[])
 language sql
 stable
@@ -114,7 +116,8 @@ security definer
 set search_path = ''
 as $$
   with regra as (
-    select public.hoje_brasilia() as hoje, public.hoje_brasilia() >= public.lances_dia_do_corte() as nova
+    select (p_quando at time zone 'America/Sao_Paulo')::date as hoje,
+      (p_quando at time zone 'America/Sao_Paulo')::date >= public.lances_dia_do_corte() as nova
   ),
   grupo as (
     select case when r.nova then array['penaltis', 'lances'] else array['lances'] end as minigames from regra r
@@ -178,6 +181,10 @@ begin
   if p_modo not in ('normal', 'desafio') or (p_modo = 'desafio') <> (p_desafio is not null) then
     raise exception 'modo_invalido';
   end if;
+  -- A hora vem da função (só o servidor executa esta): no máximo 1 minuto de diferença do relógio do banco.
+  if p_criada_em is null or abs(extract(epoch from (p_criada_em - now()))) > 60 then
+    raise exception 'hora_invalida';
+  end if;
   perform pg_advisory_xact_lock(hashtext('lances_comecar'), hashtext(p_torcedor::text));
 
   if (select count(*) from public.partidas p
@@ -186,16 +193,14 @@ begin
     raise exception 'muitas_partidas';
   end if;
 
-  select h.feitas, h.limite into v_feitas, v_limite from public.lances_hoje(p_torcedor) h;
+  -- O limite do dia em que a partida vai ficar (o da hora gravada nela, não o do relógio do banco).
+  select h.feitas, h.limite into v_feitas, v_limite from public.lances_hoje(p_torcedor, p_criada_em) h;
   if v_feitas >= v_limite then
     raise exception 'limite_do_dia';
   end if;
 
   -- Dificuldade fixa por lance (seção 7.3): a do dia não se aplica. O código do X1 fica no segredo da partida:
   -- partidas.desafio_id aponta para os desafios dos pênaltis (como a Prova, que guarda o dela em prova_estado).
-  if p_criada_em is null or abs(extract(epoch from (p_criada_em - now()))) > 60 then
-    raise exception 'hora_invalida';
-  end if;
   insert into public.partidas (torcedor_id, minigame, modo, semente, dificuldade, expira_em, criada_em)
   values (p_torcedor, 'lances', p_modo, p_semente, 0, p_expira_em, p_criada_em)
   returning id into v_id;
@@ -233,6 +238,9 @@ begin
   if p_modo not in ('normal', 'desafio') or (p_modo = 'desafio') <> (p_desafio is not null) then
     raise exception 'modo_invalido';
   end if;
+  if p_criada_em is null or abs(extract(epoch from (p_criada_em - now()))) > 60 then
+    raise exception 'hora_invalida';
+  end if;
   perform pg_advisory_xact_lock(hashtext('lances_comecar'), hashtext(p_torcedor::text));
 
   if (select count(*) from public.partidas p
@@ -241,10 +249,7 @@ begin
     raise exception 'muitas_partidas';
   end if;
 
-  select h.feitas, h.limite into v_feitas, v_limite from public.lances_hoje(p_torcedor) h;
-  if p_criada_em is null or abs(extract(epoch from (p_criada_em - now()))) > 60 then
-    raise exception 'hora_invalida';
-  end if;
+  select h.feitas, h.limite into v_feitas, v_limite from public.lances_hoje(p_torcedor, p_criada_em) h;
   if p_criada_em >= public.lances_unificados_desde() and v_feitas >= v_limite then
     raise exception 'limite_do_dia';
   end if;
@@ -341,6 +346,12 @@ begin
   returning p.minigame, p.amistoso into v_minigame, v_amistoso;
   if not found then
     return;
+  end if;
+  -- Guarda no banco: no dia da regra nova, nenhuma partida de Lances passa de 150 (seção 14.7). Só dispara se uma
+  -- função de antes do PR #108 ainda estiver no ar depois do corte (ordem de publicação errada): aí a partida não
+  -- fecha, em vez de entrar no dia novo com a tabela velha.
+  if v_minigame in ('penaltis', 'lances') and p_dia >= public.lances_dia_do_corte() and p_pontos > 150 then
+    raise exception 'acima_do_teto';
   end if;
 
   perform public.atualizar_teto(p_torcedor, p_dia);
@@ -736,14 +747,14 @@ $$;
 --    quem tem sessão (o login anônimo também é authenticated; o resumo do X1 também para anon, como ver_desafio).
 -- ---------------------------------------------------------------------------
 revoke execute on function public.lances_unificados_desde(), public.lances_dia_do_corte(),
-  public.lances_hoje(uuid), public.meus_lances_hoje(),
+  public.lances_hoje(uuid, timestamptz), public.meus_lances_hoje(),
   public.lances_comecar(uuid, bigint, timestamptz, jsonb, text, text, timestamptz),
   public.penaltis_comecar(uuid, bigint, numeric, timestamptz, text, text, text, smallint, jsonb, timestamptz),
   public.ver_desafio_lances(text), public.penaltis_anotar_gols(), public.medalhas_de(uuid),
   public.medalha_do_item(text, integer, integer, integer), public.minhas_medalhas(), public.vitrine_medalhas(),
   public.lances_anotar_tentativas(), public.lances_taxa(text)
   from public, anon, authenticated;
-grant execute on function public.lances_hoje(uuid), public.lances_comecar(uuid, bigint, timestamptz, jsonb, text, text, timestamptz),
+grant execute on function public.lances_hoje(uuid, timestamptz), public.lances_comecar(uuid, bigint, timestamptz, jsonb, text, text, timestamptz),
   public.penaltis_comecar(uuid, bigint, numeric, timestamptz, text, text, text, smallint, jsonb, timestamptz),
   public.medalhas_de(uuid), public.lances_taxa(text)
   to service_role;
@@ -874,9 +885,11 @@ begin
     where r.recorde > 0
     on conflict (torcedor_id, minigame) do update
       set recorde = excluded.recorde, herdado_em = now()
-      -- Herança de antes do corte é de outra tabela de pontos (e a regra nova a ignora): a nova sempre a substitui.
+      -- Herança de antes do corte é de outra tabela de pontos (e a regra nova a ignora): depois do corte, a nova
+      -- sempre a substitui. Antes do corte as duas são da tabela velha, e só a maior fica.
       where excluded.recorde > h.recorde
-        or (h.minigame in ('penaltis', 'lances') and h.herdado_em < public.lances_unificados_desde());
+        or (h.minigame in ('penaltis', 'lances') and h.herdado_em < public.lances_unificados_desde()
+            and now() >= public.lances_unificados_desde());
 
     update public.torcedores t
       set time_id = v_time, apelido = coalesce(v_d.apelido, v_o.apelido), faixa_etaria = v_faixa, atualizado_em = now()

@@ -5,6 +5,7 @@ import { calibrar, resolverLance, TABELA_LANCES_ANTES, TABELA_LANCES_UNIFICADA, 
 import { cenasComFaixa, ehLanceRepetido, fecharPartidaLances, LanceForaDeOrdem, tentativasDoLance } from './lancesPartida.ts';
 import { PONTOS, PONTOS_UNIFICADOS, simularPartida, totalizar, type GestoCobranca, type TabelaPenaltis } from './penaltis.ts';
 import {
+  desafioNaFaixa,
   DIA_DO_CORTE,
   ehUnificada,
   faixaCorrigida,
@@ -124,11 +125,27 @@ describe('faltas e cara a cara: 3 tentativas do mesmo lance', () => {
 describe('faixa da partida', () => {
   const lance: Pick<Lance, 'faixa' | 'faixaUnificada'> = { faixa: 'facil', faixaUnificada: 'dificil' };
 
-  it('antes do corte, a do catálogo; depois, a corrigida, senão a recalibrada, senão a do catálogo', () => {
+  it('antes do corte, a do catálogo; depois, a recalibrada (senão a do catálogo), ou a corrigida se pagar menos', () => {
     expect(faixaDaPartida(lance, '2026-11-15T12:00:00-03:00', 'craque')).toBe('facil');
-    expect(faixaDaPartida(lance, '2026-11-16T12:00:00-03:00', 'craque')).toBe('craque');
     expect(faixaDaPartida(lance, '2026-11-16T12:00:00-03:00', null)).toBe('dificil');
+    expect(faixaDaPartida(lance, '2026-11-16T12:00:00-03:00', 'media')).toBe('media');
+    expect(faixaDaPartida(lance, '2026-11-16T12:00:00-03:00', 'facil')).toBe('facil');
     expect(faixaDaPartida({ faixa: 'media' }, '2026-11-16T12:00:00-03:00')).toBe('media');
+  });
+
+  it('a taxa real nunca sobe a faixa: errar de propósito não leva um lance a Craque', () => {
+    expect(faixaDaPartida(lance, '2026-11-16T12:00:00-03:00', 'craque')).toBe('dificil');
+    expect(faixaDaPartida(lance, '2026-11-16T12:00:00-03:00', 'dificil')).toBe('dificil');
+    expect(faixaDaPartida({ faixa: 'facil' }, '2026-11-16T12:00:00-03:00', 'media')).toBe('facil');
+    // Contas que só erram: 8 pessoas, 80 tentativas, nenhum gol. A faixa fica a do catálogo.
+    expect(faixaDaPartida(lance, '2026-11-16T12:00:00-03:00', faixaCorrigida(0, 80, 8))).toBe('dificil');
+  });
+
+  it('o X1 só vale enquanto a faixa gravada nele não pagar mais que a de agora', () => {
+    expect(desafioNaFaixa('dificil', 'dificil')).toBe(true);
+    expect(desafioNaFaixa('media', 'dificil')).toBe(true);
+    expect(desafioNaFaixa('dificil', 'media')).toBe(false);
+    expect(desafioNaFaixa('craque', 'facil')).toBe(false);
   });
 
   it('corrige a partir de 30 tentativas de pelo menos 8 pessoas, pelas faixas de sempre', () => {
