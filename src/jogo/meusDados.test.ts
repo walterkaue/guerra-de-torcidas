@@ -43,6 +43,13 @@ describe('ver meus dados', () => {
     expect(linhasDosMeusDados(dados, nome).some((l) => l.rotulo === 'Cidade')).toBe(false);
   });
 
+  it('diz que há boneco, em uma linha, sem mostrar as escolhas', () => {
+    const com = linhasDosMeusDados({ ...dados, boneco: true }, nome);
+    expect(com.find((l) => l.rotulo === 'Boneco do avatar')?.valor).toBe('escolhas de visual, sem foto');
+    expect(linhasDosMeusDados({ ...dados, boneco: false }, nome).some((l) => l.rotulo === 'Boneco do avatar')).toBe(false);
+    expect(linhasDosMeusDados(dados, nome).some((l) => l.rotulo === 'Boneco do avatar')).toBe(false);
+  });
+
   it('em linguagem simples', () => {
     expect(valor('Time')).toBe('Bahia');
     expect(valor('Faixa de idade')).toBe('16 ou 17');

@@ -4,6 +4,7 @@ import {
   CABECAS,
   CAMISAS,
   CHUTEIRAS,
+  conferirFormato,
   FUNDOS,
   MOLDURAS,
   novasPecas,
@@ -18,6 +19,7 @@ import {
   sortearComPecas,
   sortearDoComeco,
   textoDaCondicao,
+  TAMANHO_MAXIMO,
   TOTAL_DE_PECAS,
   validar,
   type CampoDaPeca,
@@ -379,5 +381,37 @@ describe('textoDaCondicao', () => {
     expect(texto('fundo_verde_amarelo')).toBe('Libera com um ouro da Seleção');
     expect(texto('moldura_galeria')).toBe('Libera com 5 ouros');
     expect(texto('apito')).toBe('Libera com o Aquecimento completo');
+  });
+});
+
+describe('conferirFormato (o que o servidor recusa)', () => {
+  const cheia = { ...PADRAO, numero: '07', camisa: 'goleiro', fundo: 'verde_amarelo', moldura: 'galeria' };
+  it('aceita o PADRAO, o sorteio e peça trancada (quem troca é o validar)', () => {
+    expect(conferirFormato({ ...PADRAO })).toBe(true);
+    expect(conferirFormato(cheia)).toBe(true);
+    for (let i = 0; i < 50; i++) expect(conferirFormato(sortearComPecas(PECAS.map((p) => p.id), semente(i + 1)))).toBe(true);
+  });
+  it('recusa o que não é vestimenta', () => {
+    for (const x of [null, undefined, 'x', 7, [], [PADRAO], { ...PADRAO, v: 2 }, { ...PADRAO, v: '1' }]) expect(conferirFormato(x)).toBe(false);
+  });
+  it('recusa chave a mais ou faltando', () => {
+    expect(conferirFormato({ ...PADRAO, cor: '#fff' })).toBe(false);
+    const { moldura: _m, ...sem } = PADRAO;
+    expect(conferirFormato(sem)).toBe(false);
+    expect(conferirFormato(JSON.parse(JSON.stringify(PADRAO).replace('{', '{"__proto__":{"x":1},')))).toBe(false);
+  });
+  it('recusa valor fora do catálogo', () => {
+    expect(conferirFormato({ ...PADRAO, pele: 6 })).toBe(false);
+    expect(conferirFormato({ ...PADRAO, pele: '0' })).toBe(false);
+    expect(conferirFormato({ ...PADRAO, corpo: 'mulher' })).toBe(false);
+    expect(conferirFormato({ ...PADRAO, fundo: 'arco_iris' })).toBe(false);
+    expect(conferirFormato({ ...PADRAO, camisa: null })).toBe(false);
+  });
+  it('recusa número fora do formato', () => {
+    for (const numero of ['100', '', ' 7', '7a', 7, '٣']) expect(conferirFormato({ ...PADRAO, numero })).toBe(false);
+    for (const numero of ['0', '00', '7', '07', '99', null]) expect(conferirFormato({ ...PADRAO, numero })).toBe(true);
+  });
+  it('a maior vestimenta possível cabe no teto', () => {
+    expect(JSON.stringify(cheia).length).toBeLessThan(TAMANHO_MAXIMO);
   });
 });

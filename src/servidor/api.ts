@@ -293,7 +293,7 @@ export function contarCliqueSocio(clube: string): void {
     .catch(() => undefined);
 }
 
-async function chamar<T>(funcao: string, corpo: Record<string, unknown>): Promise<T> {
+export async function chamar<T>(funcao: string, corpo: Record<string, unknown>): Promise<T> {
   await garantirSessao();
   const sb = await supabase();
   const { data, error } = await comTempoLimite(sb.functions.invoke(funcao, { body: corpo }));

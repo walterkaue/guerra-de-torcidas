@@ -2,7 +2,7 @@
 // Puro, sem DOM. Cobre só o que o texto usa: títulos, parágrafos, listas, tabela, negrito, itálico e links.
 
 /** Versão em vigor. Mudou o texto de um jeito que importa? Mude a data: a Home avisa quem já tinha visto a anterior. */
-export const DATA_DA_VERSAO = '04/11/2026';
+export const DATA_DA_VERSAO = '05/11/2026';
 
 /**
  * Faixa "Os Termos mudaram" na Home. `vista` é a versão guardada no aparelho. Aparelho sem versão guardada
