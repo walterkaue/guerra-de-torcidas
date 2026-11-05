@@ -43,7 +43,7 @@ Quatro trilhos, que rodam em paralelo (fila decidida pelo Kauê em 05/11/2026). 
   1. ~~D5a, peças e catálogo puro~~: no `main` desde 05/11/2026 (PR #125, prints aprovados pelo Kauê). `src/jogo/vestiario.ts` (também em `_shared`), o desenho em `src/telas/bonecoMontavel.ts` e a vitrine `?vitrineBoneco`. Nada do app usa ainda.
   2. ~~D5-lista, nomes de jogadores na `palavras_bloqueadas`~~: PR #124; migração `20261106100000` no ar (conferido no `migration list` em 05/11/2026).
   3. ~~D5b, servidor~~: no ar desde 05/11/2026 (PR #130). Migração `20261106300000_boneco.sql` aplicada, função `boneco` publicada (`meu_boneco`, `salvar_boneco`) e o cliente `src/servidor/boneco.ts`, sem tela. Detalhe em `docs/jogo.md` 14.5, "Como está no servidor".
-  4. ~~D5b-seg, revisão de segurança~~: feita em 05/11/2026, sem furo; a corrida foi provada em Postgres 17. **Falta:** a conferência só de leitura do PR #130 (RLS, permissões e contagem).
+  4. ~~D5b-seg, revisão de segurança~~: feita em 05/11/2026, sem furo; a corrida foi provada em Postgres 17. Conferência só de leitura do PR #130 feita em 05/11/2026: RLS ligada com a política restritiva, o celular (anon e authenticated) sem acesso à tabela e às 4 funções internas, que só o servidor chama (`security definer`, `search_path` vazio); função `boneco` ativa (versão 1), recusando pedido sem login (401); 0 contas com boneco, porque nenhuma tela chama a função antes do D5c.
   5. **D5c, telas:** Perfil (crachá de 84 px e bloco Vestiário), Home (busto de 52 px), vestiário, peça trancada e peça nova. O desenho entra por `import()`, para o bundle inicial não crescer.
 
 ## Conferir primeiro
