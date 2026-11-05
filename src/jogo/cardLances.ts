@@ -17,6 +17,11 @@ export interface DadosCardLances extends DadosBase {
   lances: readonly LanceDoCard[];
   /** "Bronze no lance Gol do título!" quando a partida deu medalha. */
   medalha?: string | null;
+  /**
+   * Lances unificados (3 tentativas do mesmo lance): o título aparece uma vez só, no alto, e cada linha de `lances`
+   * traz só "Tentativa N". Sem isso, o formato antigo: o título de cada lance na sua linha.
+   */
+  tituloUnico?: string | null;
 }
 
 const VERDE = '#2e9d4f';
@@ -104,8 +109,15 @@ export function desenharCardLances(d: DadosCardLances): HTMLCanvasElement {
     c.fillText('LANCES DO JOGO', x + l / 2, y + 30);
 
     const temMedalha = !!d.medalha;
-    const topo = y + 52;
-    const linha = Math.min(78, (a - 52 - (temMedalha ? 46 : 0)) / Math.max(1, d.lances.length));
+    const temTitulo = !!d.tituloUnico;
+    const alturaTitulo = temTitulo ? 46 : 0;
+    if (d.tituloUnico) {
+      c.fillStyle = '#ffffff';
+      c.font = `700 36px ${FONTE}`;
+      c.fillText(cortarTexto(c, d.tituloUnico, l), x + l / 2, y + 74, l);
+    }
+    const topo = y + 52 + alturaTitulo;
+    const linha = Math.min(78, (a - 52 - alturaTitulo - (temMedalha ? 46 : 0)) / Math.max(1, d.lances.length));
     const raio = linha * 0.4;
     d.lances.forEach((lance, i) => {
       const cy = topo + i * linha + linha / 2;
