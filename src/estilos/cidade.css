@@ -1,0 +1,88 @@
+/* Escolher a cidade (#cidade; docs/jogo.md, seção 3). Celular primeiro: nada de rolagem para o lado. */
+
+.cidade .placa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.cidade-dica,
+.cidade-aviso {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.cidade-atual {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--e2);
+  margin: 0;
+}
+
+.cidade-campo input {
+  width: 100%;
+  min-height: 48px;
+  font-size: 16px; /* 16px evita o zoom do iPhone ao focar */
+}
+
+.cidade-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cidade-lista li + li {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cidade-item {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 4px;
+  border: 0;
+  background: none;
+  color: var(--cal);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  overflow-wrap: anywhere;
+  touch-action: manipulation;
+}
+
+.cidade-item[aria-current='true'] {
+  color: var(--amarelo);
+}
+
+.cidade-item:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Linha "Sua cidade" do Perfil. */
+.cidade-perfil {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--e2);
+  margin: 0;
+}
+
+/* Convite depois da partida. */
+.convite-cidade {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
+}
+
+.convite-cidade .rotulo {
+  color: var(--amarelo);
+  font-size: 18px;
+}

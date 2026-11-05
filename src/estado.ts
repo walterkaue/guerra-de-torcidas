@@ -28,6 +28,8 @@ interface Prefs {
   faixaSincronizada?: FaixaEtaria;
   /** Versão dos Termos que este aparelho já viu (jogo/termos.ts, avisoDosTermos). */
   termosVistos?: string;
+  /** Dia (aaaa-mm-dd) em que o convite "Defende sua cidade também?" apareceu neste aparelho (uma vez só). */
+  cidadeConvite?: string;
   /** Aquecimento (jogo.md, 14.4): andamento, se já viu, selo e desfecho por mandar. Uma vez por aparelho. */
   aquecimento?: EstadoDoAquecimento;
   /** Dicas da faixa de instrução já vistas e contadores de gatilho (jogo/dicas.ts). */

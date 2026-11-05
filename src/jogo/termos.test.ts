@@ -38,10 +38,10 @@ describe('texto dos termos', () => {
     expect(texto).not.toMatch(/rascunho|advogado/i);
   });
 
-  it('o texto publicado renderiza por inteiro, com os 12 pontos numerados e as 7 fichas', () => {
+  it('o texto publicado renderiza por inteiro, com os 12 pontos numerados e as 8 fichas', () => {
     const html = termosEmHtml(texto);
     expect(html.match(/<ol>.*?<\/ol>/)?.[0].match(/<li>/g)).toHaveLength(12);
-    expect(html.match(/<dt>/g)).toHaveLength(7);
+    expect(html.match(/<dt>/g)).toHaveLength(8);
     expect(html).not.toMatch(/\*\*|\|/);
   });
 });

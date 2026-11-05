@@ -4,7 +4,7 @@
 
 - O jogo é de graça e não tem aposta, anúncio nem compra dentro dele.
 - Você não precisa dar nome, e-mail ou telefone para jogar.
-- Ninguém te vê no ranking: só a sua torcida aparece.
+- Ninguém te vê no ranking: só a sua torcida aparece, e a sua cidade, somada, se você escolher uma.
 - Não tem chat. Ninguém consegue falar com você pelo jogo.
 - Zoeira é com o time, nunca com pessoas.
 - Os pontos são conferidos. Trapaça tira a partida do ranking.
@@ -35,13 +35,14 @@
 | --- | --- | --- |
 | Um código aleatório do seu aparelho | Saber quais pontos são seus | Não, é automático |
 | Seu time | Mandar seus pontos para a torcida certa | Sim |
+| Sua cidade, e cada troca com a data | Somar no ranking de cidades e estados, nunca com seu apelido | Não |
 | Suas partidas, respostas e palpites | Contar os pontos e conferir se não houve trapaça | Sim, ao jogar |
 | Sua faixa de idade (menos de 16, 16 ou 17, 18 ou mais) | Desligar, para menores de 18, os avisos, o apoio ao jogo e o link de sócio | Sim, uma vez |
 | Apelido | Aparecer só para quem você manda um desafio | Não |
 | Endereço de aviso do navegador | Mandar 1 aviso por semana, se você pedir (só para 18 ou mais) | Não |
 | O que você manda no "Achei um erro", mais a tela em que estava e o tipo de navegador e aparelho (até 300 caracteres) | Achar e corrigir o problema | Não |
 
-**O que o jogo não pede:** nome, e-mail, telefone, foto, data de nascimento, endereço ou localização.
+**O que o jogo não pede:** nome, e-mail, telefone, foto, data de nascimento, endereço ou a localização do aparelho. A cidade, se você quiser, é escolhida numa lista, sem GPS.
 
 **Quem lê:** seus dados de jogo ficam ligados só ao código do seu aparelho. O administrador do jogo lê apenas o que você manda no "Achei um erro" e as partidas que o sistema marcou como suspeitas, além do acesso técnico necessário para manter o servidor funcionando e seguro. Ninguém compra nem recebe seus dados para anúncio.
 
@@ -53,7 +54,7 @@
 
 **Por quanto tempo:** enquanto você jogar. Conta sem nenhuma partida, resposta ou palpite por mais de 6 meses seguidos é apagada automaticamente. Antes, os pontos que ela deu à torcida viram um total anônimo, para o placar não mudar.
 
-**Seus direitos:** você, ou seu responsável, pode ver ou apagar seus dados a qualquer momento, nos botões "Ver meus dados" e "Apagar meus dados" desta página. Como o jogo não pede e-mail, CPF nem cadastro, isso é feito no próprio aparelho em que você joga: por e-mail não dá para saber qual conta é a sua. Ao apagar, saem o código do aparelho, o seu histórico e as suas mensagens. Ficam só totais de pontos da torcida e estatísticas das respostas da Prova, sem nada que identifique você.
+**Seus direitos:** você, ou seu responsável, pode ver ou apagar seus dados a qualquer momento, nos botões "Ver meus dados" e "Apagar meus dados" desta página. Como o jogo não pede e-mail, CPF nem cadastro, isso é feito no próprio aparelho em que você joga: por e-mail não dá para saber qual conta é a sua. Ao apagar, saem o código do aparelho, o seu histórico e as suas mensagens. Ficam só totais de pontos da torcida, da cidade e do estado, e estatísticas das respostas da Prova, sem nada que identifique você.
 
 **Para pais e responsáveis:** o jogo não tem chat, perfil público, compra ou anúncio. Só algumas partidas por dia contam pontos. A faixa de idade é informada no primeiro acesso, sem pedir documento. Menores de 18 não recebem aviso por push nem veem a opção de apoio financeiro ou o link de sócio-torcedor.
 
