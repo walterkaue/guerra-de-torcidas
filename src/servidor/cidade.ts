@@ -35,7 +35,10 @@ export async function escolherCidade(codigo: number | null): Promise<void> {
   await sincronizarTorcedor().catch(() => {});
   const sb = await supabase();
   const { error } = await comTempoLimite(sb.rpc('escolher_cidade', { p_codigo: codigo }));
-  if (error) throw new ErroServidor(error.message.includes('cidade_invalida') ? 'cidade_invalida' : 'falha');
+  if (error) {
+    const codigoErro = ['cidade_invalida', 'sem_torcedor', 'sessao_encerrada', 'muitas_trocas'].find((c) => error.message.includes(c));
+    throw new ErroServidor(codigoErro ?? (error.code === '42501' ? 'sessao_encerrada' : 'falha'));
+  }
 }
 
 /** Lista do IBGE (public/dados/municipios.json), baixada só na tela de escolha. */

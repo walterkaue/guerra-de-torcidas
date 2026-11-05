@@ -13,6 +13,14 @@ import { aoTocarNoEstado, cabecalhoTela, estado, faixa } from './blocos';
 export const AVISO_DA_CIDADE =
   'Os pontos que você já fez ficam onde foram feitos. A cidade só aparece somada no ranking de cidades e estados, nunca junto do seu apelido.';
 
+const MENSAGEM: Record<string, string> = {
+  cidade_invalida: 'Essa cidade não está na lista. Escolhe outra.',
+  sem_torcedor: 'Escolhe o seu time primeiro, depois volta aqui pra escolher a cidade.',
+  sessao_encerrada: 'Sua sessão terminou. Abre o jogo de novo e tenta outra vez.',
+  muitas_trocas: 'Você trocou de cidade muitas vezes hoje. Tenta de novo amanhã.',
+};
+export const mensagemDoErro = (codigo: string): string => MENSAGEM[codigo] ?? 'Não consegui gravar agora. Tenta de novo daqui a pouco.';
+
 export function telaCidade(root: HTMLElement, rota: Rota): () => void {
   const depois: Rota = rota.tela === 'cidade' && rota.depois ? rota.depois : { tela: 'perfil' };
   let saiu = false;
@@ -96,11 +104,7 @@ export function telaCidade(root: HTMLElement, rota: Rota): () => void {
       if (saiu) return;
       ocupado = false;
       root.querySelectorAll('button').forEach((b) => ((b as HTMLButtonElement).disabled = false));
-      erro(
-        e instanceof ErroServidor && e.codigo === 'cidade_invalida'
-          ? 'Essa cidade não está na lista. Escolhe outra.'
-          : 'Não consegui gravar agora. Tenta de novo daqui a pouco.',
-      );
+      erro(mensagemDoErro(e instanceof ErroServidor ? e.codigo : 'falha'));
     }
   }
 
