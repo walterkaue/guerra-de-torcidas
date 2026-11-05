@@ -2,14 +2,19 @@
 // placar → pontos pro time → detalhe em placas → frase do narrador → selos → Carreira →
 // "Mandar no grupo" com Card, Stories, Emoji e Link → Início e "Mais uma".
 // O que cada jogo tem de próprio entra como placa no detalhe, sem quebrar a ordem.
+// Comemoração (ligarConfete): papel picado nas cores do time e vibração, uma vez por resultado, em vitória, recorde
+// novo, partida nas 3 melhores do dia, Time do Dia acertado e medalha nova (jogo/confete.ts).
 
 import { esc } from '../app';
 import { corDeTexto, type Time } from '../dados/times';
 import { mostrarCard } from '../jogo/card';
+import { criarComemoracao, pedacosDoConfete, type MotivoDoConfete } from '../jogo/confete';
 import { selosDaPosicao, type Desempenho, type Minigame } from '../jogo/posicao';
 import { seloPre, selo } from './blocos';
 import { convidarParaCidade } from './conviteCidade';
 import { icone } from './icones';
+import { qualidade } from './qualidade';
+import { vibrar } from './toque';
 
 const semMovimento = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
@@ -39,7 +44,6 @@ export interface PartesDoResultado {
   zap: string;
   /** 8. Texto do botão principal. */
   maisUma: string;
-  confete?: boolean;
 }
 
 /** Selos da posição naquele jogo (novo recorde, posição na semana, recorde). */
@@ -54,8 +58,6 @@ export function htmlResultado(p: PartesDoResultado): string {
   return `
     <main class="tela ${p.classe} res-padrao"
       style="--c1:${t.cores[0]};--c2:${t.cores[1]};--txt:${corDeTexto(t.cores[0])}">
-      ${p.confete ? '<canvas class="confete" aria-hidden="true"></canvas>' : ''}
-
       <header class="res-topo">
         <div class="res-topo-linha"><p class="rotulo">${esc(p.rotulo)}</p>${seloPre()}</div>
         <h1 class="res-titulo${p.ganhou ? '' : ' neutro'}">${esc(p.titulo)}</h1>
@@ -95,14 +97,82 @@ export function htmlResultado(p: PartesDoResultado): string {
       </section>
 
       <div data-convite-push></div>
-      <div data-convite-cidade></div>
       <div class="res-apoio" data-apoio></div>
 
       <div class="res-acoes">
         <button class="botao botao-sec" type="button" data-acao="inicio">Início</button>
         <button class="botao" type="button" data-acao="mais-uma">${esc(p.maisUma)}</button>
       </div>
+
+      <!-- No fim da página, depois de tudo: entra tarde (rede) e não empurra nada. -->
+      <div data-convite-cidade></div>
     </main>`;
+}
+
+/**
+ * Papel picado que cai do alto da tela nas cores do time (o da vitória dos Pênaltis, agora de todos os jogos).
+ * Um canvas por cima de tudo, criado na hora e removido no fim (~1,6 s). Movimento reduzido: nada.
+ */
+function papelDaVitoria(root: HTMLElement, cores: readonly string[]): void {
+  const n = pedacosDoConfete(qualidade().nivel, semMovimento());
+  if (!n) return;
+  const canvas = document.createElement('canvas');
+  canvas.className = 'confete';
+  canvas.setAttribute('aria-hidden', 'true');
+  (root.querySelector('.res-padrao') ?? root).prepend(canvas);
+  const c = canvas.getContext('2d');
+  if (!c) {
+    canvas.remove();
+    return;
+  }
+  const dpr = Math.min(window.devicePixelRatio || 1, qualidade().dprMax, 2);
+  const W = (canvas.width = innerWidth * dpr);
+  const H = (canvas.height = innerHeight * dpr);
+  const pedacos = Array.from({ length: n }, () => ({
+    x: Math.random() * W,
+    y: -Math.random() * H * 0.4,
+    vx: (Math.random() - 0.5) * 3 * dpr,
+    vy: (2 + Math.random() * 3) * dpr,
+    giro: Math.random() * Math.PI,
+    cor: cores[Math.floor(Math.random() * cores.length)],
+    t: (6 + Math.random() * 6) * dpr,
+  }));
+  const inicio = performance.now();
+  const quadro = (agora: number) => {
+    if (!canvas.isConnected) return;
+    const passou = agora - inicio;
+    c.clearRect(0, 0, W, H);
+    c.globalAlpha = passou > 1200 ? Math.max(0, 1 - (passou - 1200) / 400) : 1;
+    for (const p of pedacos) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.giro += 0.15;
+      c.save();
+      c.translate(p.x, p.y);
+      c.rotate(p.giro);
+      c.fillStyle = p.cor;
+      c.fillRect(-p.t / 2, -p.t / 4, p.t, p.t / 2);
+      c.restore();
+    }
+    if (passou < 1600) requestAnimationFrame(quadro);
+    else canvas.remove();
+  };
+  requestAnimationFrame(quadro);
+}
+
+/** Cores do confete: as duas do time e o amarelo do placar. */
+export const coresDoConfete = (t: Time): string[] => [t.cores[0], t.cores[1], '#ffd23f'];
+
+/**
+ * Comemoração do resultado: devolve `soltar(motivo)`, que solta o confete e a vibração no primeiro motivo e ignora
+ * os seguintes (uma vez por resultado). Tela que já saiu não comemora.
+ */
+export function ligarConfete(root: HTMLElement, time: Time): (motivo: MotivoDoConfete | null) => boolean {
+  const soltar = criarComemoracao({
+    desenhar: () => papelDaVitoria(root, coresDoConfete(time)),
+    vibrar: () => vibrar('gol'),
+  });
+  return (motivo) => root.isConnected && soltar(motivo);
 }
 
 /** Conta de 0 até `total` em ~700 ms (sem animação para quem pediu menos movimento). */

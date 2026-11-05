@@ -12,8 +12,8 @@ import { ID_SELECAO, lembrancaDaDisputa } from '../jogo/disputas';
 import { placarEmoji } from '../jogo/emoji';
 import { escolherFrase } from '../narrador/escolher';
 import { contextoDoTime } from '../narrador/sessao';
-import { minhasMedalhas, ouvirRanking, rankingCalculadoEm, rankingDaSemana, type LinhaRanking } from '../servidor/api';
-import { ESPERA_RANKING_MS, tabelaIncluiPartida } from '../jogo/rankingMinuto';
+import { motivoDoConfete } from '../jogo/confete';
+import { minhasMedalhas } from '../servidor/api';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { bomMomentoDosLances } from '../jogo/apoio';
 import { oferecerApoio } from './apoio';
@@ -21,7 +21,8 @@ import { convidarParaAvisos } from './convitePush';
 import { golsDaDisputa, linhaMelhoresDoDia, textoForaDasMelhores } from '../jogo/lancesTextos';
 import { numero, placa, selo } from './blocos';
 import { lancesUnificados } from './corte';
-import { contar, htmlResultado, htmlSelosDaPosicao, ligarResultado } from './resultadoPadrao';
+import { ligarEfeitoNoRanking } from './efeitoRanking';
+import { contar, htmlResultado, htmlSelosDaPosicao, ligarConfete, ligarResultado } from './resultadoPadrao';
 import { mostrarRumoDaDisputa } from './rumoMedalhas';
 import { vibrar } from './toque';
 
@@ -29,59 +30,6 @@ const SITE = 'https://torcida.kauewalter.com.br';
 const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
 // Em desenvolvimento, ?penaltiFalso lê as medalhas de mentira (src/dev/penaltiFalso.ts).
 const PENALTI_FALSO = import.meta.env.DEV && new URLSearchParams(location.search).has('penaltiFalso');
-const semMovimento = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-
-/** Confete curto nas cores do time (só na vitória e só para quem não pediu menos movimento). */
-function confete(canvas: HTMLCanvasElement, cores: string[]): void {
-  if (semMovimento()) {
-    canvas.remove();
-    return;
-  }
-  const c = canvas.getContext('2d');
-  if (!c) return;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const W = (canvas.width = innerWidth * dpr);
-  const H = (canvas.height = innerHeight * dpr);
-  const pedacos = Array.from({ length: 90 }, () => ({
-    x: Math.random() * W,
-    y: -Math.random() * H * 0.4,
-    vx: (Math.random() - 0.5) * 3 * dpr,
-    vy: (2 + Math.random() * 3) * dpr,
-    giro: Math.random() * Math.PI,
-    cor: cores[Math.floor(Math.random() * cores.length)],
-    t: (6 + Math.random() * 6) * dpr,
-  }));
-  const inicio = performance.now();
-  const quadro = (agora: number) => {
-    const passou = agora - inicio;
-    c.clearRect(0, 0, W, H);
-    c.globalAlpha = passou > 1200 ? Math.max(0, 1 - (passou - 1200) / 400) : 1;
-    for (const p of pedacos) {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.giro += 0.15;
-      c.save();
-      c.translate(p.x, p.y);
-      c.rotate(p.giro);
-      c.fillStyle = p.cor;
-      c.fillRect(-p.t / 2, -p.t / 4, p.t, p.t / 2);
-      c.restore();
-    }
-    if (passou < 1600) requestAnimationFrame(quadro);
-    else canvas.remove();
-  };
-  requestAnimationFrame(quadro);
-}
-
-/** "do Flamengo" / "da Chapecoense" */
-const doTime = (id: string) => {
-  const t = timePorId(id);
-  return t ? `${t.artigo === 'a' ? 'da' : 'do'} ${t.nome}` : '';
-};
-
-/** "226 pontos de média" / "1 ponto de média" */
-const pontosDeMedia = (n: number) => `${n} ${n === 1 ? 'ponto' : 'pontos'} de média`;
-
 export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | void {
   if (rota.tela !== 'resultado') return;
   const d: DadosResultado = rota.dados;
@@ -188,19 +136,27 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
       (!situacao && !esperaRanking ? selo('Contou pro ranking') : ''),
     zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
     maisUma: r.venceu ? 'Mais uma' : 'Revanche',
-    confete: r.venceu,
   });
 
   contar(root.querySelector<HTMLElement>('[data-contador]'), p.total);
+  // Confete e vibração, uma vez por resultado: vitória, recorde novo, entrou nas 3 melhores do dia ou medalha nova.
+  const comemorar = ligarConfete(root, time);
+  comemorar(
+    motivoDoConfete({
+      venceu: r.venceu,
+      novoRecorde: !!d.servidor?.desempenho?.novoRecorde,
+      entrouNasMelhores: unificada && !!d.servidor && !situacao,
+    }),
+  );
   if (contouProMedalha && d.disputa)
     void mostrarRumoDaDisputa({
       alvo: root.querySelector<HTMLElement>('[data-rumo]')!,
       partida: { id: d.disputa.id, titulo: d.disputa.titulo, gols: golsDaDisputa(r.cobrancas), venceu: r.venceu },
-      cores: [time.cores[0], time.cores[1], '#ffd23f'],
+      aoSubir: () => comemorar('medalha'),
       ler: PENALTI_FALSO ? () => import('../dev/penaltiFalso').then((m) => m.minhasMedalhas()) : () => minhasMedalhas(),
     });
-  // Fim da morte súbita: o coração para ou explode (docs/jogo.md 14.2).
-  if (r.decisao === 'morte_subita') vibrar(r.venceu ? 'gol' : 'erro');
+  // Fim da morte súbita: o coração para (na vitória, quem explode é a comemoração de cima, docs/jogo.md 14.2).
+  if (r.decisao === 'morte_subita' && !r.venceu) vibrar('erro');
   // Carreira: só quando o servidor fechou a partida (o XP sai de lá).
   if (d.servidor)
     mostrarCarreiraNoResultado(
@@ -214,83 +170,16 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     root.querySelector<HTMLElement>('[data-apoio]'),
     bomMomentoDosLances({ venceu: r.venceu, valendo: d.valendo, novoRecorde: !!d.servidor?.desempenho?.novoRecorde }),
   );
-  const elConfete = root.querySelector<HTMLCanvasElement>('.confete');
-  if (elConfete) confete(elConfete, [time.cores[0], time.cores[1], '#ffd23f']);
 
   // ---------- efeito no ranking ("subiu de 5º pra 3º") ----------
-  // O servidor refaz o ranking a cada minuto: a tela compara a foto de antes da partida com a primeira
-  // tabela calculada depois que a partida foi gravada (já pronta ao abrir, ou pelo aviso do Realtime).
-  // Partida que não mexe em nada não gera aviso: passado o minuto, o selo vira só "Contou pro ranking".
-  const elSelo = root.querySelector<HTMLElement>('[data-selo-ranking]');
-  const elNota = root.querySelector<HTMLElement>('[data-nota]')!;
-  const rk = d.servidor?.ranking;
-  let saiu = false;
-  let pararRanking: (() => void) | null = null;
-  let espera: ReturnType<typeof setTimeout> | undefined;
-  const trocarSelo = (texto: string, tom?: 'subiu' | 'caiu') => {
-    if (!elSelo) return;
-    elSelo.className = `selo${tom ? ` ${tom}` : ''}`;
-    elSelo.innerHTML = texto;
-  };
-  const mostrarEfeito = (linhas: LinhaRanking[]) => {
-    const meu = linhas.find((l) => l.time_id === time.id);
-    if (!meu) return;
-    const depois = meu.posicao_campeao;
-    const antes = rk?.antes && Number(rk.antes.media30) > 0 ? rk.antes.posicao_campeao : undefined;
-    if (antes === undefined) trocarSelo(`Entrou em ${depois}º na semana`);
-    else if (antes > depois) trocarSelo(`<span aria-hidden="true">▲</span> Subiu de ${antes}º pra ${depois}º`, 'subiu');
-    else if (antes < depois) trocarSelo(`<span aria-hidden="true">▼</span> Caiu de ${antes}º pra ${depois}º`, 'caiu');
-    else trocarSelo(`Segue em ${depois}º na semana`);
-    const nota = (texto: string) => {
-      elNota.textContent = texto;
-      elNota.hidden = false;
-    };
-    if (meu.posicao_campeao === 1) {
-      const segundo = linhas.find((l) => l.posicao_campeao === 2);
-      nota(
-        segundo
-          ? `Na liderança, ${pontosDeMedia(Math.round(meu.media30 - segundo.media30))} na frente ${doTime(segundo.time_id)}.`
-          : 'Na liderança!',
-      );
-      return;
-    }
-    const acima = linhas.find((l) => l.posicao_campeao === meu.posicao_campeao - 1);
-    const tAcima = acima && timePorId(acima.time_id);
-    if (!acima || !tAcima) return;
-    const n = Math.max(1, Math.ceil(acima.media30 - meu.media30));
-    nota(`Mais ${n} de média e passa ${tAcima.artigo} ${tAcima.nome} (${acima.posicao_campeao}º).`);
-  };
-  if (esperaRanking && d.servidor) {
-    const semana = d.servidor.semana;
-    const confirmadaEm = d.servidor.confirmadaEm;
-    let pronto = false;
-    const encerrar = () => {
-      pronto = true;
-      clearTimeout(espera);
-      pararRanking?.();
-    };
-    // aviso: sem a hora da partida (servidor antigo), o aviso que chega depois de abrir a tela basta.
-    const conferir = (aviso: boolean) =>
-      Promise.all([rankingCalculadoEm(semana), rankingDaSemana(semana)])
-        .then(([calculadoEm, linhas]) => {
-          if (saiu || pronto) return;
-          if (!tabelaIncluiPartida(calculadoEm, confirmadaEm) && !(aviso && !confirmadaEm)) return;
-          encerrar();
-          mostrarEfeito(linhas);
-        })
-        .catch(() => {});
-    void conferir(false);
-    ouvirRanking(semana, () => void conferir(true), () => void conferir(false))
-      .then((f) => (saiu || pronto ? f() : (pararRanking = f)))
-      .catch(() => {
-        // sem Realtime: a espera abaixo encerra
-      });
-    espera = setTimeout(() => {
-      if (saiu || pronto) return;
-      encerrar();
-      trocarSelo('Contou pro ranking');
-    }, ESPERA_RANKING_MS);
-  }
+  // O mesmo fluxo dos Lances (telas/efeitoRanking.ts): selo de espera que vira "Subiu de 5º pra 3º" e a nota.
+  const pararEfeito =
+    esperaRanking && d.servidor
+      ? ligarEfeitoNoRanking(
+          { selo: root.querySelector<HTMLElement>('[data-selo-ranking]'), nota: root.querySelector<HTMLElement>('[data-nota]')! },
+          { timeId: time.id, semana: d.servidor.semana, confirmadaEm: d.servidor.confirmadaEm, antes: d.servidor.ranking?.antes },
+        )
+      : null;
 
   // ---------- card ----------
   const card = (async () => {
@@ -323,9 +212,5 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     inicio: () => irPara({ tela: 'inicio' }),
   });
 
-  return () => {
-    saiu = true;
-    clearTimeout(espera);
-    pararRanking?.();
-  };
+  return () => pararEfeito?.();
 }

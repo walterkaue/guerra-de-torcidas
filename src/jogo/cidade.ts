@@ -67,3 +67,15 @@ export function lerLista(bruto: unknown): Municipio[] {
     (l): l is Municipio => Array.isArray(l) && Number.isInteger(l[0]) && typeof l[1] === 'string' && typeof l[2] === 'string' && l[2].length === 2,
   );
 }
+
+export type CodigoErroEscolher = 'cidade_invalida' | 'sem_torcedor' | 'sessao_encerrada' | 'muitas_trocas' | 'falha';
+
+/**
+ * Traduz o erro de `escolher_cidade` no código que a tela entende. A mensagem manda; sem mensagem conhecida,
+ * 42501 (política de segurança) é sessão encerrada e o resto é falha.
+ */
+export function codigoDoErroDeEscolher(erro: { message?: string; code?: string }): CodigoErroEscolher {
+  const msg = erro.message ?? '';
+  const achado = (['cidade_invalida', 'sem_torcedor', 'sessao_encerrada', 'muitas_trocas'] as const).find((c) => msg.includes(c));
+  return achado ?? (erro.code === '42501' ? 'sessao_encerrada' : 'falha');
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deveLembrarDaCidade, linhaDaCidadeNaHome, seloDaSemana, situacaoDaCidade, textoFaltam, type MinhaCidade } from './rankingCidades';
+import { acimaNaUltimaVisita, deveLembrarDaCidade, guardarCidadeVista, linhaDaCidadeNaHome, seloDaSemana, situacaoDaCidade, textoFaltam, type MinhaCidade } from './rankingCidades';
 
 const base: MinhaCidade = {
   codigo: 3550308, nome: 'São Paulo', uf: 'SP', ativos: 12, minimo: 5, faltam: 0, posicao_estado: 3, cidades_no_estado: 9,
@@ -60,5 +60,30 @@ describe('frase do narrador', () => {
       expect(f).not.toMatch(/[{}]/);
     }
     expect(fraseDaCidade(faltam, null)).toBeNull();
+  });
+});
+
+describe('rival guardado na Home', () => {
+  it('só vale na mesma semana', () => {
+    const g = { semana: '2026-11-02', acima: { '3550308': true } };
+    expect(acimaNaUltimaVisita(g, '2026-11-02', 3550308)).toBe(true);
+    expect(acimaNaUltimaVisita(g, '2026-11-09', 3550308)).toBeNull();
+    expect(acimaNaUltimaVisita(g, '2026-11-02', 1)).toBeNull();
+  });
+  it('registro antigo (sem semana) ou vazio não conta', () => {
+    expect(acimaNaUltimaVisita({ '3550308': true } as never, '2026-11-02', 3550308)).toBeNull();
+    expect(acimaNaUltimaVisita(null, '2026-11-02', 3550308)).toBeNull();
+  });
+  it('semana nova começa do zero; a mesma semana junta as cidades', () => {
+    const g = { semana: '2026-11-02', acima: { '1': true } };
+    expect(guardarCidadeVista(g, '2026-11-02', 2, false)).toEqual({ semana: '2026-11-02', acima: { '1': true, '2': false } });
+    expect(guardarCidadeVista(g, '2026-11-09', 2, false)).toEqual({ semana: '2026-11-09', acima: { '2': false } });
+    expect(guardarCidadeVista(null, '2026-11-09', 2, true)).toEqual({ semana: '2026-11-09', acima: { '2': true } });
+  });
+  it('sem esse cuidado o "SUBIU!" vinha de outra semana; com ele, só da mesma', () => {
+    const na = { ...base, rival_acima: false, rival_media30: 79 };
+    const g = { semana: '2026-10-26', acima: { '3550308': true } };
+    expect(situacaoDaCidade(na, acimaNaUltimaVisita(g, '2026-11-02', na.codigo))?.evento).toBe('cidade_frente');
+    expect(situacaoDaCidade(na, acimaNaUltimaVisita({ ...g, semana: '2026-11-02' }, '2026-11-02', na.codigo))?.evento).toBe('cidade_passou');
   });
 });

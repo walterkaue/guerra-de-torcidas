@@ -17,6 +17,7 @@ import { prefs } from '../estado';
 import { sementeNova } from '../jogo/aleatorio';
 import { lancesUnificados } from './corte';
 import { desenharCardLances } from '../jogo/cardLances';
+import { motivoDoConfete } from '../jogo/confete';
 import { prontoParaDesenhar, seloNivel } from '../jogo/card';
 import type { FechamentoLances } from '../jogo/lancesPartida';
 import {
@@ -63,7 +64,7 @@ import { sincronizarTorcedor } from '../servidor/torcedor';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { abas, aoTocarNoEstado, cabecalhoTela, estado, faixa, marcarAba, numero, placa, selo, trilha } from './blocos';
 import { ligarEfeitoNoRanking } from './efeitoRanking';
-import { contar, htmlResultado, htmlSelosDaPosicao, ligarResultado } from './resultadoPadrao';
+import { contar, htmlResultado, htmlSelosDaPosicao, ligarConfete, ligarResultado } from './resultadoPadrao';
 import {
   BONUS_RECRIOU,
   LANCES_POR_PARTIDA,
@@ -909,12 +910,22 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           ? () => import('../dev/homeFalsa').then((m) => m.minhaCarreira())
           : undefined,
       );
+    // Confete e vibração, uma vez por resultado: X1 vencido, recorde novo, entrou nas 3 melhores do dia ou medalha nova.
+    const comemorar = ligarConfete(root, time);
+    comemorar(
+      motivoDoConfete({
+        venceu: !!cmp?.venceu,
+        novoRecorde: !!desempenho?.novoRecorde,
+        entrouNasMelhores: nova && !!fim && situacao.tipo === 'ranking',
+        subiuMedalha: contouProMedalha && medalhas.length > 0,
+      }),
+    );
     if (fim && contouProMedalha)
       void mostrarRumoDasMedalhas({
         alvo: root.querySelector<HTMLElement>('[data-rumo]')!,
         jogados: lances.map((l, i) => ({ id: l.id, titulo: l.titulo, gol: resultados[i].desfecho === 'gol', recriou: resultados[i].recriou })),
         novas: fim.medalhas,
-        cores: [time.cores[0], time.cores[1], '#ffd23f'],
+        aoSubir: () => comemorar('medalha'),
         ler: () => servidor().then((s) => s.minhasMedalhas()),
       });
     // Efeito no ranking: selo "No ranking em 1 min" que vira "Subiu de 5º pra 3º" (mesmo fluxo dos pênaltis).

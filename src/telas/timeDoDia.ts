@@ -33,14 +33,14 @@ import { bomMomentoDoDia } from '../jogo/apoio';
 import { oferecerApoio } from './apoio';
 import { convidarParaAvisos } from './convitePush';
 import { aoTocarNoEstado, cabecalhoTela, estado as blocoEstado, numero, placa } from './blocos';
-import { contar, htmlResultado, htmlSelosDaPosicao, ligarResultado } from './resultadoPadrao';
+import { motivoDoConfete } from '../jogo/confete';
+import { contar, htmlResultado, htmlSelosDaPosicao, ligarConfete, ligarResultado } from './resultadoPadrao';
 import { vibrar } from './toque';
 import { dicasDoAparelho, mostrarDica, tirarDica, vezesVista } from './dicas';
 import { DICAS } from '../jogo/dicas';
 import { coresEmAmarelo, primeiraDica, temSeta, terceiroChuteSemVerde } from '../jogo/dicasGatilhos';
 import { abrirRegras } from './regras';
 import { lancesUnificados } from './corte';
-import { papelPicadoNaTela } from './papelPicado';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 /** Quantos clubes a busca mostra de uma vez (a lista inteira tem 60). */
@@ -343,10 +343,11 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
   function terminar(): void {
     const e = estado!;
     const n = e.tentativas.length;
-    // Primeira vez que o fim aparece nesta visita (não ao reabrir a tela já jogada).
-    const festejar = !frasesFinais.length && e.acertou;
-    if (!frasesFinais.length) {
-      vibrar(e.acertou ? 'acerto' : 'erro');
+    // Primeira vez que o fim aparece nesta visita (não ao reabrir a tela já jogada): só ela comemora.
+    const primeiraVez = !frasesFinais.length;
+    if (primeiraVez) {
+      // Acertou: quem vibra é a comemoração do resultado (confete e vibração, ligarConfete).
+      if (!e.acertou) vibrar('erro');
       const f1 = e.acertou
         ? n === 1
           ? narrador.falar('dia_acertou_primeira')
@@ -411,7 +412,8 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     // Bom momento para oferecer o aviso de domingo: acertou o time do dia.
     if (e.acertou) convidarParaAvisos(root.querySelector<HTMLElement>('[data-convite-push]'));
     oferecerApoio(root.querySelector<HTMLElement>('[data-apoio]'), bomMomentoDoDia({ acertou: e.acertou }));
-    if (festejar) papelPicadoNaTela(root.querySelector('.dia-chutes') ?? root, [time.cores[0], time.cores[1], '#ffd23f']);
+    if (primeiraVez)
+      ligarConfete(root, time)(motivoDoConfete({ acertouTimeDoDia: e.acertou, novoRecorde: !!e.desempenho?.novoRecorde }));
 
     const elRelogio = root.querySelector<HTMLElement>('[data-relogio]')!;
     clearInterval(relogio);

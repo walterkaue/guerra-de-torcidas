@@ -243,3 +243,68 @@
   font-size: 15px;
   color: var(--cal);
 }
+
+/* ---------- "Mandar a medalha" (jogo.md 7.3, "Card de medalha") ---------- */
+.mandar-medalha .mm-titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  font: 700 18px var(--fonte-rotulo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mm-titulo .medalha {
+  width: 22px;
+  height: 22px;
+}
+
+.mm-frase {
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+/* O card em pé (9:16) cabe inteiro na folha, sem empurrar os botões para fora da tela. */
+.mm-card {
+  display: flex;
+  justify-content: center;
+  min-height: 120px;
+}
+
+.mm-card .card {
+  display: block;
+  height: min(44dvh, 420px);
+  width: auto;
+  aspect-ratio: 1080 / 1920;
+  border-radius: 12px;
+  background: var(--placa-alta);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.mandar-medalha .formatos.dois {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Botão "Mandar a medalha" na linha da medalha que subiu (resultado). */
+.mandar-medalha-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: var(--e1);
+  border-color: var(--m-ouro);
+}
+
+.mandar-medalha-btn.prata {
+  border-color: var(--m-prata);
+}
+
+.mandar-medalha-btn.bronze {
+  border-color: var(--m-bronze);
+}
+
+.mandar-medalha-btn .ico {
+  font-size: 18px;
+}

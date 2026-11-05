@@ -2,7 +2,7 @@
 // que a partida deu, como o gatilho penaltis_anotar_gols conta (gols nas 8 primeiras cobranças e 1 linha de vitória).
 
 import { describe, expect, it } from 'vitest';
-import { placaRumoDisputa } from './rumoMedalhas';
+import { placaRumo, placaRumoDisputa } from './rumoMedalhas';
 
 const partida = (gols: number, venceu: boolean) => ({ id: 'flamengo-2022-copa-do-brasil', titulo: 'O tetra da Copa do Brasil', gols, venceu });
 const linha = (gols: number, vitorias?: number) => ({ lance_id: 'penaltis:flamengo-2022-copa-do-brasil', gols, recriados: 0, vitorias, medalha: null });
@@ -38,5 +38,28 @@ describe('placa rumo à medalha da disputa', () => {
   it('gol ou vitória que o servidor não anotou (disputa que ele não conhece): sem placa, para não inventar', () => {
     expect(placaRumoDisputa(partida(3, false), [])).toBeNull();
     expect(placaRumoDisputa(partida(0, true), [])).toBeNull();
+  });
+});
+
+describe('mandar a medalha no resultado (card só da medalha, jogo.md 7.3)', () => {
+  it('subiu de medalha na disputa: a linha leva o botão com o item penaltis:<id> e a medalha', () => {
+    const p = placaRumoDisputa(partida(5, true), [linha(12, 1)]);
+    expect(p?.html).toContain('Mandar a medalha');
+    expect(p?.html).toContain('data-mandar-medalha="penaltis:flamengo-2022-copa-do-brasil"');
+    expect(p?.html).toContain('data-medalha="bronze"');
+  });
+
+  it('não subiu: sem botão', () => {
+    expect(placaRumoDisputa(partida(4, false), [linha(8, 0)])?.html).not.toContain('Mandar a medalha');
+  });
+
+  it('lance que subiu de medalha: botão na linha dele', () => {
+    const p = placaRumo(
+      [{ id: 'flamengo-1981-toquio', titulo: 'O primeiro gol de Tóquio', gol: true, recriou: false }],
+      [{ lance_id: 'flamengo-1981-toquio', gols: 5, recriados: 0, medalha: 'bronze' }],
+      [{ lanceId: 'flamengo-1981-toquio', medalha: 'bronze' }],
+    );
+    expect(p?.subiu).toBe(true);
+    expect(p?.html).toContain('data-mandar-medalha="flamengo-1981-toquio"');
   });
 });
