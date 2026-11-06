@@ -274,7 +274,7 @@ export const FRASES = {
     { t: "Vitória sobre {desafiante}! O grupo inteiro precisa ver.", rara: true },
   ],
   desafio_derrota: [
-    { t: "{desafiante} venceu essa. Revanche? O link tá aqui." },
+    { t: "{desafiante} venceu essa. Revanche?" },
     { t: "Perdeu pra {desafiante}! Agora é você que chama no X1." },
     { t: "Deu {desafiante}. Bora devolver o X1?" },
     { t: "{desafiante} levou essa. Vai deixar barato?" },

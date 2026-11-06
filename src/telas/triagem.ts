@@ -13,6 +13,7 @@ export function telaTriagem(root: HTMLElement, rota: Rota): void {
       <h1 class="marca-pequena">Guerra <span>de Torcidas</span></h1>
       <div class="triagem-pergunta" role="group" aria-labelledby="triagem-titulo">
         <h2 id="triagem-titulo">Quantos anos você tem?</h2>
+        <p class="campo-dica">Só pra deixar o jogo certo pra sua idade.</p>
         <button class="botao botao-sec" type="button" data-faixa="menos_16">Menos de 16</button>
         <button class="botao botao-sec" type="button" data-faixa="16_17">16 ou 17</button>
         <button class="botao botao-sec" type="button" data-faixa="18_mais">18 ou mais</button>

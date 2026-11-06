@@ -505,3 +505,10 @@ div.gal-vitrine > span b {
     transition: none;
   }
 }
+
+.gal-toque {
+  margin: 0;
+  font-size: 14px;
+  color: var(--texto-suave);
+  text-align: center;
+}

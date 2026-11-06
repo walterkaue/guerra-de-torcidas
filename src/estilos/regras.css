@@ -116,3 +116,14 @@
     animation: none;
   }
 }
+
+.regras-notas {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--texto-suave);
+}

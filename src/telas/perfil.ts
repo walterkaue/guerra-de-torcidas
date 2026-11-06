@@ -65,7 +65,7 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
     ? `<button class="perfil-destaque convite" type="button" data-acao="trocar">Escolha seu time ${icone('lapis')}</button>`
     : apelido
       ? `<p class="perfil-destaque">${esc(apelido)}</p>`
-      : `<button class="perfil-destaque convite" type="button" data-acao="apelido">Escolha seu apelido ${icone('lapis')}</button>`;
+      : `<button class="perfil-destaque convite" type="button" data-acao="apelido">Dar um apelido (opcional) ${icone('lapis')}</button>`;
 
   root.innerHTML = `
     <main class="tela perfil"

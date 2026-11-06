@@ -354,7 +354,7 @@ O convite que vai com o link é texto fixo, sem sorteio (glossário de 20/10): "
 - ⭐ Vitória sobre {desafiante}! O grupo inteiro precisa ver.
 
 ### `desafio_derrota` — quem te chamou no X1 venceu
-- {desafiante} venceu essa. Revanche? O link tá aqui.
+- {desafiante} venceu essa. Revanche?
 - Perdeu pra {desafiante}! Agora é você que chama no X1.
 - Deu {desafiante}. Bora devolver o X1?
 - {desafiante} levou essa. Vai deixar barato?
