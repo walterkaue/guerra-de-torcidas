@@ -353,6 +353,22 @@
   flex: 1 1 0;
 }
 
+/* Cidades: as 4 sub-abas do mesmo tamanho e na largura toda; o nome longo quebra em 2 linhas em vez de rolar. */
+.cid-abas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.iguais.quatro > .abas-2 button {
+  min-width: 0;
+  padding: 0 4px;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  line-height: 1.1;
+  white-space: normal;
+}
+
 .abas-2 {
   display: inline-flex;
   gap: 2px;

@@ -44,9 +44,9 @@ export function desenharCidades(el: HTMLElement, inicial?: 'campeas'): () => voi
   let dados: Dados | null = null;
 
   el.innerHTML = `
-    <div class="abas-linha">
-      ${abas('cidsemana', [{ id: 'atual', texto: 'Esta semana' }, { id: 'passada', texto: 'Passada' }], 'atual', 2)}
-      ${abas('cidsub', [{ id: 'estado', texto: 'Seu estado' }, { id: 'top', texto: 'Top nacional' }, { id: 'estados', texto: 'Estados' }, { id: 'campeas', texto: 'Campeãs' }], inicial ?? 'top', 2)}
+    <div class="cid-abas">
+      <div class="abas-linha">${abas('cidsemana', [{ id: 'atual', texto: 'Esta semana' }, { id: 'passada', texto: 'Passada' }], 'atual', 2)}</div>
+      <div class="abas-linha iguais quatro">${abas('cidsub', [{ id: 'estado', texto: 'Seu estado' }, { id: 'top', texto: 'Top nacional' }, { id: 'estados', texto: 'Estados' }, { id: 'campeas', texto: 'Campeãs' }], inicial ?? 'top', 2)}</div>
     </div>
     <p class="selo-semana" data-cid-selo hidden></p>
     <p class="frase-meu-time" data-cid-frase hidden></p>
@@ -58,7 +58,7 @@ export function desenharCidades(el: HTMLElement, inicial?: 'campeas'): () => voi
   const elTabela = el.querySelector<HTMLElement>('[data-cid-tabela]')!;
   const elExplica = el.querySelector<HTMLElement>('.explica')!;
   const elCampeas = el.querySelector<HTMLElement>('[data-cid-campeas]')!;
-  const elSemanaAbas = el.querySelector<HTMLElement>('[data-cidsemana]')!.parentElement!;
+  const elSemanaAbas = el.querySelector<HTMLElement>('[data-cidsemana]')!.parentElement!.parentElement!;
 
   const tentarDeNovo = () => {
     elTabela.innerHTML = estado('carregando', 'Buscando as cidades…');
