@@ -4,10 +4,12 @@
 import '../estilos/cidade.css';
 import { esc, irPara, type Rota } from '../app';
 import { buscar, indexar, rotuloDaCidade, type Indexado } from '../jogo/cidade';
+import { ID_OUTRO } from '../dados/times';
 import { prefs } from '../estado';
 import { ErroServidor } from '../servidor/api';
 import { diaBrasilia } from '../servidor/tempo';
 import { baixarMunicipios, escolherCidade, minhaCidade, type CidadeEscolhida } from '../servidor/cidade';
+import { avisoCurto } from './avisoCurto';
 import { aoTocarNoEstado, cabecalhoTela, estado, faixa } from './blocos';
 
 export const AVISO_DA_CIDADE =
@@ -101,7 +103,10 @@ export function telaCidade(root: HTMLElement, rota: Rota): () => void {
       if (saiu) return;
       // Quem mexeu na cidade aqui não precisa do convite depois da partida.
       prefs.set({ cidadeConvite: diaBrasilia() });
+      const escolhida = codigo === null ? undefined : indice?.find((i) => i.m[0] === codigo)?.m[1];
       voltar();
+      // Para quem joga por "Outro time" a cidade é a única camisa (J29).
+      if (escolhida) avisoCurto(prefs.get().time === ID_OUTRO ? `${escolhida} joga por você no ranking.` : `${escolhida} é sua segunda camisa.`);
     } catch (e) {
       if (saiu) return;
       ocupado = false;

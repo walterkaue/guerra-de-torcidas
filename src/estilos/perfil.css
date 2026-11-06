@@ -297,3 +297,11 @@ button.perfil-destaque[data-acao='apelido'] {
   line-height: 1.2;
   text-transform: none;
 }
+
+/* Folha "Outro aparelho": duas saídas do mesmo tamanho. */
+.perfil-folha-titulo {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 22px;
+  text-transform: uppercase;
+}

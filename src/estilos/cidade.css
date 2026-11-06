@@ -86,3 +86,22 @@
   color: var(--amarelo);
   font-size: 18px;
 }
+
+/* Aviso curto depois de escolher a cidade (some sozinho). */
+.aviso-curto {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  z-index: 50;
+  margin: 0 auto;
+  max-width: 420px;
+  padding: 12px 16px;
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
+  color: var(--texto, #f5f5f0);
+  font-weight: 700;
+  text-align: center;
+  pointer-events: none;
+}

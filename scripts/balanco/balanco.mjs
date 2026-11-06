@@ -34,6 +34,12 @@ const NOMES = { penaltis: 'Pênaltis', prova: 'Prova de Boleiro', dia: 'Time do 
 export const PROVA_TRES_ERROS_DESDE = process.env.PROVA_DESDE ?? '2026-11-02T03:00:00Z';
 const PROVA_ANTES = process.argv.includes('--prova-antes');
 
+// A Prova passou de 15 s para 20 s por pergunta em 06/11/2026 (migração 20261106500000, função `prova` v19 publicada
+// às 16h47 de Brasília). A mediana e a decisão dos 4 erros usam só as partidas criadas a partir daí (padrão);
+// --prova-15s mostra as de 02/11 até a mudança, só como referência. PROVA_20S_DESDE ajusta se a hora estiver errada.
+export const PROVA_20S_DESDE = process.env.PROVA_20S_DESDE ?? '2026-11-06T19:47:45Z';
+const PROVA_15S = process.argv.includes('--prova-15s');
+
 // Lances do Jogo unificados (jogo.md, 14.7): regras diferentes não se misturam na mesma linha. Por padrão o relatório
 // mostra "antes de 09/11" e "a partir de 09/11" (as que tiverem partidas); --regra antes|nova (ou --regra=nova) mostra só uma.
 export function lerRegraArg(argv = process.argv) {
@@ -45,9 +51,12 @@ export function lerRegraArg(argv = process.argv) {
 }
 
 // Tudo numa consulta só (cada chamada ao CLI leva uns segundos). Sem partida sob suspeita.
-export const montarSql = (desde = PROVA_TRES_ERROS_DESDE, antes = false) => {
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(desde)) throw new Error(`data inválida: ${desde}`);
-  const filtroProva = `(p.minigame <> 'prova' or p.criada_em ${antes ? '<' : '>='} timestamptz '${desde}')`;
+export const montarSql = (desde = PROVA_20S_DESDE, antes = false, ate = null) => {
+  const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+  if (!ISO.test(desde)) throw new Error(`data inválida: ${desde}`);
+  if (ate !== null && !ISO.test(ate)) throw new Error(`data inválida: ${ate}`);
+  const limite = ate ? ` and p.criada_em < timestamptz '${ate}'` : '';
+  const filtroProva = `(p.minigame <> 'prova' or (p.criada_em ${antes ? '<' : '>='} timestamptz '${desde}'${limite}))`;
   return SQL.replace('/*FILTRO_PROVA*/', filtroProva);
 };
 
@@ -86,7 +95,7 @@ export function lerDados() {
   const pasta = mkdtempSync(join(tmpdir(), 'balanco-'));
   try {
     const arquivo = join(pasta, 'balanco.sql');
-    writeFileSync(arquivo, montarSql(PROVA_TRES_ERROS_DESDE, PROVA_ANTES));
+    writeFileSync(arquivo, PROVA_ANTES ? montarSql(PROVA_TRES_ERROS_DESDE, true) : PROVA_15S ? montarSql(PROVA_TRES_ERROS_DESDE, false, PROVA_20S_DESDE) : montarSql(PROVA_20S_DESDE, false));
     const saida = execFileSync(npx, ['supabase', 'db', 'query', '--remote', '--read-only', '-o', 'json', '-f', arquivo], {
       encoding: 'utf8',
       shell: process.platform === 'win32',
@@ -224,7 +233,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   console.log(
     PROVA_ANTES
       ? `Prova: só partidas criadas antes de ${PROVA_TRES_ERROS_DESDE} (regra antiga: o 1º erro encerra)\n`
-      : `Prova: só partidas criadas a partir de ${PROVA_TRES_ERROS_DESDE} (regra nova: 3 erros e fora)\n`,
+      : PROVA_15S
+        ? `Prova: só partidas criadas de ${PROVA_TRES_ERROS_DESDE} até ${PROVA_20S_DESDE} (3 erros e fora, 15 s por pergunta; referência)\n`
+        : `Prova: só partidas criadas a partir de ${PROVA_20S_DESDE} (3 erros e fora, 20 s por pergunta)\n`,
   );
   rodarBalanco();
 }

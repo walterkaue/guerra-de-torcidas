@@ -696,7 +696,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   let lembreteMostrado = false;
   const notaCidade = root.querySelector<HTMLElement>('[data-nota-cidade]');
   notaCidade?.querySelector('button')?.addEventListener('click', () => {
-    location.hash = '#cidade';
+    irPara({ tela: 'cidade', depois: { tela: 'inicio' } });
   });
   const carregarCidade = () => {
     // Sem time ainda, não cria login só para isso.
@@ -741,7 +741,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     if (!a) return;
     e.preventDefault();
     if (a.dataset.acao === 'ver-cidades') irPara({ tela: 'ranking', aba: 'cidades' });
-    else location.hash = '#cidade';
+    else irPara({ tela: 'cidade', depois: { tela: 'inicio' } });
   });
 
   const carregar = () => {

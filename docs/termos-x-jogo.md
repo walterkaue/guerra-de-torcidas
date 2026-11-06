@@ -133,6 +133,12 @@ O jogo passou a ligar uma carreira em vários aparelhos por um código de 8 cara
 - **Quem tem o código vira dono da conta:** um menor pode passar o código a outra pessoa. A tela avisa, e a lista de aparelhos permite desconectar.
 - **Identificador interno em formato de e-mail:** ele não é dado pessoal da pessoa, mas está na tabela de usuários do Auth. Convém confirmar que a frase acima basta.
 
+## Mudança de redação (06/11/2026, J35 das jornadas simuladas)
+
+Em "Seus direitos" (Termos e Política), "Ao apagar, saem o código do aparelho, o seu histórico e as suas mensagens" passou a dizer "…e as suas mensagens do Achei um erro". Motivo: a página diz que o jogo não tem chat, e a frase solta deixava a dúvida de quais mensagens. O sentido jurídico é o mesmo (o texto do feedback some junto, ver "O que acontece depois de Apagar meus dados"). `DATA_DA_VERSAO` foi para 06/11/2026, então todo mundo vê a faixa "Os Termos mudaram · Ler"; o Kauê aceitou isso. Levar esta troca na lista da revisão do advogado.
+
+Nos itens do código do torcedor abaixo, o botão do Perfil agora se chama "Outro aparelho" e abre duas opções ("Levar minha conta pra outro aparelho" e "Entrar com o código de outro aparelho"); o texto proposto continua valendo, só o nome do botão mudou.
+
 ## O que o jogo faz e o texto não diz
 
 1. **Feedback leva a tela e o navegador** (`src/servidor/api.ts:476`; `feedback.sql:10-11`).
