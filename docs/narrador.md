@@ -712,33 +712,33 @@ Uma frase na ficha de cada troféu (`docs/jogo.md`, seção 5, "Telas aprovadas 
 - **Vitrine não é título:** a Maior torcida comemora o barulho, nunca "título" ou "campeão".
 Variáveis: `{o_time}`, `{do_time}`, `{pro_time}`. Até 75 caracteres com qualquer time (teste em `src/jogo/galeria.test.ts`). O rebaixamento não tem ficha nem frase: ele só aparece na linha neutra de sobe e desce.
 
-### `campeao_semana` — flâmula da semana
+### Flâmula da semana (`campeao_semana`)
 - Semana fechada e a flâmula ficou com {o_time}. Tá pendurada!
 - Média dos 30 lá em cima: essa semana foi {do_time}.
 - Flâmula na parede! Na média, ninguém segurou {o_time}.
 - {o_time} levou a semana. O resto da tabela que lute.
 
-### `maior_torcida` — megafone da vitrine
+### Megafone da vitrine (`maior_torcida`)
 - Arquibancada lotada! Ninguém somou mais que {o_time}.
 - Megafone na vitrine: o barulho da semana foi {do_time}.
 - Não é título, mas que barulho! Muita gente jogando {pro_time}.
 
-### `campeao_temporada` — taça da Série A do mês
+### Taça da Série A do mês (`campeao_temporada`)
 - Mês inteiro somando, e a taça foi pra estante {do_time}!
 - A Série A do mês ficou com {o_time}. Taça na estante!
 - Taça da temporada! Semana a semana, {o_time} somou mais.
 
-### `campeao_serie_b` — taça da Série B do mês
+### Taça da Série B do mês (`campeao_serie_b`)
 - A Série B do mês ficou com {o_time}. Taça na estante!
 - Taça da Série B {pro_time}! Mês bem jogado.
 - {o_time} fez o mês na Série B e levou a taça.
 
-### `campeao_estreia` — taça com estrela do mês de estreia
+### Taça com estrela do mês de estreia (`campeao_estreia`)
 - Primeira taça da história do jogo: {o_time} estreou com estrela!
 - Estreia com taça! Essa estrela ninguém tira {do_time}.
 - O primeiro mês do jogo ficou com {o_time}. Pra sempre na Galeria.
 
-### `acesso` — subiu pra Série A
+### Subiu pra Série A (`acesso`)
 - Subiu! {o_time} carimbou o passaporte pra Série A.
 - Acesso na conta! No mês que vem, {o_time} tá na Série A.
 - Da Série B pra Série A: {o_time} fez a subida no braço.
