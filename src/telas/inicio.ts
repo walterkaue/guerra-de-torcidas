@@ -63,6 +63,7 @@ import { seloPre, faixa, numero as numeroBloco, posicaoHtml } from './blocos';
 import { arteEscada, arteGrade, htmlDaCasa, htmlDoLanceDoDia, htmlDosCards } from './cardsJogos';
 import { lancesUnificados } from './corte';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
+import { pintarAvatar } from './bonecoDoAparelho';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
 import { qualidade } from './qualidade';
@@ -275,7 +276,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     else abrir[proximo]();
   });
   root.querySelector('[data-acao="aquecimento"]')?.addEventListener('click', () => irPara({ tela: 'aquecimento', depois: { tela: 'inicio' } }));
-  root.querySelector('[data-acao="perfil"]')?.addEventListener('click', () => irPara({ tela: 'perfil' }));
+  const botaoPerfil = root.querySelector<HTMLElement>('[data-acao="perfil"]');
+  botaoPerfil?.addEventListener('click', () => irPara({ tela: 'perfil' }));
+  // Busto do boneco (52 px) no lugar do ícone; sem time não há boneco, e o ícone fica.
+  const pararAvatar = botaoPerfil && time ? pintarAvatar(botaoPerfil, 52) : () => {};
   root.querySelectorAll('[data-acao="trocar"]').forEach((b) =>
     b.addEventListener('click', () => irPara({ tela: 'times', depois: 'inicio' })),
   );
@@ -753,6 +757,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
   return () => {
     saiu = true;
+    pararAvatar();
     clearInterval(relogio);
     pararArquibancada();
     pararRanking?.();

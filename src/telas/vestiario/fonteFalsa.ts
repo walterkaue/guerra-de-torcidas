@@ -43,10 +43,13 @@ const INICIAL: Vestimenta = {
   moldura: 'nenhuma',
 };
 
+/** A gravada de mentira vale para a aba inteira (o vestiário, a Home e o Perfil falsos veem a mesma). */
+let gravadaNaAba: Vestimenta | null = null;
+
 export function fonteFalsa(params: URLSearchParams): FonteDoVestiario {
   const estado = estadoFalso(params);
   const liberadas = pecasLiberadas(estado);
-  let gravada = validar(INICIAL, liberadas);
+  let gravada = validar(gravadaNaAba ?? INICIAL, liberadas);
   const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
   return {
     async ler() {
@@ -57,6 +60,7 @@ export function fonteFalsa(params: URLSearchParams): FonteDoVestiario {
       await espera(400);
       if (params.has('erroAoSalvar')) throw new Error('falso: erro ao salvar');
       gravada = validar(v, liberadas);
+      gravadaNaAba = gravada;
       return { ...gravada };
     },
   };

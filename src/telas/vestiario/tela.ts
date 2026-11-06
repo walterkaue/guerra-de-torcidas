@@ -12,6 +12,7 @@ import {
   CORPOS,
   PELES,
   CORES_DE_CABELO,
+  pecaPorId,
   textoDaCondicao,
   type Aba,
   type Peca,
@@ -41,6 +42,8 @@ import { CORES_DE_CABELO as HEX_DO_CABELO, TONS_DE_PELE } from '../bonecos';
 import { telaCarregando } from '../esqueleto';
 import { icone, type NomeIcone } from '../icones';
 import { abrirFolhaTrancada } from './folhaTrancada';
+import { guardarBoneco, marcarVestiarioAberto } from '../bonecoDoAparelho';
+import { pecaPedida } from './abrir';
 import { fonteDoVestiario } from './fonte';
 import { criarVoltar } from './voltar';
 
@@ -97,13 +100,8 @@ interface Miniatura {
 
 export function telaVestiario(root: HTMLElement, _rota: Rota): () => void {
   const fonte = fonteDoVestiario();
-  if (!fonte) {
-    // Produção, nesta etapa: ainda não existe fonte do servidor. Volta ao Perfil (e tira o #vestiario do endereço).
-    if (location.hash === '#vestiario') history.replaceState(null, '', `${location.pathname}${location.search}`);
-    irPara({ tela: 'perfil' });
-    return () => {};
-  }
-
+  // A peça pedida por quem abriu (Peça nova, "Vestir agora"): lida uma vez, mesmo que a abertura tente de novo.
+  const pedida = pecaPedida();
   let fim = false;
   let limpezaDaTela: () => void = () => {};
   const limpar = () => {
@@ -116,12 +114,12 @@ export function telaVestiario(root: HTMLElement, _rota: Rota): () => void {
     fonte.ler().then(
       (dados) => {
         if (fim) return;
-        limpezaDaTela = montar(root, dados.vestimenta, new Set(dados.liberadas), dados.estado);
+        limpezaDaTela = montar(root, dados.vestimenta, new Set(dados.liberadas), dados.estado, pedida);
       },
       () => {
         if (fim) return;
         root.innerHTML = `<main class="tela vest-erro">
-          ${blocoDeEstado('erro', 'Não deu pra abrir o vestiário agora.', { detalhe: 'Confere a conexão e tenta de novo.' })}
+          ${blocoDeEstado('erro', 'Sem conexão com o vestiário agora.', { detalhe: 'Tenta de novo.' })}
           <button class="botao-linha" type="button" data-voltar>Voltar</button>
         </main>`;
         aoTocarNoEstado(root, carregar);
@@ -138,8 +136,10 @@ function montar(
   gravadaInicial: Vestimenta,
   liberadas: ReadonlySet<string>,
   estadoDaTela: EstadoDaTela,
+  pedida: string | null,
 ): () => void {
-  const fonte = fonteDoVestiario()!;
+  const fonte = fonteDoVestiario();
+  marcarVestiarioAberto();
   const time = timeDaTela();
   const cores: readonly [string, string] = [time.cores[0], time.cores[1]];
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
@@ -149,6 +149,13 @@ function montar(
   let gravada = gravadaInicial;
   let atual = gravadaInicial;
   let aba: Aba = abaInicial();
+  // Peça pedida e liberada: abre na aba dela já vestida, como mudança ainda não salva. A pose só aparece no card,
+  // então não veste nada. Trancada ou desconhecida: ignora.
+  const pedidaPeca = pedida ? pecaPorId(pedida) : undefined;
+  if (pedidaPeca && temPeca(pedidaPeca, liberadas)) {
+    aba = pedidaPeca.aba;
+    if (pedidaPeca.campo !== 'pose') atual = vestirPeca(gravadaInicial, pedidaPeca);
+  }
   let salvando = false;
   let encerrada = false;
   let miniaturas: Miniatura[] = [];
@@ -569,6 +576,7 @@ function montar(
       const voltou = await fonte.salvar(atual);
       if (encerrada) return true;
       gravada = voltou;
+      guardarBoneco(voltou);
       // O servidor pode trocar uma peça: mostra o que voltou.
       const mudouAoVoltar = JSON.stringify(voltou) !== JSON.stringify(atual);
       atual = voltou;

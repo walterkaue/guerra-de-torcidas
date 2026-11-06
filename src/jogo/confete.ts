@@ -1,7 +1,7 @@
 // Confete da vitória no resultado de todos os jogos (item E01 do roteiro; telas/resultadoPadrao.ts): quando
 // solta, quantos pedaços e a regra de "uma vez por resultado". Puro: o desenho fica na tela.
 
-export type MotivoDoConfete = 'vitoria' | 'recorde' | 'melhores_do_dia' | 'time_do_dia' | 'medalha';
+export type MotivoDoConfete = 'vitoria' | 'recorde' | 'melhores_do_dia' | 'time_do_dia' | 'medalha' | 'peca';
 
 export interface SinaisDoConfete {
   /** Pênaltis vencidos, X1 vencido, 8 de 8 na Prova. */

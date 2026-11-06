@@ -21,6 +21,74 @@
   box-shadow: 0 0 0 4px var(--placa), 0 0 0 6px var(--c2, var(--linha));
 }
 
+/* Com o boneco: o busto de 84 px traz o fundo e a moldura no próprio desenho. */
+.avatar.avatar-g.com-boneco {
+  width: 84px;
+  height: 84px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  box-shadow: none;
+}
+
+/* ---------- bloco Vestiário: baixo (~120 px), boneco pequeno à esquerda ---------- */
+.perfil-vest {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--e4);
+  min-height: 120px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.perfil-vest-boneco {
+  flex: none;
+  width: 76px;
+  height: 112px;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.perfil-vest-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e1);
+}
+
+.perfil-vest-conta {
+  min-height: 22px;
+  font-family: var(--fonte-placar);
+  font-size: 20px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--cal);
+}
+
+.perfil-vest-conta.esq {
+  width: 110px;
+  border-radius: 6px;
+}
+
+.perfil-vest-prox {
+  min-height: 34px;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--texto-suave);
+}
+
+.perfil-vest .botao-linha {
+  min-height: 44px;
+}
+
+/* Esqueleto do bloco: placa mais clara e parada (nada se move). */
+.perfil-vest .esq {
+  background: var(--placa-alta);
+}
+
 .perfil-nomes {
   flex: 1;
   min-width: 0;

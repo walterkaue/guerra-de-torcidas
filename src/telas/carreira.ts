@@ -61,13 +61,17 @@ export function carregarCarreiraPerfil(el: HTMLElement, saiu: () => boolean, ler
 }
 
 /** Placa do resultado: nível, "+10 XP" (ou o selo "Subiu pra Titular!") e a barra até o próximo. Só com servidor. */
-export function mostrarCarreiraNoResultado(el: HTMLElement | null, ler: () => Promise<Carreira | null> = buscar): void {
-  if (!el) return;
-  void ler().then((c) => {
-    if (!c) return;
+export function mostrarCarreiraNoResultado(
+  el: HTMLElement | null,
+  ler: () => Promise<Carreira | null> = buscar,
+): Promise<ParDeXp | null> {
+  return ler().then((c) => {
+    if (!c) return null;
+    // O "antes" é o último XP visto neste aparelho; xpVisto(c.xp) já grava o novo, então o par sai daqui.
     const antes = xpVisto(c.xp);
+    const par: ParDeXp = { antes, depois: c.xp };
     const r = linhaResultado(antes, c.xp);
-    if (!r || antes === null) return;
+    if (!el || !r || antes === null) return par;
     const n = nivelDe(c.xp);
     el.innerHTML = placa(
       `<div class="carreira-res">
@@ -79,7 +83,14 @@ export function mostrarCarreiraNoResultado(el: HTMLElement | null, ler: () => Pr
       { titulo: 'Carreira', classe: 'aperta' },
     );
     el.hidden = false;
+    return par;
   });
+}
+
+/** O XP visto antes da partida (null: aparelho que nunca viu) e o lido depois; o bloco "Peça nova" parte daqui. */
+export interface ParDeXp {
+  antes: number | null;
+  depois: number;
 }
 
 /** Nível para o card, se a pessoa escolheu mostrar (espera a leitura do resultado por até 3 s). */

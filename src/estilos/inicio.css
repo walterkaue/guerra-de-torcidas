@@ -26,7 +26,7 @@
 
 .cabecalho-linha {
   display: grid;
-  grid-template-columns: 44px 1fr 44px;
+  grid-template-columns: 52px 1fr 52px;
   align-items: center;
   gap: 8px;
 }
@@ -49,6 +49,16 @@
   color: var(--txt);
   font-size: 24px;
   touch-action: manipulation;
+}
+
+/* Com o boneco: o busto de 52 px traz o fundo e a moldura no próprio desenho (bonecoPintar.ts). */
+.avatar.com-boneco {
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 12px;
+  background: none;
 }
 
 .contagem {
@@ -1038,6 +1048,7 @@
 /* Sininho do aviso de domingo (push), no canto do cabeçalho da Home. */
 .sininho {
   grid-column: 3;
+  justify-self: end;
   width: 44px;
   height: 44px;
   display: grid;

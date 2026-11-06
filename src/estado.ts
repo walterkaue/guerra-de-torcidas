@@ -81,14 +81,27 @@ export function guardarFaixa(faixa: FaixaEtaria): void {
 }
 
 /**
+ * O que o aparelho guardou da conta de antes (XP visto, posições, duelo da Home, cópia do boneco, peças já vistas e
+ * o vestiário aberto): não vale para a conta nova.
+ */
+export const CHAVES_DA_CONTA = [
+  'gdt:carreira',
+  'gdt:posicoes',
+  'gdt:minha-posicao',
+  'gdt:duelo',
+  'gdt:boneco',
+  'gdt:pecas-vistas',
+  'gdt:vestiario-aberto',
+] as const;
+
+/**
  * Este aparelho deixa de ser o torcedor que era (saiu da conta, ou entrou em outra pelo código; jogo.md, 14.1):
  * esquece time, apelido e faixa, como um aparelho novo. Som e gráficos ficam.
  */
 export function esquecerTorcedor(): void {
   faixaDaAba = undefined;
   prefs.set({ time: undefined, apelido: undefined, faixa: undefined, sincronizado: undefined, faixaSincronizada: undefined });
-  // O que o aparelho guardou da conta de antes (XP visto, posições, duelo da Home): não vale para a conta nova.
-  for (const chave of ['gdt:carreira', 'gdt:posicoes', 'gdt:minha-posicao', 'gdt:duelo']) {
+  for (const chave of CHAVES_DA_CONTA) {
     try {
       localStorage.removeItem(chave);
     } catch {
