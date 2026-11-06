@@ -7,6 +7,7 @@ import { destinoDepoisDoTime } from '../jogo/primeiroAcesso';
 import { ErroServidor } from '../servidor/api';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { cabecalhoTela } from './blocos';
+import { ajustarNomesDeTime } from './nomesDeTime';
 
 export function telaTimes(root: HTMLElement, rota: Rota): void {
   const depois = rota.tela === 'times' ? (rota.depois ?? 'partida') : 'partida';
@@ -49,6 +50,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
     </main>
   `;
 
+  ajustarNomesDeTime(root);
   let escolhido = atual.time;
   const confirmar = root.querySelector<HTMLButtonElement>('[data-acao="confirmar"]')!;
   const input = root.querySelector<HTMLInputElement>('input')!;

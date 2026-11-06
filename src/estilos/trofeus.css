@@ -308,3 +308,10 @@
 .mandar-medalha-btn .ico {
   font-size: 18px;
 }
+
+.ficha-ensina {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--texto-suave);
+}

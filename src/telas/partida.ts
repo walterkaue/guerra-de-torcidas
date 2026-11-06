@@ -397,7 +397,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         : planejarDefesa(semente, rodada, dificuldade, desafio?.cobrancas?.[rodada]).dica;
     dicaDoServidor = null;
     fase = { tipo: 'corrida', inicio: relogio(), dica, zona: null, pulouEm: null };
-    instruir('Sua vez de defender! Olhe o pé de apoio e toque onde pular.');
+    instruir('Sua vez de defender! Olhe o pé de apoio, marcado em amarelo, e toque onde pular.');
     if (defesaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['defesa']) }));
   }
 
@@ -923,6 +923,10 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     c.beginPath();
     c.ellipse(0, 0, g.raio * 0.85, g.raio * 1.3, 0, 0, Math.PI * 2);
     c.fill();
+    // Contorno firme: o pé marcado se vê parado, sem depender do movimento (J21).
+    c.strokeStyle = 'rgba(255,210,63,0.95)';
+    c.lineWidth = 3;
+    c.stroke();
     c.fillStyle = 'rgba(255,210,63,0.5)';
     c.beginPath();
     c.ellipse(0, 0, g.raio * 0.5, g.raio * 0.95, 0, 0, Math.PI * 2);

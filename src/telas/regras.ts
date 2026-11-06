@@ -169,6 +169,13 @@ export function htmlDasRegras(jogo: JogoComRegras, paraTime?: string | null): st
   const passos = r.passos.map(([forte, texto]) => `<li><strong>${esc(forte)}</strong> ${texto}</li>`).join('');
   const pontos = r.pontos.map(([rotulo, valor]) => `<li><span>${esc(rotulo)}</span><strong>${esc(valor)}</strong></li>`).join('');
   const nota = [r.nota, paraTime && jogo !== 'crava' ? `Os pontos vão ${paraTime}.` : ''].filter(Boolean).join(' ');
+  // Nota longa (limite do dia, dificuldade): uma frase por item, em lista, em vez de um parágrafo técnico (J39).
+  const frases = nota.split(/(?<=[.!?])\s+(?=[A-ZÀ-Ú0-9])/);
+  const htmlDaNota = !nota
+    ? ''
+    : frases.length > 2
+      ? `${faixa('Bom saber', 'h3')}<ul class="regras-notas">${frases.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>`
+      : `<p class="regras-nota">${esc(nota)}</p>`;
   return `<div class="regras-cab">
       <h2 id="regras-titulo" class="titulo-tela">${esc(r.titulo)}</h2>
       <button class="voltar" type="button" data-regras-fechar aria-label="Fechar as regras">×</button>
@@ -178,7 +185,7 @@ export function htmlDasRegras(jogo: JogoComRegras, paraTime?: string | null): st
       <ul class="regras-passos">${passos}</ul>
       ${faixa('Pontos', 'h3')}
       <ul class="regras-pontos">${pontos}</ul>
-      ${nota ? `<p class="regras-nota">${esc(nota)}</p>` : ''}
+      ${htmlDaNota}
     </div>
     <button class="botao" type="button" data-regras-fechar>Entendi</button>`;
 }

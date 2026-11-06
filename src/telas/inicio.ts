@@ -204,9 +204,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
       <section class="bloco-cidade" data-cidade aria-live="polite" hidden></section>
 
-      <section class="bloco-placa-trofeu" data-placa-trofeu hidden></section>
-
       <button class="botao botao-jogar" type="button" data-acao="jogar-agora">Jogar agora<small data-motivo>&nbsp;</small></button>
+
+      <!-- Depois do "Jogar agora": a placa chega tarde e não pode empurrar o botão (J08). -->
+      <section class="bloco-placa-trofeu" data-placa-trofeu hidden></section>
 
       ${prefs.get().aquecimento?.cardNaHome && !prefs.get().aquecimento?.visto ? `<button class="card-aquecimento" type="button" data-acao="aquecimento"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}><span class="rotulo">Aquecimento</span><strong>Conheça os outros jogos</strong><small>1 min</small></button>` : ''}
 

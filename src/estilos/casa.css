@@ -372,3 +372,22 @@
   align-items: center;
   font-weight: 700;
 }
+
+/* "Ver fontes" e "Nota completa" com cara de botão: moldura e seta (J36). */
+.casa-rodape details > summary {
+  padding: 0 14px;
+  border: 2px solid rgba(245, 245, 240, 0.35);
+  border-radius: var(--raio-p);
+  list-style: none;
+  justify-content: space-between;
+}
+.casa-rodape details > summary::-webkit-details-marker {
+  display: none;
+}
+.casa-rodape details > summary::after {
+  content: '▾';
+  font-size: 16px;
+}
+.casa-rodape details[open] > summary::after {
+  content: '▴';
+}

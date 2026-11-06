@@ -130,7 +130,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
       ${d.disputa ? `<p class="res-disputa rotulo">${esc(lembrancaDaDisputa(d.disputa))}</p>` : ''}`,
     pontos,
     detalhe: `${
-      pontos && detalhes.length
+      pontos && detalhes.length > 1 // uma parcela só repetiria o total de cima (J24)
         ? `<div class="numeros${detalhes.length === 3 ? ' tres' : ''}">${detalhes.map(([nome, v]) => numero(`+${v}`, nome)).join('')}</div>`
         : ''
     }${blocoDesafio}${contouProMedalha ? '<div data-rumo hidden></div>' : ''}`,
