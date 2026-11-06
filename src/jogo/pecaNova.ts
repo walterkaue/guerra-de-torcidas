@@ -115,7 +115,7 @@ export function paraAnunciar(novas: readonly Peca[], vistas: ReadonlySet<string>
   return novas.filter((p) => !vistas.has(p.id));
 }
 
-/** Título de cada grupo do bloco: "Subiu pra Titular!", "1º ouro!"… Nunca nome de pessoa. */
+/** Título de cada grupo do bloco: "Subiu pra Titular!", "Primeiro ouro!"… Nunca nome de pessoa. */
 export function tituloDaConquista(peca: Peca): string {
   const c = peca.condicao;
   switch (c.tipo) {
@@ -124,7 +124,8 @@ export function tituloDaConquista(peca: Peca): string {
     case 'nivel':
       return `Subiu pra ${NIVEIS[c.nivel].nome}!`;
     case 'medalha':
-      return c.medalha === 'bronze' ? '1º bronze!' : c.medalha === 'prata' ? '1ª prata!' : '1º ouro!';
+      // Por extenso: no título em caixa alta, "1º" vira algo como "1⁰" e lê "10".
+      return c.medalha === 'bronze' ? 'Primeiro bronze!' : c.medalha === 'prata' ? 'Primeira prata!' : 'Primeiro ouro!';
     case 'ouroDisputa':
       return 'Ouro nos pênaltis!';
     case 'ouroSelecao':

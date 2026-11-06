@@ -138,7 +138,7 @@ describe('o bloco', () => {
     const g = gruposDaPecaNova([peca('fundo_tunel'), peca('munhequeira_bronze'), peca('chuteira_time')]);
     expect(g).toEqual([
       { titulo: 'Subiu pra Titular!', pecas: [peca('chuteira_time'), peca('fundo_tunel')] },
-      { titulo: '1º bronze!', pecas: [peca('munhequeira_bronze')] },
+      { titulo: 'Primeiro bronze!', pecas: [peca('munhequeira_bronze')] },
     ]);
   });
 
