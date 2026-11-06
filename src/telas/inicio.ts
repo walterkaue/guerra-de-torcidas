@@ -198,7 +198,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           </div>
           <p class="adesivo" data-frase-rival hidden></p>
         </div>
-        ${time?.id === ID_OUTRO ? '<p class="cabo-nota">Quem joga por "Outro time" fica fora do ranking das torcidas.</p>' : ''}
+        ${time?.id === ID_OUTRO ? '<div class="cabo-nota" data-nota-cidade hidden><p>Escolha sua cidade: é ela que joga por você no ranking.</p><button class="botao botao-sec" type="button" data-acao="escolher-cidade">Escolher minha cidade</button></div>' : ''}
         <p class="cabo-voce" data-posicao-semana aria-live="polite" hidden></p>
       </section>
 
@@ -693,6 +693,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   // ---------- sua cidade (um bloco só: posição, "Faltam N" ou o lembrete de escolher) ----------
   const elCidade = root.querySelector<HTMLElement>('[data-cidade]')!;
   let lembreteMostrado = false;
+  const notaCidade = root.querySelector<HTMLElement>('[data-nota-cidade]');
+  notaCidade?.querySelector('button')?.addEventListener('click', () => {
+    location.hash = '#cidade';
+  });
   const carregarCidade = () => {
     // Sem time ainda, não cria login só para isso.
     if (!time || lembreteMostrado) return;
@@ -708,6 +712,12 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           const frase = fraseDaCidade(minha, antes);
           elCidade.innerHTML = `<a class="bloco-cidade-link" href="#ranking-cidades" data-acao="ver-cidades"><strong>${esc(linhaDaCidadeNaHome(minha))}</strong>${frase ? `<span class="adesivo">${esc(frase)}</span>` : ''}</a>`;
           elCidade.hidden = false;
+          return;
+        }
+        // Quem joga por "Outro time" e não tem cidade: o convite fica no lugar da antiga nota (J14), sempre.
+        if (notaCidade) {
+          if (!(await api.sessaoValida()) || saiu) return;
+          notaCidade.hidden = false;
           return;
         }
         // Sem cidade: lembrete depois da 1ª partida, no máximo 1 vez por semana.
