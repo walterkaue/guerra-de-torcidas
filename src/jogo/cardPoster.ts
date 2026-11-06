@@ -6,9 +6,10 @@
 
 import { desenharFundo } from '../telas/bonecoFundos';
 import { ALTURA_DA_FIGURA, ALTURA_DO_JOELHO, LARGURA_DA_FIGURA, desenharFiguraDoCard, prepararFonteDoNumero } from '../telas/bonecoMontavel';
-import { AMARELO, FONTE, PLACAR, ROTULO, adesivo, seloRecorde } from './card';
+import { AMARELO, FONTE, PLACAR, ROTULO, adesivo, quebrarTexto, seloRecorde } from './card';
 import { cortarTexto } from './cardLances';
 import { desenharMedalha } from './cardMedalha';
+import { desenharImagemDoTrofeu, imagemDoTrofeu, type ImagemDoTrofeu } from './cardTrofeu';
 import type { DadosDoCard, PlanoDoCard, PlanoDoPoster } from './cardPersonalizado';
 import { AVISO_PRE_TEMPORADA } from './posicao';
 
@@ -166,7 +167,7 @@ function faixaDoTopo(c: CanvasRenderingContext2D, p: PlanoDoPoster, m: Medidas, 
   c.fillText(linha.texto, largura / 2, m.faixa * 0.84, largura - 80);
 }
 
-function placa(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard, p: PlanoDoPoster, m: Medidas): void {
+function placa(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard, p: PlanoDoPoster, m: Medidas, trofeu: ImagemDoTrofeu | null): void {
   const { x, y, l, a, raio, pad } = m.placa;
   const cores = d.time.cores;
   c.fillStyle = TINTA;
@@ -186,30 +187,54 @@ function placa(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard, 
   const meio = y + a / 2;
 
   // Bloco da direita: pontos grandes, "pro Time" embaixo e, se houver, a medalha à esquerda dos pontos.
-  const comMedalha = !!p.medalha;
-  const reservaMedalha = comMedalha ? m.raioMedalha * 2 + 28 : 0;
+  // No card do troféu, o troféu desenhado ocupa o lugar da medalha e o nome dele, o dos pontos.
+  const alturaTrofeu = a * 0.66;
+  const larguraTrofeu = trofeu ? (trofeu.l * alturaTrofeu) / trofeu.a : 0;
+  const reservaMedalha = trofeu ? larguraTrofeu + 24 : p.medalha ? m.raioMedalha * 2 + 28 : 0;
   const temEsquerda = !!(p.apelido || plano.nivel);
   const maxPontos = (temEsquerda ? dentro * 0.58 : dentro) - reservaMedalha;
-  const pontos = linhaUnica(c, p.pontos, (t) => `400 ${t}px ${PLACAR}`, maxPontos, m.tPontos, Math.round(m.tPontos * 0.5));
+  // O nome do troféu é longo ("CAMPEÃO DA TEMPORADA"): em até 2 linhas, menor que os pontos.
+  let pontos: { texto: string; tam: number };
+  let linhasP: string[];
+  if (trofeu) {
+    const tam = Math.round(m.tPontos * 0.48);
+    c.font = `400 ${tam}px ${PLACAR}`;
+    linhasP = quebrarTexto(c, p.pontos, maxPontos).slice(0, 2);
+    pontos = { texto: linhasP.reduce((a, b) => (c.measureText(b).width > c.measureText(a).width ? b : a), ''), tam };
+  } else {
+    pontos = linhaUnica(c, p.pontos, (t) => `400 ${t}px ${PLACAR}`, maxPontos, m.tPontos, Math.round(m.tPontos * 0.5));
+    linhasP = [pontos.texto];
+  }
   c.font = `400 ${pontos.tam}px ${PLACAR}`;
-  const largPontos = c.measureText(pontos.texto).width;
+  const largPontos = Math.min(c.measureText(pontos.texto).width, maxPontos);
   const larguraDireita = reservaMedalha + largPontos;
   // Sem apelido nem nível, o bloco dos pontos fica centrado na placa.
   const fimDireita = temEsquerda ? direita : x + l / 2 + larguraDireita / 2;
-  const altPontos = c.measureText(pontos.texto).actualBoundingBoxAscent;
+  const passoP = pontos.tam * 1.12;
+  const altPontos = c.measureText(pontos.texto).actualBoundingBoxAscent + (linhasP.length - 1) * passoP;
   const temProTime = !!p.proTime;
   const altBloco = altPontos + (temProTime ? m.tProTime * 1.5 : 0);
   const topoBloco = meio - altBloco / 2;
   c.textAlign = 'right';
   c.textBaseline = 'alphabetic';
   c.fillStyle = AMARELO;
-  c.fillText(pontos.texto, fimDireita, topoBloco + altPontos);
+  const ascP = c.measureText(pontos.texto).actualBoundingBoxAscent;
+  linhasP.forEach((ln, i) => c.fillText(ln, fimDireita, topoBloco + ascP + i * passoP));
   if (p.proTime) {
-    c.font = `700 ${m.tProTime}px ${ROTULO}`;
     c.fillStyle = '#ffffff';
-    c.fillText(p.proTime, fimDireita, topoBloco + altPontos + m.tProTime * 1.35, Math.max(largPontos, 120));
+    if (trofeu) {
+      // "Time · Série A" encolhe até caber embaixo do nome e do troféu, em vez de espremer.
+      const rotulo = linhaUnica(c, p.proTime, (t) => `700 ${t}px ${ROTULO}`, Math.max(largPontos, maxPontos * 0.8), m.tProTime, 18);
+      c.font = `700 ${rotulo.tam}px ${ROTULO}`;
+      c.fillText(rotulo.texto, fimDireita, topoBloco + altPontos + m.tProTime * 1.35);
+    } else {
+      c.font = `700 ${m.tProTime}px ${ROTULO}`;
+      c.fillText(p.proTime, fimDireita, topoBloco + altPontos + m.tProTime * 1.35, Math.max(largPontos, 120));
+    }
   }
-  if (p.medalha) {
+  if (trofeu) {
+    desenharImagemDoTrofeu(c, trofeu, fimDireita - largPontos - 24 - larguraTrofeu / 2, meio, larguraTrofeu, alturaTrofeu);
+  } else if (p.medalha) {
     const cx = fimDireita - largPontos - 28 - m.raioMedalha;
     desenharMedalha(c, p.medalha, cores, cx, y + a * 0.56, m.raioMedalha);
   }
@@ -265,6 +290,7 @@ export async function desenharCardPoster(d: DadosDoCard, plano: PlanoDoCard): Pr
   canvas.width = plano.largura;
   canvas.height = plano.altura;
   const c = canvas.getContext('2d', { willReadFrequently: true })!;
+  const trofeu = p.trofeu ? await imagemDoTrofeu(p.trofeu.tipo, d.time.cores, 200, { contorno: true, traco: '#f4f1e6' }) : null;
   const { largura, altura } = plano;
   const m = MEDIDAS[plano.formato];
   const cores = d.time.cores;
@@ -308,7 +334,7 @@ export async function desenharCardPoster(d: DadosDoCard, plano: PlanoDoCard): Pr
 
   // 5. A frase sobre as pernas, a placa e o rodapé.
   if (plano.frase) adesivo(c, d.time, plano.frase, m.yFrase, m.tFrase);
-  placa(c, d, plano, p, m);
+  placa(c, d, plano, p, m, trofeu);
   if (plano.novoRecorde) {
     c.save();
     const e = m.escalaSelo;

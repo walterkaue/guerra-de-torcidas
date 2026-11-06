@@ -4,6 +4,7 @@
 
 import { horaBrasilia } from '../servidor/tempo';
 import {
+  GEO_QUADRADO,
   GEO_STORIES,
   adesivo,
   blocoDoNumero,
@@ -19,7 +20,6 @@ import {
   TELAO_L,
   TELAO_X,
   type Caixa,
-  type Geo,
 } from './card';
 import { conteudoAcertos, conteudoPalpites, telaoMaiorDoCrava } from './cardCrava';
 import { conteudoDia } from './cardDia';
@@ -48,6 +48,9 @@ function conteudoDoTelao(d: DadosDoCard): { maior: number; desenhar: (c: CanvasR
       return { maior: 0, desenhar: (c, caixa) => conteudoAcertos(c, caixa, k.resultados) };
     case 'medalha':
       return { maior: TELAO_MAIOR_DA_MEDALHA, desenhar: (c, caixa) => conteudoMedalha(c, caixa, k.medalha, d.time.cores, k.item) };
+    case 'trofeu':
+      // O troféu tem o seu próprio telão (cardTrofeu.ts); este não é chamado para ele.
+      return { maior: 0, desenhar: () => {} };
   }
 }
 
@@ -56,7 +59,6 @@ function conteudoDoTelao(d: DadosDoCard): { maior: number; desenhar: (c: CanvasR
  * escala do Stories, reduzida, para cada jogo não precisar de outro tamanho de fonte.
  */
 const ESCALA_QUADRADO = 0.66;
-const GEO_QUADRADO: Geo = { altura: 1080, ceu: 96, altArq: 524, fimMeio: 862, rodape: 884 };
 /** Mesmo ponto do cenário do Stories: onde o `ceu` do Stories (216) cai no Quadrado. */
 const DESLOCA_QUADRADO = GEO_QUADRADO.ceu - ESCALA_QUADRADO * GEO_STORIES.ceu;
 
@@ -141,5 +143,12 @@ export async function desenharCardPersonalizado(d: DadosDoCard, plano: PlanoDoCa
     return desenharCardPoster(d, plano);
   }
   const busto = await bustoDoCard(d, plano);
+  // O card do troféu: o Telão e a imagem do troféu vêm de cardTrofeu.ts (carregado só quando o card é do troféu).
+  if (plano.trofeu) {
+    const t = await import('./cardTrofeu');
+    if (plano.estilo === 'telao') return t.desenharTelaoDoTrofeu(d, plano, busto);
+    const imagem = await t.imagemDoTrofeu(plano.trofeu.tipo, d.time.cores, 360, { contorno: false, traco: '#3b3b36' });
+    return desenharCardPlacarSeco(d, plano, busto, imagem);
+  }
   return plano.estilo === 'telao' ? desenharTelao(d, plano, busto) : desenharCardPlacarSeco(d, plano, busto);
 }
