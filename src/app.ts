@@ -31,7 +31,7 @@ export interface DadosResultado {
 export type Rota =
   | { tela: 'inicio' }
   /** `aba`: abre direto numa aba do Ranking (o atalho do Perfil leva às Conquistas). */
-  | { tela: 'ranking'; aba?: 'conquistas' | 'cidades' }
+  | { tela: 'ranking'; aba?: 'conquistas' | 'cidades' | 'temporada'; sub?: 'galeria' | 'campeas' | '52semanas' }
   | { tela: 'palpites' }
   | { tela: 'perfil' }
   /** Código do torcedor (docs/jogo.md, seção 14.1): mostrar o código deste aparelho. */
