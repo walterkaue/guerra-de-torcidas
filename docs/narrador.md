@@ -298,7 +298,7 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 
 ### `vitoria`
 - ACABOU! Vitória com sabor de domingo!
-- Venceu! E mais 20 {pro_time}!
+- Venceu! A festa dessa vai {pro_time}!
 - Venceu! Pode desfilar na resenha de cabeça erguida.
 - Vitória! O grupo do WhatsApp precisa saber disso.
 - Ganhou! O goleiro adversário pediu as contas.
