@@ -1,7 +1,7 @@
 # Banco do narrador — pênaltis, palpites, quiz, Time do Dia e Lances
 
 > Versão 1.9 · 06/11/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
-> Mudanças da 1.9: seção 15, **Galeria de Troféus** (uma frase na ficha de cada troféu; a aprovar pelo Kauê).
+> Mudanças da 1.9: seção 15, **Galeria de Troféus** (uma frase na ficha de cada troféu; aprovadas pelo Kauê em 06/11/2026).
 > Mudanças da 1.8: três erros e fora na Prova: 3 frases comuns em `prova_errou` e situação nova `prova_ultima_vida` (aprovadas pelo Kauê em 01/11/2026).
 > Mudanças da 1.7: seção 13, **aviso de domingo** (push sem urgência); sai `dia_sequencia` do Time do Dia (sem sequência de dias, `jogo.md` seção 13).
 > Mudanças da 1.6: seção 12, **Lances do Jogo** (abertura, barreira, lance recriado e fim); nas jogadas, os Lances reaproveitam as frases da seção 3 que não falam de pênalti.
