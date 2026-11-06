@@ -1,5 +1,5 @@
 /* Tela "SEU CARD" (jogo.md 14.6, visual.md 4.6): folha de tela cheia com o card no meio, as pontas dos outros estilos dos
-   lados, 8 quadradinhos (5 de ligar e desligar, 3 de ação) e os botões de salvar e compartilhar. */
+   lados, 8 quadradinhos (5 de ligar e desligar, 2 de ação e Meu boneco) e os botões de salvar e compartilhar. */
 
 .cc {
   position: fixed;
@@ -170,13 +170,22 @@
   color: var(--texto-suave);
 }
 
-.cc-pontos span {
+.cc-pontos button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 44px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  touch-action: manipulation;
 }
 
-.cc-pontos span::before {
+.cc-pontos button::before {
   content: '';
   width: 8px;
   height: 8px;
@@ -186,7 +195,7 @@
 }
 
 .cc-pontos .on {
-  color: var(--cal);
+  color: var(--amarelo);
 }
 
 .cc-pontos .on::before {
@@ -263,6 +272,17 @@
 
 .cc-liga[aria-pressed='true'] .cc-check {
   display: block;
+}
+
+/* Meu boneco: no Pôster fica amarelo e travado; sem boneco (sem rede), apagado. */
+.cc-boneco[data-poster] {
+  background: var(--amarelo);
+  color: #1a1a1a;
+  box-shadow: 0 3px 0 var(--amarelo-escuro);
+}
+
+.cc-boneco[data-sem-rede] {
+  opacity: 0.45;
 }
 
 /* Ação: verde. */
