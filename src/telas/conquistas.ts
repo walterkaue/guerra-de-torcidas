@@ -26,7 +26,7 @@ import type { Medalha } from '../jogo/lances';
 import { textoDasMedalhasDosPenaltis } from '../jogo/regrasUnificadas';
 import * as real from '../servidor/api';
 import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
-import { aoTocarNoEstado, estado, faixa, numero, trilha } from './blocos';
+import { abas, aoTocarNoEstado, estado, faixa, marcarAba, numero, trilha } from './blocos';
 import { lancesUnificados } from './corte';
 import { icone } from './icones';
 import { ligarMandarMedalha } from './mandarMedalha';
@@ -101,7 +101,7 @@ function totais(porClube: readonly MedalhasDoClube[]): Record<Medalha, number> {
   return t;
 }
 
-export function desenharConquistas(el: HTMLElement): () => void {
+function desenharMedalhas(el: HTMLElement): () => void {
   let saiu = false;
   const meuTime = prefs.get().time;
   el.innerHTML = `<div class="conquistas">
@@ -185,5 +185,42 @@ export function desenharConquistas(el: HTMLElement): () => void {
 
   return () => {
     saiu = true;
+  };
+}
+
+/** A aba Conquistas: "Medalhas" (o que já existia) e "Galeria" (troféus das torcidas; baixa só ao abrir). */
+export function desenharConquistas(el: HTMLElement, inicial: 'medalhas' | 'galeria' = 'medalhas'): () => void {
+  let sub: 'medalhas' | 'galeria' | null = null;
+  let parar: (() => void) | null = null;
+  let vez = 0;
+  el.innerHTML = `<div class="abas-linha">${abas('csub', [{ id: 'medalhas', texto: 'Medalhas' }, { id: 'galeria', texto: 'Galeria' }], inicial, 2)}</div>
+    <div class="painel-ranking" data-csub-corpo></div>`;
+  const corpo = el.querySelector<HTMLElement>('[data-csub-corpo]')!;
+
+  function abrir(nova: 'medalhas' | 'galeria'): void {
+    if (nova === sub) return;
+    sub = nova;
+    parar?.();
+    parar = null;
+    const minha = ++vez;
+    marcarAba(el, 'csub', nova);
+    if (nova === 'medalhas') {
+      parar = desenharMedalhas(corpo);
+      return;
+    }
+    corpo.innerHTML = '';
+    // Baixa sob demanda; se saiu da sub-aba antes de chegar, não desenha.
+    void import('./galeria').then((m) => {
+      if (minha === vez) parar = m.desenharGaleria(corpo, { verMedalhas: () => abrir('medalhas') });
+    });
+  }
+  el.querySelectorAll<HTMLElement>('[data-csub]').forEach((b) =>
+    b.addEventListener('click', () => abrir(b.dataset.csub as 'medalhas' | 'galeria')),
+  );
+  abrir(inicial);
+
+  return () => {
+    vez++;
+    parar?.();
   };
 }
