@@ -42,6 +42,8 @@ interface Prefs {
   cidadeLembrete?: string;
   /** Escolhas do card personalizável (jogo.md 14.6): estilo, formato e o que ficou desligado. Ler com `lerEscolhas`. */
   card?: unknown;
+  /** Troféus da Galeria que a placa da Home já anunciou neste aparelho (jogo/galeria.ts, chaveDoTrofeu). */
+  trofeusAnunciados?: string[];
 }
 
 function ler(): Prefs {

@@ -102,7 +102,11 @@ Card 'Telão do estádio' (decidido em 31/10/2026): arquibancada do clube no alt
 - **Tela "Seu card":** fundo de gramado. Embaixo do topo (✕, "SEU CARD" em Barlow Condensed e o seletor Stories | Quadrado, com o marcado em papel claro) fica o card grande no meio, com as pontas dos outros estilos dos dois lados, e embaixo dele os nomes dos estilos como botões de tocar (o atual em amarelo) e "deslize pra trocar". Depois vêm os 8 quadradinhos (de ligar: papel claro com ✓ quando ligados, placa escura quando desligados; de ação: verde `--subiu`; "Meu boneco" por último: como os de ligar, amarelo com ✓ no Pôster e apagado sem conexão) e, no pé, Salvar imagem (placa escura) e Compartilhar (amarelo, o único botão principal), na proporção 1 : 1,4. Sem transição no deslizar com movimento reduzido.
 
 ### Ranking
-- Abas: Semana, Temporada, Cidades, 52 semanas (a de 52 semanas ainda não existe).
+- Abas: Semana; Temporada, com as sub-abas Mês · Série A e B e 52 semanas; Cidades, com a 4ª sub-aba Campeãs; Conquistas, com as sub-abas Medalhas e Galeria.
+- **Galeria em estante:** botão do time no topo (cor 1 do time, "Trocar"). Taças em SVG, pintadas com `--taca` e `--taca-sombra`; a que ainda não veio é tracejada, apagada, com "ainda não"; repetida ganha "×N" no canto. Flâmula lisa na cor 1, com faixa reta na cor 2 junto do mastro, data embaixo e selo "Série B" quando for. Megafone para a Maior torcida, com "×N". Cada prateleira é uma placa escura com faixa-título.
+- **Ficha do troféu:** folha que abre de baixo, troféu grande no alto, três números, frase em itálico. "Fechar" escuro e "Mandar no grupo" verde, os dois do mesmo tamanho.
+- **52 semanas:** placa do seu time com os três números, a janela em letra pequena e a lista dos 20 com uma barrinha proporcional ao líder (a sua torcida destacada). Na pré-temporada, o selo "Teste: zera no lançamento".
+- **Placa da Home ("Troféu novo na Galeria"):** botões claros, nunca amarelos (o amarelo é do "Jogar agora"). Entra com uma animação curta de altura; com movimento reduzido, aparece sem animação. Papel picado e vibração só na primeira vez que o troféu é anunciado.
 - **Aba Cidades:** seletor Esta semana/Passada (provisória e travada como na aba Semana) e sub-abas Seu estado (cidades do estado da pessoa), Top nacional (20 primeiras) e Estados. Linha: posição, nome (com UF no top), jogadores na semana e média dos 30 melhores; a sua cidade (ou estado) destacada como nas torcidas. Sem cidade escolhida, abre em Top nacional com convite para `#cidade`. Só entram 5+ jogadores; abaixo disso, "Faltam 2 pra sua cidade entrar no ranking. Chama a galera.". Nenhum apelido.
 - Tabela da Série A com faixa amarela no líder e vermelha na zona de rebaixamento, sua torcida destacada.
 - Explicação curta de como conta, no rodapé.
@@ -114,7 +118,7 @@ Card 'Telão do estádio' (decidido em 31/10/2026): arquibancada do clube no alt
 ### No MVP (até a fase 1.5 chegar)
 - **Sem divisões ainda:** onde está "Série A", mostrar o ranking geral da semana com os 20 times (Campeão da semana, com a Maior torcida como segunda aba). Sem faixa de rebaixamento.
 - **Cidade na Home:** um bloco só, abaixo do duelo. Com cidade: "Sua cidade está em 3º em SP" (ou o "Faltam N") e a frase `cidade_*` do narrador, levando à aba Cidades. Sem cidade, depois da 1ª partida: lembrete "Defende sua cidade também?" que leva a `#cidade`, no máximo 1 vez por semana (`cidadeLembrete`). O bloco do time em si não mostra cidade.
-- **Ranking** mostra as abas Semana, Temporada (desde 02/11/2026) e Cidades; 52 semanas ainda não.
+- **Ranking** mostra as abas Semana, Temporada (desde 02/11/2026, com as 52 semanas desde 06/11/2026), Cidades (com as Campeãs) e Conquistas (com a Galeria).
 - **Ranking público só de torcidas:** nenhum apelido aparece em ranking; cada pessoa vê só a própria posição.
 
 ### Bonecos

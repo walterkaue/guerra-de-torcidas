@@ -18,10 +18,10 @@ import { fraseDaCidade } from '../narrador/cidade';
 import * as real from '../servidor/rankingCidades';
 import { ouvirRanking } from '../servidor/api';
 import { semanaBrasilia } from '../servidor/tempo';
-import { abas, aoTocarNoEstado, estado, marcarAba } from './blocos';
+import { abas, aoTocarNoEstado, baixarPedaco, estado, marcarAba } from './blocos';
 
 type Servidor = typeof real;
-type Sub = 'estado' | 'top' | 'estados';
+type Sub = 'estado' | 'top' | 'estados' | 'campeas';
 
 // Em desenvolvimento, ?cidadesFalsas=com|sem|faltam|vazia|erro troca o servidor por um de mentira.
 const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('cidadesFalsas');
@@ -33,34 +33,52 @@ interface Dados {
   estados: LinhaEstado[];
 }
 
-export function desenharCidades(el: HTMLElement): () => void {
+export function desenharCidades(el: HTMLElement, inicial?: 'campeas'): () => void {
   let saiu = false;
   let pararAviso: (() => void) | null = null;
   const atual = semanaBrasilia();
   const passada = semanaBrasilia(new Date(Date.now() - 7 * 24 * 3600_000));
   let semana = atual;
-  let sub: Sub | null = null;
+  let sub: Sub | null = inicial === 'campeas' ? 'campeas' : null;
+  let pararCampeas: (() => void) | undefined;
   let dados: Dados | null = null;
 
   el.innerHTML = `
     <div class="abas-linha">
-      ${abas('cid-semana', [{ id: 'atual', texto: 'Esta semana' }, { id: 'passada', texto: 'Passada' }], 'atual', 2)}
-      ${abas('cid-sub', [{ id: 'estado', texto: 'Seu estado' }, { id: 'top', texto: 'Top nacional' }, { id: 'estados', texto: 'Estados' }], 'top', 2)}
+      ${abas('cidsemana', [{ id: 'atual', texto: 'Esta semana' }, { id: 'passada', texto: 'Passada' }], 'atual', 2)}
+      ${abas('cidsub', [{ id: 'estado', texto: 'Seu estado' }, { id: 'top', texto: 'Top nacional' }, { id: 'estados', texto: 'Estados' }, { id: 'campeas', texto: 'Campeãs' }], inicial ?? 'top', 2)}
     </div>
     <p class="selo-semana" data-cid-selo hidden></p>
     <p class="frase-meu-time" data-cid-frase hidden></p>
     <div class="tabela" data-cid-tabela aria-live="polite"></div>
-    <p class="explica">${esc(EXPLICA_CIDADES)}</p>`;
+    <p class="explica">${esc(EXPLICA_CIDADES)}</p>
+    <div class="painel-ranking" data-cid-campeas hidden></div>`;
   const elSelo = el.querySelector<HTMLElement>('[data-cid-selo]')!;
   const elFrase = el.querySelector<HTMLElement>('[data-cid-frase]')!;
   const elTabela = el.querySelector<HTMLElement>('[data-cid-tabela]')!;
+  const elExplica = el.querySelector<HTMLElement>('.explica')!;
+  const elCampeas = el.querySelector<HTMLElement>('[data-cid-campeas]')!;
+  const elSemanaAbas = el.querySelector<HTMLElement>('[data-cidsemana]')!.parentElement!;
 
   const tentarDeNovo = () => {
     elTabela.innerHTML = estado('carregando', 'Buscando as cidades…');
     void carregar();
   };
 
+  /** Com "Campeãs" aberta o seletor de semana e a tabela somem; a sub-aba baixa só ao abrir. */
+  function mostrarCampeas(sim: boolean): void {
+    pararCampeas?.();
+    pararCampeas = undefined;
+    elCampeas.innerHTML = '';
+    for (const x of [elSemanaAbas, elTabela, elExplica]) x.hidden = sim;
+    elCampeas.hidden = !sim;
+    if (!sim) return;
+    elSelo.hidden = elFrase.hidden = true;
+    baixarPedaco(elCampeas, () => import('./campeas'), (m) => (pararCampeas = m.desenharCampeas(elCampeas)), () => !saiu && sub === 'campeas' && !pararCampeas);
+  }
+
   async function carregar(): Promise<void> {
+    if (sub === 'campeas') return;
     const pedida = semana;
     if (!dados) elTabela.innerHTML = estado('carregando', 'Buscando as cidades…');
     try {
@@ -102,8 +120,8 @@ export function desenharCidades(el: HTMLElement): () => void {
     elSelo.textContent = selo ?? '';
     elSelo.hidden = !selo;
     elSelo.classList.toggle('provisoria', !!selo && selo !== 'Semana fechada.');
-    marcarAba(el, 'cid-sub', sub);
-    marcarAba(el, 'cid-semana', ehPassada ? 'passada' : 'atual');
+    marcarAba(el, 'cidsub', sub);
+    marcarAba(el, 'cidsemana', ehPassada ? 'passada' : 'atual');
 
     // Frase do narrador (posição no estado) ou o convite, sempre sem apelido.
     let frase = '';
@@ -146,17 +164,23 @@ export function desenharCidades(el: HTMLElement): () => void {
 
   const clicou = (e: Event) => {
     const alvo = e.target as HTMLElement;
-    const s = alvo.closest<HTMLElement>('[data-cid-sub]');
+    const s = alvo.closest<HTMLElement>('[data-cidsub]');
     if (s) {
-      const nova = s.dataset.cidSub as Sub;
+      const nova = s.dataset.cidsub as Sub;
       if (nova === sub) return;
+      const eraCampeas = sub === 'campeas';
       sub = nova;
+      if (eraCampeas || nova === 'campeas') {
+        marcarAba(el, 'cidsub', nova);
+        mostrarCampeas(nova === 'campeas');
+        if (nova === 'campeas') return;
+      }
       void carregar();
       return;
     }
-    const w = alvo.closest<HTMLElement>('[data-cid-semana]');
+    const w = alvo.closest<HTMLElement>('[data-cidsemana]');
     if (w) {
-      const nova = w.dataset.cidSemana === 'passada' ? passada : atual;
+      const nova = w.dataset.cidsemana === 'passada' ? passada : atual;
       if (nova === semana) return;
       semana = nova;
       dados = null;
@@ -178,10 +202,12 @@ export function desenharCidades(el: HTMLElement): () => void {
       });
   };
   ouvir();
-  void carregar();
+  if (sub === 'campeas') mostrarCampeas(true);
+  else void carregar();
 
   return () => {
     saiu = true;
+    pararCampeas?.();
     pararAviso?.();
     el.removeEventListener('click', clicou);
   };

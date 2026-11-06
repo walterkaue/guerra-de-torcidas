@@ -1,6 +1,7 @@
 # Banco do narrador — pênaltis, palpites, quiz, Time do Dia e Lances
 
-> Versão 1.8 · 01/11/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Versão 1.9 · 06/11/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Mudanças da 1.9: seção 15, **Galeria de Troféus** (uma frase na ficha de cada troféu; aprovadas pelo Kauê em 06/11/2026).
 > Mudanças da 1.8: três erros e fora na Prova: 3 frases comuns em `prova_errou` e situação nova `prova_ultima_vida` (aprovadas pelo Kauê em 01/11/2026).
 > Mudanças da 1.7: seção 13, **aviso de domingo** (push sem urgência); sai `dia_sequencia` do Time do Dia (sem sequência de dias, `jogo.md` seção 13).
 > Mudanças da 1.6: seção 12, **Lances do Jogo** (abertura, barreira, lance recriado e fim); nas jogadas, os Lances reaproveitam as frases da seção 3 que não falam de pênalti.
@@ -702,3 +703,42 @@ Gritos curtos das 5 estações do aquecimento (docs/jogo.md, seção 14.4), um p
 | Crava | Cravado! Esse vale de verdade. · Palpite feito! Agora é torcer. | (sempre comemora como acerto) |
 
 Fim: "Aquecido! Agora vale ponto {pro_time}" (sem time oficial: "Aquecido! Agora vale ponto de verdade").
+
+## 15. Galeria de Troféus
+
+Uma frase na ficha de cada troféu (`docs/jogo.md`, seção 5, "Telas aprovadas em 05/11/2026"). Texto em `src/narrador/galeria.ts`, não neste banco: o `npm run frases` não lê esta seção. Passa pelo checklist da seção 1, com três cuidados a mais:
+- **Nada de urgência nem de voltar:** sem "volte", "amanhã", "não perde", contagem de tempo ou sequência de semanas (seção 13 do `jogo.md`). O troféu já foi ganho; a frase só comemora.
+- **Nenhum adjetivo concorda com o time:** "{o_time} é campeão" sairia "A Chapecoense é campeão". As frases falam da taça, da flâmula e da semana.
+- **Vitrine não é título:** a Maior torcida comemora o barulho, nunca "título" ou "campeão".
+Variáveis: `{o_time}`, `{do_time}`, `{pro_time}`. Até 75 caracteres com qualquer time (teste em `src/jogo/galeria.test.ts`). O rebaixamento não tem ficha nem frase: ele só aparece na linha neutra de sobe e desce.
+
+### Flâmula da semana (`campeao_semana`)
+- Semana fechada e a flâmula ficou com {o_time}. Tá pendurada!
+- Média dos 30 lá em cima: essa semana foi {do_time}.
+- Flâmula na parede! Na média, ninguém segurou {o_time}.
+- {o_time} levou a semana. O resto da tabela que lute.
+
+### Megafone da vitrine (`maior_torcida`)
+- Arquibancada lotada! Ninguém somou mais que {o_time}.
+- Megafone na vitrine: o barulho da semana foi {do_time}.
+- Não é título, mas que barulho! Muita gente jogando {pro_time}.
+
+### Taça da Série A do mês (`campeao_temporada`)
+- Mês inteiro somando, e a taça foi pra estante {do_time}!
+- A Série A do mês ficou com {o_time}. Taça na estante!
+- Taça da temporada! Semana a semana, {o_time} somou mais.
+
+### Taça da Série B do mês (`campeao_serie_b`)
+- A Série B do mês ficou com {o_time}. Taça na estante!
+- Taça da Série B {pro_time}! Mês bem jogado.
+- {o_time} fez o mês na Série B e levou a taça.
+
+### Taça com estrela do mês de estreia (`campeao_estreia`)
+- Primeira taça da história do jogo: {o_time} estreou com estrela!
+- Estreia com taça! Essa estrela ninguém tira {do_time}.
+- O primeiro mês do jogo ficou com {o_time}. Pra sempre na Galeria.
+
+### Subiu pra Série A (`acesso`)
+- Subiu! {o_time} carimbou o passaporte pra Série A.
+- Acesso na conta! No mês que vem, {o_time} tá na Série A.
+- Da Série B pra Série A: {o_time} fez a subida no braço.

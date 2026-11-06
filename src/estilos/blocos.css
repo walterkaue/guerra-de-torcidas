@@ -344,6 +344,15 @@
   gap: var(--e2);
 }
 
+.iguais > .abas-2 {
+  display: flex;
+  flex: 1;
+}
+
+.iguais > .abas-2 button {
+  flex: 1 1 0;
+}
+
 .abas-2 {
   display: inline-flex;
   gap: 2px;

@@ -99,6 +99,21 @@ export function aoTocarNoEstado(el: ParentNode, fazer: () => void): void {
   el.querySelector('[data-estado-acao]')?.addEventListener('click', fazer);
 }
 
+/** Baixa um pedaço de tela por import(); sem rede, pinta o erro com "Tentar de novo". `vivo()` falso: saiu, não desenha. */
+export function baixarPedaco<M>(el: HTMLElement, carregar: () => Promise<M>, usar: (m: M) => void, vivo: () => boolean): void {
+  carregar().then(
+    (m) => vivo() && usar(m),
+    () => {
+      if (!vivo()) return;
+      el.innerHTML = estado('erro', 'Sem conexão agora.', { detalhe: 'Essa parte abre assim que a internet voltar.' });
+      aoTocarNoEstado(el, () => {
+        el.innerHTML = '';
+        baixarPedaco(el, carregar, usar, vivo);
+      });
+    },
+  );
+}
+
 /** Frase da trilha para leitor de tela: "Prata. 23 gols, faltam 27 pro ouro". */
 export function descricaoDaTrilha(t: Trilha): string {
   const nome = t.medalha ? NOME_DA_MEDALHA[t.medalha] : 'Sem medalha';

@@ -12,9 +12,7 @@ import { textoDaMedia } from '../jogo/rankingTextos';
 import { lancesUnificados } from './corte';
 import { semanaBrasilia } from '../servidor/tempo';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
-import { desenharCidades } from './rankingCidades';
-import { desenharTemporada } from './temporada';
-import { abas, aoTocarNoEstado, cabecalhoTela, estado } from './blocos';
+import { abas, aoTocarNoEstado, baixarPedaco, cabecalhoTela, estado } from './blocos';
 
 type Modo = 'campeao' | 'soma';
 
@@ -59,7 +57,7 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
     </main>`;
   ligarBarraNavegacao(root);
 
-  // As abas Temporada e Conquistas só carregam quando são abertas, e a cada abertura começam do zero.
+  // As abas Temporada, Cidades e Conquistas só carregam quando são abertas, e a cada abertura começam do zero.
   type AbaDoRanking = 'semana' | 'temporada' | 'cidades' | 'conquistas';
   const paineis: Record<AbaDoRanking, HTMLElement> = {
     semana: root.querySelector<HTMLElement>('[data-painel="semana"]')!,
@@ -67,36 +65,39 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
     cidades: root.querySelector<HTMLElement>('[data-painel="cidades"]')!,
     conquistas: root.querySelector<HTMLElement>('[data-painel="conquistas"]')!,
   };
-  const desenhadores: Partial<Record<AbaDoRanking, (el: HTMLElement) => () => void>> = {
-    temporada: desenharTemporada,
-    cidades: desenharCidades,
-    // Conquistas baixa sob demanda (lances, medalhas e o CSS dela não pesam na Home).
-    conquistas: (el) => {
+  // As abas Temporada, Cidades e Conquistas baixam sob demanda (lances, medalhas, Galeria e o CSS delas não pesam na
+  // Home). Se a pessoa sai da aba antes de o pedaço chegar, nada é desenhado.
+  type Desenhador = (el: HTMLElement, sub?: string) => () => void;
+  const sobDemanda =
+    (carregar: () => Promise<Desenhador>): Desenhador =>
+    (el, sub) => {
       let parar: (() => void) | null = null;
       let saiuDaAba = false;
-      void import('./conquistas').then((m) => {
-        if (!saiuDaAba) parar = m.desenharConquistas(el);
-      });
+      baixarPedaco(el, carregar, (desenhar) => (parar = desenhar(el, sub)), () => !saiuDaAba);
       return () => {
         saiuDaAba = true;
         parar?.();
       };
-    },
+    };
+  const desenhadores: Partial<Record<AbaDoRanking, Desenhador>> = {
+    temporada: sobDemanda(() => import('./temporada').then((m) => (el, sub) => m.desenharTemporada(el, sub === '52semanas' ? sub : 'mes'))),
+    cidades: sobDemanda(() => import('./rankingCidades').then((m) => (el, sub) => m.desenharCidades(el, sub === 'campeas' ? sub : undefined))),
+    conquistas: sobDemanda(() => import('./conquistas').then((m) => (el, sub) => m.desenharConquistas(el, sub === 'galeria' ? sub : 'medalhas'))),
   };
   let abaAberta: AbaDoRanking = 'semana';
   let limparAba: (() => void) | null = null;
-  function abrirAba(aba: AbaDoRanking): void {
+  function abrirAba(aba: AbaDoRanking, sub?: string): void {
     if (aba === abaAberta) return;
     abaAberta = aba;
     root.querySelectorAll<HTMLElement>('[data-ranking]').forEach((o) => o.setAttribute('aria-selected', String(o.dataset.ranking === aba)));
     for (const [nome, el] of Object.entries(paineis)) el.hidden = nome !== aba;
     limparAba?.();
-    limparAba = desenhadores[aba]?.(paineis[aba]) ?? null;
+    limparAba = desenhadores[aba]?.(paineis[aba], sub) ?? null;
   }
   root.querySelectorAll<HTMLButtonElement>('[data-ranking]').forEach((b) =>
     b.addEventListener('click', () => abrirAba(b.dataset.ranking as AbaDoRanking)),
   );
-  if (rota.tela === 'ranking' && rota.aba) abrirAba(rota.aba);
+  if (rota.tela === 'ranking' && rota.aba) abrirAba(rota.aba, rota.sub);
 
   const elTabela = root.querySelector<HTMLElement>('[data-tabela-semana]')!;
   const elExplica = root.querySelector<HTMLElement>('[data-explica]')!;

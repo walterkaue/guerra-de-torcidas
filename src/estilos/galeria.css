@@ -1,0 +1,507 @@
+/* Galeria de Troféus, 52 semanas e Campeãs de estado no Grafismo de TV (jogo.md 5 e 14.2). Celular primeiro (390 px). */
+.galeria,
+.gal-52,
+.gal-campeas {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---------- botão do time (topo) e do estado ---------- */
+.gal-time {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: var(--raio);
+  background: var(--gc1, var(--placa-alta));
+  box-shadow: inset 0 -5px 0 var(--gc2, var(--linha)), var(--sombra-placa);
+  color: var(--gtxt, var(--cal));
+  text-align: left;
+  touch-action: manipulation;
+  transition: transform var(--lento) var(--mola);
+}
+
+.gal-time:active {
+  transform: scale(0.98);
+  transition-duration: 0s;
+}
+
+.gal-time-nome {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--fonte-placar);
+  font-size: 22px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.gal-time-nome small {
+  margin-top: 2px;
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+
+.gal-troca {
+  flex: none;
+  padding: 6px 12px;
+  border-radius: var(--raio-p);
+  box-shadow: inset 0 0 0 2px currentColor;
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ---------- prateleiras ---------- */
+.gal-tacas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gal-flamulas {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gal-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 4px;
+  border: 0;
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+  color: var(--cal);
+  font: 700 14px/1.15 var(--fonte-rotulo);
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  transition: transform var(--lento) var(--mola);
+}
+
+button.gal-item:active {
+  transform: scale(0.95);
+  transition-duration: 0s;
+}
+
+.gal-item svg {
+  display: block;
+  height: 56px;
+  width: auto;
+  max-width: 100%;
+  filter: drop-shadow(0 0 1px rgba(245, 245, 240, 0.75));
+}
+
+.gal-tacas .gal-item svg {
+  height: 64px;
+}
+
+.gal-item small {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--texto-suave);
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.gal-item.vazio {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--linha);
+  color: var(--texto-suave);
+}
+
+.gal-item.vazio svg {
+  filter: none;
+}
+
+/* "×3": Anton, no canto da taça. */
+.gal-x {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--cal);
+}
+
+.gal-b {
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--cal);
+  color: var(--tinta);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+.gal-todas {
+  align-self: stretch;
+}
+
+.gal-vitrine {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 72px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+  color: var(--cal);
+  text-align: left;
+  touch-action: manipulation;
+}
+
+div.gal-vitrine {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--linha);
+  color: var(--texto-suave);
+}
+
+.gal-vitrine svg {
+  flex: none;
+  height: 48px;
+  width: auto;
+  filter: drop-shadow(0 0 1px rgba(245, 245, 240, 0.75));
+}
+
+.gal-vitrine > span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--texto-suave);
+}
+
+.gal-vitrine > span b {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--cal);
+}
+
+div.gal-vitrine > span b {
+  color: var(--texto-suave);
+}
+
+.gal-sobe {
+  padding: 4px 6px;
+  font: 700 17px/1.3 var(--fonte-rotulo);
+  letter-spacing: 0.03em;
+  text-align: center;
+  color: var(--texto-suave);
+}
+
+.gal-largo {
+  width: 100%;
+}
+
+/* ---------- escolha de torcida (lista) ---------- */
+.gal-times {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gal-opcao {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+  color: var(--cal);
+  font: 700 16px/1.15 var(--fonte-rotulo);
+  letter-spacing: 0.03em;
+  text-align: left;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+
+.gal-opcao[aria-current='true'] {
+  box-shadow: inset 0 0 0 2px var(--cal);
+}
+
+.gal-opcao:active {
+  transform: scale(0.97);
+}
+
+.gal-opcao .cor,
+.gal-linha .cor {
+  flex: none;
+  width: 10px;
+  height: 26px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--c1) 55%, var(--c2) 55%);
+  transform: skewX(var(--inclinacao));
+}
+
+.gal-opcao span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Folha de baixo da escolha (time, estado). */
+.gal-folha-titulo {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 22px;
+  text-transform: uppercase;
+}
+
+.gal-ufs {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.gal-ufs .gal-opcao {
+  justify-content: center;
+}
+
+/* ---------- pré-temporada ---------- */
+.gal-fantasma {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.gal-fantasma-linha {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gal-fantasma .gal-item {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+
+.gal-abre {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.1;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.gal-texto {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--texto-suave);
+}
+
+/* ---------- listas (52 semanas, top 3, campeãs) ---------- */
+.gal-lista {
+  display: flex;
+  flex-direction: column;
+}
+
+.mini-linha.gal-linha {
+  grid-template-columns: 34px 10px minmax(0, 1fr) auto;
+  row-gap: 4px;
+}
+
+.gal-linha .nome small {
+  display: inline;
+}
+
+.gal-linha[role='link'] {
+  cursor: pointer;
+}
+
+.gal-barra {
+  grid-column: 1 / -1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(245, 245, 240, 0.1);
+}
+
+.gal-barra > i {
+  display: block;
+  height: 100%;
+  width: calc(var(--f, 0) * 100%);
+  border-radius: 2px;
+  background: rgba(245, 245, 240, 0.55);
+}
+
+.gal-linha.meu .gal-barra > i {
+  background: var(--cal);
+}
+
+.gal-distancia {
+  font: 700 17px/1.3 var(--fonte-rotulo);
+  letter-spacing: 0.03em;
+  color: var(--texto-suave);
+}
+
+.gal-janela {
+  font: 700 15px/1.3 var(--fonte-rotulo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.gal-campea {
+  font-family: var(--fonte-placar);
+  font-size: 24px;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.gal-campea small {
+  display: block;
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  color: var(--texto-suave);
+}
+
+.gal-semana {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 6px;
+  font-size: 16px;
+}
+
+.gal-semana + .gal-semana {
+  border-top: 1px solid var(--linha);
+}
+
+.gal-semana span:first-child {
+  flex: none;
+  font: 700 15px var(--fonte-rotulo);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.gal-semana span:last-child {
+  min-width: 0;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- ficha do troféu ---------- */
+.gal-ficha .ficha-corpo {
+  align-items: stretch;
+  text-align: center;
+}
+
+.gal-ficha-desenho {
+  display: flex;
+  justify-content: center;
+  padding: var(--e2) 0 0;
+}
+
+.gal-ficha-desenho svg {
+  height: 120px;
+  width: auto;
+  filter: drop-shadow(0 0 1px rgba(245, 245, 240, 0.75));
+}
+
+.gal-ficha-nome {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.gal-ficha .ficha-meta {
+  margin-top: -6px;
+}
+
+.gal-explica {
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.gal-campo {
+  padding: 8px 12px;
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+  font-weight: 700;
+}
+
+.gal-frase {
+  font-size: 15px;
+  line-height: 1.45;
+  font-style: italic;
+  color: var(--texto-suave);
+}
+
+.gal-ficha .dupla .botao {
+  min-height: 56px;
+  padding: 8px;
+  font-size: 17px;
+  justify-content: center;
+}
+
+.gal-ficha .dupla .botao-sec {
+  background: var(--placa-alta);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.5), inset 0 0 0 1px var(--linha);
+}
+
+.gal-esq .numero strong,
+.gal-esq .numero > span {
+  border-radius: 4px;
+  background: var(--placa-alta);
+  color: transparent;
+  animation: gal-pulso 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes gal-pulso {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gal-esq .numero strong,
+  .gal-esq .numero > span {
+    animation: none;
+  }
+  .gal-time,
+  .gal-item {
+    transition: none;
+  }
+}

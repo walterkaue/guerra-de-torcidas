@@ -3,7 +3,7 @@
 // O mês é o mais recente da tabela `temporada`, nunca o relógio do celular.
 
 import { esc, irPara } from '../app';
-import { estado } from './blocos';
+import { abas, baixarPedaco, estado, marcarAba } from './blocos';
 import { ID_OUTRO, timePorId } from '../dados/times';
 import { prefs } from '../estado';
 import * as real from '../servidor/api';
@@ -38,7 +38,7 @@ interface DadosDoMes {
   fechadas: number;
 }
 
-export function desenharTemporada(el: HTMLElement): () => void {
+function desenharMes(el: HTMLElement): () => void {
   let saiu = false;
   let temporadas: Temporada[] | null = null;
   let indice = 0;
@@ -188,5 +188,36 @@ export function desenharTemporada(el: HTMLElement): () => void {
     saiu = true;
     el.removeEventListener('click', clicou);
     el.removeEventListener('keydown', tecla);
+  };
+}
+
+/** A aba Temporada: "Mês · Série A e B" (o que já existia) e "52 semanas" (baixa só ao abrir). */
+export function desenharTemporada(el: HTMLElement, inicial: 'mes' | '52semanas' = 'mes'): () => void {
+  let parar: (() => void) | undefined;
+  let atual = '';
+  let vez = 0;
+  el.innerHTML = `<div class="abas-linha iguais">${abas('tsub', [{ id: 'mes', texto: 'Mês · Série A e B' }, { id: '52semanas', texto: '52 semanas' }], inicial, 2)}</div><div class="painel-ranking"></div>`;
+  const corpo = el.lastElementChild as HTMLElement;
+  const abrir = (id: string) => {
+    if (id === atual) return;
+    atual = id;
+    parar?.();
+    parar = undefined;
+    const minha = ++vez;
+    marcarAba(el, 'tsub', id);
+    corpo.innerHTML = '';
+    if (id === 'mes') parar = desenharMes(corpo);
+    else
+      baixarPedaco(corpo, () => import('./semanas52'), (m) => (parar = m.desenharSemanas52(corpo)), () => minha === vez);
+  };
+  el.firstElementChild!.addEventListener('click', (e) => {
+    const id = (e.target as HTMLElement).closest<HTMLElement>('[data-tsub]')?.dataset.tsub;
+    if (id) abrir(id);
+  });
+  abrir(inicial);
+
+  return () => {
+    vez++;
+    parar?.();
   };
 }
