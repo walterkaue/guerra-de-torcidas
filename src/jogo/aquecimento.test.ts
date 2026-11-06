@@ -59,6 +59,7 @@ describe('aquecimento', () => {
   });
 
   it('pergunta própria: 4 alternativas, a certa dentro, com fonte', () => {
+    expect(PERGUNTA_AQUECIMENTO.tempo).toBe(20);
     expect(PERGUNTA_AQUECIMENTO.alternativas).toHaveLength(4);
     expect(PERGUNTA_AQUECIMENTO.alternativas[PERGUNTA_AQUECIMENTO.certa]).toBe('11');
     expect(PERGUNTA_AQUECIMENTO.fonte).toMatch(/^https:\/\//);
