@@ -520,7 +520,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         botaoDoDia.querySelector<HTMLElement>('[data-lance-do-dia]')!.textContent = rotulo.split(' · ').slice(1).join(' · ');
         botaoDoDia.setAttribute('aria-label', rotulo);
         botaoDoDia.disabled = false;
-        botaoDoDia.addEventListener('click', () => irPara(time ? { tela: 'lances', lance: id } : { tela: 'times', depois: 'lances' }));
+        botaoDoDia.addEventListener('click', () => irPara(time ? { tela: 'lances', lance: id } : { tela: 'times', depois: 'lances', lance: id }));
       })
       .catch(() => {
         // sem o catálogo (rede): o botão some
