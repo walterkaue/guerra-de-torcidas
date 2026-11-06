@@ -1,3 +1,4 @@
+import { conferidoAoSalvar } from '../jogo/apelidoConferido';
 import '../estilos/times.css';
 import { desafioDoLink, desafioLancesDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
 import { TIMES, corDeTexto } from '../dados/times';
@@ -69,13 +70,15 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
     confirmar.disabled = true;
     confirmar.textContent = 'Salvando…';
     const anterior = prefs.get();
-    prefs.set({ time: escolhido, apelido: input.value.trim().replace(/\s+/g, ' ').slice(0, APELIDO_MAX) || undefined });
+    // O apelido novo só vai para o card depois que o servidor aceitar (apelidoConferido, J26).
+    const apelidoNovo = input.value.trim().replace(/\s+/g, ' ').slice(0, APELIDO_MAX) || undefined;
+    prefs.set({ time: escolhido, apelido: apelidoNovo, apelidoConferido: conferidoAoSalvar(anterior, apelidoNovo) });
     try {
       await sincronizarTorcedor();
     } catch (e) {
       if (e instanceof ErroServidor && e.codigo === 'apelido_bloqueado') {
         // Volta o apelido anterior e pede outro.
-        prefs.set({ apelido: anterior.apelido });
+        prefs.set({ apelido: anterior.apelido, apelidoConferido: anterior.apelidoConferido });
         erro.textContent = 'Esse apelido não passa no filtro. Tenta outro?';
         erro.hidden = false;
         confirmar.disabled = false;
