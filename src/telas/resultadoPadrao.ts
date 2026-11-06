@@ -11,7 +11,7 @@ import { textoDoCompartilhar, type DadosDoCard } from '../jogo/cardPersonalizado
 import { criarComemoracao, pedacosDoConfete, type MotivoDoConfete } from '../jogo/confete';
 import { selosDaPosicao, type Desempenho, type Minigame } from '../jogo/posicao';
 import { seloPre, selo } from './blocos';
-import { abrirCardPersonalizado, desenharComAsEscolhas } from './cardPersonalizado';
+import { abrirCardPersonalizado, desenharComAsEscolhas, prepararBonecoDoCard } from './cardPersonalizado';
 import { convidarParaCidade } from './conviteCidade';
 import { icone } from './icones';
 import { qualidade } from './qualidade';
@@ -218,6 +218,9 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
 
   // Resultado da 1ª partida de qualquer jogo: convite para a cidade (uma vez por aparelho).
   void convidarParaCidade(root.querySelector<HTMLElement>('[data-convite-cidade]'));
+
+  // Pôster ou "Meu boneco" guardados: lê o boneco já, para o Stories não esperar a rede no toque (14.6).
+  prepararBonecoDoCard();
 
   botao('card').addEventListener('click', () =>
     abrirCardPersonalizado({

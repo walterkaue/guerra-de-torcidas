@@ -60,7 +60,7 @@ const GEO_QUADRADO: Geo = { altura: 1080, ceu: 96, altArq: 524, fimMeio: 862, ro
 /** Mesmo ponto do cenário do Stories: onde o `ceu` do Stories (216) cai no Quadrado. */
 const DESLOCA_QUADRADO = GEO_QUADRADO.ceu - ESCALA_QUADRADO * GEO_STORIES.ceu;
 
-function desenharTelao(d: DadosDoCard, plano: PlanoDoCard): HTMLCanvasElement {
+function desenharTelao(d: DadosDoCard, plano: PlanoDoCard, busto: HTMLCanvasElement | null): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = plano.largura;
   canvas.height = plano.altura;
@@ -93,19 +93,53 @@ function desenharTelao(d: DadosDoCard, plano: PlanoDoCard): HTMLCanvasElement {
   c.restore();
 
   if (quadrado) {
-    blocoDoNumero(c, plano.destaque, plano.quem, 688, 124, 34);
-    if (plano.frase) adesivo(c, d.time, plano.frase, 800, 26);
-    if (plano.nivel) pilulaDoNivel(c, plano.nivel, geo.rodape, 30);
-    rodape(c, plano.link, plano.avisoFixo, 948, 0.8);
+    blocoDoNumero(c, plano.destaque, plano.quem, 688, 124, 34, busto);
+    if (plano.frase) adesivo(c, d.time, plano.frase, busto ? 850 : 800, 26);
+    // Com o busto, a pílula e o rodapé descem um pouco para não encostar no adesivo.
+    if (plano.nivel) pilulaDoNivel(c, plano.nivel, busto ? 910 : geo.rodape, 30);
+    rodape(c, plano.link, plano.avisoFixo, busto ? 968 : 948, 0.8);
   } else {
-    blocoDoNumero(c, plano.destaque, plano.quem);
-    if (plano.frase) adesivo(c, d.time, plano.frase);
+    blocoDoNumero(c, plano.destaque, plano.quem, 1178, 212, 54, busto);
+    if (plano.frase) adesivo(c, d.time, plano.frase, busto ? 1462 : 1395);
     if (plano.nivel) pilulaDoNivel(c, plano.nivel, geo.rodape);
     rodape(c, plano.link, plano.avisoFixo);
   }
   return canvas;
 }
 
-export function desenharCardPersonalizado(d: DadosDoCard, plano: PlanoDoCard): HTMLCanvasElement {
-  return plano.estilo === 'telao' ? desenharTelao(d, plano) : desenharCardPlacarSeco(d, plano);
+/**
+ * Lado do canvas do busto: 200 px no Stories (52 px na tela), proporcional no Quadrado. O Telão desenha no tamanho do
+ * canvas; o Placar seco reduz até caber, então recebe o maior lado que usa (130 no Quadrado), para não esticar.
+ */
+const LADO_DO_BUSTO = { telao: { stories: 200, quadrado: 104 }, placar: { stories: 200, quadrado: 130 } };
+
+/**
+ * O busto (círculo com fundo e moldura) num canvas quadrado, ou null sem busto no plano. O boneco só carrega aqui; se o
+ * pedaço do boneco não baixar, o card sai sem o busto.
+ */
+async function bustoDoCard(d: DadosDoCard, plano: PlanoDoCard): Promise<HTMLCanvasElement | null> {
+  const v = plano.busto;
+  if (!v) return null;
+  try {
+    const { desenharBoneco, numeroVisivel, prepararFonteDoNumero } = await import('../telas/bonecoMontavel');
+    if (numeroVisivel(v) !== null) await prepararFonteDoNumero();
+    const lado = LADO_DO_BUSTO[plano.estilo === 'telao' ? 'telao' : 'placar'][plano.formato];
+    const canvas = document.createElement('canvas');
+    canvas.width = lado;
+    canvas.height = lado;
+    desenharBoneco(canvas.getContext('2d')!, v, d.time.cores, 'busto', lado, lado);
+    return canvas;
+  } catch {
+    return null;
+  }
+}
+
+/** Assíncrono porque o Pôster e o busto do boneco carregam por `import()` só quando entram no card. */
+export async function desenharCardPersonalizado(d: DadosDoCard, plano: PlanoDoCard): Promise<HTMLCanvasElement> {
+  if (plano.poster) {
+    const { desenharCardPoster } = await import('./cardPoster');
+    return desenharCardPoster(d, plano);
+  }
+  const busto = await bustoDoCard(d, plano);
+  return plano.estilo === 'telao' ? desenharTelao(d, plano, busto) : desenharCardPlacarSeco(d, plano, busto);
 }

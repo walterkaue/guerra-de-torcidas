@@ -1,7 +1,9 @@
 // Só em desenvolvimento (npm run dev, com ?cardFalso na URL): abre direto a tela "Seu card" (telas/cardPersonalizado.ts),
 // sem servidor nem partida, com dados de mentira de Lances do Jogo. Serve para conferir a tela e tirar os prints.
 //   &tipo=jogo|medalha          o tipo do card (padrão: jogo-x1, de Lances com link de X1)
-//   &estilo=telao|placar        o estilo guardado no aparelho
+//   &estilo=telao|placar|poster o estilo guardado no aparelho
+//   &boneco=sem|parado|bracos   sem = sem rede (sem Pôster); parado = sem a pose de braços liberada; bracos (padrão) = com ela
+//   &comBoneco=1                já abre com o busto ligado (Telão e Placar seco)
 //   &formato=stories|quadrado   o formato guardado no aparelho
 //   &tudo=desligado             todos os quadradinhos de ligar começam desligados
 //   &folha=frase                já abre a folha "Escrever minha frase"
@@ -11,7 +13,8 @@
 import { LANCES } from '../dados/lances';
 import { TIMES, proTime, timePorId } from '../dados/times';
 import { prefs } from '../estado';
-import { tipoDoJogo, type DadosDoCard, type EscolhasDoCard, type TipoDeCard } from '../jogo/cardPersonalizado';
+import { tipoDoJogo, type BonecoDoCard, type DadosDoCard, type EscolhasDoCard, type TipoDeCard } from '../jogo/cardPersonalizado';
+import { PADRAO } from '../jogo/vestiario';
 import { linhaDoTorcedor } from '../jogo/cardTextos';
 import type { DesfechoLance } from '../jogo/lances';
 import { emojisDaPartida } from '../jogo/lancesTextos';
@@ -28,11 +31,18 @@ export function abrirCardFalso(raiz: HTMLElement): void {
   const paraTime = proTime(time);
   const apelido = prefs.get().apelido;
 
-  const estilo = q.get('estilo') === 'placar' ? 'placar' : 'telao';
+  const pedidoEstilo = q.get('estilo');
+  const estilo = pedidoEstilo === 'placar' || pedidoEstilo === 'poster' ? pedidoEstilo : 'telao';
   const formato = q.get('formato') === 'quadrado' ? 'quadrado' : 'stories';
   const tudoDesligado = q.get('tudo') === 'desligado';
-  const escolhas: EscolhasDoCard = { estilo, formato, desligados: tudoDesligado ? ['frase', 'apelido', 'placar', 'link'] : [] };
+  const escolhas: EscolhasDoCard = { estilo, formato, desligados: tudoDesligado ? ['frase', 'apelido', 'placar', 'link'] : [], comBoneco: q.get('comBoneco') === '1' };
   prefs.set({ card: escolhas, nivelNoCard: !tudoDesligado });
+
+  // O boneco de mentira: uma vestimenta fixa, sem passar pelo servidor.
+  const vestimenta = { ...PADRAO, numero: '07', fundo: 'tunel', camisa: 'uni1' } as BonecoDoCard['vestimenta'];
+  const modo = q.get('boneco');
+  const boneco: Promise<BonecoDoCard | null> =
+    modo === 'sem' ? Promise.resolve(null) : Promise.resolve({ vestimenta, liberadas: modo === 'parado' ? [] : ['pose_bracos'] });
 
   const pedido = q.get('tipo');
   const tipo: TipoDeCard = pedido === 'medalha' ? 'medalha' : pedido === 'jogo' ? 'jogo' : tipoDoJogo(true);
@@ -97,6 +107,7 @@ export function abrirCardFalso(raiz: HTMLElement): void {
     link: `https://${link}`,
     sortearFrase,
     quemComApelido,
+    boneco,
     inicial: folha ? { folhaDaFrase: folha } : undefined,
   });
 }

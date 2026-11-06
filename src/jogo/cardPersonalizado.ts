@@ -1,9 +1,9 @@
-// Cards personalizáveis (docs/jogo.md 14.6): a conta pura do que entra em cada estilo (Telão, Placar seco) e formato
+// Cards personalizáveis (docs/jogo.md 14.6): a conta pura do que entra em cada estilo (Telão, Placar seco, Pôster) e formato
 // (Stories 1080×1920, Quadrado 1080×1080), dos quadradinhos de ligar e desligar de cada tipo de card e das escolhas
 // guardadas no aparelho. Sem DOM nem canvas: o desenho fica em `cardPersonalizadoDesenho.ts`, a tela em
 // `telas/cardPersonalizado.ts`. Tipo de card novo (o troféu da Galeria, por exemplo) entra em TIPOS_DE_CARD.
 
-import type { Time } from '../dados/times';
+import { proTime, type Time } from '../dados/times';
 import type { Medalha } from './lances';
 import type { DesfechoLance } from './lances';
 import type { Luz } from './home';
@@ -11,14 +11,16 @@ import type { Pistas } from './timeDoDia';
 import type { LinhaMeuPalpite } from './cravaTela';
 import type { PontosDoJogo } from './crava';
 import type { ItemDaMedalha } from './medalhaTextos';
+import type { Vestimenta } from './vestiario';
 
 // ---------- estilos e formatos ----------
 
-export type EstiloCard = 'telao' | 'placar';
-/** Na ordem do deslizar; o primeiro é o padrão. */
+export type EstiloCard = 'telao' | 'placar' | 'poster';
+/** Na ordem do deslizar; o primeiro é o padrão. O Pôster só existe com o boneco carregado (`estilosDisponiveis`). */
 export const ESTILOS: readonly { id: EstiloCard; nome: string }[] = [
   { id: 'telao', nome: 'Telão' },
   { id: 'placar', nome: 'Placar seco' },
+  { id: 'poster', nome: 'Pôster' },
 ];
 
 export type FormatoCard = 'stories' | 'quadrado';
@@ -32,17 +34,39 @@ export const TAMANHO_DO_CARD: Record<FormatoCard, { l: number; a: number }> = {
   quadrado: { l: 1080, a: 1080 },
 };
 
-/** O estilo seguinte (ou anterior, passo −1), dando a volta: o deslizar e "Trocar estilo". */
-export function estiloVizinho(atual: EstiloCard, passo: 1 | -1): EstiloCard {
-  const i = ESTILOS.findIndex((e) => e.id === atual);
-  return ESTILOS[(i + passo + ESTILOS.length) % ESTILOS.length].id;
+/** Os estilos que dá para escolher agora: sem o boneco carregado (sem rede), o Pôster some da lista. */
+export function estilosDisponiveis(temBoneco: boolean): readonly EstiloCard[] {
+  return ESTILOS.map((e) => e.id).filter((e) => temBoneco || e !== 'poster');
+}
+
+/**
+ * O estilo que vale agora: o guardado, ou o primeiro disponível se o guardado não está na lista (Pôster guardado e
+ * sem boneco). A escolha guardada não muda por isso: com rede de novo, o Pôster volta.
+ */
+export function estiloEfetivo(guardado: EstiloCard, temBoneco: boolean): EstiloCard {
+  const lista = estilosDisponiveis(temBoneco);
+  return lista.includes(guardado) ? guardado : lista[0];
+}
+
+/** O estilo seguinte (ou anterior, passo −1) entre os disponíveis, dando a volta: o deslizar e as setas do teclado. */
+export function estiloVizinho(atual: EstiloCard, passo: 1 | -1, temBoneco = true): EstiloCard {
+  const lista = estilosDisponiveis(temBoneco);
+  const i = lista.indexOf(atual);
+  if (i < 0) return lista[0];
+  return lista[(i + passo + lista.length) % lista.length];
+}
+
+/** Os nomes embaixo do card, que viram botões de tocar (para quem não desliza); o atual fica em amarelo. */
+export function botoesDeEstilo(atual: EstiloCard, temBoneco: boolean): { id: EstiloCard; nome: string; atual: boolean }[] {
+  const efetivo = estiloEfetivo(atual, temBoneco);
+  return estilosDisponiveis(temBoneco).map((id) => ({ id, nome: ESTILOS.find((e) => e.id === id)!.nome, atual: id === efetivo }));
 }
 
 // ---------- tipos de card e quadradinhos ----------
 
 /** O que se liga e desliga no card. */
 export type Chave = 'frase' | 'apelido' | 'nivel' | 'placar' | 'link';
-export type Acao = 'sortear' | 'escrever' | 'trocar';
+export type Acao = 'sortear' | 'escrever';
 
 export interface Quadradinho<C extends string> {
   chave: C;
@@ -69,12 +93,42 @@ export const TIPOS_DE_CARD: Record<TipoDeCard, readonly Quadradinho<Chave>[]> = 
   medalha: [FRASE, APELIDO, NIVEL, { chave: 'placar', nome: 'Medalha\nem emoji', icone: 'trofeu' }, { chave: 'link', nome: 'Link do\nlance', icone: 'corrente' }],
 };
 
-/** Os 3 de ação (verdes), iguais em todo tipo, depois dos de ligar. */
+/** Os 2 de ação (verdes), iguais em todo tipo, depois dos de ligar. */
 export const ACOES: readonly Quadradinho<Acao>[] = [
   { chave: 'sortear', nome: 'Sortear\noutra frase', icone: 'troca' },
   { chave: 'escrever', nome: 'Escrever\nminha frase', icone: 'lapis' },
-  { chave: 'trocar', nome: 'Trocar\nestilo', icone: 'imagem' },
 ];
+
+/**
+ * O 8º quadradinho, no lugar do antigo "Trocar estilo": liga e desliga o busto no Telão e no Placar seco; no Pôster
+ * fica sempre ligado. Igual em todo tipo de card. O estado sai de `estadoDoMeuBoneco`.
+ */
+export const MEU_BONECO: Quadradinho<'boneco'> = { chave: 'boneco', nome: 'Meu\nboneco', icone: 'camisa' };
+
+export const AVISO_POSTER = 'No Pôster o boneco é o card.';
+export const AVISO_SEM_BONECO = 'Sem conexão pro boneco agora';
+
+export interface EstadoDoMeuBoneco {
+  ligado: boolean;
+  /** Não muda ao tocar (no Pôster, ou sem boneco carregado). */
+  travado: boolean;
+  /** O que aparece ao tocar (ou fixo, sem boneco). */
+  aviso: string | null;
+}
+
+/** "Meu boneco" para o estilo de agora: sem boneco, desligado e travado; no Pôster, ligado e travado. */
+export function estadoDoMeuBoneco(estilo: EstiloCard, temBoneco: boolean, comBoneco: boolean): EstadoDoMeuBoneco {
+  if (!temBoneco) return { ligado: false, travado: true, aviso: AVISO_SEM_BONECO };
+  if (estilo === 'poster') return { ligado: true, travado: true, aviso: AVISO_POSTER };
+  return { ligado: comBoneco, travado: false, aviso: null };
+}
+
+/** Toque em "Meu boneco": travado não muda nada e devolve o aviso; senão liga ou desliga o busto (guardado no aparelho). */
+export function tocarMeuBoneco(e: EscolhasDoCard, temBoneco: boolean): { escolhas: EscolhasDoCard; aviso: string | null } {
+  const estado = estadoDoMeuBoneco(estiloEfetivo(e.estilo, temBoneco), temBoneco, e.comBoneco);
+  if (estado.travado) return { escolhas: e, aviso: estado.aviso };
+  return { escolhas: { ...e, comBoneco: !e.comBoneco }, aviso: null };
+}
 
 /** X1 só existe quando a partida gerou o código; sem ele, o card é do tipo sem X1 ("Link do jogo"). */
 export const tipoDoJogo = (temX1: boolean): TipoDeCard => (temX1 ? 'jogo-x1' : 'jogo');
@@ -87,9 +141,11 @@ export interface EscolhasDoCard {
   formato: FormatoCard;
   /** Desligados de propósito (o nível fica em `nivelNoCard`, a mesma escolha do Perfil). */
   desligados: readonly Exclude<Chave, 'nivel'>[];
+  /** "Meu boneco" no Telão e no Placar seco (o busto ao lado do apelido). Começa desligado. */
+  comBoneco: boolean;
 }
 
-export const ESCOLHAS_PADRAO: EscolhasDoCard = { estilo: 'telao', formato: 'stories', desligados: [] };
+export const ESCOLHAS_PADRAO: EscolhasDoCard = { estilo: 'telao', formato: 'stories', desligados: [], comBoneco: false };
 
 const CHAVES_GUARDADAS: readonly Exclude<Chave, 'nivel'>[] = ['frase', 'apelido', 'placar', 'link'];
 
@@ -99,7 +155,7 @@ export function lerEscolhas(salvo: unknown): EscolhasDoCard {
   const estilo = ESTILOS.some((e) => e.id === s.estilo) ? (s.estilo as EstiloCard) : ESCOLHAS_PADRAO.estilo;
   const formato = FORMATOS.some((f) => f.id === s.formato) ? (s.formato as FormatoCard) : ESCOLHAS_PADRAO.formato;
   const desligados = Array.isArray(s.desligados) ? CHAVES_GUARDADAS.filter((c) => (s.desligados as unknown[]).includes(c)) : [];
-  return { estilo, formato, desligados };
+  return { estilo, formato, desligados, comBoneco: s.comBoneco === true };
 }
 
 /** Situação do aparelho que muda o que pode ficar ligado. */
@@ -177,6 +233,32 @@ export interface DadosDoCard {
   luz?: Luz;
 }
 
+/** O boneco da pessoa, como veio do servidor (`lerBoneco`). */
+export interface BonecoDoCard {
+  vestimenta: Vestimenta;
+  /** Ids das peças liberadas (PECAS em vestiario.ts). */
+  liberadas: readonly string[];
+}
+
+/** O Pôster: o boneco é o card. */
+export interface PlanoDoPoster {
+  /** A vestimenta como vai no card: "braços pra cima" se a pose está liberada, senão parado. */
+  vestimenta: Vestimenta;
+  /** Stories: corpo inteiro. Quadrado: do joelho pra cima, para caber. */
+  enquadramento: 'corpo' | 'joelho';
+  /** O número da camisa, grande e translúcido atrás do boneco, na cor 1 do time (null sem número). */
+  numero: string | null;
+  /** A faixa escura do topo: "LANCES DO JOGO · a falta do tri". */
+  faixa: string;
+  /** Na placa escura de baixo, à esquerda, com o nível do plano embaixo; só com "Meu apelido" ligado. */
+  apelido: string | null;
+  /** À direita: os pontos grandes ("+134", "OURO") e "pro Flamengo" embaixo (null para "Outro time"). */
+  pontos: string;
+  proTime: string | null;
+  /** No card de medalha, a medalha desenhada junto dos pontos. */
+  medalha: Medalha | null;
+}
+
 /** O que entra no card, já decidido: o desenho só desenha o que vier aqui. */
 export interface PlanoDoCard {
   estilo: EstiloCard;
@@ -202,6 +284,10 @@ export interface PlanoDoCard {
   link: string | null;
   novoRecorde: boolean;
   avisoFixo: string | null;
+  /** Telão e Placar seco: o busto ao lado do apelido ("Meu boneco" ligado e boneco carregado). */
+  busto: Vestimenta | null;
+  /** Só no estilo Pôster. */
+  poster: PlanoDoPoster | null;
 }
 
 export interface OpcoesDoPlano {
@@ -210,6 +296,33 @@ export interface OpcoesDoPlano {
   ligados: ReadonlySet<Chave>;
   /** A frase própria deste card (já conferida); troca a do narrador. */
   frasePropria?: string | null;
+  /** O boneco carregado; sem ele não há busto nem Pôster (o Pôster vira Telão). */
+  boneco?: BonecoDoCard | null;
+  /** "Meu boneco" ligado (busto no Telão e no Placar seco). */
+  comBoneco?: boolean;
+  /** O apelido salvo, para a placa do Pôster. */
+  apelido?: string | null;
+}
+
+/** A pose do Pôster: "braços pra cima" se a peça está liberada, senão parado (docs/jogo.md 14.6). */
+export function vestimentaDoPoster(b: BonecoDoCard): Vestimenta {
+  return { ...b.vestimenta, pose: b.liberadas.includes('pose_bracos') ? 'bracos' : 'parado' };
+}
+
+/**
+ * "LANCES DO JOGO · a falta do tri": só o nome do jogo (a parte antes de " · ", sem a rodada do Crava, que o lance já
+ * diz) e o lance, sem repetir o nome que já vier nele ("Prova de Boleiro: …").
+ */
+export function faixaDoPoster(jogo: string, lance: string): string {
+  const nome = jogo.split(' · ')[0].trim();
+  const minusculo = (t: string) => t.trim().toLocaleLowerCase('pt-BR');
+  let resto = lance.trim();
+  if (minusculo(resto).startsWith(`${minusculo(nome)}:`)) resto = resto.slice(nome.length + 1).trim();
+  resto = resto
+    .split(' · ')
+    .filter((t) => t.trim() && minusculo(t) !== minusculo(nome))
+    .join(' · ');
+  return resto ? `${nome.toUpperCase()} · ${resto}` : nome.toUpperCase();
 }
 
 /** Decide o que entra no card para um estilo, um formato e o que está ligado. */
@@ -218,9 +331,13 @@ export function planoDoCard(d: DadosDoCard, o: OpcoesDoPlano): PlanoDoCard {
   const liga = (c: Chave) => o.ligados.has(c);
   const comApelido = liga('apelido');
   const frase = (o.frasePropria ?? d.frase).trim();
-  const telao = o.estilo === 'telao';
+  const boneco = o.boneco ?? null;
+  // Sem boneco, o Pôster não existe: vira o Telão (estiloEfetivo).
+  const estilo = estiloEfetivo(o.estilo, !!boneco);
+  const telao = estilo === 'telao';
+  const poster = estilo === 'poster' && boneco ? planoDoPoster(d, o, boneco, comApelido) : null;
   return {
-    estilo: o.estilo,
+    estilo,
     formato: o.formato,
     largura: l,
     altura: a,
@@ -236,14 +353,30 @@ export function planoDoCard(d: DadosDoCard, o: OpcoesDoPlano): PlanoDoCard {
     link: liga('link') && d.link ? d.link.replace(/^https?:\/\//, '') : null,
     novoRecorde: d.novoRecorde,
     avisoFixo: d.avisoFixo ?? null,
+    busto: !poster && boneco && o.comBoneco ? boneco.vestimenta : null,
+    poster,
+  };
+}
+
+function planoDoPoster(d: DadosDoCard, o: OpcoesDoPlano, b: BonecoDoCard, comApelido: boolean): PlanoDoPoster {
+  const vestimenta = vestimentaDoPoster(b);
+  const apelido = comApelido && o.apelido?.trim() ? o.apelido.trim() : null;
+  return {
+    vestimenta,
+    enquadramento: o.formato === 'stories' ? 'corpo' : 'joelho',
+    numero: vestimenta.numero,
+    faixa: faixaDoPoster(d.jogo, d.lance),
+    apelido,
+    pontos: d.destaque,
+    proTime: proTime(d.time),
+    medalha: d.conteudo.jogo === 'medalha' ? d.conteudo.medalha : null,
   };
 }
 
 // ---------- compartilhar ----------
 
 /** Nome do arquivo baixado ou compartilhado. */
-export const nomeDoArquivo = (estilo: EstiloCard, formato: FormatoCard): string =>
-  `guerra-de-torcidas-${estilo === 'telao' ? 'telao' : 'placar'}-${formato}.png`;
+export const nomeDoArquivo = (estilo: EstiloCard, formato: FormatoCard): string => `guerra-de-torcidas-${estilo}-${formato}.png`;
 
 /**
  * Texto que vai junto com a imagem: o do jogo (só emoji antigo, seção 6), sem as linhas do link quando o link está

@@ -22,8 +22,8 @@ interface Bloco {
 
 /** Tamanhos de partida de cada formato; o resto sai da redução `k` até o conjunto caber. */
 const BASE = {
-  stories: { topo: 46, destaque: 340, time: 108, lance: 52, emoji: 150, quem: 56, frase: 46, nivel: 40, link: 52, aviso: 30, margem: 120, gap: 1 },
-  quadrado: { topo: 36, destaque: 250, time: 76, lance: 40, emoji: 100, quem: 44, frase: 36, nivel: 32, link: 40, aviso: 26, margem: 56, gap: 0.62 },
+  stories: { topo: 46, destaque: 340, time: 108, lance: 52, emoji: 150, quem: 56, busto: 200, frase: 46, nivel: 40, link: 52, aviso: 30, margem: 120, gap: 1 },
+  quadrado: { topo: 36, destaque: 250, time: 76, lance: 40, emoji: 100, quem: 44, busto: 130, frase: 36, nivel: 32, link: 40, aviso: 26, margem: 56, gap: 0.62 },
 };
 
 /** Maior tamanho (até `tam`, nunca abaixo de `min`) em que o texto cabe em `largura`. */
@@ -39,7 +39,7 @@ function duasLinhas(c: CanvasRenderingContext2D, texto: string, largura: number)
   return linhas.length > 2 ? [linhas[0], cortarTexto(c, linhas.slice(1).join(' '), largura)] : linhas;
 }
 
-function montar(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard, k: number): Bloco[] {
+function montar(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard, k: number, busto: HTMLCanvasElement | null): Bloco[] {
   const b = BASE[plano.formato];
   const z = (base: number, piso = 0.8) => Math.max(base * piso, base * k);
   const gap = (n: number) => n * b.gap * Math.max(k, 0.55);
@@ -138,15 +138,29 @@ function montar(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard,
     });
   }
 
-  // Quem fez.
-  if (plano.quem) {
+  // Quem fez; com o busto do boneco, os dois lado a lado e centrados (sem a linha, o busto vai sozinho).
+  if (plano.quem || busto) {
     const quem = plano.quem;
-    const tam = caber(c, (t) => `800 ${t}px ${FONTE}`, quem, 940, z(b.quem), 30);
-    add(gap(50), tam * 0.8, (y) => {
+    const lado = busto ? Math.round(z(b.busto, 0.5)) : 0;
+    const folga = busto && quem ? lado * 0.14 : 0;
+    const tam = quem ? caber(c, (t) => `800 ${t}px ${FONTE}`, quem, 940 - lado - folga, z(b.quem), 30) : 0;
+    c.font = `800 ${tam}px ${FONTE}`;
+    const texto = quem ? Math.min(c.measureText(quem).width, 940 - lado - folga) : 0;
+    const altura = Math.max(tam * 0.8, lado);
+    add(gap(50), altura, (y) => {
+      const x0 = cx - (lado + folga + texto) / 2;
+      if (busto) c.drawImage(busto, x0, y, lado, lado);
+      if (!quem) return;
       c.font = `800 ${tam}px ${FONTE}`;
       c.fillStyle = TINTA;
-      c.textAlign = 'center';
-      c.fillText(quem, cx, y + tam * 0.78, 940);
+      c.textBaseline = 'alphabetic';
+      if (busto) {
+        c.textAlign = 'left';
+        c.fillText(quem, x0 + lado + folga, y + lado / 2 + tam * 0.3, texto);
+      } else {
+        c.textAlign = 'center';
+        c.fillText(quem, cx, y + tam * 0.78, 940);
+      }
     });
   }
 
@@ -231,7 +245,8 @@ function montar(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard,
 
 const total = (bs: Bloco[]) => bs.reduce((s, b) => s + b.antes + b.h, 0);
 
-export function desenharCardPlacarSeco(d: DadosDoCard, plano: PlanoDoCard): HTMLCanvasElement {
+/** `busto`: o canvas do busto do boneco já pronto (quadrado), ou null; assim este módulo não importa o boneco. */
+export function desenharCardPlacarSeco(d: DadosDoCard, plano: PlanoDoCard, busto: HTMLCanvasElement | null = null): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = plano.largura;
   canvas.height = plano.altura;
@@ -241,10 +256,10 @@ export function desenharCardPlacarSeco(d: DadosDoCard, plano: PlanoDoCard): HTML
 
   const limite = plano.altura - BASE[plano.formato].margem * 2;
   let k = 1;
-  let blocos = montar(c, d, plano, k);
+  let blocos = montar(c, d, plano, k, busto);
   while (total(blocos) > limite && k > 0.3) {
     k = Math.round((k - 0.04) * 100) / 100;
-    blocos = montar(c, d, plano, k);
+    blocos = montar(c, d, plano, k, busto);
   }
   let y = (plano.altura - total(blocos)) / 2;
   for (const bl of blocos) {

@@ -259,7 +259,16 @@ export function telao(c: CanvasRenderingContext2D, time: Time, maior: number, so
 }
 
 /** O destaque grande (em amarelo, com sombra) e, embaixo, a linha de quem fez. */
-export function blocoDoNumero(c: CanvasRenderingContext2D, destaque: string, quem: string | null, yBase = 1178, tam = 212, tamQuem = 54): void {
+export function blocoDoNumero(
+  c: CanvasRenderingContext2D,
+  destaque: string,
+  quem: string | null,
+  yBase = 1178,
+  tam = 212,
+  tamQuem = 54,
+  /** O busto do boneco já pronto (canvas quadrado, no tamanho final): vai ao lado da linha de quem fez, o grupo centrado. */
+  busto: HTMLCanvasElement | null = null,
+): void {
   c.textAlign = 'center';
   c.textBaseline = 'alphabetic';
   c.font = `400 ${tam}px ${PLACAR}`;
@@ -267,10 +276,26 @@ export function blocoDoNumero(c: CanvasRenderingContext2D, destaque: string, que
   c.fillText(destaque, L / 2 + tam / 30, yBase + tam / 30, L - 120);
   c.fillStyle = AMARELO;
   c.fillText(destaque, L / 2, yBase, L - 120);
+  if (busto) return linhaComBusto(c, busto, quem, yBase + tam * 0.07, tamQuem);
   if (!quem) return;
   c.font = `800 ${tamQuem}px ${FONTE}`;
   c.fillStyle = '#ffffff';
   c.fillText(quem, L / 2, yBase + tamQuem * 1.5, L - 130);
+}
+
+/** Busto + linha de quem fez, lado a lado e centrados; sem a linha, o busto vai sozinho. `topo` é o alto do busto. */
+function linhaComBusto(c: CanvasRenderingContext2D, busto: HTMLCanvasElement, quem: string | null, topo: number, tamQuem: number): void {
+  const lado = busto.width;
+  const folga = lado * 0.14;
+  c.font = `800 ${tamQuem}px ${FONTE}`;
+  const texto = quem ? Math.min(c.measureText(quem).width, L - 130 - lado - folga) : 0;
+  const x0 = L / 2 - (lado + (quem ? folga + texto : 0)) / 2;
+  c.drawImage(busto, x0, topo, lado, lado);
+  if (!quem) return;
+  c.textAlign = 'left';
+  c.textBaseline = 'alphabetic';
+  c.fillStyle = '#ffffff';
+  c.fillText(quem, x0 + lado + folga, topo + lado / 2 + tamQuem * 0.34, texto);
 }
 
 /** Adesivo do narrador: papel, borda na cor do time e levemente torto, como na Home e no resultado. Centro em (L/2, y). */

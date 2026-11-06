@@ -1,6 +1,6 @@
 // Tela "SEU CARD" (docs/jogo.md 14.6): folha de tela cheia que abre do botão Card de todo resultado e do "Mandar a
 // medalha". O card no meio, com as pontas dos outros estilos dos lados (deslizar troca), 5 quadradinhos de ligar e
-// desligar, 3 de ação (sortear, escrever a própria frase, trocar estilo), Salvar imagem e Compartilhar. A conta do que
+// desligar, 2 de ação (sortear, escrever a própria frase) e "Meu boneco", Salvar imagem e Compartilhar. A conta do que
 // entra no card é pura (`jogo/cardPersonalizado.ts`); aqui só há tela. A frase própria vale só para este card: não vai
 // para prefs, localStorage nem servidor.
 
@@ -13,11 +13,17 @@ import { prontoParaDesenhar } from '../jogo/card';
 import {
   ACOES,
   AVISO_IPHONE,
+  AVISO_SEM_BONECO,
   ESTILOS,
+  MEU_BONECO,
   FORMATOS,
   TAMANHO_DO_CARD,
   TIPOS_DE_CARD,
   alternar,
+  botoesDeEstilo,
+  estadoDoMeuBoneco,
+  estiloEfetivo,
+  estilosDisponiveis,
   estiloVizinho,
   lerEscolhas,
   ligados as ligadosDe,
@@ -25,7 +31,9 @@ import {
   planoDoCard,
   salvaPelaFolha,
   textoDoCompartilhar,
+  tocarMeuBoneco,
   type Acao,
+  type BonecoDoCard,
   type Chave,
   type Contexto,
   type DadosDoCard,
@@ -39,6 +47,7 @@ import { escolherFrase, type ContextoNarrador } from '../narrador/escolher';
 import type { EventoNarrador } from '../narrador/frases';
 import { lerRecentes, registrarVista } from '../narrador/historico';
 import { ErroServidor, salvarTorcedor } from '../servidor/api';
+import { lerBoneco } from '../servidor/boneco';
 import { nivelParaCard } from './carreira';
 import { icone, type NomeIcone } from './icones';
 
@@ -49,6 +58,51 @@ const VAO = 12;
 /** O mínimo que precisa aparecer de cada vizinho, em pixels (limita a largura do Quadrado). */
 const PONTA = 28;
 const DICA = 'deslize pra trocar';
+/** Quanto a tela SEU CARD espera o boneco do servidor antes de seguir sem ele (sem rede), em milissegundos. */
+const TEMPO_DO_BONECO = 4000;
+/**
+ * Quanto o botão Stories do resultado espera o boneco: pouco, para o compartilhar não perder o gesto do toque (o
+ * iPhone recusa o `share` muito depois do toque). Passou disso, o card sai sem ele (Telão, sem busto).
+ */
+const TEMPO_NO_TOQUE = 800;
+/** Por quanto tempo uma leitura do boneco vale para os próximos cards (o vestiário pode ter mudado depois). */
+const VALIDADE_DO_BONECO = 60_000;
+
+let leitura: { desde: number; promessa: Promise<BonecoDoCard | null> } | null = null;
+
+/** Uma leitura só para vários cards seguidos; erro não fica guardado. */
+function lerBonecoGuardado(): Promise<BonecoDoCard | null> {
+  if (leitura && Date.now() - leitura.desde < VALIDADE_DO_BONECO) return leitura.promessa;
+  const promessa = lerBoneco().then(
+    (b): BonecoDoCard => ({ vestimenta: b.vestimenta, liberadas: b.liberadas }),
+    () => {
+      if (leitura?.promessa === promessa) leitura = null;
+      return null;
+    },
+  );
+  leitura = { desde: Date.now(), promessa };
+  return promessa;
+}
+
+/** O boneco guardado no servidor; erro ou tempo esgotado viram null (o card sai sem Pôster e sem busto). */
+export function bonecoDoServidor(limite = TEMPO_DO_BONECO): Promise<BonecoDoCard | null> {
+  return new Promise((ok) => {
+    const t = window.setTimeout(() => ok(null), limite);
+    void lerBonecoGuardado().then((b) => {
+      clearTimeout(t);
+      ok(b);
+    });
+  });
+}
+
+/**
+ * Começa a ler o boneco antes do toque, se as escolhas guardadas vão usá-lo (Pôster ou "Meu boneco"). Quem mostra um
+ * resultado chama ao aparecer, para o botão Stories não esperar a rede no toque.
+ */
+export function prepararBonecoDoCard(): void {
+  const e = lerEscolhas(prefs.get().card);
+  if (e.estilo === 'poster' || e.comBoneco) void lerBonecoGuardado();
+}
 
 export interface OpcoesDoCard {
   /** O dialog entra aqui e some quando a tela é trocada. */
@@ -63,6 +117,8 @@ export interface OpcoesDoCard {
   sortearFrase?: () => string | null;
   /** Refaz a linha de quem fez com o apelido recém-escolhido (a escolha do apelido sem sair da tela). */
   quemComApelido?: (apelido: string) => string;
+  /** O boneco da pessoa; o padrão é lê-lo do servidor (null = sem rede: sem Pôster e sem busto). */
+  boneco?: Promise<BonecoDoCard | null>;
   /** Só para os prints em desenvolvimento: já abre a folha da frase (e, com `enviar`, toca em "Pôr no card"). */
   inicial?: { folhaDaFrase?: { texto: string; enviar: boolean } };
 }
@@ -79,8 +135,17 @@ export function escolhasGuardadas(tipo: DadosDoCard['tipo']): { escolhas: Escolh
 export async function desenharComAsEscolhas(dados: DadosDoCard): Promise<{ canvas: HTMLCanvasElement; comLink: boolean }> {
   await prontoParaDesenhar();
   const { escolhas, ligados } = escolhasGuardadas(dados.tipo);
-  const plano = planoDoCard(dados, { estilo: escolhas.estilo, formato: escolhas.formato, ligados });
-  return { canvas: desenharCardPersonalizado(dados, plano), comLink: ligados.has('link') };
+  // Só busca o boneco se o card vai usá-lo (Pôster guardado ou busto ligado).
+  const boneco = escolhas.estilo === 'poster' || escolhas.comBoneco ? await bonecoDoServidor(TEMPO_NO_TOQUE) : null;
+  const plano = planoDoCard(dados, {
+    estilo: escolhas.estilo,
+    formato: escolhas.formato,
+    ligados,
+    boneco,
+    comBoneco: escolhas.comBoneco,
+    apelido: prefs.get().apelido ?? null,
+  });
+  return { canvas: await desenharCardPersonalizado(dados, plano), comLink: ligados.has('link') };
 }
 
 /**
@@ -126,9 +191,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
         </div>
         <p class="cc-montando" data-montando>Montando o card…</p>
       </div>
-      <div class="cc-pontos" data-pontos>
-        ${ESTILOS.map((e) => `<span data-ponto="${e.id}">${esc(e.nome)}</span>`).join('')}
-      </div>
+      <div class="cc-pontos" data-pontos></div>
       <p class="cc-dica" data-dica role="status" aria-live="polite">${DICA}</p>
       <div class="cc-grade" data-grade></div>
       <div class="cc-acoes">
@@ -144,10 +207,14 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
   const slides = [...d.querySelectorAll<HTMLElement>('.cc-slide')];
   const dica = $('[data-dica]');
   const grade = $('[data-grade]');
+  const pontos = $('[data-pontos]');
   const btnSalvar = $<HTMLButtonElement>('[data-salvar]');
   const btnCompartilhar = $<HTMLButtonElement>('[data-compartilhar]');
 
   let dados: DadosDoCard | null = null;
+  let boneco: BonecoDoCard | null = null;
+  const temBoneco = () => boneco !== null;
+  const estilo = () => estiloEfetivo(escolhas.estilo, temBoneco());
   let escolhas = lerEscolhas(prefs.get().card);
   let nivelNoCard = !!prefs.get().nivelNoCard;
   let frasePropria: string | null = null;
@@ -207,8 +274,8 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
 
   /** Põe a imagem de cada estilo no slide certo: o do meio é o atual, as pontas são os vizinhos. */
   function pintar(): void {
-    const atual = escolhas.estilo;
-    const estiloDe = (pos: number): EstiloCard => (pos === 0 ? atual : estiloVizinho(atual, pos < 0 ? -1 : 1));
+    const atual = estilo();
+    const estiloDe = (pos: number): EstiloCard => (pos === 0 ? atual : estiloVizinho(atual, pos < 0 ? -1 : 1, temBoneco()));
     for (const s of slides) {
       const pos = Number(s.dataset.pos);
       const estilo = estiloDe(pos);
@@ -219,15 +286,30 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
       img.alt = pos === 0 ? `Seu card no estilo ${ESTILOS.find((e) => e.id === estilo)!.nome}` : '';
       s.setAttribute('aria-hidden', String(pos !== 0));
     }
-    for (const p of d.querySelectorAll<HTMLElement>('[data-ponto]')) {
-      const on = p.dataset.ponto === atual;
-      p.classList.toggle('on', on);
-      if (on) p.setAttribute('aria-current', 'true');
-      else p.removeAttribute('aria-current');
-    }
+    marcarPontos();
     const cheio = prontos.has(atual);
     palco.toggleAttribute('data-vazio', !cheio);
     palco.setAttribute('aria-busy', String(!cheio));
+  }
+
+  /**
+   * Os nomes dos estilos embaixo do card: botões de tocar, o atual em amarelo. Montados uma vez (a lista só muda com o
+   * boneco, que chega antes); depois só a marca muda, para não perder o toque nem o foco.
+   */
+  function montarPontos(): void {
+    pontos.innerHTML = botoesDeEstilo(escolhas.estilo, temBoneco())
+      .map((b) => `<button type="button" data-ponto="${b.id}">${esc(b.nome)}</button>`)
+      .join('');
+    marcarPontos();
+  }
+  function marcarPontos(): void {
+    const atual = estilo();
+    for (const b of pontos.querySelectorAll<HTMLElement>('[data-ponto]')) {
+      const on = b.dataset.ponto === atual;
+      b.classList.toggle('on', on);
+      if (on) b.setAttribute('aria-current', 'true');
+      else b.removeAttribute('aria-current');
+    }
   }
 
   // ---------- desenho ----------
@@ -236,21 +318,37 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
     const minha = ++geracao;
     try {
       await prontoParaDesenhar();
-      const L = ligados();
-      const ordem = [escolhas.estilo, ...ESTILOS.map((e) => e.id).filter((e) => e !== escolhas.estilo)];
-      for (const estilo of ordem) {
-        const plano = planoDoCard(dados, { estilo, formato: escolhas.formato, ligados: L, frasePropria });
-        const canvas = desenharCardPersonalizado(dados, plano);
+    } catch {
+      if (minha === geracao) avisar('Não deu pra desenhar o card agora. Tenta de novo.');
+      return;
+    }
+    const L = ligados();
+    const atual = estilo();
+    const ordem = [atual, ...estilosDisponiveis(temBoneco()).filter((e) => e !== atual)];
+    // Cada estilo por si: se um falhar (o pedaço do Pôster não baixou, por exemplo), os outros saem mesmo assim.
+    for (const est of ordem) {
+      try {
+        const plano = planoDoCard(dados, {
+          estilo: est,
+          formato: escolhas.formato,
+          ligados: L,
+          frasePropria,
+          boneco,
+          comBoneco: escolhas.comBoneco,
+          apelido: prefs.get().apelido ?? null,
+        });
+        const canvas = await desenharCardPersonalizado(dados, plano);
         const blob = await noBlob(canvas);
         if (minha !== geracao || fechado) return;
         // O de agora aparece assim que fica pronto; os vizinhos chegam em seguida (até lá, com a imagem anterior).
-        const antigo = prontos.get(estilo);
-        prontos.set(estilo, { blob, url: blob ? URL.createObjectURL(blob) : canvas.toDataURL('image/png') });
+        const antigo = prontos.get(est);
+        prontos.set(est, { blob, url: blob ? URL.createObjectURL(blob) : canvas.toDataURL('image/png') });
         pintar();
         if (antigo?.url.startsWith('blob:')) URL.revokeObjectURL(antigo.url);
+      } catch {
+        if (minha !== geracao || fechado) return;
+        if (est === estilo()) avisar('Não deu pra desenhar o card agora. Tenta de novo.');
       }
-    } catch {
-      if (minha === geracao) avisar('Não deu pra desenhar o card agora. Tenta de novo.');
     }
   }
 
@@ -263,13 +361,21 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
       TIPOS_DE_CARD[dados!.tipo]
         .map((q) => `<button type="button" class="cc-q cc-liga" data-chave="${q.chave}" aria-pressed="false">${html(q)}<span class="cc-check" aria-hidden="true">✓</span></button>`)
         .join('') +
-      ACOES.map((q) => `<button type="button" class="cc-q cc-acao" data-acao="${q.chave}">${html(q)}</button>`).join('');
+      ACOES.map((q) => `<button type="button" class="cc-q cc-acao" data-acao="${q.chave}">${html(q)}</button>`).join('') +
+      `<button type="button" class="cc-q cc-liga cc-boneco" data-boneco aria-pressed="false">${html(MEU_BONECO)}<span class="cc-check" aria-hidden="true">✓</span></button>`;
     atualizarGrade();
   }
   function atualizarGrade(): void {
     const L = ligados();
     for (const b of grade.querySelectorAll<HTMLButtonElement>('[data-chave]')) b.setAttribute('aria-pressed', String(L.has(b.dataset.chave as Chave)));
     grade.querySelector<HTMLButtonElement>('[data-acao="sortear"]')!.disabled = !o.sortearFrase;
+    const m = estadoDoMeuBoneco(estilo(), temBoneco(), escolhas.comBoneco);
+    const b = grade.querySelector<HTMLButtonElement>('[data-boneco]')!;
+    b.setAttribute('aria-pressed', String(m.ligado));
+    b.toggleAttribute('data-poster', temBoneco() && estilo() === 'poster');
+    b.toggleAttribute('data-sem-rede', !temBoneco());
+    if (m.travado) b.setAttribute('aria-disabled', 'true');
+    else b.removeAttribute('aria-disabled');
   }
 
   async function aoLigar(chave: Chave): Promise<void> {
@@ -291,10 +397,29 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
     void redesenhar();
   }
 
-  function trocarEstilo(passo: 1 | -1): void {
-    escolhas = { ...escolhas, estilo: estiloVizinho(escolhas.estilo, passo) };
+  /** Troca o estilo que vale, guarda a escolha e refaz os quadradinhos; o que ainda não foi desenhado sai agora. */
+  function irParaEstilo(novo: EstiloCard): void {
+    escolhas = { ...escolhas, estilo: novo };
     guardar();
+    atualizarGrade();
     pintar();
+    if (!prontos.has(novo)) void redesenhar();
+  }
+  function trocarEstilo(passo: 1 | -1): void {
+    irParaEstilo(estiloVizinho(estilo(), passo, temBoneco()));
+  }
+
+  function tocarBoneco(): void {
+    if (!dados) return;
+    const r = tocarMeuBoneco(escolhas, temBoneco());
+    if (r.aviso) {
+      avisar(r.aviso);
+      return;
+    }
+    escolhas = r.escolhas;
+    guardar();
+    atualizarGrade();
+    void redesenhar();
   }
 
   function sortear(): void {
@@ -321,12 +446,18 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button');
     if (!b || b.disabled) return;
     if (b.dataset.chave) void aoLigar(b.dataset.chave as Chave);
+    else if ('boneco' in b.dataset) tocarBoneco();
     else if (b.dataset.acao) {
       const a = b.dataset.acao as Acao;
       if (a === 'sortear') sortear();
-      else if (a === 'escrever') abrirFolhaDaFrase();
-      else trocarEstilo(1);
+      else abrirFolhaDaFrase();
     }
+  });
+  pontos.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-ponto]');
+    const novo = b?.dataset.ponto as EstiloCard | undefined;
+    if (!dados || !novo || novo === estilo() || trilho.classList.contains('anima')) return;
+    irParaEstilo(novo);
   });
 
   // ---------- formato ----------
@@ -387,9 +518,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
       clearTimeout(tFim);
       trilho.classList.remove('anima');
       if (lado) {
-        escolhas = { ...escolhas, estilo: estiloVizinho(escolhas.estilo, lado) };
-        guardar();
-        pintar();
+        irParaEstilo(estiloVizinho(estilo(), lado, temBoneco()));
       }
       mover(0);
     };
@@ -415,8 +544,8 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
 
   // ---------- salvar e compartilhar ----------
   const arquivoAtual = (): File | null => {
-    const p = prontos.get(escolhas.estilo);
-    return p?.blob ? new File([p.blob], nomeDoArquivo(escolhas.estilo, escolhas.formato), { type: 'image/png' }) : null;
+    const p = prontos.get(estilo());
+    return p?.blob ? new File([p.blob], nomeDoArquivo(estilo(), escolhas.formato), { type: 'image/png' }) : null;
   };
   const rotuloDoBotao = (b: HTMLButtonElement, texto: string) => {
     const s = b.querySelector('span')!;
@@ -426,7 +555,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
   };
 
   btnSalvar.addEventListener('click', async () => {
-    const pronto = prontos.get(escolhas.estilo);
+    const pronto = prontos.get(estilo());
     if (!dados || !pronto) {
       avisar('O card ainda tá saindo. Espera um instante.');
       return;
@@ -443,7 +572,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
     }
     const a = document.createElement('a');
     a.href = pronto.url;
-    a.download = nomeDoArquivo(escolhas.estilo, escolhas.formato);
+    a.download = nomeDoArquivo(estilo(), escolhas.formato);
     d.append(a);
     a.click();
     a.remove();
@@ -617,16 +746,20 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
   else d.setAttribute('open', '');
   medir();
 
-  void Promise.resolve(o.dados)
-    .then((pronto) => {
+  const doBoneco = o.boneco ?? bonecoDoServidor();
+  void Promise.all([Promise.resolve(o.dados), doBoneco.catch(() => null)])
+    .then(([pronto, b]) => {
       if (fechado) return;
       dados = pronto;
+      boneco = b;
       d.setAttribute('style', estiloDoTime());
       $('[data-montando]').remove();
       montarGrade();
+      montarPontos();
       medir();
       pintar();
       void redesenhar();
+      if (!temBoneco()) avisar(AVISO_SEM_BONECO, 6000);
       if (o.inicial?.folhaDaFrase) abrirFolhaDaFrase(o.inicial.folhaDaFrase);
     })
     .catch(() => {

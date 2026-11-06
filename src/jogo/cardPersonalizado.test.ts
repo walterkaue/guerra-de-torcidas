@@ -2,15 +2,27 @@
 // escolhas guardadas no aparelho.
 
 import { describe, expect, it } from 'vitest';
-import { TIMES } from '../dados/times';
+import { TIMES, proTime } from '../dados/times';
+import { PADRAO, type Vestimenta } from './vestiario';
 import {
   ACOES,
+  AVISO_POSTER,
+  AVISO_SEM_BONECO,
   ESCOLHAS_PADRAO,
   ESTILOS,
+  MEU_BONECO,
   TAMANHO_DO_CARD,
   TIPOS_DE_CARD,
   alternar,
+  botoesDeEstilo,
+  estadoDoMeuBoneco,
+  estiloEfetivo,
+  estilosDisponiveis,
   estiloVizinho,
+  faixaDoPoster,
+  tocarMeuBoneco,
+  vestimentaDoPoster,
+  type BonecoDoCard,
   lerEscolhas,
   ligados,
   nomeDoArquivo,
@@ -44,9 +56,9 @@ const TUDO: ReadonlySet<Chave> = new Set(['frase', 'apelido', 'nivel', 'placar',
 const NADA: ReadonlySet<Chave> = new Set();
 
 describe('estilos e formatos', () => {
-  it('Telão é o padrão, depois o Placar seco; Stories é o formato padrão', () => {
-    expect(ESTILOS.map((e) => e.nome)).toEqual(['Telão', 'Placar seco']);
-    expect(ESCOLHAS_PADRAO).toEqual({ estilo: 'telao', formato: 'stories', desligados: [] });
+  it('Telão é o padrão, depois o Placar seco e o Pôster; Stories é o formato padrão; Meu boneco começa desligado', () => {
+    expect(ESTILOS.map((e) => e.nome)).toEqual(['Telão', 'Placar seco', 'Pôster']);
+    expect(ESCOLHAS_PADRAO).toEqual({ estilo: 'telao', formato: 'stories', desligados: [], comBoneco: false });
   });
 
   it('Stories 1080×1920 e Quadrado 1080×1080', () => {
@@ -54,23 +66,79 @@ describe('estilos e formatos', () => {
     expect(TAMANHO_DO_CARD.quadrado).toEqual({ l: 1080, a: 1080 });
   });
 
-  it('deslizar dá a volta nos estilos', () => {
+  it('deslizar dá a volta nos estilos disponíveis', () => {
     expect(estiloVizinho('telao', 1)).toBe('placar');
-    expect(estiloVizinho('placar', 1)).toBe('telao');
-    expect(estiloVizinho('telao', -1)).toBe('placar');
+    expect(estiloVizinho('placar', 1)).toBe('poster');
+    expect(estiloVizinho('poster', 1)).toBe('telao');
+    expect(estiloVizinho('telao', -1)).toBe('poster');
+    // Sem boneco, só os dois de antes.
+    expect(estiloVizinho('placar', 1, false)).toBe('telao');
+    expect(estiloVizinho('telao', -1, false)).toBe('placar');
+    expect(estiloVizinho('poster', 1, false)).toBe('telao');
+  });
+});
+
+describe('estilos com e sem boneco', () => {
+  it('com boneco, os 3; sem boneco (sem rede), o Pôster some', () => {
+    expect(estilosDisponiveis(true)).toEqual(['telao', 'placar', 'poster']);
+    expect(estilosDisponiveis(false)).toEqual(['telao', 'placar']);
+  });
+
+  it('Pôster guardado sem boneco vale como Telão, sem mudar o guardado', () => {
+    expect(estiloEfetivo('poster', false)).toBe('telao');
+    expect(estiloEfetivo('poster', true)).toBe('poster');
+    expect(estiloEfetivo('placar', false)).toBe('placar');
+    expect(lerEscolhas({ estilo: 'poster' }).estilo).toBe('poster');
+  });
+
+  it('os nomes embaixo do card viram botões, com o atual marcado', () => {
+    expect(botoesDeEstilo('placar', true)).toEqual([
+      { id: 'telao', nome: 'Telão', atual: false },
+      { id: 'placar', nome: 'Placar seco', atual: true },
+      { id: 'poster', nome: 'Pôster', atual: false },
+    ]);
+    expect(botoesDeEstilo('poster', false)).toEqual([
+      { id: 'telao', nome: 'Telão', atual: true },
+      { id: 'placar', nome: 'Placar seco', atual: false },
+    ]);
+  });
+});
+
+describe('Meu boneco', () => {
+  it('Telão e Placar seco: liga e desliga, guardado nas escolhas', () => {
+    expect(estadoDoMeuBoneco('telao', true, false)).toEqual({ ligado: false, travado: false, aviso: null });
+    expect(estadoDoMeuBoneco('placar', true, true)).toEqual({ ligado: true, travado: false, aviso: null });
+    const liga = tocarMeuBoneco(ESCOLHAS_PADRAO, true);
+    expect(liga).toEqual({ escolhas: { ...ESCOLHAS_PADRAO, comBoneco: true }, aviso: null });
+    expect(tocarMeuBoneco(liga.escolhas, true).escolhas.comBoneco).toBe(false);
+    expect(lerEscolhas({ comBoneco: true }).comBoneco).toBe(true);
+    expect(lerEscolhas({ comBoneco: 'sim' }).comBoneco).toBe(false);
+  });
+
+  it('Pôster: sempre ligado e travado, mesmo com o busto desligado; tocar só avisa', () => {
+    expect(estadoDoMeuBoneco('poster', true, false)).toEqual({ ligado: true, travado: true, aviso: AVISO_POSTER });
+    const e = { ...ESCOLHAS_PADRAO, estilo: 'poster' as const };
+    expect(tocarMeuBoneco(e, true)).toEqual({ escolhas: e, aviso: 'No Pôster o boneco é o card.' });
+  });
+
+  it('sem boneco: desligado e travado, com o aviso de sem conexão (também com o Pôster guardado)', () => {
+    expect(estadoDoMeuBoneco('telao', false, true)).toEqual({ ligado: false, travado: true, aviso: AVISO_SEM_BONECO });
+    const e = { ...ESCOLHAS_PADRAO, estilo: 'poster' as const, comBoneco: true };
+    expect(tocarMeuBoneco(e, false)).toEqual({ escolhas: e, aviso: 'Sem conexão pro boneco agora' });
   });
 });
 
 describe('quadradinhos', () => {
-  it('5 de ligar e 3 de ação: 8, em 2 linhas de 4', () => {
+  it('5 de ligar, 2 de ação e Meu boneco: 8, em 2 linhas de 4', () => {
     for (const tipo of Object.keys(TIPOS_DE_CARD) as (keyof typeof TIPOS_DE_CARD)[]) {
-      expect(TIPOS_DE_CARD[tipo].length + ACOES.length).toBe(8);
+      expect(TIPOS_DE_CARD[tipo].length + ACOES.length + 1).toBe(8);
     }
-    expect(ACOES.map((a) => a.chave)).toEqual(['sortear', 'escrever', 'trocar']);
+    expect(ACOES.map((a) => a.chave)).toEqual(['sortear', 'escrever']);
+    expect(MEU_BONECO.nome).toBe('Meu\nboneco');
   });
 
   it('todo texto cabe em 2 linhas', () => {
-    for (const q of [...Object.values(TIPOS_DE_CARD).flat(), ...ACOES]) expect(q.nome.split('\n')).toHaveLength(2);
+    for (const q of [...Object.values(TIPOS_DE_CARD).flat(), ...ACOES, MEU_BONECO]) expect(q.nome.split('\n')).toHaveLength(2);
   });
 
   it('jogo sem X1 troca "Link do X1" por "Link do jogo"', () => {
@@ -100,6 +168,7 @@ describe('escolhas no aparelho', () => {
       estilo: 'placar',
       formato: 'quadrado',
       desligados: ['frase', 'link'],
+      comBoneco: false,
     });
   });
 
@@ -195,6 +264,91 @@ describe('o que entra em cada estilo e formato', () => {
   });
 });
 
+describe('o boneco no card', () => {
+  const vestimenta: Vestimenta = { ...PADRAO, numero: '07', fundo: 'tunel' };
+  const comPose: BonecoDoCard = { vestimenta, liberadas: ['uni1', 'pose_bracos', 'fundo_tunel'] };
+  const semPose: BonecoDoCard = { vestimenta: { ...vestimenta, pose: 'bracos' }, liberadas: ['uni1'] };
+  const opcoes = { ligados: TUDO, boneco: comPose, apelido: 'Zé da Geral' } as const;
+
+  it('Telão e Placar seco: busto só com Meu boneco ligado e boneco carregado', () => {
+    expect(planoDoCard(dados(), { ...opcoes, estilo: 'telao', formato: 'stories', comBoneco: true }).busto).toEqual(vestimenta);
+    expect(planoDoCard(dados(), { ...opcoes, estilo: 'placar', formato: 'quadrado', comBoneco: true }).busto).toEqual(vestimenta);
+    expect(planoDoCard(dados(), { ...opcoes, estilo: 'telao', formato: 'stories', comBoneco: false }).busto).toBeNull();
+    expect(planoDoCard(dados(), { ...opcoes, boneco: null, estilo: 'telao', formato: 'stories', comBoneco: true }).busto).toBeNull();
+    expect(planoDoCard(dados(), { ...opcoes, estilo: 'telao', formato: 'stories', comBoneco: true }).poster).toBeNull();
+  });
+
+  it('Pôster no Stories: corpo inteiro, braços pra cima (pose liberada), número, faixa, placa e pontos', () => {
+    const p = planoDoCard(dados({ destaque: '+134', lance: 'a falta do tri' }), { ...opcoes, estilo: 'poster', formato: 'stories' });
+    expect(p.estilo).toBe('poster');
+    expect(p.busto).toBeNull();
+    expect(p).toMatchObject({ largura: 1080, altura: 1920, frase: 'Na gaveta!', nivel: 'CARREIRA · CRAQUE', link: 'torcida.kauewalter.com.br/?l=ab12cd34' });
+    expect(p.poster).toEqual({
+      vestimenta: { ...vestimenta, pose: 'bracos' },
+      enquadramento: 'corpo',
+      numero: '07',
+      faixa: 'LANCES DO JOGO · a falta do tri',
+      apelido: 'Zé da Geral',
+      pontos: '+134',
+      proTime: 'pro Flamengo',
+      medalha: null,
+    });
+  });
+
+  it('Pôster no Quadrado: do joelho pra cima', () => {
+    expect(planoDoCard(dados(), { ...opcoes, estilo: 'poster', formato: 'quadrado' }).poster!.enquadramento).toBe('joelho');
+  });
+
+  it('sem a pose liberada, o Pôster fica parado (mesmo com bracos na vestimenta); sem número, sem número', () => {
+    const p = planoDoCard(dados(), { ...opcoes, boneco: { ...semPose, vestimenta: { ...semPose.vestimenta, numero: null } }, estilo: 'poster', formato: 'stories' });
+    expect(p.poster!.vestimenta.pose).toBe('parado');
+    expect(p.poster!.numero).toBeNull();
+  });
+
+  it('Pôster com tudo desligado: sem frase, apelido, nível nem link; pontos e faixa ficam', () => {
+    const p = planoDoCard(dados(), { ...opcoes, ligados: NADA, estilo: 'poster', formato: 'stories' });
+    expect(p).toMatchObject({ frase: null, nivel: null, link: null });
+    expect(p.poster).toMatchObject({ apelido: null, pontos: '+47', faixa: 'LANCES DO JOGO · Falta no ângulo' });
+  });
+
+  it('Pôster sem boneco vira Telão', () => {
+    const p = planoDoCard(dados(), { ...opcoes, boneco: null, estilo: 'poster', formato: 'stories' });
+    expect(p.estilo).toBe('telao');
+    expect(p.poster).toBeNull();
+    expect(p.telaoComPlacar).toBe(true);
+  });
+
+  it('card de medalha no Pôster: a medalha e o título do lance, sem nome de pessoa', () => {
+    const medalha = dados({
+      tipo: 'medalha',
+      destaque: 'OURO',
+      jogo: 'Lances do Jogo',
+      lance: 'Gol do título · Lances do Jogo',
+      conteudo: { jogo: 'medalha', medalha: 'ouro', item: { tipo: 'lance', titulo: 'Gol do título' } as never },
+    });
+    const p = planoDoCard(medalha, { ...opcoes, estilo: 'poster', formato: 'stories' });
+    expect(p.poster).toMatchObject({ medalha: 'ouro', pontos: 'OURO', faixa: 'LANCES DO JOGO · Gol do título' });
+  });
+
+  it('a faixa não repete o nome do jogo', () => {
+    expect(faixaDoPoster('Prova de Boleiro', 'Prova de Boleiro: cheguei na 6ª')).toBe('PROVA DE BOLEIRO · cheguei na 6ª');
+    expect(faixaDoPoster('Lances do Jogo', 'Seus 3 lances')).toBe('LANCES DO JOGO · Seus 3 lances');
+    expect(faixaDoPoster('Time do Dia #7', '')).toBe('TIME DO DIA #7');
+    expect(faixaDoPoster('Pênaltis', 'Pênaltis')).toBe('PÊNALTIS');
+    expect(faixaDoPoster('Crava a Rodada · 34ª', '34ª rodada')).toBe('CRAVA A RODADA · 34ª rodada');
+  });
+
+  it('time "Outro" fica sem "pro [time]"', () => {
+    const outro = TIMES.find((t) => !proTime(t));
+    if (!outro) return;
+    expect(planoDoCard(dados({ time: outro }), { ...opcoes, estilo: 'poster', formato: 'stories' }).poster!.proTime).toBeNull();
+  });
+
+  it('vestimentaDoPoster não mexe no resto da vestimenta', () => {
+    expect(vestimentaDoPoster(comPose)).toEqual({ ...vestimenta, pose: 'bracos' });
+  });
+});
+
 describe('compartilhar', () => {
   const texto = 'Fiz 47 pontos pro Flamengo nos Lances do Jogo\n⚽✋⚽\nhttps://torcida.kauewalter.com.br/?l=ab12cd34';
   const link = 'https://torcida.kauewalter.com.br/?l=ab12cd34';
@@ -211,6 +365,7 @@ describe('compartilhar', () => {
   it('nome do arquivo pelo estilo e formato', () => {
     expect(nomeDoArquivo('telao', 'stories')).toBe('guerra-de-torcidas-telao-stories.png');
     expect(nomeDoArquivo('placar', 'quadrado')).toBe('guerra-de-torcidas-placar-quadrado.png');
+    expect(nomeDoArquivo('poster', 'stories')).toBe('guerra-de-torcidas-poster-stories.png');
   });
 
   it('iPhone e iPad salvam pela folha de compartilhar; Android e computador baixam', () => {
