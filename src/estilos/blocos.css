@@ -330,6 +330,15 @@
   touch-action: manipulation;
 }
 
+/* Celular estreito (dobrável fechado, 344 px): 4 abas cabem sem cortar "CONQUISTAS" (J15). */
+@media (max-width: 380px) {
+  .abas-tv button {
+    padding: 0 2px;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+  }
+}
+
 .abas-tv [aria-selected='true'] {
   background: var(--cal);
   color: var(--tinta);
