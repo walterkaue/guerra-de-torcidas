@@ -18,8 +18,10 @@ export interface UsoGemini {
   falhas: number;
   entrada: number;
   saida: number;
+  /** Código de cada tentativa que falhou, na ordem: 429, 503, outro HTTP, "rede" ou "formato". */
+  codigos: string[];
 }
-export const usoVazio = (): UsoGemini => ({ chamadas: 0, falhas: 0, entrada: 0, saida: 0 });
+export const usoVazio = (): UsoGemini => ({ chamadas: 0, falhas: 0, entrada: 0, saida: 0, codigos: [] });
 
 /** Grava o uso de uma chamada; erro ao gravar nunca derruba o pipeline. */
 export async function registrarUso(
@@ -28,7 +30,12 @@ export async function registrarUso(
   uso: UsoGemini,
 ): Promise<void> {
   if (!uso.chamadas) return;
-  await sb.schema('staging_gt').from('uso_gemini').insert({ ...linha, ...uso }).then(() => {}, () => {});
+  const { codigos, ...contagem } = uso;
+  await sb
+    .schema('staging_gt')
+    .from('uso_gemini')
+    .insert({ ...linha, ...contagem, codigos: codigos.length ? codigos.join(',') : null })
+    .then(() => {}, () => {});
 }
 
 /** Tenta cada modelo (com 2 novas tentativas em 429/503) e devolve o JSON da primeira resposta válida. Se passar `uso`, ele é preenchido. */
@@ -65,11 +72,13 @@ export async function perguntarJson<T>(
           return { modelo, dados: JSON.parse(parte.text) as T };
         } catch {
           uso.falhas++;
+          uso.codigos.push('formato');
           ultimo = `${modelo}: resposta fora do formato`;
           break;
         }
       }
       uso.falhas++;
+      uso.codigos.push(r ? String(r.status) : 'rede');
       ultimo = `${modelo}: ${d?.error?.status ?? (r ? `HTTP ${r.status}` : 'falha de rede')}`;
       if (r && (r.status === 429 || r.status === 503)) await esperar(8_000 * (tentativa + 1));
       else break;
