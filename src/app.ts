@@ -52,6 +52,8 @@ export type Rota =
       tela: 'times';
       depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia' | 'lances' | 'perfil';
       desafio?: string;
+      /** `lance`: id do item (link `#lance/…`/`#disputa/…`) que abre a ficha depois da escolha do time (com `depois: 'lances'`). */
+      lance?: string;
       apelido?: boolean;
       primeira?: boolean;
     }

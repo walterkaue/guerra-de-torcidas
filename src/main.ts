@@ -152,7 +152,7 @@ function rotaDoHash(): Rota | undefined {
     const item = itemDoEndereco(location.hash);
     history.replaceState(null, '', `${location.pathname}${location.search}`);
     if (!item) return { tela: 'inicio' };
-    return prefs.get().time ? { tela: 'lances', lance: item } : { tela: 'times', depois: 'lances' };
+    return prefs.get().time ? { tela: 'lances', lance: item } : { tela: 'times', depois: 'lances', lance: item };
   }
   return undefined;
 }

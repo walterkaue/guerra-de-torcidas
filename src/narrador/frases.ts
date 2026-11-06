@@ -222,7 +222,7 @@ export const FRASES = {
   ],
   vitoria: [
     { t: "ACABOU! Vitória com sabor de domingo!" },
-    { t: "Venceu! E mais 20 {pro_time}!" },
+    { t: "Venceu! A festa dessa vai {pro_time}!" },
     { t: "Venceu! Pode desfilar na resenha de cabeça erguida." },
     { t: "Vitória! O grupo do WhatsApp precisa saber disso." },
     { t: "Ganhou! O goleiro adversário pediu as contas." },
