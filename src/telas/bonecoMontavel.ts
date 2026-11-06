@@ -472,3 +472,21 @@ export function desenharBoneco(ctx: CanvasRenderingContext2D, vestimenta: Vestim
   }
   ctx.drawImage(imagem, 0, 0, largura, altura);
 }
+
+// ---------- a figura no card (Pôster) ----------
+
+/** Altura da figura inteira, em unidades do boneco, com os braços pra cima (pés na origem, cabeça para cima em -y). */
+export const ALTURA_DA_FIGURA = ALTURA_DO_CORPO;
+/** Altura do joelho em unidades do boneco, para o enquadramento "do joelho pra cima" do Quadrado. */
+export const ALTURA_DO_JOELHO = -(GEOMETRIA.ALTURA_PELVE + GEOMETRIA.COXA);
+/** Largura da figura em unidades do boneco (com os braços abertos na pose "braços pra cima"). */
+export const LARGURA_DA_FIGURA = 66;
+
+/**
+ * A figura vestida, sem fundo nem moldura, com os pés na origem da transformação atual (1 unidade do boneco = 1 unidade
+ * da transformação: quem chama faz `translate` e `scale`). Direto no contexto, sem devicePixelRatio e sem cache: serve
+ * para o canvas de 1080 do Pôster. Com número na camisa, a Anton precisa estar carregada (prepararFonteDoNumero).
+ */
+export function desenharFiguraDoCard(ctx: CanvasRenderingContext2D, vestimenta: Vestimenta, coresDoTime: readonly [string, string]): void {
+  desenharFiguraVestida(ctx, vestimenta, coresDoTime);
+}

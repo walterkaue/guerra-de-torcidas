@@ -10,7 +10,8 @@ import { desenharCardCrava } from '../jogo/cardCrava';
 import { desenharCardDia } from '../jogo/cardDia';
 import { desenharCardProva } from '../jogo/cardProva';
 import { desenharCardPersonalizado } from '../jogo/cardPersonalizadoDesenho';
-import { TIPOS_DE_CARD, planoDoCard, type Chave, type DadosDoCard, type EstiloCard, type FormatoCard } from '../jogo/cardPersonalizado';
+import { PADRAO } from '../jogo/vestiario';
+import { TIPOS_DE_CARD, planoDoCard, type BonecoDoCard, type Chave, type DadosDoCard, type EstiloCard, type FormatoCard } from '../jogo/cardPersonalizado';
 import type { Luz } from '../jogo/home';
 import type { ItemDaMedalha } from '../jogo/medalhaTextos';
 import type { Pistas, Tom } from '../jogo/timeDoDia';
@@ -180,6 +181,20 @@ function dadosPersonalizados(t: Time, luz: Luz): Record<string, DadosDoCard> {
   };
 }
 
+/** Boneco falso fixo da amostra: número 07, fundo túnel e a pose de braços pra cima liberada. */
+const BONECO_FALSO: BonecoDoCard = { vestimenta: { ...PADRAO, camisa: 'uni1', numero: '07', fundo: 'tunel', cabelo: 'raspado' }, liberadas: ['pose_bracos'] };
+
+function nomeDoCard(id: string, jogo: string, estilo: string, formato: string, modo: string): string {
+  return `${TIMES_DA_AMOSTRA.length > 1 ? `${id}-` : ''}${jogo}-${estilo}-${formato}-${modo}`;
+}
+
+function mostrar(nome: string, canvas: HTMLCanvasElement, formato: FormatoCard): void {
+  window.cards.push({ nome, canvas });
+  canvas.style.cssText = `width:270px;height:${formato === 'stories' ? 480 : 270}px`;
+  canvas.title = nome;
+  document.body.append(canvas);
+}
+
 async function personalizados(): Promise<void> {
   const estilos: EstiloCard[] = ['telao', 'placar'];
   const formatos: FormatoCard[] = ['stories', 'quadrado'];
@@ -193,13 +208,21 @@ async function personalizados(): Promise<void> {
           for (const modo of ['ligado', 'desligado'] as const) {
             const ligados = new Set<Chave>(modo === 'ligado' ? TIPOS_DE_CARD[d.tipo].map((q) => q.chave) : []);
             const plano = planoDoCard(d, { estilo, formato, ligados });
-            const canvas = desenharCardPersonalizado(d, plano);
-            const nome = `${TIMES_DA_AMOSTRA.length > 1 ? `${id}-` : ''}${jogo}-${estilo === 'telao' ? 'telao' : 'placar'}-${formato}-${modo}`;
-            window.cards.push({ nome, canvas });
-            canvas.style.cssText = `width:${formato === 'stories' ? 270 : 270}px;height:${formato === 'stories' ? 480 : 270}px`;
-            canvas.title = nome;
-            document.body.append(canvas);
+            const canvas = await desenharCardPersonalizado(d, plano);
+            mostrar(nomeDoCard(id, jogo, estilo === 'telao' ? 'telao' : 'placar', formato, modo), canvas, formato);
           }
+          // O mesmo estilo com o busto do boneco ("Meu boneco" ligado).
+          const ligados = new Set<Chave>(TIPOS_DE_CARD[d.tipo].map((q) => q.chave));
+          const comBusto = planoDoCard(d, { estilo, formato, ligados, boneco: BONECO_FALSO, comBoneco: true });
+          mostrar(nomeDoCard(id, jogo, estilo === 'telao' ? 'telao' : 'placar', formato, 'busto'), await desenharCardPersonalizado(d, comBusto), formato);
+        }
+      }
+      // O Pôster: tudo ligado (com apelido) e só o essencial.
+      for (const formato of formatos) {
+        for (const modo of ['ligado', 'desligado'] as const) {
+          const ligados = new Set<Chave>(modo === 'ligado' ? TIPOS_DE_CARD[d.tipo].map((q) => q.chave) : []);
+          const plano = planoDoCard(d, { estilo: 'poster', formato, ligados, boneco: BONECO_FALSO, apelido: 'Zé da Geral' });
+          mostrar(nomeDoCard(id, jogo, 'poster', formato, modo), await desenharCardPersonalizado(d, plano), formato);
         }
       }
     }
