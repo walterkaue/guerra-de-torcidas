@@ -54,7 +54,7 @@ export function telaEntrarComCodigo(root: HTMLElement, rota: Rota): () => void {
 
   function telaDoCodigo(inicial: string, mensagem?: string): void {
     corpo.innerHTML = `
-      <p class="campo-dica">No aparelho onde você já joga, abre o Perfil e toca em "Jogar em outro aparelho". Digita aqui o código que aparecer, ou aponta a câmera pro QR.</p>
+      <p class="campo-dica">No aparelho onde você já joga, abre o Perfil e toca em "Jogar em outro aparelho". Digita aqui o código que aparecer, ou abre a câmera do aparelho (fora do jogo) e aponta pro QR.</p>
       ${temTime ? `<p class="aviso-caixa" role="note">${esc(AVISO_DE_JUNTAR)}</p>` : ''}
       <label class="campo campo-codigo">
         <span>Código do outro aparelho</span>

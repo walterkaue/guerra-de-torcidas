@@ -43,7 +43,7 @@ export type Rota =
   /** Faixa etária (docs/jogo.md, seção 13): depois de responder, segue para `depois`. */
   | { tela: 'triagem'; depois: Rota }
   /** Termos e privacidade: `de` é para onde o voltar leva (sem ela, a Home); `apagar` abre já em "Apagar meus dados". */
-  | { tela: 'termos'; de?: Rota; apagar?: boolean }
+  | { tela: 'termos'; de?: Rota; apagar?: boolean; ver?: boolean }
   | { tela: 'feedback'; de?: string }
   /** `apelido` já leva ao campo do apelido (Perfil, "Escolher apelido"). */
   /** `desafio`: o código do X1 que segue junto (pênaltis com `partida`, Prova com `prova`, Lances com `lances`). */
@@ -52,6 +52,8 @@ export type Rota =
       tela: 'times';
       depois?: 'partida' | 'inicio' | 'palpites' | 'prova' | 'timeDoDia' | 'lances' | 'perfil';
       desafio?: string;
+      /** `lance`: id do item (link `#lance/…`/`#disputa/…`) que abre a ficha depois da escolha do time (com `depois: 'lances'`). */
+      lance?: string;
       apelido?: boolean;
       primeira?: boolean;
     }

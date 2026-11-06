@@ -10,6 +10,7 @@ import { ID_OUTRO, TIMES, corDeTexto, timePorId, type Time } from '../../dados/t
 import { faixaDoAparelho } from '../../estado';
 import { contarCliqueSocio } from '../../servidor/api';
 import { diaBrasilia } from '../../servidor/tempo';
+import { ajustarNomesDeTime } from '../nomesDeTime';
 import { svgEstadio, svgManto, svgTaca } from './desenhos';
 import {
   dataBR,
@@ -70,6 +71,7 @@ function indice(root: HTMLElement): void {
           .join('')}
       </div>
     </main>`;
+  ajustarNomesDeTime(root);
   root.querySelector('.voltar')!.addEventListener('click', () => irPara({ tela: 'inicio' }));
   root.querySelectorAll<HTMLButtonElement>('.cartao-time:not([disabled])').forEach((b) =>
     b.addEventListener('click', () => irPara({ tela: 'casa', id: b.dataset.id })),

@@ -1,6 +1,7 @@
 // Preferências do jogador guardadas só neste aparelho (time, apelido, som).
 // Nada aqui é obrigatório; tudo tem valor padrão.
 
+import { apelidoParaCard } from './jogo/apelidoConferido';
 import type { EstadoDoAquecimento } from './jogo/aquecimento';
 import type { EstadoDasDicas } from './jogo/dicas';
 import { ehFaixa, type FaixaEtaria } from './jogo/faixaEtaria';
@@ -13,6 +14,8 @@ export const APELIDO_MAX = 20;
 interface Prefs {
   time?: string;
   apelido?: string;
+  /** false = apelido digitado aqui que o servidor ainda não aceitou: o card sai sem ele (jogo/apelidoConferido.ts). */
+  apelidoConferido?: boolean;
   mudo?: boolean;
   /** Gráficos: automático (padrão) ou um nível fixo (telas/qualidade.ts). */
   qualidade?: 'auto' | 'alta' | 'media' | 'leve';
@@ -62,6 +65,9 @@ function gravar(p: Prefs): void {
   }
 }
 
+/** O apelido que o card pode mostrar: só o que o servidor já aceitou (J26). */
+export const apelidoDoCard = (): string | undefined => apelidoParaCard(ler());
+
 export const prefs = {
   get: ler,
   set(parcial: Prefs) {
@@ -102,7 +108,7 @@ export const CHAVES_DA_CONTA = [
  */
 export function esquecerTorcedor(): void {
   faixaDaAba = undefined;
-  prefs.set({ time: undefined, apelido: undefined, faixa: undefined, sincronizado: undefined, faixaSincronizada: undefined });
+  prefs.set({ time: undefined, apelido: undefined, apelidoConferido: undefined, faixa: undefined, sincronizado: undefined, faixaSincronizada: undefined });
   for (const chave of CHAVES_DA_CONTA) {
     try {
       localStorage.removeItem(chave);

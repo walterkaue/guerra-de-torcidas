@@ -198,15 +198,16 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           </div>
           <p class="adesivo" data-frase-rival hidden></p>
         </div>
-        ${time?.id === ID_OUTRO ? '<p class="cabo-nota">Quem joga por "Outro time" fica fora do ranking das torcidas.</p>' : ''}
+        ${time?.id === ID_OUTRO ? '<div class="cabo-nota" data-nota-cidade hidden><p>Escolha sua cidade: é ela que joga por você no ranking.</p><button class="botao botao-sec" type="button" data-acao="escolher-cidade">Escolher minha cidade</button></div>' : ''}
         <p class="cabo-voce" data-posicao-semana aria-live="polite" hidden></p>
       </section>
 
       <section class="bloco-cidade" data-cidade aria-live="polite" hidden></section>
 
-      <section class="bloco-placa-trofeu" data-placa-trofeu hidden></section>
-
       <button class="botao botao-jogar" type="button" data-acao="jogar-agora">Jogar agora<small data-motivo>&nbsp;</small></button>
+
+      <!-- Depois do "Jogar agora": a placa chega tarde e não pode empurrar o botão (J08). -->
+      <section class="bloco-placa-trofeu" data-placa-trofeu hidden></section>
 
       ${prefs.get().aquecimento?.cardNaHome && !prefs.get().aquecimento?.visto ? `<button class="card-aquecimento" type="button" data-acao="aquecimento"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}><span class="rotulo">Aquecimento</span><strong>Conheça os outros jogos</strong><small>1 min</small></button>` : ''}
 
@@ -520,7 +521,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         botaoDoDia.querySelector<HTMLElement>('[data-lance-do-dia]')!.textContent = rotulo.split(' · ').slice(1).join(' · ');
         botaoDoDia.setAttribute('aria-label', rotulo);
         botaoDoDia.disabled = false;
-        botaoDoDia.addEventListener('click', () => irPara(time ? { tela: 'lances', lance: id } : { tela: 'times', depois: 'lances' }));
+        botaoDoDia.addEventListener('click', () => irPara(time ? { tela: 'lances', lance: id } : { tela: 'times', depois: 'lances', lance: id }));
       })
       .catch(() => {
         // sem o catálogo (rede): o botão some
@@ -693,6 +694,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   // ---------- sua cidade (um bloco só: posição, "Faltam N" ou o lembrete de escolher) ----------
   const elCidade = root.querySelector<HTMLElement>('[data-cidade]')!;
   let lembreteMostrado = false;
+  const notaCidade = root.querySelector<HTMLElement>('[data-nota-cidade]');
+  notaCidade?.querySelector('button')?.addEventListener('click', () => {
+    location.hash = '#cidade';
+  });
   const carregarCidade = () => {
     // Sem time ainda, não cria login só para isso.
     if (!time || lembreteMostrado) return;
@@ -708,6 +713,12 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           const frase = fraseDaCidade(minha, antes);
           elCidade.innerHTML = `<a class="bloco-cidade-link" href="#ranking-cidades" data-acao="ver-cidades"><strong>${esc(linhaDaCidadeNaHome(minha))}</strong>${frase ? `<span class="adesivo">${esc(frase)}</span>` : ''}</a>`;
           elCidade.hidden = false;
+          return;
+        }
+        // Quem joga por "Outro time" e não tem cidade: o convite fica no lugar da antiga nota (J14), sempre.
+        if (notaCidade) {
+          if (!(await api.sessaoValida()) || saiu) return;
+          notaCidade.hidden = false;
           return;
         }
         // Sem cidade: lembrete depois da 1ª partida, no máximo 1 vez por semana.

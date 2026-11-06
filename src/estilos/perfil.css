@@ -288,3 +288,12 @@ button.ajuste {
     transition: none;
   }
 }
+
+/* O convite do apelido não grita: tamanho de texto, sem caixa alta (J30). */
+button.perfil-destaque[data-acao='apelido'] {
+  font-family: var(--fonte-texto);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.2;
+  text-transform: none;
+}

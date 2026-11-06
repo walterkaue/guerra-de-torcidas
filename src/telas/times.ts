@@ -1,11 +1,14 @@
+import { conferidoAoSalvar } from '../jogo/apelidoConferido';
 import '../estilos/times.css';
-import { desafioDoLink, desafioLancesDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
+import { desafioDoLink, desafioLancesDoLink, desafioProvaDoLink, esc, irPara, linkDoTimeDoDia, type Rota } from '../app';
 import { TIMES, corDeTexto } from '../dados/times';
 import { APELIDO_MAX, prefs } from '../estado';
 import { abreSozinho } from '../jogo/aquecimento';
+import { destinoDepoisDoTime } from '../jogo/primeiroAcesso';
 import { ErroServidor } from '../servidor/api';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { cabecalhoTela } from './blocos';
+import { ajustarNomesDeTime } from './nomesDeTime';
 
 export function telaTimes(root: HTMLElement, rota: Rota): void {
   const depois = rota.tela === 'times' ? (rota.depois ?? 'partida') : 'partida';
@@ -48,6 +51,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
     </main>
   `;
 
+  ajustarNomesDeTime(root);
   let escolhido = atual.time;
   const confirmar = root.querySelector<HTMLButtonElement>('[data-acao="confirmar"]')!;
   const input = root.querySelector<HTMLInputElement>('input')!;
@@ -69,13 +73,15 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
     confirmar.disabled = true;
     confirmar.textContent = 'Salvando…';
     const anterior = prefs.get();
-    prefs.set({ time: escolhido, apelido: input.value.trim().replace(/\s+/g, ' ').slice(0, APELIDO_MAX) || undefined });
+    // O apelido novo só vai para o card depois que o servidor aceitar (apelidoConferido, J26).
+    const apelidoNovo = input.value.trim().replace(/\s+/g, ' ').slice(0, APELIDO_MAX) || undefined;
+    prefs.set({ time: escolhido, apelido: apelidoNovo, apelidoConferido: conferidoAoSalvar(anterior, apelidoNovo) });
     try {
       await sincronizarTorcedor();
     } catch (e) {
       if (e instanceof ErroServidor && e.codigo === 'apelido_bloqueado') {
         // Volta o apelido anterior e pede outro.
-        prefs.set({ apelido: anterior.apelido });
+        prefs.set({ apelido: anterior.apelido, apelidoConferido: anterior.apelidoConferido });
         erro.textContent = 'Esse apelido não passa no filtro. Tenta outro?';
         erro.hidden = false;
         confirmar.disabled = false;
@@ -86,17 +92,13 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
       // Sem internet: fica salvo no aparelho e sobe para o servidor na próxima partida.
     }
     const desafio = rota.tela === 'times' ? rota.desafio : undefined;
-    const destino: Rota =
-      depois === 'partida'
-        ? { tela: 'partida', desafio }
-        : depois === 'prova'
-          ? { tela: 'prova', desafio }
-          : depois === 'lances'
-            ? { tela: 'lances', desafio } // X1 dos Lances (?l=): vai direto ao mesmo lance
-            : { tela: depois };
+    const lance = rota.tela === 'times' ? rota.lance : undefined;
+    // X1 dos Lances (?l=) vai direto ao mesmo lance; o link do lance abre a ficha.
+    const destino: Rota = destinoDepoisDoTime(depois, desafio, lance);
     // Aquecimento (docs/jogo.md, 14.4): uma vez por aparelho, logo depois de escolher o time. Quem chegou por
     // link de desafio vai direto ao desafio; o aquecimento aparece depois, como card na Home.
-    const veioPorDesafio = !!desafio || !!desafioDoLink() || !!desafioProvaDoLink() || !!desafioLancesDoLink();
+    // O link do lance (#lance/…) e o do Time do Dia (?dia) também pedem o time e seguem para o jogo (14.8).
+    const veioPorDesafio = !!desafio || !!lance || !!desafioDoLink() || !!desafioProvaDoLink() || !!desafioLancesDoLink() || linkDoTimeDoDia();
     const aquecimento = prefs.get().aquecimento ?? {};
     if (abreSozinho(aquecimento, veioPorDesafio)) return irPara({ tela: 'aquecimento', depois: destino });
     if (veioPorDesafio && !aquecimento.visto && !aquecimento.cardNaHome) prefs.set({ aquecimento: { ...aquecimento, cardNaHome: true } });

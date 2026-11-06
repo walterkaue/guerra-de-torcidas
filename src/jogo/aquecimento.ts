@@ -22,7 +22,7 @@ export interface TextoDaEstacao {
 
 export const TEXTO_DA_ESTACAO: Record<Estacao, TextoDaEstacao> = {
   penalti: { nome: 'Pênalti', frase: 'Arraste da bola pro gol.' },
-  defesa: { nome: 'Defesa', frase: 'Olhe o pé amarelo e toque onde pular.' },
+  defesa: { nome: 'Defesa', frase: 'Olhe o pé de apoio, marcado em amarelo, e toque onde pular.' },
   falta: { nome: 'Falta com barreira', frase: 'Passe por cima ou ao lado da barreira.' },
   prova: { nome: 'Prova', frase: 'Toque na resposta antes do tempo.' },
   crava: { nome: 'Crava', frase: 'Use − e + e toque em Cravar.' },
@@ -72,7 +72,7 @@ export interface PerguntaDoAquecimento {
   alternativas: readonly string[];
   certa: number;
   fonte: string;
-  /** Segundos no relógio (a Prova usa 15). */
+  /** Segundos no relógio (a Prova usa 20). */
   tempo: number;
 }
 
@@ -81,7 +81,7 @@ export const PERGUNTA_AQUECIMENTO: PerguntaDoAquecimento = {
   alternativas: ['9', '10', '11', '12'],
   certa: 2,
   fonte: 'https://www.theifab.com/laws/latest/the-players/',
-  tempo: 15,
+  tempo: 20,
 };
 
 // ---------------------------------------------------------------------------

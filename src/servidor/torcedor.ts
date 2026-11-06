@@ -6,14 +6,14 @@ import { esquecerTorcedor, faixaDoAparelho, guardarFaixa, prefs } from '../estad
 import { FAIXAS, type FaixaEtaria } from '../jogo/faixaEtaria';
 import { entrarNaConta, ErroServidor, meuTorcedor, pedirEntrada, salvarFaixaEtaria, salvarTorcedor, type TorcedorNoServidor } from './api';
 
-const marcaDe = (time: string, apelido: string | null | undefined) => `${time}|${apelido ?? ''}`;
+export const marcaDe = (time: string, apelido: string | null | undefined) => `${time}|${apelido ?? ''}`;
 /** A faixa do servidor é mais nova (mais protetora) que a do aparelho. */
 const maisProtetora = (servidor: FaixaEtaria, aparelho: FaixaEtaria | undefined) =>
   !aparelho || FAIXAS.indexOf(servidor) < FAIXAS.indexOf(aparelho);
 
 /** Grava no aparelho o torcedor da conta, já marcado como igual ao do servidor. */
 export function adotarTorcedor(t: TorcedorNoServidor): void {
-  prefs.set({ time: t.time_id, apelido: t.apelido ?? undefined, sincronizado: marcaDe(t.time_id, t.apelido) });
+  prefs.set({ time: t.time_id, apelido: t.apelido ?? undefined, apelidoConferido: undefined, sincronizado: marcaDe(t.time_id, t.apelido) });
   if (t.faixa_etaria) {
     guardarFaixa(t.faixa_etaria);
     prefs.set({ faixaSincronizada: t.faixa_etaria });
@@ -40,7 +40,7 @@ export function puxarTorcedor(forcar = false): Promise<boolean> {
     let mudou = false;
     const local = p.time ? marcaDe(p.time, p.apelido) : '';
     if (p.sincronizado === local && marcaDe(t.time_id, t.apelido) !== local) {
-      prefs.set({ time: t.time_id, apelido: t.apelido ?? undefined, sincronizado: marcaDe(t.time_id, t.apelido) });
+      prefs.set({ time: t.time_id, apelido: t.apelido ?? undefined, apelidoConferido: undefined, sincronizado: marcaDe(t.time_id, t.apelido) });
       mudou = true;
     }
     // A faixa do servidor ganha se este aparelho não mudou nada por subir, e sempre que for a mais protetora (a da
@@ -77,7 +77,10 @@ export async function sincronizarTorcedor(forcar = false): Promise<boolean> {
   const marca = marcaDe(p.time, p.apelido);
   if (forcar || p.sincronizado !== marca) {
     await salvarTorcedor(p.time, p.apelido);
-    prefs.set({ sincronizado: marca, faixaSincronizada: forcar ? undefined : p.faixaSincronizada });
+    // O servidor aceitou (o filtro de apelidos roda lá): agora o card pode mostrar o apelido.
+    prefs.set({ sincronizado: marca, apelidoConferido: undefined, faixaSincronizada: forcar ? undefined : p.faixaSincronizada });
+  } else if (p.apelidoConferido === false && p.sincronizado === marca) {
+    prefs.set({ apelidoConferido: undefined });
   }
   await sincronizarFaixa();
   return mudou;

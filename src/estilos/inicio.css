@@ -334,6 +334,15 @@
   font-size: 14px;
   color: var(--texto-suave);
 }
+.cabo-nota[data-nota-cidade]:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.cabo-nota p {
+  margin: 0;
+}
 
 /* Sua posição entre todos os torcedores na semana (só a própria, nunca a lista). */
 .cabo-voce {

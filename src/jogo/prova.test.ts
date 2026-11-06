@@ -18,6 +18,7 @@ import {
   precisaDecidir,
   quantasTirar,
   resumoDaProva,
+  SEGUNDOS,
   type Passo,
 } from './prova';
 
@@ -204,5 +205,11 @@ describe('detecção', () => {
   it('só olha as difíceis e de craque', () => {
     const faceis = Array(100).fill(resp(true, 900, 1));
     expect(motivoSuspeitaProva(faceis)).toBeNull();
+  });
+});
+
+describe('tempo da pergunta', () => {
+  it('são 20 s por pergunta (decisão de 06/11/2026)', () => {
+    expect(SEGUNDOS).toBe(20);
   });
 });

@@ -39,7 +39,7 @@ describe('aquecimento', () => {
 
   it('frases da mão animada, como decidido', () => {
     expect(TEXTO_DA_ESTACAO.penalti.frase).toBe('Arraste da bola pro gol.');
-    expect(TEXTO_DA_ESTACAO.defesa.frase).toBe('Olhe o pé amarelo e toque onde pular.');
+    expect(TEXTO_DA_ESTACAO.defesa.frase).toBe('Olhe o pé de apoio, marcado em amarelo, e toque onde pular.');
     expect(TEXTO_DA_ESTACAO.falta.frase).toBe('Passe por cima ou ao lado da barreira.');
     expect(TEXTO_DA_ESTACAO.prova.frase).toBe('Toque na resposta antes do tempo.');
     expect(TEXTO_DA_ESTACAO.crava.frase).toBe('Use − e + e toque em Cravar.');
@@ -59,6 +59,7 @@ describe('aquecimento', () => {
   });
 
   it('pergunta própria: 4 alternativas, a certa dentro, com fonte', () => {
+    expect(PERGUNTA_AQUECIMENTO.tempo).toBe(20);
     expect(PERGUNTA_AQUECIMENTO.alternativas).toHaveLength(4);
     expect(PERGUNTA_AQUECIMENTO.alternativas[PERGUNTA_AQUECIMENTO.certa]).toBe('11');
     expect(PERGUNTA_AQUECIMENTO.fonte).toMatch(/^https:\/\//);

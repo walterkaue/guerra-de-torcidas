@@ -1,11 +1,20 @@
-// "Mandar no grupo" de um troféu da Galeria (ficha e placa da Home). Único ponto de troca para o D3b: quando a
-// tela SEU CARD ganhar o card do troféu, é só esta função que passa a abri-la (docs/jogo.md, seção 5, "Card do
-// troféu"). Por enquanto: compartilhar nativo com o texto (emoji antigo) e o link do jogo; sem compartilhar nativo,
-// abre o WhatsApp com o mesmo texto. Chamar direto no toque (sem await antes), para o iPhone não perder o gesto.
+// "Mandar no grupo" de um troféu da Galeria (ficha na Galeria e placa "Troféu novo" da Home). Abre a tela SEU CARD com
+// o card do troféu (docs/jogo.md 14.6, "Card do troféu"). A tela, o nível e a leitura dos números ficam em
+// `mandarTrofeuCard.ts`, carregado por `import()` no toque, para o bundle inicial não crescer; se esse pedaço não
+// baixar, cai no compartilhar nativo com o texto (emoji antigo) e o link do jogo. O troféu de rebaixamento não tem card.
 
-import { LINK_DO_JOGO, textoDeMandarTrofeu, type TimeDoTexto, type Trofeu } from '../jogo/galeria';
+import type { Time } from '../dados/times';
+import { LINK_DO_JOGO, textoDeMandarTrofeu, type Trofeu } from '../jogo/galeria';
 
-export function mandarTrofeuNoGrupo(t: Trofeu, time: TimeDoTexto): void {
+export interface OpcoesDoMandarTrofeu {
+  /** Onde o dialog entra: a ficha da Galeria ou o container da Home. */
+  raiz: HTMLElement;
+  /** A frase que a ficha mostra (o card usa a mesma); sem ela, sorteia uma. */
+  frase?: string | null;
+}
+
+/** O compartilhar de texto de antes (emoji antigo e o link do jogo): para o troféu sem card e como reserva. */
+function mandarSoOTexto(t: Trofeu, time: Time): void {
   const texto = textoDeMandarTrofeu(t, time);
   if (typeof navigator.share === 'function') {
     navigator.share({ text: texto, url: LINK_DO_JOGO }).catch(() => {
@@ -15,4 +24,12 @@ export function mandarTrofeuNoGrupo(t: Trofeu, time: TimeDoTexto): void {
   }
   // Compartilhar do próprio jogador (como o "Mandar no grupo" dos resultados): sem o aviso de saída.
   window.open(`https://wa.me/?text=${encodeURIComponent(`${texto}\n${LINK_DO_JOGO}`)}`, '_blank', 'noopener');
+}
+
+export function mandarTrofeuNoGrupo(t: Trofeu, time: Time, o: OpcoesDoMandarTrofeu): void {
+  if (t.trofeu === 'rebaixamento') return mandarSoOTexto(t, time);
+  import('./mandarTrofeuCard').then(
+    (m) => m.abrirCardDoTrofeu(t, time, o),
+    () => mandarSoOTexto(t, time),
+  );
 }

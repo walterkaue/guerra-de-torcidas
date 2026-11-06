@@ -55,8 +55,8 @@ export function telaTermos(root: HTMLElement, rota: Rota): void {
         <div class="folha-caixa">
           <p id="apagar-aviso">${AVISO_APAGAR}</p>
           <p class="termos-erro" role="alert" hidden></p>
-          <button class="botao" type="button" data-acao="confirmar">Apagar</button>
-          <button class="botao botao-sec" type="button" data-acao="ficar">Voltar</button>
+          <button class="botao" type="button" data-acao="ficar">Voltar</button>
+          <button class="botao botao-perigo" type="button" data-acao="confirmar">Apagar</button>
         </div>
       </div>
     </main>`;
@@ -79,7 +79,7 @@ export function telaTermos(root: HTMLElement, rota: Rota): void {
 
   const ver = root.querySelector<HTMLButtonElement>('[data-acao="ver"]')!;
   const dados = root.querySelector<HTMLElement>('.termos-dados')!;
-  ver.addEventListener('click', async () => {
+  const mostrarDados = async () => {
     if (!dados.hidden) {
       dados.hidden = true;
       ver.setAttribute('aria-expanded', 'false');
@@ -95,7 +95,13 @@ export function telaTermos(root: HTMLElement, rota: Rota): void {
       dados.innerHTML = estado('erro', 'Não deu pra buscar agora.', { detalhe: 'Confere a internet e toca em Ver meus dados de novo.', acao: '' });
     }
     ver.disabled = false;
-  });
+  };
+  ver.addEventListener('click', mostrarDados);
+  // Veio do "Ver meus dados" do Perfil: já abre a ficha, sem rolar a página até o fim (J18).
+  if (rota.tela === 'termos' && rota.ver) {
+    ver.scrollIntoView({ block: 'center' });
+    void mostrarDados();
+  }
 
   const fechar = () => {
     folha.hidden = true;

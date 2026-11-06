@@ -330,6 +330,15 @@
   touch-action: manipulation;
 }
 
+/* Celular estreito (dobrável fechado, 344 px): 4 abas cabem sem cortar "CONQUISTAS" (J15). */
+@media (max-width: 380px) {
+  .abas-tv button {
+    padding: 0 2px;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+  }
+}
+
 .abas-tv [aria-selected='true'] {
   background: var(--cal);
   color: var(--tinta);
@@ -351,6 +360,22 @@
 
 .iguais > .abas-2 button {
   flex: 1 1 0;
+}
+
+/* Cidades: as 4 sub-abas do mesmo tamanho e na largura toda; o nome longo quebra em 2 linhas em vez de rolar. */
+.cid-abas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.iguais.quatro > .abas-2 button {
+  min-width: 0;
+  padding: 0 4px;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  line-height: 1.1;
+  white-space: normal;
 }
 
 .abas-2 {

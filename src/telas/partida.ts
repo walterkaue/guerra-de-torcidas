@@ -43,7 +43,7 @@ import {
   type DesafioRecebido,
   type FechamentoDoServidor,
 } from '../servidor/api';
-import { comMotivo } from '../servidor/motivo';
+import { comMotivo, preencherAviso } from '../servidor/motivo';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { criarCena, facil, limitar01, suave } from './cena';
 import { criarCena3d, type Cena3d } from './cena3d';
@@ -145,7 +145,7 @@ const DUR_ANTES_DO_REPLAY = 1000;
 
 // O código do motivo vai no fim (servidor/motivo.ts): "Sem internet" também cobre CAPTCHA, login e função fora.
 export const AVISO_SEM_PONTOS = 'Sem conexão: essa partida não vale pontos.';
-export const AVISO_CAIU = 'Caiu a conexão: essa partida não vale mais pontos.';
+export const AVISO_CAIU = 'Caiu a conexão: essa não vale mais pontos. Joga de novo quando a rede voltar.';
 /** Cada X1 dos pênaltis vale uma vez por pessoa (jogo.md, seção 6): na segunda, vira partida normal. */
 export const X1_JA_JOGADO = 'Esse X1 você já jogou. Vai uma partida nova!';
 /** X1 de partida criada antes de 09/11/2026 (ou de lance que mudou de faixa) não pode ser aceito depois (jogo.md, 14.7). */
@@ -397,7 +397,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         : planejarDefesa(semente, rodada, dificuldade, desafio?.cobrancas?.[rodada]).dica;
     dicaDoServidor = null;
     fase = { tipo: 'corrida', inicio: relogio(), dica, zona: null, pulouEm: null };
-    instruir('Sua vez de defender! Olhe o pé de apoio e toque onde pular.');
+    instruir('Sua vez de defender! Olhe o pé de apoio, marcado em amarelo, e toque onde pular.');
     if (defesaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['defesa']) }));
   }
 
@@ -651,7 +651,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   function mostrarAviso(texto: string): void {
     aviso = texto;
     const el = root.querySelector<HTMLElement>('.aviso-partida')!;
-    el.textContent = texto;
+    preencherAviso(el, texto);
     el.hidden = false;
   }
 
@@ -923,6 +923,10 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     c.beginPath();
     c.ellipse(0, 0, g.raio * 0.85, g.raio * 1.3, 0, 0, Math.PI * 2);
     c.fill();
+    // Contorno firme: o pé marcado se vê parado, sem depender do movimento (J21).
+    c.strokeStyle = 'rgba(255,210,63,0.95)';
+    c.lineWidth = 3;
+    c.stroke();
     c.fillStyle = 'rgba(255,210,63,0.5)';
     c.beginPath();
     c.ellipse(0, 0, g.raio * 0.5, g.raio * 0.95, 0, 0, Math.PI * 2);

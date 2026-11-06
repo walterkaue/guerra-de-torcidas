@@ -11,3 +11,10 @@
   background: var(--placa);
   box-shadow: var(--sombra-placa);
 }
+
+/* Com um time marcado, "Bora pro jogo" fica preso no rodapé: não precisa rolar até o fim dos 20 times (J06). */
+.times [data-acao='confirmar']:not(:disabled) {
+  position: sticky;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  z-index: 5;
+}

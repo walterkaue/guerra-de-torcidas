@@ -11,7 +11,8 @@ import { desenharCardDia } from '../jogo/cardDia';
 import { desenharCardProva } from '../jogo/cardProva';
 import { desenharCardPersonalizado } from '../jogo/cardPersonalizadoDesenho';
 import { PADRAO } from '../jogo/vestiario';
-import { TIPOS_DE_CARD, planoDoCard, type BonecoDoCard, type Chave, type DadosDoCard, type EstiloCard, type FormatoCard } from '../jogo/cardPersonalizado';
+import { dadosDeAmostraDoTrofeu } from './trofeuFalso';
+import { quadradinhosDoCard, planoDoCard, type BonecoDoCard, type Chave, type DadosDoCard, type EstiloCard, type FormatoCard } from '../jogo/cardPersonalizado';
 import type { Luz } from '../jogo/home';
 import type { ItemDaMedalha } from '../jogo/medalhaTextos';
 import type { Pistas, Tom } from '../jogo/timeDoDia';
@@ -173,6 +174,9 @@ function dadosPersonalizados(t: Time, luz: Luz): Record<string, DadosDoCard> {
       avisoFixo: 'Palpite de resenha: não vale nada além da zoeira.',
       conteudo: { jogo: 'crava-resultado', rodada: 34, resultados: resultados.map((acerto, i) => ({ acerto, certeza: i === 0 })) },
     }),
+    'trofeu-semana': dadosDeAmostraDoTrofeu('semana', t, { somou: true, apelido: 'Zé da Geral', luz }),
+    'trofeu-mes': dadosDeAmostraDoTrofeu('mes', t, { somou: false, apelido: 'Zé da Geral', luz }),
+    'trofeu-vitrine': dadosDeAmostraDoTrofeu('vitrine', t, { somou: true, apelido: 'Zé da Geral', luz }),
     medalha: comum('Lances do Jogo', 'OURO', 'Medalha pro time', 'Já sou ouro no primeiro gol de Tóquio — Flamengo x Liverpool (1981)', '🥇', 'Medalha no peito e zoeira no grupo.', {
       tipo: 'jogo-x1',
       novoRecorde: false,
@@ -206,13 +210,13 @@ async function personalizados(): Promise<void> {
       for (const estilo of estilos) {
         for (const formato of formatos) {
           for (const modo of ['ligado', 'desligado'] as const) {
-            const ligados = new Set<Chave>(modo === 'ligado' ? TIPOS_DE_CARD[d.tipo].map((q) => q.chave) : []);
+            const ligados = new Set<Chave>(modo === 'ligado' ? quadradinhosDoCard(d).map((q) => q.chave) : []);
             const plano = planoDoCard(d, { estilo, formato, ligados });
             const canvas = await desenharCardPersonalizado(d, plano);
             mostrar(nomeDoCard(id, jogo, estilo === 'telao' ? 'telao' : 'placar', formato, modo), canvas, formato);
           }
           // O mesmo estilo com o busto do boneco ("Meu boneco" ligado).
-          const ligados = new Set<Chave>(TIPOS_DE_CARD[d.tipo].map((q) => q.chave));
+          const ligados = new Set<Chave>(quadradinhosDoCard(d).map((q) => q.chave));
           const comBusto = planoDoCard(d, { estilo, formato, ligados, boneco: BONECO_FALSO, comBoneco: true });
           mostrar(nomeDoCard(id, jogo, estilo === 'telao' ? 'telao' : 'placar', formato, 'busto'), await desenharCardPersonalizado(d, comBusto), formato);
         }
@@ -220,7 +224,7 @@ async function personalizados(): Promise<void> {
       // O Pôster: tudo ligado (com apelido) e só o essencial.
       for (const formato of formatos) {
         for (const modo of ['ligado', 'desligado'] as const) {
-          const ligados = new Set<Chave>(modo === 'ligado' ? TIPOS_DE_CARD[d.tipo].map((q) => q.chave) : []);
+          const ligados = new Set<Chave>(modo === 'ligado' ? quadradinhosDoCard(d).map((q) => q.chave) : []);
           const plano = planoDoCard(d, { estilo: 'poster', formato, ligados, boneco: BONECO_FALSO, apelido: 'Zé da Geral' });
           mostrar(nomeDoCard(id, jogo, 'poster', formato, modo), await desenharCardPersonalizado(d, plano), formato);
         }

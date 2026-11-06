@@ -27,7 +27,34 @@ export function motivoDaFalha(e: unknown): string {
   return 'desconhecido';
 }
 
-/** Aviso com o código no fim, para o jogador mandar no print. */
+/**
+ * Aviso com o código numa linha à parte (separada por "\n"), para o jogador mandar no print.
+ * Quem mostra o aviso usa `preencherAviso` (elemento) ou `htmlDoAviso` (HTML), que põem o código pequeno e cinza.
+ */
 export function comMotivo(aviso: string, e: unknown): string {
-  return `${aviso} (código: ${motivoDaFalha(e)})`;
+  return `${aviso}\ncódigo: ${motivoDaFalha(e)}`;
+}
+
+/** Separa a frase do código (linha "código: x" depois do "\n". */
+export function partesDoAviso(aviso: string): { frase: string; codigo: string | null } {
+  const i = aviso.indexOf('\n');
+  return i < 0 ? { frase: aviso, codigo: null } : { frase: aviso.slice(0, i), codigo: aviso.slice(i + 1) };
+}
+
+/** Escreve o aviso no elemento: a frase e, embaixo, o código em letra pequena e cinza. */
+export function preencherAviso(el: HTMLElement, aviso: string): void {
+  const { frase, codigo } = partesDoAviso(aviso);
+  el.textContent = frase;
+  if (codigo) {
+    const small = document.createElement('small');
+    small.className = 'aviso-codigo';
+    small.textContent = codigo;
+    el.append(small);
+  }
+}
+
+/** Mesmo aviso como HTML (a frase e o código já escapados pelo `esc` de quem chama). */
+export function htmlDoAviso(aviso: string, esc: (s: string) => string): string {
+  const { frase, codigo } = partesDoAviso(aviso);
+  return esc(frase) + (codigo ? `<small class="aviso-codigo">${esc(codigo)}</small>` : '');
 }

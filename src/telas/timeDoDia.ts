@@ -3,7 +3,7 @@
 
 import { esc, irPara, type Rota } from '../app';
 import { corDeTexto, ID_OUTRO, proTime, timePorId, TIMES, type Time } from '../dados/times';
-import { prefs } from '../estado';
+import { apelidoDoCard, prefs } from '../estado';
 import type { DadosDoCard } from '../jogo/cardPersonalizado';
 import { linhaDoTorcedor } from '../jogo/cardTextos';
 import { conviteDia } from '../jogo/convites';
@@ -158,6 +158,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
           <p class="dia-chute">Exemplo de pistas</p>
           <div class="dia-celulas">${EXEMPLO.map(([tom, valor], i) => `<span class="dia-cel ${tom}" style="--i:${i}">${valor}</span>`).join('')}</div>
         </div>
+        <p class="dia-legenda">Verde = igual · Amarelo = perto · ↑ ↓ = o secreto é maior ou menor</p>
         <ol class="dia-grade" data-grade aria-label="Seus chutes" aria-live="polite"></ol>
         <p class="faixa-dica" data-dica hidden aria-live="polite"></p>
       </section>
@@ -436,7 +437,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     ).catch(() => {});
 
     // Card personalizável (jogo.md 14.6): o Card abre a tela "Seu card" e o Stories manda o card com as escolhas guardadas.
-    const apelido = prefs.get().apelido;
+    const apelido = apelidoDoCard();
     const dados = (async (): Promise<DadosDoCard> => ({
       tipo: 'jogo',
       time,

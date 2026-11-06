@@ -1,7 +1,28 @@
 // Primeiro acesso (docs/jogo.md 14.8): a escolha do time é a primeira tela de quem é novo.
 
 import { describe, expect, it } from 'vitest';
-import { comecaPelaEscolha } from './primeiroAcesso';
+import { comecaPelaEscolha, destinoDepoisDoTime } from './primeiroAcesso';
+
+describe('destino depois da escolha do time', () => {
+  it('o item do link do lance atravessa a escolha e abre a ficha', () => {
+    expect(destinoDepoisDoTime('lances', undefined, 'corinthians-2012-gol-da-america')).toEqual({
+      tela: 'lances',
+      desafio: undefined,
+      lance: 'corinthians-2012-gol-da-america',
+    });
+  });
+
+  it('o X1 dos Lances segue junto e sem item abre só os Lances', () => {
+    expect(destinoDepoisDoTime('lances', 'abcdefgh')).toMatchObject({ tela: 'lances', desafio: 'abcdefgh', lance: undefined });
+  });
+
+  it('os outros destinos não levam o item', () => {
+    expect(destinoDepoisDoTime('partida', 'abcdefgh')).toEqual({ tela: 'partida', desafio: 'abcdefgh' });
+    expect(destinoDepoisDoTime('prova', 'abcdefgh')).toEqual({ tela: 'prova', desafio: 'abcdefgh' });
+    expect(destinoDepoisDoTime('timeDoDia')).toEqual({ tela: 'timeDoDia' });
+    expect(destinoDepoisDoTime(undefined)).toEqual({ tela: 'partida', desafio: undefined });
+  });
+});
 
 describe('primeiro acesso', () => {
   it('quem é novo e ia para a Home começa pela escolha do time', () => {

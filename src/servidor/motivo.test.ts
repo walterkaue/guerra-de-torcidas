@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError } from '@supabase/supabase-js';
-import { codigoDaFuncao, comMotivo, motivoDaFalha } from './motivo';
+import { codigoDaFuncao, comMotivo, htmlDoAviso, motivoDaFalha, partesDoAviso } from './motivo';
 import { ErroServidor } from './api';
 
 describe('código da falha de uma função', () => {
@@ -38,7 +38,19 @@ describe('motivo no aviso', () => {
 
   it('o código vai no fim do aviso', () => {
     expect(comMotivo('Sem conexão: essa partida não vale pontos.', new ErroServidor('captcha'))).toBe(
-      'Sem conexão: essa partida não vale pontos. (código: captcha)',
+      'Sem conexão: essa partida não vale pontos.\ncódigo: captcha',
     );
+  });
+
+  it('a frase e o código se separam, sem parênteses', () => {
+    const aviso = comMotivo('Caiu a conexão: essa não vale mais pontos. Joga de novo quando a rede voltar.', new ErroServidor('tempo_esgotado'));
+    expect(partesDoAviso(aviso)).toEqual({
+      frase: 'Caiu a conexão: essa não vale mais pontos. Joga de novo quando a rede voltar.',
+      codigo: 'código: tempo_esgotado',
+    });
+    expect(htmlDoAviso(aviso, (s) => s)).toBe(
+      'Caiu a conexão: essa não vale mais pontos. Joga de novo quando a rede voltar.<small class="aviso-codigo">código: tempo_esgotado</small>',
+    );
+    expect(partesDoAviso('Sem código.')).toEqual({ frase: 'Sem código.', codigo: null });
   });
 });

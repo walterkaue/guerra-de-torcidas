@@ -71,7 +71,7 @@ export function desenharGaleria(el: HTMLElement, o: OpcoesDaGaleria = {}): () =>
     }
     const texto = total === null ? 'Buscando…' : total === 'erro' ? 'Sem conexão' : textoDoTotal(total);
     botaoTime.setAttribute('style', `--gc1:${t.cores[0]};--gc2:${t.cores[1]};--gtxt:${corDeTexto(t.cores[0])}`);
-    botaoTime.innerHTML = `<span class="gal-time-nome">${esc(t.nome)}<small>${esc(texto)}</small></span><span class="gal-troca" aria-hidden="true">Trocar</span>`;
+    botaoTime.innerHTML = `<span class="gal-time-nome">${esc(t.nome)}<small>${esc(texto)}</small></span><span class="gal-troca" aria-hidden="true">Ver outro time</span>`;
     botaoTime.setAttribute('aria-label', `Galeria ${t.artigo === 'a' ? 'da' : 'do'} ${t.nome}, ${texto}. Trocar de time`);
   }
 
@@ -135,8 +135,8 @@ export function desenharGaleria(el: HTMLElement, o: OpcoesDaGaleria = {}): () =>
           <button type="button" class="botao botao-zap" data-gal-mandar>Mandar no grupo</button>
         </div>
       </div>`;
-    // Direto no toque, sem await antes: o iPhone perde o gesto do compartilhar.
-    d.querySelector('[data-gal-mandar]')!.addEventListener('click', () => mandarTrofeuNoGrupo(t, time));
+    // Abre a tela SEU CARD direto no toque (sem await antes) com a mesma frase que a ficha mostra.
+    d.querySelector('[data-gal-mandar]')!.addEventListener('click', () => mandarTrofeuNoGrupo(t, time, { raiz: d, frase }));
     abrirFolha(d);
 
     const numeros = d.querySelector<HTMLElement>('[data-gal-numeros]')!;
@@ -250,7 +250,8 @@ export function desenharGaleria(el: HTMLElement, o: OpcoesDaGaleria = {}): () =>
         })()
       : `<div class="gal-vitrine">${svgMegafone('Megafone: ainda não')}<span><b>Ainda não</b>Soma de todo mundo. Não é título.</span></div>`;
 
-    corpo.innerHTML = `${placa(`<div class="gal-tacas">${tacas}</div>`, { titulo: 'Taças', filete: true })}
+    corpo.innerHTML = `<p class="gal-toque">Toque num troféu pra ver a história dele.</p>
+      ${placa(`<div class="gal-tacas">${tacas}</div>`, { titulo: 'Taças', filete: true })}
       ${placa(flamulas, { titulo: 'Campeão da semana' })}
       ${placa(vitrine, { titulo: 'Vitrine · Maior torcida' })}
       ${sobeDesce ? `<p class="gal-sobe">${esc(sobeDesce)}</p>` : ''}

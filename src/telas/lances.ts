@@ -13,7 +13,7 @@
 import { esc, irPara, type Rota } from '../app';
 import { LANCES } from '../dados/lances';
 import { ID_OUTRO, TIMES, corDeTexto, proTime, timePorId, type Time } from '../dados/times';
-import { prefs } from '../estado';
+import { apelidoDoCard, prefs } from '../estado';
 import { sementeNova } from '../jogo/aleatorio';
 import { lancesUnificados } from './corte';
 import { tipoDoJogo, type DadosDoCard } from '../jogo/cardPersonalizado';
@@ -59,7 +59,7 @@ import { contextoDoTime } from '../narrador/sessao';
 import type { Desempenho } from '../jogo/posicao';
 import * as SERVIDOR from '../servidor/api';
 import { ErroServidor, type PedidoLances } from '../servidor/api';
-import { comMotivo } from '../servidor/motivo';
+import { comMotivo, preencherAviso } from '../servidor/motivo';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { sorteadorDeFrase } from './cardPersonalizado';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
@@ -117,7 +117,7 @@ const servidor = (): Promise<Servidor> => (FALSO ? import('../dev/lancesFalsos')
 
 // O código do motivo vai no fim (servidor/motivo.ts), como nos pênaltis.
 export const AVISO_SEM_PONTOS = 'Sem conexão: essa partida não vale pontos.';
-export const AVISO_CAIU = 'Caiu a conexão: essa partida não vale mais pontos.';
+export const AVISO_CAIU = 'Caiu a conexão: essa não vale mais pontos. Joga de novo quando a rede voltar.';
 const SITE = 'https://torcida.kauewalter.com.br';
 
 /**
@@ -800,7 +800,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     const valendo = !!fim;
     const outro = time.id === ID_OUTRO;
     const paraTime = proTime(time);
-    const apelido = prefs.get().apelido;
+    const apelido = apelidoDoCard();
     const desempenho: Desempenho | null = fim?.desempenho
       ? { posicao: fim.desempenho.posicao, total: fim.desempenho.total, recorde: fim.desempenho.recorde, novoRecorde: fim.desempenho.novo_recorde }
       : null;
@@ -897,6 +897,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         (esperaRanking ? selo('No ranking em 1 min', undefined, 'data-selo-ranking') : '') +
         (valendo && situacao.tipo === 'ranking' && outro ? selo('Contou pro ranking') : ''),
       zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
+      mandarCard: true,
       maisUma: 'Jogar de novo',
     });
     contar(root.querySelector<HTMLElement>('[data-contador]'), pontos);
@@ -1260,7 +1261,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     function mostrarAviso(texto: string): void {
       aviso = texto;
       const el = root.querySelector<HTMLElement>('.aviso-partida')!;
-      el.textContent = texto;
+      preencherAviso(el, texto);
       el.hidden = false;
     }
 

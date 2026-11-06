@@ -298,7 +298,7 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 
 ### `vitoria`
 - ACABOU! Vitória com sabor de domingo!
-- Venceu! E mais 20 {pro_time}!
+- Venceu! A festa dessa vai {pro_time}!
 - Venceu! Pode desfilar na resenha de cabeça erguida.
 - Vitória! O grupo do WhatsApp precisa saber disso.
 - Ganhou! O goleiro adversário pediu as contas.
@@ -354,7 +354,7 @@ O convite que vai com o link é texto fixo, sem sorteio (glossário de 20/10): "
 - ⭐ Vitória sobre {desafiante}! O grupo inteiro precisa ver.
 
 ### `desafio_derrota` — quem te chamou no X1 venceu
-- {desafiante} venceu essa. Revanche? O link tá aqui.
+- {desafiante} venceu essa. Revanche?
 - Perdeu pra {desafiante}! Agora é você que chama no X1.
 - Deu {desafiante}. Bora devolver o X1?
 - {desafiante} levou essa. Vai deixar barato?
@@ -552,7 +552,7 @@ Cuidado extra: o narrador **nunca** fala da pessoa real da pergunta (nem elogio,
 Só uma frase por erro. O 3º erro não tem grito: a partida acaba e quem fala é `prova_fim`. O mesmo vale para o 2º erro na pergunta 8, sem nada pela frente.
 
 ### `prova_abertura`
-- Prova de Boleiro! Oito perguntas, quinze segundos cada.
+- Prova de Boleiro! Oito perguntas, vinte segundos cada.
 - Hora de mostrar que entende de bola, não só de grito.
 - Dedo na tela e cabeça no jogo. Bora!
 - ⭐ O narrador estudou a semana toda. E você?
