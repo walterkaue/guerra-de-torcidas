@@ -44,6 +44,8 @@ const DUR_BATIDA = 190;
 const JANELA_DA_DEFESA = 3600;
 /** Depois do toque, o batedor espera só um instante antes de chutar. */
 const ESPERA_APOS_TOQUE = 350;
+/** Defesa: a mão (1,1 s) volta a mostrar o toque depois dessa pausa, até a pessoa tocar. */
+const REPETE_A_MAO = 2400;
 const RECUO = 2.4;
 
 type Fase =
@@ -230,7 +232,8 @@ function montar(ctx: Parameters<Estacao>[0], tipo: 'penalti' | 'defesa'): () => 
         desenharBola(g.bolaX, g.bolaY);
         maquinaCorrendo(ms, agora, fase.dica);
         const tocou = fase.zona !== null && ms >= DUR_CORRIDA + ESPERA_APOS_TOQUE;
-        if (tocou || ms >= DUR_CORRIDA + JANELA_DA_DEFESA) chuteDaMaquina(fase.zona ?? -1, fase.pulouEm ?? agora, fase.dica);
+        // J20 (06/11/2026): na defesa do Aquecimento o chute só sai depois do 1º toque, sem prazo.
+        if (tocou || (tipo === 'penalti' && ms >= DUR_CORRIDA + JANELA_DA_DEFESA)) chuteDaMaquina(fase.zona ?? -1, fase.pulouEm ?? agora, fase.dica);
         break;
       }
       case 'chuteMaquina': {
@@ -319,17 +322,22 @@ function montar(ctx: Parameters<Estacao>[0], tipo: 'penalti' | 'defesa'): () => 
   medir();
   raf = requestAnimationFrame(() => quadro(relogio()));
 
-  // A mão faz o gesto uma vez: arrasta da bola para o gol, ou toca o canto que o pé amarelo aponta.
-  timerDaMao = window.setTimeout(
-    () => {
-      if (acabou) return;
-      tiraMao =
-        tipo === 'penalti'
-          ? demonstrar(palco, { tipo: 'arrasta', de: { x: g.bolaX, y: g.bolaY }, para: { x: telaX(0.45), y: telaY(0.5) } }, reduzido)
-          : demonstrar(palco, { tipo: 'toca', em: [{ x: telaX(zonaX(plano.alvo)), y: telaY(zonaY(plano.alvo)) }] }, reduzido);
-    },
-    tipo === 'penalti' ? 500 : 750,
-  );
+  // A mão faz o gesto: arrasta da bola para o gol, ou toca o canto que o pé amarelo aponta. No pênalti, uma vez; na defesa,
+  // repete até a pessoa tocar (J20), porque o chute só sai depois do toque.
+  const mostrarMao = () => {
+    if (acabou) return;
+    tiraMao =
+      tipo === 'penalti'
+        ? demonstrar(palco, { tipo: 'arrasta', de: { x: g.bolaX, y: g.bolaY }, para: { x: telaX(0.45), y: telaY(0.5) } }, reduzido)
+        : demonstrar(palco, { tipo: 'toca', em: [{ x: telaX(zonaX(plano.alvo)), y: telaY(zonaY(plano.alvo)) }] }, reduzido);
+    // Movimento reduzido mostra a seta parada, que fica até o toque: não há o que repetir.
+    if (tipo === 'defesa' && !reduzido) {
+      timerDaMao = window.setTimeout(() => {
+        if (fase.tipo === 'corrida' && fase.zona === null) mostrarMao();
+      }, REPETE_A_MAO);
+    }
+  };
+  timerDaMao = window.setTimeout(mostrarMao, tipo === 'penalti' ? 500 : 750);
 
   if (import.meta.env.DEV) {
     // Para a conferência no navegador: dispara o gesto sem arrastar o dedo.

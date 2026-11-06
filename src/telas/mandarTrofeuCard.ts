@@ -3,7 +3,7 @@
 // bundle inicial não crescer.
 
 import type { Time } from '../dados/times';
-import { prefs } from '../estado';
+import { apelidoDoCard, prefs } from '../estado';
 import { dadosDoCardDoTrofeu, somouNoTrofeu, sorteadorDeFraseDoTrofeu } from '../jogo/cardTrofeuDados';
 import { LINK_DO_JOGO, numerosDaFicha, quemNoTrofeu, textoDoCardDoTrofeu, type Trofeu } from '../jogo/galeria';
 import { fraseDaGaleria } from '../narrador/galeria';
@@ -26,7 +26,7 @@ export function abrirCardDoTrofeu(t: Trofeu, time: Time, o: { raiz: HTMLElement;
         numeros: f ? numerosDaFicha(t, f) : [],
         meusPontos,
         ehDoMeuTime,
-        apelido: prefs.get().apelido,
+        apelido: apelidoDoCard(),
         frase,
         nivel,
       }),

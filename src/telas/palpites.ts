@@ -5,7 +5,7 @@
 
 import { esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, TIMES, corDeTexto, proTime, timePorId, type Time } from '../dados/times';
-import { prefs } from '../estado';
+import { apelidoDoCard, prefs } from '../estado';
 import type { DadosDoCard } from '../jogo/cardPersonalizado';
 import { linhaDoTorcedor } from '../jogo/cardTextos';
 import {
@@ -697,7 +697,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
         time: timeDoCard(),
         jogo: `Crava a Rodada · ${ordinalRodada(rodadaDoCard)}`,
         destaque: `${linhas.length} ${linhas.length === 1 ? 'CRAVADO' : 'CRAVADOS'}`,
-        quem: { comApelido: meusPalpites(prefs.get().apelido), semApelido: meusPalpites() },
+        quem: { comApelido: meusPalpites(apelidoDoCard()), semApelido: meusPalpites() },
         lance: `${ordinalRodada(rodadaDoCard)} rodada`,
         placarEmoji: '',
         frase: '',
@@ -720,7 +720,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     const resultados = resultadosDaRodada().sort((a, b) => ordem.get(a.jogoId)! - ordem.get(b.jogoId)!);
     const pontos = resultados.reduce((s, r) => s + r.torcida, 0);
     const novoRecorde = recordeCrava(pontosPorRodada(), rodadaDoCard).novo;
-    const apelido = prefs.get().apelido;
+    const apelido = apelidoDoCard();
     abrirCardPersonalizado({
       raiz: root,
       dados: (async (): Promise<DadosDoCard> => ({

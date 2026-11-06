@@ -4,7 +4,7 @@
 
 import { esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, proTime, timePorId, TIMES } from '../dados/times';
-import { prefs } from '../estado';
+import { apelidoDoCard } from '../estado';
 import { tipoDoJogo, type DadosDoCard } from '../jogo/cardPersonalizado';
 import { linhaDoTorcedor } from '../jogo/cardTextos';
 import { linhaDoCard } from '../jogo/cardProva';
@@ -27,7 +27,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
   const time = timePorId(rota.dados.timeId) ?? TIMES[TIMES.length - 1];
   const outro = time.id === ID_OUTRO;
   const paraTime = proTime(time);
-  const apelido = prefs.get().apelido;
+  const apelido = apelidoDoCard();
   const total = fim.pontos.total;
 
   const codigo = fim.desafio?.codigo;

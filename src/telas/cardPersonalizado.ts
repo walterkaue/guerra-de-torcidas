@@ -8,7 +8,7 @@ import '../estilos/trofeus.css';
 import '../estilos/cardPersonalizado.css';
 import { esc } from '../app';
 import { corDeTexto } from '../dados/times';
-import { APELIDO_MAX, prefs } from '../estado';
+import { APELIDO_MAX, apelidoDoCard, prefs } from '../estado';
 import { prontoParaDesenhar } from '../jogo/card';
 import {
   ACOES,
@@ -47,6 +47,7 @@ import { escolherFrase, type ContextoNarrador } from '../narrador/escolher';
 import type { EventoNarrador } from '../narrador/frases';
 import { lerRecentes, registrarVista } from '../narrador/historico';
 import { ErroServidor, salvarTorcedor } from '../servidor/api';
+import { marcaDe } from '../servidor/torcedor';
 import { lerBoneco } from '../servidor/boneco';
 import { nivelParaCard } from './carreira';
 import { icone, type NomeIcone } from './icones';
@@ -131,7 +132,7 @@ export interface OpcoesDoCard {
 export function escolhasGuardadas(tipo: DadosDoCard['tipo']): { escolhas: EscolhasDoCard; ctx: Contexto; ligados: ReadonlySet<Chave> } {
   const p = prefs.get();
   const escolhas = lerEscolhas(p.card);
-  const ctx: Contexto = { temApelido: !!p.apelido, nivelNoCard: !!p.nivelNoCard };
+  const ctx: Contexto = { temApelido: !!apelidoDoCard(), nivelNoCard: !!p.nivelNoCard };
   return { escolhas, ctx, ligados: ligadosDe(tipo, escolhas, ctx) };
 }
 
@@ -147,7 +148,7 @@ export async function desenharComAsEscolhas(dados: DadosDoCard): Promise<{ canva
     ligados,
     boneco,
     comBoneco: escolhas.comBoneco,
-    apelido: prefs.get().apelido ?? null,
+    apelido: apelidoDoCard() ?? null,
   });
   return { canvas: await desenharCardPersonalizado(dados, plano), comLink: ligados.has('link') };
 }
@@ -230,7 +231,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
   let geracao = 0;
   let fechado = false;
 
-  const contexto = (): Contexto => ({ temApelido: !!prefs.get().apelido, nivelNoCard });
+  const contexto = (): Contexto => ({ temApelido: !!apelidoDoCard(), nivelNoCard });
   const ligados = () => ligadosDe(dados!.tipo, escolhas, contexto());
   const guardar = () => prefs.set({ card: escolhas, nivelNoCard });
 
@@ -343,7 +344,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
           frasePropria,
           boneco,
           comBoneco: escolhas.comBoneco,
-          apelido: prefs.get().apelido ?? null,
+          apelido: apelidoDoCard() ?? null,
         });
         const canvas = await desenharCardPersonalizado(dados, plano);
         const blob = await noBlob(canvas);
@@ -388,7 +389,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
 
   async function aoLigar(chave: Chave): Promise<void> {
     if (!dados) return;
-    if (chave === 'apelido' && !prefs.get().apelido) {
+    if (chave === 'apelido' && !apelidoDoCard()) {
       abrirFolhaDoApelido();
       return;
     }
@@ -747,7 +748,9 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
         return;
       }
       if (fechado) return;
-      prefs.set({ apelido });
+      // O servidor acabou de aceitar: o apelido está conferido e o aparelho não precisa mandá-lo de novo (J26).
+      const timeSalvo = prefs.get().time ?? dados!.time.id;
+      prefs.set({ apelido, apelidoConferido: undefined, sincronizado: marcaDe(timeSalvo, apelido) });
       escolhas = { ...escolhas, desligados: escolhas.desligados.filter((c) => c !== 'apelido') };
       guardar();
       if (o.quemComApelido && dados!.quem) dados!.quem = { ...dados!.quem, comApelido: o.quemComApelido(apelido) };

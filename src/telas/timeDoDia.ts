@@ -3,7 +3,7 @@
 
 import { esc, irPara, type Rota } from '../app';
 import { corDeTexto, ID_OUTRO, proTime, timePorId, TIMES, type Time } from '../dados/times';
-import { prefs } from '../estado';
+import { apelidoDoCard, prefs } from '../estado';
 import type { DadosDoCard } from '../jogo/cardPersonalizado';
 import { linhaDoTorcedor } from '../jogo/cardTextos';
 import { conviteDia } from '../jogo/convites';
@@ -437,7 +437,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     ).catch(() => {});
 
     // Card personalizável (jogo.md 14.6): o Card abre a tela "Seu card" e o Stories manda o card com as escolhas guardadas.
-    const apelido = prefs.get().apelido;
+    const apelido = apelidoDoCard();
     const dados = (async (): Promise<DadosDoCard> => ({
       tipo: 'jogo',
       time,

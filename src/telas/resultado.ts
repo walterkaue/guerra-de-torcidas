@@ -5,7 +5,7 @@
 import { esc, irPara, type DadosResultado, type Rota } from '../app';
 import { SELECAO } from '../dados/adversarios';
 import { ID_OUTRO, proTime, timePorId, TIMES } from '../dados/times';
-import { prefs } from '../estado';
+import { apelidoDoCard } from '../estado';
 import { tipoDoJogo, type DadosDoCard } from '../jogo/cardPersonalizado';
 import { linhaDoTorcedor } from '../jogo/cardTextos';
 import { conviteX1Penaltis } from '../jogo/convites';
@@ -39,7 +39,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
   const d: DadosResultado = rota.dados;
   const time = timePorId(d.timeId) ?? TIMES[TIMES.length - 1];
   const outro = time.id === ID_OUTRO;
-  const apelido = prefs.get().apelido;
+  const apelido = apelidoDoCard();
   const r = d.resultado;
   const p = r.pontos;
   const paraTime = proTime(time);

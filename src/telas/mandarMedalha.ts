@@ -5,7 +5,7 @@
 import '../estilos/trofeus.css';
 import { esc } from '../app';
 import { corDeTexto, proTime, timePorId, TIMES } from '../dados/times';
-import { prefs } from '../estado';
+import { apelidoDoCard, prefs } from '../estado';
 import { mostrarCard } from '../jogo/card';
 import { textoDoCompartilhar, type DadosDoCard } from '../jogo/cardPersonalizado';
 import type { Medalha } from '../jogo/lances';
@@ -78,7 +78,7 @@ export function abrirMandarMedalha(o: { raiz: HTMLElement; itemId: string; medal
     time,
     jogo: item.tipo === 'disputa' ? 'Pênaltis' : 'Lances do Jogo',
     destaque: MEDALHA_NO_CARD[o.medalha],
-    quem: { comApelido: quemNaMedalha(prefs.get().apelido, paraTime), semApelido: quemNaMedalha(undefined, paraTime) },
+    quem: { comApelido: quemNaMedalha(apelidoDoCard(), paraTime), semApelido: quemNaMedalha(undefined, paraTime) },
     lance: `${noTitulo(item.titulo, item.tipo)} · ${jogoDoItem(item)}`,
     placarEmoji: EMOJI_DA_MEDALHA[o.medalha],
     frase: ADESIVO_DA_MEDALHA[o.medalha],
