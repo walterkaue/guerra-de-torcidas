@@ -107,21 +107,31 @@ function desenharTelao(d: DadosDoCard, plano: PlanoDoCard, busto: HTMLCanvasElem
   return canvas;
 }
 
-/** Lado do busto ao lado da linha de quem fez: 200 px no Stories (52 px na tela), proporcional no Quadrado. */
-const LADO_DO_BUSTO = { stories: 200, quadrado: 104 };
+/**
+ * Lado do canvas do busto: 200 px no Stories (52 px na tela), proporcional no Quadrado. O Telão desenha no tamanho do
+ * canvas; o Placar seco reduz até caber, então recebe o maior lado que usa (130 no Quadrado), para não esticar.
+ */
+const LADO_DO_BUSTO = { telao: { stories: 200, quadrado: 104 }, placar: { stories: 200, quadrado: 130 } };
 
-/** O busto (círculo com fundo e moldura) num canvas quadrado, ou null sem busto no plano. O boneco só carrega aqui. */
+/**
+ * O busto (círculo com fundo e moldura) num canvas quadrado, ou null sem busto no plano. O boneco só carrega aqui; se o
+ * pedaço do boneco não baixar, o card sai sem o busto.
+ */
 async function bustoDoCard(d: DadosDoCard, plano: PlanoDoCard): Promise<HTMLCanvasElement | null> {
   const v = plano.busto;
   if (!v) return null;
-  const { desenharBoneco, numeroVisivel, prepararFonteDoNumero } = await import('../telas/bonecoMontavel');
-  if (numeroVisivel(v) !== null) await prepararFonteDoNumero();
-  const lado = LADO_DO_BUSTO[plano.formato];
-  const canvas = document.createElement('canvas');
-  canvas.width = lado;
-  canvas.height = lado;
-  desenharBoneco(canvas.getContext('2d')!, v, d.time.cores, 'busto', lado, lado);
-  return canvas;
+  try {
+    const { desenharBoneco, numeroVisivel, prepararFonteDoNumero } = await import('../telas/bonecoMontavel');
+    if (numeroVisivel(v) !== null) await prepararFonteDoNumero();
+    const lado = LADO_DO_BUSTO[plano.estilo === 'telao' ? 'telao' : 'placar'][plano.formato];
+    const canvas = document.createElement('canvas');
+    canvas.width = lado;
+    canvas.height = lado;
+    desenharBoneco(canvas.getContext('2d')!, v, d.time.cores, 'busto', lado, lado);
+    return canvas;
+  } catch {
+    return null;
+  }
 }
 
 /** Assíncrono porque o Pôster e o busto do boneco carregam por `import()` só quando entram no card. */
