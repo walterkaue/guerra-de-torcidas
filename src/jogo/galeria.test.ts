@@ -355,6 +355,14 @@ describe('campeãs de estado', () => {
     expect(resumirCampeas(linhas, null).minha).toBeNull();
     expect(resumirCampeas([], null)).toEqual({ maisVezes: [], minha: null, semanas: [] });
   });
+
+  it('sua cidade em "mais vezes campeã" não repete na linha dela (nem no empate)', () => {
+    expect(resumirCampeas(linhas, 1).minha).toBeNull(); // empatada no topo
+    expect(resumirCampeas(linhas, 2).minha).toBeNull();
+    const sozinha = [l('2027-01-04', 1, 'Santos'), l('2027-01-11', 1, 'Santos'), l('2027-01-18', 2, 'Campinas')];
+    expect(resumirCampeas(sozinha, 1).minha).toBeNull();
+    expect(resumirCampeas(sozinha, 2).minha).toEqual({ nome: 'Campinas', vezes: 1 });
+  });
 });
 
 describe('narrador da Galeria', () => {
