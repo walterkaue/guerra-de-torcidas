@@ -158,8 +158,8 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
           <p class="dia-chute">Exemplo de pistas</p>
           <div class="dia-celulas">${EXEMPLO.map(([tom, valor], i) => `<span class="dia-cel ${tom}" style="--i:${i}">${valor}</span>`).join('')}</div>
         </div>
-        <ol class="dia-grade" data-grade aria-label="Seus chutes" aria-live="polite"></ol>
         <p class="dia-legenda">Verde = igual · Amarelo = perto · ↑ ↓ = o secreto é maior ou menor</p>
+        <ol class="dia-grade" data-grade aria-label="Seus chutes" aria-live="polite"></ol>
         <p class="faixa-dica" data-dica hidden aria-live="polite"></p>
       </section>
 
