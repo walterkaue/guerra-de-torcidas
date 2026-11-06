@@ -1,6 +1,6 @@
 // Prova de Boleiro no servidor (docs/jogo.md, seção 7.1). Uma pergunta por vez: o celular recebe o
 // texto e 4 alternativas com ids embaralhados por partida, e a certa só depois da escolha.
-// O tempo é medido aqui, a partir da hora em que a pergunta saiu (15 s + 2 s de tolerância).
+// O tempo é medido aqui, a partir da hora em que a pergunta saiu (20 s + 2 s de tolerância).
 // Corpo: { acao, ... }
 //   nova      { desafio?: string }                        cria a partida e manda a 1ª pergunta
 //   proxima   { partidaId, decisao?: 'seguir' | 'parar' }  da 3ª em diante, decide antes de ver
@@ -539,7 +539,7 @@ async function ajuda(sb: SupabaseClient, uid: string, corpo: Record<string, unkn
     return { tipo, porcentagens: Object.fromEntries(est.alternativas.map((a) => [a.id, pct[a.idx]])), respostas: total };
   }
 
-  // Troca: outra pergunta do mesmo degrau (do mesmo clube, ou geral), com 15 s cheios.
+  // Troca: outra pergunta do mesmo degrau (do mesmo clube, ou geral), com 20 s cheios.
   const vaga = est.escada[est.atual];
   const naPartida = new Set(est.escada.flatMap((v) => [v.perguntaId, v.trocadaDe ?? '']));
   let novaId = await sortearPergunta(sb, uid, vaga.degrau, vaga.origem, naPartida, cfg);
