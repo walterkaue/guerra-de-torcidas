@@ -1,0 +1,93 @@
+/* Placa "Troféu novo na Galeria" da Home (docs/visual.md 4.6, Grafismo de TV). Botões claros: o amarelo é do "Jogar agora". */
+.bloco-placa-trofeu {
+  margin: 10px 0;
+}
+
+.bloco-placa-trofeu:not([hidden]) {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+
+.placa-trofeu-miolo {
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+
+.bloco-placa-trofeu.entra {
+  animation: placa-trofeu-entra var(--medio) var(--mola-firme) both;
+}
+
+@keyframes placa-trofeu-entra {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+
+.placa-trofeu-corpo {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.placa-trofeu-desenho {
+  flex: none;
+  width: 64px;
+  height: 64px;
+}
+
+.placa-trofeu-desenho svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.placa-trofeu-texto {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.placa-trofeu-texto strong {
+  font-family: var(--fonte-rotulo);
+  font-size: 22px;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.placa-trofeu-texto span {
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.placa-trofeu-texto .adesivo {
+  color: inherit;
+}
+
+.botao-placa {
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--cal);
+  color: var(--tinta);
+  font-family: var(--fonte-rotulo);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4);
+}
+
+.botao-placa:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
