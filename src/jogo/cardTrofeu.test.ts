@@ -6,7 +6,7 @@ import { TIMES } from '../dados/times';
 import { PADRAO } from './vestiario';
 import { quadradinhosDoCard, planoDoCard, textoDoCompartilhar, TIPOS_DE_CARD, type BonecoDoCard, type Chave } from './cardPersonalizado';
 import { dadosDoCardDoTrofeu, somouNoTrofeu, sorteadorDeFraseDoTrofeu } from './cardTrofeuDados';
-import { LINK_DO_JOGO, quemNoTrofeu, textoDoCardDoTrofeu, type Trofeu } from './galeria';
+import { LINK_DO_JOGO, quemNoTrofeu, separarOrdinal, textoDoCardDoTrofeu, type Trofeu } from './galeria';
 import { FRASES_DA_GALERIA, preencherFraseDaGaleria } from '../narrador/galeria';
 
 const flamengo = TIMES.find((t) => t.id === 'flamengo')!;
@@ -188,5 +188,14 @@ describe('sortear outra frase do troféu', () => {
 
   it('rebaixamento não tem frase', () => {
     expect(sorteadorDeFraseDoTrofeu('rebaixamento', flamengo, null)()).toBeNull();
+  });
+});
+
+describe('posição com ordinal', () => {
+  it('separa o número do º para o º ir menor (em Anton "1º" parece "10")', () => {
+    expect(separarOrdinal('1º')).toEqual({ numero: '1', ordinal: 'º' });
+    expect(separarOrdinal('12º')).toEqual({ numero: '12', ordinal: 'º' });
+    expect(separarOrdinal('88,4')).toEqual({ numero: '88,4', ordinal: '' });
+    expect(separarOrdinal('+12,6')).toEqual({ numero: '+12,6', ordinal: '' });
   });
 });

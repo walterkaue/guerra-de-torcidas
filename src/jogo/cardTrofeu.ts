@@ -7,7 +7,7 @@ import { corDeTexto } from '../dados/times';
 import { horaBrasilia } from '../servidor/tempo';
 import { proporcaoDoTrofeu, svgDoTrofeu, svgParaImagem } from '../telas/trofeusDesenho';
 import { AMARELO, FONTE, GEO_QUADRADO, GEO_STORIES, PLACAR, ROTULO, adesivo, fundo, pilulaDoNivel, quebrarTexto, rodape, textoDoTopo, viga } from './card';
-import type { TipoDeTrofeu } from './galeria';
+import { separarOrdinal, type TipoDeTrofeu } from './galeria';
 import { luzDoHorario } from './home';
 import type { DadosDoCard, PlanoDoCard, PlanoDoTrofeu } from './cardPersonalizado';
 
@@ -113,9 +113,27 @@ function numeros(c: CanvasRenderingContext2D, lista: PlanoDoTrofeu, cx: number, 
     const x = cx - w / 2 + col * (i + 0.5);
     c.textAlign = 'center';
     c.textBaseline = 'alphabetic';
+    const { numero, ordinal } = separarOrdinal(n.valor);
     c.font = `400 ${tamV}px ${PLACAR}`;
     c.fillStyle = AMARELO;
-    c.fillText(n.valor, x, yTopo + tamV * 0.9, col - 16);
+    const base = yTopo + tamV * 0.9;
+    if (!ordinal) c.fillText(n.valor, x, base, col - 16);
+    else {
+      // "1º": em Anton o º parece um zero ("10"); vai menor, em Barlow Condensed, no alto, como o º do rótulo.
+      const tamO = Math.round(tamV * 0.4);
+      const larguraN = c.measureText(numero).width;
+      c.font = `700 ${tamO}px ${ROTULO}`;
+      const larguraO = c.measureText(ordinal).width;
+      const gap = tamV * 0.04;
+      const total = larguraN + gap + larguraO;
+      const x0 = x - total / 2;
+      c.textAlign = 'left';
+      c.font = `400 ${tamV}px ${PLACAR}`;
+      c.fillText(numero, x0, base);
+      c.font = `700 ${tamO}px ${ROTULO}`;
+      c.fillText(ordinal, x0 + larguraN + gap, base - tamV * 0.5);
+      c.textAlign = 'center';
+    }
     c.font = `700 ${tamR}px ${ROTULO}`;
     c.fillStyle = 'rgba(255,255,255,0.85)';
     c.fillText(n.rotulo.toUpperCase(), x, yTopo + tamV * 0.9 + tamR * 1.4, col - 12);

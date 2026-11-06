@@ -281,6 +281,12 @@ export function numerosDaFicha(
   ];
 }
 
+/** "1º" vira { numero: '1', ordinal: 'º' }; valor sem ordinal ("88,4") fica inteiro em `numero`. */
+export function separarOrdinal(valor: string): { numero: string; ordinal: string } {
+  const m = /^(.*?)([ºª])$/.exec(valor);
+  return m ? { numero: m[1], ordinal: m[2] } : { numero: valor, ordinal: '' };
+}
+
 /**
  * "Você tava em campo: 340 pontos nessa semana", só em troféu de semana, na Galeria do próprio time, e só para
  * quem somou (pontos da pessoa na semana, `minha_posicao_semana`).

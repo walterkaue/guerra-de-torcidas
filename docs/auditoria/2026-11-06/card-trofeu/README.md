@@ -17,5 +17,6 @@ Prints em 390 × 844 (dpr 2, 780 × 1688) tirados no dev (`npm run dev`) com Edg
 | `20-img-telao-stories-busto.png` | Telão com "Meu boneco" ligado |
 | `21-img-telao-stories-desligado.png`, `22-img-placar-stories-desligado.png` | Tudo desligado: só o essencial |
 | `23-img-vitrine-telao-stories.png` | Vitrine (megafone), sem série |
+| `24-img-mes-telao-stories-posicao.png` | Troféu de mês no Telão, imagem gerada 1080 × 1920: a posição "1º" com o º menor (em Anton parecia "10") |
 
 Não há print do Pôster com troféu de outro time porque ele não existe (sem boneco, o card vira Telão).
