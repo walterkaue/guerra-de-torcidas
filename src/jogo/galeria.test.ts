@@ -92,7 +92,7 @@ describe('estante', () => {
     ]);
   });
 
-  it('vitrine com ×N e total sem o rebaixamento', () => {
+  it('vitrine com ×N e total só com o que está na estante (sem acesso e queda)', () => {
     const e = montarEstante([
       vitrine('2027-01-04'),
       vitrine('2027-01-11'),
@@ -101,8 +101,8 @@ describe('estante', () => {
       doMes('acesso', '2027-02-01', { serie: 'b' }),
     ]);
     expect(e.vitrine.multiplo).toBe('×2');
-    expect(e.total).toBe(4);
-    expect(textoDoTotal(4)).toBe('4 troféus');
+    expect(e.total).toBe(3);
+    expect(textoDoTotal(3)).toBe('3 troféus');
     expect(textoDoTotal(1)).toBe('1 troféu');
   });
 });
@@ -232,6 +232,13 @@ describe('Home: o que anunciar', () => {
     expect(a?.chaves).toHaveLength(3);
     expect(a?.chaves.some((c) => c.startsWith('rebaixamento'))).toBe(false);
     expect(textosDosOutros()).toEqual([null, '+1 troféu novo', '+2 troféus novos']);
+  });
+
+  it('no empate de data, a flâmula vem antes do megafone', () => {
+    const a = trofeuParaAnunciar([vitrine('2027-03-08'), semana('2027-03-08')], { meuTime: 'flamengo', anunciados: [], hoje });
+    expect(a?.trofeu.trofeu).toBe('campeao_semana');
+    const b = trofeuParaAnunciar([semana('2027-03-08'), vitrine('2027-03-08')], { meuTime: 'flamengo', anunciados: [], hoje });
+    expect(b?.trofeu.trofeu).toBe('campeao_semana');
   });
 
   it('uma vez por aparelho: o que já foi anunciado não volta', () => {

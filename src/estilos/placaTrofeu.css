@@ -68,7 +68,7 @@
 }
 
 .placa-trofeu-texto .adesivo {
-  color: inherit;
+  color: var(--tinta);
 }
 
 .botao-placa {

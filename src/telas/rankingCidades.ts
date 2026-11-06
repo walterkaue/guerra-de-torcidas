@@ -18,7 +18,7 @@ import { fraseDaCidade } from '../narrador/cidade';
 import * as real from '../servidor/rankingCidades';
 import { ouvirRanking } from '../servidor/api';
 import { semanaBrasilia } from '../servidor/tempo';
-import { abas, aoTocarNoEstado, estado, marcarAba } from './blocos';
+import { abas, aoTocarNoEstado, baixarPedaco, estado, marcarAba } from './blocos';
 
 type Servidor = typeof real;
 type Sub = 'estado' | 'top' | 'estados' | 'campeas';
@@ -74,9 +74,7 @@ export function desenharCidades(el: HTMLElement, inicial?: 'campeas'): () => voi
     elCampeas.hidden = !sim;
     if (!sim) return;
     elSelo.hidden = elFrase.hidden = true;
-    void import('./campeas').then((m) => {
-      if (!saiu && sub === 'campeas' && !pararCampeas) pararCampeas = m.desenharCampeas(elCampeas);
-    });
+    baixarPedaco(elCampeas, () => import('./campeas'), (m) => (pararCampeas = m.desenharCampeas(elCampeas)), () => !saiu && sub === 'campeas' && !pararCampeas);
   }
 
   async function carregar(): Promise<void> {

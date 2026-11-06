@@ -12,7 +12,7 @@ import { textoDaMedia } from '../jogo/rankingTextos';
 import { lancesUnificados } from './corte';
 import { semanaBrasilia } from '../servidor/tempo';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
-import { abas, aoTocarNoEstado, cabecalhoTela, estado } from './blocos';
+import { abas, aoTocarNoEstado, baixarPedaco, cabecalhoTela, estado } from './blocos';
 
 type Modo = 'campeao' | 'soma';
 
@@ -73,9 +73,7 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
     (el, sub) => {
       let parar: (() => void) | null = null;
       let saiuDaAba = false;
-      void carregar().then((desenhar) => {
-        if (!saiuDaAba) parar = desenhar(el, sub);
-      });
+      baixarPedaco(el, carregar, (desenhar) => (parar = desenhar(el, sub)), () => !saiuDaAba);
       return () => {
         saiuDaAba = true;
         parar?.();

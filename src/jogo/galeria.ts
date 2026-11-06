@@ -130,7 +130,7 @@ export interface Flamula {
 }
 
 export interface Estante {
-  /** Troféus no botão do topo ("N troféus"): todos menos o rebaixamento. */
+  /** Troféus no botão do topo ("N troféus"): os que aparecem na estante (acesso e queda ficam na linha de sobe e desce). */
   total: number;
   tacas: Taca[];
   /** Uma flâmula por semana, da mais nova à mais antiga. */
@@ -140,7 +140,19 @@ export interface Estante {
 
 const ORDEM_DAS_TACAS: Taca['tipo'][] = ['campeao_estreia', 'campeao_temporada', 'campeao_serie_b'];
 const multiplo = (n: number) => (n > 1 ? `×${n}` : null);
-const maisNovo = (a: Trofeu, b: Trofeu) => ((b.semana ?? b.mes ?? '') > (a.semana ?? a.mes ?? '') ? 1 : -1);
+/** No empate de data, o que mais pesa vem antes (a taça antes da flâmula, a flâmula antes do megafone). */
+const PESO: Record<TipoDeTrofeu, number> = {
+  campeao_estreia: 0,
+  campeao_temporada: 1,
+  campeao_serie_b: 2,
+  acesso: 3,
+  campeao_semana: 4,
+  maior_torcida: 5,
+  rebaixamento: 6,
+};
+const dataDe = (t: Trofeu) => t.semana ?? t.mes ?? '';
+const maisNovo = (a: Trofeu, b: Trofeu) =>
+  dataDe(a) !== dataDe(b) ? (dataDe(b) > dataDe(a) ? 1 : -1) : PESO[a.trofeu] - PESO[b.trofeu];
 
 /** Monta as prateleiras de um time a partir das linhas de `galeria_trofeus`. */
 export function montarEstante(trofeus: readonly Trofeu[]): Estante {
@@ -153,7 +165,7 @@ export function montarEstante(trofeus: readonly Trofeu[]): Estante {
   const flamulas = doTipo('campeao_semana').map((t) => ({ trofeu: t, data: ddmmaaaa(t.semana ?? ''), serieB: t.serie === 'b' }));
   const vitrine = doTipo('maior_torcida');
   return {
-    total: ordenados.filter((t) => t.trofeu !== 'rebaixamento').length,
+    total: tacas.reduce((n, t) => n + t.vezes, 0) + doTipo('campeao_semana').length + vitrine.length,
     tacas,
     flamulas,
     vitrine: { vezes: vitrine.length, multiplo: multiplo(vitrine.length), ultimo: vitrine[0] ?? null },

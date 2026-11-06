@@ -41,7 +41,8 @@ const doMes = (time_id: string, mes: string, trofeu: Trofeu['trofeu'], serie: Se
  * campeão da A no mês passado; flâmulas e megafones espalhados, os mais novos da semana passada.
  */
 function historia(id: string): Trofeu[] {
-  const completo = IDS.indexOf(id) % 2 === 0 || id === IDS[0];
+  // Um em cada quatro times tem só duas flâmulas, para a Galeria de outro time variar.
+  const completo = IDS.indexOf(id) % 4 !== 3;
   const base = [semana(id, semanaAtras(1), 'a'), semana(id, semanaAtras(1), 'a', 'maior_torcida'), semana(id, semanaAtras(3), 'a', 'maior_torcida')];
   if (!completo) return [semana(id, semanaAtras(2), 'a'), semana(id, semanaAtras(9), 'b')];
   return [
@@ -143,7 +144,7 @@ export function servidorFalso(cenario: string): ServidorDaGaleria {
             ]
           : [],
       ),
-    dadosDaFicha: (t) => espera(ficha(t), 350),
+    dadosDaFicha: (t, comMeusPontos) => espera({ ...ficha(t), meusPontos: comMeusPontos ? ficha(t).meusPontos : null }, 350),
     minhaCidade: () => espera(cheia ? { codigo: 3509502, uf: 'SP' } : null),
   };
 }

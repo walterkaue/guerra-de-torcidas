@@ -33,7 +33,8 @@ export interface ServidorDaGaleria {
   temporadas(): Promise<{ mes: string; pre_temporada: boolean }[]>;
   /** A série do time em cada mês fora da pré-temporada. */
   historicoDeSeries(timeId: string): Promise<SerieDoMes[]>;
-  dadosDaFicha(t: Trofeu): Promise<DadosDaFicha>;
+  /** `comMeusPontos`: só na Galeria do próprio time (senão a leitura dos pontos da pessoa nem acontece). */
+  dadosDaFicha(t: Trofeu, comMeusPontos: boolean): Promise<DadosDaFicha>;
   /** Cidade da pessoa (código e UF) para abrir as Campeãs no estado dela. */
   minhaCidade(): Promise<{ codigo: number; uf: string } | null>;
 }
@@ -75,7 +76,7 @@ const real: ServidorDaGaleria = {
     return ((series.data ?? []) as SerieDoMes[]).filter((s) => !pre.has(s.mes));
   },
 
-  async dadosDaFicha(t) {
+  async dadosDaFicha(t, comMeusPontos) {
     const sb = await supabase();
     if (t.semana) {
       const [semana, series, meusPontos] = await Promise.all([
@@ -87,7 +88,7 @@ const real: ServidorDaGaleria = {
             .not('confirmada_em', 'is', null),
         ),
         comTempoLimite(sb.from('temporada_serie').select('time_id, serie').eq('mes', mesDaSemana(t.semana))),
-        meusPontosNaSemana(t.semana),
+        comMeusPontos ? meusPontosNaSemana(t.semana) : Promise.resolve(null),
       ]);
       if (semana.error || series.error) throw new ErroServidor('falha');
       return {

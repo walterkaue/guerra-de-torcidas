@@ -142,7 +142,7 @@ export function desenharGaleria(el: HTMLElement, o: OpcoesDaGaleria = {}): () =>
     const numeros = d.querySelector<HTMLElement>('[data-gal-numeros]')!;
     const campo = d.querySelector<HTMLElement>('[data-gal-campo]')!;
     void servidorDaGaleria()
-      .then((api) => api.dadosDaFicha(t))
+      .then((api) => api.dadosDaFicha(t, t.time_id === prefs.get().time))
       .then((dados) => {
         if (!d.isConnected) return;
         const lista = numerosDaFicha(t, dados);

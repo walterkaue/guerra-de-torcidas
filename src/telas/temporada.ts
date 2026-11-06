@@ -3,7 +3,7 @@
 // O mês é o mais recente da tabela `temporada`, nunca o relógio do celular.
 
 import { esc, irPara } from '../app';
-import { abas, estado, marcarAba } from './blocos';
+import { abas, baixarPedaco, estado, marcarAba } from './blocos';
 import { ID_OUTRO, timePorId } from '../dados/times';
 import { prefs } from '../estado';
 import * as real from '../servidor/api';
@@ -196,7 +196,7 @@ export function desenharTemporada(el: HTMLElement, inicial: 'mes' | '52semanas' 
   let parar: (() => void) | undefined;
   let atual = '';
   let vez = 0;
-  el.innerHTML = `<div class="abas-linha">${abas('tsub', [{ id: 'mes', texto: 'Mês · Série A e B' }, { id: '52semanas', texto: '52 semanas' }], inicial, 2)}</div><div class="painel-ranking"></div>`;
+  el.innerHTML = `<div class="abas-linha iguais">${abas('tsub', [{ id: 'mes', texto: 'Mês · Série A e B' }, { id: '52semanas', texto: '52 semanas' }], inicial, 2)}</div><div class="painel-ranking"></div>`;
   const corpo = el.lastElementChild as HTMLElement;
   const abrir = (id: string) => {
     if (id === atual) return;
@@ -208,9 +208,7 @@ export function desenharTemporada(el: HTMLElement, inicial: 'mes' | '52semanas' 
     corpo.innerHTML = '';
     if (id === 'mes') parar = desenharMes(corpo);
     else
-      void import('./semanas52').then((m) => {
-        if (minha === vez) parar = m.desenharSemanas52(corpo);
-      });
+      baixarPedaco(corpo, () => import('./semanas52'), (m) => (parar = m.desenharSemanas52(corpo)), () => minha === vez);
   };
   el.firstElementChild!.addEventListener('click', (e) => {
     const id = (e.target as HTMLElement).closest<HTMLElement>('[data-tsub]')?.dataset.tsub;

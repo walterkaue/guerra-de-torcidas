@@ -23,13 +23,17 @@ import { papelPicadoNaTela } from './papelPicado';
 import { vibrar } from './toque';
 import { svgDoTrofeu } from './trofeusDesenho';
 
-/** Uma leitura por abertura do app: voltar à Home não lê de novo. `anuncio` fica para a placa voltar se a Home redesenhar. */
-let lidoDoTime: string | null = null;
-let anuncio: Anuncio | null = null;
+/**
+ * Uma leitura por abertura do app: voltar à Home não lê de novo. `leitura` é a leitura (feita ou em andamento) do
+ * time; uma Home que chega enquanto ela anda espera a mesma. Falha de rede esquece a leitura, para a próxima Home
+ * tentar de novo. `comemorou` marca que o papel picado e a vibração já saíram nesta abertura.
+ */
+let leitura: { time: string; anuncio: Promise<Anuncio | null> } | null = null;
+let comemorou = false;
 
 const semMovimento = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
-function desenhar(el: HTMLElement, a: Anuncio, time: Time, comemorar: boolean): void {
+function desenhar(el: HTMLElement, a: Anuncio, time: Time, comemorar: boolean, saiu: () => boolean): void {
   const t = a.trofeu;
   const nome = NOME_DO_TROFEU[t.trofeu] + (t.serie === 'b' ? ' · Série B' : '');
   const outros = textoDosOutros(a.outros);
@@ -51,41 +55,47 @@ function desenhar(el: HTMLElement, a: Anuncio, time: Time, comemorar: boolean): 
     </div>
   </div>`;
   el.hidden = false;
-  el.classList.toggle('entra', !semMovimento());
+  // Entra com animação só na primeira vez; ao voltar à Home a placa já está no lugar.
+  el.classList.toggle('entra', comemorar && !semMovimento());
   el.querySelector('[data-acao="ver-galeria"]')!.addEventListener('click', () => irPara({ tela: 'ranking', aba: 'conquistas', sub: 'galeria' }));
   // Direto no toque, sem await antes, para o iPhone não perder o gesto de compartilhar.
   el.querySelector('[data-acao="mandar-trofeu"]')!.addEventListener('click', () => mandarTrofeuNoGrupo(t, time));
   if (comemorar && !semMovimento()) {
     const desenho = el.querySelector('[data-desenho]')!;
-    window.setTimeout(() => papelPicadoNaTela(desenho, time.cores), 280);
+    window.setTimeout(() => !saiu() && papelPicadoNaTela(desenho, time.cores), 280);
   }
   if (comemorar) vibrar('acerto');
+}
+
+/** Lê a Galeria do time e decide o anúncio (grava as chaves no aparelho, fora do modo falso). */
+async function lerAnuncio(time: Time): Promise<Anuncio | null> {
+  const trofeus = await (await servidorDaGaleria()).trofeusDoTime(time.id);
+  const falsa = galeriaFalsaLigada();
+  const antes = prefs.get().trofeusAnunciados ?? [];
+  const a = trofeuParaAnunciar(trofeus, { meuTime: time.id, anunciados: falsa ? [] : antes, hoje: diaBrasilia() });
+  if (a && !falsa) prefs.set({ trofeusAnunciados: guardarAnunciados(antes, a.chaves) });
+  return a;
 }
 
 /** Chamada pela Home depois de desenhar. `el` é a <section data-placa-trofeu hidden>; `timeId` o time do coração. */
 export async function mostrarPlacaTrofeu(el: HTMLElement, timeId: string | undefined, saiu: () => boolean): Promise<void> {
   const time = timeId && timeId !== ID_OUTRO ? timePorId(timeId) : undefined;
   if (!time) return;
-  if (lidoDoTime === time.id) {
-    // Mesma abertura: sem nova leitura. Se já anunciou algo, a placa continua, sem festa de novo.
-    if (anuncio && !saiu()) desenhar(el, anuncio, time, false);
-    return;
+  if (leitura?.time !== time.id) {
+    const anuncio = lerAnuncio(time);
+    leitura = { time: time.id, anuncio };
+    comemorou = false;
+    anuncio.catch(() => {
+      if (leitura?.anuncio === anuncio) leitura = null; // sem internet: nada aparece, e a próxima Home tenta de novo
+    });
   }
-  lidoDoTime = time.id;
-  anuncio = null;
   try {
-    const trofeus = await (await servidorDaGaleria()).trofeusDoTime(time.id);
-    if (saiu()) {
-      lidoDoTime = null; // saiu antes de ver: a próxima Home lê de novo
-      return;
-    }
-    const falsa = galeriaFalsaLigada();
-    const antes = prefs.get().trofeusAnunciados ?? [];
-    const a = trofeuParaAnunciar(trofeus, { meuTime: time.id, anunciados: falsa ? [] : antes, hoje: diaBrasilia() });
-    if (!a) return;
-    anuncio = a;
-    if (!falsa) prefs.set({ trofeusAnunciados: guardarAnunciados(antes, a.chaves) });
-    desenhar(el, a, time, true);
+    const a = await leitura.anuncio;
+    if (!a || saiu()) return;
+    // Gravado como anunciado assim que foi lido: se a pessoa saiu antes de ver, a placa ainda aparece nesta abertura.
+    const primeira = !comemorou;
+    comemorou = true;
+    desenhar(el, a, time, primeira, saiu);
   } catch {
     // sem internet: nada aparece, sem aviso
   }
@@ -93,6 +103,6 @@ export async function mostrarPlacaTrofeu(el: HTMLElement, timeId: string | undef
 
 /** Só para testes e depuração: esquece a leitura da abertura. */
 export function esquecerLeitura(): void {
-  lidoDoTime = null;
-  anuncio = null;
+  leitura = null;
+  comemorou = false;
 }
