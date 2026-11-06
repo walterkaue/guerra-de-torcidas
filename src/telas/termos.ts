@@ -50,6 +50,7 @@ export function telaTermos(root: HTMLElement, rota: Rota): void {
         </div>
         <div class="termos-dados" id="meus-dados" aria-live="polite" hidden></div>
       </section>
+      <button class="botao botao-sec termos-fechar" type="button" data-acao="fechar">Fechar</button>
       <div class="folha" data-folha role="dialog" aria-modal="true" aria-describedby="apagar-aviso" aria-label="Apagar meus dados" hidden>
         <div class="folha-caixa">
           <p id="apagar-aviso">${AVISO_APAGAR}</p>
@@ -60,10 +61,13 @@ export function telaTermos(root: HTMLElement, rota: Rota): void {
       </div>
     </main>`;
 
-  root.querySelector('.voltar')!.addEventListener('click', () => {
+  // O "Fechar" do fim faz o mesmo que a seta do topo: quem leu até o fim não precisa subir tudo.
+  const sair = () => {
     limparEndereco();
     irPara((rota.tela === 'termos' && rota.de) || { tela: 'inicio' });
-  });
+  };
+  root.querySelector('.voltar')!.addEventListener('click', sair);
+  root.querySelector('[data-acao="fechar"]')!.addEventListener('click', sair);
 
   const abrir = root.querySelector<HTMLButtonElement>('[data-acao="apagar"]')!;
   const folha = root.querySelector<HTMLElement>('[data-folha]')!;
