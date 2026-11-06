@@ -1,4 +1,4 @@
-// Prova de Boleiro (docs/jogo.md, seção 7.1): 8 perguntas na escada, 15 s cada, parar ou seguir
+// Prova de Boleiro (docs/jogo.md, seção 7.1): 8 perguntas na escada, 20 s cada, parar ou seguir
 // a partir da 3ª e 3 ajudas. Tudo vem do servidor, uma pergunta por vez; aqui é só toque e desenho.
 // O relógio da tela é só aviso: quem mede o tempo é o servidor.
 

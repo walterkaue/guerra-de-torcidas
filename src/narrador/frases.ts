@@ -429,7 +429,7 @@ export const FRASES = {
     { t: "Fechou a rodada! O caderninho do narrador tá cheio de anotação.", rara: true },
   ],
   prova_abertura: [
-    { t: "Prova de Boleiro! Oito perguntas, quinze segundos cada." },
+    { t: "Prova de Boleiro! Oito perguntas, vinte segundos cada." },
     { t: "Hora de mostrar que entende de bola, não só de grito." },
     { t: "Dedo na tela e cabeça no jogo. Bora!" },
     { t: "O narrador estudou a semana toda. E você?", rara: true },

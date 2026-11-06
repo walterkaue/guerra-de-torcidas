@@ -1,4 +1,4 @@
-// Estação 4 (Prova) do Aquecimento: a pergunta fácil própria do aquecimento, 4 botões e relógio de 15 s,
+// Estação 4 (Prova) do Aquecimento: a pergunta fácil própria do aquecimento, 4 botões e relógio de 20 s,
 // no visual da Prova. Tempo esgotado conta como errou. Ninguém grava nada: roda no aparelho.
 
 import { esc } from '../../app';

@@ -552,7 +552,7 @@ Cuidado extra: o narrador **nunca** fala da pessoa real da pergunta (nem elogio,
 Só uma frase por erro. O 3º erro não tem grito: a partida acaba e quem fala é `prova_fim`. O mesmo vale para o 2º erro na pergunta 8, sem nada pela frente.
 
 ### `prova_abertura`
-- Prova de Boleiro! Oito perguntas, quinze segundos cada.
+- Prova de Boleiro! Oito perguntas, vinte segundos cada.
 - Hora de mostrar que entende de bola, não só de grito.
 - Dedo na tela e cabeça no jogo. Bora!
 - ⭐ O narrador estudou a semana toda. E você?
