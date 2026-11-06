@@ -27,4 +27,12 @@ export function definirFonteDoVestiario(f: FonteDoVestiario | null): void {
   fonteAtual = f;
 }
 
-export const fonteDoVestiario = (): FonteDoVestiario => fonteAtual ?? fonteDoServidor;
+/** Em dev, os servidores de mentira da Home e dos jogos abrem o vestiário com a fonte falsa (o mesmo &nivel=). */
+const DEV_FALSO =
+  import.meta.env.DEV && ['homeFalsa', 'lancesFalsos', 'penaltiFalso', 'provaFalsa', 'diaFalso'].some((f) => new URLSearchParams(location.search).has(f));
+const fonteFalsaDeDev: FonteDoVestiario = {
+  ler: async () => (await import('./fonteFalsa')).fonteFalsa(new URLSearchParams(location.search)).ler(),
+  salvar: async (v) => (await import('./fonteFalsa')).fonteFalsa(new URLSearchParams(location.search)).salvar(v),
+};
+
+export const fonteDoVestiario = (): FonteDoVestiario => fonteAtual ?? (DEV_FALSO ? fonteFalsaDeDev : fonteDoServidor);

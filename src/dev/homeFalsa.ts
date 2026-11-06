@@ -11,6 +11,7 @@ import type { Carreira } from '../jogo/carreira';
 import type { PosicaoSemana } from '../jogo/posicao';
 import type { LancesHoje, LinhaRanking, MinigameDoRecorde, RespostaDoDia, ResumoDesafioLances } from '../servidor/api';
 import type { Jogo, MeusDados, MinhaPosicao } from '../servidor/crava';
+import { estadoFalso } from '../telas/vestiario/fonteFalsa';
 
 const params = new URLSearchParams(location.search);
 const cenario = params.get('cenario') ?? 'dia';
@@ -94,7 +95,9 @@ export const meusDadosDoCrava = (): Promise<MeusDados> =>
 export const meusRecordes = (): Promise<Partial<Record<MinigameDoRecorde, number | null>>> =>
   espera(params.has('semRanking') ? { penaltis: null, prova: null, dia: null, crava: null, lances: null } : { penaltis: 85, prova: 58, dia: 70, crava: 44, lances: 62 });
 
-export const minhaCarreira = (): Promise<Carreira> => espera({ xp: 770, partidasHoje: 3, bonus: null });
+// Com &nivel= (o mesmo do boneco falso), o XP acompanha o nível; sem ele, 770 (Reserva).
+export const minhaCarreira = (): Promise<Carreira> =>
+  espera({ xp: params.has('nivel') ? estadoFalso(params).xp : 770, partidasHoje: 3, bonus: null });
 
 export const minhaPosicaoMinigame = (minigame: 'penaltis' | 'prova' | 'dia' | 'lances'): Promise<PosicaoSemana | null> =>
   espera({ penaltis: { posicao: 2, total: 9, pontos: 85 }, prova: { posicao: null, total: 6, pontos: 0 }, dia: { posicao: 1, total: 5, pontos: 70 }, lances: { posicao: 4, total: 9, pontos: 62 } }[minigame]);
