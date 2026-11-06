@@ -59,7 +59,7 @@ export function htmlDoBloco(novas: readonly Peca[], comBoneco: boolean): string 
         ${comBoneco ? `<div class="peca-boneco" data-peca-boneco style="width:${LARGURA}px;height:${ALTURA}px"></div>` : ''}
         <div class="peca-lista">${grupos}</div>
       </div>
-      <button type="button" class="botao" data-acao="vestir-agora">Vestir agora</button>`,
+      <button type="button" class="botao-linha" data-acao="vestir-agora">Vestir agora</button>`,
     { titulo: 'Peça nova no vestiário', filete: true, classe: 'peca-placa' },
   );
 }

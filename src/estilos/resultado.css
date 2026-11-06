@@ -492,8 +492,9 @@
   font-size: 15px;
 }
 
-.peca-placa .botao {
+.peca-placa .botao-linha {
   width: 100%;
+  min-height: 44px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
