@@ -62,17 +62,28 @@ async function lerDeVerdade(): Promise<BonecoDoServidor> {
  * Lê o boneco do servidor, guarda a cópia de exibição e marca as peças liberadas como vistas (o resultado não
  * anuncia peça que este aparelho já viu). Rejeita sem rede.
  */
-export async function lerDoServidor(): Promise<BonecoDoServidor> {
-  const b = await lerDeVerdade();
-  guardarBoneco(b.vestimenta);
-  marcarVistas(b.liberadas);
-  return b;
+export function lerDoServidor(): Promise<BonecoDoServidor> {
+  // Duas telas pedindo ao mesmo tempo (o avatar e o bloco do Perfil) dividem a mesma leitura.
+  lendo ??= lerDeVerdade()
+    .then((b) => {
+      guardarBoneco(b.vestimenta);
+      marcarVistas(b.liberadas);
+      return b;
+    })
+    .finally(() => {
+      lendo = null;
+    });
+  return lendo;
 }
+
+let lendo: Promise<BonecoDoServidor> | null = null;
 
 let conferido: Promise<boolean> | null = null;
 
 /** Uma conferência por abertura do app (Home e Perfil): true se a vestimenta guardada mudou. Sem rede: false. */
 export function conferirComOServidor(): Promise<boolean> {
+  // Sem cópia guardada (troca de conta: esquecerTorcedor apaga), confere de novo mesmo já tendo conferido.
+  if (conferido && bonecoGuardado() === null) conferido = null;
   conferido ??= (async () => {
     const antes = JSON.stringify(vestimentaGuardada());
     try {

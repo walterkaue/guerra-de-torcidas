@@ -943,7 +943,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         comemorar,
         bronzeNoDev: true,
       }),
-    );
+    ).catch(() => {});
     // Efeito no ranking: selo "No ranking em 1 min" que vira "Subiu de 5º pra 3º" (mesmo fluxo dos pênaltis).
     let pararEfeito: (() => void) | null = null;
     if (esperaRanking && fim) {

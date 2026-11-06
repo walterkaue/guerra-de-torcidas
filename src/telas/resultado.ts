@@ -186,7 +186,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
       jogadas: d.disputa ? [{ item: itemPenaltis(d.disputa.id), gols: golsDaDisputa(r.cobrancas), recriados: 0, vitorias: r.venceu ? 1 : 0 }] : [],
       comemorar,
     }),
-  );
+  ).catch(() => {});
   // Bom momento para oferecer o aviso de domingo: vitória que valeu pra torcida.
   if (r.venceu && d.valendo) convidarParaAvisos(root.querySelector<HTMLElement>('[data-convite-push]'));
   oferecerApoio(

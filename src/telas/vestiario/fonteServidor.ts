@@ -14,7 +14,8 @@ export const fonteDoServidor: FonteDoVestiario = {
   async ler() {
     const [b, carreira, medalhas] = await Promise.all([
       lerDoServidor(),
-      minhaCarreira(),
+      // Sem a carreira, a folha só não mostra a barra de XP: o vestiário abre do mesmo jeito.
+      minhaCarreira().catch(() => null),
       // Sem as medalhas, a folha só não mostra quanto falta: o que está liberado veio do servidor do mesmo jeito.
       minhasMedalhas().catch(() => []),
     ]);

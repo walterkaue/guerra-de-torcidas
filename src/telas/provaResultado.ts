@@ -110,7 +110,7 @@ ${conviteX1Prova(total, false)} ${link}`;
   // Peça nova no vestiário: só o nível muda na Prova (import() lazy).
   void import('./pecaNovaBloco').then((m) =>
     m.pecaNovaDoResultado({ alvo: root.querySelector<HTMLElement>('[data-peca-nova]'), contou: !!fim.desempenho && !situacao, carreira, comemorar }),
-  );
+  ).catch(() => {});
 
   // Card personalizável (jogo.md 14.6): o Card abre a tela "Seu card" e o Stories manda o card com as escolhas guardadas.
   const paraOCard = outro ? null : paraTime;

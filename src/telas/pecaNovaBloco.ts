@@ -76,7 +76,6 @@ export async function mostrarPecaNova(alvo: HTMLElement | null, o: PedidoDoBloco
   if (!alvo) return [];
   const novas = pecasParaAnunciar(o, o.ignorarVistas ? new Set() : pecasVistas());
   if (!novas.length) return [];
-  if (!o.ignorarVistas) marcarVistas(novas.map((p) => p.id));
 
   const pintura = await import('./bonecoPintar');
   let guardada: Vestimenta | null = pintura.vestimentaGuardada();
@@ -85,6 +84,8 @@ export async function mostrarPecaNova(alvo: HTMLElement | null, o: PedidoDoBloco
 
   alvo.innerHTML = htmlDoBloco(novas, !!guardada);
   alvo.hidden = false;
+  // Só agora o bloco está na tela: tela que saiu antes (ou chunk que não baixou) não gasta o anúncio.
+  if (!o.ignorarVistas) marcarVistas(novas.map((p) => p.id));
   alvo.querySelector('[data-acao="vestir-agora"]')!.addEventListener('click', () => abrirVestiario(pecaParaVestir(novas)?.id));
 
   const box = alvo.querySelector<HTMLElement>('[data-peca-boneco]');
