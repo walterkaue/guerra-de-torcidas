@@ -57,7 +57,9 @@ const semMovimento = () => window.matchMedia?.('(prefers-reduced-motion: reduce)
 const VAO = 12;
 /** O mínimo que precisa aparecer de cada vizinho, em pixels (limita a largura do Quadrado). */
 const PONTA = 28;
-const DICA = 'deslize pra trocar';
+const comMouse = () => window.matchMedia?.('(pointer: fine)').matches ?? false;
+/** No celular desliza; no PC também tem ‹ › e as setas do teclado (J31). */
+const dicaDeTrocar = () => (comMouse() ? 'use ‹ › ou as setas do teclado' : 'deslize pra trocar');
 /** Quanto a tela SEU CARD espera o boneco do servidor antes de seguir sem ele (sem rede), em milissegundos. */
 const TEMPO_DO_BONECO = 4000;
 /**
@@ -192,9 +194,11 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
           ${[-1, 0, 1].map((p) => `<div class="cc-slide" style="--p:${p}" data-pos="${p}"><img alt="" draggable="false" /></div>`).join('')}
         </div>
         <p class="cc-montando" data-montando>Montando o card…</p>
+        <button type="button" class="cc-seta cc-seta-e" data-seta="-1" aria-label="Estilo anterior">‹</button>
+        <button type="button" class="cc-seta cc-seta-d" data-seta="1" aria-label="Próximo estilo">›</button>
       </div>
       <div class="cc-pontos" data-pontos></div>
-      <p class="cc-dica" data-dica role="status" aria-live="polite">${DICA}</p>
+      <p class="cc-dica" data-dica role="status" aria-live="polite">${dicaDeTrocar()}</p>
       <div class="cc-grade" data-grade></div>
       <div class="cc-acoes">
         <button type="button" class="cc-salvar" data-salvar>${icone('imagem')}<span>Salvar imagem</span></button>
@@ -235,7 +239,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
   const avisar = (texto: string, ms = 3500) => {
     dica.textContent = texto;
     clearTimeout(tAviso);
-    tAviso = window.setTimeout(() => (dica.textContent = DICA), ms);
+    tAviso = window.setTimeout(() => (dica.textContent = dicaDeTrocar()), ms);
   };
 
   // ---------- fechar ----------
@@ -540,11 +544,18 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
     requestAnimationFrame(() => mover(alvo));
   }
 
-  palco.addEventListener('keydown', (e) => {
+  // As setas valem na folha toda, sem precisar focar o carrossel (J31); campo de texto e folhas de baixo ficam de fora.
+  d.addEventListener('keydown', (e) => {
     if (!dados || trilho.classList.contains('anima')) return;
+    if ((e.target as HTMLElement).closest('input, textarea, select, .cc-folha')) return;
     if (e.key === 'ArrowLeft') trocarEstilo(-1);
     else if (e.key === 'ArrowRight') trocarEstilo(1);
   });
+  d.querySelectorAll<HTMLButtonElement>('[data-seta]').forEach((b) =>
+    b.addEventListener('click', () => {
+      if (dados && !trilho.classList.contains('anima')) trocarEstilo(Number(b.dataset.seta) as 1 | -1);
+    }),
+  );
 
   // ---------- salvar e compartilhar ----------
   const arquivoAtual = (): File | null => {
@@ -583,8 +594,11 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
     rotuloDoBotao(btnSalvar, 'Salvo!');
   });
 
+  let compartilhando = false; // toque duplo não chama a folha de compartilhar duas vezes (J32)
   btnCompartilhar.addEventListener('click', async () => {
-    if (!dados) return;
+    if (!dados || compartilhando) return;
+    compartilhando = true;
+    btnCompartilhar.disabled = true;
     const texto = textoDoCompartilhar(textoPronto, o.link, ligados().has('link'));
     const arquivo = arquivoAtual();
     try {
@@ -592,11 +606,15 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
       else if (navigator.share) await navigator.share({ text: texto });
       else {
         await navigator.clipboard.writeText(texto);
-        avisar('Copiado!');
-        rotuloDoBotao(btnCompartilhar, 'Copiado!');
+        // Só o texto e o link vão pra área de transferência: a imagem não (J17).
+        avisar('Link copiado. Pra mandar a imagem, use Salvar imagem.', 6000);
+        rotuloDoBotao(btnCompartilhar, 'Link copiado!');
       }
     } catch (e) {
       if ((e as { name?: string })?.name !== 'AbortError') avisar('Não deu pra compartilhar agora.');
+    } finally {
+      compartilhando = false;
+      btnCompartilhar.disabled = false;
     }
   });
 

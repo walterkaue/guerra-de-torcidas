@@ -120,3 +120,11 @@
   font-size: 15px;
   font-weight: 700;
 }
+
+/* Confirmar apagar: "Voltar" é o botão principal; "Apagar", a ação sem volta, fica em contorno, do mesmo tamanho (J19). */
+.botao.botao-perigo {
+  background: transparent;
+  color: #ff8f7a;
+  border: 3px solid #ff8f7a;
+  box-shadow: none;
+}

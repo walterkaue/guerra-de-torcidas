@@ -535,3 +535,12 @@ html[data-sem-movimento='1'] .pula,
 html[data-sem-movimento='1'] .vest-folha {
   animation: none;
 }
+
+/* "Sair sem salvar?": Salvar e Sair do mesmo tamanho; o destaque fica só na cor (J33). */
+.vest-folha-botoes .botao,
+.vest-folha-botoes .botao-linha {
+  width: 100%;
+  min-height: 56px;
+  padding-block: 0;
+  font-size: 20px;
+}

@@ -412,8 +412,13 @@ body {
 .placar-jogo .sigla {
   max-width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* Nome longo do adversário quebra em 2 linhas em vez de cortar ("JUNIOR B…", J25). */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.05;
+  text-align: center;
+  overflow-wrap: anywhere;
   font-size: 13px;
   font-weight: 800;
 }

@@ -397,7 +397,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         : planejarDefesa(semente, rodada, dificuldade, desafio?.cobrancas?.[rodada]).dica;
     dicaDoServidor = null;
     fase = { tipo: 'corrida', inicio: relogio(), dica, zona: null, pulouEm: null };
-    instruir('Sua vez de defender! Olhe o pé de apoio e toque onde pular.');
+    instruir('Sua vez de defender! Olhe o pé de apoio, marcado em amarelo, e toque onde pular.');
     if (defesaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['defesa']) }));
   }
 

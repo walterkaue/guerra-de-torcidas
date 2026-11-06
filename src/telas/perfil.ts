@@ -151,6 +151,7 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
             : ''
         }
         <button class="ajuste" type="button" data-acao="termos">Termos e privacidade</button>
+        <button class="ajuste" type="button" data-acao="ver-dados">Ver meus dados</button>
         <button class="ajuste" type="button" data-acao="apagar">Apagar meus dados</button>
       </section>
 
@@ -174,6 +175,7 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
   root.querySelector('[data-acao="aquecimento"]')?.addEventListener('click', () => irPara({ tela: 'aquecimento', depois: aqui }));
   root.querySelector('[data-acao="conquistas"]')?.addEventListener('click', () => irPara({ tela: 'ranking', aba: 'conquistas' }));
   root.querySelector('[data-acao="termos"]')?.addEventListener('click', () => irPara({ tela: 'termos', de: aqui }));
+  root.querySelector('[data-acao="ver-dados"]')?.addEventListener('click', () => irPara({ tela: 'termos', de: aqui, ver: true }));
   root.querySelector('[data-acao="apagar"]')?.addEventListener('click', () => irPara({ tela: 'termos', de: aqui, apagar: true }));
 
   // Gráficos: toque troca automático → alta → média → leve → automático (telas/qualidade.ts).
