@@ -3,7 +3,7 @@
 // Sem DOM, relógio nem Math.random: o sorteio vem de fora.
 
 export const PERGUNTAS = 8;
-export const SEGUNDOS = 15;
+export const SEGUNDOS = 20;
 export const TOLERANCIA_SEGUNDOS = 2;
 /** A partir da 3ª pergunta (índice 2), "Parar e levar X" ou "Seguir" antes de ela aparecer. */
 export const PRIMEIRA_DECISAO = 2;

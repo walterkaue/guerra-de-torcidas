@@ -222,7 +222,7 @@ export const FRASES = {
   ],
   vitoria: [
     { t: "ACABOU! Vitória com sabor de domingo!" },
-    { t: "Venceu! E mais 20 {pro_time}!" },
+    { t: "Venceu! A festa dessa vai {pro_time}!" },
     { t: "Venceu! Pode desfilar na resenha de cabeça erguida." },
     { t: "Vitória! O grupo do WhatsApp precisa saber disso." },
     { t: "Ganhou! O goleiro adversário pediu as contas." },
@@ -429,7 +429,7 @@ export const FRASES = {
     { t: "Fechou a rodada! O caderninho do narrador tá cheio de anotação.", rara: true },
   ],
   prova_abertura: [
-    { t: "Prova de Boleiro! Oito perguntas, quinze segundos cada." },
+    { t: "Prova de Boleiro! Oito perguntas, vinte segundos cada." },
     { t: "Hora de mostrar que entende de bola, não só de grito." },
     { t: "Dedo na tela e cabeça no jogo. Bora!" },
     { t: "O narrador estudou a semana toda. E você?", rara: true },

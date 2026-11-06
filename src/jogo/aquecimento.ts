@@ -72,7 +72,7 @@ export interface PerguntaDoAquecimento {
   alternativas: readonly string[];
   certa: number;
   fonte: string;
-  /** Segundos no relógio (a Prova usa 15). */
+  /** Segundos no relógio (a Prova usa 20). */
   tempo: number;
 }
 
@@ -81,7 +81,7 @@ export const PERGUNTA_AQUECIMENTO: PerguntaDoAquecimento = {
   alternativas: ['9', '10', '11', '12'],
   certa: 2,
   fonte: 'https://www.theifab.com/laws/latest/the-players/',
-  tempo: 15,
+  tempo: 20,
 };
 
 // ---------------------------------------------------------------------------

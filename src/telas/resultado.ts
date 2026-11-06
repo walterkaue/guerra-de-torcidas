@@ -112,6 +112,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
   const contouProMedalha = !!d.disputa && !!d.servidor && d.valendo && !d.servidor.sobSuspeita;
   const detalhes = etiquetas.filter(([, v]) => v > 0);
   // O efeito no ranking chega depois (até 1 minuto): começa como selo de espera.
+  // Partida que não vale não mostra "+N pro time" (nem o detalhe) desde o corte; antes dele a tela antiga seguia mostrando.
+  const pontos = unificada && !d.valendo ? null : { total: p.total, paraTime };
   const esperaRanking = !situacao && !!d.servidor && !outro;
 
   root.innerHTML = htmlResultado({
@@ -126,9 +128,9 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
         <div><span class="rotulo">${esc(nomeAdversario)}</span><strong>${r.golsMaquina}</strong></div>
       </section>
       ${d.disputa ? `<p class="res-disputa rotulo">${esc(lembrancaDaDisputa(d.disputa))}</p>` : ''}`,
-    pontos: { total: p.total, paraTime },
+    pontos,
     detalhe: `${
-      detalhes.length > 1 // uma parcela só repetiria o total de cima (J24)
+      pontos && detalhes.length > 1 // uma parcela só repetiria o total de cima (J24)
         ? `<div class="numeros${detalhes.length === 3 ? ' tres' : ''}">${detalhes.map(([nome, v]) => numero(`+${v}`, nome)).join('')}</div>`
         : ''
     }${blocoDesafio}${contouProMedalha ? '<div data-rumo hidden></div>' : ''}`,
