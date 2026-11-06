@@ -6,7 +6,7 @@ import { esquecerTorcedor, faixaDoAparelho, guardarFaixa, prefs } from '../estad
 import { FAIXAS, type FaixaEtaria } from '../jogo/faixaEtaria';
 import { entrarNaConta, ErroServidor, meuTorcedor, pedirEntrada, salvarFaixaEtaria, salvarTorcedor, type TorcedorNoServidor } from './api';
 
-const marcaDe = (time: string, apelido: string | null | undefined) => `${time}|${apelido ?? ''}`;
+export const marcaDe = (time: string, apelido: string | null | undefined) => `${time}|${apelido ?? ''}`;
 /** A faixa do servidor é mais nova (mais protetora) que a do aparelho. */
 const maisProtetora = (servidor: FaixaEtaria, aparelho: FaixaEtaria | undefined) =>
   !aparelho || FAIXAS.indexOf(servidor) < FAIXAS.indexOf(aparelho);

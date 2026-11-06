@@ -47,6 +47,7 @@ import { escolherFrase, type ContextoNarrador } from '../narrador/escolher';
 import type { EventoNarrador } from '../narrador/frases';
 import { lerRecentes, registrarVista } from '../narrador/historico';
 import { ErroServidor, salvarTorcedor } from '../servidor/api';
+import { marcaDe } from '../servidor/torcedor';
 import { lerBoneco } from '../servidor/boneco';
 import { nivelParaCard } from './carreira';
 import { icone, type NomeIcone } from './icones';
@@ -729,7 +730,9 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
         return;
       }
       if (fechado) return;
-      prefs.set({ apelido });
+      // O servidor acabou de aceitar: o apelido está conferido e o aparelho não precisa mandá-lo de novo (J26).
+      const timeSalvo = prefs.get().time ?? dados!.time.id;
+      prefs.set({ apelido, apelidoConferido: undefined, sincronizado: marcaDe(timeSalvo, apelido) });
       escolhas = { ...escolhas, desligados: escolhas.desligados.filter((c) => c !== 'apelido') };
       guardar();
       if (o.quemComApelido && dados!.quem) dados!.quem = { ...dados!.quem, comApelido: o.quemComApelido(apelido) };

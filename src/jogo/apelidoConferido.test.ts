@@ -13,6 +13,11 @@ describe('apelido no card (J26)', () => {
     expect(apelidoParaCard({ apelidoConferido: true })).toBeUndefined();
     expect(apelidoParaCard({})).toBeUndefined();
   });
+  it('depois que o servidor aceita (folha do Seu card), o apelido volta ao card', () => {
+    const antes = { apelido: 'Duda', apelidoConferido: false };
+    expect(apelidoParaCard(antes)).toBeUndefined();
+    expect(apelidoParaCard({ ...antes, apelidoConferido: undefined })).toBe('Duda');
+  });
   it('ao salvar: apelido novo espera o servidor; o mesmo mantém; vazio limpa', () => {
     expect(conferidoAoSalvar({ apelido: 'Duda' }, 'Dudinha')).toBe(false);
     expect(conferidoAoSalvar({}, 'Duda')).toBe(false);
