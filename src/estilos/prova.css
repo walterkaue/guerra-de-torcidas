@@ -148,7 +148,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .relogio.correndo .relogio-barra {
-    animation-timing-function: steps(15);
+    animation-timing-function: steps(20);
   }
 }
 
