@@ -24,13 +24,17 @@
     "aplicar-conferencia-casa": "node scripts/casa/aplicar-conferencia.mjs",
     "conferir-casa": "node scripts/casa/conferir-gemini.mjs",
     "gerar-municipios": "node scripts/cidade/gerar-municipios.mjs",
-    "gemini": "node scripts/ia/gemini.mjs"
+    "gemini": "node scripts/ia/gemini.mjs",
+    "simular": "node scripts/simulacoes/simular.mjs",
+    "simular:consolidar": "node scripts/simulacoes/consolidar.mjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@electric-sql/pglite": "^0.5.10",
     "@fontsource/anton": "^5.3.0",
     "@fontsource/barlow": "^5.3.0",
     "@fontsource/barlow-condensed": "^5.3.0",
+    "@playwright/test": "^1.65.0",
     "subset-font": "^2.9.0",
     "supabase": "^3.0.0",
     "typescript": "^7.0.2",
