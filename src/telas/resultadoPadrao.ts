@@ -6,6 +6,8 @@
 // novo, partida nas 3 melhores do dia, Time do Dia acertado e medalha nova (jogo/confete.ts).
 
 import { esc } from '../app';
+import { prefs } from '../estado';
+import { htmlDoAviso } from '../servidor/motivo';
 import { corDeTexto, type Time } from '../dados/times';
 import { textoDoCompartilhar, type DadosDoCard } from '../jogo/cardPersonalizado';
 import { criarComemoracao, pedacosDoConfete, type MotivoDoConfete } from '../jogo/confete';
@@ -43,6 +45,11 @@ export interface PartesDoResultado {
   aviso?: { texto: string; forte: boolean } | null;
   /** 7. Link do WhatsApp ("Mandar no grupo"). */
   zap: string;
+  /**
+   * J16 (06/11/2026), só nos Lances: "Mandar no grupo" manda o card com o texto pela folha de compartilhar (o link do
+   * WhatsApp fica de reserva) e o botão Emoji sai (o placar em emoji é um quadradinho da tela "Seu card").
+   */
+  mandarCard?: boolean;
   /** 8. Texto do botão principal. */
   maisUma: string;
 }
@@ -78,7 +85,7 @@ export function htmlResultado(p: PartesDoResultado): string {
 
       ${p.frases.map((f, i) => `<p class="adesivo${i ? ' segundo' : ''}">${esc(f)}</p>`).join('')}
 
-      ${p.aviso ? `<p class="res-aviso${p.aviso.forte ? ' forte' : ''}" role="note">${esc(p.aviso.texto)}</p>` : ''}
+      ${p.aviso ? `<p class="res-aviso${p.aviso.forte ? ' forte' : ''}" role="note">${htmlDoAviso(p.aviso.texto, esc)}</p>` : ''}
       <section class="res-selos" aria-label="Seus números" aria-live="polite">
         <div class="selos" data-selos>${p.selos ?? ''}</div>
         <p class="res-nota" data-nota hidden></p>
@@ -88,11 +95,11 @@ export function htmlResultado(p: PartesDoResultado): string {
       <div data-peca-nova hidden></div>
 
       <section class="mandar" aria-label="Compartilhar">
-        <a class="botao botao-zap" data-sem-aviso target="_blank" rel="noopener" href="${p.zap}">Mandar no grupo</a>
+        <a class="botao botao-zap" data-sem-aviso${p.mandarCard ? ' data-mandar-card' : ''} target="_blank" rel="noopener" href="${p.zap}">Mandar no grupo</a>
         <div class="formatos">
           <button type="button" data-acao="card">${icone('imagem')}Card</button>
           <button type="button" data-acao="share">${icone('celular')}Stories</button>
-          <button type="button" data-acao="emoji">${icone('sorriso')}Emoji</button>
+          ${p.mandarCard ? '' : `<button type="button" data-acao="emoji">${icone('sorriso')}Emoji</button>`}
           <button type="button" data-acao="copiar">${icone('corrente')}Link</button>
         </div>
       </section>
@@ -233,13 +240,51 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
     }),
   );
 
+  /** O card com as escolhas guardadas, como arquivo e com o texto que vai junto. */
+  const cardPronto = async () => {
+    const { canvas, comLink } = await desenharComAsEscolhas(await o.dados);
+    const texto = textoDoCompartilhar(o.textoShare, o.link, comLink);
+    const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, 'image/png'));
+    const arquivo = blob ? new File([blob], 'guerra-de-torcidas.png', { type: 'image/png' }) : null;
+    return { arquivo, texto, comLink };
+  };
+
+  // "Mandar no grupo" com o card (Lances, J16). O card fica pronto de antemão porque, no iPhone, o share tem de sair
+  // direto do toque, sem await antes. Sem card pronto ou sem share com arquivo, o link do wa.me segue como sempre.
+  const zap = root.querySelector<HTMLAnchorElement>('[data-mandar-card]');
+  if (zap) {
+    let pronto: { arquivo: File; texto: string; assinatura: string } | null = null;
+    const assinatura = () => JSON.stringify([prefs.get().card, prefs.get().apelido, prefs.get().nivelNoCard]);
+    const preparar = () => {
+      const marca = assinatura();
+      void cardPronto()
+        .then((c) => {
+          if (c.arquivo && marca === assinatura()) pronto = { arquivo: c.arquivo, texto: c.texto, assinatura: marca };
+        })
+        .catch(() => {
+          // sem card pronto: fica o link do WhatsApp
+        });
+    };
+    preparar();
+    // Voltou da tela "Seu card": as escolhas podem ter mudado.
+    root.addEventListener('close', () => { pronto = null; preparar(); }, true);
+    zap.addEventListener('click', (e) => {
+      const p = pronto;
+      if (!p || p.assinatura !== assinatura() || !navigator.canShare?.({ files: [p.arquivo] })) {
+        if (p && p.assinatura !== assinatura()) { pronto = null; preparar(); }
+        return; // segue o link do WhatsApp
+      }
+      e.preventDefault();
+      navigator.share({ files: [p.arquivo], text: p.texto }).catch(() => {
+        // cancelou
+      });
+    });
+  }
+
   const btnShare = botao('share');
   btnShare.addEventListener('click', async () => {
     try {
-      const { canvas, comLink } = await desenharComAsEscolhas(await o.dados);
-      const texto = textoDoCompartilhar(o.textoShare, o.link, comLink);
-      const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, 'image/png'));
-      const arquivo = blob ? new File([blob], 'guerra-de-torcidas.png', { type: 'image/png' }) : null;
+      const { arquivo, texto, comLink } = await cardPronto();
       if (arquivo && navigator.canShare?.({ files: [arquivo] })) {
         await navigator.share({ files: [arquivo], text: texto });
       } else if (navigator.share) {
@@ -253,8 +298,8 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
     }
   });
 
-  const btnEmoji = botao('emoji');
-  btnEmoji.addEventListener('click', async () => {
+  const btnEmoji = root.querySelector<HTMLButtonElement>('[data-acao="emoji"]');
+  btnEmoji?.addEventListener('click', async () => {
     try {
       if (navigator.share) await navigator.share({ text: o.emoji });
       else {
