@@ -16,6 +16,11 @@ import { meusRecordes, minhaPosicaoMinigame, minhaPosicaoSemana, type MinigameDo
 import { jogosDoCrava, minhaPosicaoCrava } from '../servidor/crava';
 import { semanaBrasilia } from '../servidor/tempo';
 import { montarAparelhos } from './aparelhosLigados';
+import { pintarAvatar, pintarBoneco, vestiarioJaAberto } from './bonecoDoAparelho';
+import { pecaPorId } from '../jogo/vestiario';
+import { linhaDaProxima } from '../jogo/pecaNova';
+import { textoDoContador } from '../jogo/vestiarioTela';
+import { abrirVestiario } from './vestiario/abrir';
 import { aoTocarNoEstado, cabecalhoTela, estado, faixa, numero, placa, posicaoHtml, selo } from './blocos';
 import { carregarCarreiraPerfil } from './carreira';
 import { lancesUnificados } from './corte';
@@ -68,7 +73,7 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
       ${cabecalhoTela({ titulo: 'Perfil' })}
 
       <section class="perfil-cab placa filete" aria-label="Seu crachá">
-        <span class="avatar avatar-g" aria-hidden="true">${icone('pessoa')}</span>
+        <span class="avatar avatar-g" data-avatar aria-hidden="true">${icone('pessoa')}</span>
         <div class="perfil-nomes">
           ${destaque}
           ${
@@ -79,6 +84,19 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
           }
         </div>
       </section>
+
+      ${
+        time
+          ? `<section class="placa perfil-vest" aria-label="Seu vestiário" aria-busy="true" data-vestiario>
+        <div class="perfil-vest-boneco esq" data-vest-boneco></div>
+        <div class="perfil-vest-info">
+          <p class="perfil-vest-conta esq" data-vest-conta></p>
+          <p class="perfil-vest-prox" data-vest-prox aria-live="polite"></p>
+          <button class="botao-linha" type="button" data-acao="vestiario">${vestiarioJaAberto() ? 'Abrir vestiário' : 'Monte seu boneco'}</button>
+        </div>
+      </section>`
+          : ''
+      }
 
       <section class="placa perfil-bloco" aria-label="Sua cidade">
         ${faixa('Cidade')}
@@ -148,6 +166,7 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
   if (semTime) aoTocarNoEstado(semTime, () => irPara({ tela: 'times', depois: 'perfil' }));
   // "Escolha seu apelido" usa o campo e o filtro de sempre, na escolha do time.
   root.querySelector('[data-acao="apelido"]')?.addEventListener('click', () => irPara({ tela: 'times', depois: 'perfil', apelido: true }));
+  root.querySelector('[data-acao="vestiario"]')?.addEventListener('click', () => abrirVestiario());
   root.querySelector('[data-acao="outro-aparelho"]')?.addEventListener('click', () => irPara({ tela: 'outroAparelho' }));
   root.querySelector('[data-acao="entrar-codigo"]')?.addEventListener('click', () => irPara({ tela: 'entrar', de: 'perfil' }));
   const elAparelhos = root.querySelector<HTMLElement>('[data-aparelhos]');
@@ -186,6 +205,37 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
       if (abrir) void painelDoAviso(painel, acender);
       else painel.innerHTML = '';
     });
+  }
+
+  const pararBusto = time ? pintarAvatar(root.querySelector<HTMLElement>('[data-avatar]')!, 84) : () => {};
+  const pararCorpo: (() => void)[] = [];
+  if (time) void carregarVestiario(root.querySelector<HTMLElement>('[data-vestiario]')!);
+
+  /** Bloco Vestiário: o boneco de corpo inteiro, quantas peças tem e a próxima. Sem rede, só o boneco guardado. */
+  async function carregarVestiario(el: HTMLElement): Promise<void> {
+    const caixa = el.querySelector<HTMLElement>('[data-vest-boneco]')!;
+    const conta = el.querySelector<HTMLElement>('[data-vest-conta]')!;
+    const prox = el.querySelector<HTMLElement>('[data-vest-prox]')!;
+    const pronto = () => {
+      el.removeAttribute('aria-busy');
+      caixa.classList.remove('esq');
+      conta.classList.remove('esq');
+    };
+    try {
+      const { lerDoServidor } = await import('./bonecoPintar');
+      const b = await lerDoServidor();
+      if (saiu) return;
+      pronto();
+      pararCorpo.push(pintarBoneco(caixa, { recorte: 'corpo', largura: 76, altura: 112, vestimenta: b.vestimenta, rotulo: 'Seu boneco' }));
+      conta.textContent = `${textoDoContador(b.liberadas)} peças`;
+      const peca = b.proxima ? pecaPorId(b.proxima.id) : undefined;
+      prox.textContent = (peca && b.proxima && linhaDaProxima({ peca, condicao: b.proxima.condicao })) || 'Você tem todas as peças';
+    } catch {
+      if (saiu) return;
+      pronto();
+      pararCorpo.push(pintarBoneco(caixa, { recorte: 'corpo', largura: 76, altura: 112, rotulo: 'Seu boneco' }));
+      prox.textContent = 'Sem conexão com o vestiário agora.';
+    }
   }
 
   void carregarCidade(root.querySelector<HTMLElement>('[data-cidade]')!);
@@ -284,5 +334,7 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
 
   return () => {
     saiu = true;
+    pararBusto();
+    pararCorpo.forEach((p) => p());
   };
 }
