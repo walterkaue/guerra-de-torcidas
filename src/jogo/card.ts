@@ -37,6 +37,8 @@ export interface Geo {
   rodape: number;
 }
 export const GEO_STORIES: Geo = { altura: A, ceu: CEU, altArq: ALT_ARQUIBANCADA, fimMeio: FIM_DO_MEIO, rodape: RODAPE };
+/** O cenário mais baixo do Quadrado (1080 × 1080) dos cards personalizáveis. */
+export const GEO_QUADRADO: Geo = { altura: 1080, ceu: 96, altArq: 524, fimMeio: 862, rodape: 884 };
 /** Na qualidade Leve, o desenho espera a contagem dos pontos da tela de resultado terminar. */
 const ESPERA_NA_LEVE_MS = 900;
 

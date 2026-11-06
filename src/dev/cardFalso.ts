@@ -1,6 +1,8 @@
 // Só em desenvolvimento (npm run dev, com ?cardFalso na URL): abre direto a tela "Seu card" (telas/cardPersonalizado.ts),
 // sem servidor nem partida, com dados de mentira de Lances do Jogo. Serve para conferir a tela e tirar os prints.
-//   &tipo=jogo|medalha          o tipo do card (padrão: jogo-x1, de Lances com link de X1)
+//   &tipo=jogo|medalha|trofeu   o tipo do card (padrão: jogo-x1, de Lances com link de X1)
+//   &trofeu=semana|mes|vitrine|estreia  (com tipo=trofeu) o troféu; &somou=0|1 (a pessoa somou na semana; padrão 1);
+//                               &outroTime=1 (a Galeria de outro time: cores do troféu, sem Pôster e sem Meu boneco)
 //   &estilo=telao|placar|poster o estilo guardado no aparelho
 //   &boneco=sem|parado|bracos   sem = sem rede (sem Pôster); parado = sem a pose de braços liberada; bracos (padrão) = com ela
 //   &comBoneco=1                já abre com o busto ligado (Telão e Placar seco)
@@ -21,6 +23,9 @@ import { emojisDaPartida } from '../jogo/lancesTextos';
 import { ADESIVO_DA_MEDALHA, MEDALHA_NO_CARD, itemDaMedalha, jogoDoItem, noTitulo, quemNaMedalha } from '../jogo/medalhaTextos';
 import { contextoDoTime } from '../narrador/sessao';
 import { abrirCardPersonalizado, sorteadorDeFrase } from '../telas/cardPersonalizado';
+import { sorteadorDeFraseDoTrofeu } from '../jogo/cardTrofeuDados';
+import { quemNoTrofeu, textoDoCardDoTrofeu } from '../jogo/galeria';
+import { dadosDeAmostraDoTrofeu, trofeuDeAmostra, type AmostraDeTrofeu } from './trofeuFalso';
 
 const SITE = 'torcida.kauewalter.com.br';
 
@@ -45,7 +50,7 @@ export function abrirCardFalso(raiz: HTMLElement): void {
     modo === 'sem' ? Promise.resolve(null) : Promise.resolve({ vestimenta, liberadas: modo === 'parado' ? [] : ['pose_bracos'] });
 
   const pedido = q.get('tipo');
-  const tipo: TipoDeCard = pedido === 'medalha' ? 'medalha' : pedido === 'jogo' ? 'jogo' : tipoDoJogo(true);
+  const tipo: TipoDeCard = pedido === 'trofeu' ? 'trofeu' : pedido === 'medalha' ? 'medalha' : pedido === 'jogo' ? 'jogo' : tipoDoJogo(true);
   const desfechos: DesfechoLance[] = ['gol', 'defesa', 'gol'];
   const pontos = 47;
   const lance = LANCES.find((l) => l.id === 'flamengo-2019-virada-em-lima') ?? LANCES[0];
@@ -59,7 +64,29 @@ export function abrirCardFalso(raiz: HTMLElement): void {
   let sortearFrase: (() => string | null) | undefined;
   const link = `${SITE}/?l=ABC123`;
 
-  if (tipo === 'medalha') {
+  let texto = `Fiz ${pontos} pontos nos Lances do Jogo. Bora tentar?\n${emojisDaPartida(desfechos)}\nhttps://${link}`;
+  let cardLink = `https://${link}`;
+  let avisoSemBoneco: string | undefined;
+  let bonecoDoCard = boneco;
+
+  if (tipo === 'trofeu') {
+    const pedidoT = q.get('trofeu');
+    const amostra: AmostraDeTrofeu = pedidoT === 'mes' || pedidoT === 'vitrine' || pedidoT === 'estreia' ? pedidoT : 'semana';
+    const outroTime = q.get('outroTime') === '1';
+    const somou = q.get('somou') !== '0';
+    // Outro time: o troféu é de um time que não é o seu.
+    const doTime = outroTime ? (TIMES.find((t) => t.id !== time.id && t.id !== 'outro') ?? time) : time;
+    dados = dadosDeAmostraDoTrofeu(amostra, doTime, { somou, outroTime, apelido });
+    const t = trofeuDeAmostra(amostra, doTime.id).trofeu;
+    quemComApelido = (a) => quemNoTrofeu(a);
+    sortearFrase = sorteadorDeFraseDoTrofeu(t.trofeu, doTime, dados.frase);
+    texto = textoDoCardDoTrofeu(t, doTime, somou && !outroTime && !!t.semana);
+    cardLink = 'https://torcida.kauewalter.com.br';
+    if (outroTime) {
+      bonecoDoCard = Promise.resolve(null);
+      avisoSemBoneco = 'Boneco só no card do seu time';
+    }
+  } else if (tipo === 'medalha') {
     const item = itemDaMedalha(lance.id)!;
     dados = {
       tipo,
@@ -103,11 +130,12 @@ export function abrirCardFalso(raiz: HTMLElement): void {
   abrirCardPersonalizado({
     raiz,
     dados,
-    texto: `Fiz ${pontos} pontos nos Lances do Jogo. Bora tentar?\n${emojisDaPartida(desfechos)}\nhttps://${link}`,
-    link: `https://${link}`,
+    texto,
+    link: cardLink,
     sortearFrase,
     quemComApelido,
-    boneco,
+    boneco: bonecoDoCard,
+    avisoSemBoneco,
     inicial: folha ? { folhaDaFrase: folha } : undefined,
   });
 }

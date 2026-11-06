@@ -22,13 +22,25 @@ export function svgTaca(o: { estrela?: boolean; vazia?: boolean; rotulo: string 
   </svg>`;
 }
 
+export interface OpcoesDaFlamula {
+  /**
+   * Contorno claro fino em volta da bandeira e da faixa da cor 2, para a cor 2 preta (Flamengo, Botafogo, Atlético-MG)
+   * não sumir no fundo escuro (placa da Home e card do troféu). Sem ele, o contorno escuro de sempre.
+   */
+  contorno?: boolean;
+}
+
+/** O contorno claro da flâmula: branco translúcido, fino. */
+export const CONTORNO_CLARO = 'rgba(255,255,255,.7)';
+
 /** Flâmula lisa: mastro, cor 1 cheia e faixa reta na cor 2 junto do mastro. */
-export function svgFlamula(cores: readonly [string, string] | readonly string[], rotulo: string): string {
+export function svgFlamula(cores: readonly [string, string] | readonly string[], rotulo: string, o: OpcoesDaFlamula = {}): string {
+  const borda = o.contorno ? `stroke="${CONTORNO_CLARO}" stroke-width=".8"` : '';
   return `<svg class="svg-flamula" viewBox="0 0 40 60" role="img" aria-label="${rotulo}">
     <rect x="3" y="2" width="2.5" height="56" rx="1" fill="#d8d2c4"/>
     <circle cx="4.25" cy="2.5" r="2.2" fill="#d8d2c4"/>
-    <path d="M5.5 6h31L22 23 36.5 40h-31z" fill="${cores[0]}" stroke="rgba(0,0,0,.25)" stroke-width=".8"/>
-    <rect x="5.5" y="6" width="7" height="34" fill="${cores[1]}"/>
+    <path d="M5.5 6h31L22 23 36.5 40h-31z" fill="${cores[0]}" ${o.contorno ? borda : 'stroke="rgba(0,0,0,.25)" stroke-width=".8"'}/>
+    <rect x="5.5" y="6" width="7" height="34" fill="${cores[1]}" ${borda}/>
   </svg>`;
 }
 
@@ -50,10 +62,10 @@ export function svgAcesso(rotulo: string): string {
 }
 
 /** O desenho de um troféu qualquer (ficha e placa da Home). */
-export function svgDoTrofeu(tipo: TipoDeTrofeu, cores: readonly string[], rotulo: string): string {
+export function svgDoTrofeu(tipo: TipoDeTrofeu, cores: readonly string[], rotulo: string, o: OpcoesDaFlamula = {}): string {
   switch (tipo) {
     case 'campeao_semana':
-      return svgFlamula(cores, rotulo);
+      return svgFlamula(cores, rotulo, o);
     case 'maior_torcida':
       return svgMegafone(rotulo);
     case 'acesso':
@@ -63,4 +75,29 @@ export function svgDoTrofeu(tipo: TipoDeTrofeu, cores: readonly string[], rotulo
     default:
       return svgTaca({ rotulo });
   }
+}
+
+// ---------- para o canvas ----------
+
+const COR_COM_RESERVA = /var\(--[\w-]+,\s*(#[0-9a-fA-F]{3,8})\)/g;
+
+/**
+ * O mesmo SVG sem variáveis de CSS: `var(--taca, #e9c75a)` vira `#e9c75a` (idem `--taca-sombra` e `--subiu`) e
+ * `currentColor` (as ondas do megafone) vira `traco`. Dentro de uma imagem, o SVG não enxerga o CSS da página.
+ */
+export function comCoresFixas(svg: string, traco = '#ffffff'): string {
+  return svg.replace(COR_COM_RESERVA, '$1').replaceAll('currentColor', traco);
+}
+
+/** O SVG como endereço de imagem (data URL), no tamanho pedido, para o canvas desenhar com `drawImage`. */
+export function svgParaImagem(svg: string, largura: number, altura: number, traco = '#ffffff'): string {
+  const pronto = comCoresFixas(svg, traco).replace(/^<svg /, `<svg xmlns="http://www.w3.org/2000/svg" width="${largura}" height="${altura}" `);
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(pronto)}`;
+}
+
+/** Proporção (largura / altura) do desenho de cada troféu, pelo viewBox. */
+export function proporcaoDoTrofeu(tipo: TipoDeTrofeu): number {
+  if (tipo === 'campeao_semana') return 40 / 60;
+  if (tipo === 'maior_torcida') return 56 / 48;
+  return 48 / 56;
 }

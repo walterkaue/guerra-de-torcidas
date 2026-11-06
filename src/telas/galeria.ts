@@ -135,8 +135,8 @@ export function desenharGaleria(el: HTMLElement, o: OpcoesDaGaleria = {}): () =>
           <button type="button" class="botao botao-zap" data-gal-mandar>Mandar no grupo</button>
         </div>
       </div>`;
-    // Direto no toque, sem await antes: o iPhone perde o gesto do compartilhar.
-    d.querySelector('[data-gal-mandar]')!.addEventListener('click', () => mandarTrofeuNoGrupo(t, time));
+    // Abre a tela SEU CARD direto no toque (sem await antes) com a mesma frase que a ficha mostra.
+    d.querySelector('[data-gal-mandar]')!.addEventListener('click', () => mandarTrofeuNoGrupo(t, time, { raiz: d, frase }));
     abrirFolha(d);
 
     const numeros = d.querySelector<HTMLElement>('[data-gal-numeros]')!;

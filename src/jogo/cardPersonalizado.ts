@@ -12,6 +12,7 @@ import type { LinhaMeuPalpite } from './cravaTela';
 import type { PontosDoJogo } from './crava';
 import type { ItemDaMedalha } from './medalhaTextos';
 import type { Vestimenta } from './vestiario';
+import type { NumeroDaFicha, TipoDeTrofeu, Trofeu } from './galeria';
 
 // ---------- estilos e formatos ----------
 
@@ -79,9 +80,10 @@ export interface Quadradinho<C extends string> {
 /**
  * Cada tipo de card diz quais quadradinhos de ligar e desligar existem e com que nome, na ordem da tela.
  * `jogo-x1`: Lances (com os Pênaltis) e Prova, que geram link de X1. `jogo`: Time do Dia e Crava, sem X1.
- * `medalha`: o card de "Mandar a medalha".
+ * `medalha`: o card de "Mandar a medalha". `trofeu`: o card de "Mandar no grupo" da Galeria de Troféus (no troféu de
+ * mês, o quadradinho dos números se chama "Números do mês": `quadradinhosDoCard`).
  */
-export type TipoDeCard = 'jogo-x1' | 'jogo' | 'medalha';
+export type TipoDeCard = 'jogo-x1' | 'jogo' | 'medalha' | 'trofeu';
 
 const FRASE: Quadradinho<'frase'> = { chave: 'frase', nome: 'Frase do\nnarrador', icone: 'balao' };
 const APELIDO: Quadradinho<'apelido'> = { chave: 'apelido', nome: 'Meu\napelido', icone: 'pessoa' };
@@ -91,7 +93,15 @@ export const TIPOS_DE_CARD: Record<TipoDeCard, readonly Quadradinho<Chave>[]> = 
   'jogo-x1': [FRASE, APELIDO, NIVEL, { chave: 'placar', nome: 'Placar em\nemoji', icone: 'sorriso' }, { chave: 'link', nome: 'Link do\nX1', icone: 'corrente' }],
   jogo: [FRASE, APELIDO, NIVEL, { chave: 'placar', nome: 'Placar em\nemoji', icone: 'sorriso' }, { chave: 'link', nome: 'Link do\njogo', icone: 'corrente' }],
   medalha: [FRASE, APELIDO, NIVEL, { chave: 'placar', nome: 'Medalha\nem emoji', icone: 'trofeu' }, { chave: 'link', nome: 'Link do\nlance', icone: 'corrente' }],
+  trofeu: [FRASE, APELIDO, NIVEL, { chave: 'placar', nome: 'Números da\nsemana', icone: 'grafico' }, { chave: 'link', nome: 'Link do\njogo', icone: 'corrente' }],
 };
+
+/** Os quadradinhos de ligar de um card: os do tipo, com "Números do mês" no lugar de "Números da semana" no troféu de mês. */
+export function quadradinhosDoCard(d: Pick<DadosDoCard, 'tipo' | 'conteudo'>): readonly Quadradinho<Chave>[] {
+  const base = TIPOS_DE_CARD[d.tipo];
+  if (d.conteudo.jogo !== 'trofeu' || d.conteudo.trofeu.semana || !d.conteudo.trofeu.mes) return base;
+  return base.map((q) => (q.chave === 'placar' ? { ...q, nome: 'Números do\nmês' } : q));
+}
 
 /** Os 2 de ação (verdes), iguais em todo tipo, depois dos de ligar. */
 export const ACOES: readonly Quadradinho<Acao>[] = [
@@ -204,7 +214,21 @@ export type ConteudoDoTelao =
   | { jogo: 'dia'; numero: number; placar: string; pistas: readonly Pistas[] }
   | { jogo: 'crava-meus'; rodada: number; linhas: readonly LinhaMeuPalpite[] }
   | { jogo: 'crava-resultado'; rodada: number; resultados: readonly Pick<PontosDoJogo, 'acerto' | 'certeza'>[] }
-  | { jogo: 'medalha'; medalha: Medalha; item: ItemDaMedalha };
+  | { jogo: 'medalha'; medalha: Medalha; item: ItemDaMedalha }
+  | {
+      jogo: 'trofeu';
+      trofeu: Trofeu;
+      /** "Campeão da semana". */
+      nome: string;
+      /** "Série A" (nula na vitrine). */
+      serie: string | null;
+      /** "Semana de 02/11 a 08/11/2026" ou "Março de 2027". */
+      periodo: string;
+      /** Os 3 números da ficha; vazio sem rede ou sem a linha do time. */
+      numeros: readonly NumeroDaFicha[];
+      /** A pessoa somou na semana do troféu do próprio time (só então a linha "tava na arquibancada" entra). */
+      somou: boolean;
+    };
 
 /** Tudo o que o card pode mostrar; quem chama (cada jogo, a medalha) monta. Nada aqui tem nome de pessoa. */
 export interface DadosDoCard {
@@ -214,8 +238,8 @@ export interface DadosDoCard {
   jogo: string;
   /** O número grande: "+47", "OURO". */
   destaque: string;
-  /** A linha de quem fez, com e sem o apelido ("Zé pro Flamengo" / "Fiz 47 pontos pro Flamengo"). */
-  quem: { comApelido: string; semApelido: string };
+  /** Nula: a linha some (troféu em que a pessoa não somou). A linha de quem fez, com e sem o apelido ("Zé pro Flamengo" / "Fiz 47 pontos pro Flamengo"). */
+  quem: { comApelido: string; semApelido: string } | null;
   /** O que foi jogado, no Placar seco: título do lance, "Prova de Boleiro: cheguei na 6ª", "33ª rodada". */
   lance: string;
   /** O placar em emoji: uma linha, ou poucas separadas por quebra de linha (a grade do Time do Dia). No card é desenho, então vale qualquer emoji. */
@@ -257,6 +281,17 @@ export interface PlanoDoPoster {
   proTime: string | null;
   /** No card de medalha, a medalha desenhada junto dos pontos. */
   medalha: Medalha | null;
+  /** No card do troféu, o troféu desenhado e o nome dele no lugar dos pontos ("pro Time" vira "Time · Série A"). */
+  trofeu: { tipo: TipoDeTrofeu; nome: string } | null;
+}
+
+/** O troféu do card: o que o Telão e o Placar seco desenham. Os números só vêm com "Números da semana" ligado. */
+export interface PlanoDoTrofeu {
+  tipo: TipoDeTrofeu;
+  nome: string;
+  serie: string | null;
+  periodo: string;
+  numeros: readonly NumeroDaFicha[];
 }
 
 /** O que entra no card, já decidido: o desenho só desenha o que vier aqui. */
@@ -286,6 +321,8 @@ export interface PlanoDoCard {
   avisoFixo: string | null;
   /** Telão e Placar seco: o busto ao lado do apelido ("Meu boneco" ligado e boneco carregado). */
   busto: Vestimenta | null;
+  /** Só no card do troféu. */
+  trofeu: PlanoDoTrofeu | null;
   /** Só no estilo Pôster. */
   poster: PlanoDoPoster | null;
 }
@@ -336,6 +373,11 @@ export function planoDoCard(d: DadosDoCard, o: OpcoesDoPlano): PlanoDoCard {
   const estilo = estiloEfetivo(o.estilo, !!boneco);
   const telao = estilo === 'telao';
   const poster = estilo === 'poster' && boneco ? planoDoPoster(d, o, boneco, comApelido) : null;
+  const k = d.conteudo;
+  const trofeu: PlanoDoTrofeu | null =
+    k.jogo === 'trofeu' ? { tipo: k.trofeu.trofeu, nome: k.nome, serie: k.serie, periodo: k.periodo, numeros: liga('placar') ? k.numeros : [] } : null;
+  // Troféu: a linha de quem ("tava na arquibancada") sai nos três estilos, com ou sem apelido; sem soma, d.quem é nulo.
+  const quem = !d.quem ? null : telao || trofeu ? (comApelido ? d.quem.comApelido : d.quem.semApelido) : comApelido ? d.quem.comApelido : null;
   return {
     estilo,
     formato: o.formato,
@@ -344,7 +386,7 @@ export function planoDoCard(d: DadosDoCard, o: OpcoesDoPlano): PlanoDoCard {
     topo: `GUERRA DE TORCIDAS · ${d.jogo.toUpperCase()}`,
     destaque: d.destaque,
     time: d.time.nome,
-    quem: telao ? (comApelido ? d.quem.comApelido : d.quem.semApelido) : comApelido ? d.quem.comApelido : null,
+    quem,
     telaoComPlacar: telao && liga('placar'),
     lance: telao ? null : d.lance || null,
     placarEmoji: !telao && liga('placar') && d.placarEmoji ? d.placarEmoji : null,
@@ -354,6 +396,7 @@ export function planoDoCard(d: DadosDoCard, o: OpcoesDoPlano): PlanoDoCard {
     novoRecorde: d.novoRecorde,
     avisoFixo: d.avisoFixo ?? null,
     busto: !poster && boneco && o.comBoneco ? boneco.vestimenta : null,
+    trofeu,
     poster,
   };
 }
@@ -361,15 +404,19 @@ export function planoDoCard(d: DadosDoCard, o: OpcoesDoPlano): PlanoDoCard {
 function planoDoPoster(d: DadosDoCard, o: OpcoesDoPlano, b: BonecoDoCard, comApelido: boolean): PlanoDoPoster {
   const vestimenta = vestimentaDoPoster(b);
   const apelido = comApelido && o.apelido?.trim() ? o.apelido.trim() : null;
+  const k = d.conteudo;
+  // Troféu: "GALERIA DE TROFÉUS · SEMANA DE 02/11 A 08/11/2026" na faixa; na placa, o nome do troféu e "Time · Série A".
+  const faixa = k.jogo === 'trofeu' ? faixaDoPoster(d.jogo, k.periodo.toLocaleUpperCase('pt-BR')) : faixaDoPoster(d.jogo, d.lance);
   return {
     vestimenta,
     enquadramento: o.formato === 'stories' ? 'corpo' : 'joelho',
     numero: vestimenta.numero,
-    faixa: faixaDoPoster(d.jogo, d.lance),
+    faixa,
     apelido,
     pontos: d.destaque,
-    proTime: proTime(d.time),
-    medalha: d.conteudo.jogo === 'medalha' ? d.conteudo.medalha : null,
+    proTime: k.jogo === 'trofeu' ? [d.time.nome, k.serie].filter(Boolean).join(' · ') : proTime(d.time),
+    medalha: k.jogo === 'medalha' ? k.medalha : null,
+    trofeu: k.jogo === 'trofeu' ? { tipo: k.trofeu.trofeu, nome: k.nome } : null,
   };
 }
 

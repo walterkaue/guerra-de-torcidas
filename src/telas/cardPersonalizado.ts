@@ -18,7 +18,6 @@ import {
   MEU_BONECO,
   FORMATOS,
   TAMANHO_DO_CARD,
-  TIPOS_DE_CARD,
   alternar,
   botoesDeEstilo,
   estadoDoMeuBoneco,
@@ -29,6 +28,7 @@ import {
   ligados as ligadosDe,
   nomeDoArquivo,
   planoDoCard,
+  quadradinhosDoCard,
   salvaPelaFolha,
   textoDoCompartilhar,
   tocarMeuBoneco,
@@ -109,8 +109,8 @@ export interface OpcoesDoCard {
   raiz: HTMLElement;
   /** Os dados do card; pode ainda estar chegando (o nível da Carreira, por exemplo). */
   dados: DadosDoCard | Promise<DadosDoCard>;
-  /** Texto que vai junto da imagem (emoji antigo, seção 6 do jogo.md). */
-  texto: string;
+  /** Texto que vai junto da imagem (emoji antigo, seção 6 do jogo.md); pode ainda estar chegando (o do troféu depende dos pontos da semana). */
+  texto: string | Promise<string>;
   /** Link do jogo, como aparece dentro de `texto`. */
   link: string;
   /** Sorteia outra frase do narrador para este resultado; sem ela, "Sortear outra frase" fica desligado. */
@@ -119,6 +119,8 @@ export interface OpcoesDoCard {
   quemComApelido?: (apelido: string) => string;
   /** O boneco da pessoa; o padrão é lê-lo do servidor (null = sem rede: sem Pôster e sem busto). */
   boneco?: Promise<BonecoDoCard | null>;
+  /** O que "Meu boneco" diz quando não há boneco por outro motivo que a falta de rede (o troféu de outro time). */
+  avisoSemBoneco?: string;
   /** Só para os prints em desenvolvimento: já abre a folha da frase (e, com `enviar`, toca em "Pôr no card"). */
   inicial?: { folhaDaFrase?: { texto: string; enviar: boolean } };
 }
@@ -212,6 +214,8 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
   const btnCompartilhar = $<HTMLButtonElement>('[data-compartilhar]');
 
   let dados: DadosDoCard | null = null;
+  /** O texto que vai com a imagem, já resolvido antes do toque (o iPhone perde o gesto se o compartilhar esperar). */
+  let textoPronto = typeof o.texto === 'string' ? o.texto : '';
   let boneco: BonecoDoCard | null = null;
   const temBoneco = () => boneco !== null;
   const estilo = () => estiloEfetivo(escolhas.estilo, temBoneco());
@@ -358,7 +362,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
 
   function montarGrade(): void {
     grade.innerHTML =
-      TIPOS_DE_CARD[dados!.tipo]
+      quadradinhosDoCard(dados!)
         .map((q) => `<button type="button" class="cc-q cc-liga" data-chave="${q.chave}" aria-pressed="false">${html(q)}<span class="cc-check" aria-hidden="true">✓</span></button>`)
         .join('') +
       ACOES.map((q) => `<button type="button" class="cc-q cc-acao" data-acao="${q.chave}">${html(q)}</button>`).join('') +
@@ -413,7 +417,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
     if (!dados) return;
     const r = tocarMeuBoneco(escolhas, temBoneco());
     if (r.aviso) {
-      avisar(r.aviso);
+      avisar(!temBoneco() && o.avisoSemBoneco ? o.avisoSemBoneco : r.aviso);
       return;
     }
     escolhas = r.escolhas;
@@ -581,7 +585,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
 
   btnCompartilhar.addEventListener('click', async () => {
     if (!dados) return;
-    const texto = textoDoCompartilhar(o.texto, o.link, ligados().has('link'));
+    const texto = textoDoCompartilhar(textoPronto, o.link, ligados().has('link'));
     const arquivo = arquivoAtual();
     try {
       if (arquivo && navigator.canShare?.({ files: [arquivo] })) await navigator.share({ files: [arquivo], text: texto });
@@ -728,7 +732,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
       prefs.set({ apelido });
       escolhas = { ...escolhas, desligados: escolhas.desligados.filter((c) => c !== 'apelido') };
       guardar();
-      if (o.quemComApelido) dados!.quem = { ...dados!.quem, comApelido: o.quemComApelido(apelido) };
+      if (o.quemComApelido && dados!.quem) dados!.quem = { ...dados!.quem, comApelido: o.quemComApelido(apelido) };
       atualizarGrade();
       void redesenhar();
       sai();
@@ -747,10 +751,11 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
   medir();
 
   const doBoneco = o.boneco ?? bonecoDoServidor();
-  void Promise.all([Promise.resolve(o.dados), doBoneco.catch(() => null)])
-    .then(([pronto, b]) => {
+  void Promise.all([Promise.resolve(o.dados), doBoneco.catch(() => null), Promise.resolve(o.texto)])
+    .then(([pronto, b, texto]) => {
       if (fechado) return;
       dados = pronto;
+      textoPronto = texto;
       boneco = b;
       d.setAttribute('style', estiloDoTime());
       $('[data-montando]').remove();
@@ -759,7 +764,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
       medir();
       pintar();
       void redesenhar();
-      if (!temBoneco()) avisar(AVISO_SEM_BONECO, 6000);
+      if (!temBoneco()) avisar(o.avisoSemBoneco ?? AVISO_SEM_BONECO, 6000);
       if (o.inicial?.folhaDaFrase) abrirFolhaDaFrase(o.inicial.folhaDaFrase);
     })
     .catch(() => {

@@ -1,11 +1,13 @@
 // Card "Placar seco" (docs/jogo.md 14.6): fundo de papel, sem arquibancada nem telão. De cima para baixo: a linha do
 // topo, o filete com as duas cores do time, o destaque enorme, o nome do time, o que foi jogado, o placar em emoji,
-// quem fez, a frase, o nível e o link. O bloco todo fica centrado na vertical; sem nada ligado, só topo, destaque,
+// quem fez, a frase, o nível e o link. No card do troféu entra o troféu desenhado depois do filete e, depois do período,
+// uma linha pequena com os números. O bloco todo fica centrado na vertical; sem nada ligado, só topo, destaque,
 // time e lance, e ainda assim parece composto. Só desenha o que o plano manda.
 
 import { AMARELO, FONTE, PLACAR, ROTULO, quebrarTexto, seloRecorde } from './card';
 import { cortarTexto } from './cardLances';
 import type { DadosDoCard, PlanoDoCard } from './cardPersonalizado';
+import type { ImagemDoTrofeu } from './cardTrofeu';
 import { PAPEL, corDaBorda } from './cardTextos';
 import { AVISO_PRE_TEMPORADA } from './posicao';
 
@@ -22,8 +24,8 @@ interface Bloco {
 
 /** Tamanhos de partida de cada formato; o resto sai da redução `k` até o conjunto caber. */
 const BASE = {
-  stories: { topo: 46, destaque: 340, time: 108, lance: 52, emoji: 150, quem: 56, busto: 200, frase: 46, nivel: 40, link: 52, aviso: 30, margem: 120, gap: 1 },
-  quadrado: { topo: 36, destaque: 250, time: 76, lance: 40, emoji: 100, quem: 44, busto: 130, frase: 36, nivel: 32, link: 40, aviso: 26, margem: 56, gap: 0.62 },
+  stories: { trofeu: 300, nums: 34, topo: 46, destaque: 340, time: 108, lance: 52, emoji: 150, quem: 56, busto: 200, frase: 46, nivel: 40, link: 52, aviso: 30, margem: 120, gap: 1 },
+  quadrado: { trofeu: 170, nums: 26, topo: 36, destaque: 250, time: 76, lance: 40, emoji: 100, quem: 44, busto: 130, frase: 36, nivel: 32, link: 40, aviso: 26, margem: 56, gap: 0.62 },
 };
 
 /** Maior tamanho (até `tam`, nunca abaixo de `min`) em que o texto cabe em `largura`. */
@@ -39,7 +41,7 @@ function duasLinhas(c: CanvasRenderingContext2D, texto: string, largura: number)
   return linhas.length > 2 ? [linhas[0], cortarTexto(c, linhas.slice(1).join(' '), largura)] : linhas;
 }
 
-function montar(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard, k: number, busto: HTMLCanvasElement | null): Bloco[] {
+function montar(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard, k: number, busto: HTMLCanvasElement | null, trofeu: ImagemDoTrofeu | null): Bloco[] {
   const b = BASE[plano.formato];
   const z = (base: number, piso = 0.8) => Math.max(base * piso, base * k);
   const gap = (n: number) => n * b.gap * Math.max(k, 0.55);
@@ -72,6 +74,13 @@ function montar(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard,
     c.lineWidth = 2;
     c.strokeRect(x, y, LARGURA_UTIL, hFilete);
   });
+
+  // O troféu desenhado (só no card do troféu).
+  if (trofeu) {
+    const h = Math.round(z(b.trofeu, 0.5));
+    const w = (trofeu.l * h) / trofeu.a;
+    add(gap(40), h, (y) => c.drawImage(trofeu.img, cx - w / 2, y, w, h));
+  }
 
   // Destaque.
   const tDest = caber(c, (t) => `400 ${t}px ${PLACAR}`, plano.destaque, LARGURA_UTIL, z(b.destaque, 0.4), 90);
@@ -118,6 +127,21 @@ function montar(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard,
     add(gap(44), linhas.length * lh, (y) => {
       c.font = `700 ${tam}px ${FONTE}`;
       c.fillStyle = '#26272a';
+      c.textAlign = 'center';
+      linhas.forEach((l, i) => c.fillText(l, cx, y + i * lh + lh * 0.78));
+    });
+  }
+
+  // Os números do troféu, numa linha pequena (até 2 linhas).
+  if (plano.trofeu?.numeros.length) {
+    const tam = z(b.nums);
+    const texto = plano.trofeu.numeros.map((n) => `${n.valor} ${n.rotulo}`).join(' · ');
+    c.font = `700 ${tam}px ${FONTE}`;
+    const linhas = duasLinhas(c, texto, 900);
+    const lh = tam * 1.3;
+    add(gap(30), linhas.length * lh, (y) => {
+      c.font = `700 ${tam}px ${FONTE}`;
+      c.fillStyle = '#44464a';
       c.textAlign = 'center';
       linhas.forEach((l, i) => c.fillText(l, cx, y + i * lh + lh * 0.78));
     });
@@ -246,7 +270,12 @@ function montar(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard,
 const total = (bs: Bloco[]) => bs.reduce((s, b) => s + b.antes + b.h, 0);
 
 /** `busto`: o canvas do busto do boneco já pronto (quadrado), ou null; assim este módulo não importa o boneco. */
-export function desenharCardPlacarSeco(d: DadosDoCard, plano: PlanoDoCard, busto: HTMLCanvasElement | null = null): HTMLCanvasElement {
+export function desenharCardPlacarSeco(
+  d: DadosDoCard,
+  plano: PlanoDoCard,
+  busto: HTMLCanvasElement | null = null,
+  trofeu: ImagemDoTrofeu | null = null,
+): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = plano.largura;
   canvas.height = plano.altura;
@@ -256,10 +285,10 @@ export function desenharCardPlacarSeco(d: DadosDoCard, plano: PlanoDoCard, busto
 
   const limite = plano.altura - BASE[plano.formato].margem * 2;
   let k = 1;
-  let blocos = montar(c, d, plano, k, busto);
+  let blocos = montar(c, d, plano, k, busto, trofeu);
   while (total(blocos) > limite && k > 0.3) {
     k = Math.round((k - 0.04) * 100) / 100;
-    blocos = montar(c, d, plano, k, busto);
+    blocos = montar(c, d, plano, k, busto, trofeu);
   }
   let y = (plano.altura - total(blocos)) / 2;
   for (const bl of blocos) {

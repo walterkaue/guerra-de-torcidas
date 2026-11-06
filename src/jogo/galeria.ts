@@ -281,6 +281,12 @@ export function numerosDaFicha(
   ];
 }
 
+/** "1º" vira { numero: '1', ordinal: 'º' }; valor sem ordinal ("88,4") fica inteiro em `numero`. */
+export function separarOrdinal(valor: string): { numero: string; ordinal: string } {
+  const m = /^(.*?)([ºª])$/.exec(valor);
+  return m ? { numero: m[1], ordinal: m[2] } : { numero: valor, ordinal: '' };
+}
+
 /**
  * "Você tava em campo: 340 pontos nessa semana", só em troféu de semana, na Galeria do próprio time, e só para
  * quem somou (pontos da pessoa na semana, `minha_posicao_semana`).
@@ -313,6 +319,17 @@ export function textoDeMandarTrofeu(t: Trofeu, time: TimeDoTexto): string {
     case 'rebaixamento':
       return `${time.nome} no Guerra de Torcidas.`;
   }
+}
+
+/** A linha de quem do card do troféu: só quando a pessoa somou na semana do troféu do próprio time. */
+export const quemNoTrofeu = (apelido: string | null | undefined): string => `${apelido?.trim() || 'Eu'} tava na arquibancada`;
+
+/**
+ * O texto que vai com a imagem do card do troféu (emoji antigo): o de sempre e, só se a pessoa somou na semana,
+ * " Eu tava na arquibancada."; o link em linha à parte (some com "Link do jogo" desligado, em `textoDoCompartilhar`).
+ */
+export function textoDoCardDoTrofeu(t: Trofeu, time: TimeDoTexto, somou: boolean): string {
+  return `${textoDeMandarTrofeu(t, time)}${somou ? ' Eu tava na arquibancada.' : ''}\n${LINK_DO_JOGO}`;
 }
 
 // ---------- Home: o que anunciar ----------
@@ -465,10 +482,12 @@ export function resumirCampeas(linhas: readonly CampeaDeEstado[], minhaCidade: n
   }
   const lista = [...contagem.values()].sort((a, b) => b.vezes - a.vezes || a.nome.localeCompare(b.nome, 'pt-BR'));
   const max = lista[0]?.vezes ?? 0;
+  const maisVezes = lista.filter((c) => c.vezes === max).slice(0, 3);
   const minha = minhaCidade !== null ? contagem.get(minhaCidade) : undefined;
   return {
-    maisVezes: lista.filter((c) => c.vezes === max).slice(0, 3),
-    minha: minha ? { nome: minha.nome, vezes: minha.vezes } : null,
+    maisVezes,
+    // Sua cidade já aparece em "Mais vezes campeã" (vale no empate): a linha dela não repete.
+    minha: minha && !maisVezes.some((c) => c.codigo === minha.codigo) ? { nome: minha.nome, vezes: minha.vezes } : null,
     semanas: [...linhas]
       .sort((a, b) => (a.semana < b.semana ? 1 : -1))
       .map((l) => ({ semana: l.semana, data: `Semana de ${ddmmaaaa(l.semana)}`, codigo: l.codigo, nome: l.nome })),

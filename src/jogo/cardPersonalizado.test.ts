@@ -292,6 +292,7 @@ describe('o boneco no card', () => {
       pontos: '+134',
       proTime: 'pro Flamengo',
       medalha: null,
+      trofeu: null,
     });
   });
 

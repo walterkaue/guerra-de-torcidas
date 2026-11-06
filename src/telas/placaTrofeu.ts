@@ -41,7 +41,7 @@ function desenhar(el: HTMLElement, a: Anuncio, time: Time, comemorar: boolean, s
     <div class="placa placa-trofeu filete" style="--c1:${time.cores[0]};--c2:${time.cores[1]}">
       <span class="faixa">Troféu novo na Galeria</span>
       <div class="placa-trofeu-corpo">
-        <div class="placa-trofeu-desenho" data-desenho>${svgDoTrofeu(t.trofeu, time.cores, nome)}</div>
+        <div class="placa-trofeu-desenho" data-desenho>${svgDoTrofeu(t.trofeu, time.cores, nome, { contorno: true })}</div>
         <div class="placa-trofeu-texto">
           <strong>${esc(nome)}</strong>
           <span>${esc(periodoDoTrofeu(t))}</span>
@@ -58,8 +58,8 @@ function desenhar(el: HTMLElement, a: Anuncio, time: Time, comemorar: boolean, s
   // Entra com animação só na primeira vez; ao voltar à Home a placa já está no lugar.
   el.classList.toggle('entra', comemorar && !semMovimento());
   el.querySelector('[data-acao="ver-galeria"]')!.addEventListener('click', () => irPara({ tela: 'ranking', aba: 'conquistas', sub: 'galeria' }));
-  // Direto no toque, sem await antes, para o iPhone não perder o gesto de compartilhar.
-  el.querySelector('[data-acao="mandar-trofeu"]')!.addEventListener('click', () => mandarTrofeuNoGrupo(t, time));
+  // Abre a tela SEU CARD direto no toque, sem await antes; a placa sorteia a frase do narrador.
+  el.querySelector('[data-acao="mandar-trofeu"]')!.addEventListener('click', () => mandarTrofeuNoGrupo(t, time, { raiz: el }));
   if (comemorar && !semMovimento()) {
     const desenho = el.querySelector('[data-desenho]')!;
     window.setTimeout(() => !saiu() && papelPicadoNaTela(desenho, time.cores), 280);
