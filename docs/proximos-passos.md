@@ -129,6 +129,15 @@ from staging_gt.uso_gemini group by 1, 2 order by 1, 2;
 select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2026-11-03' group by 1;
 ```
 
+**Medida adiantada em 06/11/2026 (só leitura; a decisão continua do Kauê, no domingo):**
+- **Falhas:** `auditar-conteudo` falhou em 59 de 115 chamadas (51%) de 02 a 06/11; `gerar-conteudo`, em 6 de 55 (11%).
+- **Tokens:** `auditar` usou 167 mil de entrada e 4 mil de saída; `gerar`, 161 mil e 14 mil.
+- **Lacuna da medida:** a tabela guardava só `falhas`, sem separar 429 (cota) de 503 (sobrecarga), e a cobrança só resolve cota. Desde 06/11 a coluna `codigos` guarda o código de cada tentativa que falha (ex.: `429,429,503`); as linhas anteriores ficam sem ele. Depois de 2 ou 3 dias: `select criada_em::date, funcao, codigos, count(*) from staging_gt.uso_gemini where codigos is not null group by 1,2,3 order by 1,2,4 desc;`. `chamadas` e `falhas` contam cada tentativa, inclusive as repetições: 51% é taxa de tentativas, não de auditorias perdidas.
+- **Rascunhos desde 03/11 (62):** 40 `publicada`, 7 `pre_aprovada`, 11 `rascunho` (esperando auditoria) e 4 `reprovada` (todas em 03/11). Das 51 auditadas, 47 passaram.
+- **Fáceis de clube:** as 9 estão preenchidas e `ativa`; os 7 clubes têm 3 ou mais fáceis hoje (athletico-pr 4, bahia 3, bragantino 4, chapecoense 4, coritiba 4, remo 3, vasco 6). O Bahia fecha com a `bahia-f-04`.
+- **Médias que sobram (a aposentar, decisão do Kauê):** athletico-pr 7, bahia 5, bragantino 4, chapecoense 5, coritiba 4, remo 4, vasco 5, contra o alvo de 3. Acerto não serve de critério ainda (só 8 respostas em 34 médias); a escolha é pela semelhança. Candidatas por clube na seção 8 de `docs/propostas/robos-gemini-perguntas.md`.
+- **Leitura:** a meta está quase cumprida e a fila é pequena; a inclinação é manter as 5 execuções. Detalhes e tabela por dia em `docs/propostas/robos-gemini-perguntas.md`, seção 8.
+
 **10. Lances unificados no ar (publicados em 05/11/2026, 8h16):** os blocos da conferência estão na descrição do PR #108. Só leitura.
 - **Agora, no celular:**
   - jogue uma partida de pênaltis e uma de faltas: tudo igual a antes;

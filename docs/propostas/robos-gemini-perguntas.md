@@ -82,3 +82,28 @@ Com `paginas` 3, 3 execuções por dia e ~2 propostas por página, cerca de 10 a
 1. Modo reposição com 3 execuções por dia (recomendado) ou um job por clube?
 2. Medir a cota por 2 dias antes de subir de 1 para 3 execuções?
 3. Subir o auditor para 20 por execução?
+
+## 8. Medida de 02 a 06/11/2026 (só leitura; dia 06 parcial)
+
+`staging_gt.uso_gemini`, por dia e função:
+
+| Dia | Função | Chamadas | Falhas | Entrada | Saída |
+|---|---|---|---|---|---|
+| 02/11 | gerar | 9 | 0 | 28.640 | 1.374 |
+| 02/11 | auditar | 7 | 2 | 26.518 | 289 |
+| 03/11 | gerar | 13 | 1 | 33.856 | 2.646 |
+| 03/11 | auditar | 24 | 12 | 40.398 | 1.002 |
+| 04/11 | gerar | 16 | 1 | 40.626 | 5.379 |
+| 04/11 | auditar | 37 | 17 | 54.584 | 1.508 |
+| 05/11 | gerar | 14 | 4 | 24.927 | 3.267 |
+| 05/11 | auditar | 34 | 22 | 28.384 | 940 |
+| 06/11 | gerar | 3 | 0 | 33.213 | 1.569 |
+| 06/11 | auditar | 13 | 6 | 16.934 | 499 |
+
+- **Total:** `auditar` 59 falhas em 115 chamadas (51%), 167 mil tokens de entrada e 4 mil de saída. `gerar` 6 falhas em 55 (11%), 161 mil e 14 mil.
+- **O que a seção 3.5 prometia e a tabela não entrega:** a divisão 429/503. Só há `falhas`. Sem ela não dá para saber se a cobrança do Google AI Studio resolveria (resolve cota, não sobrecarga).
+- **Rascunhos desde 03/11:** 62 (cerca de 15 por dia, dentro dos 10 a 15 da seção 4). 40 `publicada`, 7 `pre_aprovada`, 11 `rascunho`, 4 `reprovada`. Passaram 47 das 51 auditadas (92%), bem acima da metade estimada. As 4 reprovações são de 03/11: duas por propaganda na fonte, uma por o auditor escolher outra alternativa, uma por o trecho do auditor não trazer a resposta.
+- **Cuidado ao ler "falhas":** `chamadas` e `falhas` contam cada tentativa, inclusive as repetições de 429/503 (até 3 por modelo, com espera de 8, 16 e 24 s). Uma auditoria que bate na cota várias vezes infla as duas colunas, então 51% é taxa de tentativas e não de auditorias perdidas (47 das 51 auditadas passaram).
+- **Fáceis de clube (contagem por `degrau = 1` em `public.perguntas`, status `ativa`):** as 9 estão preenchidas, e os 7 clubes têm 3 ou mais fáceis: athletico-pr 4, bahia 3, bragantino 4, chapecoense 4, coritiba 4, remo 3, vasco 6. O Bahia tem `bahia-f-04`, `bahia-m-01` e `bahia-m-03`.
+- **Médias que sobram** (alvo de 3 por clube): athletico-pr 7, bahia 5, bragantino 4, chapecoense 5, coritiba 4, remo 4, vasco 5. A regra de aposentar "a de menor acerto" não se aplica ainda: das 34 médias desses clubes, só 8 têm 1 resposta em `prova_respostas` e nenhuma tem mais. A escolha tem de ser pela semelhança entre elas, e é do Kauê.
+- **Inclinação (decisão do Kauê):** manter as 5 execuções; a meta fechou e a fila de auditoria é de 11 rascunhos. Antes de ligar a cobrança, separar 429 de 503. O PR `claude/uso-gemini-codigos` passa a gravar em `staging_gt.uso_gemini.codigos` o código de cada tentativa que falha (coluna nova, migração `20261106400000` que só cria). Com 2 ou 3 dias de dado novo dá para decidir.
