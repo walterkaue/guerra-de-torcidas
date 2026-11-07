@@ -32,11 +32,11 @@ Sem parâmetros, o comportamento de hoje continua (menos o `break`, que passa a 
 
 ### 3.2 Modo reposição: o robô descobre o que falta
 
-Com `{"modo": "reposicao"}`, a função calcula o déficit de cada clube × degrau contra a cota da pré-temporada (3 fáceis, 3 médias, 2 difíceis, 2 de craque) usando `public.perguntas` ativas **mais** os rascunhos e pré-aprovadas pendentes, e trabalha no maior déficit. Sem déficit, volta ao sorteio uniforme entre os clubes de menor cobertura.
+Com `{"modo": "reposicao"}`, a função calcula o déficit de cada clube × degrau contra a cota (desde 06/11/2026, a meta do lançamento: 9 fáceis, 9 médias, 6 difíceis, 6 de craque; antes, 3/3/2/2 da pré-temporada) usando `public.perguntas` ativas **mais** os rascunhos e pré-aprovadas pendentes, e trabalha no maior déficit. Sem déficit, volta ao sorteio uniforme entre os clubes de menor cobertura.
 
 - Cobre sozinho as 9 fáceis de hoje (athletico-pr 2, chapecoense 2, bahia, bragantino, coritiba, remo, vasco 1 cada) e qualquer vaga futura.
 - Conta rascunhos pendentes para não gerar a 10ª pergunta de uma vaga já preenchida.
-- Quando a meta subir para 30 por clube, só muda a tabela de cotas.
+- A meta subiu para 30 por clube em 06/11/2026: só mudou a tabela de cotas.
 
 ### 3.3 Paralelo: 5 execuções por dia, não 20 robôs
 
@@ -105,5 +105,5 @@ Com `paginas` 3, 3 execuções por dia e ~2 propostas por página, cerca de 10 a
 - **Rascunhos desde 03/11:** 62 (cerca de 15 por dia, dentro dos 10 a 15 da seção 4). 40 `publicada`, 7 `pre_aprovada`, 11 `rascunho`, 4 `reprovada`. Passaram 47 das 51 auditadas (92%), bem acima da metade estimada. As 4 reprovações são de 03/11: duas por propaganda na fonte, uma por o auditor escolher outra alternativa, uma por o trecho do auditor não trazer a resposta.
 - **Cuidado ao ler "falhas":** `chamadas` e `falhas` contam cada tentativa, inclusive as repetições de 429/503 (até 3 por modelo, com espera de 8, 16 e 24 s). Uma auditoria que bate na cota várias vezes infla as duas colunas, então 51% é taxa de tentativas e não de auditorias perdidas (47 das 51 auditadas passaram).
 - **Fáceis de clube (contagem por `degrau = 1` em `public.perguntas`, status `ativa`):** as 9 estão preenchidas, e os 7 clubes têm 3 ou mais fáceis: athletico-pr 4, bahia 3, bragantino 4, chapecoense 4, coritiba 4, remo 3, vasco 6. O Bahia tem `bahia-f-04`, `bahia-m-01` e `bahia-m-03`.
-- **Médias que sobram** (alvo de 3 por clube): athletico-pr 7, bahia 5, bragantino 4, chapecoense 5, coritiba 4, remo 4, vasco 5. A regra de aposentar "a de menor acerto" não se aplica ainda: das 34 médias desses clubes, só 8 têm 1 resposta em `prova_respostas` e nenhuma tem mais. A escolha tem de ser pela semelhança entre elas, e é do Kauê.
+- **Médias acima da cota antiga** (3 por clube): athletico-pr 7, bahia 5, bragantino 4, chapecoense 5, coritiba 4, remo 4, vasco 5. **Decidido pelo Kauê em 06/11/2026: nenhuma é aposentada.** Pergunta válida não sai por excesso; a cota subiu para 30 por clube (9/9/6/6) e o robô passa a buscar mais para os outros clubes. Esses sete ficam por último nas médias até os demais os alcançarem.
 - **Inclinação (decisão do Kauê):** manter as 5 execuções; a meta fechou e a fila de auditoria é de 11 rascunhos. Antes de ligar a cobrança, separar 429 de 503. O PR `claude/uso-gemini-codigos` passa a gravar em `staging_gt.uso_gemini.codigos` o código de cada tentativa que falha (coluna nova, migração `20261106400000` que só cria). Com 2 ou 3 dias de dado novo dá para decidir.
