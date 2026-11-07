@@ -1,6 +1,7 @@
 # Revisão gráfica — direção "Transmissão de domingo"
 
-> Versão 1.15 · 06/11/2026 · **Direção aprovada em 18/10/2026; rota "Grafismo de TV" em 03/11/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Versão 1.16 · 06/11/2026 · **Direção aprovada em 18/10/2026; rota "Grafismo de TV" em 03/11/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Mudanças da 1.16: boneco em campo (o batedor da pessoa é o boneco montável, de costas e com o número) e bustos no X1 (seção 3, "Bonecos"; replay na 4.2).
 > Mudanças da 1.15: partida em tela grande com o campo pela altura, aviso "Vire o celular pra jogar" e "Mandar esse lance" na ficha (seção 4.7; teto de pixels na 4.3).
 > Mudanças da 1.14: card do troféu da Galeria nos cards personalizáveis e flâmula com contorno claro (seção 3, "Card de compartilhamento").
 > Mudanças da 1.13: estilo Pôster e busto do boneco nos cards personalizáveis (seção 3, "Card de compartilhamento").
@@ -126,6 +127,7 @@ Card 'Telão do estádio' (decidido em 31/10/2026): arquibancada do clube no alt
 
 ### Bonecos
 - Estilo "Silhueta premium", aprovado em 19/10: ver `docs/bonecos.md`.
+- **Boneco em campo (06/11/2026, `docs/bonecos.md` seção 7):** o batedor da pessoa é o boneco montável dela, de costas, nas cores da cena, com o número nas costas e as peças do vestiário que vão a campo; no replay, de frente comemorando. No X1, o batedor de quem chamou é o boneco dele, e o resultado põe o busto de cada um ao lado do apelido no placar (o convite da Home mostra o busto de quem chamou). Sem boneco ou com o interruptor desligado, tudo como antes.
 
 ## 3.1 Perfil
 
@@ -161,7 +163,7 @@ Decidido em 31/10/2026. A aba "Carreira" da barra (que era "em breve") vira **Pe
 - **Como:** ~1 s depois do gol, uma faixa inclinada nas cores do time varre a tela (vinheta) e esconde o corte de câmera. O replay mostra o mesmo chute de **trás do gol**, do alto, com a rede na frente, em câmera lenta (metade da velocidade) e fechando devagar (zoom de 1,0 a 1,1). Tarja amarela "REPLAY" no canto com "toque pra pular". No fim, a vinheta passa de novo e o jogo segue.
 - **Por quê é barato:** o lance já foi resolvido pelo motor puro (gesto + semente). O replay só redesenha o caminho da bola (`caminhoDoChute`, em `jogo/lances.ts`) na câmera 3D dos Lances; nos Pênaltis, num canvas 3D por cima da cena de TV, criado no primeiro golaço. Zero rede, ~5 KB gzip a mais no pacote dos jogos, e a arquibancada do outro lado é pré-desenhada uma vez por replay (~16 ms no computador; fica escondida pela vinheta).
 - **Campo inteiro (26/10, depois do teste):** o replay mostra o outro lado do campo: laterais, linha do meio, círculo central, a grande área e o gol de lá (campo de 105 m), com a torcida atrás.
-- **Bonecos de costas viram de frente:** cada boneco é recriado do outro lado (`deFrente` trocado) e desenhado espelhado, então o batedor aparece de frente comemorando e o goleiro de costas, voando para o lado certo.
+- **Bonecos de costas viram de frente:** cada boneco é recriado do outro lado (`deFrente` trocado) e desenhado espelhado, então o batedor aparece de frente comemorando e o goleiro de costas, voando para o lado certo. **Com o boneco em campo (06/11/2026):** o batedor da pessoa vira de frente com as mesmas peças, e o número aparece na frente, legível (sem espelhar os dígitos).
 - Pode virar card ou vídeo para compartilhar depois (fora deste passo).
 
 ## 4.3 Qualidade gráfica (Alta, Média, Leve)

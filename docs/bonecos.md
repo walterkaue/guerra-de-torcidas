@@ -26,7 +26,7 @@
 - **Cabelos:** raspado, curto, crespo volumoso, tranças, coque, rabo de cavalo, comprido solto.
 - **Homens e mulheres** em proporção parecida.
 - Cada lado tem **5 batedores diferentes**, um por cobrança (na morte súbita volta o primeiro), e **1 goleiro**. Todos são sorteados a cada partida (tom de pele, cabelo, homem ou mulher) com o gerador aleatório **do visual**, nunca a semente da partida (a física continua determinística). Vale para quem joga e para a máquina (decidido em 19/10).
-- Escolher o próprio boneco fica no backlog (I06, Seu Craque).
+- Desde 06/11/2026, o batedor da própria pessoa é o boneco montável dela (seção 7); os outros continuam sorteados.
 - Nenhum traço caricato de etnia, corpo ou origem.
 - **Nenhum boneco imita jogador real**, nem pela combinação de número, tom de pele e cabelo (direito de imagem; decidido em 19/10).
 
@@ -57,7 +57,7 @@ O jogo é em **canvas 2D**, então o boneco é desenhado no canvas, não em SVG 
 
 ## 6. Boneco montável (avatar da pessoa, 05/11/2026)
 
-O avatar do Perfil, da Home e do vestiário (`docs/jogo.md`, seção 14.5). Os bonecos das partidas continuam sorteados e não mudam.
+O avatar do Perfil, da Home e do vestiário (`docs/jogo.md`, seção 14.5). Desde 06/11/2026 ele também vai a campo como o batedor da pessoa (seção 7).
 
 - **Mesmo estilo:** o boneco das partidas, de frente, com as peças por cima. Formas chapadas, sem contorno, degradê só na pele e no calção, rosto liso. Sempre fictício: camisa lisa sem nome, nada que imite jogador real.
 - **Peças do começo:** corpo (h ou m, só a forma), 6 tons de pele, 7 cabelos × 6 cores, uniforme 1 e 2 nas cores do time, número, testeira, munhequeira, fundos Gramado, Arquibancada e Estádio à noite.
@@ -69,3 +69,15 @@ O avatar do Perfil, da Home e do vestiário (`docs/jogo.md`, seção 14.5). Os b
 - **Técnica:** `desenharBoneco(ctx, vestimenta, coresDoTime, recorte, largura, altura)` em `src/telas/bonecoMontavel.ts` (fundos em `bonecoFundos.ts`). Desenha uma vez num canvas fora da tela, no tamanho × devicePixelRatio, guarda até 24 imagens e depois só faz `drawImage`. Nenhum filtro nem `shadowBlur`. Com número, a imagem só vai ao cache com a Anton carregada: chame `prepararFonteDoNumero()` e redesenhe. As peças entram por ganchos opcionais (`Camadas`) no `desenharBoneco` de `bonecos.ts`; sem eles, o desenho das partidas é o mesmo.
 - **Legibilidade (o que ainda é fraco):** braçadeira e munhequeira quase somem abaixo de 52 px; o Telão vira pontilhado no busto pequeno; colete contra camisa de goleiro amarela tem contraste baixo.
 - **Vitrine:** `?vitrineBoneco` em dev (`src/dev/vitrineBoneco.ts`, fora do bundle), com `&so=prancha|bustos|tamanhos|uniformes|fundos|molduras|times`, `&estado=novo|meio|tudo` e `&time=<id>`. Prints em `docs/auditoria/2026-11-05/boneco/`.
+
+## 7. Boneco em campo (06/11/2026)
+
+Decidido pelo Kauê em 06/11/2026 (C5, Rota B, "você no lance"). Regra completa em `docs/jogo.md`, seção 14.5, "Boneco em campo".
+
+- **Quem:** o batedor da pessoa (pênaltis com a morte súbita, Lances, treino e aquecimento) e, no X1 de pênaltis, o batedor de quem chamou. Goleiros e a máquina continuam sorteados.
+- **Roupa da cena, nunca a do vestiário:** camisa, calção e meião pela seção 2 (uniforme 1 ou 2 e a troca contra o adversário; cores da Seleção; cores do clube do lance; roupa de goleiro no Gol 100). O campo `camisa` da vestimenta não vale em campo.
+- **Peças que entram:** corpo, pele, cabelo e cor, testeira, munhequeira (e a bronze), braçadeira e chuteira (cores do time do coração ou dourada). Testeira, munhequeira e chuteira do time ficam nas cores do time do coração, mesmo numa cena de outro clube. **Nunca entram:** colete, faixa, apito, pose, fundo e moldura.
+- **De costas:** em campo o batedor aparece de costas, com o cabelo de costas (coque, tranças, rabo e crespo pelo `cabelo(estilo, deFrente)`), a testeira como faixa sobre o cabelo e o número nas costas, em Anton, na cor de texto da camisa da cena. A braçadeira fica no braço esquerdo do boneco também de costas. No replay, de frente comemorando, com o número na frente.
+- **Número:** só o que a pessoa escolheu; sem número, camisa lisa. Os bonecos sorteados continuam sem número (seção 2).
+- **Técnica:** o batedor anda, então não há um desenho único para guardar. Por cena, o boneco e as camadas são montados uma vez e o número é desenhado uma vez num canvas fora da tela e reaproveitado com `drawImage` a cada quadro. Nada de texto, `Path2D` ou objeto novo dentro do quadro; nenhum filtro. Tudo vem no pedaço dos jogos (o JS inicial não cresce). Movimento reduzido e qualidade Leve: como nos sorteados.
+- **Sem cópia no aparelho, cópia inválida ou interruptor desligado:** sorteio, sem esperar a rede.
