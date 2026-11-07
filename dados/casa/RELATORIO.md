@@ -39,7 +39,7 @@ Lacunas por falta de fonte aceita aberta:
 
 ## 2. Dúvidas e divergências para a revisão olhar primeiro
 
-Estaduais conferidos só por Lance/Trivela/Goal (as federações FPF-SP, FERJ, FMF, FGF, FBF, FCF não abriram): todos os `estadual` têm "conferir" na observação.
+Estaduais: **revistos em 07/11/2026** (seção 6). FPF-SP e FCF publicam a lista oficial e batem com o CSV; FGF mostra só de 2020 em diante; FERJ, FMF e FBF não publicam lista histórica. Só o Paranaense de 2000 segue com "conferir" (item 1).
 
 1. **Paranaense 2000 (conferido no lote 1; o Kauê confere na FPF):** a página da FPF lista 2000 como do Coritiba, mas a final de 17/07/2000 (Atlético 1 x 1 Coritiba, gol do título do Atlético) está contada pela Gazeta do Povo e pela Banda B. Fica com o Athletico (28 títulos); o Coritiba perde a linha (39). A página da FPF parece errada.
 2. **Paraense 2000 do Remo (resolvido, conferir):** a página de títulos do clube lista 49 anos, mas O Liberal conta 48 títulos até 2025 e a Wikipédia (só apoio) dá 2000 ao Paysandu sobre o Castanhal. Linha removida (Remo com 48).
@@ -128,3 +128,21 @@ Segunda sessão, só os títulos em `rascunho` (Palmeiras 14, Flamengo 12, Santo
 - **1987, STF:** o processo é a Ação Rescisória 3032 (https://portal.stf.jus.br/processos/listarProcessos.asp?classe=AR&numeroProcesso=3032). O último andamento em 07/11/2026 é a manifestação da PGR de 18/02/2026. **Continua aberto:** rever a linha quando sair decisão.
 
 **Correção:** a primeira versão deste relatório dizia que 89 títulos já revisados (Corinthians, São Paulo, Santos e Palmeiras) ainda tinham como `fonte` a lista do Lance que saiu do ar. Não tinham: a `fonte` deles já era o site do clube (ou o UOL) desde 25/10, e a URL do Lance só aparecia no texto da `observacao`. Os anos dessas 89 linhas foram conferidos contra a lista do Terra e contra a da FPF, e a `observacao` diz isso.
+
+**Estaduais das outras federações (07/11/2026, mesmo dia)**
+Os sites abrem no navegador do app. O que cada um publica:
+
+| Federação | O que publica | Resultado |
+|---|---|---|
+| FCF (SC) | Lista oficial de campeões da Série A, 1924 a 2025 | Chapecoense 7, os mesmos anos do CSV |
+| FGF (RS) | Uma página por ano, de 2020 a 2026, com "Campeão:" | Grêmio 2020 a 2024 e 2026, Inter 2025, igual ao CSV |
+| FERJ (RJ) | Nenhuma lista de campeões (site e página "Sobre") | Cruzado com Lance (10/03/2026), Trivela e Goal |
+| FMF (MG) | Nenhuma lista de campeões | Cruzado com o site do Atlético, Lance e Trivela (ano a ano) |
+| FBF (BA) | Nenhuma lista; só a notícia do 52º título do Bahia (07/03/2026) | Cruzado com o site do Bahia, Lance e Goal (23/03/2025) |
+
+Em todos os 386 estaduais desses estados, os anos do CSV batem com cada lista até a data dela. A observação de cada linha diz quais listas trazem o ano, com os links, e perdeu o "conferir". Casos anotados:
+- **Cruzeiro, 1926:** a tabela da Trivela traz um 1926 da liga AMET, que nem ela, nem o Lance, nem os 39 do clube contam. Não entra.
+- **Atlético e Cruzeiro, 1956:** título dividido (Trivela), já no CSV para os dois.
+- **Bahia, 1998:** fora da lista de anos do site do clube, mas Lance e Goal dão ao Bahia, e sem ele a conta não fecha nos 52 que o clube e a FBF contam.
+- **Gauchão 2026 (Grêmio)** e **Mineiro 2026 (Cruzeiro):** já estavam no CSV; agora têm a FGF e duas matérias, respectivamente.
+- **Fica:** Paranaense de 2000 (Athletico x lista da FPF do Paraná), decisão do Kauê de 21/10.
