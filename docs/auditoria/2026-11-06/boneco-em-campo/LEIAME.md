@@ -35,5 +35,7 @@ Pênaltis, "Bater a disputa livre" (`irParaPartida`). Time do coração: Palmeir
 | 24 | 24-perfil-interruptor-meu-boneco-em-campo.png | Perfil, Ajustes: "Meu boneco em campo" ligado | `/?homeFalsa&boneco=coque-pele4-n7`, Perfil |
 | 25 | 25-antes-depois-penalti.png | Antes (origin/main, porta 5180) e depois, no mesmo pênalti | base (o uniforme do "antes" é sorteado: saiu o 1) |
 | 26 | 26-antes-depois-gol100.png | Antes e depois no Gol 100 | mesma URL do 06 |
+| 27 | 27-home-divisoes-e-boneco-360.png | Home em 360 com o bloco das divisões (D4) e o boneco (avatar e busto no convite do X1), sem sobrepor | `/?homeFalsa&temporadaFalsa=unica&d=abcd1234&boneco=coque-pele4-n7` (barra de baixo solta só no print da página inteira) |
+| 28 | 28-home-divisoes-e-boneco-430.png | O mesmo em 430 | mesma URL do 27 |
 
 Os 25 e 26 têm o "antes" tirado de um worktree temporário da main (já removido), com o mesmo servidor falso.
