@@ -48,6 +48,9 @@ function conteudoDoTelao(d: DadosDoCard): { maior: number; desenhar: (c: CanvasR
       return { maior: 0, desenhar: (c, caixa) => conteudoAcertos(c, caixa, k.resultados) };
     case 'medalha':
       return { maior: TELAO_MAIOR_DA_MEDALHA, desenhar: (c, caixa) => conteudoMedalha(c, caixa, k.medalha, d.time.cores, k.item) };
+    case 'temporada':
+      // O fim de temporada tem o seu próprio telão (cardTemporada.ts); este não é chamado para ele.
+      return { maior: 0, desenhar: () => {} };
     case 'trofeu':
       // O troféu tem o seu próprio telão (cardTrofeu.ts); este não é chamado para ele.
       return { maior: 0, desenhar: () => {} };
@@ -149,6 +152,11 @@ export async function desenharCardPersonalizado(d: DadosDoCard, plano: PlanoDoCa
     if (plano.estilo === 'telao') return t.desenharTelaoDoTrofeu(d, plano, busto);
     const imagem = await t.imagemDoTrofeu(plano.trofeu.tipo, d.time.cores, 360, { contorno: false, traco: '#3b3b36' });
     return desenharCardPlacarSeco(d, plano, busto, imagem);
+  }
+  // O card do fim de temporada: o Telão vem de cardTemporada.ts (carregado só quando o card é dele).
+  if (plano.temporada && plano.estilo === 'telao') {
+    const t = await import('./cardTemporada');
+    return t.desenharTelaoDaTemporada(d, plano, busto);
   }
   return plano.estilo === 'telao' ? desenharTelao(d, plano, busto) : desenharCardPlacarSeco(d, plano, busto);
 }

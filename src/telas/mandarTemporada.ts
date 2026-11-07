@@ -39,7 +39,8 @@ export function mandarSoOTextoDoMes(e: EntradaDoCardDoMes): void {
 
 /** Abre o card de fim de temporada. Chame direto no toque, sem await antes (iPhone). */
 export function mandarTemporadaNoGrupo(e: EntradaDoCardDoMes, o: OpcoesDoMandarTemporada): void {
-  // Parte C troca esta reserva pelo card: import('./mandarTemporadaCard').then((m) => m.abrirCardDoMes(e, o), () => mandarSoOTextoDoMes(e)).
-  void o;
-  mandarSoOTextoDoMes(e);
+  import('./mandarTemporadaCard').then(
+    (m) => m.abrirCardDoMes(e, o),
+    () => mandarSoOTextoDoMes(e),
+  );
 }
