@@ -1,6 +1,6 @@
 // Amostra dos cards "Telão do estádio" (só dev: /dev/cards.html): cada jogo, com vitória e derrota, para um time
 // de cor 1 clara, um escuro e um de cor parecida com o gramado, de dia e de noite. `?times=sao-paulo` e
-// `?luz=dia` filtram. `?personalizados` desenha os cards personalizáveis (Telão e Placar seco × Stories e Quadrado ×
+// `?luz=dia` filtram (`&so=temporada` com `?personalizados` desenha só os cards desse jogo). `?personalizados` desenha os cards personalizáveis (Telão e Placar seco × Stories e Quadrado ×
 // tudo ligado e tudo desligado), com nomes como `lances-telao-stories-ligado`. `window.cards` guarda os canvas, para salvar por script.
 
 import '../style.css';
@@ -12,6 +12,7 @@ import { desenharCardProva } from '../jogo/cardProva';
 import { desenharCardPersonalizado } from '../jogo/cardPersonalizadoDesenho';
 import { PADRAO } from '../jogo/vestiario';
 import { dadosDeAmostraDoTrofeu } from './trofeuFalso';
+import { amostraDoMes } from './temporadaCardFalso';
 import { quadradinhosDoCard, planoDoCard, type BonecoDoCard, type Chave, type DadosDoCard, type EstiloCard, type FormatoCard } from '../jogo/cardPersonalizado';
 import type { Luz } from '../jogo/home';
 import type { ItemDaMedalha } from '../jogo/medalhaTextos';
@@ -21,6 +22,8 @@ const busca = new URLSearchParams(location.search);
 const TIMES_DA_AMOSTRA = (busca.get('times') ?? 'sao-paulo,corinthians,palmeiras').split(',');
 const LUZES = (busca.get('luz') ?? 'dia,noite').split(',') as Luz[];
 const APELIDO = busca.get('apelido') ?? undefined;
+/** ?so=temporada desenha só os cards personalizáveis cujo nome começa assim. */
+const SO = busca.get('so');
 
 const linha = (...tons: Tom[]): Pistas => ({
   estado: { tom: tons[0] },
@@ -177,6 +180,13 @@ function dadosPersonalizados(t: Time, luz: Luz): Record<string, DadosDoCard> {
     'trofeu-semana': dadosDeAmostraDoTrofeu('semana', t, { somou: true, apelido: 'Zé da Geral', luz }),
     'trofeu-mes': dadosDeAmostraDoTrofeu('mes', t, { somou: false, apelido: 'Zé da Geral', luz }),
     'trofeu-vitrine': dadosDeAmostraDoTrofeu('vitrine', t, { somou: true, apelido: 'Zé da Geral', luz }),
+    // O fim de temporada: subiu (com e sem soma), caiu, campeão, "vai pra Série A" e a pré-temporada.
+    'temporada-subiu': amostraDoMes('subiu', t, { somou: true, apelido: 'Zé da Geral', luz }).dados,
+    'temporada-subiu-sem-soma': amostraDoMes('subiu', t, { somou: false, apelido: 'Zé da Geral', luz }).dados,
+    'temporada-caiu': amostraDoMes('caiu', t, { somou: false, apelido: 'Zé da Geral', luz }).dados,
+    'temporada-campeao': amostraDoMes('campeao', t, { somou: true, apelido: 'Zé da Geral', luz }).dados,
+    'temporada-unica-a': amostraDoMes('unica_a', t, { somou: true, apelido: 'Zé da Geral', luz }).dados,
+    'temporada-pre': amostraDoMes('subiu', t, { pre: true, somou: true, apelido: 'Zé da Geral', luz }).dados,
     medalha: comum('Lances do Jogo', 'OURO', 'Medalha pro time', 'Já sou ouro no primeiro gol de Tóquio — Flamengo x Liverpool (1981)', '🥇', 'Medalha no peito e zoeira no grupo.', {
       tipo: 'jogo-x1',
       novoRecorde: false,
@@ -207,6 +217,7 @@ async function personalizados(): Promise<void> {
     const time = timePorId(id)!;
     const todos = dadosPersonalizados(time, luz);
     for (const [jogo, d] of Object.entries(todos)) {
+      if (SO && !jogo.startsWith(SO)) continue;
       for (const estilo of estilos) {
         for (const formato of formatos) {
           for (const modo of ['ligado', 'desligado'] as const) {

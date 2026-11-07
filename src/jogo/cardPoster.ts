@@ -9,6 +9,7 @@ import { ALTURA_DA_FIGURA, ALTURA_DO_JOELHO, LARGURA_DA_FIGURA, desenharFiguraDo
 import { AMARELO, FONTE, PLACAR, ROTULO, adesivo, quebrarTexto, seloRecorde } from './card';
 import { cortarTexto } from './cardLances';
 import { desenharMedalha } from './cardMedalha';
+import { desenharEmblema } from './cardTemporada';
 import { desenharImagemDoTrofeu, imagemDoTrofeu, type ImagemDoTrofeu } from './cardTrofeu';
 import type { DadosDoCard, PlanoDoCard, PlanoDoPoster } from './cardPersonalizado';
 import { AVISO_PRE_TEMPORADA } from './posicao';
@@ -188,16 +189,18 @@ function placa(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard, 
 
   // Bloco da direita: pontos grandes, "pro Time" embaixo e, se houver, a medalha à esquerda dos pontos.
   // No card do troféu, o troféu desenhado ocupa o lugar da medalha e o nome dele, o dos pontos.
+  // No card do fim de temporada, o emblema do destino (seta) ocupa o lugar do troféu e o destino em Anton, o dos pontos.
   const alturaTrofeu = a * 0.66;
-  const larguraTrofeu = trofeu ? (trofeu.l * alturaTrofeu) / trofeu.a : 0;
-  const reservaMedalha = trofeu ? larguraTrofeu + 24 : p.medalha ? m.raioMedalha * 2 + 28 : 0;
+  const larguraTrofeu = trofeu ? (trofeu.l * alturaTrofeu) / trofeu.a : p.selo ? alturaTrofeu : 0;
+  const titulo = !!trofeu || !!p.selo;
+  const reservaMedalha = titulo ? larguraTrofeu + 24 : p.medalha ? m.raioMedalha * 2 + 28 : 0;
   const temEsquerda = !!(p.apelido || plano.nivel);
   const maxPontos = (temEsquerda ? dentro * 0.58 : dentro) - reservaMedalha;
   // O nome do troféu é longo ("CAMPEÃO DA TEMPORADA"): em até 2 linhas, menor que os pontos.
   let pontos: { texto: string; tam: number };
   let linhasP: string[];
-  if (trofeu) {
-    const tam = Math.round(m.tPontos * 0.48);
+  if (titulo) {
+    const tam = Math.round(m.tPontos * (p.selo ? 0.42 : 0.48));
     c.font = `400 ${tam}px ${PLACAR}`;
     linhasP = quebrarTexto(c, p.pontos, maxPontos).slice(0, 2);
     pontos = { texto: linhasP.reduce((a, b) => (c.measureText(b).width > c.measureText(a).width ? b : a), ''), tam };
@@ -222,7 +225,7 @@ function placa(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard, 
   linhasP.forEach((ln, i) => c.fillText(ln, fimDireita, topoBloco + ascP + i * passoP));
   if (p.proTime) {
     c.fillStyle = '#ffffff';
-    if (trofeu) {
+    if (titulo) {
       // "Time · Série A" encolhe até caber embaixo do nome e do troféu, em vez de espremer.
       const rotulo = linhaUnica(c, p.proTime, (t) => `700 ${t}px ${ROTULO}`, Math.max(largPontos, maxPontos * 0.8), m.tProTime, 18);
       c.font = `700 ${rotulo.tam}px ${ROTULO}`;
@@ -234,6 +237,8 @@ function placa(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard, 
   }
   if (trofeu) {
     desenharImagemDoTrofeu(c, trofeu, fimDireita - largPontos - 24 - larguraTrofeu / 2, meio, larguraTrofeu, alturaTrofeu);
+  } else if (p.selo) {
+    desenharEmblema(c, p.selo, fimDireita - largPontos - 24 - larguraTrofeu / 2, meio, alturaTrofeu / 2);
   } else if (p.medalha) {
     const cx = fimDireita - largPontos - 28 - m.raioMedalha;
     desenharMedalha(c, p.medalha, cores, cx, y + a * 0.56, m.raioMedalha);

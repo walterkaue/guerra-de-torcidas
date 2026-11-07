@@ -64,6 +64,7 @@ import { arteEscada, arteGrade, htmlDaCasa, htmlDoLanceDoDia, htmlDosCards } fro
 import { lancesUnificados } from './corte';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { pintarAvatar } from './bonecoDoAparelho';
+import type { FraseDoMes } from './blocoDivisoes';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
 import { qualidade } from './qualidade';
@@ -201,6 +202,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         ${time?.id === ID_OUTRO ? '<div class="cabo-nota" data-nota-cidade hidden><p>Escolha sua cidade: é ela que joga por você no ranking.</p><button class="botao botao-sec" type="button" data-acao="escolher-cidade">Escolher minha cidade</button></div>' : ''}
         <p class="cabo-voce" data-posicao-semana aria-live="polite" hidden></p>
       </section>
+
+      ${time && time.id !== ID_OUTRO ? `<section class="bloco-divisoes placa" data-divisoes aria-label="Tabela do mês" style="--c1:${time.cores[0]};--c2:${time.cores[1]}"></section>` : ''}
 
       <section class="bloco-cidade" data-cidade aria-live="polite" hidden></section>
 
@@ -614,7 +617,46 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const vistas = memoria<{ semana: string; pos: Record<string, number> }>(CHAVE_POSICOES);
   const posicoesAntes = vistas?.semana === semana ? vistas.pos : {};
 
-  function desenhar(linhas: LinhaRanking[]): void {
+  // Bloco das divisões: pedaço carregado depois; a cada ranking novo ele refaz a projeção da semana.
+  const elDivisoes = root.querySelector<HTMLElement>('[data-divisoes]');
+  let semanaAoVivo: LinhaRanking[] | null = null;
+  let atualizarDivisoes: ((l: LinhaRanking[]) => FraseDoMes | null) | null = null;
+  if (elDivisoes && time) {
+    void import('./blocoDivisoes')
+      .then((m) => m.ligarBlocoDivisoes(elDivisoes, time, semana, () => saiu))
+      .then((atualizar) => {
+        atualizarDivisoes = atualizar;
+        if (!semanaAoVivo || saiu) return;
+        fraseDoMes = atualizar(semanaAoVivo);
+        pintarFrase();
+      })
+      .catch(() => elDivisoes.remove());
+  }
+
+  // Adesivo do cabo: a frase do duelo ou a do mês (bloco das divisões). A do mês entra quando o time é líder, está no
+  // acesso ou na zona, ou quando o duelo não tem frase; virada sobre o rival (passou/passado) é sempre do duelo.
+  let fraseDoDuelo: { evento: string; texto: string | null } | null = null;
+  let fraseDoMes: FraseDoMes | null = null;
+  function pintarFrase(): void {
+    const elFrase = elCabo.querySelector<HTMLElement>('[data-frase-rival]')!;
+    const virada = fraseDoDuelo?.evento === 'rival_passou' || fraseDoDuelo?.evento === 'rival_passado';
+    const doMes = !virada && fraseDoMes && (fraseDoMes.destaque || !fraseDoDuelo?.texto) ? fraseDoMes.texto : null;
+    const texto = doMes ?? fraseDoDuelo?.texto ?? null;
+    elFrase.textContent = texto ?? '';
+    elFrase.hidden = !texto;
+  }
+
+  /** `vazia`: o ranking veio vazio e `linhas` é a ordem da tabela, inventada; o bloco das divisões não projeta com ela. */
+  function desenhar(linhas: LinhaRanking[], vazia = false): void {
+    semanaAoVivo = vazia ? [] : linhas;
+    // Um erro no bloco não pode parar o duelo, o giro e a frase (revisão de 07/11/2026).
+    if (atualizarDivisoes) {
+      try {
+        fraseDoMes = atualizarDivisoes(semanaAoVivo);
+      } catch {
+        fraseDoMes = null;
+      }
+    }
     memoria(CHAVE_POSICOES, { semana, pos: Object.fromEntries(linhas.map((l) => [l.time_id, l.posicao_campeao])) });
 
     frasesGiro = frasesDoGiro(linhas, posicoesAntes, timePorId, time?.id);
@@ -647,19 +689,17 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     elDuelo.hidden = false;
     mostrarCabo();
 
-    const elFrase = elCabo.querySelector<HTMLElement>('[data-frase-rival]')!;
     const chave = `${time.id}>${rival.time_id}`;
     const vistos = memoria<Record<string, boolean>>(CHAVE_DUELO) ?? {};
     const duelo = situacaoDoDuelo(meu, rival, chave in vistos ? vistos[chave] : null);
-    if (!duelo) {
-      elFrase.hidden = true;
-      return;
+    if (duelo) {
+      memoria(CHAVE_DUELO, { [chave]: duelo.frente });
+      const ctx = { ...contextoDoTime(time), rival: { nome: tRival.nome, artigo: tRival.artigo }, dif: duelo.dif };
+      fraseDoDuelo = { evento: duelo.evento, texto: escolherFrase(duelo.evento, ctx, Math.random)?.texto ?? null };
+    } else {
+      fraseDoDuelo = null;
     }
-    memoria(CHAVE_DUELO, { [chave]: duelo.frente });
-    const ctx = { ...contextoDoTime(time), rival: { nome: tRival.nome, artigo: tRival.artigo }, dif: duelo.dif };
-    const texto = escolherFrase(duelo.evento, ctx, Math.random)?.texto;
-    elFrase.textContent = texto ?? '';
-    elFrase.hidden = !texto;
+    pintarFrase();
   }
 
   // ---------- sua posição na semana (só a própria, entre todos os torcedores) ----------
@@ -751,7 +791,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       .then((api) => api.rankingDaSemana(semana))
       .then((l) => !saiu && desenhar(l.length ? l : TIMES.filter((t) => t.id !== ID_OUTRO).map((t, i) => ({
         time_id: t.id, ativos: 0, soma: 0, media30: 0, posicao_campeao: i + 1, posicao_soma: i + 1,
-      }))))
+      })), l.length === 0))
       .catch(() => {
         if (saiu) return;
         elMinha.textContent = 'Sem conexão com o placar agora. Dá pra jogar mesmo assim.';
@@ -760,7 +800,12 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       });
   };
   void carregar();
-  void import('./placaTrofeu').then((m) => m.mostrarPlacaTrofeu(root.querySelector<HTMLElement>('[data-placa-trofeu]')!, time?.id, () => saiu)).catch(() => {});
+  // Uma placa só por abertura: a de fim do mês tem a vez e, sem ela, entra a de "Troféu novo" (telas/placaTemporada.ts).
+  const elPlaca = root.querySelector<HTMLElement>('[data-placa-trofeu]')!;
+  void import('./placaTemporada')
+    .then((m) => m.mostrarPlacaDaHome(elPlaca, time?.id, () => saiu))
+    .catch(() => import('./placaTrofeu').then((m) => m.mostrarPlacaTrofeu(elPlaca, time?.id, () => saiu)))
+    .catch(() => {});
   if (!FALSA) {
     ouvirRanking(semana, () => void carregar())
       .then((f) => (saiu ? f() : (pararRanking = f)))

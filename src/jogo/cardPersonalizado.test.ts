@@ -293,6 +293,7 @@ describe('o boneco no card', () => {
       proTime: 'pro Flamengo',
       medalha: null,
       trofeu: null,
+      selo: null,
     });
   });
 

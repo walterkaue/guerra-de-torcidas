@@ -3,6 +3,9 @@
 //   &tipo=jogo|medalha|trofeu   o tipo do card (padrão: jogo-x1, de Lances com link de X1)
 //   &trofeu=semana|mes|vitrine|estreia  (com tipo=trofeu) o troféu; &somou=0|1 (a pessoa somou na semana; padrão 1);
 //                               &outroTime=1 (a Galeria de outro time: cores do troféu, sem Pôster e sem Meu boneco)
+//   &tipo=temporada            o card de fim de temporada; &cenario=subiu|caiu|campeao|campeao_b|fica_a|fica_b|unica_a|
+//                               unica_b|estreia (padrão: subiu); &pre=1 (pré-temporada, "Teste das divisões");
+//                               &somou=0|1 (a pessoa somou no mês; padrão 1)
 //   &estilo=telao|placar|poster o estilo guardado no aparelho
 //   &boneco=sem|parado|bracos   sem = sem rede (sem Pôster); parado = sem a pose de braços liberada; bracos (padrão) = com ela
 //   &comBoneco=1                já abre com o busto ligado (Telão e Placar seco)
@@ -26,6 +29,8 @@ import { abrirCardPersonalizado, sorteadorDeFrase } from '../telas/cardPersonali
 import { sorteadorDeFraseDoTrofeu } from '../jogo/cardTrofeuDados';
 import { quemNoTrofeu, textoDoCardDoTrofeu } from '../jogo/galeria';
 import { dadosDeAmostraDoTrofeu, trofeuDeAmostra, type AmostraDeTrofeu } from './trofeuFalso';
+import { CENARIOS_DO_MES, amostraDoMes, mesDeAmostra } from './temporadaCardFalso';
+import { contextoDoFimDoMes, sorteadorDeFraseDoFim } from '../jogo/cardTemporadaDados';
 
 const SITE = 'torcida.kauewalter.com.br';
 
@@ -50,7 +55,7 @@ export function abrirCardFalso(raiz: HTMLElement): void {
     modo === 'sem' ? Promise.resolve(null) : Promise.resolve({ vestimenta, liberadas: modo === 'parado' ? [] : ['pose_bracos'] });
 
   const pedido = q.get('tipo');
-  const tipo: TipoDeCard = pedido === 'trofeu' ? 'trofeu' : pedido === 'medalha' ? 'medalha' : pedido === 'jogo' ? 'jogo' : tipoDoJogo(true);
+  const tipo: TipoDeCard = pedido === 'temporada' ? 'temporada' : pedido === 'trofeu' ? 'trofeu' : pedido === 'medalha' ? 'medalha' : pedido === 'jogo' ? 'jogo' : tipoDoJogo(true);
   const desfechos: DesfechoLance[] = ['gol', 'defesa', 'gol'];
   const pontos = 47;
   const lance = LANCES.find((l) => l.id === 'flamengo-2019-virada-em-lima') ?? LANCES[0];
@@ -69,7 +74,20 @@ export function abrirCardFalso(raiz: HTMLElement): void {
   let avisoSemBoneco: string | undefined;
   let bonecoDoCard = boneco;
 
-  if (tipo === 'trofeu') {
+  if (tipo === 'temporada') {
+    const pedidoC = q.get('cenario');
+    const cenario = CENARIOS_DO_MES.find((c) => c === pedidoC) ?? 'subiu';
+    const pre = q.get('pre') === '1';
+    const somou = q.get('somou') !== '0';
+    const a = amostraDoMes(cenario, time, { pre, somou, apelido });
+    dados = a.dados;
+    texto = a.texto;
+    cardLink = 'https://torcida.kauewalter.com.br';
+    quemComApelido = (ap) => quemNoTrofeu(ap);
+    const m = mesDeAmostra(cenario, time, pre);
+    const { ctx, rivalCaiu } = contextoDoFimDoMes(m.linha, m.linhas, time, m.temporada.mes);
+    sortearFrase = sorteadorDeFraseDoFim(a.destino, ctx, rivalCaiu, dados.frase);
+  } else if (tipo === 'trofeu') {
     const pedidoT = q.get('trofeu');
     const amostra: AmostraDeTrofeu = pedidoT === 'mes' || pedidoT === 'vitrine' || pedidoT === 'estreia' ? pedidoT : 'semana';
     const outroTime = q.get('outroTime') === '1';

@@ -1,0 +1,58 @@
+/* Placa de fim do mês da Home (docs/visual.md 4.6). Usa o corpo e os botões de placaTrofeu.css; botões do mesmo tamanho. */
+.placa-mes-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+}
+
+.placa-mes-teste {
+  flex: none;
+  padding: 2px 8px;
+  border: 1px solid rgba(245, 245, 240, 0.4);
+  border-radius: var(--raio-p);
+  color: var(--cal);
+  font-family: var(--fonte-rotulo);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.placa-mes .placa-trofeu-texto strong {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 24px;
+}
+
+.placa-mes-frase {
+  margin: 2px 0 0;
+  font-size: 14px;
+}
+
+.placa-mes .dupla {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--e2);
+}
+
+.placa-mes .botao-placa {
+  width: 100%;
+  min-width: 0;
+}
+
+.botao-placa.escuro {
+  background: var(--placa-alta);
+  color: var(--cal);
+  box-shadow: inset 0 0 0 1px rgba(245, 245, 240, 0.4), 0 4px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* "Mandar no grupo" abriu o card: a placa sai e fica só o container do dialog. */
+.bloco-placa-trofeu.so-dialogo {
+  margin: 0;
+}
+
+.placa-mes-cab {
+  flex-wrap: wrap;
+}

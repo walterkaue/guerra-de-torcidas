@@ -1,0 +1,100 @@
+/* Bloco das divisões da Home (docs/visual.md 4.6, Grafismo de TV). A altura reservada e o [hidden] ficam em inicio.css. */
+.bloco-divisoes {
+  gap: 2px;
+  padding: 6px var(--e4);
+  border-left: 6px solid var(--c1, var(--cal));
+  box-sizing: border-box;
+}
+
+.bd-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--e2);
+}
+
+.bd-topo .selo-pre {
+  position: relative;
+}
+
+/* O bloco inteiro abre a aba Temporada; o botão é o alvo de teclado e leitor de tela. */
+.bd-abrir {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  min-width: 0;
+  min-height: 0; /* o alvo de toque é o bloco inteiro (~90 px), não só o botão */
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.bd-pos {
+  flex: none;
+  display: inline-flex;
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 36px;
+  line-height: 1;
+}
+
+/* O "º" da Anton parece um zero elevado: vai na Barlow Condensed, no alto, como em .numero (blocos.css). */
+.bd-pos i {
+  align-self: flex-start;
+  margin-left: 1px;
+  font-family: var(--fonte-rotulo);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.55em;
+}
+
+.bd-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.bd-texto b {
+  font-size: 15px;
+}
+
+.bd-texto span {
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.bd-proj {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.bd-proj .seta {
+  flex: none;
+  font-size: 15px;
+}
+
+.bd-erro {
+  margin: auto 0;
+  color: var(--texto-suave);
+  font-size: 15px;
+}
+
+/* O selo da pré-temporada fica no formato curto ("Pré"): o título da série não quebra por causa dele. */
+.bd-topo .selo-pre .sp-cheio {
+  display: none;
+}
+
+.bd-topo .selo-pre .sp-curto {
+  display: inline;
+}

@@ -358,7 +358,14 @@ export interface Anuncio {
 }
 
 /**
- * O que a placa da Home anuncia: troféus do time do coração (menos o rebaixamento) que este aparelho ainda não
+ * Troféus do mês que saem pela placa de fim do mês (`telas/placaTemporada.ts`), não pela "Troféu novo": uma placa só
+ * por mês (docs/jogo.md seção 5, "Telas do resto das divisões"). A "Troféu novo" fica com a semana e a vitrine.
+ */
+export const TROFEUS_DA_PLACA_DO_MES: ReadonlySet<TipoDeTrofeu> = new Set(['campeao_temporada', 'campeao_serie_b', 'acesso', 'campeao_estreia']);
+
+/**
+ * O que a placa da Home anuncia: troféus do time do coração (menos o rebaixamento e os do mês, que têm a placa de
+ * fim do mês) que este aparelho ainda não
  * anunciou e que foram ganhos há até `DIAS_DE_NOVIDADE` dias. Mostra o mais novo; os outros entram no "+N" e são
  * marcados juntos, para a placa aparecer uma vez só por troféu.
  */
@@ -370,7 +377,7 @@ export function trofeuParaAnunciar(
   const vistos = new Set(o.anunciados);
   const limite = somarDias(o.hoje, -DIAS_DE_NOVIDADE);
   const novos = trofeus
-    .filter((t) => t.time_id === o.meuTime && t.trofeu !== 'rebaixamento')
+    .filter((t) => t.time_id === o.meuTime && t.trofeu !== 'rebaixamento' && !TROFEUS_DA_PLACA_DO_MES.has(t.trofeu))
     .filter((t) => !vistos.has(chaveDoTrofeu(t)))
     .filter((t) => ganhoEm(t) >= limite && ganhoEm(t) <= o.hoje)
     .sort(maisNovo);

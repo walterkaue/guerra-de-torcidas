@@ -13,6 +13,7 @@ import type { PontosDoJogo } from './crava';
 import type { ItemDaMedalha } from './medalhaTextos';
 import type { Vestimenta } from './vestiario';
 import type { NumeroDaFicha, TipoDeTrofeu, Trofeu } from './galeria';
+import { emblemaDoDestino, temFesta, type DestinoDoMes, type FatiaDaTabela } from './temporada';
 
 // ---------- estilos e formatos ----------
 
@@ -81,9 +82,10 @@ export interface Quadradinho<C extends string> {
  * Cada tipo de card diz quais quadradinhos de ligar e desligar existem e com que nome, na ordem da tela.
  * `jogo-x1`: Lances (com os Pênaltis) e Prova, que geram link de X1. `jogo`: Time do Dia e Crava, sem X1.
  * `medalha`: o card de "Mandar a medalha". `trofeu`: o card de "Mandar no grupo" da Galeria de Troféus (no troféu de
- * mês, o quadradinho dos números se chama "Números do mês": `quadradinhosDoCard`).
+ * mês, o quadradinho dos números se chama "Números do mês": `quadradinhosDoCard`). `temporada`: o card de fim de
+ * temporada ("Mandar no grupo" da placa de fim do mês e botão "Card do mês"); o "placar" é a tabela final.
  */
-export type TipoDeCard = 'jogo-x1' | 'jogo' | 'medalha' | 'trofeu';
+export type TipoDeCard = 'jogo-x1' | 'jogo' | 'medalha' | 'trofeu' | 'temporada';
 
 const FRASE: Quadradinho<'frase'> = { chave: 'frase', nome: 'Frase do\nnarrador', icone: 'balao' };
 const APELIDO: Quadradinho<'apelido'> = { chave: 'apelido', nome: 'Meu\napelido', icone: 'pessoa' };
@@ -94,6 +96,7 @@ export const TIPOS_DE_CARD: Record<TipoDeCard, readonly Quadradinho<Chave>[]> = 
   jogo: [FRASE, APELIDO, NIVEL, { chave: 'placar', nome: 'Placar em\nemoji', icone: 'sorriso' }, { chave: 'link', nome: 'Link do\njogo', icone: 'corrente' }],
   medalha: [FRASE, APELIDO, NIVEL, { chave: 'placar', nome: 'Medalha\nem emoji', icone: 'trofeu' }, { chave: 'link', nome: 'Link do\nlance', icone: 'corrente' }],
   trofeu: [FRASE, APELIDO, NIVEL, { chave: 'placar', nome: 'Números da\nsemana', icone: 'grafico' }, { chave: 'link', nome: 'Link do\njogo', icone: 'corrente' }],
+  temporada: [FRASE, APELIDO, NIVEL, { chave: 'placar', nome: 'Tabela\nfinal', icone: 'grafico' }, { chave: 'link', nome: 'Link do\njogo', icone: 'corrente' }],
 };
 
 /** Os quadradinhos de ligar de um card: os do tipo, com "Números do mês" no lugar de "Números da semana" no troféu de mês. */
@@ -228,6 +231,25 @@ export type ConteudoDoTelao =
       numeros: readonly NumeroDaFicha[];
       /** A pessoa somou na semana do troféu do próprio time (só então a linha "tava na arquibancada" entra). */
       somou: boolean;
+    }
+  | {
+      jogo: 'temporada';
+      destino: DestinoDoMes;
+      /** O selo inclinado: "SUBIU!", "CAMPEÃO". */
+      selo: string;
+      /** "Série B". */
+      serie: string;
+      /** Posição final do meu time na série. */
+      posicao: number;
+      /** O pedaço da tabela final em volta do meu time. */
+      fatia: FatiaDaTabela;
+      meuTime: string;
+      /** Os 3 números: posição final, pontos e vitórias de semana. */
+      numeros: readonly NumeroDaFicha[];
+      /** Mês de pré-temporada: o card diz "Teste das divisões" e não tem troféu. */
+      teste: boolean;
+      /** A pessoa somou no mês (só então a linha "tava na arquibancada" entra). */
+      somou: boolean;
     };
 
 /** Tudo o que o card pode mostrar; quem chama (cada jogo, a medalha) monta. Nada aqui tem nome de pessoa. */
@@ -283,6 +305,24 @@ export interface PlanoDoPoster {
   medalha: Medalha | null;
   /** No card do troféu, o troféu desenhado e o nome dele no lugar dos pontos ("pro Time" vira "Time · Série A"). */
   trofeu: { tipo: TipoDeTrofeu; nome: string } | null;
+  /** No card do fim de temporada, o selo do destino (seta) no lugar da medalha; o destino em Anton no lugar dos pontos. */
+  selo: { emblema: 'sobe' | 'desce' | 'fica'; destino: DestinoDoMes } | null;
+}
+
+/** O fim de temporada do card: o que o Telão e o Placar seco desenham. */
+export interface PlanoDaTemporada {
+  destino: DestinoDoMes;
+  selo: string;
+  emblema: 'sobe' | 'desce' | 'fica';
+  /** Papel picado: só em campeão, campeão da B, subiu, "vai pra Série A" e Campeão da estreia. */
+  festa: boolean;
+  /** "Teste das divisões" (pré-temporada). */
+  teste: boolean;
+  meuTime: string;
+  /** Telão: a tabela final (nula com "Tabela final" desligado). */
+  fatia: FatiaDaTabela | null;
+  /** Telão: sempre; Placar seco: só com "Tabela final" ligado. */
+  numeros: readonly NumeroDaFicha[];
 }
 
 /** O troféu do card: o que o Telão e o Placar seco desenham. Os números só vêm com "Números da semana" ligado. */
@@ -323,6 +363,8 @@ export interface PlanoDoCard {
   busto: Vestimenta | null;
   /** Só no card do troféu. */
   trofeu: PlanoDoTrofeu | null;
+  /** Só no card do fim de temporada. */
+  temporada: PlanoDaTemporada | null;
   /** Só no estilo Pôster. */
   poster: PlanoDoPoster | null;
 }
@@ -376,19 +418,32 @@ export function planoDoCard(d: DadosDoCard, o: OpcoesDoPlano): PlanoDoCard {
   const k = d.conteudo;
   const trofeu: PlanoDoTrofeu | null =
     k.jogo === 'trofeu' ? { tipo: k.trofeu.trofeu, nome: k.nome, serie: k.serie, periodo: k.periodo, numeros: liga('placar') ? k.numeros : [] } : null;
-  // Troféu: a linha de quem ("tava na arquibancada") sai nos três estilos, com ou sem apelido; sem soma, d.quem é nulo.
-  const quem = !d.quem ? null : telao || trofeu ? (comApelido ? d.quem.comApelido : d.quem.semApelido) : comApelido ? d.quem.comApelido : null;
+  const temporada: PlanoDaTemporada | null =
+    k.jogo === 'temporada'
+      ? {
+          destino: k.destino,
+          selo: k.selo,
+          emblema: emblemaDoDestino(k.destino),
+          festa: temFesta(k.destino),
+          teste: k.teste,
+          meuTime: k.meuTime,
+          fatia: telao && liga('placar') ? k.fatia : null,
+          numeros: telao || liga('placar') ? k.numeros : [],
+        }
+      : null;
+  // Troféu e fim de temporada: a linha de quem ("tava na arquibancada") sai nos três estilos, com ou sem apelido; sem soma, d.quem é nulo.
+  const quem = !d.quem ? null : telao || trofeu || temporada ? (comApelido ? d.quem.comApelido : d.quem.semApelido) : comApelido ? d.quem.comApelido : null;
   return {
     estilo,
     formato: o.formato,
     largura: l,
     altura: a,
-    topo: `GUERRA DE TORCIDAS · ${d.jogo.toUpperCase()}`,
+    topo: `GUERRA DE TORCIDAS · ${d.jogo.toUpperCase()}${temporada?.teste && !telao ? ` · ${TESTE_DAS_DIVISOES}` : ''}`,
     destaque: d.destaque,
     time: d.time.nome,
     quem,
     telaoComPlacar: telao && liga('placar'),
-    lance: telao ? null : d.lance || null,
+    lance: telao ? null : lanceDoFim(d, temporada),
     placarEmoji: !telao && liga('placar') && d.placarEmoji ? d.placarEmoji : null,
     frase: liga('frase') && frase ? frase : null,
     nivel: liga('nivel') && d.nivel ? `CARREIRA · ${d.nivel.toUpperCase()}` : null,
@@ -397,8 +452,20 @@ export function planoDoCard(d: DadosDoCard, o: OpcoesDoPlano): PlanoDoCard {
     avisoFixo: d.avisoFixo ?? null,
     busto: !poster && boneco && o.comBoneco ? boneco.vestimenta : null,
     trofeu,
+    temporada,
     poster,
   };
+}
+
+export const TESTE_DAS_DIVISOES = 'TESTE DAS DIVISÕES';
+
+/**
+ * O que foi jogado, no Placar seco. No fim de temporada, "O Cruzeiro terminou em 2º na Série B · 61 pts · 2 vitórias de
+ * semana"; com os 3 números na linha de baixo, fica só a primeira parte (para não repetir).
+ */
+function lanceDoFim(d: DadosDoCard, t: PlanoDaTemporada | null): string | null {
+  if (!t || !t.numeros.length) return d.lance || null;
+  return d.lance.split(' · ')[0] || null;
 }
 
 function planoDoPoster(d: DadosDoCard, o: OpcoesDoPlano, b: BonecoDoCard, comApelido: boolean): PlanoDoPoster {
@@ -406,7 +473,13 @@ function planoDoPoster(d: DadosDoCard, o: OpcoesDoPlano, b: BonecoDoCard, comApe
   const apelido = comApelido && o.apelido?.trim() ? o.apelido.trim() : null;
   const k = d.conteudo;
   // Troféu: "GALERIA DE TROFÉUS · SEMANA DE 02/11 A 08/11/2026" na faixa; na placa, o nome do troféu e "Time · Série A".
-  const faixa = k.jogo === 'trofeu' ? faixaDoPoster(d.jogo, k.periodo.toLocaleUpperCase('pt-BR')) : faixaDoPoster(d.jogo, d.lance);
+  // Fim de temporada: "FIM DE DEZEMBRO · 2º NA SÉRIE B" (pré-temporada: "… · TESTE DAS DIVISÕES · …").
+  const faixa =
+    k.jogo === 'trofeu'
+      ? faixaDoPoster(d.jogo, k.periodo.toLocaleUpperCase('pt-BR'))
+      : k.jogo === 'temporada'
+        ? [d.jogo, k.teste ? TESTE_DAS_DIVISOES : '', `${k.posicao}º na ${k.serie}`].filter(Boolean).join(' · ').toLocaleUpperCase('pt-BR')
+        : faixaDoPoster(d.jogo, d.lance);
   return {
     vestimenta,
     enquadramento: o.formato === 'stories' ? 'corpo' : 'joelho',
@@ -414,9 +487,10 @@ function planoDoPoster(d: DadosDoCard, o: OpcoesDoPlano, b: BonecoDoCard, comApe
     faixa,
     apelido,
     pontos: d.destaque,
-    proTime: k.jogo === 'trofeu' ? [d.time.nome, k.serie].filter(Boolean).join(' · ') : proTime(d.time),
+    proTime: k.jogo === 'trofeu' || k.jogo === 'temporada' ? [d.time.nome, k.serie].filter(Boolean).join(' · ') : proTime(d.time),
     medalha: k.jogo === 'medalha' ? k.medalha : null,
     trofeu: k.jogo === 'trofeu' ? { tipo: k.trofeu.trofeu, nome: k.nome } : null,
+    selo: k.jogo === 'temporada' ? { emblema: emblemaDoDestino(k.destino), destino: k.destino } : null,
   };
 }
 
