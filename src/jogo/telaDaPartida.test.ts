@@ -31,6 +31,11 @@ describe('celularDeitado', () => {
     expect(celularDeitado({ largura: 900, altura: 480, toque: false })).toBe(false);
   });
 
+  it('o limite é a altura de 500 px', () => {
+    expect(celularDeitado({ largura: 900, altura: 500, toque: true })).toBe(true);
+    expect(celularDeitado({ largura: 900, altura: 501, toque: true })).toBe(false);
+  });
+
   it('quadrado não é deitado', () => {
     expect(celularDeitado({ largura: 400, altura: 400, toque: true })).toBe(false);
   });
@@ -42,6 +47,11 @@ describe('larguraDoCampo', () => {
     expect(larguraDoCampo(360, 678)).toBe(360);
     // O mais baixo dos comuns: 360 × 640 com o placar (canvas ~578).
     expect(larguraDoCampo(360, 578)).toBe(360);
+    // Celular em pé baixo com a barra do navegador: iPhone SE no Safari (~375 × 488) e 360 × 640 no Chrome (~360 × 500).
+    expect(larguraDoCampo(375, 488)).toBe(375);
+    expect(larguraDoCampo(360, 500)).toBe(360);
+    // A coluna antiga de 520 px também fica como era.
+    expect(larguraDoCampo(520, 708)).toBe(520);
   });
 
   it('na tela grande cresce pela altura, não pela largura', () => {

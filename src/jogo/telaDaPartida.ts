@@ -25,9 +25,15 @@ export const celularDeitado = (j: Janela): boolean => j.toque && j.largura > j.a
  */
 export const PROPORCAO_DO_CAMPO = 0.68;
 
-/** A largura (px) em que a cena monta o campo: a do canvas, limitada pela altura. */
+/** Largura da coluna antiga da partida: até ela (todo celular em pé), o campo é a largura do canvas, como sempre. */
+export const COLUNA_DA_PARTIDA = 520;
+
+/**
+ * A largura (px) em que a cena monta o campo: a do canvas, limitada pela altura só quando o canvas passa da coluna
+ * antiga. Assim o celular em pé baixo (iPhone SE com a barra do Safari, canvas de ~375 × 488) não encolhe.
+ */
 export const larguraDoCampo = (largura: number, altura: number): number =>
-  Math.max(0, Math.min(largura, altura * PROPORCAO_DO_CAMPO));
+  largura <= COLUNA_DA_PARTIDA ? Math.max(0, largura) : Math.max(0, Math.min(largura, altura * PROPORCAO_DO_CAMPO));
 
 /**
  * Teto de pixels do canvas (largura × altura × dpr²) por nível de qualidade. No celular em pé ele nunca chega a

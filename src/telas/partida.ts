@@ -970,17 +970,17 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
 
   function quadro(agora: number): void {
     if (acabou) return;
+    // Celular deitado: o aviso cobre o campo e o tempo está parado; não precisa redesenhar (nem o replay).
+    if (tempo.pausado()) {
+      raf = proximoQuadro(quadro, relogio);
+      return;
+    }
     if (fase.tipo === 'replay' && cena3d) {
       cena3d.c.save();
       const falta = fase.replay.quadro(agora);
       cena3d.c.restore();
       if (falta <= ANTES_DO_CORTE) tarja.sair();
       if (falta <= 0) fimDoReplay();
-      raf = proximoQuadro(quadro, relogio);
-      return;
-    }
-    // Celular deitado: o aviso cobre o campo e o tempo está parado; não precisa redesenhar.
-    if (tempo.pausado()) {
       raf = proximoQuadro(quadro, relogio);
       return;
     }

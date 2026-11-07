@@ -396,7 +396,8 @@ body {
     position: absolute;
     top: 0;
     left: 50%;
-    z-index: 2;
+    /* Acima do canvas do replay dos pênaltis (.tela-replay, z-index 2), que agora começa no topo. */
+    z-index: 3;
     width: min(100%, 560px);
     transform: translateX(-50%);
     border-radius: 0 0 var(--raio) var(--raio);

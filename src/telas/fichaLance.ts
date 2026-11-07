@@ -126,14 +126,22 @@ export function abrirFicha(o: OpcoesDaFicha): () => void {
       if (mandando) return;
       mandando = true;
       btnMandar.disabled = true;
+      const copiar = async () => {
+        await navigator.clipboard.writeText(textoParaCopiar(texto, link));
+        avisar('Link copiado.');
+      };
       try {
-        if (navigator.share) await navigator.share({ text: texto, url: link });
-        else {
-          await navigator.clipboard.writeText(textoParaCopiar(texto, link));
-          avisar('Link copiado.');
-        }
-      } catch (e) {
-        if ((e as { name?: string })?.name !== 'AbortError') avisar('Não deu pra compartilhar agora.');
+        if (navigator.share) {
+          try {
+            await navigator.share({ text: texto, url: link });
+          } catch (e) {
+            // Cancelou: nada. Folha que existe mas falha (computador sem destino, permissão): copia o link.
+            if ((e as { name?: string })?.name === 'AbortError') return;
+            await copiar();
+          }
+        } else await copiar();
+      } catch {
+        avisar('Não deu pra compartilhar agora.');
       } finally {
         mandando = false;
         btnMandar.disabled = false;
