@@ -27,7 +27,7 @@ O upgrade dos pênaltis que travava a Casa fechou (Lances do Jogo no `main`), en
 2. **Jogos e gols:** valem os números que o clube divulga, mesmo com amistosos. O rodapé do Livro de Recordes traz o rótulo **"contagem do clube"**.
 3. **Títulos reivindicados** (Flamengo 1987, Palmeiras Copa Rio 1951): **na Casa do clube, vale o lado da torcida.** O título aparece na prateleira normal e conta no total daquele clube, com a nota neutra ("a CBF reconhece o Sport", "a FIFA não lista entre os campeões mundiais"). Em outras telas (Time do Dia, Brasileiros do `clubes-do-dia.csv`) continua valendo a lista oficial da entidade. No dado, a coluna `oficial = não` segue registrando o fato; a tela é que decide mostrar.
 4. **Competições sem id** (Copa Master da Conmebol, Recopa de 1968/69 do Santos, Copa dos Campeões, Mercosul, Rio-São Paulo): ficam de fora por enquanto e entram depois, com id próprio.
-5. **Erros das fontes oficiais** (Paranaense 2000 na FPF; Paraense 2000 na página do Remo): vale o fato, como no rascunho. O Kauê confere nas federações.
+5. **Erros das fontes oficiais** (Paranaense 2000 na FPF, confirmado pelo Kauê em 07/11/2026: Athletico campeão, Coritiba vice; Paraense 2000 na página do Remo): vale o fato, como no rascunho. O Kauê confere nas federações.
 6. **Mais domínios aceitos** em `DOMINIOS_ACEITOS` (`bemparana.com.br`, `umdoisesportes.com.br`, `band.com.br`): sim, se abrirem.
 7. **Canal de erro:** botão "Achou um erro? Conta pra gente" com link de e-mail para **contato@kauewalter.com.br**, sem pedir dado pessoal.
 

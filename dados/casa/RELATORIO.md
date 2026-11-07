@@ -39,9 +39,9 @@ Lacunas por falta de fonte aceita aberta:
 
 ## 2. Dúvidas e divergências para a revisão olhar primeiro
 
-Estaduais: **revistos em 07/11/2026** (seção 6). FPF-SP e FCF publicam a lista oficial e batem com o CSV; FGF mostra só de 2020 em diante; FERJ, FMF e FBF não publicam lista histórica. Só o Paranaense de 2000 segue com "conferir" (item 1).
+Estaduais: **revistos em 07/11/2026** (seção 6). FPF-SP e FCF publicam a lista oficial e batem com o CSV; FGF mostra só de 2020 em diante; FERJ, FMF e FBF não publicam lista histórica. Nenhum segue com "conferir"; o Paranaense de 2000 foi decidido em 07/11 (item 1).
 
-1. **Paranaense 2000 (conferido no lote 1; o Kauê confere na FPF):** a página da FPF lista 2000 como do Coritiba, mas a final de 17/07/2000 (Atlético 1 x 1 Coritiba, gol do título do Atlético) está contada pela Gazeta do Povo e pela Banda B. Fica com o Athletico (28 títulos); o Coritiba perde a linha (39). A página da FPF parece errada.
+1. **Paranaense 2000 (decidido pelo Kauê em 07/11/2026: Athletico campeão, Coritiba vice):** a página da FPF lista 2000 como do Coritiba, mas a final de 17/07/2000 (Atlético 1 x 1 Coritiba, gol do título do Atlético) está contada pela Gazeta do Povo e pela Banda B. Fica com o Athletico (28 títulos); o Coritiba perde a linha (39). A página da FPF parece errada.
 2. **Paraense 2000 do Remo (resolvido, conferir):** a página de títulos do clube lista 49 anos, mas O Liberal conta 48 títulos até 2025 e a Wikipédia (só apoio) dá 2000 ao Paysandu sobre o Castanhal. Linha removida (Remo com 48).
 3. **Atlético-MG, Brasileiro 1937 (resolvido no lote 1):** reconhecido pela CBF em 25/08/2023 (Itatiaia); o Jornal de Brasília mistura com a resolução de 2010. Bate com `clubes-do-dia.csv` (3 Brasileiros).
 4. **Bahia, Baiano 1998 (conferido no lote 1):** fora da lista de anos do clube, mas necessário para fechar os 52 títulos que o clube e a FBF contam; o Lance dá ao Bahia. Conferir na FBF.
@@ -91,7 +91,7 @@ Segunda sessão (`docs/casa.md`, seção 8), com o prompt de `dados/casa/confere
 **Estaduais de 2026:** Mineiro do Cruzeiro, Carioca do Flamengo, Baiano do Bahia (já na lista), Paulista do Palmeiras, Paranaense do Operário. Nenhum muda o lote além do Bahia.
 
 **Continua em dúvida (o Kauê confere)**
-- Paranaense 2000 (FPF dá ao Coritiba; imprensa dá ao Athletico) e a lista da FPF com 2002 repetido.
+- ~~Paranaense 2000~~: decidido em 07/11/2026, Athletico campeão e Coritiba vice. A lista da FPF com 2002 repetido segue anotada.
 - Baiano 1998 (fora da lista de anos do clube; Lance dá ao Bahia) e Baiano 1999 (Lance lista Bahia e Vitória). Lista da FBF não abriu.
 - Mineiros (FMF sem lista), Cariocas (FERJ sem lista; 1907, 1912 e 1935 com dois campeões na Trivela) e Paulista de 1990 do Bragantino (FPF-SP não abriu).
 - Série C 2007 do Bragantino: só Goal; lista da CBF não abriu.
@@ -125,7 +125,7 @@ Segunda sessão, só os títulos em `rascunho` (Palmeiras 14, Flamengo 12, Santo
 **Pendências resolvidas no mesmo dia, pelo navegador** (os sites recusam o acesso automático, mas abrem no navegador do app)
 - **Paulistas, FPF:** a lista oficial "Todos os campeões" da Série A1 (https://futebolpaulista.com.br/Clubes/TodosCampeoes.aspx) bate ano a ano com o CSV: Corinthians 31, Palmeiras 27 (os anos até 1940 como Palestra Itália), Santos 22 (1973 com a Portuguesa), São Paulo 22 e Bragantino 1 (1990). As 103 linhas ganharam a frase "Conferido na FPF em 07/11/2026", com a liga de cada ano (LPF, APEA ou FPF), e perderam o "conferir na FPF".
 - **Série D 2020 do Mirassol, CBF:** a tabela oficial (https://www.cbf.com.br/futebol-brasileiro/tabelas/campeonato-brasileiro/serie-d/2020) traz a fase final, com Floresta 0 x 1 Mirassol (30/01/2021) e Mirassol 1 x 0 Floresta (06/02/2021).
-- **1987, STF:** o processo é a Ação Rescisória 3032 (https://portal.stf.jus.br/processos/listarProcessos.asp?classe=AR&numeroProcesso=3032). O último andamento em 07/11/2026 é a manifestação da PGR de 18/02/2026. **Continua aberto:** rever a linha quando sair decisão.
+- **1987, STF:** o processo é a Ação Rescisória 3032 (https://portal.stf.jus.br/processos/listarProcessos.asp?classe=AR&numeroProcesso=3032). O último andamento em 07/11/2026 é a manifestação da PGR de 18/02/2026. **Decisão do Kauê (07/11/2026): segue o Sport como campeão por enquanto**, ou seja, `oficial = não` com a nota neutra; rever só quando o STF julgar.
 
 **Correção:** a primeira versão deste relatório dizia que 89 títulos já revisados (Corinthians, São Paulo, Santos e Palmeiras) ainda tinham como `fonte` a lista do Lance que saiu do ar. Não tinham: a `fonte` deles já era o site do clube (ou o UOL) desde 25/10, e a URL do Lance só aparecia no texto da `observacao`. Os anos dessas 89 linhas foram conferidos contra a lista do Terra e contra a da FPF, e a `observacao` diz isso.
 
@@ -145,4 +145,4 @@ Em todos os 386 estaduais desses estados, os anos do CSV batem com cada lista at
 - **Atlético e Cruzeiro, 1956:** título dividido (Trivela), já no CSV para os dois.
 - **Bahia, 1998:** fora da lista de anos do site do clube, mas Lance e Goal dão ao Bahia, e sem ele a conta não fecha nos 52 que o clube e a FBF contam.
 - **Gauchão 2026 (Grêmio)** e **Mineiro 2026 (Cruzeiro):** já estavam no CSV; agora têm a FGF e duas matérias, respectivamente.
-- **Fica:** Paranaense de 2000 (Athletico x lista da FPF do Paraná), decisão do Kauê de 21/10.
+- **Paranaense de 2000:** o Kauê confirmou em 07/11/2026, Athletico campeão e Coritiba vice. Com isso, nenhum estadual segue com "conferir".
