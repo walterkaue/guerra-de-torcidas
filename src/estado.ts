@@ -47,6 +47,8 @@ interface Prefs {
   card?: unknown;
   /** Troféus da Galeria que a placa da Home já anunciou neste aparelho (jogo/galeria.ts, chaveDoTrofeu). */
   trofeusAnunciados?: string[];
+  /** Último mês fechado cuja placa de fim do mês a Home já mostrou neste aparelho ("AAAA-MM-01"; telas/placaTemporada.ts). */
+  temporadaVista?: string;
 }
 
 function ler(): Prefs {

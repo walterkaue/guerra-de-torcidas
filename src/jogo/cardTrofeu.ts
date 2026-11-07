@@ -7,9 +7,9 @@ import { corDeTexto } from '../dados/times';
 import { horaBrasilia } from '../servidor/tempo';
 import { proporcaoDoTrofeu, svgDoTrofeu, svgParaImagem } from '../telas/trofeusDesenho';
 import { AMARELO, FONTE, GEO_QUADRADO, GEO_STORIES, PLACAR, ROTULO, adesivo, fundo, pilulaDoNivel, quebrarTexto, rodape, textoDoTopo, viga } from './card';
-import { separarOrdinal, type TipoDeTrofeu } from './galeria';
+import { separarOrdinal, type NumeroDaFicha, type TipoDeTrofeu } from './galeria';
 import { luzDoHorario } from './home';
-import type { DadosDoCard, PlanoDoCard, PlanoDoTrofeu } from './cardPersonalizado';
+import type { DadosDoCard, PlanoDoCard } from './cardPersonalizado';
 
 const L = 1080;
 
@@ -53,7 +53,7 @@ export function desenharImagemDoTrofeu(c: CanvasRenderingContext2D, im: ImagemDo
 // ---------- peças ----------
 
 /** Tamanho (até `tam`, nunca abaixo de `min`) em que o texto cabe em `largura`. */
-function caber(c: CanvasRenderingContext2D, fonte: (t: number) => string, texto: string, largura: number, tam: number, min: number): number {
+export function caber(c: CanvasRenderingContext2D, fonte: (t: number) => string, texto: string, largura: number, tam: number, min: number): number {
   c.font = fonte(tam);
   const l = c.measureText(texto).width;
   return l > largura ? Math.max(min, Math.floor((tam * largura) / l)) : tam;
@@ -75,7 +75,7 @@ function faixaAmarela(c: CanvasRenderingContext2D, texto: string, cx: number, cy
 }
 
 /** O nome do time numa faixa de placar: cor 1 cheia e uma faixa reta na cor 2 junto da borda esquerda. */
-function faixaDoTime(c: CanvasRenderingContext2D, d: DadosDoCard, cx: number, cy: number, w: number, h: number, tam: number): void {
+export function faixaDoTime(c: CanvasRenderingContext2D, d: DadosDoCard, cx: number, cy: number, w: number, h: number, tam: number): void {
   const [c1, c2] = d.time.cores;
   const x = cx - w / 2;
   const y = cy - h / 2;
@@ -107,7 +107,7 @@ function faixaDoTime(c: CanvasRenderingContext2D, d: DadosDoCard, cx: number, cy
 }
 
 /** Os números da ficha, lado a lado: valor em Anton amarelo e o rótulo embaixo. `yTopo` é o alto do bloco. */
-function numeros(c: CanvasRenderingContext2D, lista: PlanoDoTrofeu, cx: number, yTopo: number, w: number, tamV: number, tamR: number): void {
+export function numeros(c: CanvasRenderingContext2D, lista: { numeros: readonly NumeroDaFicha[] }, cx: number, yTopo: number, w: number, tamV: number, tamR: number): void {
   const col = w / lista.numeros.length;
   lista.numeros.forEach((n, i) => {
     const x = cx - w / 2 + col * (i + 0.5);
@@ -140,10 +140,10 @@ function numeros(c: CanvasRenderingContext2D, lista: PlanoDoTrofeu, cx: number, 
   });
 }
 
-const alturaDosNumeros = (tamV: number, tamR: number) => tamV * 0.9 + tamR * 1.6;
+export const alturaDosNumeros = (tamV: number, tamR: number) => tamV * 0.9 + tamR * 1.6;
 
 /** O painel escuro do telão, pendurado nos cabos da viga. */
-function moldura(c: CanvasRenderingContext2D, x: number, y: number, l: number, a: number, ceu: number, borda: number): void {
+export function moldura(c: CanvasRenderingContext2D, x: number, y: number, l: number, a: number, ceu: number, borda: number): void {
   c.fillStyle = '#1b1f24';
   for (const cabo of [x + 130, x + l - 130]) {
     c.fillRect(cabo - 8, ceu, 16, y - ceu + 8);
@@ -166,7 +166,7 @@ function moldura(c: CanvasRenderingContext2D, x: number, y: number, l: number, a
   c.fill();
 }
 
-interface ItemAbaixo {
+export interface ItemAbaixo {
   h: number;
   desenhar: (y: number) => void;
 }
@@ -194,7 +194,7 @@ function linhaDeQuem(c: CanvasRenderingContext2D, quem: string | null, busto: HT
 }
 
 /** O que vai embaixo do painel: a frase do narrador (adesivo) e a linha de quem (com o busto). */
-function itensAbaixo(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard, busto: HTMLCanvasElement | null, quadrado: boolean): ItemAbaixo[] {
+export function itensAbaixo(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard, busto: HTMLCanvasElement | null, quadrado: boolean): ItemAbaixo[] {
   const itens: ItemAbaixo[] = [];
   if (plano.frase) {
     const tam = quadrado ? 26 : 40;
@@ -214,7 +214,7 @@ function itensAbaixo(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDo
 }
 
 /** Distribui os itens centrados na faixa [de, ate], com `vao` entre eles. */
-function empilhar(itens: ItemAbaixo[], de: number, ate: number, vao: number): void {
+export function empilhar(itens: ItemAbaixo[], de: number, ate: number, vao: number): void {
   const total = itens.reduce((s, i) => s + i.h, 0) + vao * Math.max(0, itens.length - 1);
   let y = de + Math.max(0, (ate - de - total) / 2);
   for (const i of itens) {
@@ -223,7 +223,7 @@ function empilhar(itens: ItemAbaixo[], de: number, ate: number, vao: number): vo
   }
 }
 
-const alturaAbaixo = (itens: ItemAbaixo[], vao: number) => itens.reduce((s, i) => s + i.h, 0) + vao * Math.max(0, itens.length - 1);
+export const alturaAbaixo = (itens: ItemAbaixo[], vao: number) => itens.reduce((s, i) => s + i.h, 0) + vao * Math.max(0, itens.length - 1);
 
 // ---------- Telão ----------
 

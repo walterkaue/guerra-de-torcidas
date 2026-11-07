@@ -1,6 +1,7 @@
 # Banco do narrador — pênaltis, palpites, quiz, Time do Dia e Lances
 
-> Versão 1.9 · 06/11/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Versão 2.0 · 06/11/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Mudanças da 2.0: seção 16, **Divisões** (Home durante o mês, placa e card do fim do mês; decididas pelo Kauê em 06/11/2026).
 > Mudanças da 1.9: seção 15, **Galeria de Troféus** (uma frase na ficha de cada troféu; aprovadas pelo Kauê em 06/11/2026).
 > Mudanças da 1.8: três erros e fora na Prova: 3 frases comuns em `prova_errou` e situação nova `prova_ultima_vida` (aprovadas pelo Kauê em 01/11/2026).
 > Mudanças da 1.7: seção 13, **aviso de domingo** (push sem urgência); sai `dia_sequencia` do Time do Dia (sem sequência de dias, `jogo.md` seção 13).
@@ -742,3 +743,75 @@ Variáveis: `{o_time}`, `{do_time}`, `{pro_time}`. Até 75 caracteres com qualqu
 - Subiu! {o_time} carimbou o passaporte pra Série A.
 - Acesso na conta! No mês que vem, {o_time} tá na Série A.
 - Da Série B pra Série A: {o_time} fez a subida no braço.
+
+## 16. Divisões (Série A e Série B)
+
+Frases do bloco das divisões da Home (durante o mês) e da placa e do card do fim do mês (`docs/jogo.md`, seção 5, "Telas do resto das divisões"). Decididas pelo Kauê em 06/11/2026. Texto em `src/narrador/temporada.ts`, não neste banco: o `npm run frases` não lê esta seção. Passa pelo checklist da seção 1 e pelos três cuidados da seção 15 (sem urgência, nenhum adjetivo concorda com o time, até 75 caracteres depois da troca com qualquer time; teste em `src/jogo/temporadaDivisoes.test.ts`).
+
+Variáveis: `{o_time}`, `{do_time}`, `{pro_time}`, `{serie}` ("Série A", "Série B" ou "série única"), `{dif}` (distância para o 8º, "3 pontos"), `{mes}` (o mês seguinte, "janeiro") e `{o_rival}` (o clássico da tabela). Frase que pede variável que não veio fica de fora do sorteio (ex.: `{dif}` com empate em pontos).
+
+**Qual situação na Home:** 1º da série (ou da série única) é `temporada_lider`; 2º da Série B, e do 2º ao 10º na série única, `temporada_acesso`; 9º e 10º da Série A, `temporada_queda`; o resto, `temporada_meio`. Sem semana travada no mês, não há frase.
+
+**No fim do mês:** a frase sai do destino do time. A zoeira com o rival (`temporada_rival_caiu`) só entra quando o meu time ficou na série (fica na A ou na B) e o clássico da tabela caiu: em festa, a frase é da festa; na queda, nunca. O Campeão da estreia usa as frases da taça com estrela (seção 15). "Escapou!" só sai para quem terminou em 7º ou 8º da Série A (perto da zona); do 2º ao 6º, a outra frase de `temporada_fica_a` (revisão de 07/11/2026).
+
+### Na Home, durante o mês
+
+#### `temporada_lider`
+- {o_time} na ponta da {serie}. A tabela tá com cara de taça.
+- Líder! O resto da {serie} tá olhando de baixo.
+- Lá em cima e confortável. Por enquanto.
+
+#### `temporada_acesso`
+- {o_time} tá na zona de acesso. A Série A já tá de olho.
+- Por enquanto, sobe. Lugar bom esse.
+- Na zona de acesso. O elevador tá parado no andar certo.
+
+#### `temporada_queda`
+- {o_time} tá na zona. Zona de queda não é endereço fixo.
+- Na zona por {dif}. Uma semana boa resolve.
+- A tabela tá apertada lá embaixo. Dá pra sair.
+
+#### `temporada_meio`
+- {o_time} no meio da tabela. Nem festa, nem susto.
+- Meio de tabela: dá pra sonhar com o topo.
+
+### No fim do mês (placa e card)
+
+#### `temporada_campeao`
+- Taça da temporada {pro_time}! O mês tem dono.
+- Taça na estante! Pode pendurar a faixa no grupo.
+- A Série A do mês ficou com {o_time}. Ninguém segurou.
+
+#### `temporada_campeao_b`
+- Taça da Série B e malas prontas pra A!
+- Levou a B com sobra. A Série A que se prepare.
+
+#### `temporada_subiu`
+- Subiu! A Série B ficou pequena {pro_time}.
+- Acesso confirmado! {o_time} vai pra Série A.
+- Elevador pra cima! Próximo andar: Série A.
+
+#### `temporada_fica_a`
+- {o_time} fica na Série A. Missão cumprida.
+- Escapou! Série A de novo no mês que vem.
+
+#### `temporada_fica_b`
+- {o_time} fica na Série B. O acesso ficou pra próxima.
+- Mais um mês de Série B. De lá sobem dois.
+
+#### `temporada_caiu`
+- Caiu. Em {mes} é Série B, e de lá sobem dois.
+- Desceu um andar. A volta tá na tabela do mês que vem.
+- Caiu, mas os pontos {do_time} contam igual na B.
+
+#### `temporada_unica_a`
+- {o_time} começa {mes} na Série A!
+- Top 10! {o_time} vai pra Série A em {mes}.
+
+#### `temporada_unica_b`
+- {o_time} começa {mes} na Série B. De lá sobem dois.
+- Série B em {mes}. Lugar de quem quer subir.
+
+#### `temporada_rival_caiu` (meu time ficou na série e o rival, o clássico da tabela, caiu)
+- {o_rival} caiu pra Série B. A torcida {do_time} agradece.
+- {o_rival} desceu um andar. Print obrigatório.
