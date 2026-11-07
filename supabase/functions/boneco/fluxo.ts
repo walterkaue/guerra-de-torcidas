@@ -42,6 +42,8 @@ export interface RespostaBoneco {
   liberadas: string[];
   /** A próxima peça a liberar, para o bloco do Perfil; null quando todas já liberaram. */
   proxima: { id: string; condicao: string } | null;
+  /** O interruptor "Meu boneco em campo" do Perfil (docs/jogo.md 14.5, "Boneco em campo"); ligado por padrão. */
+  emCampo: boolean;
 }
 
 export interface RespostaSalvar extends RespostaBoneco {
@@ -58,6 +60,8 @@ interface MedalhaDoBanco {
 
 interface EstadoDoBanco {
   vestimenta: unknown;
+  /** null quando ainda não há boneco (o padrão é ligado). */
+  em_campo?: boolean | null;
   xp: number;
   aquecido: boolean;
   medalhas: MedalhaDoBanco[];
@@ -88,7 +92,13 @@ const ERROS: Record<string, [number, string]> = {
   sessao: [401, 'sessao'],
   sem_torcedor: [404, 'sem_torcedor'],
   limite: [429, 'limite'],
+  sem_boneco: [409, 'sem_boneco'],
 };
+
+/** O que boneco_em_campo devolve à função: o interruptor como ficou gravado. */
+export interface RespostaEmCampo {
+  emCampo: boolean;
+}
 
 async function chamar(s: Servicos, nome: string, args: Record<string, unknown>): Promise<Record<string, unknown>> {
   const { data, error } = await s.rpc(nome, args);
@@ -102,11 +112,16 @@ async function chamar(s: Servicos, nome: string, args: Record<string, unknown>):
   return r;
 }
 
-function resposta(vestimenta: unknown, estado: EstadoDoVestiario): RespostaBoneco {
+function resposta(vestimenta: unknown, estado: EstadoDoVestiario, emCampo: unknown): RespostaBoneco {
   const liberadas = pecasLiberadas(estado);
   const p = proximaPeca(estado);
   // Revalida também na leitura: o que está gravado já passou pela regra, mas nunca sai do servidor fora dela.
-  return { vestimenta: validar(vestimenta, liberadas), liberadas, proxima: p ? { id: p.peca.id, condicao: p.condicao } : null };
+  return {
+    vestimenta: validar(vestimenta, liberadas),
+    liberadas,
+    proxima: p ? { id: p.peca.id, condicao: p.condicao } : null,
+    emCampo: emCampo !== false,
+  };
 }
 
 /** A vestimenta da própria pessoa, o que ela tem liberado e a próxima peça. Conta sem boneco ganha o sorteado. */
@@ -118,7 +133,7 @@ export async function meuBoneco(s: Servicos, uid: string, sessao: string): Promi
     const criado = await chamar(s, 'boneco_criar', { ...args, p_vestimenta: sortearDoComeco(s.sortear) });
     guardada = criado.vestimenta;
   }
-  return resposta(guardada, estadoDoVestiario(banco));
+  return resposta(guardada, estadoDoVestiario(banco), banco.em_campo);
 }
 
 /**
@@ -129,9 +144,29 @@ export async function salvarBoneco(s: Servicos, uid: string, sessao: string, cor
   const pedida = corpo.vestimenta;
   if (!conferirFormato(pedida)) throw new ErroBoneco(400, 'formato');
   const args = { p_torcedor: uid, p_sessao: sessao };
-  const estado = estadoDoVestiario((await chamar(s, 'boneco_estado', args)) as unknown as EstadoDoBanco);
+  const banco = (await chamar(s, 'boneco_estado', args)) as unknown as EstadoDoBanco;
+  const estado = estadoDoVestiario(banco);
   const final = validar(pedida, pecasLiberadas(estado));
   const trocou = (Object.keys(final) as (keyof Vestimenta)[]).some((k) => final[k] !== pedida[k]);
   const gravado = await chamar(s, 'boneco_gravar', { ...args, p_vestimenta: final });
-  return { ...resposta(gravado.vestimenta, estado), trocou };
+  return { ...resposta(gravado.vestimenta, estado, banco.em_campo), trocou };
+}
+
+/**
+ * Liga ou desliga o boneco em campo (o interruptor do Perfil). Vale também para o X1: com ele desligado, quem recebe
+ * um desafio vê batedores sorteados e nenhum busto. Conta no mesmo limite por hora do salvar. Conta sem boneco
+ * ganha o sorteado antes (como na primeira leitura), para o interruptor ter onde ficar.
+ */
+export async function ligarEmCampo(s: Servicos, uid: string, sessao: string, corpo: Record<string, unknown>): Promise<RespostaEmCampo> {
+  if (typeof corpo.ligado !== 'boolean') throw new ErroBoneco(400, 'formato');
+  const args = { p_torcedor: uid, p_sessao: sessao, p_ligado: corpo.ligado };
+  let r: Record<string, unknown>;
+  try {
+    r = await chamar(s, 'boneco_em_campo', args);
+  } catch (e) {
+    if (!(e instanceof ErroBoneco && e.codigo === 'sem_boneco')) throw e;
+    await chamar(s, 'boneco_criar', { p_torcedor: uid, p_sessao: sessao, p_vestimenta: sortearDoComeco(s.sortear) });
+    r = await chamar(s, 'boneco_em_campo', args);
+  }
+  return { emCampo: r.em_campo === true };
 }

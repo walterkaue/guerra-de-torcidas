@@ -50,6 +50,14 @@ describe('ver meus dados', () => {
     expect(linhasDosMeusDados(dados, nome).some((l) => l.rotulo === 'Boneco do avatar')).toBe(false);
   });
 
+  it('mostra o interruptor do boneco em campo, só com boneco e servidor novo', () => {
+    const linha = (d: Partial<MeusDados>) => linhasDosMeusDados({ ...dados, ...d }, nome).find((l) => l.rotulo === 'Boneco em campo')?.valor;
+    expect(linha({ boneco: true, boneco_em_campo: true })).toBe('ligado: quem recebe um desafio seu vê o boneco');
+    expect(linha({ boneco: true, boneco_em_campo: false })).toBe('desligado');
+    expect(linha({ boneco: true })).toBeUndefined(); // servidor antigo
+    expect(linha({ boneco: false, boneco_em_campo: null })).toBeUndefined();
+  });
+
   it('em linguagem simples', () => {
     expect(valor('Time')).toBe('Bahia');
     expect(valor('Faixa de idade')).toBe('16 ou 17');
