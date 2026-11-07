@@ -149,6 +149,30 @@
   grid-template-columns: 1fr;
 }
 
+.ficha-lance .lance-acoes.com-mandar {
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.ficha-lance .lance-acoes.com-mandar .botao-linha {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  font-size: 14px;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.ficha-mandar-aviso {
+  margin: 8px 0 0;
+  min-height: 1.3em;
+  text-align: center;
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
 .ficha-lance .lance-acoes .botao,
 .ficha-lance .lance-acoes .botao-linha {
   min-height: 52px;
