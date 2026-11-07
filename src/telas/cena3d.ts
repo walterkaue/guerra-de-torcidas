@@ -9,6 +9,7 @@ import { cameraAtrasDaBola, cameraDoReplay, type Camera, type Enquadramento, typ
 import { desenharBolaEm, desenharPontosEm, desenharRastroEm, facil, limitar01, suave } from './cena';
 import { vibrar } from './toque';
 import { qualidade } from './qualidade';
+import { PIXELS_MAX, dprDoCanvas, larguraDoCampo } from '../jogo/telaDaPartida';
 import { somTrave } from '../jogo/som';
 import { criarPapelPicado } from './papelPicado';
 import { corDaTorcida, type Torcida } from './torcida';
@@ -49,6 +50,8 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
   const papel = criarPapelPicado([cores[0], cores[1], '#ffd23f']);
   let W = 0;
   let H = 0;
+  /** Largura em que o campo é montado: a do canvas, limitada pela altura em tela grande (J09). */
+  let L = 0;
   let dpr = 1;
   let bola = { x: 0, z: 11 };
   let enquadramento: Enquadramento | null = null;
@@ -69,10 +72,13 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
 
   // ---------- montagem ----------
   function medir(): void {
-    dpr = Math.min(window.devicePixelRatio || 1, qualidade().dprMax);
     const r = canvas.getBoundingClientRect();
     W = r.width;
     H = r.height;
+    L = larguraDoCampo(W, H);
+    // Canvas grande (computador, tablet) tem teto de pixels por nível; no celular em pé ele não pesa.
+    const q = qualidade();
+    dpr = dprDoCanvas(W, H, window.devicePixelRatio || 1, q.dprMax, PIXELS_MAX[q.nivel]);
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -111,7 +117,7 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
    */
   function montar(): void {
     if (!W || !enquadramento) return;
-    cam = replay ? cameraDoReplay(bola, replay.fimX, W, H) : cameraAtrasDaBola(bola, enquadramento, W, H);
+    cam = replay ? cameraDoReplay(bola, replay.fimX, W, H, L) : cameraAtrasDaBola(bola, enquadramento, W, H, L);
     const [off, o] = novaCamada();
     arquibancada(o, !!replay);
     gramado(o, replay ? FIM_DO_CAMPO + 4 : 90);
@@ -570,8 +576,8 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
 
   const desenharRastro = (rastro: readonly { x: number; y: number }[]) => desenharRastroEm(c, rastro);
   function desenharPontos(agora: number): void {
-    papel.desenhar(c, agora, Math.max(8, W * 0.025));
-    efeitos.pontos = desenharPontosEm(c, efeitos.pontos, agora, Math.max(28, W * 0.09));
+    papel.desenhar(c, agora, Math.max(8, L * 0.025));
+    efeitos.pontos = desenharPontosEm(c, efeitos.pontos, agora, Math.max(28, L * 0.09));
   }
 
   return {

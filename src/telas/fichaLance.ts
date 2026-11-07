@@ -6,6 +6,7 @@
 
 import '../estilos/trofeus.css';
 import { esc } from '../app';
+import { textoParaCopiar } from '../jogo/mandarLance';
 import { ehItemPenaltis, previaDoProximoGol, trilhaDoItem } from '../jogo/lancesTextos';
 import { barra, trilha } from './blocos';
 import { icone } from './icones';
@@ -37,6 +38,8 @@ export interface OpcoesDaFicha {
   aoFavoritar(favorito: boolean): void;
   /** Tela única: o botão "Jogar" (e só ele). Sem isso, a ficha antiga com Treinar e Pôr na partida. */
   aoJogar?(): void;
+  /** Tela única: o botão "Mandar esse lance" (folha de compartilhar ou, sem ela, copia). Só aparece junto com `aoJogar`. */
+  mandar?: { texto: string; link: string };
   aoTreinar?(): void;
   aoPor?(): void;
 }
@@ -76,13 +79,14 @@ export function abrirFicha(o: OpcoesDaFicha): () => void {
       <p class="ficha-texto">${esc(o.texto)}</p>
       ${o.situacao ? `<p class="lance-situacao">${esc(o.situacao)}</p>` : ''}
       <div class="ficha-medalhas" data-medalhas>${blocoDasMedalhas(o.medalhas instanceof Promise ? 'carregando' : o.medalhas, o.id)}</div>
-      <div class="lance-acoes${o.aoJogar ? ' so-jogar' : ''}">
+      <div class="lance-acoes${o.aoJogar ? (o.mandar ? ' com-mandar' : ' so-jogar') : ''}">
         ${
           o.aoJogar
-            ? '<button type="button" class="botao" data-jogar>Jogar</button>'
+            ? `${o.mandar ? `<button type="button" class="botao-linha" data-mandar>${icone('corrente')}<span>Mandar esse lance</span></button>` : ''}<button type="button" class="botao" data-jogar>Jogar</button>`
             : '<button type="button" class="botao-linha" data-treinar>Treinar</button><button type="button" class="botao" data-por>Pôr na partida</button>'
         }
       </div>
+      ${o.aoJogar && o.mandar ? '<p class="ficha-mandar-aviso" role="status" aria-live="polite" data-mandar-aviso></p>' : ''}
     </div>`;
   o.raiz.append(d);
 
@@ -107,6 +111,43 @@ export function abrirFicha(o: OpcoesDaFicha): () => void {
     fechar();
     o.aoJogar?.();
   });
+  const btnMandar = d.querySelector<HTMLButtonElement>('[data-mandar]');
+  if (btnMandar && o.mandar) {
+    const { texto, link } = o.mandar;
+    const aviso = d.querySelector<HTMLElement>('[data-mandar-aviso]')!;
+    let tAviso = 0;
+    const avisar = (t: string) => {
+      aviso.textContent = t;
+      clearTimeout(tAviso);
+      tAviso = window.setTimeout(() => (aviso.textContent = ''), 3500);
+    };
+    let mandando = false; // toque duplo não chama a folha de compartilhar duas vezes
+    btnMandar.addEventListener('click', async () => {
+      if (mandando) return;
+      mandando = true;
+      btnMandar.disabled = true;
+      const copiar = async () => {
+        await navigator.clipboard.writeText(textoParaCopiar(texto, link));
+        avisar('Link copiado.');
+      };
+      try {
+        if (navigator.share) {
+          try {
+            await navigator.share({ text: texto, url: link });
+          } catch (e) {
+            // Cancelou: nada. Folha que existe mas falha (computador sem destino, permissão): copia o link.
+            if ((e as { name?: string })?.name === 'AbortError') return;
+            await copiar();
+          }
+        } else await copiar();
+      } catch {
+        avisar('Não deu pra compartilhar agora.');
+      } finally {
+        mandando = false;
+        btnMandar.disabled = false;
+      }
+    });
+  }
   d.querySelector('[data-treinar]')?.addEventListener('click', () => {
     fechar();
     o.aoTreinar?.();

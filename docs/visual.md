@@ -1,6 +1,7 @@
 # Revisão gráfica — direção "Transmissão de domingo"
 
-> Versão 1.14 · 06/11/2026 · **Direção aprovada em 18/10/2026; rota "Grafismo de TV" em 03/11/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Versão 1.15 · 06/11/2026 · **Direção aprovada em 18/10/2026; rota "Grafismo de TV" em 03/11/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Mudanças da 1.15: partida em tela grande com o campo pela altura, aviso "Vire o celular pra jogar" e "Mandar esse lance" na ficha (seção 4.7; teto de pixels na 4.3).
 > Mudanças da 1.14: card do troféu da Galeria nos cards personalizáveis e flâmula com contorno claro (seção 3, "Card de compartilhamento").
 > Mudanças da 1.13: estilo Pôster e busto do boneco nos cards personalizáveis (seção 3, "Card de compartilhamento").
 > Mudanças da 1.12: "Grafismo de TV" (seção 4.6): placas, números em bloco, selo único da pré-temporada, abas de dois níveis e resultado padrão nos 5 jogos; Resultado (seção 3) e Perfil (3.1) seguem a 4.6.
@@ -179,6 +180,7 @@ Amostra aprovada em 26/10 (página "Qualidade Alta, Média e Leve"). Código em 
 - **Na mão:** ajuste "Gráficos" no Perfil, toque troca automático → Alta → Média → Leve.
 - Em dev, `?qualidade=alta|media|leve` força o nível; `/dev/qualidade.html` desenha a amostra dos três.
 - O que vier de efeito novo (partículas, impacto) declara em que nível aparece.
+- **Teto de pixels do canvas (06/11/2026, J09):** além da nitidez, cada nível tem um teto de largura × altura × nitidez² (Alta 4,2 milhões, Média 2,6, Leve 1,3; nunca abaixo de 0,75×). No celular em pé ele nunca chega a valer (390×784 em Alta dá 1,2 milhão): só segura o canvas grande do computador e do tablet. Conta em `jogo/telaDaPartida.ts` (`dprDoCanvas`).
 
 ## 4.4 Papel picado
 
@@ -214,6 +216,17 @@ Escolhida pelo Kauê depois da auditoria de 03/11 (`docs/jogo.md`, seção 14.2;
 - **Contraste:** texto pequeno com pelo menos 4,5:1; nada de opacidade baixa em texto.
 - **Resultado padrão (`telas/resultadoPadrao.ts`), nos 5 jogos e nesta ordem:** placar → pontos pro time → detalhe em placas (gols, defesas, degraus; escada da Prova, grade do Time do Dia, lista dos 3 lances) → frase do narrador → selos (novo recorde, posição na semana, medalha, "No ranking em 1 min", que vira "Subiu de 5º pra 3º" quando a tabela mexe) → Carreira em placa com o XP ganho e a barra → "Mandar no grupo" (verde) com Card, Stories, Emoji e Link embaixo → Início e "Mais uma" (amarelo) fixos no rodapé. O selo da pré-temporada fica na linha de cima, ao lado do "Na morte súbita".
 - **Movimento e vibração:** as molas e vibrações de sempre (seção 4). Entrou a vibração no fim da morte súbita (gol na vitória, erro na derrota).
+
+## 4.7 Partida em tela grande e celular deitado (06/11/2026)
+
+Decidido em 06/11/2026 (J09, J10 e J43, jornadas simuladas). Prints de antes e depois em `docs/auditoria/2026-11-06/lote-g2/`.
+
+- **Tela grande (J09):** no computador, no iPad (em pé e deitado) e no dobrável aberto (CSS `min-width: 700px` e `min-height: 600px`), a partida dos pênaltis e dos Lances sai da coluna de 520 px: o canvas vai até um quadrado da altura da tela (`max(520px, min(100vw, 100dvh))`). O campo cresce pela altura: acima de 520 px de largura, a cena monta o campo numa largura de até 0,68 da altura do canvas (`larguraDoCampo` em `jogo/telaDaPartida.ts`), e o que sobra dos lados é mais torcida e gramado. Em 1920×1080 o gol dos pênaltis passou de ~415 para ~590 px. O placar vira uma placa por cima do campo, no alto e no meio (até 560 px), como na TV, e fica por cima também do replay; a faixa de instrução e o grito já ficavam por cima. O par ou ímpar fica com até 496 px no meio. Home, Ranking, Galeria e os resultados continuam na coluna.
+  - **Mira:** o arraste é lido em proporção ao gol (pênaltis) e à boca do gol projetada (Lances), então continua certo em qualquer tamanho. A bola dos Lances segue 2,2× a real; a dos pênaltis segue 7,25% da largura do gol (a mesma conta de antes no celular).
+  - **Celular em pé não muda:** até 520 px de largura (a coluna antiga), o campo é a largura do canvas, como sempre; só acima disso a altura limita. Assim o celular baixo com a barra do navegador (iPhone SE no Safari) não encolhe.
+  - **Peso:** o canvas maior tem o teto de pixels da seção 4.3, então não pesa no aparelho fraco.
+- **Celular deitado (J10):** com toque (`pointer: coarse`), mais largo que alto e altura até 500 px, os pênaltis e os Lances cobrem a tela com "Vire o celular pra jogar" e "A partida espera você.", num fundo quase preto (`telas/vireOCelular.ts`). Um celular desenhado gira de deitado para em pé, com uma seta amarela; com movimento reduzido ele fica parado, em pé. Tablet e dobrável aberto deitados (altura acima de 500) e o computador nunca veem o aviso. Enquanto ele está na tela, o relógio da partida para (a janela da defesa, "A jogada" e as animações) e o toque não chega ao campo.
+- **"Mandar esse lance" (J43):** na ficha da tela única, ao lado do "Jogar". Padrão de dois botões do Grafismo de TV (4.6): o escuro (`.botao-linha`, com o ícone de corrente) à esquerda e "Jogar" amarelo à direita, metade e metade; em 360 px o rótulo quebra em duas linhas dentro do botão. "Link copiado." aparece numa linha pequena embaixo dos botões e some em 3,5 s.
 
 ## 5. Ajustes encontrados no código
 

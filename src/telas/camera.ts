@@ -59,33 +59,51 @@ const norm = (a: Ponto3): Ponto3 => {
  * Câmera atrás da bola (`bola` em metros no chão), na linha que vai do meio do gol até a bola, olhando
  * para um ponto entre a bola e o gol. `largura` e `altura` são o tamanho da tela em pixels.
  */
-export function cameraAtrasDaBola(bola: { x: number; z: number }, e: Enquadramento, largura: number, altura: number): Camera {
+export function cameraAtrasDaBola(
+  bola: { x: number; z: number },
+  e: Enquadramento,
+  largura: number,
+  altura: number,
+  larguraFocal = largura,
+): Camera {
   const d = Math.hypot(bola.x, bola.z) || 1;
   const ux = bola.x / d;
   const uz = bola.z / d;
   const pos = { x: bola.x + ux * e.atras, y: e.altura, z: bola.z + uz * e.atras };
   const alvo = { x: bola.x * (1 - e.olhar), y: e.alturaOlhar, z: bola.z * (1 - e.olhar) };
-  return cameraOlhando(pos, alvo, e.zoom, largura, altura, e.centroY);
+  return cameraOlhando(pos, alvo, e.zoom, largura, altura, e.centroY, larguraFocal);
 }
 
 /**
  * Câmera do replay de TV: atrás do gol, por trás da rede, um pouco alta, olhando para o campo entre a
  * bola e o gol. Puxa um pouco para o lado onde a bola entrou, como o cinegrafista de fundo.
  */
-export function cameraDoReplay(bola: { x: number; z: number }, fimX: number, largura: number, altura: number): Camera {
+export function cameraDoReplay(bola: { x: number; z: number }, fimX: number, largura: number, altura: number, larguraFocal = largura): Camera {
   // Alta (como a câmera da arquibancada atrás do gol) para o campo encher a tela em pé, sem céu vazio.
   const pos = { x: Math.max(-2.5, Math.min(2.5, fimX * 0.25 + bola.x * 0.1)), y: 7.5, z: -7.5 };
   // Mira entre o canto onde a bola entrou e a bola: os dois ficam no quadro.
   const alvo = { x: fimX * 0.5 + bola.x * 0.2, y: 0, z: bola.z * 0.4 };
-  return cameraOlhando(pos, alvo, 1.15, largura, altura, 0.6);
+  return cameraOlhando(pos, alvo, 1.15, largura, altura, 0.6, larguraFocal);
 }
 
-/** Câmera em `pos` olhando para `alvo`, com o zoom em larguras de tela e o centro na altura `centroY`. */
-export function cameraOlhando(pos: Ponto3, alvo: Ponto3, zoom: number, largura: number, altura: number, centroY: number): Camera {
+/**
+ * Câmera em `pos` olhando para `alvo`, com o zoom em larguras de tela e o centro na altura `centroY`. Em tela grande
+ * o zoom conta sobre `larguraFocal` (a largura do campo, limitada pela altura: jogo/telaDaPartida.ts), e o que
+ * sobra dos lados mostra mais campo e torcida.
+ */
+export function cameraOlhando(
+  pos: Ponto3,
+  alvo: Ponto3,
+  zoom: number,
+  largura: number,
+  altura: number,
+  centroY: number,
+  larguraFocal = largura,
+): Camera {
   const frente = norm(sub(alvo, pos));
   const direita = norm(cross(frente, { x: 0, y: 1, z: 0 }));
   const cima = cross(direita, frente);
-  const f = zoom * largura;
+  const f = zoom * larguraFocal;
   const cx = largura / 2;
   const cy = altura * centroY;
   return {

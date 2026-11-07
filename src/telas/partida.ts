@@ -82,6 +82,8 @@ import {
 import { abrirRegras } from './regras';
 import { icone } from './icones';
 import { aoMudarQualidade, medirQuadros, qualidade } from './qualidade';
+import { criarRelogioPausavel } from '../jogo/telaDaPartida';
+import { vigiarCelularDeitado } from './vireOCelular';
 
 type Fase =
   | { tipo: 'mirar'; inicio: number }
@@ -122,12 +124,12 @@ function diaEmBrasilia(): number {
 const parametros = new URLSearchParams(location.search);
 const usarTimer = import.meta.env.DEV && parametros.has('relogio');
 const escalaTempo = import.meta.env.DEV ? Math.max(1, Number(parametros.get('lento')) || 1) : 1;
-const relogio = () => performance.now() / escalaTempo;
+const relogioDoAparelho = () => performance.now() / escalaTempo;
 // ?penaltiFalso troca o servidor por um de mentira, lance a lance (src/dev/penaltiFalso.ts).
 const FALSO = import.meta.env.DEV && parametros.has('penaltiFalso');
 const servidor = (): Promise<Pick<typeof SERVIDOR, 'novaPartida' | 'lancePenalti' | 'fecharPartida'>> =>
   FALSO ? import('../dev/penaltiFalso') : Promise.resolve(SERVIDOR);
-const proximoQuadro = (fn: (t: number) => void): number =>
+const proximoQuadro = (fn: (t: number) => void, relogio: () => number): number =>
   usarTimer ? window.setTimeout(() => fn(relogio()), 16) : requestAnimationFrame(() => fn(relogio()));
 
 const DUR_CHUTE = 650;
@@ -208,6 +210,10 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     </main>
   `;
 
+  // Relógio da partida: para enquanto o aviso de virar o celular está na tela (J10). A janela da defesa e todas as
+  // animações correm nele, no aparelho; o servidor não mede tempo, então pontos e sementes não mudam.
+  const tempo = criarRelogioPausavel(relogioDoAparelho);
+  const relogio = tempo.agora;
   const canvas = root.querySelector<HTMLCanvasElement>('canvas')!;
   const torcidaDaPartida = pelaSelecao ? TORCIDA_SELECAO : undefined;
   const cena = criarCena(canvas, { cores: time.cores, torcida: torcidaDaPartida, relogio, reduzido });
@@ -964,13 +970,18 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
 
   function quadro(agora: number): void {
     if (acabou) return;
+    // Celular deitado: o aviso cobre o campo e o tempo está parado; não precisa redesenhar (nem o replay).
+    if (tempo.pausado()) {
+      raf = proximoQuadro(quadro, relogio);
+      return;
+    }
     if (fase.tipo === 'replay' && cena3d) {
       cena3d.c.save();
       const falta = fase.replay.quadro(agora);
       cena3d.c.restore();
       if (falta <= ANTES_DO_CORTE) tarja.sair();
       if (falta <= 0) fimDoReplay();
-      raf = proximoQuadro(quadro);
+      raf = proximoQuadro(quadro, relogio);
       return;
     }
     const inicioQuadro = performance.now();
@@ -1112,7 +1123,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       temposDeQuadro.push(trabalho);
       if (temposDeQuadro.length > 120) temposDeQuadro.shift();
     }
-    raf = proximoQuadro(quadro);
+    raf = proximoQuadro(quadro, relogio);
   }
 
   // Qualidade automática: mede os quadros e, se o nível mudar, refaz os canvas abertos.
@@ -1129,7 +1140,14 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   medir();
   atualizarHud();
   void preparar();
-  let raf = proximoQuadro(quadro);
+  let raf = proximoQuadro(quadro, relogio);
+  // Deitado: pausa (e solta o arraste que estava no meio); ao virar, segue de onde parou.
+  const pararDeVigiar = vigiarCelularDeitado(root.querySelector<HTMLElement>('main')!, (deitado) => {
+    if (deitado) {
+      tempo.pausar();
+      rastro = [];
+    } else tempo.retomar();
+  });
 
   const aoRedimensionar = () => medir();
   window.addEventListener('resize', aoRedimensionar);
@@ -1153,6 +1171,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   return () => {
     acabou = true;
     pararDeOuvirQualidade();
+    pararDeVigiar();
     if (usarTimer) clearTimeout(raf);
     else cancelAnimationFrame(raf);
     window.removeEventListener('resize', aoRedimensionar);

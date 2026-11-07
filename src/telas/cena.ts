@@ -6,6 +6,7 @@ import { coluna, linha, type GestoCobranca } from '../jogo/penaltis';
 import { GOLEIRO, desenharBoneco, maos, misturar, novaPose, poseGoleiroEsperando, type Boneco, type Pose } from './bonecos';
 import { vibrar } from './toque';
 import { qualidade } from './qualidade';
+import { PIXELS_MAX, dprDoCanvas, larguraDoCampo } from '../jogo/telaDaPartida';
 import { QUADROS_TORCIDA, desenharTorcedor, hash, lugaresDaTorcida, type Lugar, type Torcida } from './torcida';
 import { somTrave } from '../jogo/som';
 import { criarPapelPicado } from './papelPicado';
@@ -196,22 +197,27 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, torcida: daPartida
   const g = { gx: 0, gy: 0, gw: 0, gh: 0, chao: 0, bolaX: 0, bolaY: 0, raio: 0, fugaY: 0, escM: 0 };
 
   function medir(): void {
-    const dpr = Math.min(window.devicePixelRatio || 1, qualidade().dprMax);
     const ret = canvas.getBoundingClientRect();
     W = ret.width;
     H = ret.height;
+    // Canvas grande (computador, tablet) tem teto de pixels por nível; no celular em pé ele não pesa.
+    const q = qualidade();
+    const dpr = dprDoCanvas(W, H, window.devicePixelRatio || 1, q.dprMax, PIXELS_MAX[q.nivel]);
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // Gol maior e mais baixo que antes; a bola grande perto do dedo.
-    g.gw = Math.min(W * 0.8, 440);
+    // Gol maior e mais baixo que antes; a bola grande perto do dedo. Em tela grande o campo cresce pela altura
+    // (J09): a largura do campo é a do canvas até 0,68 da altura; no celular em pé, a do canvas, como sempre.
+    // O arraste é lido em proporção ao gol (lerArraste), então a mira não muda com o tamanho.
+    g.gw = larguraDoCampo(W, H) * 0.8;
     g.gh = g.gw * 0.4;
     g.gx = (W - g.gw) / 2;
     g.gy = Math.max(H * 0.17, 64);
     g.chao = g.gy + g.gh;
     g.bolaX = W / 2;
     g.bolaY = H * 0.82;
-    g.raio = Math.max(16, Math.min(30, W * 0.058));
+    // 7,25% do gol (era 5,8% da largura, com o gol em 80% dela: a mesma conta no celular).
+    g.raio = Math.max(16, g.gw * 0.0725);
     g.escM = g.gw / 7.32;
     // Ponto de fuga escolhido para a marca do pênalti (11 m) cair exatamente na bola.
     g.fugaY = g.chao - (g.bolaY - g.chao) / (fator(DIST_MARCA) - 1);

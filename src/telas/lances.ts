@@ -93,6 +93,8 @@ import { criarCena3d } from './cena3d';
 import { ANTES_DO_CORTE, criarReplay, montarTarjaDoReplay, type Replay } from './replay';
 import { icone, type NomeIcone } from './icones';
 import { aoMudarQualidade, medirQuadros, qualidade } from './qualidade';
+import { criarRelogioPausavel } from '../jogo/telaDaPartida';
+import { vigiarCelularDeitado } from './vireOCelular';
 import { DICAS } from '../jogo/dicas';
 import {
   bolaNaBarreira,
@@ -109,6 +111,7 @@ import { cardDoAlbum, criarMedalhasDoAlbum, favoritosDoAparelho, htmlFiltrosDoAl
 import { abrirFicha, blocoDasMedalhas, type NumerosDoLance } from './fichaLance';
 import { mostrarRumoDasMedalhas } from './rumoMedalhas';
 import { filtrarAlbum, trilhaDoItem, type FiltroAlbum } from '../jogo/lancesTextos';
+import { linkDoItem, textoDaDisputaParaMandar, textoDoLanceParaMandar } from '../jogo/mandarLance';
 
 // Em desenvolvimento, ?lancesFalsos troca o servidor por um de mentira (src/dev/lancesFalsos.ts).
 const FALSO = import.meta.env.DEV && new URLSearchParams(location.search).has('lancesFalsos');
@@ -195,7 +198,7 @@ function legenda(r: ResultadoLance): string {
 
 const ICONE: Record<ResultadoLance['desfecho'], NomeIcone> = { gol: 'bola', defesa: 'mao', barreira: 'barreira', trave: 'xis', fora: 'xis' };
 
-const relogio = () => performance.now();
+const relogioDoAparelho = () => performance.now();
 
 export function telaLances(root: HTMLElement, rota: Rota): () => void {
   const time: Time = timePorId(prefs.get().time) ?? TIMES[TIMES.length - 1];
@@ -592,6 +595,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         meta: `${metaDaDisputa(d)} · ${d.placar}`,
         situacao: chamadaDaDisputa(d),
         aoJogar: () => irPara({ tela: 'partida', disputa: d }),
+        mandar: { texto: textoDaDisputaParaMandar(d.titulo), link: linkDoItem(id) },
       });
       return;
     }
@@ -606,6 +610,10 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       meta: `${clube.nome} · ${l.data.slice(0, 4)} · ${faixaDoCard(l)}`,
       situacao: situacaoDoLance(l),
       aoJogar: () => jogarLance(l),
+      mandar: {
+        texto: textoDoLanceParaMandar({ titulo: l.titulo, clube: clube.nome, adversario: l.adversario, data: l.data }),
+        link: linkDoItem(id),
+      },
     });
   }
 
@@ -1079,6 +1087,10 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     const elSub = root.querySelector<HTMLElement>('.grito-sub')!;
     const elMudo = root.querySelector<HTMLButtonElement>('.mudo')!;
     const reduzido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Relógio da partida: para enquanto o aviso de virar o celular está na tela (J10). "A jogada" do cara a cara e
+    // as animações correm nele, no aparelho; o servidor não mede tempo, então pontos e sementes não mudam.
+    const tempo = criarRelogioPausavel(relogioDoAparelho);
+    const relogio = tempo.agora;
     const cena = criarCena3d(canvas, { cores: time.cores, relogio, reduzido });
     const tarja = montarTarjaDoReplay(root.querySelector<HTMLElement>('main')!);
     const { c } = cena;
@@ -1395,6 +1407,11 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
 
     function quadro(agora: number): void {
       if (acabou) return;
+      // Celular deitado: o aviso cobre o campo e o tempo está parado; não precisa redesenhar.
+      if (tempo.pausado()) {
+        raf = requestAnimationFrame(() => quadro(relogio()));
+        return;
+      }
       const inicioQuadro = performance.now();
       c.save();
       if (fase.tipo === 'replay') {
@@ -1616,9 +1633,17 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     const medidor = medirQuadros();
     const pararDeOuvirQualidade = aoMudarQualidade(() => cena.medir());
     let raf = requestAnimationFrame(() => quadro(relogio()));
+    // Deitado: pausa (e solta o arraste que estava no meio); ao virar, segue de onde parou.
+    const pararDeVigiar = vigiarCelularDeitado(root.querySelector<HTMLElement>('main')!, (deitado) => {
+      if (deitado) {
+        tempo.pausar();
+        rastro = [];
+      } else tempo.retomar();
+    });
     limparJogo = () => {
       acabou = true;
       pararDeOuvirQualidade();
+      pararDeVigiar();
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', aoRedimensionar);
     };

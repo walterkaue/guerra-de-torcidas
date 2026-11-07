@@ -384,6 +384,30 @@ body {
   -webkit-user-select: none;
 }
 
+/* Tela grande (computador, iPad, dobrável aberto; J09, 06/11/2026): a partida sai da coluna de 520 px e o campo
+   cresce pela altura (o canvas vai até um quadrado; a cena limita o campo a 0,68 da altura, jogo/telaDaPartida.ts).
+   O placar fica por cima do campo, no alto, como na TV; a faixa de instrução e o grito já ficam por cima.
+   O celular em pé e o deitado não entram aqui. */
+@media (min-width: 700px) and (min-height: 600px) {
+  .partida {
+    max-width: max(520px, min(100vw, 100dvh));
+  }
+  .partida > .hud {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    /* Acima do canvas do replay dos pênaltis (.tela-replay, z-index 2), que agora começa no topo. */
+    z-index: 3;
+    width: min(100%, 560px);
+    transform: translateX(-50%);
+    border-radius: 0 0 var(--raio) var(--raio);
+  }
+  .partida > .par-ou-impar {
+    max-width: 496px;
+    margin-inline: auto;
+  }
+}
+
 .hud {
   display: flex;
   align-items: center;
@@ -707,6 +731,60 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .botao, .voltar, .mudo, .barra-nav button, .cartao-time, .card-jogo, .alt, .ajuda-btn, .link-casa, .casa-home { transition: none; }
   .adesivo:not([hidden]) { animation: none; }
+}
+
+/* ---------- "Vire o celular pra jogar" (telas/vireOCelular.ts; J10, 06/11/2026) ---------- */
+/* Celular deitado: cobre a tela inteira (não só a coluna) por cima da partida, que fica parada. */
+.vire-o-celular {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e3);
+  padding: calc(var(--e5) + env(safe-area-inset-top)) var(--e5) calc(var(--e5) + env(safe-area-inset-bottom));
+  background: rgba(6, 20, 12, 0.98);
+  text-align: center;
+  touch-action: none;
+}
+.vire-o-celular[hidden] {
+  display: none;
+}
+.vire-celular {
+  width: 88px;
+  height: 88px;
+  color: var(--cal);
+}
+.vire-celular .vire-seta {
+  color: var(--amarelo);
+  stroke: var(--amarelo);
+}
+.vire-celular .vire-aparelho {
+  transform-box: view-box;
+  transform-origin: 40px 41px;
+  animation: vire-girar 2.4s var(--mola-firme, ease-in-out) infinite;
+}
+@keyframes vire-girar {
+  0%, 20% { transform: rotate(-90deg); }
+  55%, 85% { transform: rotate(0deg); }
+  100% { transform: rotate(-90deg); }
+}
+.vire-titulo {
+  font: 400 28px/1.1 var(--fonte-placar);
+  text-transform: uppercase;
+  color: var(--amarelo);
+}
+.vire-sub {
+  font-size: 15px;
+  color: var(--texto-suave);
+}
+/* Movimento reduzido: o celular fica parado, em pé, com a seta mostrando o giro. */
+@media (prefers-reduced-motion: reduce) {
+  .vire-celular .vire-aparelho {
+    animation: none;
+  }
 }
 
 /* ---------- replay de TV do gol (telas/replay.ts) ---------- */
