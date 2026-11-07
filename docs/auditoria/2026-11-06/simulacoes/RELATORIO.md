@@ -2,9 +2,19 @@
 
 O simulador (`scripts/simulacoes/`) põe oito personas fictícias para jogar em aparelhos, telas e navegadores diferentes (Chromium, WebKit e Firefox, pelo Playwright). Ele tira print de cada passo e confere sozinho cada tela: erros, layout, regras mensuráveis do `docs/jogo.md`, contraste e acessibilidade (axe), movimento reduzido, desempenho e teclado.
 
-Esta rodada rodou contra a `main` de 06/11 à noite, já com os PRs #138 a #144. Foram 16 sessões com dados falsos (8 personas, 13 aparelhos, cortes "depois" e "antes") e 2 sessões curtas no site no ar. O que as correções das jornadas (J01–J48, em [`JORNADAS.md`](JORNADAS.md)) já resolveram saiu da lista. Quando um achado repete ou completa um J…, a última coluna diz qual.
+Esta rodada rodou contra a `main` de 06/11 à noite, já com os PRs #138 a #144. Foram 16 sessões com dados falsos (8 personas, 13 aparelhos, cortes "depois" e "antes") e 2 sessões curtas no site no ar. O que as correções das jornadas (J01–J48, em [`JORNADAS.md`](JORNADAS.md)) já resolveram saiu da lista. Quando um achado repete ou completa um J…, o id aparece ao lado, no Top 10 e na última coluna da tabela.
 
-- **Nada chegou à produção.** Furos na guarda de rede: 0 nas 18 sessões. Nas rodadas com dados falsos, o pacote do jogo é montado com um Supabase que não existe, e toda requisição que não é do próprio pacote é abortada. No site no ar só passou GET: 203 arquivos do site e 4 leituras em `/rest/v1/` (`jogos` e `ranking_semana`). O que foi cortado: 2 `rpc` (`ver_desafio` e `galeria_trofeus`, ambos POST), 6 conexões do Realtime e 2 do Turnstile. Ninguém escolheu time nem jogou no ar.
+**Em correção:** J09, J10, J27, J29, J35, J37 e J43 estão sendo corrigidos agora em outras duas sessões. O que toca neles vai marcado **em correção** e não pede decisão aqui (ver [Já estavam nas jornadas](#já-estavam-nas-jornadas-e-continuam)).
+
+- **Nada chegou à produção.** Furos na guarda de rede: 0 nas 18 sessões. Nas rodadas com dados falsos, o pacote do jogo é montado com um Supabase que não existe, e toda requisição que não é do próprio pacote é abortada. Ninguém escolheu time nem jogou no ar.
+- **Rodada no site no ar: 10 requisições bloqueadas, 257 liberadas, todas GET.** Contado no registro de cada requisição (`redeDetalhe` de cada sessão), não no resumo:
+
+  | Sessão no ar | Liberadas (só GET) | Bloqueadas |
+  |---|---|---|
+  | Zé · Android 360×740 | 203 arquivos do site + 4 leituras em `/rest/v1/` (`jogos` e `ranking_semana`, 2 vezes cada) | 10: 2 POST em `/rest/v1/rpc/` (`ver_desafio` e `galeria_trofeus`), 6 WebSocket do Realtime, 2 GET do Turnstile |
+  | Duda · iPhone SE | 50 arquivos do site | 0 |
+
+  Nenhum POST, PATCH ou DELETE, nenhum `/auth/`, nenhum `/rpc/` e nenhum `/functions/` chegou à produção. Os 2 POST em `/rpc/` foram abortados antes de sair do navegador. Nenhuma chamada a `/auth/` ou `/functions/` chegou a ser tentada, porque ninguém escolheu time. A auditoria das respostas, separada da guarda, também não achou nada de fora da lista: nenhuma resposta veio de POST, de `/auth/`, de `/rpc/` ou de `/functions/`.
 - **Prints:** os 11 usados aqui estão em [`prints-simulador/`](prints-simulador/), em PNG comprimido. Os outros (cerca de 330) ficam em `prints/simulacoes/2026-11-06/`, fora do Git.
 - **A mesma tabela** está em [`achados.csv`](achados.csv).
 
@@ -35,10 +45,10 @@ Esta rodada rodou contra a `main` de 06/11 à noite, já com os PRs #138 a #144.
 **O que mais apareceu:** fonte grande. Com a fonte do sistema em 150% (Seu Antônio), o Ranking, os Lances, o Time do Dia e o Crava cortam ou sobrepõem texto (S02 a S05). O teste de 360 px com fonte normal não pega isso.
 
 **O que passou bem:**
-- girar o celular, dobrar e desdobrar o Fold no meio da partida: o campo continua na tela e o chute responde;
+- girar o celular, dobrar e desdobrar o Fold no meio da partida: o campo continua na tela e o chute responde (o encaixe do campo com o celular deitado é o J10, **em correção**);
 - toque duplo em "Jogar agora" começa uma partida só;
 - o vestiário pergunta "Sair sem salvar?" no botão e no voltar do celular;
-- o código de outro aparelho funciona nas 3 variações (recusado, "Qual time fica?" e pronto);
+- o código de outro aparelho funciona nas 3 variações (recusado, "Qual time fica?" e pronto); os nomes parecidos dos dois botões são o J37, **em correção**;
 - a Carreira cabe inteira no Perfil a 390×844;
 - com movimento reduzido, o papel picado, o pulinho e o replay do resultado ficam parados;
 - nenhuma palavra proibida, nenhuma urgência e nenhuma oferta 18+ para a Duda;
@@ -48,15 +58,15 @@ Esta rodada rodou contra a `main` de 06/11 à noite, já com os PRs #138 a #144.
 ## Top 10
 
 1. **S06 · Botões atrás da barra de baixo.** Quando a tela rola até um botão, ele pode parar sob a barra fixa. No Zé, o toque em "Card" caiu na barra e o card não abriu.
-2. **S02 · Abas com fonte 150%.** No Ranking, "TEMPORADA" e "CIDADES" se sobrepõem e "CONQUISTAS" sai da tela. Nos Lances, "PÊNALTIS" fica coberta. A página rola para o lado.
+2. **S02 · Abas com fonte 150% (resto do J15).** No Ranking, "TEMPORADA" e "CIDADES" se sobrepõem e "CONQUISTAS" sai da tela. Nos Lances, "PÊNALTIS" fica coberta. A página rola para o lado.
 3. **S01 · Leitor de tela.** As linhas do Ranking e da Galeria leem "Abrir a Casa do X" em vez do que aparece.
-4. **S08 · Voltar com a ficha aberta.** O voltar do navegador ou do Android sai da tela em vez de fechar a ficha do lance.
+4. **S08 · Voltar com a ficha aberta (novo; a ficha também muda no J43, em correção).** O voltar do navegador ou do Android sai da tela em vez de fechar a ficha do lance.
 5. **S05 · Crava com fonte 150%.** O aviso fixo ocupa 3 linhas no topo e cobre a data e o "Certeza ×2" ao rolar.
-6. **S04 · Time do Dia com fonte 150%.** As pistas vazam ou cortam ("1910↑", "nterio").
+6. **S04 · Time do Dia com fonte 150% (complementa o J12).** As pistas vazam ou cortam ("1910↑", "nterio").
 7. **S03 · Ranking com fonte 150%.** Os nomes saem encurtados e o número de torcedores some.
 8. **S07 · Fim da Home.** Com fonte 130% a 360 px, "Termos e privacidade" fica sob a barra mesmo no fim da página.
-9. **S10 · Dois amarelos.** No resultado da 1ª partida, "Revanche" e "Escolher a cidade" são os dois amarelos.
-10. **S11 · Código do aviso de queda.** Tem 11 px e contraste 4,27:1. Veio com a correção do J03.
+9. **S10 · Dois amarelos (novo; o destino do "Escolher a cidade" é o J29, em correção).** No resultado da 1ª partida, "Revanche" e "Escolher a cidade" são os dois amarelos.
+10. **S11 · Código do aviso de queda (efeito do J03).** Tem 11 px e contraste 4,27:1. Veio com a correção do J03.
 
 ## Achados
 
@@ -71,9 +81,9 @@ Os endereços valem para `npm run dev` (ou para o pacote do simulador). Fonte gr
 | S05 | Seu Antônio | Galaxy S21 384×854 · fonte 150% | Crava a rodada | O aviso fixo "Aqui é só resenha…" ocupa 3 linhas grudado no topo e, ao rolar, cobre a data e o "Certeza ×2" do jogo de cima. As bolinhas de forma (V, D, E) cortam na direita. | atrapalha | layout | [S05](prints-simulador/S05-crava-aviso-fixo.png) | `/?homeFalsa&corte=depois → Palpites, fonte 150%` | Decisão de produto: aviso fixo mais baixo com fonte grande (uma linha, ou fixo só no topo da lista). Forma com bolinhas menores ou só as 3 últimas. | novo |
 | S06 | Zé, Camila, Bia | Android 360×740 (fonte 130%), iPhone 15 430×932, Redmi 393×873 | Home e resultado | Quando a tela rola até um botão (rolagem automática, voltar para a tela, foco do teclado), ele pode parar atrás da barra fixa de baixo: "Jogar agora" do Zé, cards dos Lances e da Prova da Camila, e a fileira Card · Stories · Emoji · Link do resultado sob a barra Início · Revanche. No Zé, o toque em "Card" caiu na barra e o card não abriu. | atrapalha | layout | [S06](prints-simulador/S06-card-sob-a-barra.png) | `/?homeFalsa&penaltiFalso&d=abcdefgh&corte=antes → jogar o X1 → resultado (360×740, fonte 130%)` | html { scroll-padding-bottom: altura da barra + safe-area } e o mesmo para a barra do resultado (WCAG 2.4.11). | novo |
 | S07 | Zé | Android 360×740 · fonte 130% | Home (fim da página) | Rolando até o fim, o link "Termos e privacidade" continua embaixo da barra de navegação: não dá para tocar nele. | atrapalha | layout | — | `/?homeFalsa&penaltiFalso&lancesFalsos&cenario=lances&corte=depois, rolar até o fim` | Espaço no fim da página = altura real da barra (medida com a fonte grande) + safe-area. | novo |
-| S08 | Rafa (vale para todo Android) | PC 1920×1080 Firefox e notebook 1366×768 Opera GX | Ficha do lance | Com a ficha de um lance aberta, o voltar do navegador (ou do celular) não fecha a ficha: sai da tela para a página anterior. | atrapalha | acessibilidade | — | `/?homeFalsa&lancesFalsos&penaltiFalso&provaFalsa&corte=depois&cenario=lances → Lances → abrir uma ficha → voltar` | Empurrar o histórico ao abrir fichas e folhas, como o vestiário já faz (src/telas/vestiario/voltar.ts). | novo |
+| S08 | Rafa (vale para todo Android) | PC 1920×1080 Firefox e notebook 1366×768 Opera GX | Ficha do lance | Com a ficha de um lance aberta, o voltar do navegador (ou do celular) não fecha a ficha: sai da tela para a página anterior. | atrapalha | acessibilidade | — | `/?homeFalsa&lancesFalsos&penaltiFalso&provaFalsa&corte=depois&cenario=lances → Lances → abrir uma ficha → voltar` | Empurrar o histórico ao abrir fichas e folhas, como o vestiário já faz (src/telas/vestiario/voltar.ts). | novo. A mesma ficha muda no J43 (**em correção**, card do lance para os Stories), mas o voltar não faz parte dele: avisar quem corrige o J43 para não mexerem no mesmo arquivo ao mesmo tempo. |
 | S09 | Bia | Redmi Note 393×873 · Chromium (escuro, economia de dados) | Seu card | Dois toques rápidos em "Salvar imagem" baixam dois arquivos. O "Compartilhar" já tem trava; o "Salvar" não. | detalhe | erro | [S09](prints-simulador/S09-toque-duplo-salvar.png) | `/?homeFalsa&cardFalso&estilo=poster&formato=stories&corte=depois → 2 toques em Salvar imagem` | A mesma trava do Compartilhar (botão desligado até terminar). | resto do J32 |
-| S10 | Zé, Bia, Léo, Seu Antônio | Vários | Resultado da 1ª partida (convite da cidade) | Dois botões amarelos na mesma tela: "Revanche" (ou "Jogar de novo", "Mais uma") na barra de baixo e "Escolher a cidade" no convite "Defende sua cidade também?". | detalhe | regra do jogo.md | [S10](prints-simulador/S10-dois-amarelos.png) | `/?homeFalsa&penaltiFalso&d=abcdefgh&corte=depois → jogar → resultado` | "Escolher a cidade" no estilo claro, como os botões da placa do troféu. | novo |
+| S10 | Zé, Bia, Léo, Seu Antônio | Vários | Resultado da 1ª partida (convite da cidade) | Dois botões amarelos na mesma tela: "Revanche" (ou "Jogar de novo", "Mais uma") na barra de baixo e "Escolher a cidade" no convite "Defende sua cidade também?". | detalhe | regra do jogo.md | [S10](prints-simulador/S10-dois-amarelos.png) | `/?homeFalsa&penaltiFalso&d=abcdefgh&corte=depois → jogar → resultado` | "Escolher a cidade" no estilo claro, como os botões da placa do troféu. | novo. O J29 (**em correção**) trata para onde o "Escolher a cidade" leva; a cor do botão não faz parte dele. |
 | S11 | Bia | Redmi Note 393×873 | Lances: aviso de conexão caída | A linha "código: tempo_esgotado" tem 11 px e contraste 4,27:1. A regra pede 12 px no mínimo e 4,5:1 para texto pequeno. Veio com a correção do J03. | detalhe | acessibilidade | [S11](prints-simulador/S11-codigo-11px.png) | `/?homeFalsa&lancesFalsos&cenario=lances&caiNoLance=2&corte=depois → falta → 2º chute` | 12 px e um tom mais claro sobre o vermelho. | efeito do J03 |
 | S12 | Léo | Galaxy Z Fold dobrado 344×882 | Placar da partida (Lances da Seleção) | As siglas do placar ("SELEÇÃO", "ITÁLIA") têm 10 px. | detalhe | layout | [S12](prints-simulador/S12-siglas-10px.png) | `/?homeFalsa&lancesFalsos&corte=depois → Lances → Seleção → Jogar (344 px)` | Mínimo de 12 px, com sigla mais curta se precisar. | novo |
 | S13 | Zé | Android 360×740 · fonte 130% | Placar da disputa | "JUNIOR BARRANQUILLA" ainda sai encurtado com reticências no placar da partida com fonte grande. | detalhe | layout | — | `/?homeFalsa&penaltiFalso&d=abcdefgh&corte=depois, fonte 130%` | Mesma solução de duas linhas do placar do adversário, também na sigla. | resto do J25 |
@@ -88,7 +98,14 @@ Os endereços valem para `npm run dev` (ou para o pacote do simulador). Fonte gr
 
 ### Já estavam nas jornadas e continuam
 
-- **J09:** em tela grande (PC, notebook, iPad, Fold aberto), o jogo continua numa coluna de cerca de 480 px no meio.
+Todos **em correção** em outras duas sessões. Nada aqui pede decisão; fica só o que o simulador viu, para quem estiver corrigindo.
+
+- **J09 (em correção):** em tela grande (PC, notebook, iPad, Fold aberto), o jogo continua numa coluna de cerca de 480 px no meio.
+- **J10 (em correção):** com o celular deitado, a Bia cobrou 2 pênaltis e o chute respondeu. O simulador não mede se a bola e o batedor ficam em cima do gol, então não confirma nem desmente o J10.
+- **J27 e J35 (em correção):** a Galeria e os Termos travaram no WebKit do Windows (ver os limites, item 1). No Chromium, a Galeria só aparece no S01 (o que o leitor de tela lê nas linhas), que não é o J27; a página dos Termos não teve achado (o S07 é o link no fim da Home).
+- **J29 (em correção):** o S10 fica no mesmo convite da cidade, mas trata só da cor do botão.
+- **J37 (em correção):** o código de outro aparelho funcionou nas 3 variações; os nomes dos botões não são medidos pelo simulador.
+- **J43 (em correção):** o S08 fica na mesma ficha do lance, mas trata só do voltar.
 
 ### Corrigidos pelos PRs #138 a #144 e confirmados nesta rodada
 
@@ -189,7 +206,7 @@ O simulador roda os motores do Playwright no Windows. O WebKit daqui não é o S
 
 **13. O que o WebKit do simulador não abriu (iPhone e iPad).** No Safari:
 - jogue 10 partidas de Lances e uma 11ª: ela vira treino e diz isso antes de começar?
-- abra a Galeria, a Casa do seu time e os Termos e role até o fim: nada trava nem fica em branco?
+- abra a Galeria, a Casa do seu time e os Termos e role até o fim: nada trava nem fica em branco? (A Galeria e os Termos mudam com o J27 e o J35, **em correção**: faça este depois que eles entrarem.)
 - em Termos, "Ver meus dados" mostra os seus dados. Em "Apagar meus dados", toque em Voltar: **não confirme**.
 
 **14. Fonte grande nas telas de S02 a S05.** No Android com a fonte no máximo, abra o Ranking, os Lances, o Time do Dia e o Crava e confira se o que a tabela descreve aparece igual.
