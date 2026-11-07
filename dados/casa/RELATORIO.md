@@ -122,8 +122,9 @@ Segunda sessão, só os títulos em `rascunho` (Palmeiras 14, Flamengo 12, Santo
 
 **Brasileiro de 1987 (Flamengo):** fica `oficial = não`, com a nota neutra ("a CBF reconhece o Sport"), e conta na Casa do Flamengo (decisão de 21/10). O Jornal de Brasília dá "Sport/Flamengo" e diz que, por decisão do STF, o Sport é o campeão oficial. A Tribuna de Minas (19/02/2026) diz que, depois da decisão do STF de 2017, a CBF passou a declarar só o Sport; a Trivela (dez/2023) ainda dizia que a CBF tratava os dois como campeões. Em 18/02/2026 a PGR deu parecer no STF pelo título dividido, e a ação rescisória do Flamengo segue sem julgamento (nada novo achado até 07/11/2026). **Rever a linha se o STF julgar.**
 
-**Continua em dúvida (o Kauê confere)**
-- Paulistas: a FPF não abriu (certificado inválido em `fpf.org.br`, 403 em `futebolpaulista.com.br`); as linhas ficam com "conferir na FPF".
-- Série D 2020 do Mirassol: lista da CBF não conferida (Terra e site do clube concordam).
+**Pendências resolvidas no mesmo dia, pelo navegador** (os sites recusam o acesso automático, mas abrem no navegador do app)
+- **Paulistas, FPF:** a lista oficial "Todos os campeões" da Série A1 (https://futebolpaulista.com.br/Clubes/TodosCampeoes.aspx) bate ano a ano com o CSV: Corinthians 31, Palmeiras 27 (os anos até 1940 como Palestra Itália), Santos 22 (1973 com a Portuguesa), São Paulo 22 e Bragantino 1 (1990). As 103 linhas ganharam a frase "Conferido na FPF em 07/11/2026", com a liga de cada ano (LPF, APEA ou FPF), e perderam o "conferir na FPF".
+- **Série D 2020 do Mirassol, CBF:** a tabela oficial (https://www.cbf.com.br/futebol-brasileiro/tabelas/campeonato-brasileiro/serie-d/2020) traz a fase final, com Floresta 0 x 1 Mirassol (30/01/2021) e Mirassol 1 x 0 Floresta (06/02/2021).
+- **1987, STF:** o processo é a Ação Rescisória 3032 (https://portal.stf.jus.br/processos/listarProcessos.asp?classe=AR&numeroProcesso=3032). O último andamento em 07/11/2026 é a manifestação da PGR de 18/02/2026. **Continua aberto:** rever a linha quando sair decisão.
 
-**Fora do escopo, para outra rodada:** a mesma lista do Lance que saiu do ar ainda é a `fonte` de 89 títulos já revisados (Corinthians 31, São Paulo 22, Santos 21, Palmeiras 15). A lista do Terra traz os anos dos quatro clubes; a troca é mecânica, mas pede conferir ano por ano.
+**Correção:** a primeira versão deste relatório dizia que 89 títulos já revisados (Corinthians, São Paulo, Santos e Palmeiras) ainda tinham como `fonte` a lista do Lance que saiu do ar. Não tinham: a `fonte` deles já era o site do clube (ou o UOL) desde 25/10, e a URL do Lance só aparecia no texto da `observacao`. Os anos dessas 89 linhas foram conferidos contra a lista do Terra e contra a da FPF, e a `observacao` diz isso.
