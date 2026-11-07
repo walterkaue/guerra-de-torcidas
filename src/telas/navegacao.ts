@@ -1,6 +1,7 @@
 // Barra de navegação do rodapé: Jogar, Palpites, Ranking e Perfil.
 
 import { irPara } from '../app';
+import { medirBarraDeBaixo } from './alturaBarra';
 import { icone, type NomeIcone } from './icones';
 
 type Aba = 'jogar' | 'palpites' | 'ranking' | 'perfil';
@@ -24,6 +25,7 @@ export function barraNavegacao(ativa: Aba): string {
 }
 
 export function ligarBarraNavegacao(root: HTMLElement): void {
+  medirBarraDeBaixo(root.querySelector<HTMLElement>('.barra-nav'));
   root.querySelectorAll<HTMLButtonElement>('.barra-nav [data-aba]').forEach((b) =>
     b.addEventListener('click', () => {
       if (b.classList.contains('ativa')) return;
