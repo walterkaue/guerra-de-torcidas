@@ -217,6 +217,8 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   let refazerListaUnica: (() => void) | null = null;
   let fichaDaRotaAberta = false;
   let telaViva = true;
+  /** Quem chamou o X1 recebido (o `boneco` e o time do resumo), para o busto no placar do resultado. */
+  let quemChamouX1: { boneco: unknown; timeId: string } | null = null;
   let escolhidos: Lance[] = [];
   let filtroClube = LANCES.some((l) => l.clube === time.id) ? time.id : 'todos';
   let limparJogo: (() => void) | null = null;
@@ -795,6 +797,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       hub();
       return;
     }
+    quemChamouX1 = { boneco: resumo.boneco ?? null, timeId: resumo.time_id };
     jogo([lance, lance, lance], false, { x1: codigo, alvoX1: { apelido: resumo.apelido, pontos: resumo.pontos } });
   }
 
@@ -851,9 +854,9 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           const p = placarDoX1(pontos, cmp);
           return placa(
             `<div class="duelo-desafio">
-              <div><span>Você</span><strong>${p.voce}</strong></div>
+              <div><span data-nome-duelo="voce">Você</span><strong>${p.voce}</strong></div>
               <em>x</em>
-              <div><span>${esc(p.nomeDoOutro)}</span><strong>${p.outro}</strong></div>
+              <div><span data-nome-duelo="outro">${esc(p.nomeDoOutro)}</span><strong>${p.outro}</strong></div>
               <p class="adesivo">${esc(fraseX1 ?? '')}</p>
             </div>`,
             { titulo: 'X1', filete: true },
@@ -914,6 +917,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       mandarCard: true,
       maisUma: 'Jogar de novo',
     });
+    if (cmp) void import('./bustosDoDuelo').then((m) => m.bustosDoDuelo(root, quemChamouX1?.boneco, quemChamouX1?.timeId));
     contar(root.querySelector<HTMLElement>('[data-contador]'), pontos);
     root.querySelector('[data-acao="album"]')!.addEventListener('click', hub);
 

@@ -45,7 +45,8 @@ import {
 } from '../servidor/api';
 import { comMotivo, preencherAviso } from '../servidor/motivo';
 import { sincronizarTorcedor } from '../servidor/torcedor';
-import { bonecoDaPessoaEmCampo } from './bonecoEmCampoCena';
+import { vestimentaDeCampo } from './bonecoEmCampo';
+import { bonecoDaPessoaEmCampo, bonecoDeQuemChamouEmCampo } from './bonecoEmCampoCena';
 import { criarCena, facil, limitar01, suave } from './cena';
 import { criarCena3d, type Cena3d } from './cena3d';
 import { ENQUADRAMENTOS } from './camera';
@@ -269,7 +270,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   // Uniforme 1 ou 2 também é sorteado; o adversário troca se as camisetas ficarem parecidas.
   // Se a pessoa montou um boneco e deixou "Meu boneco em campo" ligado, ele bate as cobranças dela no lugar dos 5
   // sorteados (a morte súbita também); o goleiro dela e todo o lado da máquina continuam sorteados. Só visual.
-  const uniformePreferido: 0 | 1 = Math.random() < 0.5 ? 0 : 1;
+  // Em dev, ?uniforme=1 ou 2 força o uniforme (para conferir os dois nos prints).
+  const uniformeDeDev = import.meta.env.DEV ? parametros.get('uniforme') : null;
+  const uniformePreferido: 0 | 1 = uniformeDeDev === '1' ? 0 : uniformeDeDev === '2' ? 1 : Math.random() < 0.5 ? 0 : 1;
   const sortearBatedores = () => Array.from({ length: COBRANCAS }, sortearAparencia);
   const elenco = { jogador: sortearBatedores(), goleiroJogador: sortearAparencia(), maquina: sortearBatedores(), goleiroMaquina: sortearAparencia() };
   let batedoresJogador: Boneco[] = [];
@@ -278,6 +281,11 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   let batedoresMaquina: Boneco[] = [];
   let goleiroMaquina!: Boneco;
   let coresVestidas: readonly [string, string] | null = null;
+  // X1 recebido (docs/jogo.md 14.5, "Boneco em campo"): o boneco de quem chamou bate as cobranças dele, nas cores do
+  // time dele. Vem do resumo do desafio (`ver_desafio`), buscado ao mesmo tempo que a nova-partida: nunca atrasa o apito.
+  // Se chegar depois, a troca só acontece entre cobranças (trocarBonecoSeChegou), nunca no meio de uma. Só visual.
+  let bonecoDeQuemChamou: unknown = null;
+  let bonecoNovo = false;
   /** Veste todo mundo para enfrentar a máquina (null) ou o time de quem desafiou. */
   function vestir(coresAdversario: readonly [string, string] | null): void {
     coresVestidas = coresAdversario;
@@ -285,12 +293,30 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     const meuBoneco = bonecoDaPessoaEmCampo(u.jogador);
     batedoresJogador = meuBoneco ? Array.from({ length: COBRANCAS }, () => meuBoneco) : elenco.jogador.map((a) => criarBoneco(a, u.jogador, false));
     goleiroJogador = criarBoneco(elenco.goleiroJogador, u.goleiroJogador, true);
-    batedoresMaquina = elenco.maquina.map((a) => criarBoneco(a, u.adversario, false));
+    const coresDele = desafio ? timePorId(desafio.timeId)?.cores : undefined;
+    const doChamou = coresDele ? bonecoDeQuemChamouEmCampo(vestimentaDeCampo(bonecoDeQuemChamou), u.adversario, [coresDele[0], coresDele[1]]) : null;
+    if (desafio) bonecoNovo = false;
+    batedoresMaquina = doChamou ? Array.from({ length: COBRANCAS }, () => doChamou) : elenco.maquina.map((a) => criarBoneco(a, u.adversario, false));
     goleiroMaquina = criarBoneco(elenco.goleiroMaquina, u.goleiroAdversario, true);
   }
   vestir(disputa ? coresDoAdversario(disputa.adversario) : null);
   // Em dev, o jogo falso (que traz o boneco falso) chega depois da primeira vestida: veste de novo.
   if (import.meta.env.DEV && FALSO) void servidor().then(() => vestir(coresVestidas));
+  /** O boneco de quem chamou chegou depois do apito: veste de novo, mas só no começo de uma cobrança ou defesa. */
+  function trocarBonecoSeChegou(): void {
+    if (bonecoNovo && desafio) vestir(coresVestidas);
+  }
+  /** Busca o boneco de quem chamou (sem boneco, interruptor desligado ou sem rede: o batedor segue sorteado). */
+  async function buscarBonecoDeQuemChamou(codigo: string): Promise<void> {
+    try {
+      const r = FALSO ? await (await import('../dev/penaltiFalso')).verDesafio(codigo) : await SERVIDOR.verDesafio(codigo);
+      if (!r?.boneco) return;
+      bonecoDeQuemChamou = r.boneco;
+      bonecoNovo = true;
+    } catch {
+      // sem o boneco: batedores sorteados, como sempre
+    }
+  }
   /** O batedor da cobrança (ou da defesa) i. */
   const batedor = (lista: Boneco[], i: number) => lista[Math.max(0, i) % lista.length];
 
@@ -374,6 +400,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   }
 
   function comecarCobranca(): void {
+    trocarBonecoSeChegou();
     fase = { tipo: 'mirar', inicio: relogio() };
     rastro = [];
     dicas.novoLance();
@@ -404,6 +431,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   }
 
   function comecarDefesa(): void {
+    trocarBonecoSeChegou();
     dicas.novoLance();
     const dica =
       emLanceALance() && dicaDoServidor !== null
@@ -494,7 +522,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     if (r.desfecho === 'gol') comemorar(telaX(r.x), telaY(r.y), r.pontos, true);
     else if (r.desfecho === 'trave') cena.baterNaTrave(telaX(r.x), telaY(r.y));
     somTorcida(r.desfecho === 'gol' ? 'festa' : 'uuuh');
-    const golaco = r.desfecho === 'gol' && (r.angulo || r.cavadinha || r.raspouTrave);
+    // Em dev, ?replayFalso dispara o replay em qualquer gol (para conferir o batedor de frente nos prints).
+    const golaco = r.desfecho === 'gol' && (r.angulo || r.cavadinha || r.raspouTrave || (import.meta.env.DEV && parametros.has('replayFalso')));
     if (golaco && !reduzido && qualidade().replay) {
       const gesto = gestosCobranca[gestosCobranca.length - 1];
       window.setTimeout(() => !acabou && tarja.entrar(), DUR_ANTES_DO_REPLAY - ANTES_DO_CORTE);
@@ -698,6 +727,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   /** Pede a semente ao servidor. Sem resposta, a partida segue local e sem valer pontos. */
   async function preparar(): Promise<void> {
     instruir('Preparando a partida…');
+    if (codigoDesafio) void buscarBonecoDeQuemChamou(codigoDesafio);
     try {
       // Time e apelido precisam estar no servidor; sessão nova (aparelho limpo) regrava.
       const pedir = async (codigo?: string) => {
@@ -819,7 +849,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         valendo: !!servidor,
         aviso: aviso ?? undefined,
         servidor,
-        desafio: desafio ?? undefined,
+        desafio: desafio ? { ...desafio, boneco: (bonecoDeQuemChamou as typeof desafio.boneco) ?? null } : undefined,
         disputa,
         resultado,
         frasesFinais: eventosDoFim(resultado)

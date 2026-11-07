@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TIMES, corDeTexto } from '../dados/times';
 import { PADRAO, type Vestimenta } from '../jogo/vestiario';
-import { batedorEmCampo } from './bonecoEmCampo';
+import { batedorEmCampo, vestimentaDeCampo } from './bonecoEmCampo';
 import { CORES_DE_CABELO, JUNTA, TONS_DE_PELE, diferencaDeCor, novaPose, uniformeDeLinha, uniformesDaPartida, type Uniforme } from './bonecos';
 import { camadasDeCampo } from './bonecoMontavel';
 
@@ -171,5 +171,44 @@ describe('camadas de campo: costas e replay espelhado', () => {
       expect(t).toContainEqual(ombro(lado));
       expect(t).not.toContainEqual(ombro(lado ? 0 : 1));
     }
+  });
+});
+
+describe('boneco de quem chamou o X1: do servidor para a Vestimenta', () => {
+  const doServidor = { corpo: 'm', pele: 5, cabelo: 'coque', corCabelo: 3, numero: '7', cabeca: 'testeira', punho: 'munhequeira_bronze', braco: 'bracadeira', chuteira: 'dourada' };
+
+  it('null, ausente ou não-objeto: null (sem boneco)', () => {
+    expect(vestimentaDeCampo(null)).toBeNull();
+    expect(vestimentaDeCampo(undefined)).toBeNull();
+    expect(vestimentaDeCampo('boneco')).toBeNull();
+    expect(vestimentaDeCampo([])).toBeNull();
+  });
+
+  it('monta a Vestimenta completa: as 9 chaves entram, o resto é o PADRAO', () => {
+    const v = vestimentaDeCampo(doServidor)!;
+    expect(v).toEqual({ ...PADRAO, ...doServidor });
+    expect(v.camisa).toBe(PADRAO.camisa);
+    expect(v.peito).toBe('nenhum');
+    expect(v.pescoco).toBe('nenhum');
+    expect(v.pose).toBe(PADRAO.pose);
+  });
+
+  it('chave a mais é ignorada (nada de colete, camisa ou id vindo de fora)', () => {
+    const v = vestimentaDeCampo({ ...doServidor, peito: 'colete', pescoco: 'apito', camisa: 'goleiro', pose: 'bracos', fundo: 'estadio_noite', moldura: 'galeria', torcedor_id: 'x' })!;
+    expect(v).toEqual({ ...PADRAO, ...doServidor });
+  });
+
+  it('objeto torto cai no padrão, campo a campo', () => {
+    const v = vestimentaDeCampo({ ...doServidor, pele: 9, cabelo: 'moicano', numero: '123', chuteira: 7 })!;
+    expect(v.pele).toBe(PADRAO.pele);
+    expect(v.cabelo).toBe(PADRAO.cabelo);
+    expect(v.numero).toBeNull();
+    expect(v.chuteira).toBe(PADRAO.chuteira);
+    expect(v.corpo).toBe('m');
+    expect(vestimentaDeCampo({})).toEqual({ ...PADRAO });
+  });
+
+  it('o resultado passa no batedorEmCampo (forma da Vestimenta completa)', () => {
+    expect(em(vestimentaDeCampo(doServidor))).not.toBeNull();
   });
 });

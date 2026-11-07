@@ -10,7 +10,7 @@
 // O desenho é o do vestiário (bonecoMontavel.ts); aqui não há canvas.
 
 import { corDeTexto } from '../dados/times';
-import { conferirFormato } from '../jogo/vestiario';
+import { PADRAO, PECAS, conferirFormato, validar, type Vestimenta } from '../jogo/vestiario';
 import type { CoresDoTime } from './bonecoFundos';
 import { aparenciaDe, comChuteiraDe, corDaTesteira, corDoPunho, type PecasDeCampo } from './bonecoMontavel';
 import { corDoCabeloVisivel, type Aparencia, type Uniforme } from './bonecos';
@@ -45,4 +45,24 @@ export function batedorEmCampo(vestimenta: unknown, ligado: boolean, roupaDaCena
       chuteiraDourada: v.chuteira === 'dourada',
     },
   };
+}
+
+/** O que o servidor manda do boneco de quem chamou o X1 (`ver_desafio` e `ver_desafio_lances`): só o que vai a campo. */
+export type VestimentaDeCampo = Pick<Vestimenta, 'corpo' | 'pele' | 'cabelo' | 'corCabelo' | 'numero' | 'cabeca' | 'punho' | 'braco' | 'chuteira'>;
+
+const CHAVES_DE_CAMPO = ['corpo', 'pele', 'cabelo', 'corCabelo', 'numero', 'cabeca', 'punho', 'braco', 'chuteira'] as const;
+const TODAS_AS_PECAS = PECAS.map((p) => p.id);
+
+/**
+ * O boneco de quem chamou, como Vestimenta completa e segura: o PADRAO com só as 9 chaves de campo por cima (chave a
+ * mais é ignorada), cada valor conferido contra o catálogo (valor torto cai no padrão). Todas as peças valem, porque o
+ * servidor já conferiu o que estava liberado. null (sem boneco, interruptor desligado, servidor antigo) ou algo que
+ * não é objeto: null, e quem chama sorteia o batedor / não mostra busto.
+ */
+export function vestimentaDeCampo(x: unknown): Vestimenta | null {
+  if (typeof x !== 'object' || x === null || Array.isArray(x)) return null;
+  const bruto = x as Record<string, unknown>;
+  const base: Record<string, unknown> = { ...PADRAO };
+  for (const k of CHAVES_DE_CAMPO) if (k in bruto) base[k] = bruto[k];
+  return validar(base, TODAS_AS_PECAS);
 }

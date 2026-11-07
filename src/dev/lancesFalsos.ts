@@ -11,7 +11,7 @@
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { LANCES } from '../dados/lances';
-import './bonecoDeCampoFalso'; // o boneco falso em campo (&boneco=, &semBoneco, &emCampo=0)
+import { bonecoFalsoDeQuemChamou, timeFalsoDeQuemChamou } from './bonecoDeCampoFalso'; // o boneco falso em campo (&boneco=, &semBoneco, &emCampo=0, &chamouBoneco=, &chamouSemBoneco)
 import { DISPUTAS } from '../dados/disputas';
 import { sementeNova } from '../jogo/aleatorio';
 import { TABELA_LANCES_ANTES, TABELA_LANCES_UNIFICADA, medalhaDoLance, type Faixa, type Lance } from '../jogo/lances';
@@ -96,7 +96,7 @@ export async function verDesafioLances(id: string): Promise<ResumoDesafioLances 
   await espera();
   if (!id || x1 === 'nao') return null;
   const l = lanceDoX1();
-  return { id, time_id: 'palmeiras', apelido: 'Camisa10', lance_id: l.id, pontos: 96, gols: 3, recriados: 1, faixa: faixaNaTela(l, unificada()).faixa };
+  return { id, time_id: timeFalsoDeQuemChamou('palmeiras'), apelido: 'Camisa10', lance_id: l.id, pontos: 96, gols: 3, recriados: 1, faixa: faixaNaTela(l, unificada()).faixa, boneco: bonecoFalsoDeQuemChamou() };
 }
 
 export async function novaPartidaLances(pedido: string[] | PedidoLances): Promise<RespostaNovaLances> {
@@ -110,7 +110,7 @@ export async function novaPartidaLances(pedido: string[] | PedidoLances): Promis
     if (x1 === 'nao') throw new ErroServidor('desafio_nao_encontrado');
     if (x1 === 'proprio') throw new ErroServidor('proprio_desafio');
     if (x1 === 'expirado') throw new ErroServidor('desafio_expirado');
-    desafio = { codigo: p.desafio, timeId: 'palmeiras', apelido: 'Camisa10', pontos: 96 };
+    desafio = { codigo: p.desafio, timeId: timeFalsoDeQuemChamou('palmeiras'), apelido: 'Camisa10', pontos: 96 };
     const l = lanceDoX1();
     cenas = [l, l, l];
   } else if ('lance' in p) {

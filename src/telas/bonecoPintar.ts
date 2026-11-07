@@ -6,6 +6,7 @@ import { prefs } from '../estado';
 import { conferirFormato, type Vestimenta } from '../jogo/vestiario';
 import type { BonecoDoServidor } from '../servidor/boneco';
 import { bonecoGuardado, guardarBoneco, marcarVistas, type Pintura } from './bonecoDoAparelho';
+import { vestimentaDeCampo } from './bonecoEmCampo';
 import { guardarEmCampo } from './bonecoEmCampoGuardado';
 import { desenharBoneco, fonteDoNumeroPronta, numeroVisivel, prepararFonteDoNumero } from './bonecoMontavel';
 
@@ -27,8 +28,15 @@ export function vestimentaGuardada(): Vestimenta | null {
 
 /** Desenha num canvas novo e troca o conteúdo do alvo por ele. Sem vestimenta, não toca no alvo. */
 export function pintarNoAlvo(alvo: HTMLElement, p: Pintura): void {
-  const v = p.vestimenta ?? vestimentaGuardada();
+  const v = p.deCampo !== undefined ? vestimentaDeCampo(p.deCampo) : (p.vestimenta ?? vestimentaGuardada());
   if (!v) return;
+  if (p.aoLado) {
+    const lado = document.createElement('span');
+    lado.className = 'convite-busto';
+    lado.setAttribute('aria-hidden', 'true');
+    alvo.prepend(lado);
+    alvo = lado;
+  }
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(p.largura * dpr);
@@ -45,7 +53,7 @@ export function pintarNoAlvo(alvo: HTMLElement, p: Pintura): void {
     if (!c) return;
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
     c.clearRect(0, 0, p.largura, p.altura);
-    desenharBoneco(c, v, coresDeAgora(), p.recorte, p.largura, p.altura);
+    desenharBoneco(c, v, p.cores ?? coresDeAgora(), p.recorte, p.largura, p.altura);
   };
   desenhar();
   alvo.replaceChildren(canvas);

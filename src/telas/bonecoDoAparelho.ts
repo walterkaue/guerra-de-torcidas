@@ -61,6 +61,15 @@ export interface Pintura {
   altura: number;
   /** Vestimenta para desenhar; sem ela, a guardada (e, sem a guardada, nada: fica o que já estava no alvo). */
   vestimenta?: Vestimenta;
+  /**
+   * O `boneco` de quem chamou um X1, como o servidor manda (só o que vai a campo): a conta de Vestimenta segura e o fundo
+   * e a moldura padrão ficam no bonecoPintar. Tem prioridade sobre `vestimenta`; inválido ou null, não desenha.
+   */
+  deCampo?: unknown;
+  /** As cores do time para desenhar; sem elas, as do time do coração de agora. */
+  cores?: readonly [string, string];
+  /** `alvo` é o texto de um convite: o busto entra antes dele, como um quadradinho que o texto contorna (Home, X1). */
+  aoLado?: boolean;
   /** Rótulo para leitor de tela ("Seu boneco"); sem ele, o desenho é decorativo. */
   rotulo?: string;
 }
