@@ -202,6 +202,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         <p class="cabo-voce" data-posicao-semana aria-live="polite" hidden></p>
       </section>
 
+      ${time && time.id !== ID_OUTRO ? `<section class="bloco-divisoes placa" data-divisoes aria-label="Tabela do mês" style="--c1:${time.cores[0]};--c2:${time.cores[1]}"></section>` : ''}
+
       <section class="bloco-cidade" data-cidade aria-live="polite" hidden></section>
 
       <button class="botao botao-jogar" type="button" data-acao="jogar-agora">Jogar agora<small data-motivo>&nbsp;</small></button>
@@ -614,7 +616,23 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const vistas = memoria<{ semana: string; pos: Record<string, number> }>(CHAVE_POSICOES);
   const posicoesAntes = vistas?.semana === semana ? vistas.pos : {};
 
+  // Bloco das divisões: pedaço carregado depois; a cada ranking novo ele refaz a projeção da semana.
+  const elDivisoes = root.querySelector<HTMLElement>('[data-divisoes]');
+  let semanaAoVivo: LinhaRanking[] | null = null;
+  let atualizarDivisoes: ((l: LinhaRanking[]) => void) | null = null;
+  if (elDivisoes && time) {
+    void import('./blocoDivisoes')
+      .then((m) => m.ligarBlocoDivisoes(elDivisoes, time, semana, () => saiu))
+      .then((atualizar) => {
+        atualizarDivisoes = atualizar;
+        if (semanaAoVivo) atualizar(semanaAoVivo);
+      })
+      .catch(() => elDivisoes.remove());
+  }
+
   function desenhar(linhas: LinhaRanking[]): void {
+    semanaAoVivo = linhas;
+    atualizarDivisoes?.(linhas);
     memoria(CHAVE_POSICOES, { semana, pos: Object.fromEntries(linhas.map((l) => [l.time_id, l.posicao_campeao])) });
 
     frasesGiro = frasesDoGiro(linhas, posicoesAntes, timePorId, time?.id);
@@ -760,7 +778,12 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       });
   };
   void carregar();
-  void import('./placaTrofeu').then((m) => m.mostrarPlacaTrofeu(root.querySelector<HTMLElement>('[data-placa-trofeu]')!, time?.id, () => saiu)).catch(() => {});
+  // Uma placa só por abertura: a de fim do mês tem a vez e, sem ela, entra a de "Troféu novo" (telas/placaTemporada.ts).
+  const elPlaca = root.querySelector<HTMLElement>('[data-placa-trofeu]')!;
+  void import('./placaTemporada')
+    .then((m) => m.mostrarPlacaDaHome(elPlaca, time?.id, () => saiu))
+    .catch(() => import('./placaTrofeu').then((m) => m.mostrarPlacaTrofeu(elPlaca, time?.id, () => saiu)))
+    .catch(() => {});
   if (!FALSA) {
     ouvirRanking(semana, () => void carregar())
       .then((f) => (saiu ? f() : (pararRanking = f)))

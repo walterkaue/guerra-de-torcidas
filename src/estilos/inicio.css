@@ -1143,6 +1143,16 @@
 .lance-do-dia:disabled { opacity: 0.7; }
 .lance-do-dia:not(:disabled):active { transform: translateY(1px); }
 
+/* Bloco das divisões: a altura fica reservada desde a abertura (o resto vem em estilos/blocoDivisoes.css, carregado depois). */
+.bloco-divisoes {
+  margin: 10px 0;
+  min-height: 172px;
+}
+
+.bloco-divisoes[hidden] {
+  display: none;
+}
+
 /* Bloco da cidade na Home e linhas do ranking de cidades (sem cor de time: só posição, nome e média). */
 .bloco-cidade {
   margin: 10px 0;
