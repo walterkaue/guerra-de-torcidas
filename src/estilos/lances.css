@@ -1,15 +1,8 @@
-/* Lances do Jogo (docs/jogo.md, seção 7.3) no "Grafismo de TV" (14.2): hub, ficha, barra "Sua partida" e resultado.
+/* Lances do Jogo (docs/jogo.md, seções 7.3 e 14.7) no "Grafismo de TV" (14.2): tela única, ficha e resultado.
    Os blocos (placa, faixa, abas, número, selo, estado) vêm de estilos/blocos.css. */
 
 /* ---------- hub ---------- */
 .lances {
-  gap: var(--e3);
-}
-
-.lances-conteudo {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
   gap: var(--e3);
 }
 
@@ -18,16 +11,6 @@
   font-size: 15px;
   line-height: 1.35;
   color: var(--texto-suave);
-}
-
-.lances-bloco {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e2);
-}
-
-.lances-bloco > .faixa {
-  margin-left: 5px;
 }
 
 /* Filtro de clube: select escuro, na mesma fileira do rótulo. */
@@ -132,19 +115,6 @@
   box-shadow: inset 0 0 0 2px var(--amarelo);
 }
 
-.lance-ficha {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e3);
-  padding: 0 var(--e4) var(--e4);
-  font-size: 15px;
-  line-height: 1.4;
-}
-
-.lance-ficha[hidden] {
-  display: none;
-}
-
 .lance-situacao {
   font-size: 14px;
   color: var(--texto-suave);
@@ -156,26 +126,9 @@
   gap: var(--e2);
 }
 
-.lance-acoes .botao-linha,
-.lance-ficha .botao-sec {
+.lance-acoes .botao-linha {
   min-height: 52px;
   font-size: 16px;
-}
-
-/* Disputa livre (tela de antes, até 07/11): título e linha dentro da placa. */
-.lances-conteudo > .placa > div > .lance-titulo,
-.lances-conteudo > .placa > div > .lance-meta {
-  display: block;
-}
-
-/* ---------- barra "Sua partida" ---------- */
-.sua-partida {
-  margin-top: auto;
-  position: sticky;
-  bottom: calc(var(--e2) + env(safe-area-inset-bottom));
-  z-index: 5;
-  background: var(--placa-alta);
-  box-shadow: var(--sombra-alta), inset 0 0 0 1px var(--linha);
 }
 
 .valendo-hoje {
@@ -189,41 +142,6 @@
 
 .valendo-hoje[hidden] {
   display: none;
-}
-
-.slots {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--e2);
-}
-
-.slot {
-  min-height: 44px;
-  padding: 4px 6px;
-  display: grid;
-  place-items: center;
-  border: 2px dashed rgba(245, 245, 240, 0.3);
-  border-radius: var(--raio-p);
-  color: var(--texto-suave);
-  font: 700 13px var(--fonte-rotulo);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  text-align: center;
-  line-height: 1.1;
-  overflow: hidden;
-}
-
-.slot.cheio {
-  border: 0;
-  background: var(--c1);
-  color: var(--txt);
-  box-shadow: inset 0 -5px 0 var(--c2);
-  touch-action: manipulation;
-}
-
-.sua-partida .botao {
-  min-height: 52px;
-  justify-content: center;
 }
 
 /* ---------- resultado (resultado padrão, telas/resultadoPadrao.ts) ---------- */

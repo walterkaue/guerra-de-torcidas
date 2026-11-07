@@ -6,14 +6,12 @@ import {
   montarMedalhas,
   ordenarVitrine,
   progressoDaMedalha,
-  filtrarAlbum,
   linhaRumo,
   linhasRumoDaPartida,
   previaDoProximoGol,
   trilhaDoLance,
   situacaoDoResultado,
   textoDaMedalhaNova,
-  textoDeCompartilhar,
 } from './lancesTextos';
 
 describe('emoji dos lances', () => {
@@ -28,22 +26,6 @@ describe('emoji dos lances', () => {
       // O bloco dos emojis suplementares (🧱, 🧤…) começa em U+1F900.
       expect(e.codePointAt(0)!).toBeLessThan(0x1f900);
     }
-  });
-
-  it('o texto de compartilhar leva os emojis, os pontos, a medalha e o link', () => {
-    const t = textoDeCompartilhar({
-      desfechos: ['gol', 'defesa', 'gol'],
-      pontos: 28,
-      paraTime: 'pro Flamengo',
-      link: 'https://x/?time=flamengo',
-      medalha: 'Bronze no lance Falta de fora da área!',
-    });
-    expect(t).toBe(
-      '⚽ Guerra de Torcidas · Lances do Jogo\n⚽✋⚽ · 28 pontos pro Flamengo\nBronze no lance Falta de fora da área!\nhttps://x/?time=flamengo',
-    );
-    expect(textoDeCompartilhar({ desfechos: ['fora'], pontos: 1, paraTime: null, link: 'l' })).toBe(
-      '⚽ Guerra de Torcidas · Lances do Jogo\n❌ · 1 ponto\nl',
-    );
   });
 });
 
@@ -210,20 +192,5 @@ describe('trilha de 3 medalhas (seção 14.3)', () => {
   it('prévia do próximo gol na ficha', () => {
     expect(previaDoProximoGol(23, 4)).toBe('+1 rumo ao ouro · 24/50');
     expect(previaDoProximoGol(49, 9)).toBe('+1 · ouro completo · 50 gols');
-  });
-
-  it('álbum: meus troféus, perto do próximo e favoritos primeiro', () => {
-    const lances = ['a', 'b', 'c', 'd'].map((id) => ({ id }));
-    const m = new Map([
-      ['a', { gols: 50, recriados: 10 }], // ouro completo
-      ['b', { gols: 18, recriados: 0 }], // faltam 2 pra prata
-      ['c', { gols: 4, recriados: 0 }], // falta 1 pro bronze
-    ]);
-    const ids = (f: Parameters<typeof filtrarAlbum>[2], fav: string[] = []) => filtrarAlbum(lances, m, f, new Set(fav)).map((l) => l.id);
-    expect(ids('todos')).toEqual(['a', 'b', 'c', 'd']);
-    expect(ids('meus')).toEqual(['a', 'b']);
-    expect(ids('perto')).toEqual(['c', 'b', 'd', 'a']);
-    expect(ids('todos', ['d'])).toEqual(['d', 'a', 'b', 'c']);
-    expect(ids('perto', ['a'])).toEqual(['a', 'c', 'b', 'd']);
   });
 });

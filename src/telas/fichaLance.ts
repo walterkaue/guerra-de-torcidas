@@ -1,14 +1,15 @@
 // Ficha do lance que abre de baixo (jogo.md, 14.3): favoritar, a ficha factual, a situação, a trilha de medalhas,
-// os recriados, o que falta pro ouro, a prévia da linha do resultado e os botões Treinar e Pôr na partida.
-// Na tela única (14.7, depois do corte) a ficha serve também às disputas de pênaltis (barra de
-// Vitórias, sem a prévia do gol) e só tem ⭐ e "Jogar". Um <dialog> com showModal: fecha no ✕, no toque fora e
-// no Esc. Os números das medalhas vêm de quem abre.
+// os recriados, o que falta pro ouro, a prévia da linha do resultado, "Mandar esse lance" e "Jogar". Serve aos lances
+// e às disputas de pênaltis da tela única (14.7; nas disputas, a barra de Vitórias, sem a prévia do gol). Um <dialog>
+// com showModal: fecha no ✕, no toque fora, no Esc e no voltar do celular ou do navegador (S08: entra no history,
+// telas/folhaNoHistorico.ts). Os números das medalhas vêm de quem abre.
 
 import '../estilos/trofeus.css';
 import { esc } from '../app';
 import { textoParaCopiar } from '../jogo/mandarLance';
 import { ehItemPenaltis, previaDoProximoGol, trilhaDoItem } from '../jogo/lancesTextos';
 import { barra, trilha } from './blocos';
+import { folhaNoHistorico } from './folhaNoHistorico';
 import { icone } from './icones';
 
 export interface NumerosDoLance {
@@ -36,12 +37,10 @@ export interface OpcoesDaFicha {
   /** Os números das medalhas: já chegaram (zerados se nunca marcou), ainda vêm (promessa) ou falharam (null). */
   medalhas: NumerosDoLance | null | Promise<NumerosDoLance | null>;
   aoFavoritar(favorito: boolean): void;
-  /** Tela única: o botão "Jogar" (e só ele). Sem isso, a ficha antiga com Treinar e Pôr na partida. */
-  aoJogar?(): void;
-  /** Tela única: o botão "Mandar esse lance" (folha de compartilhar ou, sem ela, copia). Só aparece junto com `aoJogar`. */
+  /** O botão "Jogar": roda depois que a ficha fechou e o history voltou (a disputa troca de tela). */
+  aoJogar(): void;
+  /** O botão "Mandar esse lance" (folha de compartilhar ou, sem ela, copia). */
   mandar?: { texto: string; link: string };
-  aoTreinar?(): void;
-  aoPor?(): void;
 }
 
 /** O bloco das medalhas da ficha: trilha com marcos, barra de recriados, o que falta e a prévia. */
@@ -79,27 +78,26 @@ export function abrirFicha(o: OpcoesDaFicha): () => void {
       <p class="ficha-texto">${esc(o.texto)}</p>
       ${o.situacao ? `<p class="lance-situacao">${esc(o.situacao)}</p>` : ''}
       <div class="ficha-medalhas" data-medalhas>${blocoDasMedalhas(o.medalhas instanceof Promise ? 'carregando' : o.medalhas, o.id)}</div>
-      <div class="lance-acoes${o.aoJogar ? (o.mandar ? ' com-mandar' : ' so-jogar') : ''}">
-        ${
-          o.aoJogar
-            ? `${o.mandar ? `<button type="button" class="botao-linha" data-mandar>${icone('corrente')}<span>Mandar esse lance</span></button>` : ''}<button type="button" class="botao" data-jogar>Jogar</button>`
-            : '<button type="button" class="botao-linha" data-treinar>Treinar</button><button type="button" class="botao" data-por>Pôr na partida</button>'
-        }
+      <div class="lance-acoes${o.mandar ? ' com-mandar' : ' so-jogar'}">
+        ${o.mandar ? `<button type="button" class="botao-linha" data-mandar>${icone('corrente')}<span>Mandar esse lance</span></button>` : ''}<button type="button" class="botao" data-jogar>Jogar</button>
       </div>
-      ${o.aoJogar && o.mandar ? '<p class="ficha-mandar-aviso" role="status" aria-live="polite" data-mandar-aviso></p>' : ''}
+      ${o.mandar ? '<p class="ficha-mandar-aviso" role="status" aria-live="polite" data-mandar-aviso></p>' : ''}
     </div>`;
   o.raiz.append(d);
 
-  const fechar = () => {
+  // O voltar do celular fecha a ficha antes de sair da tela; fechar tocando desfaz o estado empurrado.
+  const folha = folhaNoHistorico(() => {
     if (d.open) d.close();
     d.remove();
-  };
-  d.addEventListener('close', () => d.remove());
+  });
+  const fechar = (depois?: () => void) => folha.fechar(depois);
+  // Esc fecha o <dialog> sozinho: passa pelo mesmo caminho, para o history voltar também.
+  d.addEventListener('close', () => fechar());
   // O fundo escurecido é o próprio <dialog> (o corpo cobre o resto): clicar nele é tocar fora.
   d.addEventListener('click', (e) => {
     if (e.target === d) fechar();
   });
-  d.querySelector('[data-fechar]')!.addEventListener('click', fechar);
+  d.querySelector('[data-fechar]')!.addEventListener('click', () => fechar());
   d.querySelector<HTMLElement>('[data-fav]')!.addEventListener('click', (e) => {
     favorito = !favorito;
     const b = e.currentTarget as HTMLElement;
@@ -107,10 +105,7 @@ export function abrirFicha(o: OpcoesDaFicha): () => void {
     b.querySelector('span')!.textContent = favorito ? 'Favorito' : 'Favoritar';
     o.aoFavoritar(favorito);
   });
-  d.querySelector('[data-jogar]')?.addEventListener('click', () => {
-    fechar();
-    o.aoJogar?.();
-  });
+  d.querySelector('[data-jogar]')!.addEventListener('click', () => fechar(() => o.aoJogar()));
   const btnMandar = d.querySelector<HTMLButtonElement>('[data-mandar]');
   if (btnMandar && o.mandar) {
     const { texto, link } = o.mandar;
@@ -148,14 +143,6 @@ export function abrirFicha(o: OpcoesDaFicha): () => void {
       }
     });
   }
-  d.querySelector('[data-treinar]')?.addEventListener('click', () => {
-    fechar();
-    o.aoTreinar?.();
-  });
-  d.querySelector('[data-por]')?.addEventListener('click', () => {
-    o.aoPor?.();
-    fechar();
-  });
   if (o.medalhas instanceof Promise)
     void o.medalhas
       .catch(() => null)
@@ -164,5 +151,5 @@ export function abrirFicha(o: OpcoesDaFicha): () => void {
         if (alvo && d.isConnected) alvo.innerHTML = blocoDasMedalhas(n, o.id);
       });
   d.showModal();
-  return fechar;
+  return () => fechar();
 }

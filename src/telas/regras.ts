@@ -7,8 +7,8 @@ import { esc } from '../app';
 import { ID_OUTRO, corDeTexto, proTime, timePorId } from '../dados/times';
 import { prefs } from '../estado';
 import { GOLS_MAX, PESO_TORCIDA, PONTOS_ACERTO, TETO_RODADA } from '../jogo/crava';
-import { BONUS_RECRIOU, FAIXAS, LANCES_POR_PARTIDA, PONTOS_FAIXA, TABELA_LANCES_UNIFICADA } from '../jogo/lances';
-import { PONTOS as PONTOS_PENALTIS, PONTOS_UNIFICADOS, RODADAS_EXTRAS_MAX } from '../jogo/penaltis';
+import { LANCES_POR_PARTIDA, TABELA_LANCES_UNIFICADA } from '../jogo/lances';
+import { PONTOS_UNIFICADOS, RODADAS_EXTRAS_MAX } from '../jogo/penaltis';
 import {
   BONUS_PERFEITA,
   DEGRAU_DA_POSICAO,
@@ -24,7 +24,7 @@ import {
 import { PONTOS as PONTOS_DIA, TENTATIVAS } from '../jogo/timeDoDia';
 import { notaDosLances, notaDosPenaltis, pontosDosLances, pontosDosPenaltis } from '../jogo/regrasUnificadas';
 import { faixa, placa } from './blocos';
-import { lancesUnificados } from './corte';
+import { folhaNoHistorico } from './folhaNoHistorico';
 import { bolinha } from './icones';
 
 export type JogoComRegras = 'penaltis' | 'lances' | 'prova' | 'dia' | 'crava';
@@ -44,7 +44,6 @@ const bonus = (n: number) => `+${n}`;
 const NOME_DO_DEGRAU: Record<Degrau, string> = { ...NOME_DEGRAU, 2: 'Nível médio' };
 
 function dosPenaltis(): Regras {
-  const unificada = lancesUnificados();
   return {
     titulo: 'Pênaltis',
     passos: [
@@ -53,43 +52,13 @@ function dosPenaltis(): Regras {
       ['Defender.', 'O batedor corre. Olhe o pé de apoio, em amarelo, e toque no gol onde ele vai pular. Ele nem sempre é honesto, e o tempo pra reagir é curto.'],
       ['Desempate.', `5 cobranças e 5 defesas, alternadas. Empatou? Morte súbita: uma de cada, até ${RODADAS_EXTRAS_MAX} rodadas. Ainda empatado, par ou ímpar com o narrador.`],
     ],
-    pontos: unificada
-      ? pontosDosPenaltis(PONTOS_UNIFICADOS)
-      : [
-          ['Gol', String(PONTOS_PENALTIS.gol)],
-          ['Gol no ângulo', bonus(PONTOS_PENALTIS.angulo)],
-          ['Cavadinha que entra', bonus(PONTOS_PENALTIS.cavadinha)],
-          ['Defesa', String(PONTOS_PENALTIS.defesa)],
-          ['Vitória na disputa', bonus(PONTOS_PENALTIS.vitoria)],
-          ['5 de 5 (cobranças ou defesas)', bonus(PONTOS_PENALTIS.cincoDeCinco)],
-        ],
-    nota: unificada
-      ? notaDosPenaltis(PONTOS_UNIFICADOS)
-      : 'Gols e defesas da morte súbita valem o normal. O bônus de 5 de 5 olha só as 5 primeiras.',
+    pontos: pontosDosPenaltis(PONTOS_UNIFICADOS),
+    nota: notaDosPenaltis(PONTOS_UNIFICADOS),
   };
 }
 
+/** Lances do Jogo (docs/jogo.md, 14.7): um lance, 3 tentativas, pênaltis no mesmo jogo. */
 function dosLances(): Regras {
-  if (lancesUnificados()) return dosLancesUnificados();
-  const nomes: Record<(typeof FAIXAS)[number], string> = { facil: 'Fácil', media: 'Média', dificil: 'Difícil', craque: 'Craque' };
-  return {
-    titulo: 'Lances do Jogo',
-    passos: [
-      ['Falta ou cara a cara.', 'Monte uma partida de ' + LANCES_POR_PARTIDA + ' lances no álbum. Pode repetir o mesmo lance.'],
-      ['O gesto é o do pênalti.', 'Arraste da bola até o gol: direção, força e curva. Na falta, a bola tem de passar da barreira. No cara a cara, o goleiro pode sair do gol e a cavadinha encobre quem saiu.'],
-      ['Recriar o lance.', `Gol na área marcada onde o gol de verdade entrou vale mais ${BONUS_RECRIOU}.`],
-      ['Treino.', 'Treine quantas vezes quiser: não conta ponto.'],
-    ],
-    pontos: [
-      ...FAIXAS.map((f) => [`Gol em lance ${nomes[f].toLowerCase()}`, String(PONTOS_FAIXA[f])] as const),
-      ['Recriou o lance', bonus(BONUS_RECRIOU)],
-    ],
-    nota: 'Cada lance tem a sua dificuldade, que não muda ao longo da semana. O dia vale a melhor partida.',
-  };
-}
-
-/** Lances do Jogo depois de 08/11/2026 (docs/jogo.md, 14.7): um lance, 3 tentativas, pênaltis no mesmo jogo. */
-function dosLancesUnificados(): Regras {
   const t = TABELA_LANCES_UNIFICADA;
   return {
     titulo: 'Lances do Jogo',
@@ -208,11 +177,13 @@ export function abrirRegras(onde: HTMLElement, jogo: JogoComRegras): () => void 
   });
   onde.append(fundo);
 
-  const fechar = () => {
+  // O voltar do celular fecha as regras antes de sair da tela (S08, telas/folhaNoHistorico.ts).
+  const folha = folhaNoHistorico(() => {
     document.removeEventListener('keydown', aoTeclar);
     fundo.remove();
     antes?.focus?.();
-  };
+  });
+  const fechar = () => folha.fechar();
   const aoTeclar = (ev: KeyboardEvent) => {
     if (ev.key === 'Escape') fechar();
   };

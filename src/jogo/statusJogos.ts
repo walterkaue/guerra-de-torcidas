@@ -3,15 +3,8 @@
 import { ordinalRodada } from './crava';
 import { faseDoJogo, rodadaEmFoco, type JogoBasico } from './cravaTela';
 
-/** "faltam 3 partidas que contam hoje"; sem time (ou sem conexão), a regra geral. */
-export function linhaPenaltis(faltam: number | null, teto: number): string {
-  if (faltam === null) return `As ${teto} melhores do dia contam`;
-  if (faltam <= 0) return 'hoje só as 5 melhores contam';
-  return `${faltam === 1 ? 'falta 1 partida que conta' : `faltam ${faltam} partidas que contam`} hoje`;
-}
-
 /**
- * Regra de 08/11/2026 (docs/jogo.md, 14.7): quantas das 10 partidas valendo de hoje ainda dá para fazer.
+ * Lances unificados (docs/jogo.md, 14.7): quantas das 10 partidas valendo de hoje ainda dá para fazer.
  * Os pênaltis, as faltas e o cara a cara somam no mesmo limite. Null sem resposta do servidor.
  */
 export function faltamDosLances(h: { feitas: number; limite: number } | null | undefined): number | null {
@@ -19,7 +12,7 @@ export function faltamDosLances(h: { feitas: number; limite: number } | null | u
   return Math.max(0, h.limite - h.feitas);
 }
 
-/** A linha de baixo do card e do "Jogar agora" na regra nova: "faltam 3 partidas valendo hoje". */
+/** A linha de baixo do card e do "Jogar agora": "faltam 3 partidas valendo hoje". */
 export function linhaLancesUnificados(faltam: number | null, melhores: number): string {
   if (faltam === null) return `As ${melhores} melhores do dia contam`;
   if (faltam <= 0) return 'hoje já deu: o treino segue liberado';

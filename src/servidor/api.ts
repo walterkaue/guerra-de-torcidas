@@ -419,15 +419,15 @@ export async function verDesafio(id: string): Promise<ResumoDesafio | null> {
 
 /**
  * O que começar (docs/jogo.md, seção 14.7):
- * - `{ lance }`: regra nova, 3 tentativas do mesmo lance (antes do corte o servidor aceita, com a tabela antiga);
- * - `{ desafio }`: X1 dos Lances recebido (só na regra nova; 404, 409 ou 410 se não der);
- * - `{ lances }` (ou a lista pura): formato antigo de 3 lances escolhidos; depois do corte responde 426 `atualize_o_app`.
+ * - `{ lance }`: 3 tentativas do mesmo lance;
+ * - `{ desafio }`: X1 dos Lances recebido (404, 409 ou 410 se não der).
+ * A lista antiga de 3 lances escolhidos (`{ lances }`, até 07/11/2026) o servidor responde 426 `atualize_o_app`.
  */
-export type PedidoLances = { lance: string } | { desafio: string } | { lances: string[] };
+export type PedidoLances = { lance: string } | { desafio: string };
 
-/** Começa uma partida valendo. A lista pura de ids é o formato antigo, como `{ lances }`. */
-export function novaPartidaLances(pedido: PedidoLances | string[]): Promise<RespostaNovaLances> {
-  return chamar('lances', { acao: 'nova', ...(Array.isArray(pedido) ? { lances: pedido } : pedido) });
+/** Começa uma partida valendo. */
+export function novaPartidaLances(pedido: PedidoLances): Promise<RespostaNovaLances> {
+  return chamar('lances', { acao: 'nova', ...pedido });
 }
 
 export interface ResumoDesafioLances {

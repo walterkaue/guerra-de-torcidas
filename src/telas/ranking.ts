@@ -9,7 +9,6 @@ import { prefs } from '../estado';
 import { ouvirRanking, rankingDaSemana, type LinhaRanking } from '../servidor/api';
 import { semanaConfirmadaEm } from '../jogo/crava';
 import { textoDaMedia } from '../jogo/rankingTextos';
-import { lancesUnificados } from './corte';
 import { semanaBrasilia } from '../servidor/tempo';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { abas, aoTocarNoEstado, baixarPedaco, cabecalhoTela, estado } from './blocos';
@@ -115,7 +114,7 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
     } else elSelo.hidden = true;
     elExplica.textContent =
       modo === 'campeao'
-        ? textoDaMedia(lancesUnificados())
+        ? textoDaMedia()
         : 'Soma de todo mundo que jogou na semana. É vitrine: o título sai do Campeão da semana.';
     if (!linhas.some((l) => l.ativos > 0)) {
       elTabela.innerHTML =

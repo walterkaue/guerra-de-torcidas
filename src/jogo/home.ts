@@ -5,7 +5,7 @@
 import { ID_OUTRO, type Artigo, type Time } from '../dados/times';
 import { faseDoJogo, rodadaEmFoco, type JogoBasico } from './cravaTela';
 import { PERGUNTAS, levar } from './prova';
-import { formatarFecha, formatarVolta, linhaLancesUnificados, linhaPenaltis } from './statusJogos';
+import { formatarFecha, formatarVolta, linhaLancesUnificados } from './statusJogos';
 import { MELHORES_DO_DIA } from './regraLances';
 import { NOMES_PISTAS, TENTATIVAS, type Pistas, type Tom } from './timeDoDia';
 
@@ -79,13 +79,13 @@ export function proximoJogo(s: SituacaoDoDia): JogoDaHome {
 }
 
 /** A linha de baixo do botão: só informa o motivo, sem pressa nem cobrança. */
-export function motivoDoJogo(jogo: JogoDaHome, s: SituacaoDoDia, teto: number, unificada = false): string {
+export function motivoDoJogo(jogo: JogoDaHome, s: SituacaoDoDia): string {
   if (jogo === 'crava') return `Crava a Rodada: fecha em ${formatarFecha(s.cravaFechaEm ?? 0)}, sem palpite seu`;
   if (jogo === 'dia') {
     return s.chutesDoDia ? `Time do Dia: ${linhaChutes(s.chutesDoDia)}` : 'Time do Dia: ainda não jogou hoje';
   }
   if (jogo === 'penaltis') {
-    return `Lances do Jogo: ${unificada ? linhaLancesUnificados(s.faltamPartidas, MELHORES_DO_DIA) : linhaPenaltis(s.faltamPartidas, teto)}`;
+    return `Lances do Jogo: ${linhaLancesUnificados(s.faltamPartidas, MELHORES_DO_DIA)}`;
   }
   return 'Prova de Boleiro: 8 perguntas, para quando quiser';
 }
