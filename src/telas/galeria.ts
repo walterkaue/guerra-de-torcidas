@@ -63,10 +63,10 @@ export function desenharGaleria(el: HTMLElement, o: OpcoesDaGaleria = {}): () =>
 
   function pintarTopo(total: number | null | 'erro'): void {
     const t = visto ? timePorId(visto) : undefined;
+    // Sem torcida escolhida a lista já está aberta embaixo (J27): o botão do topo só repetiria o título.
+    botaoTime.hidden = !t;
     if (!t) {
       botaoTime.removeAttribute('style');
-      botaoTime.innerHTML = `<span class="gal-time-nome">Escolha uma torcida<small>Toque pra ver a Galeria de um time</small></span><span class="gal-troca" aria-hidden="true">Escolher</span>`;
-      botaoTime.setAttribute('aria-label', 'Escolha uma torcida');
       return;
     }
     const texto = total === null ? 'Buscando…' : total === 'erro' ? 'Sem conexão' : textoDoTotal(total);
@@ -166,7 +166,8 @@ export function desenharGaleria(el: HTMLElement, o: OpcoesDaGaleria = {}): () =>
   const botaoMedalhas = `<button type="button" class="botao-linha gal-largo" data-gal-medalhas>Ver minhas medalhas</button>`;
 
   function pintarEscolha(): void {
-    corpo.innerHTML = placa(listaDeTimes(), { titulo: 'Escolha uma torcida', filete: true });
+    // Quem é de "Outro time" tem a cidade jogando por ele: o atalho das Campeãs de estado fica no alto (J27).
+    corpo.innerHTML = `<button type="button" class="botao-linha gal-largo" data-gal-campeas>Campeãs de estado</button>${placa(listaDeTimes(), { titulo: 'Escolha uma torcida', filete: true })}`;
   }
 
   function pintarPre(top: Linha52[]): void {

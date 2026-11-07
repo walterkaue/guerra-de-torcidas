@@ -55,7 +55,7 @@
 
 **Por quanto tempo:** enquanto você jogar. Conta sem nenhuma partida, resposta ou palpite por mais de 6 meses seguidos é apagada automaticamente. Antes, os pontos que ela deu à torcida viram um total anônimo, para o placar não mudar.
 
-**Seus direitos:** você, ou seu responsável, pode ver ou apagar seus dados a qualquer momento, nos botões "Ver meus dados" e "Apagar meus dados" desta página. Como o jogo não pede e-mail, CPF nem cadastro, isso é feito no próprio aparelho em que você joga: por e-mail não dá para saber qual conta é a sua. Ao apagar, saem o código do aparelho, o seu histórico e as suas mensagens. Ficam só totais de pontos da torcida, da cidade e do estado, e estatísticas das respostas da Prova, sem nada que identifique você.
+**Seus direitos:** você, ou seu responsável, pode ver ou apagar seus dados a qualquer momento, nos botões "Ver meus dados" e "Apagar meus dados" desta página. Como o jogo não pede e-mail, CPF nem cadastro, isso é feito no próprio aparelho em que você joga: por e-mail não dá para saber qual conta é a sua. Ao apagar, saem o código do aparelho, o seu histórico e as suas mensagens do Achei um erro. Ficam só totais de pontos da torcida, da cidade e do estado, e estatísticas das respostas da Prova, sem nada que identifique você.
 
 **Para pais e responsáveis:** o jogo não tem chat, perfil público, compra ou anúncio. Só algumas partidas por dia contam pontos. A faixa de idade é informada no primeiro acesso, sem pedir documento. Menores de 18 não recebem aviso por push nem veem a opção de apoio financeiro ou o link de sócio-torcedor.
 

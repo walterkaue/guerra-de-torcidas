@@ -18,7 +18,7 @@ import {
   wilson,
 } from './calibragemProva.mjs';
 import { calcularPontos, levar } from '../../src/jogo/prova';
-import { montarSql, PROVA_TRES_ERROS_DESDE } from './balanco.mjs';
+import { montarSql, PROVA_20S_DESDE, PROVA_TRES_ERROS_DESDE } from './balanco.mjs';
 
 const acerta = (n: number) => Array.from({ length: n }, () => ({ desfecho: 'acertou' as const }));
 const regras = [REGRA_ATUAL, ...OPCOES];
@@ -155,9 +155,13 @@ describe('relatório', () => {
 describe('balanço filtra a Prova pela data da regra nova', () => {
   it('só Prova criada a partir da data; --prova-antes inverte; os outros minigames não são filtrados', () => {
     const nova = montarSql(PROVA_TRES_ERROS_DESDE, false);
-    expect(nova).toContain(`(p.minigame <> 'prova' or p.criada_em >= timestamptz '${PROVA_TRES_ERROS_DESDE}')`);
+    expect(nova).toContain(`(p.minigame <> 'prova' or (p.criada_em >= timestamptz '${PROVA_TRES_ERROS_DESDE}'))`);
     expect(montarSql(PROVA_TRES_ERROS_DESDE, true)).toContain("p.criada_em < timestamptz");
     expect(() => montarSql("2026-11-02'; drop table x;--")).toThrow();
+    // Padrão: só a Prova de 20 s. A de 15 s (referência) fica entre as duas datas.
+    expect(montarSql()).toContain(`p.criada_em >= timestamptz '${PROVA_20S_DESDE}'`);
+    expect(montarSql(PROVA_TRES_ERROS_DESDE, false, PROVA_20S_DESDE)).toContain(`and p.criada_em < timestamptz '${PROVA_20S_DESDE}'`);
+    expect(() => montarSql(PROVA_20S_DESDE, false, "x'; drop")).toThrow();
   });
 
   it('o jogo e o balanço usam a mesma regra: 3º erro leva 75%', () => {
