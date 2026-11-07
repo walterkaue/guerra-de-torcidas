@@ -1,4 +1,5 @@
-// Lances sem Disputa livre e corte antecipado (20261105400000): corte em 09/11/2026; penaltis_comecar recusa partida
+// Lances sem Disputa livre e corte antecipado (20261105400000): corte em 09/11/2026, que 20261107200000 antecipou de
+// novo, para 08/11; penaltis_comecar recusa partida
 // sem disputa a partir do corte e grava no X1 a disputa de quem chamou; a livre não tem mais medalha e as linhas
 // 'penaltis:livre' saem de lances_gols; ver_desafio devolve a disputa. Roda o SQL de verdade (PGlite).
 
@@ -81,15 +82,15 @@ const itens = async (db: PGlite, quem: string) =>
   ).rows;
 
 describe('corte antecipado', () => {
-  it('a data de corte é segunda 09/11/2026, 0h de Brasília, no instante e no dia', async () => {
+  it('a data de corte é domingo 08/11/2026, 0h de Brasília (20261107200000), no instante e no dia', async () => {
     const db = await bancoDeTeste();
     const { rows } = await db.query<{ desde: Date; dia: string; descricao: string }>(
       `select public.lances_unificados_desde() as desde, public.lances_dia_do_corte()::text as dia,
          (select descricao from public.config_deteccao where chave = 'lances_unificados_por_dia') as descricao`,
     );
-    expect(rows[0].desde.toISOString()).toBe('2026-11-09T03:00:00.000Z');
-    expect(rows[0].dia).toBe('2026-11-09');
-    expect(rows[0].descricao).toContain('09/11/2026');
+    expect(rows[0].desde.toISOString()).toBe('2026-11-08T03:00:00.000Z');
+    expect(rows[0].dia).toBe('2026-11-08');
+    expect(rows[0].descricao).toContain('08/11/2026');
   }, TEMPO);
 });
 

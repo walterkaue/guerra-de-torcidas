@@ -122,7 +122,7 @@ servir(async (req) => {
     throw new ErroHttp(400, 'gestos_invalidos');
   }
 
-  // Partida criada antes do corte e fechada depois das 00h05 da segunda conta no dia em que começou.
+  // Partida criada antes do corte e fechada depois das 00h05 do dia seguinte conta no dia em que começou.
   const { dia, semana } = periodoNoCorte(partida.criada_em, periodoDaPartida(new Date(partida.criada_em), agora));
 
   const posicao = async () => {

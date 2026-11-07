@@ -20,33 +20,34 @@ import {
   tabelaPenaltisDaPartida,
 } from './regraLances.ts';
 
-// O corte mora na migração mais nova que o redefine (20261105400000 antecipou para 09/11); as medalhas, na de 14.7.
-const MIGRACAO = readFileSync(new URL('../../supabase/migrations/20261105400000_lances_sem_livre.sql', import.meta.url), 'utf8');
+// O corte mora na migração mais nova que o redefine (20261107200000 antecipou para domingo 08/11); as medalhas, na de 14.7.
+const MIGRACAO = readFileSync(new URL('../../supabase/migrations/20261107200000_lances_corte_domingo.sql', import.meta.url), 'utf8');
 const MIGRACAO_MEDALHAS = readFileSync(new URL('../../supabase/migrations/20261105100000_lances_unificados.sql', import.meta.url), 'utf8');
 
 describe('data de corte', () => {
-  it('é segunda 09/11/2026, 0h de Brasília, igual no banco', () => {
-    expect(LANCES_UNIFICADOS_DESDE.toISOString()).toBe('2026-11-09T03:00:00.000Z');
-    expect(new Date(`${DIA_DO_CORTE}T12:00:00Z`).getUTCDay()).toBe(1);
-    expect(MIGRACAO).toContain(`timestamptz '2026-11-09 00:00:00-03'`);
+  it('é domingo 08/11/2026, 0h de Brasília, igual no banco', () => {
+    expect(LANCES_UNIFICADOS_DESDE.toISOString()).toBe('2026-11-08T03:00:00.000Z');
+    expect(new Date(`${DIA_DO_CORTE}T12:00:00Z`).getUTCDay()).toBe(0);
+    expect(MIGRACAO).toContain(`timestamptz '2026-11-08 00:00:00-03'`);
     expect(MIGRACAO).toContain(`date '${DIA_DO_CORTE}'`);
   });
 
   it('a regra sai da hora de criação', () => {
-    expect(ehUnificada('2026-11-09T02:59:59.999Z')).toBe(false);
-    expect(ehUnificada('2026-11-09T03:00:00.000Z')).toBe(true);
-    expect(tabelaPenaltisDaPartida('2026-11-08T23:00:00-03:00')).toBe(PONTOS);
-    expect(tabelaPenaltisDaPartida('2026-11-09T00:00:01-03:00')).toBe(PONTOS_UNIFICADOS);
+    expect(ehUnificada('2026-11-08T02:59:59.999Z')).toBe(false);
+    expect(ehUnificada('2026-11-08T03:00:00.000Z')).toBe(true);
+    expect(tabelaPenaltisDaPartida('2026-11-07T23:00:00-03:00')).toBe(PONTOS);
+    expect(tabelaPenaltisDaPartida('2026-11-08T00:00:01-03:00')).toBe(PONTOS_UNIFICADOS);
     expect(tabelaLancesDaPartida('2026-11-03T12:00:00Z')).toBe(TABELA_LANCES_ANTES);
     expect(tabelaLancesDaPartida('2026-12-01T12:00:00Z')).toBe(TABELA_LANCES_UNIFICADA);
   });
 
   it('partida criada antes do corte e fechada depois das 00h05 conta no dia em que começou', () => {
+    // O corte cai num domingo, no meio da semana de 02/11: sábado e domingo são da mesma semana, e só o dia separa.
+    const sabado = { dia: '2026-11-07', semana: '2026-11-02' };
     const domingo = { dia: '2026-11-08', semana: '2026-11-02' };
-    const segunda = { dia: '2026-11-09', semana: '2026-11-09' };
-    expect(periodoNoCorte('2026-11-08T23:58:00-03:00', segunda)).toEqual(domingo);
-    expect(periodoNoCorte('2026-11-08T23:58:00-03:00', domingo)).toEqual(domingo);
-    expect(periodoNoCorte('2026-11-09T00:01:00-03:00', segunda)).toEqual(segunda);
+    expect(periodoNoCorte('2026-11-07T23:58:00-03:00', domingo)).toEqual(sabado);
+    expect(periodoNoCorte('2026-11-07T23:58:00-03:00', sabado)).toEqual(sabado);
+    expect(periodoNoCorte('2026-11-08T00:01:00-03:00', domingo)).toEqual(domingo);
     expect(periodoNoCorte('2026-11-13T10:00:00-03:00', { dia: '2026-11-13', semana: '2026-11-09' })).toEqual({ dia: '2026-11-13', semana: '2026-11-09' });
   });
 });
@@ -129,7 +130,7 @@ describe('faixa da partida', () => {
   const lance: Pick<Lance, 'faixa' | 'faixaUnificada'> = { faixa: 'facil', faixaUnificada: 'dificil' };
 
   it('antes do corte, a do catálogo; depois, a recalibrada (senão a do catálogo), ou a corrigida se pagar menos', () => {
-    expect(faixaDaPartida(lance, '2026-11-08T12:00:00-03:00', 'craque')).toBe('facil');
+    expect(faixaDaPartida(lance, '2026-11-07T12:00:00-03:00', 'craque')).toBe('facil');
     expect(faixaDaPartida(lance, '2026-11-09T12:00:00-03:00', null)).toBe('dificil');
     expect(faixaDaPartida(lance, '2026-11-09T12:00:00-03:00', 'media')).toBe('media');
     expect(faixaDaPartida(lance, '2026-11-09T12:00:00-03:00', 'facil')).toBe('facil');
@@ -184,8 +185,8 @@ describe('medalhas dos pênaltis', () => {
 
 describe('disputa da partida de pênaltis (sem Disputa livre desde o corte)', () => {
   const catalogo = new Set(['flamengo-2022-copa-do-brasil', 'selecao-2016-olimpiada']);
-  const antes = '2026-11-08T23:59:59-03:00';
-  const depois = '2026-11-09T00:00:00-03:00';
+  const antes = '2026-11-07T23:59:59-03:00';
+  const depois = '2026-11-08T00:00:00-03:00';
 
   it('antes do corte: id do catálogo vale; sem id ou fora do catálogo vira partida livre', () => {
     expect(disputaDaPartida({ agora: antes, pedida: 'flamengo-2022-copa-do-brasil', catalogo })).toEqual({ disputa: 'flamengo-2022-copa-do-brasil' });
@@ -194,7 +195,7 @@ describe('disputa da partida de pênaltis (sem Disputa livre desde o corte)', ()
     expect(disputaDaPartida({ agora: antes, pedida: 42, catalogo })).toEqual({ disputa: null });
   });
 
-  it('a partir do corte (09/11, 0h de Brasília): sem disputa do catálogo, 400 disputa_obrigatoria', () => {
+  it('a partir do corte (domingo 08/11, 0h de Brasília): sem disputa do catálogo, 400 disputa_obrigatoria', () => {
     expect(disputaDaPartida({ agora: depois, pedida: 'selecao-2016-olimpiada', catalogo })).toEqual({ disputa: 'selecao-2016-olimpiada' });
     expect(disputaDaPartida({ agora: depois, pedida: undefined, catalogo })).toEqual({ erro: { status: 400, codigo: 'disputa_obrigatoria' } });
     expect(disputaDaPartida({ agora: depois, pedida: 'inventada-2099', catalogo })).toEqual({ erro: { status: 400, codigo: 'disputa_obrigatoria' } });

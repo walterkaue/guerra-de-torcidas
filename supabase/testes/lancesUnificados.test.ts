@@ -1,7 +1,8 @@
 // Migração dos Lances unificados (20261105100000): teto com as duas regras pelo dia, limite do dia somando pênaltis e
 // Lances com trava, X1 dos Lances, medalhas dos pênaltis (com o preenchimento), tentativas por lance, posição e recorde
 // que recomeçam no corte, e permissões. Roda o SQL de verdade (PGlite).
-// O corte de verdade é 09/11/2026. Para testar o "depois" sem esperar, um segundo banco troca a data de corte.
+// O corte de verdade é domingo 08/11/2026 (20261107200000). Para testar o "depois" sem esperar, um segundo banco
+// troca a data de corte.
 
 import type { PGlite } from '@electric-sql/pglite';
 import { createHash } from 'node:crypto';
@@ -109,27 +110,27 @@ const lances = (id: string, desfechos: ('gol' | 'defesa')[]) => ({
   lances: desfechos.map((d) => ({ lanceId: id, faixa: 'media', desfecho: d, recriou: false, gesto: { dir: 0, forca: 60, efeito: 0 } })),
 });
 
-describe('corte pelo dia (data de corte de verdade, 09/11/2026)', () => {
+describe('corte pelo dia (data de corte de verdade, domingo 08/11/2026)', () => {
   let db: PGlite;
   beforeAll(async () => {
     db = await bancoDeTeste();
   }, TEMPO);
 
-  it('a data de corte é segunda 09/11/2026, 0h de Brasília', async () => {
+  it('a data de corte é domingo 08/11/2026, 0h de Brasília', async () => {
     const { rows } = await db.query<{ desde: Date; dia: string }>(
       `select public.lances_unificados_desde() as desde, public.lances_dia_do_corte()::text as dia`,
     );
-    expect(rows[0].desde.toISOString()).toBe('2026-11-09T03:00:00.000Z');
-    expect(rows[0].dia).toBe('2026-11-09');
+    expect(rows[0].desde.toISOString()).toBe('2026-11-08T03:00:00.000Z');
+    expect(rows[0].dia).toBe('2026-11-08');
   });
 
   it('antes do corte: 5 melhores de pênaltis e Prova, e a melhor dos Lances à parte', async () => {
     const eu = await torcedor(db);
-    const dia = '2026-11-08';
-    for (const p of [50, 60, 70, 80, 90]) await partida(db, eu, p, { dia, criada: '2026-11-08T12:00:00-03:00' });
-    await partida(db, eu, 85, { minigame: 'prova', dia, criada: '2026-11-08T12:00:00-03:00' });
-    await partida(db, eu, 40, { minigame: 'lances', dia, criada: '2026-11-08T12:00:00-03:00' });
-    await partida(db, eu, 96, { minigame: 'lances', dia, criada: '2026-11-08T12:00:00-03:00' });
+    const dia = '2026-11-07';
+    for (const p of [50, 60, 70, 80, 90]) await partida(db, eu, p, { dia, criada: '2026-11-07T12:00:00-03:00' });
+    await partida(db, eu, 85, { minigame: 'prova', dia, criada: '2026-11-07T12:00:00-03:00' });
+    await partida(db, eu, 40, { minigame: 'lances', dia, criada: '2026-11-07T12:00:00-03:00' });
+    await partida(db, eu, 96, { minigame: 'lances', dia, criada: '2026-11-07T12:00:00-03:00' });
     expect(await noTeto(db, eu, dia)).toEqual(['lances:96', 'penaltis:60', 'penaltis:70', 'penaltis:80', 'penaltis:90', 'prova:85']);
   });
 
@@ -148,7 +149,7 @@ describe('corte pelo dia (data de corte de verdade, 09/11/2026)', () => {
     await expect(partida(db, eu, 151, { minigame: 'lances', dia: '2026-11-10' })).rejects.toThrow(/acima_do_teto/);
     await expect(partida(db, eu, 150, { dia: '2026-11-09' })).resolves.toBeDefined();
     // Antes do corte a tabela velha passa de 150; a Prova tem a guarda dela.
-    await expect(partida(db, eu, 190, { dia: '2026-11-08', criada: '2026-11-08T12:00:00-03:00' })).resolves.toBeDefined();
+    await expect(partida(db, eu, 190, { dia: '2026-11-07', criada: '2026-11-07T12:00:00-03:00' })).resolves.toBeDefined();
     await expect(partida(db, eu, 151, { minigame: 'prova', dia: '2026-11-09' })).resolves.toBeDefined();
   });
 
