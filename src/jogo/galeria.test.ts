@@ -260,12 +260,19 @@ describe('Home: o que anunciar', () => {
 
   it('troféu do mês é ganho no 1º dia do mês seguinte', () => {
     expect(ganhoEm(doMes('campeao_temporada', '2027-12-01'))).toBe('2028-01-01');
-    const a = trofeuParaAnunciar([doMes('acesso', '2027-02-01', { serie: 'b' })], {
-      meuTime: 'flamengo',
-      anunciados: [],
-      hoje: '2027-03-02',
-    });
-    expect(a?.trofeu.trofeu).toBe('acesso');
+  });
+
+  it('os troféus do mês saem pela placa de fim do mês, não pela "Troféu novo"', () => {
+    const doMesTodos = [
+      doMes('campeao_temporada', '2027-02-01'),
+      doMes('campeao_serie_b', '2027-02-01', { serie: 'b' }),
+      doMes('acesso', '2027-02-01', { serie: 'b' }),
+      doMes('campeao_estreia', '2027-02-01', { serie: 'unica' }),
+    ];
+    expect(trofeuParaAnunciar(doMesTodos, { meuTime: 'flamengo', anunciados: [], hoje: '2027-03-02' })).toBeNull();
+    const a = trofeuParaAnunciar([...doMesTodos, semana('2027-02-22')], { meuTime: 'flamengo', anunciados: [], hoje: '2027-03-02' });
+    expect(a?.trofeu.trofeu).toBe('campeao_semana');
+    expect(a?.outros).toBe(0);
   });
 
   it('sem time ou de "Outro time": nada', () => {
