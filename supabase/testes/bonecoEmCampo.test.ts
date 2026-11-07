@@ -4,6 +4,8 @@
 
 import type { PGlite } from '@electric-sql/pglite';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { bancoDeTeste, cortarLancesNoFuturo } from './banco';
 import { ErroBoneco, ligarEmCampo, meuBoneco, salvarBoneco, type Servicos } from '../functions/boneco/fluxo';
@@ -14,6 +16,7 @@ import {
   CHUTEIRAS,
   CORES_DE_CABELO,
   CORPOS,
+  FORMATO_DO_NUMERO,
   PADRAO,
   PECAS,
   PELES,
@@ -149,6 +152,40 @@ describe('as peças de campo batem com o catálogo', () => {
     }
     for (const numero of ['0', '00', '7', '07', '10', '99', null]) {
       expect((await paraCampo({ ...PADRAO, numero }))?.numero).toEqual(numero);
+    }
+  });
+
+  it('as listas do SQL são exatamente as do catálogo (nos dois sentidos)', () => {
+    const sql = readFileSync(join(import.meta.dirname, '..', 'migrations', '20261107000000_boneco_em_campo.sql'), 'utf8');
+    const corpo = sql.slice(sql.indexOf('create or replace function public.boneco_para_campo'), sql.indexOf('create or replace function public.boneco_do_desafiante'));
+    for (const [campo, valores] of Object.entries(CAMPO)) {
+      const m = new RegExp(`'${campo}', case[\\s\\S]*?p ->> '${campo}' in \\(([^)]*)\\)`).exec(corpo);
+      expect(m, campo).not.toBeNull();
+      const doSql = [...m![1].matchAll(/'([^']*)'/g)].map((x) => x[1]).sort();
+      expect(doSql, campo).toEqual(valores.map(String).sort());
+    }
+    expect(corpo).toContain(`p ->> 'numero' ~ '${FORMATO_DO_NUMERO.source}'`);
+  });
+
+  it('tipos e formas estranhas voltam ao padrão', async () => {
+    // jsonb guarda 3.0 com o ponto: o texto "3.0" não está na lista, volta a 0 (o aparelho nunca manda assim).
+    const comPonto = await db.query<{ r: Record<string, unknown> }>(`select public.boneco_para_campo('{"pele": 3.0}'::jsonb) as r`);
+    expect(comPonto.rows[0].r.pele).toBe(0);
+    const casos: [string, unknown, unknown][] = [
+      ['pele', true, 0],
+      ['pele', null, 0],
+      ['corCabelo', 6, 0],
+      ['corpo', 'H', 'h'],
+      ['cabelo', 'Coque', 'raspado'],
+      ['numero', '7\n', null],
+      ['numero', ' 7', null],
+      ['numero', '٧', null],
+      ['cabeca', null, 'nenhum'],
+      ['braco', { a: 1 }, 'nenhum'],
+    ];
+    for (const [campo, valor, esperado] of casos) {
+      const r = await paraCampo({ ...PADRAO, [campo]: valor });
+      expect(r?.[campo], `${campo} = ${JSON.stringify(valor)}`).toEqual(esperado);
     }
   });
 
@@ -291,12 +328,24 @@ describe('o interruptor na função boneco', () => {
     const eu = await torcedor();
     await ler(eu);
     for (let k = 0; k < 15; k++) await salvar(eu, { ...PADRAO, numero: String(k) });
-    for (let k = 0; k < 15; k++) await ligar(eu, k % 2 === 1);
+    for (let k = 0; k < 15; k++) await ligar(eu, k % 2 === 0);
+    expect((await ler(eu)).emCampo).toBe(true); // a 30ª gravação (k = 14, ligar) ficou
     expect(await erroDe(ligar(eu, true))).toBe('limite');
     expect(await erroDe(salvar(eu, PADRAO))).toBe('limite');
-    expect((await ler(eu)).emCampo).toBe(false); // a 30ª gravação (k = 14, desligar) ficou; a 31ª não
     await db.query(`update public.torcedor_boneco set janela_desde = now() - interval '61 minutes' where torcedor_id = $1`, [eu]);
     expect(await ligar(eu, true)).toEqual({ emCampo: true });
+  });
+
+  it('desligar passa mesmo no limite, sem somar gravação; ligar de novo espera a janela', async () => {
+    const eu = await torcedor();
+    await ler(eu);
+    for (let k = 0; k < 30; k++) await salvar(eu, { ...PADRAO, numero: String(k) });
+    expect(await erroDe(salvar(eu, PADRAO))).toBe('limite');
+    for (let k = 0; k < 3; k++) expect(await ligar(eu, false)).toEqual({ emCampo: false });
+    const d = await desafios(eu);
+    expect((await verPenaltis(d.penaltis)).boneco).toBeNull();
+    expect((await db.query<{ g: number }>('select gravacoes as g from public.torcedor_boneco where torcedor_id = $1', [eu])).rows[0].g).toBe(30);
+    expect(await erroDe(ligar(eu, true))).toBe('limite');
   });
 
   it('sessão desconectada ou de outra pessoa não grava', async () => {

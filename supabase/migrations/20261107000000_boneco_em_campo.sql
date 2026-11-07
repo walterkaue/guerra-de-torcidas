@@ -48,7 +48,9 @@ as $$
 $$;
 
 -- Liga ou desliga o boneco em campo. Conta na mesma janela de 30 gravações por hora do boneco_gravar, numa instrução
--- só (a segunda gravação ao mesmo tempo espera a linha da primeira e reavalia o where). Sem boneco ainda,
+-- só (a segunda gravação ao mesmo tempo espera a linha da primeira e reavalia o where). **Desligar passa sempre**,
+-- mesmo com o limite estourado: é como a pessoa tira o boneco dos desafios dela (a Política promete "Dá para desligar
+-- no Perfil"); no limite, desligar não soma gravação. Sem boneco ainda,
 -- {"erro": "sem_boneco"}: a função sorteia um (boneco_criar) e tenta de novo.
 -- Devolve {"erro": "sessao" | "sem_torcedor" | "sem_boneco" | "limite"} ou {"em_campo": boolean}.
 create or replace function public.boneco_em_campo(p_torcedor uuid, p_sessao uuid, p_ligado boolean)
@@ -76,10 +78,14 @@ begin
   update public.torcedor_boneco as b
     set em_campo = p_ligado,
       atualizado_em = now(),
-      gravacoes = case when b.janela_desde <= now() - interval '1 hour' then 1 else b.gravacoes + 1 end,
+      gravacoes = case
+        when b.janela_desde <= now() - interval '1 hour' then 1
+        when b.gravacoes >= v_limite then b.gravacoes
+        else b.gravacoes + 1
+      end,
       janela_desde = case when b.janela_desde <= now() - interval '1 hour' then now() else b.janela_desde end
     where b.torcedor_id = p_torcedor
-      and (b.janela_desde <= now() - interval '1 hour' or b.gravacoes < v_limite)
+      and (not p_ligado or b.janela_desde <= now() - interval '1 hour' or b.gravacoes < v_limite)
   returning b.em_campo into v_gravado;
   if v_gravado is null then
     return jsonb_build_object('erro', 'limite');
@@ -96,7 +102,7 @@ grant execute on function public.boneco_em_campo(uuid, uuid, boolean) to service
 -- ---------------------------------------------------------------------------
 -- Entra a vestimenta guardada (já conferida pela função ao salvar); sai um objeto novo só com corpo, pele, cabelo,
 -- corCabelo, numero, cabeca, punho, braco e chuteira. Valor fora do catálogo, de tipo errado ou ausente volta ao
--- PADRAO, campo a campo, como o `validar`. Camisa, colete, faixa, apito, pose, fundo e moldura nunca saem. O que não
+-- PADRAO, campo a campo, como o `validar` (só não olha o `v`: a vestimenta gravada sempre tem v = 1). Camisa, colete, faixa, apito, pose, fundo e moldura nunca saem. O que não
 -- se refaz aqui é a conta das peças liberadas (precisa da Carreira e das medalhas): ela é feita ao salvar, e peça
 -- liberada não volta a trancar. O que não é objeto sai null (sem boneco).
 create or replace function public.boneco_para_campo(p jsonb)
