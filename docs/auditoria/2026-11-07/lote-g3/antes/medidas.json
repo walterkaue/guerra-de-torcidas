@@ -1,0 +1,82 @@
+{
+  "384-fonte150/01-home": {
+    "larguraPagina": 384,
+    "larguraTela": 384
+  },
+  "384-fonte150/02-ranking-semana": {
+    "larguraPagina": 384,
+    "larguraTela": 384
+  },
+  "384-fonte150/03-ranking-temporada": {
+    "larguraPagina": 384,
+    "larguraTela": 384
+  },
+  "384-fonte150/04-ranking-cidades": {
+    "larguraPagina": 384,
+    "larguraTela": 384
+  },
+  "384-fonte150/05-ranking-conquistas": {
+    "larguraPagina": 384,
+    "larguraTela": 384
+  },
+  "384-fonte150/06-lances": {
+    "larguraPagina": 384,
+    "larguraTela": 384
+  },
+  "384-fonte150/07-time-do-dia": {
+    "larguraPagina": 384,
+    "larguraTela": 384
+  },
+  "384-fonte150/08-crava": {
+    "larguraPagina": 384,
+    "larguraTela": 384
+  },
+  "384-fonte150/09-prova": {
+    "larguraPagina": 384,
+    "larguraTela": 384
+  },
+  "384-fonte150/10-card": {
+    "larguraPagina": 384,
+    "larguraTela": 384
+  },
+  "360/01-home": {
+    "larguraPagina": 360,
+    "larguraTela": 360
+  },
+  "360/02-ranking-semana": {
+    "larguraPagina": 360,
+    "larguraTela": 360
+  },
+  "360/03-ranking-temporada": {
+    "larguraPagina": 360,
+    "larguraTela": 360
+  },
+  "360/04-ranking-cidades": {
+    "larguraPagina": 360,
+    "larguraTela": 360
+  },
+  "360/05-ranking-conquistas": {
+    "larguraPagina": 360,
+    "larguraTela": 360
+  },
+  "360/06-lances": {
+    "larguraPagina": 360,
+    "larguraTela": 360
+  },
+  "360/07-time-do-dia": {
+    "larguraPagina": 360,
+    "larguraTela": 360
+  },
+  "360/08-crava": {
+    "larguraPagina": 360,
+    "larguraTela": 360
+  },
+  "360/09-prova": {
+    "larguraPagina": 360,
+    "larguraTela": 360
+  },
+  "360/10-card": {
+    "larguraPagina": 360,
+    "larguraTela": 360
+  }
+}

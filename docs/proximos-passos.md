@@ -57,7 +57,12 @@ Quatro trilhos, que rodam em paralelo (fila decidida pelo Kauê em 05/11/2026), 
 - **Em andamento:** J09, J10, J27, J29, J35, J37 e J43. Os ajustes J27 (Galeria de Outro time com um título só e a lista já aberta), J29 (voltar de onde veio, com o aviso da segunda camisa), J35 (Termos: "mensagens do Achei um erro"; `DATA_DA_VERSAO` em 06/11/2026, então todo mundo vê "Os Termos mudaram · Ler") e J37 (botão "Outro aparelho" com a folha de duas opções) estão na branch `claude/jornadas-simuladas-ajustes-d9ceac`, com prints em `docs/auditoria/2026-11-06/lote-g1/`; o Kauê aprova antes do merge. J09, J10 e J43 seguem com outras sessões.
 - **Depois:** J41, J42, J44, J45 e J47.
 - **Fora:** J46 e J48.
-- **Simulador automático (F1):** ainda sem PR.
+- **Simulador automático (F1):** no `main` desde 07/11/2026 (PR #146; `npm run simular`, `scripts/simulacoes/`). A primeira rodada achou S01 a S18 (`docs/auditoria/2026-11-06/simulacoes/achados.csv`).
+- **Lote G3 (07/11/2026, branch `claude/lote-g3-acessibilidade`):** fonte grande, leitor de tela, teclado e toque. Corrige S01 a S05, S09 e S14 a S18. Só site; nada no Supabase. O Kauê aprova os prints antes do merge (`docs/auditoria/2026-11-07/lote-g3/`, antes e depois em 384×854 com fonte 150% e em 360×740).
+  - **O que muda:** regra única das abas (2 × 2 com fonte grande), alvos de 44 px, nome do leitor de tela começando pelo texto da tela, aviso do Crava em 2 linhas, pistas curtas no Time do Dia, trava no "Salvar imagem", Esc no sininho e foco na área das regras.
+  - **S17 era falso positivo:** o simulador media o foco relativo à janela, e a rolagem do Tab fazia o número cair. A métrica agora soma a rolagem.
+  - **Falta no celular (o Kauê):** com a fonte do sistema no máximo, abrir Ranking, Lances, Crava e Time do Dia e ver que nada sai da tela; com o TalkBack, tocar numa linha do Ranking e ouvir posição, time e pontos antes do "abrir a Casa".
+- **Lote A4 (segunda, 09/11/2026):** limpeza do resultado, da ficha do lance, do placar, do aviso de conexão e da barra de baixo (S06 a S08 e S10 a S13). O G3 não mexeu nessas telas.
 
 ## Conferir primeiro
 

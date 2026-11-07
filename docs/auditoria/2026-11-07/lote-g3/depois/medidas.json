@@ -1,0 +1,140 @@
+{
+  "384-fonte150/01-home": {
+    "larguraPagina": 384,
+    "larguraTela": 384,
+    "vazam": [
+      "circle.casa-brilho:"
+    ],
+    "abas": []
+  },
+  "384-fonte150/02-ranking-semana": {
+    "larguraPagina": 384,
+    "larguraTela": 384,
+    "vazam": [],
+    "abas": []
+  },
+  "384-fonte150/03-ranking-temporada": {
+    "larguraPagina": 384,
+    "larguraTela": 384,
+    "vazam": [],
+    "abas": []
+  },
+  "384-fonte150/04-ranking-cidades": {
+    "larguraPagina": 384,
+    "larguraTela": 384,
+    "vazam": [],
+    "abas": []
+  },
+  "384-fonte150/05-ranking-conquistas": {
+    "larguraPagina": 384,
+    "larguraTela": 384,
+    "vazam": [],
+    "abas": []
+  },
+  "384-fonte150/06-lances": {
+    "larguraPagina": 384,
+    "larguraTela": 384,
+    "vazam": [],
+    "abas": []
+  },
+  "384-fonte150/07-time-do-dia": {
+    "larguraPagina": 384,
+    "larguraTela": 384,
+    "vazam": [],
+    "abas": []
+  },
+  "384-fonte150/08-crava": {
+    "larguraPagina": 384,
+    "larguraTela": 384,
+    "vazam": [],
+    "abas": []
+  },
+  "384-fonte150/09-prova": {
+    "larguraPagina": 384,
+    "larguraTela": 384,
+    "vazam": [],
+    "abas": []
+  },
+  "384-fonte150/10-card": {
+    "larguraPagina": 384,
+    "larguraTela": 384,
+    "vazam": [
+      "circle.casa-brilho:"
+    ],
+    "abas": []
+  },
+  "360/01-home": {
+    "larguraPagina": 360,
+    "larguraTela": 360,
+    "vazam": [
+      "rect.casa-chao:",
+      "circle.casa-brilho:",
+      "path.casa-parede:",
+      "path.casa-janelas:",
+      "ellipse.casa-teto:",
+      "ellipse.casa-anel1:"
+    ],
+    "abas": []
+  },
+  "360/02-ranking-semana": {
+    "larguraPagina": 360,
+    "larguraTela": 360,
+    "vazam": [],
+    "abas": []
+  },
+  "360/03-ranking-temporada": {
+    "larguraPagina": 360,
+    "larguraTela": 360,
+    "vazam": [],
+    "abas": []
+  },
+  "360/04-ranking-cidades": {
+    "larguraPagina": 360,
+    "larguraTela": 360,
+    "vazam": [],
+    "abas": []
+  },
+  "360/05-ranking-conquistas": {
+    "larguraPagina": 360,
+    "larguraTela": 360,
+    "vazam": [],
+    "abas": []
+  },
+  "360/06-lances": {
+    "larguraPagina": 360,
+    "larguraTela": 360,
+    "vazam": [],
+    "abas": []
+  },
+  "360/07-time-do-dia": {
+    "larguraPagina": 360,
+    "larguraTela": 360,
+    "vazam": [],
+    "abas": []
+  },
+  "360/08-crava": {
+    "larguraPagina": 360,
+    "larguraTela": 360,
+    "vazam": [],
+    "abas": []
+  },
+  "360/09-prova": {
+    "larguraPagina": 360,
+    "larguraTela": 360,
+    "vazam": [],
+    "abas": []
+  },
+  "360/10-card": {
+    "larguraPagina": 360,
+    "larguraTela": 360,
+    "vazam": [
+      "rect.casa-chao:",
+      "circle.casa-brilho:",
+      "path.casa-parede:",
+      "path.casa-janelas:",
+      "ellipse.casa-teto:",
+      "ellipse.casa-anel1:"
+    ],
+    "abas": []
+  }
+}

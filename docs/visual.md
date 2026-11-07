@@ -120,6 +120,10 @@ Card 'Telão do estádio' (decidido em 31/10/2026): arquibancada do clube no alt
 
 ### Crava a Rodada
 - **Aviso fixo** "Aqui é só resenha: sem aposta, sem dinheiro, sem prêmio em dinheiro. Nunca."
+  - **Com a fonte do sistema grande** (lote G3, 07/11/2026): o aviso continua grudado no topo e com o texto igual (`docs/jogo.md` 7).
+  - **Letra:** condensada da casa e limitada (`clamp(12px, 3,4vw, 14px)`), para caber em até 2 linhas em 384 px com fonte 150%.
+  - **Margem da lista:** a página ganha `scroll-padding-top` do tamanho do aviso, e a data e o "Certeza ×2" não param por baixo dele.
+  - **Pouco espaço:** as bolinhas de forma mostram só os 3 últimos jogos, e o leitor de tela continua lendo os 5.
 - Cartão por jogo com placar ajustável (− e +), "Jogo da certeza" destacado, e jogo fechado mostrando como a torcida cravou.
 
 ### No MVP (até a fase 1.5 chegar)
@@ -150,6 +154,7 @@ Decidido em 31/10/2026. A aba "Carreira" da barra (que era "em breve") vira **Pe
 - Respeitar `prefers-reduced-motion`: sem tremida, sem confete, sem câmera lenta, sem mola nos botões, sem vibração leve.
 - Nada pisca mais de 3 vezes por segundo.
 - **Durações e molas** (variáveis em `src/style.css`): `--rapido` 120 ms, `--medio` 260 ms, `--lento` 420 ms; `--mola` passa ~10% do ponto e volta (pop de adesivo, botão soltando), `--mola-firme` quase não passa (barras, cards). Feitas com `linear()` do CSS, sem biblioteca; navegador antigo cai numa `cubic-bezier` parecida. No canvas, a mesma curva é a função `mola()` de `telas/cena.ts` (só desenho, nunca a física).
+- **Alvo de toque de 44 px no mínimo** (lote G3, 07/11/2026). A caixa do botão tem pelo menos 44 px de altura, mesmo quando o desenho é menor: a sobra vira borda transparente (`background-clip: padding-box`) ou contorno em `box-shadow: inset`. Assim ficaram o selo "Pré-temporada: o que é", as abas de 2º nível e o "trocar" do time na Home.
 - **Todo toque responde na hora:** o botão afunda sem transição e, ao soltar, volta com a mola; cards e botões pequenos encolhem um pouco (0,92 a 0,97).
 - **Vibração (só Android; o iPhone não tem):** `telas/toque.ts`. Leve (8 ms) em botão principal, card de jogo e barra de navegação; acerto (22 ms) na Prova e no Time do Dia; erro (30-50-30); gol (60-40-90). Nada passa de 200 ms. A chave Vibração, nos ajustes do Perfil, desliga tudo (preferência `semVibracao`).
 - **Fica de fora:** bibliotecas de animação (Framer Motion, GSAP, Lottie, Rive) e WebGL. O peso não cabe no orçamento e o celular simples esquenta.
@@ -214,7 +219,11 @@ Escolhida pelo Kauê depois da auditoria de 03/11 (`docs/jogo.md`, seção 14.2;
   - **Ouro completo:** brilha, e o brilho fica parado com movimento reduzido.
   - **Versões:** a compacta vai no card, nas Conquistas e no resultado; a grande, com os marcos escritos, vai na ficha.
   - **Leitura:** o nome da medalha vai sempre por escrito (`aria-label`).
-- **Abas:** a principal é uma fileira em placa, e a marcada vira papel claro com o filete do time embaixo. As de 2º nível são menores, escuras e ficam lado a lado na mesma linha. Nenhuma aba é amarela.
+- **Abas:** a principal é uma fileira em placa, e a marcada vira papel claro com o filete do time embaixo. As de 2º nível são menores e escuras. Nenhuma aba é amarela.
+  - **Regra única (lote G3, 07/11/2026):** vale para `.abas-tv` e `.abas-2` em todas as telas, inclusive as montadas à mão (Temporada, Vestiário) e as 3 ajudas da Prova. As abas do grupo têm o mesmo tamanho e ocupam a largura toda. O nome longo quebra em 2 linhas, centralizado. Nunca rolam para o lado nem se sobrepõem, também com a fonte do sistema em 150%.
+  - **Grupos de 2º nível:** cada um ocupa a linha inteira, um embaixo do outro (Esta semana · Passada em cima, Campeão · Maior torcida embaixo).
+  - **Fonte grande:** 4 abas de 1º nível viram 2 × 2 quando a fileira tem menos de 17 letras de largura (`.abas-caixa`, container query em `em`). Assim nenhuma palavra parte no meio.
+  - **Toque:** a aba de 2º nível tem 44 px de altura, e a parte desenhada continua com 38 px (borda transparente com `background-clip: padding-box`).
 - **Vazio, erro e carregando:** ícone, frase, detalhe e ação ("Tentar de novo" no erro; convite no vazio, como "Jogar agora").
 - **Cabeçalho de tela:** título em Anton 30 px igual em todas, voltar à esquerda e o **selo único da pré-temporada** à direita. O toque abre a explicação ("tudo vale ponto, mas zera antes do lançamento"); os outros avisos de pré-temporada saíram.
 - **Amarelo cheio só no botão principal**, um por tela. Chave ligada em verde, sua torcida no ranking com placa clara e contorno.
