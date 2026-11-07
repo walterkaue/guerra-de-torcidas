@@ -205,7 +205,9 @@ describe('boneco de quem chamou o X1: do servidor para a Vestimenta', () => {
     expect(v.numero).toBeNull();
     expect(v.chuteira).toBe(PADRAO.chuteira);
     expect(v.corpo).toBe('m');
-    expect(vestimentaDeCampo({})).toEqual({ ...PADRAO });
+    expect(vestimentaDeCampo({})).toBeNull(); // sem nenhuma peça de campo não é boneco
+    expect(vestimentaDeCampo({ fundo: 'estadio_noite', torcedor_id: 'x' })).toBeNull();
+    expect(vestimentaDeCampo({ cabelo: 'coque' })).toEqual({ ...PADRAO, cabelo: 'coque' });
   });
 
   it('o resultado passa no batedorEmCampo (forma da Vestimenta completa)', () => {

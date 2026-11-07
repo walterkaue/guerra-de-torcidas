@@ -6,6 +6,7 @@
 // desafio (só o que vai a campo), nas cores do time dele, com fundo e moldura padrão.
 
 import { timePorId } from '../dados/times';
+import { vestimentaDeCampo } from './bonecoEmCampo';
 import { meuBonecoParaBusto } from './bonecoEmCampoCena';
 import { pintarBoneco } from './bonecoDoAparelho';
 
@@ -43,7 +44,8 @@ export function bustosDoDuelo(raiz: ParentNode, bonecoDeQuemChamou: unknown, tim
     : null;
   const t = timePorId(timeDeQuemChamou);
   const cores: readonly [string, string] | undefined = t ? [t.cores[0], t.cores[1]] : undefined;
-  const paraEle = bonecoDeQuemChamou
+  // Resposta torta do servidor (nem objeto de peças): sem busto, em vez de um buraco de 40 px ao lado do apelido.
+  const paraEle = vestimentaDeCampo(bonecoDeQuemChamou)
     ? (alvo: HTMLElement) => pintarBoneco(alvo, { recorte: 'busto', largura: BUSTO_DO_DUELO, altura: BUSTO_DO_DUELO, deCampo: bonecoDeQuemChamou, ...(cores ? { cores } : {}) })
     : null;
   if (!paraMim && !paraEle) return;

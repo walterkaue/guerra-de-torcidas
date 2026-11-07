@@ -34,6 +34,8 @@ export function pintarNoAlvo(alvo: HTMLElement, p: Pintura): void {
     const lado = document.createElement('span');
     lado.className = 'convite-busto';
     lado.setAttribute('aria-hidden', 'true');
+    // O parágrafo passa a conter o busto (texto curto não deixa ele vazar em cima do botão).
+    alvo.classList.add('com-busto');
     alvo.prepend(lado);
     alvo = lado;
   }

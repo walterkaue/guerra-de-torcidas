@@ -62,6 +62,8 @@ const TODAS_AS_PECAS = PECAS.map((p) => p.id);
 export function vestimentaDeCampo(x: unknown): Vestimenta | null {
   if (typeof x !== 'object' || x === null || Array.isArray(x)) return null;
   const bruto = x as Record<string, unknown>;
+  // Objeto sem nenhuma peça de campo não é boneco: sorteia, em vez de desenhar o padrão.
+  if (!CHAVES_DE_CAMPO.some((k) => k in bruto)) return null;
   const base: Record<string, unknown> = { ...PADRAO };
   for (const k of CHAVES_DE_CAMPO) if (k in bruto) base[k] = bruto[k];
   return validar(base, TODAS_AS_PECAS);

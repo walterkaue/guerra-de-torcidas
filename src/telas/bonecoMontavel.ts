@@ -326,7 +326,7 @@ const PIXELS_POR_UNIDADE = 5;
 export function criarSpriteDoNumero(numero: string, cor: string): SpriteDoNumero {
   const sprite: SpriteDoNumero = { img: null };
   const desenhar = () => {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, qualidade().dprMax);
     const canvas = document.createElement('canvas');
     canvas.width = Math.ceil(LARGURA_DO_SPRITE * PIXELS_POR_UNIDADE * dpr);
     canvas.height = Math.ceil(ALTURA_DO_SPRITE * PIXELS_POR_UNIDADE * dpr);

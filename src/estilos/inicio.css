@@ -851,6 +851,10 @@
   color: var(--amarelo);
 }
 
+.convite-desafio .com-busto {
+  display: flow-root;
+}
+
 .convite-desafio .convite-busto {
   float: left;
   width: 40px;

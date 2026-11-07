@@ -223,7 +223,10 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
   // Meu boneco em campo: o batedor dos jogos é o boneco da pessoa (só visual). Grava no aparelho na hora e no servidor
   // em seguida; se o servidor falhar, volta ao que era e avisa.
   const elEmCampo = root.querySelector<HTMLInputElement>('[data-em-campo]')!;
+  /** Tocou no interruptor nesta visita: a leitura do servidor que chegar depois não desfaz o toque. */
+  let tocouEmCampo = false;
   elEmCampo.addEventListener('change', () => {
+    tocouEmCampo = true;
     const ligado = elEmCampo.checked;
     guardarEmCampo(ligado);
     const salvar = FALSA ? import('../dev/homeFalsa').then((m) => m.salvarEmCampo(ligado)) : import('../servidor/boneco').then((m) => m.salvarEmCampo(ligado));
@@ -267,6 +270,8 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
       const { lerDoServidor } = await import('./bonecoPintar');
       const b = await lerDoServidor();
       if (saiu) return;
+      // O interruptor nasceu da cópia do aparelho; o servidor manda (outro aparelho pode ter desligado).
+      if (!tocouEmCampo && typeof b.emCampo === 'boolean') elEmCampo.checked = b.emCampo;
       pronto();
       pararCorpo.push(pintarBoneco(caixa, { recorte: 'corpo', largura: 76, altura: 112, vestimenta: b.vestimenta, rotulo: 'Seu boneco' }));
       conta.textContent = `${textoDoContador(b.liberadas)} peças`;
