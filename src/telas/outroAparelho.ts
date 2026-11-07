@@ -1,4 +1,4 @@
-// "Jogar em outro aparelho" (docs/jogo.md, seção 14.1): mostra o código de 8 caracteres e o QR, com contador de
+// "Levar minha conta pra outro aparelho" (docs/jogo.md, seção 14.1): mostra o código de 8 caracteres e o QR, com contador de
 // 10 minutos, e fica de olho até o outro aparelho entrar. O código só vive nesta tela: não vai para console,
 // armazenamento, endereço nem card.
 
@@ -17,7 +17,7 @@ const CONSULTA_MS = 5000;
 export function telaOutroAparelho(root: HTMLElement, _rota: Rota): () => void {
   root.innerHTML = `
     <main class="tela outro-aparelho">
-      ${cabecalhoTela({ titulo: 'Jogar em outro aparelho', voltar: true, pre: false })}
+      ${cabecalhoTela({ titulo: 'Levar minha conta', voltar: true, pre: false })}
       <p class="campo-dica">No outro aparelho, aponta a câmera pro QR. Ou abre o Guerra de Torcidas e digita o código em "Já jogo em outro aparelho", na escolha do time, ou no Perfil. Vira o mesmo torcedor: carreira, medalhas, recordes e time.</p>
 
       <section class="codigo-caixa placa" data-caixa aria-live="polite">${estado('carregando', 'Sorteando o código…')}</section>

@@ -2,7 +2,7 @@
 // Só entram cidades e estados com 5+ jogadores na semana. Nenhum apelido: só nome de cidade e UF.
 // Semana provisória e travada iguais à aba Semana. Atualiza pelo mesmo aviso (Realtime) do ranking dos times.
 
-import { esc } from '../app';
+import { esc, irPara } from '../app';
 import { prefs } from '../estado';
 import { semanaConfirmadaEm } from '../jogo/crava';
 import {
@@ -130,7 +130,7 @@ export function desenharCidades(el: HTMLElement, inicial?: 'campeas'): () => voi
     else if (!minha && sub !== 'estados') frase = 'Defende sua cidade também? Escolha a sua e some pontos pra ela.';
     elFrase.textContent = frase;
     elFrase.hidden = !frase;
-    const convite = !minha && prefs.get().time ? `<a class="botao-linha" href="#cidade">Escolher minha cidade</a>` : '';
+    const convite = !minha && prefs.get().time ? `<button type="button" class="botao-linha" data-escolher-cidade>Escolher minha cidade</button>` : '';
 
     if (sub === 'estado' && !minha) {
       elTabela.innerHTML = estado('vazio', 'Escolha sua cidade pra ver o seu estado.', { detalhe: 'Pode trocar quando quiser.' }) + convite;
@@ -178,6 +178,7 @@ export function desenharCidades(el: HTMLElement, inicial?: 'campeas'): () => voi
       void carregar();
       return;
     }
+    if (alvo.closest('[data-escolher-cidade]')) return irPara({ tela: 'cidade', depois: { tela: 'ranking', aba: 'cidades' } });
     const w = alvo.closest<HTMLElement>('[data-cidsemana]');
     if (w) {
       const nova = w.dataset.cidsemana === 'passada' ? passada : atual;

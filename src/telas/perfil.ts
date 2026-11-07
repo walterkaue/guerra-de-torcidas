@@ -3,6 +3,7 @@
 // Baixa sob demanda: não pesa no JS inicial da Home.
 
 import '../estilos/perfil.css';
+import '../estilos/trofeus.css';
 import '../estilos/cidade.css';
 import { esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, corDeTexto, timePorId } from '../dados/times';
@@ -123,8 +124,8 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
 
       <section class="placa perfil-bloco" aria-label="Outros aparelhos">
         ${faixa('Aparelhos ligados')}
-        ${time ? '<div data-aparelhos></div><button class="ajuste" type="button" data-acao="outro-aparelho">Jogar em outro aparelho</button>' : '<p class="vazio">Escolhe o time pra ligar outro aparelho.</p>'}
-        <button class="ajuste" type="button" data-acao="entrar-codigo">Entrar com código de outro aparelho</button>
+        ${time ? '<div data-aparelhos></div>' : '<p class="vazio">Escolhe o time pra ligar outro aparelho.</p>'}
+        <button class="ajuste" type="button" data-acao="aparelho" aria-haspopup="dialog">Outro aparelho</button>
       </section>
 
       <section class="placa perfil-bloco" aria-label="Aquecimento">
@@ -168,8 +169,28 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
   // "Escolha seu apelido" usa o campo e o filtro de sempre, na escolha do time.
   root.querySelector('[data-acao="apelido"]')?.addEventListener('click', () => irPara({ tela: 'times', depois: 'perfil', apelido: true }));
   root.querySelector('[data-acao="vestiario"]')?.addEventListener('click', () => abrirVestiario());
-  root.querySelector('[data-acao="outro-aparelho"]')?.addEventListener('click', () => irPara({ tela: 'outroAparelho' }));
-  root.querySelector('[data-acao="entrar-codigo"]')?.addEventListener('click', () => irPara({ tela: 'entrar', de: 'perfil' }));
+  // Um botão só (J37): a folha oferece as duas saídas, do mesmo tamanho.
+  root.querySelector('[data-acao="aparelho"]')?.addEventListener('click', () => {
+    const d = document.createElement('dialog');
+    d.className = 'ficha-lance';
+    d.setAttribute('aria-label', 'Outro aparelho');
+    d.innerHTML = `<div class="ficha-corpo">
+        <h2 class="perfil-folha-titulo">Outro aparelho</h2>
+        ${time ? '<button type="button" class="botao" data-opcao="levar">Levar minha conta pra outro aparelho</button>' : ''}
+        <button type="button" class="botao" data-opcao="entrar">Entrar com o código de outro aparelho</button>
+        <button type="button" class="botao botao-sec" data-fechar>Fechar</button>
+      </div>`;
+    d.addEventListener('close', () => d.remove());
+    d.addEventListener('click', (e) => {
+      if (e.target === d) d.close();
+    });
+    d.querySelector('[data-fechar]')!.addEventListener('click', () => d.close());
+    d.querySelector('[data-opcao="levar"]')?.addEventListener('click', () => irPara({ tela: 'outroAparelho' }));
+    d.querySelector('[data-opcao="entrar"]')!.addEventListener('click', () => irPara({ tela: 'entrar', de: 'perfil' }));
+    root.append(d);
+    if (typeof d.showModal === 'function') d.showModal();
+    else d.setAttribute('open', '');
+  });
   const elAparelhos = root.querySelector<HTMLElement>('[data-aparelhos]');
   if (elAparelhos) montarAparelhos(elAparelhos, () => saiu);
   root.querySelector('[data-acao="aquecimento"]')?.addEventListener('click', () => irPara({ tela: 'aquecimento', depois: aqui }));

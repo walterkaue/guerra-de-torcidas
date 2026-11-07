@@ -1,0 +1,143 @@
+// Zé, 41, motoboy, Flamengo, 18+. Abre o link do X1 de pênaltis que caiu no grupo do WhatsApp, num Android de
+// entrada com 4G ruim. Chuta forte demais (a dica "Forte demais vai por cima" tem de aparecer).
+import { chutar, jogarPartida, esperar, tocarSemCobertura } from './comum/jogar.mjs';
+
+const LINK_X1 = '/?homeFalsa&penaltiFalso&d=abcdefgh';
+const DICA_FORTE = /forte demais/i;
+
+export default {
+  id: 'ze',
+  ordem: 1,
+  nome: 'Zé',
+  descricao: '41 anos, motoboy, Flamengo, 18+. Abre o link do X1 que caiu no grupo do WhatsApp.',
+  time: 'Flamengo',
+  menor: false,
+  toque: { erroPx: 4, demoraMs: 80 },
+  gesto: { escalaForca: 1.6, duracaoMs: 150, tremorPx: 1 },
+  aparelhos: ['android-entrada'],
+  cortes: ['depois', 'antes'],
+  async jornada(s, { corte }) {
+    const p = s.page;
+
+    // 1. O link do grupo: a Home com o convite.
+    await s.passo('abre o link do X1', async () => {
+      const ms = await s.abrir(LINK_X1, { esperarPor: 'text=Aceitar o X1', limiteMs: 20000, rotulo: 'link do X1 até o convite na Home' });
+      s.medir('tempo até a Home aparecer', ms, 4000);
+    });
+
+    // 2. Aceitar: o time é pedido agora.
+    await s.passo('aceita o X1 e cai na escolha do time', async () => {
+      await s.tocar(p.locator('[data-acao="desafio"]'));
+      await p.locator('[data-id]').first().waitFor({ state: 'visible', timeout: 15000 });
+    });
+    await s.passo('escolhe o Flamengo', async () => {
+      await s.tocar(p.locator('[data-id="flamengo"]'), { semMudancaOk: true });
+      await s.tocar(p.locator('[data-acao="confirmar"]'));
+    });
+
+    // 3. Triagem de idade.
+    await s.passo('triagem: 18 ou mais', async () => {
+      await s.tocar(p.getByRole('button', { name: '18 ou mais' }));
+    });
+
+    // 4. O X1: 5 cobranças e 5 defesas, chutando forte demais.
+    await s.passo('começa o X1 (mira)', async () => {
+      await p.locator('canvas.campo-jogo').waitFor({ state: 'visible', timeout: 30000 });
+      await p.waitForFunction(() => window.__partida?.fase?.() === 'mirar', null, { timeout: 40000 });
+    });
+    let jogo = null;
+    await s.passo('joga o X1 inteiro', async () => {
+      jogo = await jogarPartida(s, { chute: (n) => ({ u: [0.6, -0.6, 0.3, -0.3, 0][n % 5], forca: 70 }), limiteMs: 170000 });
+    }, { limiteMs: 175000 });
+    if (jogo) {
+      const maior = Math.max(0, ...jogo.longas.map((l) => l.dur));
+      s.medir(`tarefas longas nos ${jogo.cobrancas} arrastes do X1 (${jogo.longas.length}, maior ${Math.round(maior)} ms)`, Math.round(maior), 200);
+      if (!jogo.textos.some((t) => DICA_FORTE.test(t)))
+        s.achado({
+          regra: 'dica-nao-apareceu',
+          gravidade: 'atrapalha',
+          tipo: 'regra do jogo.md',
+          oQue: `Chutando com força ~112 (por cima) em ${jogo.cobrancas} cobranças, a dica "Forte demais vai por cima. Arraste mais curto." não apareceu na faixa. Frases vistas: ${jogo.textos.slice(0, 8).join(' | ')}`,
+          sugestao: 'Conferir se o chute saiu por cima (y > 1) ou se o simulador errou o arraste.',
+          talvezSimulador: true,
+        });
+      if (!jogo.terminou) s.achado({ regra: 'partida-nao-terminou', gravidade: 'bloqueia', tipo: 'erro', oQue: `A partida não chegou ao resultado (${jogo.cobrancas} cobranças, ${jogo.defesas} defesas).`, talvezSimulador: true });
+    }
+
+    // 5. Resultado, Card, Compartilhar no WhatsApp.
+    await s.passo('resultado do X1', async () => {
+      await p.locator('[data-acao="mais-uma"], [data-acao="card"]').first().waitFor({ state: 'visible', timeout: 30000 });
+    }, { paginaInteira: true });
+    await s.passo('abre o Card', async () => {
+      await s.tocar(p.locator('[data-acao="card"]'));
+      await esperar(1500);
+    });
+    await s.passo('fecha o Card', async () => {
+      await p.keyboard.press('Escape');
+      await esperar(500);
+      if (await p.locator('dialog[open]').count()) await s.tocar(p.getByRole('button', { name: /fechar/i }).first(), { semMudancaOk: true });
+    });
+    await s.passo('mandar no grupo (WhatsApp)', async () => {
+      const zap = p.locator('a.botao-zap').first();
+      await zap.scrollIntoViewIfNeeded();
+      const href = await zap.getAttribute('href');
+      s.medir(`endereço que o WhatsApp abriria: ${href}`, 0);
+      await s.tocar(zap, { semMudancaOk: true });
+      await esperar(1200);
+    });
+
+    // 6. "Jogar agora" na Home (cenário em que o próximo jogo são os Lances), com a rede caindo no meio da partida.
+    await s.passo('volta à Home', async () => {
+      await s.abrir('/?homeFalsa&penaltiFalso&lancesFalsos&cenario=lances', { esperarPor: '[data-acao="jogar-agora"]', limiteMs: 20000, rotulo: 'Home até o Jogar agora' });
+    });
+    await s.passo('toca em Jogar agora', async () => {
+      const t0 = Date.now();
+      await tocarSemCobertura(s, p.locator('[data-acao="jogar-agora"]'), 'Jogar agora na Home');
+      await p.locator('[data-ficha], [data-disputa], [data-acao="disputa-livre"]').first().waitFor({ state: 'visible', timeout: 15000 });
+      s.medir('Jogar agora responde (lista dos lances aparece)', Date.now() - t0, 1500);
+    });
+    if (corte === 'depois') {
+      await s.passo('abre a ficha de uma disputa', async () => {
+        await s.tocar(p.locator('[data-ficha]').first());
+        await esperar(600);
+      });
+      await s.passo('toca em Jogar na ficha', async () => {
+        await s.tocar(p.getByRole('button', { name: /^jogar/i }).first());
+        await p.locator('canvas.campo-jogo').waitFor({ state: 'visible', timeout: 30000 });
+      });
+    } else {
+      // Antes do corte: o hub de hoje, com a Disputa livre.
+      await s.passo('toca em Bater a disputa livre', async () => {
+        await s.tocar(p.locator('[data-acao="disputa-livre"]'));
+        await p.locator('canvas.campo-jogo').waitFor({ state: 'visible', timeout: 30000 });
+      });
+    }
+    let jogo2 = null;
+    await s.passo('joga com a rede caindo no meio', async () => {
+      await p.waitForFunction(() => window.__partida?.fase?.() === 'mirar', null, { timeout: 40000 });
+      const partida = jogarPartida(s, { chute: (n) => ({ u: [0.5, -0.5, 0.2, -0.2, 0][n % 5], forca: 70 }), limiteMs: 170000 });
+      await p.waitForFunction(() => (window.__partida?.cobrancas?.length ?? 0) >= 2, null, { timeout: 90000 }).catch(() => {});
+      await s.offline(true);
+      await s.conferir('rede caiu no meio da partida', { assentarMs: 1500 });
+      await esperar(4000);
+      await s.offline(false);
+      jogo2 = await partida;
+    }, { limiteMs: 175000 });
+    if (jogo2 && !jogo2.terminou) s.achado({ regra: 'partida-nao-terminou', gravidade: 'bloqueia', tipo: 'erro', oQue: 'Com a rede caindo no meio, a partida não chegou ao resultado.', talvezSimulador: true });
+    await s.passo('resultado depois da queda de rede', async () => {
+      await p.locator('[data-acao="card"]').waitFor({ state: 'visible', timeout: 30000 });
+    }, { paginaInteira: true });
+
+    // 7. O card sem rede: tem de abrir em até ~4 s.
+    await s.passo('abre o Card sem rede', async () => {
+      await s.offline(true);
+      const t0 = Date.now();
+      await s.tocar(p.locator('[data-acao="card"]'), { semMudancaOk: true });
+      let abriu = true;
+      await p.locator('dialog[open] .cc-slide img[src]').first().waitFor({ state: 'visible', timeout: 12000 }).catch(() => (abriu = false));
+      const ms = Date.now() - t0;
+      s.medir('card abre sem rede' + (abriu ? '' : ' (não abriu em 12 s)'), ms, 4000, !abriu);
+      await s.offline(false);
+    });
+  },
+};
