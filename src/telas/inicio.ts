@@ -147,7 +147,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const time = timePorId(prefs.get().time);
   const codigoDesafio = desafioDoLink();
   const codigoProva = desafioProvaDoLink();
-  // Regra de 09/11/2026 (docs/jogo.md, 14.7): card, "Jogar agora", Lance do Dia e X1 dos Lances. Antes do corte, nada muda.
+  // Regra de 08/11/2026 (docs/jogo.md, 14.7): card, "Jogar agora", Lance do Dia e X1 dos Lances. Antes do corte, nada muda.
   const unificada = lancesUnificados();
   const codigoLances = unificada ? desafioLancesDoLink() : undefined;
   const semana = semanaBrasilia();
@@ -516,7 +516,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       });
   }
 
-  // ---------- Lance do Dia (regra de 09/11/2026) ----------
+  // ---------- Lance do Dia (regra de 08/11/2026) ----------
   // O catálogo dos lances fica fora do bundle da Home: vem depois de desenhar. O mesmo lance para todos, sem bônus.
   const botaoDoDia = root.querySelector<HTMLButtonElement>('[data-acao="lance-do-dia"]');
   const catalogoDosLances = unificada ? Promise.all([import('../dados/lances'), import('../dados/adversarios'), import('../dados/disputas')]) : null;

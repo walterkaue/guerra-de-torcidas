@@ -11,7 +11,7 @@ export function linhaPenaltis(faltam: number | null, teto: number): string {
 }
 
 /**
- * Regra de 09/11/2026 (docs/jogo.md, 14.7): quantas das 10 partidas valendo de hoje ainda dá para fazer.
+ * Regra de 08/11/2026 (docs/jogo.md, 14.7): quantas das 10 partidas valendo de hoje ainda dá para fazer.
  * Os pênaltis, as faltas e o cara a cara somam no mesmo limite. Null sem resposta do servidor.
  */
 export function faltamDosLances(h: { feitas: number; limite: number } | null | undefined): number | null {

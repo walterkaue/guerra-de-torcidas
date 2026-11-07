@@ -15,7 +15,7 @@ if (TETO_UNIFICADO !== TETO_PARTIDA_UNIFICADO) throw new Error('teto unificado d
 
 export { DIA_DO_CORTE };
 export const REGRAS = ['antes', 'nova'];
-export const NOME_REGRA = { antes: 'antes de 09/11', nova: 'a partir de 09/11' };
+export const NOME_REGRA = { antes: 'antes de 08/11', nova: 'a partir de 08/11' };
 
 /** 'antes' ou 'nova', pela hora em que a partida foi criada. Sem data (dado antigo): 'antes'. */
 export function regraDaPartida(criadaEm) {
@@ -72,6 +72,8 @@ export function unidadesLances(regra, partidas = []) {
 /**
  * Peso na semana sem misturar as regras: semanas antes do corte mantêm 'penaltis' e 'lances' separados; a partir
  * do corte os dois viram 'lances' ("Lances"). Devolve só as regras pedidas que têm linhas: [{ regra, minigames, peso }].
+ * O corte cai no domingo 08/11, no meio da semana de 02/11: essa semana inteira entra em 'antes' (o domingo, com a
+ * regra nova, junto), porque o peso é por semana. Por partida (unidadesLances), a separação é pela hora de criação.
  */
 export function pesoNaSemanaPorRegra(linhas, regras = REGRAS) {
   const dobrar = (l) => ({ ...l, minigame: l.minigame === 'penaltis' ? 'lances' : l.minigame });

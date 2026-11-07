@@ -1,16 +1,17 @@
-// Lances do Jogo unificados (docs/jogo.md, seção 14.7): Pênaltis, Faltas e Cara a cara num jogo só, a partir da
-// segunda 09/11/2026, 0h de Brasília. Módulo puro, compartilhado com o servidor (npm run compartilhar).
+// Lances do Jogo unificados (docs/jogo.md, seção 14.7): Pênaltis, Faltas e Cara a cara num jogo só, a partir do
+// domingo 08/11/2026, 0h de Brasília (era segunda 09/11; antecipado em 07/11/2026). Módulo puro, compartilhado com o
+// servidor (npm run compartilhar).
 // A regra de uma partida sai SEMPRE da data em que ela foi criada no servidor, nunca do relógio de agora: assim a
-// partida aberta no domingo à noite fecha com a regra com que começou, e mudar a regra nunca mexe em partida fechada.
+// partida aberta no sábado à noite fecha com a regra com que começou, e mudar a regra nunca mexe em partida fechada.
 
 import { misturar } from './aleatorio.ts';
 import { FAIXAS, faixaPorChance, TABELA_LANCES_ANTES, TABELA_LANCES_UNIFICADA, type Faixa, type Lance, type TabelaLances } from './lances.ts';
 import { PONTOS, PONTOS_UNIFICADOS, type TabelaPenaltis } from './penaltis.ts';
 
-/** Segunda 09/11/2026, 0h de Brasília (UTC−3). Igual a public.lances_unificados_desde() no banco (teste confere). */
-export const LANCES_UNIFICADOS_DESDE = new Date('2026-11-09T03:00:00.000Z');
+/** Domingo 08/11/2026, 0h de Brasília (UTC−3). Igual a public.lances_unificados_desde() no banco (teste confere). */
+export const LANCES_UNIFICADOS_DESDE = new Date('2026-11-08T03:00:00.000Z');
 /** O mesmo corte como dia de Brasília: partidas com `dia` a partir dele seguem a regra nova no teto e na posição. */
-export const DIA_DO_CORTE = '2026-11-09';
+export const DIA_DO_CORTE = '2026-11-08';
 
 /** Partidas de Lances valendo por dia na regra nova, somando pênaltis, faltas e cara a cara (o X1 recebido conta). */
 export const LANCES_PARTIDAS_POR_DIA_UNIFICADO = 10;
@@ -39,7 +40,7 @@ function semanaDoDia(dia: string): string {
 
 /**
  * Dia e semana em que a partida conta, já com a tolerância de 00h05 (`periodo`, de periodoDaPartida). Uma partida
- * criada antes do corte e fechada depois dele (passou das 00h05 da segunda) conta no dia em que começou: a regra
+ * criada antes do corte e fechada depois dele (passou das 00h05 do dia seguinte) conta no dia em que começou: a regra
  * antiga nunca entra no dia da regra nova, e o teto e a posição podem separar as duas só pelo dia.
  */
 export function periodoNoCorte(criada: Date | string, periodo: { dia: string; semana: string }): { dia: string; semana: string } {

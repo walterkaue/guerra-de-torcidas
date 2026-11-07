@@ -330,12 +330,12 @@ export interface PartidaDoServidor {
   dificuldade: number;
   expiraEm: string;
   desafio: DesafioRecebido | null;
-  /** Regra nova (desde 09/11/2026): partidas de Lances valendo que ainda dá para começar hoje, já contando esta. */
+  /** Regra nova (desde 08/11/2026): partidas de Lances valendo que ainda dá para começar hoje, já contando esta. */
   restantesHoje?: number | null;
 }
 
 /**
- * `disputa`: id da disputa histórica escolhida; só marca a partida, não muda nada do jogo. Desde o corte (09/11/2026)
+ * `disputa`: id da disputa histórica escolhida; só marca a partida, não muda nada do jogo. Desde o corte (08/11/2026)
  * é obrigatória fora do X1: sem ela, 400 `disputa_obrigatoria` (a Disputa livre saiu, seção 14.7).
  */
 export function novaPartida(desafio?: string, disputa?: string): Promise<PartidaDoServidor> {
@@ -379,7 +379,7 @@ export interface FechamentoDoServidor {
     golsMaquinaDesafiante: number;
     venceu: boolean;
   } | null;
-  /** Regra nova (desde 09/11/2026): as 3 melhores partidas de Lances de hoje (pênaltis, faltas e cara a cara). */
+  /** Regra nova (desde 08/11/2026): as 3 melhores partidas de Lances de hoje (pênaltis, faltas e cara a cara). */
   melhoresDoDia?: number[];
   /** Regra nova: partidas de Lances valendo que ainda dá para começar hoje (null antes do corte). */
   restantesHoje?: number | null;
@@ -471,7 +471,7 @@ export interface LancesHoje {
 
 /**
  * Partidas valendo começadas hoje (Brasília), o limite do dia e a melhor do dia. Null sem resposta.
- * Desde 09/11/2026 conta pênaltis, faltas e cara a cara juntos (limite 10).
+ * Desde 08/11/2026 conta pênaltis, faltas e cara a cara juntos (limite 10).
  */
 export async function meusLancesHoje(): Promise<LancesHoje | null> {
   await garantirSessao();

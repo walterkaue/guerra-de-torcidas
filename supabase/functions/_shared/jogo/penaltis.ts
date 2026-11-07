@@ -140,7 +140,7 @@ export interface TabelaPenaltis {
   teto?: number;
 }
 
-/** Tabela de antes dos Lances unificados (partidas criadas até 08/11/2026). Teto real: 220. */
+/** Tabela de antes dos Lances unificados (partidas criadas até 07/11/2026). Teto real: 220. */
 export const PONTOS = {
   gol: 10,
   angulo: 5,
@@ -155,7 +155,7 @@ export const TETO_PARTIDA_UNIFICADO = 150;
 
 /**
  * Tabela dos Lances unificados (decidida em 04/11/2026, "mais baixa" de docs/propostas/lances-unificados.md),
- * para partidas criadas a partir de 09/11/2026. O maior caminho possível dá 136 (5 cavadinhas, 5 defesas, vitória
+ * para partidas criadas a partir de 08/11/2026. O maior caminho possível dá 136 (5 cavadinhas, 5 defesas, vitória
  * e os dois 5 de 5); o teto de 150 é a guarda no fechamento, para uma tabela futura não passar sem ninguém ver.
  */
 export const PONTOS_UNIFICADOS: TabelaPenaltis = {
@@ -503,7 +503,7 @@ export function totalizar(
   };
   const soma =
     pontos.gols + pontos.angulos + pontos.cavadinhas + pontos.defesas + pontos.vitoria + pontos.cincoDeCinco;
-  // Guarda do teto (Lances unificados): com a tabela de 09/11 nunca dispara; a tabela de antes não tem teto.
+  // Guarda do teto (Lances unificados): com a tabela de 08/11 nunca dispara; a tabela de antes não tem teto.
   pontos.total = tabela.teto === undefined ? soma : Math.min(soma, tabela.teto);
 
   return {

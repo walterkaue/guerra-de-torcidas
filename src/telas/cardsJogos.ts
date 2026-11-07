@@ -93,7 +93,7 @@ function card(id: JogoDaHome, nome: string, oQueE: string, arte: string, classe:
   </button>`;
 }
 
-/** Botão compacto "Lance do Dia" (regra de 09/11/2026), logo abaixo do card dos Lances. Nasce desligado até o catálogo chegar. */
+/** Botão compacto "Lance do Dia" (regra de 08/11/2026), logo abaixo do card dos Lances. Nasce desligado até o catálogo chegar. */
 export function htmlDoLanceDoDia(): string {
   return `<button class="lance-do-dia" type="button" data-acao="lance-do-dia" disabled>
     <span class="rotulo">Lance do Dia</span><strong data-lance-do-dia>…</strong>

@@ -147,7 +147,7 @@ function rotaDoHash(): Rota | undefined {
   // Link do card da medalha (#lance/<id> ou #disputa/<id>): abre a ficha do lance. O endereço volta a ficar limpo,
   // para recarregar a página não reabrir a ficha; sem time, passa antes pela escolha (a ficha fica para depois).
   // Endereço quebrado vai à Home; id que saiu do catálogo abre a tela dos Lances sem ficha (é ela quem confere).
-  // Antes do corte (até 08/11) a tela antiga não tem ficha: o link abre os Lances.
+  // Antes do corte (até 07/11) a tela antiga não tem ficha: o link abre os Lances.
   if (/^#(lance|disputa)\//.test(location.hash)) {
     const item = itemDoEndereco(location.hash);
     history.replaceState(null, '', `${location.pathname}${location.search}`);

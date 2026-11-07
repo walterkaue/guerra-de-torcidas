@@ -1134,7 +1134,7 @@
 .card-aquecimento strong { flex: 1; font-size: 16px; }
 .card-aquecimento small { color: var(--texto-suave); }
 
-/* Lance do Dia (regra de 09/11/2026): botão compacto logo abaixo do card dos Lances, na largura da grade. */
+/* Lance do Dia (regra de 08/11/2026): botão compacto logo abaixo do card dos Lances, na largura da grade. */
 .lance-do-dia {
   grid-column: 1 / -1;
   display: flex;

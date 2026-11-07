@@ -66,7 +66,7 @@ export interface Lance extends CenaLance {
   chegadaDe?: 'tras' | 'esquerda' | 'direita' | 'rebote';
   /**
    * Faixa dos Lances unificados (seção 14.7): o catálogo recalibrado pelo acerto real das pessoas, que vale para
-   * partidas criadas a partir de 09/11/2026. Sem ela, vale `faixa`. A partida grava a faixa usada (nunca muda depois).
+   * partidas criadas a partir de 08/11/2026. Sem ela, vale `faixa`. A partida grava a faixa usada (nunca muda depois).
    */
   faixaUnificada?: Faixa;
 }
@@ -85,7 +85,7 @@ export interface TabelaLances {
   teto: number;
 }
 
-/** A tabela de antes (partidas criadas até 08/11/2026): 3 lances escolhidos, teto 120. */
+/** A tabela de antes (partidas criadas até 07/11/2026): 3 lances escolhidos, teto 120. */
 export const TABELA_LANCES_ANTES: TabelaLances = { faixa: PONTOS_FAIXA, recriou: BONUS_RECRIOU, teto: TETO_PARTIDA };
 
 /**
