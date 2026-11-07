@@ -10,6 +10,8 @@ export interface BonecoDoServidor {
   liberadas: string[];
   /** A próxima peça a liberar ("Libera no Titular"); null quando todas já liberaram. */
   proxima: { id: string; condicao: string } | null;
+  /** "Meu boneco em campo" (Perfil): se o batedor dos jogos é o boneco da pessoa. A função antiga não manda; sem o campo, vale ligado. */
+  emCampo?: boolean;
 }
 
 export interface BonecoSalvo extends BonecoDoServidor {
@@ -28,4 +30,11 @@ export function lerBoneco(): Promise<BonecoDoServidor> {
  */
 export function salvarBoneco(vestimenta: Vestimenta): Promise<BonecoSalvo> {
   return chamar('boneco', { acao: 'salvar_boneco', vestimenta: vestimenta as unknown as Record<string, unknown> });
+}
+
+/**
+ * Liga ou desliga "Meu boneco em campo" (só o interruptor; o boneco em si é o de salvarBoneco). Erros: `limite` (429) e `sessao` (401).
+ */
+export function salvarEmCampo(ligado: boolean): Promise<{ emCampo: boolean }> {
+  return chamar('boneco', { acao: 'em_campo', ligado });
 }

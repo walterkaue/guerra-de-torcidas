@@ -11,6 +11,7 @@
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { sementeNova } from '../jogo/aleatorio';
+import './bonecoDeCampoFalso'; // o boneco falso em campo (&boneco=, &semBoneco, &emCampo=0)
 import { PONTOS, PONTOS_UNIFICADOS, simularPartida, sortearSementes, type Gestos, type SementesPorLance } from '../jogo/penaltis';
 import { jogarLance, type Lance } from '../jogo/penaltisLance';
 import { DISPUTAS } from '../dados/disputas';

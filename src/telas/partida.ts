@@ -45,6 +45,7 @@ import {
 } from '../servidor/api';
 import { comMotivo, preencherAviso } from '../servidor/motivo';
 import { sincronizarTorcedor } from '../servidor/torcedor';
+import { bonecoDaPessoaEmCampo } from './bonecoEmCampoCena';
 import { criarCena, facil, limitar01, suave } from './cena';
 import { criarCena3d, type Cena3d } from './cena3d';
 import { ENQUADRAMENTOS } from './camera';
@@ -266,6 +267,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   // cada lado tem 5 batedores, um por cobrança (na morte súbita volta o primeiro), e um goleiro
   // (docs/bonecos.md, seção 3).
   // Uniforme 1 ou 2 também é sorteado; o adversário troca se as camisetas ficarem parecidas.
+  // Se a pessoa montou um boneco e deixou "Meu boneco em campo" ligado, ele bate as cobranças dela no lugar dos 5
+  // sorteados (a morte súbita também); o goleiro dela e todo o lado da máquina continuam sorteados. Só visual.
   const uniformePreferido: 0 | 1 = Math.random() < 0.5 ? 0 : 1;
   const sortearBatedores = () => Array.from({ length: COBRANCAS }, sortearAparencia);
   const elenco = { jogador: sortearBatedores(), goleiroJogador: sortearAparencia(), maquina: sortearBatedores(), goleiroMaquina: sortearAparencia() };
@@ -274,15 +277,20 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   /** Quem bate contra você: a máquina ou, no desafio por link, o time de quem desafiou. */
   let batedoresMaquina: Boneco[] = [];
   let goleiroMaquina!: Boneco;
+  let coresVestidas: readonly [string, string] | null = null;
   /** Veste todo mundo para enfrentar a máquina (null) ou o time de quem desafiou. */
   function vestir(coresAdversario: readonly [string, string] | null): void {
+    coresVestidas = coresAdversario;
     const u = uniformesDaPartida(coresDoLado, coresAdversario, uniformePreferido);
-    batedoresJogador = elenco.jogador.map((a) => criarBoneco(a, u.jogador, false));
+    const meuBoneco = bonecoDaPessoaEmCampo(u.jogador);
+    batedoresJogador = meuBoneco ? Array.from({ length: COBRANCAS }, () => meuBoneco) : elenco.jogador.map((a) => criarBoneco(a, u.jogador, false));
     goleiroJogador = criarBoneco(elenco.goleiroJogador, u.goleiroJogador, true);
     batedoresMaquina = elenco.maquina.map((a) => criarBoneco(a, u.adversario, false));
     goleiroMaquina = criarBoneco(elenco.goleiroMaquina, u.goleiroAdversario, true);
   }
   vestir(disputa ? coresDoAdversario(disputa.adversario) : null);
+  // Em dev, o jogo falso (que traz o boneco falso) chega depois da primeira vestida: veste de novo.
+  if (import.meta.env.DEV && FALSO) void servidor().then(() => vestir(coresVestidas));
   /** O batedor da cobrança (ou da defesa) i. */
   const batedor = (lista: Boneco[], i: number) => lista[Math.max(0, i) % lista.length];
 

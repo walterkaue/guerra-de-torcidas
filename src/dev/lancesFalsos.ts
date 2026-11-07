@@ -11,6 +11,7 @@
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { LANCES } from '../dados/lances';
+import './bonecoDeCampoFalso'; // o boneco falso em campo (&boneco=, &semBoneco, &emCampo=0)
 import { DISPUTAS } from '../dados/disputas';
 import { sementeNova } from '../jogo/aleatorio';
 import { TABELA_LANCES_ANTES, TABELA_LANCES_UNIFICADA, medalhaDoLance, type Faixa, type Lance } from '../jogo/lances';

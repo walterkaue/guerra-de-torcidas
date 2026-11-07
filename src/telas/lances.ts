@@ -86,6 +86,7 @@ import { SELECAO, TORCIDA_SELECAO, coresDoAdversario, roupaDoBatedorGoleiro } fr
 import { contraAdversario } from '../dados/adversarios';
 import { DISPUTAS } from '../dados/disputas';
 import { chamadaDaDisputa, disputasDoTorcedor, type Disputa } from '../jogo/disputas';
+import { bonecoDaPessoaEmCampo } from './bonecoEmCampoCena';
 import { criarBoneco, novaPose, type Boneco, poseChute, poseComemora, poseLamenta, poseParado, sortearAparencia, uniformesDaPartida } from './bonecos';
 import { ENQUADRAMENTOS } from './camera';
 import { facil, limitar01 } from './cena';
@@ -169,11 +170,16 @@ export function clubeDoLance(clube: string): { nome: string; cores: readonly [st
 
 const distanciaDoLance = (l: Lance) => Math.hypot(l.bola.x, l.bola.z);
 
-/** Batedor nas cores do clube do lance, barreira e goleiro nas do adversário de verdade. */
+/**
+ * Batedor nas cores do clube do lance, barreira e goleiro nas do adversário de verdade. Com "Meu boneco em campo"
+ * ligado, o batedor é o boneco da pessoa (na roupa do lance: a do clube, ou a de goleiro no Gol 100); goleiro e barreira
+ * continuam sorteados. Só visual.
+ */
 function elencoDoLance(l: Lance): { batedor: Boneco; goleiro: Boneco; barreira: Boneco[] } {
   const u = uniformesDaPartida(clubeDoLance(l.clube).cores, coresDoAdversario(l.adversario), 0);
+  const roupaDoBatedor = roupaDoBatedorGoleiro(l.id) ?? u.jogador;
   return {
-    batedor: criarBoneco(sortearAparencia(), roupaDoBatedorGoleiro(l.id) ?? u.jogador, false),
+    batedor: bonecoDaPessoaEmCampo(roupaDoBatedor) ?? criarBoneco(sortearAparencia(), roupaDoBatedor, false),
     goleiro: criarBoneco(sortearAparencia(), u.goleiroAdversario, true),
     barreira: Array.from({ length: 6 }, () => criarBoneco(sortearAparencia(), u.adversario, true)),
   };

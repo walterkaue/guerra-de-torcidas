@@ -6,6 +6,7 @@
 //   &semRede        o palpite e o desfecho falham (testa o erro curto e o pendente)
 
 import { ID_OUTRO, timePorId } from '../dados/times';
+import './bonecoDeCampoFalso'; // o boneco falso em campo (&boneco=, &semBoneco, &emCampo=0)
 import { prefs } from '../estado';
 import { XP_AQUECIMENTO } from '../jogo/aquecimento';
 import type { Placar } from '../jogo/crava';

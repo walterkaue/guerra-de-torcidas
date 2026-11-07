@@ -6,6 +6,7 @@ import { prefs } from '../estado';
 import { conferirFormato, type Vestimenta } from '../jogo/vestiario';
 import type { BonecoDoServidor } from '../servidor/boneco';
 import { bonecoGuardado, guardarBoneco, marcarVistas, type Pintura } from './bonecoDoAparelho';
+import { guardarEmCampo } from './bonecoEmCampoGuardado';
 import { desenharBoneco, fonteDoNumeroPronta, numeroVisivel, prepararFonteDoNumero } from './bonecoMontavel';
 
 /** Em dev, os servidores de mentira (?homeFalsa, ?vestiarioFalso, os jogos falsos) também têm boneco de mentira. */
@@ -67,6 +68,8 @@ export function lerDoServidor(): Promise<BonecoDoServidor> {
   lendo ??= lerDeVerdade()
     .then((b) => {
       guardarBoneco(b.vestimenta);
+      // "Meu boneco em campo": o servidor manda; função antiga não manda (undefined: não mexe).
+      if (typeof b.emCampo === 'boolean') guardarEmCampo(b.emCampo);
       marcarVistas(b.liberadas);
       return b;
     })

@@ -42,17 +42,21 @@ const BRONZE_CLARO = '#e0a26a';
 const AMARELO_DE_CAPITAO = '#ffd23f';
 const COLETES = ['#b8f135', '#ff8a1f'] as const;
 
-/** Uniforme de quem veste: uni1 e uni2 pela mesma regra das partidas; goleiro num tom que contrasta com o time. */
-export function uniformeDaVestimenta(v: Pick<Vestimenta, 'camisa' | 'chuteira'>, [cor1, cor2]: CoresDoTime): Uniforme {
-  const base =
-    v.camisa === 'goleiro' ? uniformeDeGoleiro(corDeGoleiro([cor1, cor2])) : v.camisa === 'uni2' ? uniformeDeLinha([cor2, cor1]) : uniformeDeLinha([cor1, cor2]);
-  if (v.chuteira === 'dourada') return { ...base, chuteira: DOURADO };
-  if (v.chuteira === 'time') {
-    // A cor do time que mais se afasta do meião (senão a chuteira some na perna).
+/** Troca a chuteira do uniforme: dourada, ou a cor do time que mais se afasta do meião (senão some na perna). */
+export function comChuteiraDe(base: Uniforme, chuteira: Vestimenta['chuteira'], [cor1, cor2]: CoresDoTime): Uniforme {
+  if (chuteira === 'dourada') return { ...base, chuteira: DOURADO };
+  if (chuteira === 'time') {
     const alvo = diferencaDeCor(cor1, base.meiao) >= diferencaDeCor(cor2, base.meiao) ? cor1 : cor2;
     return { ...base, chuteira: alvo };
   }
   return base;
+}
+
+/** Uniforme de quem veste: uni1 e uni2 pela mesma regra das partidas; goleiro num tom que contrasta com o time. */
+export function uniformeDaVestimenta(v: Pick<Vestimenta, 'camisa' | 'chuteira'>, [cor1, cor2]: CoresDoTime): Uniforme {
+  const base =
+    v.camisa === 'goleiro' ? uniformeDeGoleiro(corDeGoleiro([cor1, cor2])) : v.camisa === 'uni2' ? uniformeDeLinha([cor2, cor1]) : uniformeDeLinha([cor1, cor2]);
+  return comChuteiraDe(base, v.chuteira, [cor1, cor2]);
 }
 
 /** Colete de treino: lima ou laranja, a que mais se afasta da camisa. */
@@ -71,6 +75,35 @@ export function corDaTesteira(cores: CoresDoTime, camisa: Vestimenta['camisa'], 
   const folga = (c: string) => Math.min(diferencaDeCor(c, cabelo), diferencaDeCor(c, pele));
   const candidatas = [preferida, outra, '#ffffff', AMARELO_DE_CAPITAO, '#111111'];
   return candidatas.find((c) => folga(c) >= 90) ?? candidatas.reduce((a, b) => (folga(b) > folga(a) ? b : a));
+}
+
+/** As duas cores da munhequeira: a do time que mais contrasta com a pele (principal) e a outra (filete), ou bronze. */
+export interface Punho {
+  principal: string;
+  filete: string;
+}
+
+export function corDoPunho(tipo: Vestimenta['punho'], [a, z]: CoresDoTime, pele: string): Punho | null {
+  if (tipo === 'nenhum') return null;
+  if (tipo === 'munhequeira_bronze') return { principal: BRONZE, filete: BRONZE_CLARO };
+  const longe = diferencaDeCor(a, pele) >= diferencaDeCor(z, pele);
+  return longe ? { principal: a, filete: z } : { principal: z, filete: a };
+}
+
+/**
+ * O que as camadas desenham em campo, já calculado (cores e peças). Quem calcula é bonecoEmCampo.ts, a partir da
+ * vestimenta e da roupa da cena; o desenho é o mesmo do vestiário.
+ */
+export interface PecasDeCampo {
+  /** Número na camisa (nas costas em campo, na frente no replay), ou null para camisa lisa. */
+  numero: string | null;
+  /** Cor do número (a `corDeTexto` da camisa que está em campo). */
+  corDoNumero: string | null;
+  /** Cor da testeira, ou null sem testeira. */
+  testeira: string | null;
+  punho: Punho | null;
+  bracadeira: boolean;
+  chuteiraDourada: boolean;
 }
 
 /** Quanto a tinta de uma cor pesa, de 0 a 1 (para escolher o cordão do apito). */
@@ -138,7 +171,7 @@ export function prepararFonteDoNumero(): Promise<void> {
 
 // ---------- o boneco vestido ----------
 
-const aparenciaDe = (v: Vestimenta): Aparencia => ({
+export const aparenciaDe = (v: Vestimenta): Aparencia => ({
   pele: TONS_DE_PELE[v.pele] ?? TONS_DE_PELE[0],
   cabelo: v.cabelo,
   corCabelo: CORES_DE_CABELO[v.corCabelo] ?? CORES_DE_CABELO[0],
@@ -249,20 +282,78 @@ function desenharApito(c: CanvasRenderingContext2D, b: Boneco, p: Pose): void {
 /** Número na frente da camisa, na Anton, na cor de texto da camisa. */
 function desenharNumero(c: CanvasRenderingContext2D, b: Boneco, p: Pose, numero: string, abaixoDoApito: boolean): void {
   noTronco(c, b, p, false, (tl) => {
-    c.font = FONTE;
-    c.textAlign = 'center';
-    c.textBaseline = 'alphabetic';
-    const m = c.measureText(numero);
-    const alto = m.actualBoundingBoxAscent || 14;
-    const alvo = 10.6;
-    const k = alvo / alto;
-    const larg = m.width * k;
-    const maxLarg = 15;
-    c.fillStyle = corDeTexto(b.uniforme.camisa);
-    c.translate(0, -tl * (abaixoDoApito ? 0.4 : 0.485) + alvo / 2);
-    c.scale(larg > maxLarg ? (k * maxLarg) / larg : k, k);
-    c.fillText(numero, 0, 0);
+    c.translate(0, -tl * (abaixoDoApito ? POSICAO_DO_NUMERO_COM_APITO : POSICAO_DO_NUMERO));
+    escreverNumero(c, numero, corDeTexto(b.uniforme.camisa));
   });
+}
+
+/** Altura do número em unidades do boneco, largura máxima e posição (fração do tronco, de baixo para cima). */
+const ALTURA_DO_NUMERO = 10.6;
+const LARGURA_MAXIMA_DO_NUMERO = 15;
+const POSICAO_DO_NUMERO = 0.485;
+const POSICAO_DO_NUMERO_COM_APITO = 0.4;
+
+/** O número centrado na origem (altura `ALTURA_DO_NUMERO`, largura limitada), na Anton, na cor dada. */
+function escreverNumero(c: CanvasRenderingContext2D, numero: string, cor: string): void {
+  c.font = FONTE;
+  c.textAlign = 'center';
+  c.textBaseline = 'alphabetic';
+  const m = c.measureText(numero);
+  const alto = m.actualBoundingBoxAscent || 14;
+  const k = ALTURA_DO_NUMERO / alto;
+  const larg = m.width * k;
+  c.fillStyle = cor;
+  c.save();
+  c.translate(0, ALTURA_DO_NUMERO / 2);
+  c.scale(larg > LARGURA_MAXIMA_DO_NUMERO ? (k * LARGURA_MAXIMA_DO_NUMERO) / larg : k, k);
+  c.fillText(numero, 0, 0);
+  c.restore();
+}
+
+// ---------- o número em campo: uma imagem só, desenhada uma vez ----------
+
+/** O número já pronto para o campo. `img` fica null até a Anton carregar (aí o número aparece, sem travar o apito). */
+export interface SpriteDoNumero {
+  img: HTMLCanvasElement | null;
+}
+
+const LARGURA_DO_SPRITE = LARGURA_MAXIMA_DO_NUMERO + 1;
+const ALTURA_DO_SPRITE = ALTURA_DO_NUMERO + 1;
+/** Pixels por unidade do boneco no sprite (× devicePixelRatio): sobra para um boneco de ~150 px de altura. */
+const PIXELS_POR_UNIDADE = 5;
+
+/** Desenha o número num canvas fora da tela (Anton, tamanho × devicePixelRatio). Sem a fonte, espera e desenha depois. */
+export function criarSpriteDoNumero(numero: string, cor: string): SpriteDoNumero {
+  const sprite: SpriteDoNumero = { img: null };
+  const desenhar = () => {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.ceil(LARGURA_DO_SPRITE * PIXELS_POR_UNIDADE * dpr);
+    canvas.height = Math.ceil(ALTURA_DO_SPRITE * PIXELS_POR_UNIDADE * dpr);
+    const c = canvas.getContext('2d');
+    if (!c) return;
+    c.scale(canvas.width / LARGURA_DO_SPRITE, canvas.height / ALTURA_DO_SPRITE);
+    c.translate(LARGURA_DO_SPRITE / 2, ALTURA_DO_SPRITE / 2);
+    escreverNumero(c, numero, cor);
+    sprite.img = canvas;
+  };
+  if (fonteDoNumeroPronta()) desenhar();
+  else void prepararFonteDoNumero().then(desenhar);
+  return sprite;
+}
+
+/** O sprite na transformação do tronco (gira com ele). Sem closure nem objeto novo: roda a cada quadro. */
+function desenharSpriteDoNumero(c: CanvasRenderingContext2D, b: Boneco, p: Pose, sprite: SpriteDoNumero, espelhado: boolean): void {
+  const img = sprite.img;
+  if (!img) return;
+  c.save();
+  c.translate(b.j[JUNTA.PELVE], b.j[JUNTA.PELVE + 1]);
+  c.rotate(p[INDICE.TR]);
+  c.translate(0, -GEOMETRIA.TRONCO * p[INDICE.TRK] * POSICAO_DO_NUMERO);
+  // A câmera do replay espelha o boneco: desvira o número para ele continuar legível.
+  if (espelhado) c.scale(-1, 1);
+  c.drawImage(img, -LARGURA_DO_SPRITE / 2, -ALTURA_DO_SPRITE / 2, LARGURA_DO_SPRITE, ALTURA_DO_SPRITE);
+  c.restore();
 }
 
 function desenharTesteira(c: CanvasRenderingContext2D, b: Boneco, p: Pose, cor: string): void {
@@ -283,28 +374,20 @@ function desenharTesteira(c: CanvasRenderingContext2D, b: Boneco, p: Pose, cor: 
   c.restore();
 }
 
-/** Munhequeira, braçadeira e brilho da chuteira dourada: tudo no sistema de coordenadas do osso. */
-function desenharPecasDosMembros(c: CanvasRenderingContext2D, b: Boneco, p: Pose, v: Vestimenta, cores: CoresDoTime): void {
+/**
+ * Munhequeira, braçadeira e brilho da chuteira dourada: tudo no sistema de coordenadas do osso.
+ * `ladoDaBracadeira`: 0 = osso da esquerda da tela, 1 = o da direita, -1 = sem braçadeira.
+ */
+function desenharPecasDosMembros(c: CanvasRenderingContext2D, b: Boneco, p: Pose, punho: Punho | null, ladoDaBracadeira: number, dourada: boolean): void {
   for (let lado = 0; lado < 2; lado++) {
     const o = lado * 2;
     const ib = lado ? INDICE.BD : INDICE.BE;
-    if (v.punho !== 'nenhum') {
+    if (punho) {
       c.save();
       c.translate(b.j[JUNTA.COTOVELO + o], b.j[JUNTA.COTOVELO + o + 1]);
       c.rotate(-p[ib + 2]);
       c.scale(1, escalaDoOsso(GEOMETRIA.ANTEBRACO * p[ib + 3], 0.05));
-      let principal: string;
-      let filete: string;
-      if (v.punho === 'munhequeira_bronze') {
-        principal = BRONZE;
-        filete = BRONZE_CLARO;
-      } else {
-        const [a, z] = cores;
-        const longe = diferencaDeCor(a, b.aparencia.pele) >= diferencaDeCor(z, b.aparencia.pele);
-        principal = longe ? a : z;
-        filete = longe ? z : a;
-      }
-      c.fillStyle = principal;
+      c.fillStyle = punho.principal;
       c.beginPath();
       c.moveTo(-2.5, 0.66);
       c.lineTo(2.5, 0.66);
@@ -312,12 +395,12 @@ function desenharPecasDosMembros(c: CanvasRenderingContext2D, b: Boneco, p: Pose
       c.lineTo(-1.9, 0.97);
       c.closePath();
       c.fill();
-      c.fillStyle = filete;
+      c.fillStyle = punho.filete;
       c.fillRect(-2.4, 0.66, 4.8, 0.07);
       c.restore();
     }
-    // Braçadeira de capitão no braço esquerdo do boneco (o da direita da tela).
-    if (v.braco === 'bracadeira' && lado === 1) {
+    // Braçadeira de capitão no braço esquerdo do boneco: o da direita da tela de frente, o da esquerda de costas.
+    if (lado === ladoDaBracadeira) {
       c.save();
       c.translate(b.j[JUNTA.OMBRO + o], b.j[JUNTA.OMBRO + o + 1]);
       c.rotate(-p[ib]);
@@ -334,7 +417,7 @@ function desenharPecasDosMembros(c: CanvasRenderingContext2D, b: Boneco, p: Pose
       c.fillRect(-3.55, 0.76, 6.9, 0.045);
       c.restore();
     }
-    if (v.chuteira === 'dourada') {
+    if (dourada) {
       const ip = lado ? INDICE.PND : INDICE.PNE;
       c.save();
       c.translate(b.j[JUNTA.TORNOZELO + o], b.j[JUNTA.TORNOZELO + o + 1]);
@@ -353,6 +436,25 @@ function desenharPecasDosMembros(c: CanvasRenderingContext2D, b: Boneco, p: Pose
   }
 }
 
+/**
+ * As camadas do boneco em campo: número (sprite), testeira, munhequeira, braçadeira e brilho da chuteira dourada.
+ * Colete, faixa e apito não entram. As cores já vêm calculadas em `pecas`; as funções de desenho são as do vestiário.
+ * `ladoDaBracadeira`: 0 = osso da esquerda da tela (de costas, ou de frente na câmera do replay, que espelha),
+ * 1 = o da direita (de frente sem espelho). `espelhado`: o número se desvira para ficar legível.
+ */
+export function camadasDeCampo(pecas: PecasDeCampo, sprite: SpriteDoNumero | null, ladoDaBracadeira: 0 | 1, espelhado: boolean): Camadas {
+  const camadas: Camadas = {};
+  if (sprite) camadas.tronco = (c, b, p) => desenharSpriteDoNumero(c, b, p, sprite, espelhado);
+  const testeira = pecas.testeira;
+  if (testeira) camadas.cabeca = (c, b, p) => desenharTesteira(c, b, p, testeira);
+  if (pecas.punho || pecas.bracadeira || pecas.chuteiraDourada) {
+    const { punho, chuteiraDourada } = pecas;
+    const lado = pecas.bracadeira ? ladoDaBracadeira : -1;
+    camadas.fim = (c, b, p) => desenharPecasDosMembros(c, b, p, punho, lado, chuteiraDourada);
+  }
+  return camadas;
+}
+
 function camadasDe(v: Vestimenta, cores: CoresDoTime): Camadas {
   const numero = numeroVisivel(v);
   const camadas: Camadas = {};
@@ -368,7 +470,7 @@ function camadasDe(v: Vestimenta, cores: CoresDoTime): Camadas {
     camadas.cabeca = (c, b, p) => desenharTesteira(c, b, p, corDaTesteira(cores, v.camisa, b.cor.cabelo, b.aparencia.pele));
   }
   if (v.punho !== 'nenhum' || v.braco !== 'nenhum' || v.chuteira === 'dourada') {
-    camadas.fim = (c, b, p) => desenharPecasDosMembros(c, b, p, v, cores);
+    camadas.fim = (c, b, p) => desenharPecasDosMembros(c, b, p, corDoPunho(v.punho, cores, b.aparencia.pele), v.braco === 'bracadeira' ? 1 : -1, v.chuteira === 'dourada');
   }
   return camadas;
 }
