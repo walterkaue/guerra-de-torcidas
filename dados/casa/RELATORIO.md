@@ -1,6 +1,6 @@
 # Casa do time: relatório dos dados (rascunho, 21/10/2026, revisado à noite)
 
-Os seis CSVs estão em `dados/casa/` (20 clubes). **Lote 1 conferido em 21/10/2026** (athletico-pr, atletico-mg, bahia, botafogo, bragantino: todas as linhas `revisada`, ver seção 5); os outros 15 clubes seguem `rascunho`. Cada fato tem a página de onde saiu na coluna `fonte*` e as dúvidas na coluna `observacao`.
+Os seis CSVs estão em `dados/casa/` (20 clubes). **Lote 1 conferido em 21/10/2026** (seção 5); os outros lotes foram conferidos depois, por script e à mão. **Desde 07/11/2026 os 808 títulos estão `revisada`** (seção 6). Cada fato tem a página de onde saiu na coluna `fonte*` e as dúvidas na coluna `observacao`.
 
 ## 1. Cobertura por clube
 
@@ -102,3 +102,28 @@ Segunda sessão (`docs/casa.md`, seção 8), com o prompt de `dados/casa/confere
 - Lacunas que seguem: Athletico sem manto 1 (as fontes alternam listras verticais e diagonais); Bahia sem jogos (o próprio clube diz que não consegue comprovar); Bragantino sem recordes, goleadas e recorde de público; gramado de todos; data exata de 3 goleadas (11 x 0 em 1991, 10 x 2 em 2002, 9 x 2 em 1927).
 
 **Para o validador (Etapa C):** os recordes agora podem ter empate (duas linhas na mesma posição, Botafogo jogos 3º); a regra "posições 1 a 3 sem buraco e em ordem decrescente" precisa aceitar valores iguais na mesma posição. Goleadas podem ter `data` só com o ano (AAAA).
+
+## 6. Conferência dos 35 títulos que faltavam (07/11/2026)
+
+Segunda sessão, só os títulos em `rascunho` (Palmeiras 14, Flamengo 12, Santos 3, São Paulo 2, Fluminense, Mirassol, Vasco e Vitória 1 cada). Com isso, **os 808 títulos estão `revisada`** (`npm run importar-casa`: titulos 808/808). Nenhuma linha saiu e nenhum ano mudou.
+
+**Como:** `npm run conferir-casa -- --clube=<id> --arquivos=titulos` nos 8 clubes confirmou 4 (Libertadores 2025 do Flamengo, Copa do Brasil 2010 do Santos e 2011 do Vasco, Série B 2023 do Vitória). Os outros 31 foram conferidos à mão: página baixada, texto bruto lido e cada citação da `observacao` checada por script contra a página (0 citações sem página). Os relatórios em `conferencia-gemini/` ficaram os de 25/10 (a rodada de 07/11 só com títulos apagaria as seções de recordes e goleadas).
+
+| Linhas | Fonte que confirmou | Soma conferida |
+|---|---|---|
+| Flamengo, Libertadores 2019 e 2022; Fluminense 2023; Palmeiras 2020 e 2021 | CONMEBOL (17/03/2026) e, no Flamengo, a matéria da CONMEBOL do título de 2025 | Flamengo 4, Fluminense 1, Palmeiras 3 |
+| Flamengo, Recopa 2020 | CONMEBOL (27/02/2020), "primeira CONMEBOL Recopa" | 1 |
+| Flamengo, Brasileiro 1980, 1982, 1983, 1992, 2009, 2019 e 2020 | Jornal de Brasília (lista ano a ano e "nono título") | 8 oficiais, igual a `clubes-do-dia.csv`; 9 na Casa com 1987 |
+| Mirassol, Série D 2020 | Terra; o site do clube diz que a edição de 2020 terminou em 2021 (pandemia). O ano é o da edição | 1 |
+| Palmeiras, 12 Paulistas; Santos, Paulista 1973 (dividido com a Portuguesa) | **Fonte trocada:** a lista do Lance deu 410 (saiu do ar); entrou a lista do Terra (08/03/2026), com os anos de cada clube | Palmeiras 27 e Santos 22, os mesmos anos do CSV |
+| Santos, Recopa 2012 | Jornal de Brasília (26/09/2012) e a tabela de campeões da CONMEBOL | 1 com id (a de 1968 segue fora) |
+| São Paulo, Mundial 2005 | Lance (13/12/2025), "3 títulos mundiais" | 2 intercontinental + 1 mundial-clubes |
+| São Paulo, Supercopa do Brasil 2024 | Trivela, "São Paulo (1)" | 1 |
+
+**Brasileiro de 1987 (Flamengo):** fica `oficial = não`, com a nota neutra ("a CBF reconhece o Sport"), e conta na Casa do Flamengo (decisão de 21/10). O Jornal de Brasília dá "Sport/Flamengo" e diz que, por decisão do STF, o Sport é o campeão oficial. A Tribuna de Minas (19/02/2026) diz que, depois da decisão do STF de 2017, a CBF passou a declarar só o Sport; a Trivela (dez/2023) ainda dizia que a CBF tratava os dois como campeões. Em 18/02/2026 a PGR deu parecer no STF pelo título dividido, e a ação rescisória do Flamengo segue sem julgamento (nada novo achado até 07/11/2026). **Rever a linha se o STF julgar.**
+
+**Continua em dúvida (o Kauê confere)**
+- Paulistas: a FPF não abriu (certificado inválido em `fpf.org.br`, 403 em `futebolpaulista.com.br`); as linhas ficam com "conferir na FPF".
+- Série D 2020 do Mirassol: lista da CBF não conferida (Terra e site do clube concordam).
+
+**Fora do escopo, para outra rodada:** a mesma lista do Lance que saiu do ar ainda é a `fonte` de 89 títulos já revisados (Corinthians 31, São Paulo 22, Santos 21, Palmeiras 15). A lista do Terra traz os anos dos quatro clubes; a troca é mecânica, mas pede conferir ano por ano.
