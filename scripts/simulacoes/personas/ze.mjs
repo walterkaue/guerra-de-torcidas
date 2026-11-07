@@ -15,8 +15,7 @@ export default {
   toque: { erroPx: 4, demoraMs: 80 },
   gesto: { escalaForca: 1.6, duracaoMs: 150, tremorPx: 1 },
   aparelhos: ['android-entrada'],
-  cortes: ['depois', 'antes'],
-  async jornada(s, { corte }) {
+  async jornada(s) {
     const p = s.page;
 
     // 1. O link do grupo: a Home com o convite.
@@ -93,25 +92,17 @@ export default {
     await s.passo('toca em Jogar agora', async () => {
       const t0 = Date.now();
       await tocarSemCobertura(s, p.locator('[data-acao="jogar-agora"]'), 'Jogar agora na Home');
-      await p.locator('[data-ficha], [data-disputa], [data-acao="disputa-livre"]').first().waitFor({ state: 'visible', timeout: 15000 });
+      await p.locator('[data-ficha]').first().waitFor({ state: 'visible', timeout: 15000 });
       s.medir('Jogar agora responde (lista dos lances aparece)', Date.now() - t0, 1500);
     });
-    if (corte === 'depois') {
-      await s.passo('abre a ficha de uma disputa', async () => {
-        await s.tocar(p.locator('[data-ficha]').first());
-        await esperar(600);
-      });
-      await s.passo('toca em Jogar na ficha', async () => {
-        await s.tocar(p.getByRole('button', { name: /^jogar/i }).first());
-        await p.locator('canvas.campo-jogo').waitFor({ state: 'visible', timeout: 30000 });
-      });
-    } else {
-      // Antes do corte: o hub de hoje, com a Disputa livre.
-      await s.passo('toca em Bater a disputa livre', async () => {
-        await s.tocar(p.locator('[data-acao="disputa-livre"]'));
-        await p.locator('canvas.campo-jogo').waitFor({ state: 'visible', timeout: 30000 });
-      });
-    }
+    await s.passo('abre a ficha de uma disputa', async () => {
+      await s.tocar(p.locator('[data-ficha]').first());
+      await esperar(600);
+    });
+    await s.passo('toca em Jogar na ficha', async () => {
+      await s.tocar(p.getByRole('button', { name: /^jogar/i }).first());
+      await p.locator('canvas.campo-jogo').waitFor({ state: 'visible', timeout: 30000 });
+    });
     let jogo2 = null;
     await s.passo('joga com a rede caindo no meio', async () => {
       await p.waitForFunction(() => window.__partida?.fase?.() === 'mirar', null, { timeout: 40000 });

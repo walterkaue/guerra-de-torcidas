@@ -14,11 +14,9 @@ export default {
   toque: { erroPx: 3, demoraMs: 60 },
   gesto: { escalaForca: 1, duracaoMs: 220, tremorPx: 1 },
   aparelhos: ['iphone-15-safari', 'iphone-15-instalado'],
-  cortes: ['depois', 'antes'],
-  async jornada(s, { aparelho, corte }) {
+  async jornada(s, { aparelho }) {
     let p = s.page;
-    const depois = corte === 'depois';
-    const limite = depois ? 10 : 6;
+    const limite = 10;
 
     // Aparelho com histórico: time, apelido, faixa 18+ e aquecimento já feitos; os Termos já vistos.
     await s.semear({
@@ -77,24 +75,11 @@ export default {
     });
     if (!lancesCaiu) {
     await s.passo('escolhe um lance e começa a 1ª partida', async () => {
-      if (depois) {
-        const faltas = p.getByRole('button', { name: /^faltas$/i }).first();
-        if (await faltas.count()) await s.tocar(faltas, { semMudancaOk: true });
-        await s.tocar(p.locator('[data-ficha]').first());
-        await esperar(500);
-        await s.tocar(p.getByRole('button', { name: /^jogar/i }).first());
-      } else {
-        // Antes do corte: hub com abas; monta a partida de 3 pela ficha ("Pôr na partida").
-        const faltas = p.getByRole('button', { name: /^faltas$/i }).first();
-        if (await faltas.count()) await s.tocar(faltas, { semMudancaOk: true });
-        for (let i = 0; i < 3; i++) {
-          await s.tocar(p.locator('[data-ficha]').nth(i), { semMudancaOk: true });
-          await esperar(500);
-          await s.tocar(p.locator('[data-por]').first(), { semMudancaOk: true });
-          await esperar(300);
-        }
-        await s.tocar(p.locator('[data-acao="jogar"]'));
-      }
+      const faltas = p.getByRole('button', { name: /^faltas$/i }).first();
+      if (await faltas.count()) await s.tocar(faltas, { semMudancaOk: true });
+      await s.tocar(p.locator('[data-ficha]').first());
+      await esperar(500);
+      await s.tocar(p.getByRole('button', { name: /^jogar/i }).first());
     });
     await s.passo('joga a 1ª partida', async () => {
       const r = await jogarUma();
@@ -131,18 +116,9 @@ export default {
         await abrirVivo(`/?${FLAGS.replace('lancesFalsos', 'lancesFalsos=limite')}`, { esperarPor: '[data-jogo="penaltis"]', limiteMs: 20000 });
         await tocarSemCobertura(s, p.locator('[data-jogo="penaltis"]'), 'card Lances do Jogo');
         await esperar(1200);
-        if (depois) {
-          await s.tocar(p.locator('[data-ficha]').first());
-          await esperar(500);
-          await s.tocar(p.getByRole('button', { name: /^jogar/i }).first());
-        } else {
-          for (let i = 0; i < 3; i++) {
-            await s.tocar(p.locator('[data-ficha]').nth(i), { semMudancaOk: true });
-            await esperar(500);
-            await s.tocar(p.locator('[data-por]').first(), { semMudancaOk: true });
-          }
-          await s.tocar(p.locator('[data-acao="jogar"]'));
-        }
+        await s.tocar(p.locator('[data-ficha]').first());
+        await esperar(500);
+        await s.tocar(p.getByRole('button', { name: /^jogar/i }).first());
         await jogarUma();
       }, { limiteMs: 110000 });
       if (!viuTreino) s.achado({ regra: 'limite-sem-aviso', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: 'Com a variação de limite, não vi o aviso de partida de treino.', talvezSimulador: true });

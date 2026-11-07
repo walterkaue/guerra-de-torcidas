@@ -37,17 +37,17 @@ for (const r of todos) {
       grupos.set(k, { regra: a.regra, tela: a.tela, oQue: a.oQue, gravidade: a.gravidade, tipo: a.tipo, sugestao: a.sugestao ?? '', amostras: a.amostras ?? [], talvezSimulador: !!a.talvezSimulador, ocorrencias: [] });
     const g = grupos.get(k);
     if (PESO[a.gravidade] < PESO[g.gravidade]) g.gravidade = a.gravidade;
-    g.ocorrencias.push({ persona: a.persona, aparelho: a.aparelho, navegador: a.navegador, corte: a.corte, modo: a.modo, passo: a.passo, print: a.print, reproduzir: a.reproduzir, vezes: a.vezes });
+    g.ocorrencias.push({ persona: a.persona, aparelho: a.aparelho, navegador: a.navegador, modo: a.modo, passo: a.passo, print: a.print, reproduzir: a.reproduzir, vezes: a.vezes });
   }
 }
 const lista = [...grupos.values()].sort((a, b) => PESO[a.gravidade] - PESO[b.gravidade] || b.ocorrencias.length - a.ocorrencias.length);
 writeFileSync(join(pasta, 'consolidado.json'), JSON.stringify(lista, null, 2));
 
 const linhas = [`# Consolidado da rodada ${rodada}`, '', `${todos.length} sessões, ${lista.length} grupos de achados.`, ''];
-linhas.push('## Sessões', '', '| Persona | Aparelho | Corte | Passos | Achados | Não simuláveis | Furos na guarda | Duração |', '|---|---|---|---|---|---|---|---|');
-for (const r of todos) linhas.push(`| ${r.persona} | ${r.aparelho} | ${r.modo === 'producao' ? 'site no ar' : r.corte} | ${r.passos.length} | ${r.achados.length} | ${r.naoSimulaveis.length} | ${r.furos.length} | ${r.duracaoS ?? '?'} s |`);
+linhas.push('## Sessões', '', '| Persona | Aparelho | Alvo | Passos | Achados | Não simuláveis | Furos na guarda | Duração |', '|---|---|---|---|---|---|---|---|');
+for (const r of todos) linhas.push(`| ${r.persona} | ${r.aparelho} | ${r.modo === 'producao' ? 'site no ar' : 'dev'} | ${r.passos.length} | ${r.achados.length} | ${r.naoSimulaveis.length} | ${r.furos.length} | ${r.duracaoS ?? '?'} s |`);
 linhas.push('', '## Métricas', '');
-for (const r of todos) for (const m of r.metricas) linhas.push(`- ${r.persona} · ${r.aparelhoId}${r.modo === 'producao' ? ' · no ar' : ' · ' + r.corte}: ${m.rotulo} = ${m.ms} ms${m.limiteMs ? ` (limite ${m.limiteMs})` : ''}${m.estourou ? ' **ESTOUROU**' : ''}${m.extra ? ' · ' + JSON.stringify(m.extra) : ''}`);
+for (const r of todos) for (const m of r.metricas) linhas.push(`- ${r.persona} · ${r.aparelhoId}${r.modo === 'producao' ? ' · no ar' : ''}: ${m.rotulo} = ${m.ms} ms${m.limiteMs ? ` (limite ${m.limiteMs})` : ''}${m.estourou ? ' **ESTOUROU**' : ''}${m.extra ? ' · ' + JSON.stringify(m.extra) : ''}`);
 linhas.push('', '## Não simuláveis', '');
 for (const r of todos) for (const n of r.naoSimulaveis) linhas.push(`- ${r.persona} · ${r.aparelhoId}: ${n.tela} — ${n.motivo}`);
 linhas.push('', '## Achados', '');
@@ -55,14 +55,14 @@ for (const [i, g] of lista.entries()) {
   linhas.push(`### G${String(i + 1).padStart(3, '0')} · ${g.gravidade} · ${g.tipo} · ${g.regra}${g.talvezSimulador ? ' · talvez simulador' : ''}`);
   linhas.push('', `- Tela: ${g.tela}`, `- O que: ${g.oQue}`, `- Sugestão: ${g.sugestao}`);
   if (g.amostras.length) linhas.push(`- Amostras: ${g.amostras.slice(0, 6).join(' · ')}`);
-  const quem = [...new Set(g.ocorrencias.map((o) => `${o.persona}/${o.navegador}/${o.corte ?? 'no ar'}`))];
+  const quem = [...new Set(g.ocorrencias.map((o) => `${o.persona}/${o.navegador}/${o.modo === 'producao' ? 'no ar' : 'dev'}`))];
   linhas.push(`- Onde (${g.ocorrencias.length}): ${quem.join(', ')}`, `- Print: ${g.ocorrencias[0].print}`, `- Reproduzir: ${g.ocorrencias[0].reproduzir}`, '');
 }
 writeFileSync(join(pasta, 'consolidado.md'), linhas.join('\n'));
 
 const rede = [`# Rede da rodada ${rodada}`, ''];
 for (const r of todos) {
-  rede.push(`## ${r.persona} · ${r.aparelhoId} · ${r.modo === 'producao' ? 'site no ar' : r.corte}`, '');
+  rede.push(`## ${r.persona} · ${r.aparelhoId} · ${r.modo === 'producao' ? 'site no ar' : 'dev'}`, '');
   for (const [k, v] of Object.entries(r.rede)) rede.push(`- ${k}: ${v}`);
   if (r.furos.length) rede.push('', `**FUROS: ${r.furos.length}**`, ...r.furos.map((f) => `- ${f.metodo} ${f.url}`));
   rede.push('');

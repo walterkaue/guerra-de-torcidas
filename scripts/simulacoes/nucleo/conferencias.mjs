@@ -159,7 +159,9 @@ export function conferirNaPagina(op) {
     if (soma < larguraPai * 0.6) continue;
     const dw = Math.max(...rs.map((r) => r.width)) - Math.min(...rs.map((r) => r.width));
     const dh = Math.max(...rs.map((r) => r.height)) - Math.min(...rs.map((r) => r.height));
-    if (dw > 2 || dh > 2) linhasDiferentes.push(`${irmaos.map(desc).join(' + ')} (${rs.map((r) => `${Math.round(r.width)}×${Math.round(r.height)}`).join(', ')})`);
+    // Par principal × secundário na proporção 1 : 1,4 (Salvar × Compartilhar, Início × Revanche; S14): mesma altura, largura de 1,3 a 1,5 vezes.
+    const proporcional = irmaos.length === 2 && dh <= 2 && (() => { const [p, g] = rs.map((r) => r.width).sort((x, y) => x - y); return g / p >= 1.3 && g / p <= 1.5; })();
+    if (!proporcional && (dw > 2 || dh > 2)) linhasDiferentes.push(`${irmaos.map(desc).join(' + ')} (${rs.map((r) => `${Math.round(r.width)}×${Math.round(r.height)}`).join(', ')})`);
   }
   if (linhasDiferentes.length)
     add({ regra: 'botoes-lado-a-lado', gravidade: 'detalhe', tipo: 'regra do jogo.md', oQue: `Botões lado a lado com tamanhos diferentes.`, chave: linhasDiferentes[0].slice(0, 120), amostras: linhasDiferentes.slice(0, 4), sugestao: 'Usar grid de colunas iguais (1fr 1fr) nessa linha.' });

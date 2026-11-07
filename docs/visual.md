@@ -1,6 +1,7 @@
 # Revisão gráfica — direção "Transmissão de domingo"
 
-> Versão 1.16 · 06/11/2026 · **Direção aprovada em 18/10/2026; rota "Grafismo de TV" em 03/11/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Versão 1.17 · 08/11/2026 · **Direção aprovada em 18/10/2026; rota "Grafismo de TV" em 03/11/2026.** Mockups no canvas "Guerra de Torcidas — revisão gráfica" (Início, Partida, Resultado, Ranking, Crava a Rodada).
+> Mudanças da 1.17: barra do resultado opaca e barras de baixo com o espaço medido (seção 4, "Barras de baixo"); par principal × secundário em 1 : 1,4 também na barra do resultado; parcelas dos pênaltis com a quantidade no rótulo ("3 gols · +21"); placar da partida com siglas de 12 px em 2 linhas no celular estreito; "Escolher a cidade" no estilo claro; código do aviso de conexão com 12 px e 5,5:1.
 > Mudanças da 1.16: boneco em campo (o batedor da pessoa é o boneco montável, de costas e com o número) e bustos no X1 (seção 3, "Bonecos"; replay na 4.2).
 > Mudanças da 1.15: partida em tela grande com o campo pela altura, aviso "Vire o celular pra jogar" e "Mandar esse lance" na ficha (seção 4.7; teto de pixels na 4.3).
 > Mudanças da 1.14: card do troféu da Galeria nos cards personalizáveis e flâmula com contorno claro (seção 3, "Card de compartilhamento").
@@ -90,7 +91,7 @@ Home nova, decidida em 31/10/2026. De cima para baixo:
 
 ### Resultado (todos os minigames)
 - Placar gigante, "VITÓRIA" ou "DERROTA", confete nas cores do time quando há o que comemorar (desde 05/11/2026 em todos os jogos, pelo `resultadoPadrao.ts`: vitória, recorde novo, partida nas 3 melhores do dia, Time do Dia acertado e medalha nova; uma vez por resultado, com vibração).
-- **"+85 PRO [TIME]"** contando de 0 até o total, com os bônus em etiquetas (com o artigo certo: "pra Chapecoense").
+- **"+85 PRO [TIME]"** contando de 0 até o total, com os bônus em etiquetas (com o artigo certo: "pra Chapecoense"). **Nas parcelas, o número é o dos pontos e o rótulo leva a quantidade** (08/11/2026): "+21 · 3 gols", "+7 · 1 defesa", "+4 · 1 ângulo"; Vitória e 5 de 5 sem quantidade. Uma parcela só não aparece (repetiria o total, J24).
 - **O efeito na torcida:** "subiu de 5º pra 3º na Série A" com barra enchendo, e quanto falta para o próximo.
 - **Sua posição naquele minigame** na semana e o **recorde pessoal**; quando bate o recorde, selo "NOVO RECORDE!" (que entra no card).
 - Botões: "Mandar no grupo" (WhatsApp, o maior, verde), com Card, Stories, Emoji e Link embaixo, e "Mais uma" ou "Revanche" como ação principal. Ordem e blocos do resultado padrão na seção 4.6 (03/11/2026).
@@ -157,6 +158,10 @@ Decidido em 31/10/2026. A aba "Carreira" da barra (que era "em breve") vira **Pe
 - **Alvo de toque de 44 px no mínimo** (lote G3, 07/11/2026). A caixa do botão tem pelo menos 44 px de altura, mesmo quando o desenho é menor: a sobra vira borda transparente (`background-clip: padding-box`) ou contorno em `box-shadow: inset`. Assim ficaram o selo "Pré-temporada: o que é", as abas de 2º nível e o "trocar" do time na Home.
 - **Todo toque responde na hora:** o botão afunda sem transição e, ao soltar, volta com a mola; cards e botões pequenos encolhem um pouco (0,92 a 0,97).
 - **Vibração (só Android; o iPhone não tem):** `telas/toque.ts`. Leve (8 ms) em botão principal, card de jogo e barra de navegação; acerto (22 ms) na Prova e no Time do Dia; erro (30-50-30); gol (60-40-90). Nada passa de 200 ms. A chave Vibração, nos ajustes do Perfil, desliga tudo (preferência `semVibracao`).
+- **Barras de baixo (08/11/2026, S06 e S07):** a barra de navegação (Jogar, Palpites, Ranking, Perfil) e a barra do resultado ficam fixas; a do resultado é **opaca** (nada do que rola aparece atrás). A altura real da barra que está na tela é medida no navegador, com a fonte do sistema grande inclusive (`src/telas/alturaBarra.ts`, `--altura-barra-baixo`), e a página reserva esse espaço mais a safe-area: no fim da Home, do Ranking, do Perfil e do resultado, e no `html { scroll-padding-bottom }`, para nenhum botão parar atrás da barra depois de rolar sozinho, voltar para a tela ou receber o foco.
+- **Par principal × secundário:** dois botões lado a lado com papéis diferentes ficam na proporção 1 : 1,4, o secundário (placa escura ou claro) à esquerda e o principal (amarelo) à direita: Salvar × Compartilhar, Início × Revanche/Mais uma, Mandar esse lance × Jogar. Botões de mesmo papel ficam iguais (S14).
+- **Placar da partida no celular estreito (até 380 px, S12 e S13):** os nomes vão para uma linha de cima, cada um com metade da largura, com 12 px no mínimo e até 2 linhas sem reticências ("JUNIOR / BARRANQUILLA"); embaixo, as bolinhas e o marcador.
+- **Aviso de conexão caída:** fundo vermelho fechado `#b3261e` (o `--caiu` claro dava 3,1:1 com o branco) e a linha "código: …" com 12 px e 5,5:1.
 - **Fica de fora:** bibliotecas de animação (Framer Motion, GSAP, Lottie, Rive) e WebGL. O peso não cabe no orçamento e o celular simples esquenta.
 
 ## 4.1 Ícones e carregando
@@ -228,7 +233,7 @@ Escolhida pelo Kauê depois da auditoria de 03/11 (`docs/jogo.md`, seção 14.2;
 - **Cabeçalho de tela:** título em Anton 30 px igual em todas, voltar à esquerda e o **selo único da pré-temporada** à direita. O toque abre a explicação ("tudo vale ponto, mas zera antes do lançamento"); os outros avisos de pré-temporada saíram.
 - **Amarelo cheio só no botão principal**, um por tela. Chave ligada em verde, sua torcida no ranking com placa clara e contorno.
 - **Contraste:** texto pequeno com pelo menos 4,5:1; nada de opacidade baixa em texto.
-- **Resultado padrão (`telas/resultadoPadrao.ts`), nos 5 jogos e nesta ordem:** placar → pontos pro time → detalhe em placas (gols, defesas, degraus; escada da Prova, grade do Time do Dia, lista dos 3 lances) → frase do narrador → selos (novo recorde, posição na semana, medalha, "No ranking em 1 min", que vira "Subiu de 5º pra 3º" quando a tabela mexe) → Carreira em placa com o XP ganho e a barra → "Mandar no grupo" (verde) com Card, Stories, Emoji e Link embaixo → Início e "Mais uma" (amarelo) fixos no rodapé. O selo da pré-temporada fica na linha de cima, ao lado do "Na morte súbita".
+- **Resultado padrão (`telas/resultadoPadrao.ts`), nos 5 jogos e nesta ordem:** placar → pontos pro time → detalhe em placas (gols, defesas, degraus; escada da Prova, grade do Time do Dia, lista dos 3 lances) → frase do narrador → selos (novo recorde, posição na semana, medalha, "No ranking em 1 min", que vira "Subiu de 5º pra 3º" quando a tabela mexe) → Carreira em placa com o XP ganho e a barra → "Mandar no grupo" (verde) com Card, Stories, Emoji e Link embaixo → Início (placa escura) e "Mais uma" / "Revanche" / "Jogar de novo" (amarelo) fixos no rodapé, na proporção 1 : 1,4 (o par principal × secundário, igual a Salvar × Compartilhar). No convite "Defende sua cidade também?" da 1ª partida, "Escolher a cidade" vai no estilo claro dos botões da placa do troféu: um amarelo por tela. O selo da pré-temporada fica na linha de cima, ao lado do "Na morte súbita".
 - **Movimento e vibração:** as molas e vibrações de sempre (seção 4). Entrou a vibração no fim da morte súbita (gol na vitória, erro na derrota).
 
 ## 4.7 Partida em tela grande e celular deitado (06/11/2026)

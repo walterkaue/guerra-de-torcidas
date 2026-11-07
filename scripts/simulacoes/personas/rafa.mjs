@@ -15,7 +15,6 @@ export default {
   toque: { erroPx: 1, demoraMs: 40 },
   gesto: { escalaForca: 1, duracaoMs: 180, tremorPx: 0 },
   aparelhos: ['pc-firefox', 'notebook-opera'],
-  cortes: ['depois'],
   async jornada(s, { aparelho }) {
     let p = s.page;
     const prefsDoAparelho = { time: 'gremio', apelido: 'Rafa_FPS', faixa: '18_mais', termosVistos: '05/11/2026', aquecimento: { visto: true, aquecido: true } };

@@ -17,14 +17,13 @@ export default {
   toque: { erroPx: 6, demoraMs: 150 },
   gesto: { escalaForca: 1, duracaoMs: 300, tremorPx: 2 },
   aparelhos: ['iphone-se'],
-  cortes: ['depois'],
   async jornada(s) {
     let p = s.page;
     const { palavrao } = await palavrasDoFiltro(RAIZ);
     const famoso = (s.famosos ?? []).find((n) => n.length >= 6) ?? null;
 
     await s.passo('abre o link do lance (Stories)', async () => {
-      await s.abrir(`/?homeFalsa&lancesFalsos&corte=depois#lance/${LANCE}`, { esperarPor: '[data-id]', limiteMs: 20000, rotulo: 'link do lance até a escolha do time' });
+      await s.abrir(`/?homeFalsa&lancesFalsos#lance/${LANCE}`, { esperarPor: '[data-id]', limiteMs: 20000, rotulo: 'link do lance até a escolha do time' });
     });
     await s.passo('escolhe o Corinthians', async () => {
       await s.tocar(p.locator('[data-id="corinthians"]'), { semMudancaOk: true });
@@ -62,7 +61,7 @@ export default {
       s.usarAba(p);
       s.naoSimulavel('resultado do lance (iPhone SE)', 'a página do WebKit caiu na cena 3D; o card foi aberto pelo ?cardFalso');
       await s.passo('card de mentira (a página do lance caiu)', async () => {
-        await p.goto(s.endereco('/?homeFalsa&lancesFalsos&corte=depois&cardFalso&estilo=poster'), { waitUntil: 'domcontentloaded' });
+        await p.goto(s.endereco('/?homeFalsa&lancesFalsos&cardFalso&estilo=poster'), { waitUntil: 'domcontentloaded' });
         await p.locator('dialog[open] [data-palco]').waitFor({ state: 'visible', timeout: 20000 });
       });
     }
@@ -133,7 +132,7 @@ export default {
 
     // Perfil e vestiário.
     await s.passo('Perfil', async () => {
-      await s.abrir('/?homeFalsa&lancesFalsos&corte=depois', { esperarPor: '[data-aba="perfil"]', limiteMs: 15000 });
+      await s.abrir('/?homeFalsa&lancesFalsos', { esperarPor: '[data-aba="perfil"]', limiteMs: 15000 });
       await s.tocar(p.locator('[data-aba="perfil"]'));
       await p.locator('[data-vestiario]').waitFor({ state: 'visible', timeout: 10000 });
     }, { paginaInteira: true });
