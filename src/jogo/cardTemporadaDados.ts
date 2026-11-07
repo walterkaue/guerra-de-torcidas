@@ -20,7 +20,7 @@ import {
   type LinhaTemporada,
   type Temporada,
 } from './temporada';
-import { FRASES_DA_TEMPORADA, eventoDoFim, fraseDaTemporada, preencherFraseDaTemporada, type ContextoDaTemporada } from '../narrador/temporada';
+import { FRASES_DA_TEMPORADA, eventoDoFim, fraseDaTemporada, fraseServe, preencherFraseDaTemporada, type ContextoDaTemporada } from '../narrador/temporada';
 import type { DadosDoCard } from './cardPersonalizado';
 import type { NumeroDaFicha } from './galeria';
 
@@ -91,7 +91,7 @@ export function dadosDoCardDoMes(e: EntradaDosDadosDoMes): DadosDoCard {
 export function contextoDoFimDoMes(linha: LinhaTemporada, linhas: readonly LinhaTemporada[], time: Time, mes: string): { ctx: ContextoDaTemporada; rivalCaiu: boolean } {
   const rival = rivalDe(time) ?? null;
   return {
-    ctx: { time, serie: nomeDaSerie(linha.serie), mes: mesPorExtenso(mesSeguinte(mes)), rival },
+    ctx: { time, serie: nomeDaSerie(linha.serie), mes: mesPorExtenso(mesSeguinte(mes)), rival, posicao: linha.posicao_final },
     rivalCaiu: !!rival && caiuNoMes(linhas, rival.id),
   };
 }
@@ -112,7 +112,10 @@ export function sorteadorDeFraseDoFim(
   jaMostrada: string | null,
   rng: () => number = Math.random,
 ): () => string | null {
-  const todas = FRASES_DA_TEMPORADA[eventoDoFim(destino, rivalCaiu)].map((f) => preencherFraseDaTemporada(f, ctx)).filter((f): f is string => !!f);
+  const todas = FRASES_DA_TEMPORADA[eventoDoFim(destino, rivalCaiu)]
+    .filter((f) => fraseServe(f, ctx))
+    .map((f) => preencherFraseDaTemporada(f, ctx))
+    .filter((f): f is string => !!f);
   const usadas = new Set<string>(jaMostrada ? [jaMostrada] : []);
   return () => {
     if (!todas.length) return null;

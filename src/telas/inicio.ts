@@ -646,9 +646,17 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     elFrase.hidden = !texto;
   }
 
-  function desenhar(linhas: LinhaRanking[]): void {
-    semanaAoVivo = linhas;
-    if (atualizarDivisoes) fraseDoMes = atualizarDivisoes(linhas);
+  /** `vazia`: o ranking veio vazio e `linhas` é a ordem da tabela, inventada; o bloco das divisões não projeta com ela. */
+  function desenhar(linhas: LinhaRanking[], vazia = false): void {
+    semanaAoVivo = vazia ? [] : linhas;
+    // Um erro no bloco não pode parar o duelo, o giro e a frase (revisão de 07/11/2026).
+    if (atualizarDivisoes) {
+      try {
+        fraseDoMes = atualizarDivisoes(semanaAoVivo);
+      } catch {
+        fraseDoMes = null;
+      }
+    }
     memoria(CHAVE_POSICOES, { semana, pos: Object.fromEntries(linhas.map((l) => [l.time_id, l.posicao_campeao])) });
 
     frasesGiro = frasesDoGiro(linhas, posicoesAntes, timePorId, time?.id);
@@ -783,7 +791,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       .then((api) => api.rankingDaSemana(semana))
       .then((l) => !saiu && desenhar(l.length ? l : TIMES.filter((t) => t.id !== ID_OUTRO).map((t, i) => ({
         time_id: t.id, ativos: 0, soma: 0, media30: 0, posicao_campeao: i + 1, posicao_soma: i + 1,
-      }))))
+      })), l.length === 0))
       .catch(() => {
         if (saiu) return;
         elMinha.textContent = 'Sem conexão com o placar agora. Dá pra jogar mesmo assim.';

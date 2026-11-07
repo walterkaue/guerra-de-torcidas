@@ -127,6 +127,16 @@ describe('se a semana fechasse agora', () => {
     expect(linhaDaProjecao(p, 'unica', cru)).toBe('Se a semana fechasse agora: 1º entre os 20 esta semana, +25');
   });
 
+  it('ranking vazio: sem projeção (nada de descia inventado)', () => {
+    expect(projetarSemana(a, [], 't8')).toBeNull();
+  });
+
+  it('time fora do ranking e empatado: fica com a última semana que tinha, como na view', () => {
+    // t1 (última semana 3º) e t2 (5º) empatam em pontos e vitórias; nenhum dos dois está no ranking ao vivo.
+    const empate = [linha('t1', 'a', 1, 30, { ultima_posicao: 3 }), linha('t2', 'a', 2, 30, { ultima_posicao: 5 }), linha('t3', 'a', 3, 10)];
+    expect(projetarSemana(empate, aoVivo(['t3'], ['t3']), 't1')).toMatchObject({ agora: 1, depois: 1, seta: null });
+  });
+
   it('time fora da série: sem projeção', () => {
     expect(projetarSemana(a, aoVivo(ordemDaSemana), 'outro')).toBeNull();
   });
@@ -316,6 +326,13 @@ describe('narrador das divisões (docs/narrador.md seção 16)', () => {
         }
       }
     }
+  });
+
+  it('Escapou! só para quem ficou perto da zona (7º e 8º)', () => {
+    const frases = (posicao: number) =>
+      new Set(Array.from({ length: 20 }, (_, i) => fraseDaTemporada('temporada_fica_a', { time: cru, posicao }, () => i / 20)));
+    expect([...frases(2)].some((f) => f?.startsWith('Escapou!'))).toBe(false);
+    expect([...frases(8)].some((f) => f?.startsWith('Escapou!'))).toBe(true);
   });
 
   it('frase sem a variável que pede fica de fora', () => {

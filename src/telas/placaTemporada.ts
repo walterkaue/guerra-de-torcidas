@@ -139,6 +139,7 @@ async function lerPlaca(time: Time): Promise<PlacaDoMes | null> {
     serie: nomeDaSerie(linha.serie),
     mes: mesPorExtenso(mesSeguinte(temporada.mes)),
     rival,
+    posicao: linha.posicao_final,
   });
   const trofeus = trofeusDoMes(linha, temporada);
   if (!falsa) {

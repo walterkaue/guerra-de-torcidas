@@ -752,7 +752,7 @@ Variáveis: `{o_time}`, `{do_time}`, `{pro_time}`, `{serie}` ("Série A", "Séri
 
 **Qual situação na Home:** 1º da série (ou da série única) é `temporada_lider`; 2º da Série B, e do 2º ao 10º na série única, `temporada_acesso`; 9º e 10º da Série A, `temporada_queda`; o resto, `temporada_meio`. Sem semana travada no mês, não há frase.
 
-**No fim do mês:** a frase sai do destino do time. A zoeira com o rival (`temporada_rival_caiu`) só entra quando o meu time ficou na série (fica na A ou na B) e o clássico da tabela caiu: em festa, a frase é da festa; na queda, nunca. O Campeão da estreia usa as frases da taça com estrela (seção 15).
+**No fim do mês:** a frase sai do destino do time. A zoeira com o rival (`temporada_rival_caiu`) só entra quando o meu time ficou na série (fica na A ou na B) e o clássico da tabela caiu: em festa, a frase é da festa; na queda, nunca. O Campeão da estreia usa as frases da taça com estrela (seção 15). "Escapou!" só sai para quem terminou em 7º ou 8º da Série A (perto da zona); do 2º ao 6º, a outra frase de `temporada_fica_a` (revisão de 07/11/2026).
 
 ### Na Home, durante o mês
 

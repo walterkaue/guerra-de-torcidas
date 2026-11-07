@@ -29,17 +29,23 @@ const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('t
 export const servidorDaTemporada = async (): Promise<Servidor> => (FALSA ? import('../dev/temporadaFalsa') : import('../servidor/api'));
 export const temporadaFalsaLigada = (): boolean => FALSA;
 
-/** As temporadas recentes, lidas uma vez por abertura do app (o bloco e a placa de fim do mês usam a mesma). */
-let leituraDasTemporadas: Promise<Temporada[]> | null = null;
+/**
+ * Quanto tempo uma leitura vale. O app pode ficar aberto dias (PWA, aba restaurada): a semana trava na segunda 12h e o
+ * mês fecha às 12h01, e a Home que volta depois disso tem de ler de novo (revisão de 07/11/2026).
+ */
+const VALIDADE_DA_LEITURA_MS = 10 * 60_000;
+
+/** As temporadas recentes, lidas uma vez a cada 10 min (o bloco e a placa de fim do mês usam a mesma). */
+let leituraDasTemporadas: { em: number; p: Promise<Temporada[]> } | null = null;
 export function lerTemporadas(): Promise<Temporada[]> {
-  if (!leituraDasTemporadas) {
+  if (!leituraDasTemporadas || Date.now() - leituraDasTemporadas.em > VALIDADE_DA_LEITURA_MS) {
     const p = servidorDaTemporada().then((s) => s.temporadasRecentes());
-    leituraDasTemporadas = p;
+    leituraDasTemporadas = { em: Date.now(), p };
     p.catch(() => {
-      if (leituraDasTemporadas === p) leituraDasTemporadas = null; // sem internet: a próxima Home tenta de novo
+      if (leituraDasTemporadas?.p === p) leituraDasTemporadas = null; // sem internet: a próxima Home tenta de novo
     });
   }
-  return leituraDasTemporadas;
+  return leituraDasTemporadas.p;
 }
 
 interface TabelaDoMes {
@@ -48,11 +54,11 @@ interface TabelaDoMes {
   fechadas: number;
 }
 
-let leituraDaTabela: { time: string; tabela: Promise<TabelaDoMes | null> } | null = null;
+let leituraDaTabela: { time: string; em: number; tabela: Promise<TabelaDoMes | null> } | null = null;
 
-/** A tabela do mês aberto; nula se não há mês aberto. Uma leitura por abertura. */
+/** A tabela do mês aberto; nula se não há mês aberto. Uma leitura a cada 10 min por time. */
 function lerTabela(timeId: string): Promise<TabelaDoMes | null> {
-  if (leituraDaTabela?.time !== timeId) {
+  if (leituraDaTabela?.time !== timeId || Date.now() - leituraDaTabela.em > VALIDADE_DA_LEITURA_MS) {
     const tabela = (async () => {
       const aberta = (await lerTemporadas()).find((t) => !t.fechada_em);
       if (!aberta) return null;
@@ -60,7 +66,7 @@ function lerTabela(timeId: string): Promise<TabelaDoMes | null> {
       const [linhas, fechadas] = await Promise.all([s.classificacaoDoMes(aberta.mes), s.semanasFechadasDoMes(aberta.mes)]);
       return { temporada: aberta, linhas, fechadas };
     })();
-    leituraDaTabela = { time: timeId, tabela };
+    leituraDaTabela = { time: timeId, em: Date.now(), tabela };
     tabela.catch(() => {
       if (leituraDaTabela?.tabela === tabela) leituraDaTabela = null;
     });

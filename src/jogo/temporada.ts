@@ -311,11 +311,15 @@ export function projetarSemana(
   meuTime: string,
 ): Projecao | null {
   const minha = daSerie.find((l) => l.time_id === meuTime);
-  if (!minha) return null;
+  // Ranking vazio (segunda cedo, ou a Home sem leitura): não há semana para projetar.
+  if (!minha || semana.length === 0) return null;
   const naSemana = semanaNaSerie(daSerie, semana);
+  const presentes = new Set(semana.map((l) => l.time_id));
   const projetada = daSerie.map((l) => {
     const s = naSemana.get(l.time_id)!;
-    return { id: l.time_id, pontos: l.pontos + s.pontos, vitorias: l.vitorias + (s.vitoria ? 1 : 0), ultima: s.posicao };
+    // Como na view: time fora do ranking da semana não ganha "última semana" nova; fica a que tinha (nula vai pro fim).
+    const ultima = presentes.has(l.time_id) ? s.posicao : (l.ultima_posicao ?? Infinity);
+    return { id: l.time_id, pontos: l.pontos + s.pontos, vitorias: l.vitorias + (s.vitoria ? 1 : 0), ultima };
   });
   projetada.sort((a, b) => b.pontos - a.pontos || b.vitorias - a.vitorias || a.ultima - b.ultima || porId(a.id, b.id));
   const depois = projetada.findIndex((l) => l.id === meuTime) + 1;

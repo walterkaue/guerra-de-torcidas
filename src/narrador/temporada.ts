@@ -77,6 +77,14 @@ export interface ContextoDaTemporada {
   /** O mês seguinte, minúsculo: "janeiro". */
   mes?: string;
   rival?: TimeDaFraseDaTemporada | null;
+  /** Posição final no mês: "Escapou!" só serve para quem ficou perto da zona (7º e 8º da Série A). */
+  posicao?: number | null;
+}
+
+/** A frase serve para este contexto? (as variáveis ficam com `preencherFraseDaTemporada`). */
+export function fraseServe(frase: string, c: ContextoDaTemporada): boolean {
+  if (frase.startsWith('Escapou!')) return (c.posicao ?? 0) >= 7;
+  return true;
 }
 
 const contracao = (artigo: 'o' | 'a', base: 'de' | 'para') =>
@@ -105,7 +113,10 @@ export function preencherFraseDaTemporada(frase: string, c: ContextoDaTemporada)
 
 /** Uma frase do evento, entre as que dá para preencher com o contexto. */
 export function fraseDaTemporada(evento: EventoDaTemporada, c: ContextoDaTemporada, rng: () => number = Math.random): string | null {
-  const possiveis = FRASES_DA_TEMPORADA[evento].map((f) => preencherFraseDaTemporada(f, c)).filter((f): f is string => !!f);
+  const possiveis = FRASES_DA_TEMPORADA[evento]
+    .filter((f) => fraseServe(f, c))
+    .map((f) => preencherFraseDaTemporada(f, c))
+    .filter((f): f is string => !!f);
   if (!possiveis.length) return null;
   return possiveis[Math.floor(rng() * possiveis.length) % possiveis.length];
 }
