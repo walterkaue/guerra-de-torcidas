@@ -73,7 +73,7 @@ describe('dados do card de fim de temporada', () => {
     expect(d.tipo).toBe('temporada');
     expect(d.jogo).toBe('FIM DE DEZEMBRO');
     expect(d.destaque).toBe('SUBIU PRA SÉRIE A');
-    expect(d.lance).toBe('O Flamengo terminou em 2º na Série B · 1166 pts · 2 vitórias de semana');
+    expect(d.lance).toBe('O Flamengo terminou em 2º na Série B · 87 pts · 2 vitórias de semana');
     expect(d.link).toBe('torcida.kauewalter.com.br');
   });
 
@@ -168,7 +168,7 @@ describe('plano do card de fim de temporada por estilo', () => {
     expect(ligado.lance).toBe('O Flamengo terminou em 2º na Série B');
     const desligado = plano('placar', SEM_TABELA);
     expect(desligado.temporada?.numeros).toEqual([]);
-    expect(desligado.lance).toContain('1166 pts');
+    expect(desligado.lance).toContain('87 pts');
   });
 
   it('Placar seco e Pôster levam "Teste das divisões" no topo na pré-temporada', () => {

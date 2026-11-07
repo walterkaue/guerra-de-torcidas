@@ -51,7 +51,8 @@ export function mesDeAmostra(cenario: CenarioDoMes, time: Time, pre: boolean): {
     time_id: id,
     serie,
     posicao: i + 1,
-    pontos: Math.max(0, 1240 - i * 63 - (i % 2) * 11),
+    // Pontos de verdade num mês: no máximo 5 × 25 = 125.
+    pontos: Math.max(0, 98 - i * (serie === 'unica' ? 4 : 9) - (i % 2) * 2),
     vitorias: i < 3 ? 3 - i : 0,
     ultima_posicao: i + 1,
     posicao_final: i + 1,
