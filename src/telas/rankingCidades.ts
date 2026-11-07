@@ -107,7 +107,7 @@ export function desenharCidades(el: HTMLElement, inicial?: 'campeas'): () => voi
     if (minha && l.codigo === minha.codigo) classes.push('meu');
     return `<div class="${classes.join(' ')}">
       <span class="pos">${l.posicao}º</span>
-      <span class="nome">${esc(l.nome)}${comUf ? ` <span class="uf">${esc(l.uf)}</span>` : ''}<small> ${textoJogadores(l.ativos)}</small></span>
+      <span class="nome">${esc(l.nome)}${comUf ? ` <span class="uf">${esc(l.uf)}</span>` : ''} <small>${textoJogadores(l.ativos)}</small></span>
       <span class="valor">${Math.round(l.media30).toLocaleString('pt-BR')}</span>
     </div>`;
   }
@@ -152,7 +152,7 @@ export function desenharCidades(el: HTMLElement, inicial?: 'campeas'): () => voi
           if (minha && l.uf === minha.uf) classes.push('meu');
           return `<div class="${classes.join(' ')}">
             <span class="pos">${l.posicao}º</span>
-            <span class="nome">${esc(l.uf)}<small> ${textoJogadores(l.ativos)}</small></span>
+            <span class="nome">${esc(l.uf)} <small>${textoJogadores(l.ativos)}</small></span>
             <span class="valor">${Math.round(l.media30).toLocaleString('pt-BR')}</span>
           </div>`;
         })

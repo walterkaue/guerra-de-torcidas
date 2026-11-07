@@ -130,11 +130,11 @@ function desenharMes(el: HTMLElement): () => void {
         // Verde para quem vai (ou volta) pra A, vermelho para quem cai; "Fica" e a Série B neutros.
         const corDestino = l.serie === 'a' ? (l.destino === 'b' ? 'desce' : '') : l.destino === 'a' ? 'sobe' : '';
         const nome = time?.nome ?? l.time_id;
-        const linhaHtml = `<div class="${classes.join(' ')}" data-casa="${esc(l.time_id)}" role="link" tabindex="0" aria-label="Abrir a Casa ${time?.artigo === 'a' ? 'da' : 'do'} ${esc(nome)}">
+        const linhaHtml = `<div class="${classes.join(' ')}" data-casa="${esc(l.time_id)}" role="link" tabindex="0">
           <span class="pos">${semSemana ? '–' : `${pos}º`}</span><span class="seta" aria-hidden="true"></span>
           <span class="cor" style="--c1:${time?.cores[0] ?? '#666'};--c2:${time?.cores[1] ?? '#999'}"></span>
           <span class="nome">${esc(nome)}${vit ? `<small>${vit}</small>` : ''}</span>
-          <span class="valor">${destino ? `<em class="selo-destino ${corDestino}">${destino}</em>` : ''}${l.pontos}</span>
+          <span class="valor">${destino ? `<em class="selo-destino ${corDestino}">${destino}</em>` : ''}${l.pontos}</span><span class="so-leitor">, abrir a Casa ${time?.artigo === 'a' ? 'da' : 'do'} ${esc(nome)}</span>
         </div>`;
         const divisor =
           modo === 'unica' && !fechado && !semSemana && i === 9 ? `<p class="divisor-serie">${esc(textoDivisor(t.mes))}</p>` : '';

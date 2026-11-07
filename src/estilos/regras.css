@@ -44,6 +44,12 @@
   overscroll-behavior: contain;
 }
 
+/* Área que rola: recebe foco para o teclado rolar (S18), com contorno visível. */
+.regras-corpo:focus-visible {
+  outline: 3px solid var(--amarelo);
+  outline-offset: -3px;
+}
+
 .regras-passos {
   display: flex;
   flex-direction: column;

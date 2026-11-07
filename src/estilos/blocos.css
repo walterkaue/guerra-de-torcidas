@@ -33,9 +33,13 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  min-height: 36px;
-  padding: 0 10px;
-  border: 1px solid rgba(245, 245, 240, 0.4);
+  min-height: 44px;
+  padding: 0 11px;
+  /* Alvo de 44 px: a borda transparente em cima e embaixo mantém o desenho de 36 px. */
+  border: 0 solid transparent;
+  border-block-width: 4px;
+  background-clip: padding-box;
+  box-shadow: inset 0 0 0 1px rgba(245, 245, 240, 0.4);
   border-radius: var(--raio-p);
   color: var(--cal);
   font-family: var(--fonte-rotulo);
@@ -317,7 +321,7 @@
 
 .abas-tv button {
   min-height: 44px;
-  padding: 0 6px;
+  padding: 0 4px;
   border: 0;
   border-radius: var(--raio-p);
   background: transparent;
@@ -333,9 +337,23 @@
 /* Celular estreito (dobrável fechado, 344 px): 4 abas cabem sem cortar "CONQUISTAS" (J15). */
 @media (max-width: 380px) {
   .abas-tv button {
-    padding: 0 2px;
+    padding: 0;
     font-size: 13px;
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
+  }
+}
+
+/* Com a fonte do sistema grande (caixa com menos de 17 letras de largura), 4 abas não cabem numa fileira sem
+   partir palavra: viram 2 × 2, do mesmo tamanho e na largura toda. */
+.abas-caixa {
+  container-type: inline-size;
+  font-size: 16px;
+}
+
+@container (max-width: 17em) {
+  .abas-tv:has(> :nth-child(4)) {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -345,65 +363,62 @@
   box-shadow: inset 0 -3px 0 var(--c1, var(--caiu));
 }
 
-/* 2º nível: menores, escuras e lado a lado. */
+/* 2º nível: menores, escuras, na largura toda. Cada grupo ocupa a linha (um embaixo do outro). */
 .abas-linha {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  flex-direction: column;
   gap: var(--e2);
 }
 
-.iguais > .abas-2 {
-  display: flex;
-  flex: 1;
+/* Regra única das abas (.abas-tv e .abas-2): botões do mesmo tamanho, nome longo quebra em 2 linhas,
+   nunca rola nem sobrepõe, também com a fonte do sistema ampliada. */
+.abas-tv button,
+.abas-2 button {
+  min-width: 0;
+  line-height: 1.1;
+  white-space: normal;
+  /* Palavra que não cabe nem sozinha quebra no meio, em vez de vazar. */
+  overflow-wrap: break-word;
+  text-align: center;
 }
 
-.iguais > .abas-2 button {
-  flex: 1 1 0;
-}
-
-/* Cidades: as 4 sub-abas do mesmo tamanho e na largura toda; o nome longo quebra em 2 linhas em vez de rolar. */
 .cid-abas {
   display: flex;
   flex-direction: column;
   gap: var(--e2);
 }
 
-.iguais.quatro > .abas-2 button {
-  min-width: 0;
-  padding: 0 4px;
-  font-size: 12px;
-  letter-spacing: 0.03em;
-  line-height: 1.1;
-  white-space: normal;
-}
-
 .abas-2 {
-  display: inline-flex;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 2px;
-  padding: 3px;
+  padding: 0 3px;
   border-radius: var(--raio-p);
   background: rgba(0, 0, 0, 0.4);
 }
 
+/* Alvo de 44 px: a borda transparente em cima e embaixo mantém o desenho de 38 px. */
 .abas-2 button {
-  min-height: 38px;
-  padding: 0 10px;
-  border: 0;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0 solid transparent;
+  border-block-width: 3px;
+  background-clip: padding-box;
   border-radius: 6px;
-  background: transparent;
+  background-color: transparent;
   color: var(--texto-suave);
   font-family: var(--fonte-rotulo);
   font-weight: 700;
   font-size: 13px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
-  white-space: nowrap;
   touch-action: manipulation;
 }
 
 .abas-2 [aria-selected='true'] {
-  background: var(--placa-alta);
+  /* background-color, e não background: o atalho voltaria o clip para a borda e a aba marcada cresceria para 44 px. */
+  background-color: var(--placa-alta);
   color: var(--cal);
   box-shadow: inset 0 -2px 0 var(--cal);
 }

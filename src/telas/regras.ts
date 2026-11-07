@@ -180,7 +180,7 @@ export function htmlDasRegras(jogo: JogoComRegras, paraTime?: string | null): st
       <h2 id="regras-titulo" class="titulo-tela">${esc(r.titulo)}</h2>
       <button class="voltar" type="button" data-regras-fechar aria-label="Fechar as regras">×</button>
     </div>
-    <div class="regras-corpo">
+    <div class="regras-corpo" tabindex="0">
       ${faixa('Como joga', 'h3')}
       <ul class="regras-passos">${passos}</ul>
       ${faixa('Pontos', 'h3')}

@@ -102,6 +102,10 @@ button.gal-item:active {
   transition-duration: 0s;
 }
 
+.gal-desenho {
+  display: contents;
+}
+
 .gal-item svg {
   display: block;
   height: 56px;
@@ -334,7 +338,8 @@ div.gal-vitrine > span b {
 }
 
 .gal-linha .nome small {
-  display: inline;
+  display: block;
+  font-size: 13px;
 }
 
 .gal-linha[role='link'] {

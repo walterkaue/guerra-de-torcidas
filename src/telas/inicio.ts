@@ -222,8 +222,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         ${htmlDosCards(esc(linhaDosLances(time, LANCES_POR_CLUBE)), unificada ? linhaLancesUnificados(null, MELHORES_DO_DIA) : linhaPenaltis(null, TETO_DIARIO), unificada ? htmlDoLanceDoDia() : '')}
       </section>
 
-      <button class="giro faixa-tv" type="button" data-acao="ranking" aria-label="Ver o ranking da semana" hidden>
-        <span class="giro-selo rotulo">Giro</span><span class="giro-frase" data-giro></span>
+      <button class="giro faixa-tv" type="button" data-acao="ranking" hidden>
+        <span class="giro-selo rotulo">Giro</span><span class="giro-frase" data-giro></span><span class="so-leitor">. Ver o ranking da semana</span>
       </button>
 
       <div class="casa-secao"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>${htmlDaCasa(esc(tituloDaCasa(time)))}</div>
@@ -318,14 +318,20 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       sininho.setAttribute('aria-label', ligado ? 'Aviso de domingo ligado' : 'Aviso de domingo');
     };
     void estadoDoAviso().then((e) => !saiu && acender(e === 'ligado'));
+    const fecharPainel = () => {
+      painelPush.innerHTML = '';
+      sininho.setAttribute('aria-expanded', 'false');
+    };
     sininho.addEventListener('click', () => {
-      if (painelPush.innerHTML.trim()) {
-        painelPush.innerHTML = '';
-        sininho.setAttribute('aria-expanded', 'false');
-        return;
-      }
+      if (painelPush.innerHTML.trim()) return fecharPainel();
       sininho.setAttribute('aria-expanded', 'true');
       void painelDoAviso(painelPush, acender);
+    });
+    // Esc fecha o painel (como as outras folhas) e devolve o foco ao sininho.
+    root.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || !painelPush.innerHTML.trim()) return;
+      fecharPainel();
+      sininho.focus();
     });
   }
 
@@ -527,7 +533,6 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         const clube = lance.clube === 'selecao' ? SELECAO.nome : (timePorId(lance.clube)?.nome ?? '');
         const rotulo = rotuloDoLanceDoDia(lance.titulo, clube);
         botaoDoDia.querySelector<HTMLElement>('[data-lance-do-dia]')!.textContent = rotulo.split(' · ').slice(1).join(' · ');
-        botaoDoDia.setAttribute('aria-label', rotulo);
         botaoDoDia.disabled = false;
         botaoDoDia.addEventListener('click', () => irPara(time ? { tela: 'lances', lance: id } : { tela: 'times', depois: 'lances', lance: id }));
       })

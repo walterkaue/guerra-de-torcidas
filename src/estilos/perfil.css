@@ -138,8 +138,10 @@ button.perfil-destaque .ico {
   color: var(--texto-suave);
 }
 
+/* Alvo de 44 px (S15) sem crescer a linha: a margem negativa devolve os 8 px a mais. */
 .link-mini {
-  min-height: 36px;
+  min-height: 44px;
+  margin-block: -4px;
   padding: 0 4px;
   border: 0;
   background: none;

@@ -73,39 +73,56 @@ const SIGLA_CURTA: Record<NomePista, string> = {
   capital: 'Capital',
 };
 
+/** Texto longo + curto: o curto aparece quando a célula fica estreita pra letra (container query no CSS, S04). */
+const duplo = (longo: string, curto: string) =>
+  `<span class="dia-lg">${longo}</span><span class="dia-ct" aria-hidden="true">${curto}</span>`;
+/** Célula: o miolo é o "container" que mede a própria largura em em e escolhe o texto. */
+const miolo = (html: string) => `<span class="dia-v"><span class="dia-w">${html}</span></span>`;
+
+// Título da coluna quando falta largura (fonte grande do sistema).
+const SIGLA_MINI: Record<NomePista, string> = {
+  estado: 'UF',
+  fundacao: 'Ano',
+  titulos: 'Tít.',
+  divisao: 'Sér.',
+  cores: 'Cor',
+  capital: 'Cap.',
+};
+
 function valorDaPista(t: Tentativa, n: NomePista): string {
   const c = t.clube;
   const seta = t.pistas[n].seta === 'acima' ? '<i aria-label="o secreto tem mais">↑</i>' : t.pistas[n].seta === 'abaixo' ? '<i aria-label="o secreto tem menos">↓</i>' : '';
   switch (n) {
     case 'estado':
-      return esc(c.uf);
+      return miolo(esc(c.uf));
     case 'fundacao':
-      return `${c.fundacao}${seta}`;
     case 'titulos':
-      return `${c.titulos}${seta}`;
+      return miolo(`<span class="dia-n">${n === 'fundacao' ? c.fundacao : c.titulos}</span>${seta}`);
     case 'divisao':
-      return c.divisao;
+      return miolo(c.divisao);
     case 'cores':
-      return c.cores
-        .map((cor) => `<span class="amostra" style="background:${AMOSTRA_COR[cor]}" title="${esc(cor)}"></span>`)
-        .join('');
+      return miolo(
+        c.cores
+          .map((cor) => `<span class="amostra" style="background:${AMOSTRA_COR[cor]}" title="${esc(cor)}"></span>`)
+          .join(''),
+      );
     case 'capital':
-      return c.capital ? 'Capital' : 'Interior';
+      return miolo(c.capital ? duplo('Capital', 'Cap.') : duplo('Interior', 'Int.'));
   }
 }
 
 /** Linha de exemplo da 1ª vez (nenhum clube de verdade): tom e valor de cada pista, na ordem da grade. */
 const EXEMPLO: readonly (readonly [string, string])[] = [
-  ['certo', 'SP'],
-  ['perto', '1910<i>↑</i>'],
-  ['longe', '7<i>↓</i>'],
-  ['certo', 'A'],
-  ['perto', '<span class="amostra" style="background:#2e9d4f"></span>'],
-  ['longe', 'Interior'],
+  ['certo', miolo('SP')],
+  ['perto', miolo('<span class="dia-n">1910</span><i>↑</i>')],
+  ['longe', miolo('<span class="dia-n">7</span><i>↓</i>')],
+  ['certo', miolo('A')],
+  ['perto', miolo('<span class="amostra" style="background:#2e9d4f"></span>')],
+  ['longe', miolo(duplo('Interior', 'Int.'))],
 ];
 
 const CABECALHO_PISTAS = `<div class="dia-cabecalho" aria-hidden="true">
-        ${NOMES_PISTAS.map((n) => `<span>${SIGLA_CURTA[n]}</span>`).join('')}
+        ${NOMES_PISTAS.map((n) => `<span><span class="dia-w">${duplo(SIGLA_CURTA[n], SIGLA_MINI[n])}</span></span>`).join('')}
       </div>`;
 
 const TEXTO_TOM = { certo: 'igual', perto: 'perto', longe: 'longe' } as const;

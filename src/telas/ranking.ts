@@ -134,13 +134,13 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
         const classes = ['mini-linha'];
         if (pos(l) === 1 && l.ativos > 0) classes.push('lider');
         if (l.time_id === meuTime && meuTime !== ID_OUTRO) classes.push('meu');
-        const casa = l.time_id !== ID_OUTRO ? ` data-casa="${esc(l.time_id)}" role="link" tabindex="0" aria-label="Abrir a Casa ${t?.artigo === 'a' ? 'da' : 'do'} ${esc(t?.nome ?? l.time_id)}"` : '';
+        const casa = l.time_id !== ID_OUTRO ? ` data-casa="${esc(l.time_id)}" role="link" tabindex="0"` : '';
         if (casa) classes.push('abre-casa');
         return `<div class="${classes.join(' ')}"${casa}>
           <span class="pos">${pos(l)}º</span><span class="seta" aria-hidden="true"></span>
           <span class="cor" style="--c1:${t?.cores[0] ?? '#666'};--c2:${t?.cores[1] ?? '#999'}"></span>
-          <span class="nome">${esc(t?.nome ?? l.time_id)}<small> ${l.ativos} ${l.ativos === 1 ? 'torcedor' : 'torcedores'}</small></span>
-          <span class="valor">${Math.round(valor).toLocaleString('pt-BR')}</span>
+          <span class="nome">${esc(t?.nome ?? l.time_id)} <small>${l.ativos} ${l.ativos === 1 ? 'torcedor' : 'torcedores'}</small></span>
+          <span class="valor">${Math.round(valor).toLocaleString('pt-BR')}</span>${casa ? `<span class="so-leitor">, abrir a Casa ${t?.artigo === 'a' ? 'da' : 'do'} ${esc(t?.nome ?? l.time_id)}</span>` : ''}
         </div>`;
       })
       .join('');

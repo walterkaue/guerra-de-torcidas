@@ -570,12 +570,20 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
     setTimeout(() => (s.textContent = antes), 1800);
   };
 
+  let salvando = false; // toque duplo baixa um arquivo só (S09)
   btnSalvar.addEventListener('click', async () => {
+    if (salvando) return;
     const pronto = prontos.get(estilo());
     if (!dados || !pronto) {
       avisar('O card ainda tá saindo. Espera um instante.');
       return;
     }
+    salvando = true;
+    btnSalvar.disabled = true;
+    const soltar = () => {
+      salvando = false;
+      if (dados) btnSalvar.disabled = false;
+    };
     if (salvaPelaFolha(navigator.userAgent, navigator.maxTouchPoints)) {
       avisar(AVISO_IPHONE, 7000);
       const arquivo = arquivoAtual();
@@ -584,6 +592,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
       } catch {
         // cancelou
       }
+      soltar();
       return;
     }
     const a = document.createElement('a');
@@ -593,6 +602,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
     a.click();
     a.remove();
     rotuloDoBotao(btnSalvar, 'Salvo!');
+    setTimeout(soltar, 1800);
   });
 
   let compartilhando = false; // toque duplo não chama a folha de compartilhar duas vezes (J32)
