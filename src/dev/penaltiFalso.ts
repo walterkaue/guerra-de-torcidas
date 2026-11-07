@@ -7,7 +7,7 @@
 // catálogo; &x1Livre imita o X1 sem disputa, de antes do corte). Dá para entrar pelo convite da Home (?penaltiFalso&d=...).
 // A disputa que a partida joga ganha medalhas de mentira: 8 gols e 2 vitórias, perto do bronze (10 gols); minhasMedalhas()
 // devolve o que a partida somou, então a linha "+N rumo ao bronze" e o selo aparecem de verdade no resultado.
-// Depois do corte o fechamento traz melhoresDoDia e restantesHoje, e a tabela é a de 09/11.
+// Depois do corte o fechamento traz melhoresDoDia e restantesHoje, e a tabela é a de 08/11.
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { sementeNova } from '../jogo/aleatorio';

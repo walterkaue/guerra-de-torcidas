@@ -1,6 +1,6 @@
 // Recalibra as faixas do catálogo inteiro pelo acerto real das pessoas (docs/jogo.md, seção 14.7): a faixa nova de
 // cada lance sai da chance do robô de calibragem (`calibrar`) vezes o fator humano medido (gols das pessoas ÷ gols que
-// o robô faria nos mesmos lances). Vale só para partidas criadas a partir de 09/11/2026 (`faixaUnificada`); a faixa
+// o robô faria nos mesmos lances). Vale só para partidas criadas a partir de 08/11/2026 (`faixaUnificada`); a faixa
 // de antes continua no CSV. Grava dados/lances/faixas-unificadas.json, que o `npm run catalogo-lances` junta ao
 // catálogo, e mostra a lista de antes e depois.
 // Uso:
@@ -67,7 +67,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (!(medida.fator > 0 && medida.fator <= 1.5)) throw new Error(`fator fora do esperado: ${medida.fator}`);
   const faixas = recalibrar(lances, chances, medida.fator);
   const saida = {
-    aviso: 'GERADO por scripts/lances/recalibrar.mjs. Faixa dos Lances unificados (seção 14.7), só para partidas criadas a partir de 09/11/2026.',
+    aviso: 'GERADO por scripts/lances/recalibrar.mjs. Faixa dos Lances unificados (seção 14.7), só para partidas criadas a partir de 08/11/2026.',
     medidoEm: new Date().toISOString().slice(0, 10),
     fator: round(medida.fator),
     origem: medida.origem,

@@ -2,7 +2,7 @@
 // pelo relógio do servidor e o número secreto do narrador para um eventual par ou ímpar.
 // As sementes e as cobranças gravadas do desafio NÃO saem daqui: a partida é jogada lance a lance
 // pela função lance-penalti (anti-trapaça antes de divulgar; jogo.md, seção 6).
-// Lances unificados (seção 14.7, desde 09/11/2026): os pênaltis entram no limite do dia junto com faltas e cara a
+// Lances unificados (seção 14.7, desde 08/11/2026): os pênaltis entram no limite do dia junto com faltas e cara a
 // cara (10, contados ao começar, inclusive o X1 recebido). Passou do limite: 429 'limite_do_dia', e o celular joga
 // a partida como treino. A partida começa numa transação só no banco (penaltis_comecar), com a mesma trava por
 // torcedor da função lances.

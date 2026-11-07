@@ -417,7 +417,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
           ${e.acertou ? '' : numero('0', 'pontos hoje', 'apagado')}
         </div>`,
       frases: frasesFinais,
-      // Desde 09/11 (jogo.md 14.7) o dia vale 3 partidas de Lances e 3 da Prova: o texto não fala mais em 5.
+      // Desde 08/11 (jogo.md 14.7) o dia vale 3 partidas de Lances e 3 da Prova: o texto não fala mais em 5.
       aviso: e.acertou
         ? { texto: lancesUnificados() ? `+${e.pontos} na semana, por fora das partidas do dia.` : `+${e.pontos} na semana, além das 5 partidas do dia.`, forte: false }
         : null,

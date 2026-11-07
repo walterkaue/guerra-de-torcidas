@@ -26,7 +26,7 @@ export function linhaDosLances(time: Pick<Time, 'id' | 'nome' | 'artigo'> | unde
   return `Pênaltis, faltas e cara a cara\n${n} ${n === 1 ? 'lance histórico' : 'lances históricos'} ${time.artigo === 'a' ? 'da' : 'do'} ${time.nome}`;
 }
 
-// ---------- Lance do Dia e X1 dos Lances (regra de 09/11/2026, docs/jogo.md 14.7) ----------
+// ---------- Lance do Dia e X1 dos Lances (regra de 08/11/2026, docs/jogo.md 14.7) ----------
 
 /** O botão da Home: "Lance do Dia · Gol do título · Flamengo". Sem promessa de bônus: o lance é só um convite. */
 export function rotuloDoLanceDoDia(titulo: string, clube: string): string {

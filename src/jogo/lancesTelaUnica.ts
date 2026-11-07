@@ -1,4 +1,4 @@
-// Contas e textos da tela única dos Lances (docs/jogo.md, seção 14.7), que entra na segunda 09/11/2026, 0h de
+// Contas e textos da tela única dos Lances (docs/jogo.md, seção 14.7), que entra no domingo 08/11/2026, 0h de
 // Brasília: lista de itens (disputas históricas, faltas e cara a cara), filtro de tipo e de clube,
 // textos do X1 e da partida de 3 tentativas. Módulo puro, sem DOM, testado em lancesTelaUnica.test.ts.
 
@@ -27,7 +27,7 @@ export interface ItemUnico extends ItemDaLista {
   tipo: TipoDoItem;
 }
 
-/** Todas as disputas do catálogo e os lances de falta e cara a cara (a Disputa livre saiu no corte de 09/11). */
+/** Todas as disputas do catálogo e os lances de falta e cara a cara (a Disputa livre saiu no corte de 08/11). */
 export function itensDaTelaUnica(
   lances: readonly Pick<Lance, 'id' | 'clube' | 'tipo'>[],
   disputas: readonly Pick<Disputa, 'id' | 'clube'>[],

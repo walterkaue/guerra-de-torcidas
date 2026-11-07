@@ -22,7 +22,7 @@ import { normalizarCobranca, type GestoCobranca } from './penaltis.ts';
 
 /**
  * Partidas valendo por dia antes dos Lances unificados (ajustável em config_deteccao, chave `lances_por_dia`).
- * A partir de 09/11/2026 vale LANCES_PARTIDAS_POR_DIA_UNIFICADO (regraLances.ts), somando os três tipos.
+ * A partir de 08/11/2026 vale LANCES_PARTIDAS_POR_DIA_UNIFICADO (regraLances.ts), somando os três tipos.
  */
 export const LANCES_PARTIDAS_POR_DIA = 6;
 
@@ -151,7 +151,7 @@ export const ehLanceRepetido = (ids: readonly string[]): boolean =>
 // ---------- formato das respostas da função `lances` ----------
 
 /**
- * acao 'nova': começa uma partida valendo. Regra nova (desde 09/11/2026): `{ lance: id }` ou `{ desafio: código }`,
+ * acao 'nova': começa uma partida valendo. Regra nova (desde 08/11/2026): `{ lance: id }` ou `{ desafio: código }`,
  * e a partida são 3 tentativas desse lance. Antes do corte também vale a lista antiga `{ lances: [id, id, id] }`.
  */
 export interface RespostaNovaLances {

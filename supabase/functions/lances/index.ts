@@ -2,7 +2,7 @@
 // as sementes nunca saem daqui. Duas ações:
 //   { acao: 'nova', lance: id }                    começa a partida: 3 tentativas do mesmo lance
 //   { acao: 'nova', desafio: código }              X1 recebido: o lance de quem desafiou, com sementes novas
-//   { acao: 'nova', lances: [id, id, id] }         formato antigo (3 lances escolhidos): só antes de 09/11/2026
+//   { acao: 'nova', lances: [id, id, id] }         formato antigo (3 lances escolhidos): só antes de 08/11/2026
 //   { acao: 'lance', partidaId, i, gesto }         resolve o lance i; no 3º, fecha e grava a partida
 // A regra (tabela, limite do dia, faixa) sai da hora em que a partida foi criada (regraLances.ts).
 // A cena vem do catálogo do servidor (_shared/dados/lances.ts), pelo id: o celular nunca manda a cena.
@@ -337,7 +337,7 @@ async function fechar(
     throw e;
   }
   const agora = new Date();
-  // Partida criada antes do corte e fechada depois das 00h05 da segunda conta no dia em que começou.
+  // Partida criada antes do corte e fechada depois das 00h05 do dia seguinte conta no dia em que começou.
   const { dia, semana } = periodoNoCorte(partida.criada_em, periodoDaPartida(new Date(partida.criada_em), agora));
   const rankingAntes = await posicaoDoTime(sb, semana, torcedor.time_id);
 

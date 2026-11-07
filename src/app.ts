@@ -57,7 +57,7 @@ export type Rota =
       apelido?: boolean;
       primeira?: boolean;
     }
-  /** `disputa`: disputa histórica escolhida na aba Pênaltis (só cenário; sem ela, a Disputa livre até 08/11; desde 09/11 é obrigatória). */
+  /** `disputa`: disputa histórica escolhida na aba Pênaltis (só cenário; sem ela, a Disputa livre até 07/11; desde 08/11 é obrigatória). */
   | { tela: 'partida'; desafio?: string; disputa?: Disputa }
   | { tela: 'resultado'; dados: DadosResultado }
   | { tela: 'prova'; desafio?: string }

@@ -7,7 +7,7 @@ export interface SinaisDoConfete {
   /** Pênaltis vencidos, X1 vencido, 8 de 8 na Prova. */
   venceu?: boolean;
   novoRecorde?: boolean;
-  /** Regra de 09/11 (jogo.md 14.7): a partida entrou nas 3 melhores do dia. */
+  /** Regra de 08/11 (jogo.md 14.7): a partida entrou nas 3 melhores do dia. */
   entrouNasMelhores?: boolean;
   acertouTimeDoDia?: boolean;
   /** Subiu de bronze, prata ou ouro (Lances e disputas de pênaltis). */

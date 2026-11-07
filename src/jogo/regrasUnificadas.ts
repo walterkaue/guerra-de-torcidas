@@ -1,4 +1,4 @@
-// Textos de pontos do "?" dos Lances do Jogo depois de 09/11/2026 (docs/jogo.md, seção 14.7). Puro: sem DOM nem
+// Textos de pontos do "?" dos Lances do Jogo depois de 08/11/2026 (docs/jogo.md, seção 14.7). Puro: sem DOM nem
 // relógio. Todo número sai das tabelas do código (PONTOS_UNIFICADOS, TABELA_LANCES_UNIFICADA, MEDALHAS_PENALTIS).
 
 import { FAIXAS, TABELA_LANCES_UNIFICADA, type Faixa, type TabelaLances } from './lances';
