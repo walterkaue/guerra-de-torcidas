@@ -16,6 +16,7 @@ import {
   uniformesDaPartida,
   type Boneco,
 } from '../bonecos';
+import { bonecoDaPessoaEmCampo } from '../bonecoEmCampoCena';
 import { ENQUADRAMENTOS } from '../camera';
 import { facil, limitar01 } from '../cena';
 import { criarCena3d } from '../cena3d';
@@ -44,7 +45,8 @@ export const estacaoFalta: Estacao = (ctx) => {
   const l = CENA_DA_FALTA;
 
   const u = uniformesDaPartida(time.cores, null, Math.random() < 0.5 ? 0 : 1);
-  const batedor: Boneco = criarBoneco(sortearAparencia(), u.jogador, false);
+  // Com "Meu boneco em campo" ligado, o batedor é o boneco da pessoa (só visual).
+  const batedor: Boneco = bonecoDaPessoaEmCampo(u.jogador) ?? criarBoneco(sortearAparencia(), u.jogador, false);
   const goleiro: Boneco = criarBoneco(sortearAparencia(), u.goleiroAdversario, true);
   const barreira: Boneco[] = Array.from({ length: 3 }, () => criarBoneco(sortearAparencia(), u.adversario, true));
   const poseBatedor = novaPose();

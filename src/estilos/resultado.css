@@ -393,6 +393,28 @@
   font-weight: 700;
 }
 
+.duelo-desafio span.com-busto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  /* O lado sem busto também reserva a altura dele, para os dois nomes e placares ficarem alinhados. */
+  min-height: 40px;
+}
+
+.duelo-desafio span.com-busto b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.duelo-desafio .busto-duelo {
+  flex: none;
+  display: block;
+  overflow: visible;
+}
+
 .duelo-desafio strong {
   font-family: var(--fonte-placar);
   font-weight: 400;

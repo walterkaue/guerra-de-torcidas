@@ -11,6 +11,7 @@
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { sementeNova } from '../jogo/aleatorio';
+import { bonecoFalsoDeQuemChamou, timeFalsoDeQuemChamou } from './bonecoDeCampoFalso'; // o boneco falso em campo (&boneco=, &semBoneco, &emCampo=0, &chamouBoneco=, &chamouSemBoneco)
 import { PONTOS, PONTOS_UNIFICADOS, simularPartida, sortearSementes, type Gestos, type SementesPorLance } from '../jogo/penaltis';
 import { jogarLance, type Lance } from '../jogo/penaltisLance';
 import { DISPUTAS } from '../dados/disputas';
@@ -38,7 +39,7 @@ const medalhas = new Map<string, { gols: number; vitorias: number }>();
 /** O convite do X1 como `ver_desafio` o devolve, com a disputa de quem chamou. */
 export async function verDesafio(id: string): Promise<ResumoDesafio | null> {
   await espera();
-  return { id, time_id: 'palmeiras', apelido: 'Camisa10', gols_jogador: 3, gols_maquina: 2, pontos: 96, disputa_id: disputaDoX1() };
+  return { id, time_id: timeFalsoDeQuemChamou('palmeiras'), apelido: 'Camisa10', gols_jogador: 3, gols_maquina: 2, pontos: 96, disputa_id: disputaDoX1(), boneco: bonecoFalsoDeQuemChamou() };
 }
 
 export async function minhasMedalhas(): Promise<MedalhaDoLance[]> {
@@ -60,7 +61,7 @@ export async function novaPartida(codigo?: string, disputa?: string): Promise<Pa
     proximo: { tipo: 'cobranca', i: 0 },
     dificuldade: 0.5,
     expiraEm: new Date(Date.now() + 15 * 60_000).toISOString(),
-    desafio: codigo ? { id: codigo, timeId: 'palmeiras', apelido: 'Camisa10', golsJogador: 3, golsMaquina: 2, pontos: 96, disputaId: disputaDoX1() } : null,
+    desafio: codigo ? { id: codigo, timeId: timeFalsoDeQuemChamou('palmeiras'), apelido: 'Camisa10', golsJogador: 3, golsMaquina: 2, pontos: 96, disputaId: disputaDoX1() } : null,
     ...(lancesUnificados() ? { restantesHoje: 7 } : {}),
   };
 }

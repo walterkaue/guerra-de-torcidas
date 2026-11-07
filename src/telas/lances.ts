@@ -86,6 +86,7 @@ import { SELECAO, TORCIDA_SELECAO, coresDoAdversario, roupaDoBatedorGoleiro } fr
 import { contraAdversario } from '../dados/adversarios';
 import { DISPUTAS } from '../dados/disputas';
 import { chamadaDaDisputa, disputasDoTorcedor, type Disputa } from '../jogo/disputas';
+import { bonecoDaPessoaEmCampo } from './bonecoEmCampoCena';
 import { criarBoneco, novaPose, type Boneco, poseChute, poseComemora, poseLamenta, poseParado, sortearAparencia, uniformesDaPartida } from './bonecos';
 import { ENQUADRAMENTOS } from './camera';
 import { facil, limitar01 } from './cena';
@@ -169,11 +170,16 @@ export function clubeDoLance(clube: string): { nome: string; cores: readonly [st
 
 const distanciaDoLance = (l: Lance) => Math.hypot(l.bola.x, l.bola.z);
 
-/** Batedor nas cores do clube do lance, barreira e goleiro nas do adversário de verdade. */
+/**
+ * Batedor nas cores do clube do lance, barreira e goleiro nas do adversário de verdade. Com "Meu boneco em campo"
+ * ligado, o batedor é o boneco da pessoa (na roupa do lance: a do clube, ou a de goleiro no Gol 100); goleiro e barreira
+ * continuam sorteados. Só visual.
+ */
 function elencoDoLance(l: Lance): { batedor: Boneco; goleiro: Boneco; barreira: Boneco[] } {
   const u = uniformesDaPartida(clubeDoLance(l.clube).cores, coresDoAdversario(l.adversario), 0);
+  const roupaDoBatedor = roupaDoBatedorGoleiro(l.id) ?? u.jogador;
   return {
-    batedor: criarBoneco(sortearAparencia(), roupaDoBatedorGoleiro(l.id) ?? u.jogador, false),
+    batedor: bonecoDaPessoaEmCampo(roupaDoBatedor) ?? criarBoneco(sortearAparencia(), roupaDoBatedor, false),
     goleiro: criarBoneco(sortearAparencia(), u.goleiroAdversario, true),
     barreira: Array.from({ length: 6 }, () => criarBoneco(sortearAparencia(), u.adversario, true)),
   };
@@ -211,6 +217,8 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   let refazerListaUnica: (() => void) | null = null;
   let fichaDaRotaAberta = false;
   let telaViva = true;
+  /** Quem chamou o X1 recebido (o `boneco` e o time do resumo), para o busto no placar do resultado. */
+  let quemChamouX1: { boneco: unknown; timeId: string } | null = null;
   let escolhidos: Lance[] = [];
   let filtroClube = LANCES.some((l) => l.clube === time.id) ? time.id : 'todos';
   let limparJogo: (() => void) | null = null;
@@ -789,6 +797,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       hub();
       return;
     }
+    quemChamouX1 = { boneco: resumo.boneco ?? null, timeId: resumo.time_id };
     jogo([lance, lance, lance], false, { x1: codigo, alvoX1: { apelido: resumo.apelido, pontos: resumo.pontos } });
   }
 
@@ -845,9 +854,9 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           const p = placarDoX1(pontos, cmp);
           return placa(
             `<div class="duelo-desafio">
-              <div><span>Você</span><strong>${p.voce}</strong></div>
+              <div><span data-nome-duelo="voce">Você</span><strong>${p.voce}</strong></div>
               <em>x</em>
-              <div><span>${esc(p.nomeDoOutro)}</span><strong>${p.outro}</strong></div>
+              <div><span data-nome-duelo="outro">${esc(p.nomeDoOutro)}</span><strong>${p.outro}</strong></div>
               <p class="adesivo">${esc(fraseX1 ?? '')}</p>
             </div>`,
             { titulo: 'X1', filete: true },
@@ -908,6 +917,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       mandarCard: true,
       maisUma: 'Jogar de novo',
     });
+    if (cmp) void import('./bustosDoDuelo').then((m) => m.bustosDoDuelo(root, quemChamouX1?.boneco, quemChamouX1?.timeId));
     contar(root.querySelector<HTMLElement>('[data-contador]'), pontos);
     root.querySelector('[data-acao="album"]')!.addEventListener('click', hub);
 

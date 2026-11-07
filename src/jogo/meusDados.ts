@@ -26,6 +26,8 @@ export interface MeusDados {
   avisos: number;
   /** Há boneco guardado (seção 14.5). Só sim ou não: a vestimenta não aparece. Servidor antigo: ausente. */
   boneco?: boolean;
+  /** O interruptor "Meu boneco em campo" (vale para o X1); null sem boneco. Servidor antigo: ausente. */
+  boneco_em_campo?: boolean | null;
   /** Sessões ligadas à conta (código do torcedor, seção 14.1). Servidor antigo: ausente. */
   aparelhos?: number;
   mensagens: MensagemGuardada[];
@@ -75,6 +77,9 @@ export function linhasDosMeusDados(d: MeusDados | null, nomeDoTime: (id: string)
     { rotulo: 'Carreira', valor: `${(d.carreira_xp ?? 0).toLocaleString('pt-BR')} XP` },
     { rotulo: 'Medalhas dos Lances', valor: d.gols_lances ? plural(d.gols_lances, 'gol guardado', 'gols guardados') : 'nenhuma' },
     ...(d.boneco ? [{ rotulo: 'Boneco do avatar', valor: 'escolhas de visual, sem foto' }] : []),
+    ...(d.boneco && typeof d.boneco_em_campo === 'boolean'
+      ? [{ rotulo: 'Boneco em campo', valor: d.boneco_em_campo ? 'ligado: quem recebe um desafio seu vê o boneco' : 'desligado' }]
+      : []),
     { rotulo: 'Aviso de domingo', valor: d.avisos ? `ligado em ${plural(d.avisos, 'navegador', 'navegadores')}` : 'desligado' },
     ...(d.aparelhos ? [{ rotulo: 'Aparelhos ligados', valor: plural(d.aparelhos, 'aparelho', 'aparelhos') }] : []),
     {

@@ -595,6 +595,11 @@ function misturarCor(a: string, b: string, t: number): string {
   return hex(r1 + (r2 - r1) * t, g1 + (g2 - g1) * t, b1 + (b2 - b1) * t);
 }
 
+/** A cor do cabelo como aparece no desenho (o raspado é a cor do cabelo meio misturada com a pele). */
+export function corDoCabeloVisivel(a: Pick<Aparencia, 'cabelo' | 'corCabelo' | 'pele'>): string {
+  return a.cabelo === 'raspado' ? misturarCor(a.corCabelo, a.pele, 0.45) : a.corCabelo;
+}
+
 const distancia = distanciaDeCor;
 
 function luminancia(cor: string): number {
@@ -1051,6 +1056,10 @@ export interface Boneco {
   j: Float32Array;
   /** Tornozelo do pé de apoio na pose de espera (onde a dica aparece no chão). */
   apoio: { x: number; y: number };
+  /** Peças por cima do desenho (o boneco da pessoa em campo, bonecoEmCampoCena.ts). Sem elas, nada muda. */
+  camadas?: Camadas;
+  /** O mesmo boneco visto do outro lado, com as peças dele (o replay vira o batedor para a câmera de trás do gol). */
+  virar?: () => Boneco;
 }
 
 export function criarBoneco(aparencia: Aparencia, uniforme: Uniforme, deFrente: boolean): Boneco {
@@ -1072,7 +1081,7 @@ export function criarBoneco(aparencia: Aparencia, uniforme: Uniforme, deFrente: 
     cor: {
       peleMeio: escurecer(aparencia.pele, 0.88),
       camisaSombra: escurecer(uniforme.camisa, 0.84),
-      cabelo: aparencia.cabelo === 'raspado' ? misturarCor(aparencia.corCabelo, aparencia.pele, 0.45) : aparencia.corCabelo,
+      cabelo: corDoCabeloVisivel(aparencia),
     },
     degrades: null,
     j: new Float32Array(30),
@@ -1359,7 +1368,8 @@ function cabeca(c: CanvasRenderingContext2D, b: Boneco, p: Pose, soCabeloDeTras:
  * Desenha o boneco na pose, com os pés na origem. Batedor de costas, goleiro de frente.
  * `realcePeDeApoio` pinta de amarelo a chuteira do pé de apoio (a dica da defesa).
  */
-export function desenharBoneco(c: CanvasRenderingContext2D, b: Boneco, p: Pose, realcePeDeApoio = false, camadas?: Camadas): void {
+export function desenharBoneco(c: CanvasRenderingContext2D, b: Boneco, p: Pose, realcePeDeApoio = false, camadasPedidas?: Camadas): void {
+  const camadas = camadasPedidas ?? b.camadas;
   const d = prepararDegrades(c, b);
   resolver(b, p);
   if (b.deFrente && b.cabeloAtras) cabeca(c, b, p, true);

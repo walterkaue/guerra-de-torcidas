@@ -34,8 +34,11 @@ const DUR_PULO = 420 * LENTO;
 const DEPOIS = 1100;
 const ZOOM_FINAL = 1.1;
 
-/** O mesmo boneco visto do outro lado (quem estava de costas aparece de frente e vice-versa). */
-const virado = (b: Boneco) => criarBoneco(b.aparencia, b.uniforme, !b.deFrente);
+/**
+ * O mesmo boneco visto do outro lado (quem estava de costas aparece de frente e vice-versa). O boneco da pessoa
+ * ("Meu boneco em campo") sabe se virar com as peças dele; os sorteados são só recriados.
+ */
+const virado = (b: Boneco) => b.virar?.() ?? criarBoneco(b.aparencia, b.uniforme, !b.deFrente);
 
 /**
  * Prepara o replay na cena 3D e devolve o desenho de cada quadro, que diz quantos ms faltam (<= 0: acabou).

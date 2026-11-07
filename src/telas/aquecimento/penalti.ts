@@ -29,6 +29,7 @@ import {
   uniformesDaPartida,
   type Boneco,
 } from '../bonecos';
+import { bonecoDaPessoaEmCampo } from '../bonecoEmCampoCena';
 import { criarCena, facil, limitar01, suave } from '../cena';
 import { aoMudarQualidade } from '../qualidade';
 import { demonstrar } from './mao';
@@ -84,7 +85,8 @@ function montar(ctx: Parameters<Estacao>[0], tipo: 'penalti' | 'defesa'): () => 
 
   // Elenco: o visual é sorteado (nunca a semente); camisa lisa nas cores do time.
   const u = uniformesDaPartida(time.cores, null, Math.random() < 0.5 ? 0 : 1);
-  const batedorJogador: Boneco = criarBoneco(sortearAparencia(), u.jogador, false);
+  // Com "Meu boneco em campo" ligado, o batedor é o boneco da pessoa (só visual).
+  const batedorJogador: Boneco = bonecoDaPessoaEmCampo(u.jogador) ?? criarBoneco(sortearAparencia(), u.jogador, false);
   const goleiroJogador: Boneco = criarBoneco(sortearAparencia(), u.goleiroJogador, true);
   const batedorMaquina: Boneco = criarBoneco(sortearAparencia(), u.adversario, false);
   const goleiroMaquina: Boneco = criarBoneco(sortearAparencia(), u.goleiroAdversario, true);

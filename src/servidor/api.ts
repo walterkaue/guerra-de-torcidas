@@ -12,6 +12,7 @@ import type { Lance, Passo as PassoPenalti } from '../jogo/penaltisLance.ts';
 import type { Ajuda, Degrau, Desfecho, Fim, Passo, PontosProva } from '../jogo/prova.ts';
 import type { Desempenho, PosicaoSemana } from '../jogo/posicao.ts';
 import type { Tentativa } from '../jogo/timeDoDia.ts';
+import type { VestimentaDeCampo } from '../telas/bonecoEmCampo';
 import type { RespostaLanceDoJogo, RespostaNovaLances } from '../jogo/lancesPartida.ts';
 import type { Medalha } from '../jogo/lances.ts';
 import type { Carreira } from '../jogo/carreira.ts';
@@ -315,6 +316,8 @@ export interface DesafioRecebido {
   disputaId?: string | null;
   /** Só do servidor antigo: no lance a lance as cobranças gravadas ficam no servidor. */
   cobrancas?: GestoCobranca[];
+  /** Só do celular: o `boneco` do resumo do desafio, para o placar do resultado (a nova-partida não traz). */
+  boneco?: VestimentaDeCampo | null;
 }
 
 export interface PartidaDoServidor {
@@ -395,6 +398,11 @@ export interface ResumoDesafio {
   pontos: number;
   /** A disputa histórica do X1 (desde 20261105400000; null no X1 livre de antes do corte). */
   disputa_id?: string | null;
+  /**
+   * O boneco de quem chamou, só o que vai a campo (docs/jogo.md 14.5, "Boneco em campo"). null: sem boneco ou com o
+   * interruptor dele desligado. Ausente: servidor antigo (trate como sem boneco).
+   */
+  boneco?: VestimentaDeCampo | null;
 }
 
 /** Resumo do desafio para a tela inicial (sem as cobranças). */
@@ -431,6 +439,8 @@ export interface ResumoDesafioLances {
   gols: number;
   recriados: number;
   faixa: string;
+  /** O boneco de quem chamou (mesma regra de `ResumoDesafio.boneco`). */
+  boneco?: VestimentaDeCampo | null;
 }
 
 /** Resumo do X1 dos Lances para quem abre o link (?l=): quem chamou, o lance e os pontos a bater. */

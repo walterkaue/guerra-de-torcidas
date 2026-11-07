@@ -99,9 +99,9 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
   const blocoDesafio = cmp
     ? placa(
         `<div class="duelo-desafio">
-          <div><span>Você</span><strong>${p.total}</strong><small>${r.golsJogador} x ${r.golsMaquina}</small></div>
+          <div><span data-nome-duelo="voce">Você</span><strong>${p.total}</strong><small>${r.golsJogador} x ${r.golsMaquina}</small></div>
           <em>x</em>
-          <div><span>${esc(cmp.desafiante ?? 'Quem te chamou')}</span><strong>${cmp.pontosDesafiante}</strong><small>${cmp.golsJogadorDesafiante} x ${cmp.golsMaquinaDesafiante}</small></div>
+          <div><span data-nome-duelo="outro">${esc(cmp.desafiante ?? 'Quem te chamou')}</span><strong>${cmp.pontosDesafiante}</strong><small>${cmp.golsJogadorDesafiante} x ${cmp.golsMaquinaDesafiante}</small></div>
         </div>
         ${fraseDesafio ? `<p class="adesivo">${esc(fraseDesafio)}</p>` : ''}`,
         { titulo: 'X1', filete: true },
@@ -143,6 +143,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
     maisUma: r.venceu ? 'Mais uma' : 'Revanche',
   });
+  // X1: o busto de cada um ao lado do apelido (sem boneco ou com o interruptor desligado, nada muda).
+  if (cmp) void import('./bustosDoDuelo').then((m) => m.bustosDoDuelo(root, d.desafio?.boneco, d.desafio?.timeId));
 
   contar(root.querySelector<HTMLElement>('[data-contador]'), p.total);
   // Confete e vibração, uma vez por resultado: vitória, recorde novo, entrou nas 3 melhores do dia ou medalha nova.

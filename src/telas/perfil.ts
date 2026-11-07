@@ -13,11 +13,12 @@ import { ordinalRodada } from '../jogo/crava';
 import { podeVerPush } from '../jogo/faixaEtaria';
 import { nomeNoCracha } from '../jogo/perfil';
 import type { PosicaoSemana } from '../jogo/posicao';
-import { meusRecordes, minhaPosicaoMinigame, minhaPosicaoSemana, type MinigameDoRecorde } from '../servidor/api';
+import { ErroServidor, meusRecordes, minhaPosicaoMinigame, minhaPosicaoSemana, type MinigameDoRecorde } from '../servidor/api';
 import { jogosDoCrava, minhaPosicaoCrava } from '../servidor/crava';
 import { semanaBrasilia } from '../servidor/tempo';
 import { montarAparelhos } from './aparelhosLigados';
 import { pintarAvatar, pintarBoneco, vestiarioJaAberto } from './bonecoDoAparelho';
+import { emCampoLigado, guardarEmCampo } from './bonecoEmCampoGuardado';
 import { pecaPorId } from '../jogo/vestiario';
 import { linhaDaProxima } from '../jogo/pecaNova';
 import { textoDoContador } from '../jogo/vestiarioTela';
@@ -27,6 +28,7 @@ import { carregarCarreiraPerfil } from './carreira';
 import { lancesUnificados } from './corte';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { icone } from './icones';
+import { avisoCurto } from './avisoCurto';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { NOME_DO_NIVEL, escolha, escolherQualidade, qualidade } from './qualidade';
 import { vibrar } from './toque';
@@ -145,6 +147,9 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
         <label class="ajuste">Mostrar meu nível nos cards
           <input class="chave" type="checkbox" role="switch" data-nivel-card${nivelNoCard ? ' checked' : ''}>
         </label>
+        <label class="ajuste">Meu boneco em campo
+          <input class="chave" type="checkbox" role="switch" data-em-campo${emCampoLigado() ? ' checked' : ''}>
+        </label>
         ${
           podeVerPush(faixaDoAparelho())
             ? `<button class="ajuste" type="button" data-acao="aviso" aria-expanded="false">Aviso de domingo <span data-aviso></span></button>
@@ -215,6 +220,23 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
     prefs.set({ nivelNoCard: (e.target as HTMLInputElement).checked }),
   );
 
+  // Meu boneco em campo: o batedor dos jogos é o boneco da pessoa (só visual). Grava no aparelho na hora e no servidor
+  // em seguida; se o servidor falhar, volta ao que era e avisa.
+  const elEmCampo = root.querySelector<HTMLInputElement>('[data-em-campo]')!;
+  /** Tocou no interruptor nesta visita: a leitura do servidor que chegar depois não desfaz o toque. */
+  let tocouEmCampo = false;
+  elEmCampo.addEventListener('change', () => {
+    tocouEmCampo = true;
+    const ligado = elEmCampo.checked;
+    guardarEmCampo(ligado);
+    const salvar = FALSA ? import('../dev/homeFalsa').then((m) => m.salvarEmCampo(ligado)) : import('../servidor/boneco').then((m) => m.salvarEmCampo(ligado));
+    salvar.catch((e: unknown) => {
+      guardarEmCampo(!ligado);
+      if (!saiu) elEmCampo.checked = !ligado;
+      avisoCurto(e instanceof ErroServidor && e.codigo === 'limite' ? 'Calma, craque: trocou demais. Tenta de novo daqui a pouco.' : 'Não deu pra mudar agora. Confere a conexão e tenta de novo.');
+    });
+  });
+
   // Aviso de domingo: o mesmo painel do sininho da Home.
   const elAviso = root.querySelector<HTMLButtonElement>('[data-acao="aviso"]');
   if (elAviso) {
@@ -248,6 +270,8 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
       const { lerDoServidor } = await import('./bonecoPintar');
       const b = await lerDoServidor();
       if (saiu) return;
+      // O interruptor nasceu da cópia do aparelho; o servidor manda (outro aparelho pode ter desligado).
+      if (!tocouEmCampo && typeof b.emCampo === 'boolean') elEmCampo.checked = b.emCampo;
       pronto();
       pararCorpo.push(pintarBoneco(caixa, { recorte: 'corpo', largura: 76, altura: 112, vestimenta: b.vestimenta, rotulo: 'Seu boneco' }));
       conta.textContent = `${textoDoContador(b.liberadas)} peças`;

@@ -63,7 +63,7 @@ import { seloPre, faixa, numero as numeroBloco, posicaoHtml } from './blocos';
 import { arteEscada, arteGrade, htmlDaCasa, htmlDoLanceDoDia, htmlDosCards } from './cardsJogos';
 import { lancesUnificados } from './corte';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
-import { pintarAvatar } from './bonecoDoAparelho';
+import { pintarAvatar, pintarBoneco } from './bonecoDoAparelho';
 import type { FraseDoMes } from './blocoDivisoes';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
@@ -74,6 +74,10 @@ const SERVIDOR = { rankingDaSemana, minhaPosicaoSemana, partidasFechadasHoje, es
 // Em desenvolvimento, ?homeFalsa troca o servidor por um de mentira (src/dev/homeFalsa.ts) e ?diaFalso
 // usa o Time do Dia de mentira também no card (src/dev/diaFalso.ts).
 const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
+/** Convite do X1 (docs/jogo.md 14.5, "Boneco em campo"): o busto de quem chamou, ao lado do texto (40 px, nas cores do time dele). */
+const bustoDoConvite = (caixa: HTMLElement, boneco: unknown, cores?: Time['cores']): void => {
+  if (boneco) pintarBoneco(caixa.querySelector<HTMLElement>('p:not(.rotulo)')!, { recorte: 'busto', largura: 40, altura: 40, deCampo: boneco, cores, aoLado: true });
+};
 /** O resultado da sincronização fica guardado: redesenha só uma vez por carregamento, senão repetiria sem fim. */
 let jaRedesenhou = false;
 // Em desenvolvimento, ?cidadesFalsas=com|sem|faltam|vazia|erro troca o servidor da cidade por um de mentira.
@@ -83,7 +87,7 @@ const servidorCidade = async (): Promise<typeof realCidade> => (FALSA_CIDADE ? i
 const FALSA_DIA = import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso');
 // Em desenvolvimento, ?penaltiFalso também responde o convite do X1 (src/dev/penaltiFalso.ts).
 const FALSO_PENALTI = import.meta.env.DEV && new URLSearchParams(location.search).has('penaltiFalso');
-const verDesafioDoLink = (id: string) => (FALSO_PENALTI ? import('../dev/penaltiFalso').then((m) => m.verDesafio(id)) : verDesafio(id));
+const verDesafioDoLink = (id: string) => (FALSO_PENALTI || FALSA ? import('../dev/penaltiFalso').then((m) => m.verDesafio(id)) : verDesafio(id));
 const servidor = async (): Promise<typeof SERVIDOR> => {
   if (FALSA) return import('../dev/homeFalsa');
   return FALSA_DIA ? { ...SERVIDOR, estadoDoDia: (await import('../dev/diaFalso')).estadoDoDia } : SERVIDOR;
@@ -496,6 +500,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           <p class="convite-como">Você defende as cobranças de quem te chamou e bate as suas. Quem fizer mais pontos ganha.</p>
           <button class="botao-linha" type="button" data-acao="desafio">Aceitar o X1</button>`;
         desafioAberto = d.id;
+        bustoDoConvite(caixa, d.boneco, t?.cores);
         atualizarBotao();
         caixa.querySelector('[data-acao="desafio"]')!.addEventListener('click', () => jogar(d.id, disputa));
       })
@@ -555,6 +560,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           <button class="botao-linha" type="button" data-acao="desafio-lances">Aceitar o X1</button>`;
         caixa.hidden = false;
         desafioLancesAberto = d.id;
+        bustoDoConvite(caixa, d.boneco, t?.cores);
         atualizarBotao();
         caixa.querySelector('[data-acao="desafio-lances"]')!.addEventListener('click', () => jogarLances(d.id));
       })

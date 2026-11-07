@@ -6,10 +6,11 @@
 // Com ?corte=depois: meusLancesHoje falso (4 de 10; prova e cravado esgotam as 10; ?semMelhores zera o dia) e ?l=codigo (X1 dos Lances).
 
 import { ID_OUTRO, TIMES } from '../dados/times';
+import { bonecoFalsoDeQuemChamou, timeFalsoDeQuemChamou } from './bonecoDeCampoFalso'; // o boneco falso em campo (&boneco=, &semBoneco, &emCampo=0, &chamouBoneco=, &chamouSemBoneco)
 import { NOMES_PISTAS, type Pistas, type Tentativa, type Tom } from '../jogo/timeDoDia';
 import type { Carreira } from '../jogo/carreira';
 import type { PosicaoSemana } from '../jogo/posicao';
-import type { LancesHoje, LinhaRanking, MinigameDoRecorde, RespostaDoDia, ResumoDesafioLances } from '../servidor/api';
+import { ErroServidor, type LancesHoje, type LinhaRanking, type MinigameDoRecorde, type RespostaDoDia, type ResumoDesafioLances } from '../servidor/api';
 import type { Jogo, MeusDados, MinhaPosicao } from '../servidor/crava';
 import { estadoFalso } from '../telas/vestiario/fonteFalsa';
 
@@ -116,5 +117,12 @@ export const meusLancesHoje = (): Promise<LancesHoje | null> => {
 export async function verDesafioLances(id: string): Promise<ResumoDesafioLances | null> {
   if (id === 'naoexiste') return espera(null);
   const { LANCES } = await import('../dados/lances');
-  return espera({ id, time_id: 'flamengo', apelido: 'Zé da Geral', lance_id: LANCES[0].id, pontos: 96, gols: 3, recriados: 1, faixa: 'dificil' });
+  return espera({ id, time_id: timeFalsoDeQuemChamou('flamengo'), apelido: 'Zé da Geral', lance_id: LANCES[0].id, pontos: 96, gols: 3, recriados: 1, faixa: 'dificil', boneco: bonecoFalsoDeQuemChamou() });
+}
+
+/** "Meu boneco em campo" do Perfil. &emCampoFalha faz o servidor recusar (confere a volta do interruptor e o aviso). */
+export async function salvarEmCampo(ligado: boolean): Promise<{ emCampo: boolean }> {
+  await new Promise((ok) => setTimeout(ok, 300));
+  if (params.has('emCampoFalha')) throw new ErroServidor('limite');
+  return { emCampo: ligado };
 }
