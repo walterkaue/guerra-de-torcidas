@@ -4,8 +4,11 @@
 
 import { CLUBES } from './validar.mjs';
 
-/** Cota por clube na pré-temporada (docs/jogo.md, 7.1). Quando a meta subir para 30 por clube, mude aqui. */
-export const COTA = { facil: 3, media: 3, dificil: 2, craque: 2 };
+/**
+ * Cota por clube: a meta do lançamento, 30 por clube (docs/jogo.md, 7.1). É só a mira do robô: pergunta válida
+ * não é aposentada por o clube já ter passado dela (decidido em 06/11/2026).
+ */
+export const COTA = { facil: 9, media: 9, dificil: 6, craque: 6 };
 const DEGRAU_POR_NUMERO = { 1: 'facil', 2: 'media', 3: 'dificil', 4: 'craque' };
 const ORDEM = Object.keys(COTA);
 
