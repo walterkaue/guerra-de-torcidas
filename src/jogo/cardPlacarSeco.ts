@@ -133,9 +133,10 @@ function montar(c: CanvasRenderingContext2D, d: DadosDoCard, plano: PlanoDoCard,
   }
 
   // Os números do troféu, numa linha pequena (até 2 linhas).
-  if (plano.trofeu?.numeros.length) {
+  const numerosDoFim = (plano.trofeu ?? plano.temporada)?.numeros ?? [];
+  if (numerosDoFim.length) {
     const tam = z(b.nums);
-    const texto = plano.trofeu.numeros.map((n) => `${n.valor} ${n.rotulo}`).join(' · ');
+    const texto = numerosDoFim.map((n) => `${n.valor} ${n.rotulo}`).join(' · ');
     c.font = `700 ${tam}px ${FONTE}`;
     const linhas = duasLinhas(c, texto, 900);
     const lh = tam * 1.3;

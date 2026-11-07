@@ -7,8 +7,10 @@ import { abas, baixarPedaco, estado, marcarAba } from './blocos';
 import { ID_OUTRO, timePorId } from '../dados/times';
 import { prefs } from '../estado';
 import * as real from '../servidor/api';
+import { mandarTemporadaNoGrupo } from './mandarTemporada';
 import {
   LEGENDA_SERIE,
+  destinoDoMes,
   fraseDoMeuTime,
   mensagemSemSemana,
   nomeDaSerie,
@@ -95,6 +97,10 @@ function desenharMes(el: HTMLElement): () => void {
       fechada: fechado,
     });
 
+    // "Card do mês": só com o mês fechado e o time do coração na tabela dele (nunca "Outro time"); secundário, sem amarelo.
+    const destino = fechado && minha ? destinoDoMes(minha, t) : null;
+    const botaoDoCard = destino ? `<button class="botao botao-sec" type="button" data-card-mes style="margin-top:14px">Card do mês</button>` : '';
+
     const subMes =
       temporadas!.length > 1
         ? `<div class="abas-2" role="tablist">
@@ -146,6 +152,7 @@ function desenharMes(el: HTMLElement): () => void {
         <p class="selo-semana">${esc(textoContagem(fechadas, segundasDoMes(t.mes).length))}</p>
         ${semSemana ? `<p class="selo-semana provisoria">${esc(mensagemSemSemana(t.mes, new Date()))}</p>` : ''}
         ${frase ? `<p class="frase-meu-time">${esc(frase)}</p>` : ''}
+        ${botaoDoCard}
       </section>
       ${subMes || subSerie ? `<div class="abas-linha">${subMes}${subSerie}</div>` : ''}
       <div class="tabela" aria-live="polite" data-tabela-temporada aria-label="${esc(nomeDaSerie(serieVista))}">${linhasHtml}</div>
@@ -157,6 +164,16 @@ function desenharMes(el: HTMLElement): () => void {
     const alvo = e.target as HTMLElement;
     if (alvo.closest('[data-tentar]')) {
       void carregar();
+      return;
+    }
+    if (alvo.closest('[data-card-mes]')) {
+      // Direto no toque, sem await antes (iPhone): tudo o que o card precisa já está na memória da aba.
+      const t = temporadas?.[indice];
+      const dados = t ? cache.get(t.mes) : undefined;
+      const time = timePorId(prefs.get().time);
+      const linha = dados && time ? dados.linhas.find((l) => l.time_id === time.id) : undefined;
+      const destino = t && linha ? destinoDoMes(linha, t) : null;
+      if (t && dados && time && destino) mandarTemporadaNoGrupo({ temporada: t, linhas: dados.linhas, time, destino }, { raiz: document.body });
       return;
     }
     const mes = alvo.closest<HTMLElement>('[data-mes]');
