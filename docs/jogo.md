@@ -980,6 +980,15 @@ Só visual: nada muda em pontos, sementes, detecção ou regra de jogo.
 - **Site antigo com a migração no ar:** continua funcionando; ele ignora a coluna nova, e a função antiga não lê `em_campo`. Ordem de publicação: migração, função `boneco`, site.
 - **Testes:** `supabase/testes/bonecoEmCampo.test.ts`.
 
+**Como está no aparelho (06/11/2026):**
+- **Conta pura (`src/telas/bonecoEmCampo.ts`, com testes):** `batedorEmCampo(vestimenta, ligado, roupaDaCena, coresDoCoracao)` devolve a aparência, a roupa da cena (só a chuteira trocada) e as peças de campo já calculadas (número e a cor dele pelo `corDeTexto` da camisa da cena, testeira, punho, braçadeira, chuteira dourada), ou null para sortear. `vestimentaDeCampo(x)` transforma o `boneco` do servidor numa vestimenta segura.
+- **Cola (`src/telas/bonecoEmCampoCena.ts`):** `bonecoDaPessoaEmCampo(roupaDaCena)` e `bonecoDeQuemChamouEmCampo(vestimenta, roupaDaCena, coresDoTimeDele)`, os dois casos de `bonecoDeCampo`. O Boneco carrega as próprias camadas (`b.camadas`) e sabe se virar para o replay (`b.virar()`), com o número desvirado e a braçadeira no braço esquerdo do boneco; `cena.ts` e `cena3d.ts` não mudaram.
+- **Desenho (`src/telas/bonecoMontavel.ts`):** o vestiário e o campo usam as mesmas peças (`camadasDeCampo`, `corDoPunho`, `comChuteiraDe`, `escreverNumero`). O número em campo é um sprite (`criarSpriteDoNumero`), desenhado uma vez quando a Anton carrega; até lá, camisa lisa.
+- **Interruptor:** `src/telas/bonecoEmCampoGuardado.ts` (chave `gdt:boneco-em-campo`, ausente = ligado), fora do bundle inicial; o Perfil grava no aparelho na hora e chama `salvarEmCampo` (`src/servidor/boneco.ts`), voltando a chave com aviso se o servidor recusar. Toda leitura do `meu_boneco` sobrescreve a cópia.
+- **X1:** `partida.ts` pede o `verDesafio` em paralelo com a `nova-partida`, sem esperar: se o boneco de quem chamou chega depois do apito, ele entra no começo da próxima cobrança, nunca no meio. Os bustos do placar do X1 ficam em `src/telas/bustosDoDuelo.ts` (40 px; o de quem chamou nas cores do time dele, com fundo e moldura padrão); o convite da Home pinta o busto por `pintarBoneco` (`deCampo`, `cores`, `aoLado`).
+- **Tamanho:** `index-*.js` de 46,78 kB gzip (eram 46,64 na `main`): o resto vem por `import()` ou no pedaço dos jogos. Os +0,14 kB são as chamadas do busto no convite da Home (`inicio.ts`) e o nome do pedaço novo no mapa de `import()`.
+- **Em dev:** `&boneco=<variação>` (cabelos, peles, `n0`–`n99`, `sn`, peças, `tudo` e `foras`), `&semBoneco`, `&emCampo=0`, `&emCampoFalha`, `&chamouBoneco=<variação>`, `&chamouSemBoneco`, `&chamouTime=<id>`, `&uniforme=1|2` e `&replayFalso`, em `?penaltiFalso`, `?lancesFalsos` e `?homeFalsa` (lista no topo de `src/dev/bonecoDeCampoFalso.ts`). Prints 390 × 844 em `docs/auditoria/2026-11-06/boneco-em-campo/`.
+
 ### 14.6 Cards personalizáveis
 > Decisão do Kauê em 05/11/2026 (Rota 1).
 
