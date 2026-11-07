@@ -80,6 +80,9 @@ export function conferirNaPagina(op) {
   const reticencias = [];
   for (const el of vis) {
     if (!temTextoProprio(el)) continue;
+    // Texto só para leitor de tela (caixa de 1 px recortada): escondido de propósito, não é corte (G3).
+    const caixa = el.getBoundingClientRect();
+    if (caixa.width <= 1 && caixa.height <= 1) continue;
     const s = getComputedStyle(el);
     const escondeX = /hidden|clip/.test(s.overflowX);
     const escondeY = /hidden|clip/.test(s.overflowY);
@@ -288,6 +291,8 @@ export function focoNaPagina() {
     focusVisible: fv,
     naTela: r.bottom > 0 && r.top < innerHeight && r.width > 0,
     topo: Math.round(r.top),
+    // Posição na página (com a rolagem): o Tab rola a tela e o topo na janela cai mesmo na ordem certa (G3, S17).
+    topoNaPagina: Math.round(r.top + scrollY),
     esquerda: Math.round(r.left),
   };
 }

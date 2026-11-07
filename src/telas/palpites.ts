@@ -524,7 +524,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
           return `<div class="${classes.join(' ')}">
             <span class="pos">${l.posicao}º</span><span class="seta" aria-hidden="true"></span>
             <span class="cor" style="--c1:${t?.cores[0] ?? '#666'};--c2:${t?.cores[1] ?? '#999'}"></span>
-            <span class="nome">${esc(t?.nome ?? l.time_id)}<small> ${l.palpiteiros}</small></span>
+            <span class="nome">${esc(t?.nome ?? l.time_id)} <small>${l.palpiteiros}</small></span>
             <span class="valor">${Math.round(l.media30).toLocaleString('pt-BR')}</span>
           </div>`;
         })

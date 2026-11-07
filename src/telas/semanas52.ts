@@ -53,12 +53,12 @@ export function desenharSemanas52(el: HTMLElement): () => void {
           const classes = ['mini-linha', 'gal-linha'];
           if (l.posicao === 1 && l.pontos > 0) classes.push('lider');
           if (l.time_id === meuTime) classes.push('meu');
-          return `<div class="${classes.join(' ')}" data-casa="${esc(l.time_id)}" role="link" tabindex="0" aria-label="Abrir a Casa ${time?.artigo === 'a' ? 'da' : 'do'} ${esc(nome)}">
+          return `<div class="${classes.join(' ')}" data-casa="${esc(l.time_id)}" role="link" tabindex="0">
             <span class="pos">${l.posicao}º</span>
             <span class="cor" style="--c1:${time?.cores[0] ?? '#666'};--c2:${time?.cores[1] ?? '#999'}" aria-hidden="true"></span>
             <span class="nome">${esc(nome)}${vit ? `<small>${vit}</small>` : ''}</span>
             <span class="valor">${l.pontos.toLocaleString('pt-BR')}</span>
-            <span class="gal-barra" aria-hidden="true"><i style="--f:${fracaoDaBarra(l.pontos, lider).toFixed(3)}"></i></span>
+            <span class="gal-barra" aria-hidden="true"><i style="--f:${fracaoDaBarra(l.pontos, lider).toFixed(3)}"></i></span><span class="so-leitor">, abrir a Casa ${time?.artigo === 'a' ? 'da' : 'do'} ${esc(nome)}</span>
           </div>`;
         })
         .join('');

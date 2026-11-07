@@ -62,11 +62,13 @@ export function barra(fracao: number, rotulo: string): string {
 
 /** Abas: `nivel` 1 é a fileira principal; 2 é a menor e escura. Cada botão leva `data-<chave>="<id>"`. */
 export function abas(chave: string, opcoes: readonly { id: string; texto: string }[], escolhida: string, nivel: 1 | 2 = 1): string {
-  return `<div class="${nivel === 1 ? 'abas-tv' : 'abas-2'}" role="tablist">
+  const grupo = `<div class="${nivel === 1 ? 'abas-tv' : 'abas-2'}" role="tablist">
       ${opcoes
         .map((o) => `<button type="button" role="tab" aria-selected="${o.id === escolhida}" data-${chave}="${esc(o.id)}">${esc(o.texto)}</button>`)
         .join('')}
     </div>`;
+  // A caixa mede a largura em letras: com a fonte grande, 4 abas de 1º nível viram 2 × 2 (blocos.css).
+  return nivel === 1 ? `<div class="abas-caixa">${grupo}</div>` : grupo;
 }
 
 /** Marca a aba escolhida dentro de um grupo. */

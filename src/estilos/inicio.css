@@ -432,15 +432,28 @@
 
 .mini-linha .nome {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
+.mini-linha[data-casa] .nome {
+  container-type: inline-size;
+}
+
+/* Sem reticências (S03): o "N torcedores" é um bloco só e, quando não cabe do lado do nome (fonte grande), desce para a linha de baixo. */
 .mini-linha .nome small {
+  display: inline-block;
+  /* Em px, e não relativo: com a fonte do sistema grande, a linha de baixo continua menor que o nome. */
+  font-size: 13px;
   font-weight: 600;
   color: var(--texto-suave);
+}
+
+/* Fonte do sistema grande (coluna do nome com menos de 10 letras): "N torcedores" sempre na linha de baixo. */
+@container (max-width: 10em) {
+  .mini-linha[data-casa] .nome small {
+    display: block;
+  }
 }
 
 .mini-linha .valor {

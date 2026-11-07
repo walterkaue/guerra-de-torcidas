@@ -130,9 +130,9 @@ export async function ligarBlocoDivisoes(
           ? '<span class="seta caiu" aria-hidden="true">▼</span>'
           : '';
     el.innerHTML = `<div class="bd-topo">
-        <button class="bd-abrir" type="button" aria-label="${esc(bloco.resumo)}. Ver a tabela do mês">
-          <strong class="bd-pos" aria-hidden="true">${posicaoGrande(bloco.posicao)}</strong>
-          <span class="bd-texto" aria-hidden="true"><b>${esc(bloco.serie)}</b><span>${esc(bloco.situacao)}</span></span>
+        <button class="bd-abrir" type="button">
+          <strong class="bd-pos">${posicaoGrande(bloco.posicao)}</strong>
+          <span class="bd-texto"><b>${esc(bloco.serie)}</b><span>${esc(bloco.situacao)}</span></span><span class="so-leitor">. Ver a tabela do mês</span>
         </button>
         ${temporada.pre_temporada ? seloPre() : ''}
       </div>

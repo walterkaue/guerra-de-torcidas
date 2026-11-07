@@ -71,8 +71,7 @@ export function desenharGaleria(el: HTMLElement, o: OpcoesDaGaleria = {}): () =>
     }
     const texto = total === null ? 'Buscando…' : total === 'erro' ? 'Sem conexão' : textoDoTotal(total);
     botaoTime.setAttribute('style', `--gc1:${t.cores[0]};--gc2:${t.cores[1]};--gtxt:${corDeTexto(t.cores[0])}`);
-    botaoTime.innerHTML = `<span class="gal-time-nome">${esc(t.nome)}<small>${esc(texto)}</small></span><span class="gal-troca" aria-hidden="true">Ver outro time</span>`;
-    botaoTime.setAttribute('aria-label', `Galeria ${t.artigo === 'a' ? 'da' : 'do'} ${t.nome}, ${texto}. Trocar de time`);
+    botaoTime.innerHTML = `<span class="gal-time-nome">${esc(t.nome)}<small>${esc(texto)}</small></span><span class="gal-troca">Ver outro time</span>`;
   }
 
   const listaDeTimes = (): string =>
@@ -198,10 +197,10 @@ export function desenharGaleria(el: HTMLElement, o: OpcoesDaGaleria = {}): () =>
     )}${top.length ? placa(`<div class="gal-lista">${linhas}</div>`, { titulo: TEXTO_PRE_GALERIA.top3 }) : ''}${botaoMedalhas}`;
   }
 
-  /** Taça, flâmula ou megafone: com troféu abre a ficha; sem, fica tracejado e sem toque. */
-  function botaoDoTrofeu(t: Trofeu, texto: string, desenho: string, extra = ''): string {
+  /** Taça, flâmula ou megafone: com troféu abre a ficha; sem, fica tracejado e sem toque. O nome do botão começa pelo texto que aparece (S01). */
+  function botaoDoTrofeu(t: Trofeu, falado: string, desenho: string, extra = ''): string {
     fichas.push(t);
-    return `<button type="button" class="gal-item" data-gal-ficha="${fichas.length - 1}" aria-label="${esc(texto)}. Abrir a ficha">${desenho}${extra}</button>`;
+    return `<button type="button" class="gal-item" data-gal-ficha="${fichas.length - 1}"><span class="gal-desenho" aria-hidden="true">${desenho}</span>${extra}<span class="so-leitor">${falado ? `, ${esc(falado)}` : ''}. Abrir a ficha</span></button>`;
   }
 
   function pintarEstante(): void {
@@ -214,10 +213,9 @@ export function desenharGaleria(el: HTMLElement, o: OpcoesDaGaleria = {}): () =>
         if (!c.ultimo) {
           return `<div class="gal-item vazio">${svgTaca({ estrela: c.tipo === 'campeao_estreia', vazia: true, rotulo: esc(`${c.nome}: ainda não`) })}<span>${esc(c.nome)}</span><small>ainda não</small></div>`;
         }
-        const texto = `${c.nome}${c.multiplo ? `, ${c.vezes} vezes` : ''}`;
         return botaoDoTrofeu(
           c.ultimo,
-          texto,
+          c.multiplo ? `${c.vezes} vezes` : '',
           svgTaca({ estrela: c.tipo === 'campeao_estreia', rotulo: esc(c.nome) }),
           `${x}<span>${esc(c.nome)}</span>`,
         );
@@ -230,7 +228,7 @@ export function desenharGaleria(el: HTMLElement, o: OpcoesDaGaleria = {}): () =>
           .map((f) =>
             botaoDoTrofeu(
               f.trofeu,
-              `Campeão da semana de ${f.data}${f.serieB ? ', Série B' : ''}`,
+              'campeão da semana',
               svgFlamula(time.cores, esc(`Flâmula da semana de ${f.data}`)),
               `<span>${esc(f.data)}</span>${f.serieB ? '<em class="gal-b">Série B</em>' : ''}`,
             ),
@@ -247,7 +245,7 @@ export function desenharGaleria(el: HTMLElement, o: OpcoesDaGaleria = {}): () =>
     const vitrine = v.ultimo
       ? (() => {
           fichas.push(v.ultimo);
-          return `<button type="button" class="gal-vitrine" data-gal-ficha="${fichas.length - 1}" aria-label="Maior torcida${v.multiplo ? `, ${v.vezes} vezes` : ''}. Abrir a ficha">${svgMegafone('Megafone da Maior torcida')}<span><b>${esc(v.multiplo ?? '×1')}</b>Soma de todo mundo. Não é título.</span></button>`;
+          return `<button type="button" class="gal-vitrine" data-gal-ficha="${fichas.length - 1}" ><span class="gal-desenho" aria-hidden="true">${svgMegafone('Megafone da Maior torcida')}</span><span><b>${esc(v.multiplo ?? '×1')}</b>Soma de todo mundo. Não é título.</span><span class="so-leitor">. Maior torcida${v.multiplo ? `, ${v.vezes} vezes` : ''}. Abrir a ficha</span></button>`;
         })()
       : `<div class="gal-vitrine">${svgMegafone('Megafone: ainda não')}<span><b>Ainda não</b>Soma de todo mundo. Não é título.</span></div>`;
 

@@ -20,11 +20,17 @@
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 4px;
 }
+.dia-cabecalho > span {
+  container-type: inline-size;
+  min-width: 0;
+  position: relative;
+}
 .dia-cabecalho span {
   font: 700 12px var(--fonte-rotulo);
   text-transform: uppercase;
   letter-spacing: 0.02em;
   text-align: center;
+  line-height: 1.2;
   color: var(--texto-suave);
 }
 
@@ -66,6 +72,39 @@
   font-variant-numeric: tabular-nums;
   color: var(--cal);
   overflow: hidden;
+}
+/* Miolo da célula mede a própria largura (em) e escolhe o texto: com a letra grande do sistema entra o curto
+   ("Int.", "Cap.") e o ano deixa a seta embaixo, sem vazar pra vizinha. O longo continua lido pelo leitor de tela. */
+.dia-v {
+  container-type: inline-size;
+  width: 100%;
+  min-width: 0;
+  position: relative;
+}
+.dia-w {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+}
+.dia-ct { display: none; }
+@container (max-width: 2.7em) {
+  .dia-celulas .dia-lg {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .dia-celulas .dia-ct { display: inline; }
+  .dia-w:has(.dia-n) {
+    flex-direction: column;
+    gap: 0;
+    line-height: 1;
+    padding-block: 4px;
+  }
 }
 .dia-cel i {
   font-style: normal;
@@ -228,4 +267,17 @@
   font-size: 13px;
   line-height: 1.35;
   color: var(--texto-suave);
+}
+
+/* Títulos das colunas: a sigla curta entra antes de as palavras ficarem coladas (letra grande do sistema). */
+@container (max-width: 3.4em) {
+  .dia-cabecalho .dia-lg {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .dia-cabecalho .dia-ct { display: inline; }
 }

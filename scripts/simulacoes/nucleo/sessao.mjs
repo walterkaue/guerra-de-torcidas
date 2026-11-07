@@ -481,9 +481,9 @@ export class Sessao {
     if (invisiveis.length)
       this.achado({ regra: 'foco-invisivel', gravidade: 'atrapalha', tipo: 'acessibilidade', oQue: `${invisiveis.length} de ${ordem.length} paradas do Tab sem foco visível.`, chave: invisiveis.slice(0, 3).map((f) => f.desc).join(' | '), amostras: invisiveis.slice(0, 6).map((f) => f.desc), sugestao: 'Dar :focus-visible com contorno claro a esses elementos.' });
     let pulos = 0;
-    for (let i = 1; i < ordem.length; i++) if (ordem[i].topo < ordem[i - 1].topo - 80) pulos++;
+    for (let i = 1; i < ordem.length; i++) if ((ordem[i].topoNaPagina ?? ordem[i].topo) < (ordem[i - 1].topoNaPagina ?? ordem[i - 1].topo) - 80) pulos++;
     if (pulos > 1)
-      this.achado({ regra: 'ordem-do-tab', gravidade: 'detalhe', tipo: 'acessibilidade', oQue: `O Tab volta para cima ${pulos} vezes no meio da tela.`, chave: ordem.map((f) => f.desc).slice(0, 4).join(' > '), amostras: ordem.map((f) => `${f.desc} (y=${f.topo})`).slice(0, 12), sugestao: 'Deixar a ordem do HTML igual à ordem visual.' });
+      this.achado({ regra: 'ordem-do-tab', gravidade: 'detalhe', tipo: 'acessibilidade', oQue: `O Tab volta para cima ${pulos} vezes no meio da tela.`, chave: ordem.map((f) => f.desc).slice(0, 4).join(' > '), amostras: ordem.map((f) => `${f.desc} (y=${f.topoNaPagina ?? f.topo})`).slice(0, 12), sugestao: 'Deixar a ordem do HTML igual à ordem visual.' });
     return ordem;
   }
 
