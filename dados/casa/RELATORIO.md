@@ -1,6 +1,6 @@
 # Casa do time: relatório dos dados (rascunho, 21/10/2026, revisado à noite)
 
-Os seis CSVs estão em `dados/casa/` (20 clubes). **Lote 1 conferido em 21/10/2026** (athletico-pr, atletico-mg, bahia, botafogo, bragantino: todas as linhas `revisada`, ver seção 5); os outros 15 clubes seguem `rascunho`. Cada fato tem a página de onde saiu na coluna `fonte*` e as dúvidas na coluna `observacao`.
+Os seis CSVs estão em `dados/casa/` (20 clubes). **Lote 1 conferido em 21/10/2026** (seção 5); os outros lotes foram conferidos depois, por script e à mão. **Desde 07/11/2026 os 808 títulos estão `revisada`** (seção 6). Cada fato tem a página de onde saiu na coluna `fonte*` e as dúvidas na coluna `observacao`.
 
 ## 1. Cobertura por clube
 
@@ -39,9 +39,9 @@ Lacunas por falta de fonte aceita aberta:
 
 ## 2. Dúvidas e divergências para a revisão olhar primeiro
 
-Estaduais conferidos só por Lance/Trivela/Goal (as federações FPF-SP, FERJ, FMF, FGF, FBF, FCF não abriram): todos os `estadual` têm "conferir" na observação.
+Estaduais: **revistos em 07/11/2026** (seção 6). FPF-SP e FCF publicam a lista oficial e batem com o CSV; FGF mostra só de 2020 em diante; FERJ, FMF e FBF não publicam lista histórica. Nenhum segue com "conferir"; o Paranaense de 2000 foi decidido em 07/11 (item 1).
 
-1. **Paranaense 2000 (conferido no lote 1; o Kauê confere na FPF):** a página da FPF lista 2000 como do Coritiba, mas a final de 17/07/2000 (Atlético 1 x 1 Coritiba, gol do título do Atlético) está contada pela Gazeta do Povo e pela Banda B. Fica com o Athletico (28 títulos); o Coritiba perde a linha (39). A página da FPF parece errada.
+1. **Paranaense 2000 (decidido pelo Kauê em 07/11/2026: Athletico campeão, Coritiba vice):** a página da FPF lista 2000 como do Coritiba, mas a final de 17/07/2000 (Atlético 1 x 1 Coritiba, gol do título do Atlético) está contada pela Gazeta do Povo e pela Banda B. Fica com o Athletico (28 títulos); o Coritiba perde a linha (39). A página da FPF parece errada.
 2. **Paraense 2000 do Remo (resolvido, conferir):** a página de títulos do clube lista 49 anos, mas O Liberal conta 48 títulos até 2025 e a Wikipédia (só apoio) dá 2000 ao Paysandu sobre o Castanhal. Linha removida (Remo com 48).
 3. **Atlético-MG, Brasileiro 1937 (resolvido no lote 1):** reconhecido pela CBF em 25/08/2023 (Itatiaia); o Jornal de Brasília mistura com a resolução de 2010. Bate com `clubes-do-dia.csv` (3 Brasileiros).
 4. **Bahia, Baiano 1998 (conferido no lote 1):** fora da lista de anos do clube, mas necessário para fechar os 52 títulos que o clube e a FBF contam; o Lance dá ao Bahia. Conferir na FBF.
@@ -91,7 +91,7 @@ Segunda sessão (`docs/casa.md`, seção 8), com o prompt de `dados/casa/confere
 **Estaduais de 2026:** Mineiro do Cruzeiro, Carioca do Flamengo, Baiano do Bahia (já na lista), Paulista do Palmeiras, Paranaense do Operário. Nenhum muda o lote além do Bahia.
 
 **Continua em dúvida (o Kauê confere)**
-- Paranaense 2000 (FPF dá ao Coritiba; imprensa dá ao Athletico) e a lista da FPF com 2002 repetido.
+- ~~Paranaense 2000~~: decidido em 07/11/2026, Athletico campeão e Coritiba vice. A lista da FPF com 2002 repetido segue anotada.
 - Baiano 1998 (fora da lista de anos do clube; Lance dá ao Bahia) e Baiano 1999 (Lance lista Bahia e Vitória). Lista da FBF não abriu.
 - Mineiros (FMF sem lista), Cariocas (FERJ sem lista; 1907, 1912 e 1935 com dois campeões na Trivela) e Paulista de 1990 do Bragantino (FPF-SP não abriu).
 - Série C 2007 do Bragantino: só Goal; lista da CBF não abriu.
@@ -102,3 +102,47 @@ Segunda sessão (`docs/casa.md`, seção 8), com o prompt de `dados/casa/confere
 - Lacunas que seguem: Athletico sem manto 1 (as fontes alternam listras verticais e diagonais); Bahia sem jogos (o próprio clube diz que não consegue comprovar); Bragantino sem recordes, goleadas e recorde de público; gramado de todos; data exata de 3 goleadas (11 x 0 em 1991, 10 x 2 em 2002, 9 x 2 em 1927).
 
 **Para o validador (Etapa C):** os recordes agora podem ter empate (duas linhas na mesma posição, Botafogo jogos 3º); a regra "posições 1 a 3 sem buraco e em ordem decrescente" precisa aceitar valores iguais na mesma posição. Goleadas podem ter `data` só com o ano (AAAA).
+
+## 6. Conferência dos 35 títulos que faltavam (07/11/2026)
+
+Segunda sessão, só os títulos em `rascunho` (Palmeiras 14, Flamengo 12, Santos 3, São Paulo 2, Fluminense, Mirassol, Vasco e Vitória 1 cada). Com isso, **os 808 títulos estão `revisada`** (`npm run importar-casa`: titulos 808/808). Nenhuma linha saiu e nenhum ano mudou.
+
+**Como:** `npm run conferir-casa -- --clube=<id> --arquivos=titulos` nos 8 clubes confirmou 4 (Libertadores 2025 do Flamengo, Copa do Brasil 2010 do Santos e 2011 do Vasco, Série B 2023 do Vitória). Os outros 31 foram conferidos à mão: página baixada, texto bruto lido e cada citação da `observacao` checada por script contra a página (0 citações sem página). Os relatórios em `conferencia-gemini/` ficaram os de 25/10 (a rodada de 07/11 só com títulos apagaria as seções de recordes e goleadas).
+
+| Linhas | Fonte que confirmou | Soma conferida |
+|---|---|---|
+| Flamengo, Libertadores 2019 e 2022; Fluminense 2023; Palmeiras 2020 e 2021 | CONMEBOL (17/03/2026) e, no Flamengo, a matéria da CONMEBOL do título de 2025 | Flamengo 4, Fluminense 1, Palmeiras 3 |
+| Flamengo, Recopa 2020 | CONMEBOL (27/02/2020), "primeira CONMEBOL Recopa" | 1 |
+| Flamengo, Brasileiro 1980, 1982, 1983, 1992, 2009, 2019 e 2020 | Jornal de Brasília (lista ano a ano e "nono título") | 8 oficiais, igual a `clubes-do-dia.csv`; 9 na Casa com 1987 |
+| Mirassol, Série D 2020 | Terra; o site do clube diz que a edição de 2020 terminou em 2021 (pandemia). O ano é o da edição | 1 |
+| Palmeiras, 12 Paulistas; Santos, Paulista 1973 (dividido com a Portuguesa) | **Fonte trocada:** a lista do Lance deu 410 (saiu do ar); entrou a lista do Terra (08/03/2026), com os anos de cada clube | Palmeiras 27 e Santos 22, os mesmos anos do CSV |
+| Santos, Recopa 2012 | Jornal de Brasília (26/09/2012) e a tabela de campeões da CONMEBOL | 1 com id (a de 1968 segue fora) |
+| São Paulo, Mundial 2005 | Lance (13/12/2025), "3 títulos mundiais" | 2 intercontinental + 1 mundial-clubes |
+| São Paulo, Supercopa do Brasil 2024 | Trivela, "São Paulo (1)" | 1 |
+
+**Brasileiro de 1987 (Flamengo):** fica `oficial = não`, com a nota neutra ("a CBF reconhece o Sport"), e conta na Casa do Flamengo (decisão de 21/10). O Jornal de Brasília dá "Sport/Flamengo" e diz que, por decisão do STF, o Sport é o campeão oficial. A Tribuna de Minas (19/02/2026) diz que, depois da decisão do STF de 2017, a CBF passou a declarar só o Sport; a Trivela (dez/2023) ainda dizia que a CBF tratava os dois como campeões. Em 18/02/2026 a PGR deu parecer no STF pelo título dividido, e a ação rescisória do Flamengo segue sem julgamento (nada novo achado até 07/11/2026). **Rever a linha se o STF julgar.**
+
+**Pendências resolvidas no mesmo dia, pelo navegador** (os sites recusam o acesso automático, mas abrem no navegador do app)
+- **Paulistas, FPF:** a lista oficial "Todos os campeões" da Série A1 (https://futebolpaulista.com.br/Clubes/TodosCampeoes.aspx) bate ano a ano com o CSV: Corinthians 31, Palmeiras 27 (os anos até 1940 como Palestra Itália), Santos 22 (1973 com a Portuguesa), São Paulo 22 e Bragantino 1 (1990). As 103 linhas ganharam a frase "Conferido na FPF em 07/11/2026", com a liga de cada ano (LPF, APEA ou FPF), e perderam o "conferir na FPF".
+- **Série D 2020 do Mirassol, CBF:** a tabela oficial (https://www.cbf.com.br/futebol-brasileiro/tabelas/campeonato-brasileiro/serie-d/2020) traz a fase final, com Floresta 0 x 1 Mirassol (30/01/2021) e Mirassol 1 x 0 Floresta (06/02/2021).
+- **1987, STF:** o processo é a Ação Rescisória 3032 (https://portal.stf.jus.br/processos/listarProcessos.asp?classe=AR&numeroProcesso=3032). O último andamento em 07/11/2026 é a manifestação da PGR de 18/02/2026. **Decisão do Kauê (07/11/2026): segue o Sport como campeão por enquanto**, ou seja, `oficial = não` com a nota neutra. Na Casa do Flamengo, o 1987 continua na prateleira com a nota e conta nos 9 (confirmado pelo Kauê em 07/11/2026); rever só quando o STF julgar.
+
+**Correção:** a primeira versão deste relatório dizia que 89 títulos já revisados (Corinthians, São Paulo, Santos e Palmeiras) ainda tinham como `fonte` a lista do Lance que saiu do ar. Não tinham: a `fonte` deles já era o site do clube (ou o UOL) desde 25/10, e a URL do Lance só aparecia no texto da `observacao`. Os anos dessas 89 linhas foram conferidos contra a lista do Terra e contra a da FPF, e a `observacao` diz isso.
+
+**Estaduais das outras federações (07/11/2026, mesmo dia)**
+Os sites abrem no navegador do app. O que cada um publica:
+
+| Federação | O que publica | Resultado |
+|---|---|---|
+| FCF (SC) | Lista oficial de campeões da Série A, 1924 a 2025 | Chapecoense 7, os mesmos anos do CSV |
+| FGF (RS) | Uma página por ano, de 2020 a 2026, com "Campeão:" | Grêmio 2020 a 2024 e 2026, Inter 2025, igual ao CSV |
+| FERJ (RJ) | Nenhuma lista de campeões (site e página "Sobre") | Cruzado com Lance (10/03/2026), Trivela e Goal |
+| FMF (MG) | Nenhuma lista de campeões | Cruzado com o site do Atlético, Lance e Trivela (ano a ano) |
+| FBF (BA) | Nenhuma lista; só a notícia do 52º título do Bahia (07/03/2026) | Cruzado com o site do Bahia, Lance e Goal (23/03/2025) |
+
+Em todos os 386 estaduais desses estados, os anos do CSV batem com cada lista até a data dela. A observação de cada linha diz quais listas trazem o ano, com os links, e perdeu o "conferir". Casos anotados:
+- **Cruzeiro, 1926:** a tabela da Trivela traz um 1926 da liga AMET, que nem ela, nem o Lance, nem os 39 do clube contam. Não entra.
+- **Atlético e Cruzeiro, 1956:** título dividido (Trivela), já no CSV para os dois.
+- **Bahia, 1998:** fora da lista de anos do site do clube, mas Lance e Goal dão ao Bahia, e sem ele a conta não fecha nos 52 que o clube e a FBF contam.
+- **Gauchão 2026 (Grêmio)** e **Mineiro 2026 (Cruzeiro):** já estavam no CSV; agora têm a FGF e duas matérias, respectivamente.
+- **Paranaense de 2000:** o Kauê confirmou em 07/11/2026, Athletico campeão e Coritiba vice. Com isso, nenhum estadual segue com "conferir".
