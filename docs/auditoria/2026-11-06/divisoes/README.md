@@ -5,20 +5,35 @@ Cada situação tem dois prints: `-390.png` (390×844) e `-360.png` (360×740). 
 Playwright contra `npx vite --port 5181 --strictPort`. Nenhum print tem rolagem horizontal
 (`document.documentElement.scrollWidth <= innerWidth`, conferido em cada um). Nada vai para o Supabase.
 
-A Home rola até o bloco ou a placa antes do print; o resto da tela (duelo com o rival, "Jogar agora") aparece como é.
+Os prints do bloco (01 a 10) são o topo da Home, sem rolar: mostram a dobra de verdade. Os da placa (11 a 21) rolam até ela.
+
+**Bloco compacto (ajuste da conversa principal, 07/11/2026):** a primeira versão tinha 172 px, com o adesivo do narrador
+dentro, e empurrava o "Jogar agora" para baixo da barra em 390×844. Agora o bloco tem 88 px (102 px quando a projeção
+quebra em 3 linhas em 360) e **a frase do mês vai no adesivo do cabo de guerra**: ela entra no lugar da frase do duelo
+quando o time é líder, está no acesso ou na zona de queda (ou quando o duelo não tem frase); a virada sobre o rival
+("passou"/"foi passado") continua com a frase do duelo. Medido com Playwright:
+
+| tamanho | "Jogar agora" (topo → fundo) | topo da barra de baixo | à vista? |
+| --- | --- | --- | --- |
+| 390×844 | 693 → 768 | 775 | sim, inteiro |
+| 360×740 | 697 → 772 (711 → 786 com a projeção em 3 linhas) | 671 | não: fica abaixo da dobra |
+
+Em 360×740, antes do bloco, o botão já ficava rente à dobra (topo em ~601, fundo em ~676, barra em 671): o cabo de guerra
+ocupa quase toda a primeira tela. **Decisão do Kauê:** manter o bloco logo abaixo do cabo (como está) ou movê-lo para
+baixo do "Jogar agora" em telas baixas.
 
 ## Bloco das divisões (logo abaixo do cabo de guerra)
 
 | arquivo | o que mostra | URL de dev |
 | --- | --- | --- |
-| `01-home-bloco-lider-*.png` | Líder da Série A: "1º", vantagem em pontos, projeção e frase de líder | `temporadaFalsa=ab&serie=a&pos=1&pre=0&mes=atual` |
+| `01-home-bloco-lider-*.png` | Líder da Série A: "1º", vantagem em pontos, projeção; frase de líder no adesivo do cabo | `temporadaFalsa=ab&serie=a&pos=1&pre=0&mes=atual` |
 | `02-home-bloco-meio-serie-a-*.png` | Meio da Série A: "5º", pontos acima da zona | `ab&serie=a&pos=5&pre=0&mes=atual` |
-| `03-home-bloco-zona-de-queda-*.png` | Zona de queda da A: "9º", distância do 8º e a frase com os pontos | `ab&serie=a&pos=9&pre=0&mes=atual` |
-| `04-home-bloco-zona-de-acesso-serie-b-*.png` | Zona de acesso da B: "2º", frase de acesso | `ab&serie=b&pos=2&pre=0&mes=atual` |
+| `03-home-bloco-zona-de-queda-*.png` | Zona de queda da A: "9º", distância do 8º; no cabo, a frase da zona | `ab&serie=a&pos=9&pre=0&mes=atual` |
+| `04-home-bloco-zona-de-acesso-serie-b-*.png` | Zona de acesso da B: "2º"; no cabo, a frase de acesso | `ab&serie=b&pos=2&pre=0&mes=atual` |
 | `05-home-bloco-serie-b-fora-das-zonas-*.png` | Série B fora das zonas: "6º", pontos do acesso | `ab&serie=b&pos=6&pre=0&mes=atual` |
 | `06-home-bloco-unica-dentro-das-10-*.png` | Série única dentro das 10: "por enquanto vai pra Série A" | `unica&pos=4&pre=0&mes=atual` |
 | `07-home-bloco-unica-fora-das-10-*.png` | Série única fora das 10: pontos da última vaga da Série A | `unica&pos=15&pre=0&mes=atual` |
-| `08-home-bloco-sem-semana-travada-*.png` | Mês sem semana travada: "–", "a 1ª semana trava segunda, 12h", sem projeção nem frase | `vazia&pos=6&pre=0&mes=atual` |
+| `08-home-bloco-sem-semana-travada-*.png` | Mês sem semana travada: "–", "a 1ª semana trava segunda, 12h", sem projeção; o cabo fica com a frase do duelo | `vazia&pos=6&pre=0&mes=atual` |
 | `09-home-bloco-pre-temporada-*.png` | Pré-temporada: o selo único "Pré" no canto, nada além dele | `ab&serie=a&pos=5&mes=atual` |
 | `10-home-bloco-sem-conexao-*.png` | Leitura falhou: "Tabela do mês: sem conexão agora." no mesmo espaço | `erro` |
 

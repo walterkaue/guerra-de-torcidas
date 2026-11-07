@@ -327,6 +327,8 @@ describe('narrador das divisões (docs/narrador.md seção 16)', () => {
   });
 
   it('artigo e contração certos', () => {
+    expect(fraseDaTemporada('temporada_subiu', { time: cru }, () => 0.4)).toBe('Acesso confirmado! O Cruzeiro vai pra Série A.');
+    expect(fraseDaTemporada('temporada_unica_a', { time: cha, mes: 'dezembro' }, () => 0.9)).toBe('Top 10! A Chapecoense vai pra Série A em dezembro.');
     expect(fraseDaTemporada('temporada_subiu', { time: cha }, () => 0)).toBe('Subiu! A Série B ficou pequena pra Chapecoense.');
     expect(fraseDaTemporada('temporada_rival_caiu', { time: cru, rival: { nome: 'Atlético-MG', artigo: 'o' } }, () => 0)).toBe(
       'O Atlético-MG caiu pra Série B. A torcida do Cruzeiro agradece.',

@@ -1,7 +1,7 @@
 /* Bloco das divisões da Home (docs/visual.md 4.6, Grafismo de TV). A altura reservada e o [hidden] ficam em inicio.css. */
 .bloco-divisoes {
-  gap: 4px;
-  padding: 10px var(--e4);
+  gap: 2px;
+  padding: 6px var(--e4);
   border-left: 6px solid var(--c1, var(--cal));
   box-sizing: border-box;
 }
@@ -23,7 +23,7 @@
   align-items: center;
   gap: var(--e3);
   min-width: 0;
-  min-height: 44px;
+  min-height: 0; /* o alvo de toque é o bloco inteiro (~90 px), não só o botão */
   padding: 0;
   border: 0;
   background: none;
@@ -35,14 +35,17 @@
 
 .bd-pos {
   flex: none;
+  display: inline-flex;
   font-family: var(--fonte-placar);
   font-weight: 400;
-  font-size: 40px;
+  font-size: 36px;
   line-height: 1;
 }
 
+/* O "º" da Anton parece um zero elevado: vai na Barlow Condensed, no alto, como em .numero (blocos.css). */
 .bd-pos i {
-  margin-left: -2px;
+  align-self: flex-start;
+  margin-left: 1px;
   font-family: var(--fonte-rotulo);
   font-style: normal;
   font-weight: 700;
@@ -58,11 +61,11 @@
 }
 
 .bd-texto b {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .bd-texto span {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--texto-suave);
 }
 
@@ -71,20 +74,14 @@
   align-items: baseline;
   gap: 6px;
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 .bd-proj .seta {
   flex: none;
   font-size: 15px;
-}
-
-.bloco-divisoes .adesivo {
-  margin-top: 2px;
-  padding: 5px 12px 5px 14px;
-  font-size: 14px;
 }
 
 .bd-erro {

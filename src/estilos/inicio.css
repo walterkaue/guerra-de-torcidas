@@ -1145,8 +1145,8 @@
 
 /* Bloco das divisões: a altura fica reservada desde a abertura (o resto vem em estilos/blocoDivisoes.css, carregado depois). */
 .bloco-divisoes {
-  margin: 10px 0;
-  min-height: 172px;
+  margin: 8px 0;
+  min-height: 88px; /* compacto: o "Jogar agora" continua à vista em 390×844 */
 }
 
 .bloco-divisoes[hidden] {

@@ -1,5 +1,7 @@
 // Bloco das divisões da Home (docs/jogo.md, seção 5, "Telas do resto das divisões", Rota 2 "linha ao vivo"):
-// a posição do meu time na tabela do mês, a série, a situação e, embaixo, "se a semana fechasse agora".
+// a posição do meu time na tabela do mês, a série, a situação e, embaixo, "se a semana fechasse agora". Compacto, para o
+// "Jogar agora" continuar à vista em 390×844: a frase do narrador do mês não vai aqui, vai no adesivo do cabo de guerra
+// (a Home decide entre ela e a do duelo; ver `FraseDoMes`).
 // Lazy: a Home só leva a <section data-divisoes> vazia (altura reservada) e um import() deste arquivo.
 // Uma leitura da tabela do mês por abertura do app; a projeção refaz a cada ranking ao vivo que a Home já lê.
 // Sem urgência (seção 13): nada de contagem regressiva, "corre" ou "volte".
@@ -76,6 +78,12 @@ function fraseDoMes(chave: string, sortear: () => string | null): string | null 
 /** "8º" com o "º" fora da Anton (ela o desenha como um zero elevado). */
 const posicaoGrande = (posicao: string): string => (posicao.endsWith('º') ? `${esc(posicao.slice(0, -1))}<i>º</i>` : esc(posicao));
 
+/** A frase do mês para o adesivo do cabo. `destaque`: líder, acesso ou zona (vale mais que a frase de rotina do duelo). */
+export interface FraseDoMes {
+  texto: string;
+  destaque: boolean;
+}
+
 /**
  * Liga o bloco. Devolve a função que a Home chama a cada ranking da semana (a primeira vez e a cada atualização ao
  * vivo). Some se não há mês aberto ou se o time não está na tabela; sem rede, diz isso no mesmo espaço.
@@ -85,7 +93,7 @@ export async function ligarBlocoDivisoes(
   time: Time,
   semana: string,
   saiu: () => boolean,
-): Promise<(ranking: LinhaDaSemanaAoVivo[]) => void> {
+): Promise<(ranking: LinhaDaSemanaAoVivo[]) => FraseDoMes | null> {
   let tabela: TabelaDoMes | null = null;
   let ranking: LinhaDaSemanaAoVivo[] | null = null;
 
@@ -94,13 +102,13 @@ export async function ligarBlocoDivisoes(
     irPara({ tela: 'ranking', aba: 'temporada' });
   });
 
-  function desenhar(): void {
-    if (!tabela || saiu()) return;
+  function desenhar(): FraseDoMes | null {
+    if (!tabela || saiu()) return null;
     const { temporada, linhas, fechadas } = tabela;
     const linha = linhas.find((l) => l.time_id === time.id);
     if (!linha) {
       el.hidden = true;
-      return;
+      return null;
     }
     const daSerie = linhas.filter((l) => l.serie === linha.serie);
     const bloco = blocoDasDivisoes({ linha, daSerie, mes: temporada.mes, fechadas, agora: new Date() });
@@ -122,9 +130,9 @@ export async function ligarBlocoDivisoes(
         </button>
         ${temporada.pre_temporada ? seloPre() : ''}
       </div>
-      ${projecao ? `<p class="bd-proj">${seta}<span>${esc(linhaDaProjecao(projecao, linha.serie, time))}</span></p>` : ''}
-      ${frase ? `<p class="adesivo">${esc(frase)}</p>` : ''}`;
+      ${projecao ? `<p class="bd-proj">${seta}<span>${esc(linhaDaProjecao(projecao, linha.serie, time))}</span></p>` : ''}`;
     el.hidden = false;
+    return frase ? { texto: frase, destaque: evento !== 'temporada_meio' } : null;
   }
 
   try {
@@ -134,15 +142,15 @@ export async function ligarBlocoDivisoes(
       el.innerHTML = '<p class="bd-erro">Tabela do mês: sem conexão agora.</p>';
       el.hidden = false;
     }
-    return () => {};
+    return () => null;
   }
   if (!tabela) {
     el.hidden = true;
-    return () => {};
+    return () => null;
   }
   desenhar();
   return (novo) => {
     ranking = novo;
-    desenhar();
+    return desenhar();
   };
 }

@@ -99,7 +99,8 @@ export function preencherFraseDaTemporada(frase: string, c: ContextoDaTemporada)
     if (!valor) return null;
     texto = texto.replaceAll(chave, valor);
   }
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
+  // Maiúscula no começo e depois de ponto, "!" ou "?" ("Acesso confirmado! O Cruzeiro…").
+  return texto.replace(/(^|[.!?]\s+)(\p{Ll})/gu, (_, antes: string, letra: string) => antes + letra.toUpperCase());
 }
 
 /** Uma frase do evento, entre as que dá para preencher com o contexto. */

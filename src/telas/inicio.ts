@@ -64,6 +64,7 @@ import { arteEscada, arteGrade, htmlDaCasa, htmlDoLanceDoDia, htmlDosCards } fro
 import { lancesUnificados } from './corte';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { pintarAvatar } from './bonecoDoAparelho';
+import type { FraseDoMes } from './blocoDivisoes';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
 import { qualidade } from './qualidade';
@@ -619,20 +620,35 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   // Bloco das divisões: pedaço carregado depois; a cada ranking novo ele refaz a projeção da semana.
   const elDivisoes = root.querySelector<HTMLElement>('[data-divisoes]');
   let semanaAoVivo: LinhaRanking[] | null = null;
-  let atualizarDivisoes: ((l: LinhaRanking[]) => void) | null = null;
+  let atualizarDivisoes: ((l: LinhaRanking[]) => FraseDoMes | null) | null = null;
   if (elDivisoes && time) {
     void import('./blocoDivisoes')
       .then((m) => m.ligarBlocoDivisoes(elDivisoes, time, semana, () => saiu))
       .then((atualizar) => {
         atualizarDivisoes = atualizar;
-        if (semanaAoVivo) atualizar(semanaAoVivo);
+        if (!semanaAoVivo || saiu) return;
+        fraseDoMes = atualizar(semanaAoVivo);
+        pintarFrase();
       })
       .catch(() => elDivisoes.remove());
   }
 
+  // Adesivo do cabo: a frase do duelo ou a do mês (bloco das divisões). A do mês entra quando o time é líder, está no
+  // acesso ou na zona, ou quando o duelo não tem frase; virada sobre o rival (passou/passado) é sempre do duelo.
+  let fraseDoDuelo: { evento: string; texto: string | null } | null = null;
+  let fraseDoMes: FraseDoMes | null = null;
+  function pintarFrase(): void {
+    const elFrase = elCabo.querySelector<HTMLElement>('[data-frase-rival]')!;
+    const virada = fraseDoDuelo?.evento === 'rival_passou' || fraseDoDuelo?.evento === 'rival_passado';
+    const doMes = !virada && fraseDoMes && (fraseDoMes.destaque || !fraseDoDuelo?.texto) ? fraseDoMes.texto : null;
+    const texto = doMes ?? fraseDoDuelo?.texto ?? null;
+    elFrase.textContent = texto ?? '';
+    elFrase.hidden = !texto;
+  }
+
   function desenhar(linhas: LinhaRanking[]): void {
     semanaAoVivo = linhas;
-    atualizarDivisoes?.(linhas);
+    if (atualizarDivisoes) fraseDoMes = atualizarDivisoes(linhas);
     memoria(CHAVE_POSICOES, { semana, pos: Object.fromEntries(linhas.map((l) => [l.time_id, l.posicao_campeao])) });
 
     frasesGiro = frasesDoGiro(linhas, posicoesAntes, timePorId, time?.id);
@@ -665,19 +681,17 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     elDuelo.hidden = false;
     mostrarCabo();
 
-    const elFrase = elCabo.querySelector<HTMLElement>('[data-frase-rival]')!;
     const chave = `${time.id}>${rival.time_id}`;
     const vistos = memoria<Record<string, boolean>>(CHAVE_DUELO) ?? {};
     const duelo = situacaoDoDuelo(meu, rival, chave in vistos ? vistos[chave] : null);
-    if (!duelo) {
-      elFrase.hidden = true;
-      return;
+    if (duelo) {
+      memoria(CHAVE_DUELO, { [chave]: duelo.frente });
+      const ctx = { ...contextoDoTime(time), rival: { nome: tRival.nome, artigo: tRival.artigo }, dif: duelo.dif };
+      fraseDoDuelo = { evento: duelo.evento, texto: escolherFrase(duelo.evento, ctx, Math.random)?.texto ?? null };
+    } else {
+      fraseDoDuelo = null;
     }
-    memoria(CHAVE_DUELO, { [chave]: duelo.frente });
-    const ctx = { ...contextoDoTime(time), rival: { nome: tRival.nome, artigo: tRival.artigo }, dif: duelo.dif };
-    const texto = escolherFrase(duelo.evento, ctx, Math.random)?.texto;
-    elFrase.textContent = texto ?? '';
-    elFrase.hidden = !texto;
+    pintarFrase();
   }
 
   // ---------- sua posição na semana (só a própria, entre todos os torcedores) ----------
