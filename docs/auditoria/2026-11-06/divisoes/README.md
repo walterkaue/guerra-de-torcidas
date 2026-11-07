@@ -19,8 +19,7 @@ quando o time é líder, está no acesso ou na zona de queda (ou quando o duelo 
 | 360×740 | 697 → 772 (711 → 786 com a projeção em 3 linhas) | 671 | não: fica abaixo da dobra |
 
 Em 360×740, antes do bloco, o botão já ficava rente à dobra (topo em ~601, fundo em ~676, barra em 671): o cabo de guerra
-ocupa quase toda a primeira tela. **Decisão do Kauê:** manter o bloco logo abaixo do cabo (como está) ou movê-lo para
-baixo do "Jogar agora" em telas baixas.
+ocupa quase toda a primeira tela. **Decidido pelo Kauê em 07/11/2026:** o bloco fica logo abaixo do cabo, também em telas baixas.
 
 ## Bloco das divisões (logo abaixo do cabo de guerra)
 
