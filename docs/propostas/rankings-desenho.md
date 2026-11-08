@@ -1,6 +1,6 @@
 # Rankings, temporadas e balanceamento
 
-> Versão 1.1 · 18/10/2026 · **Aprovado na Prancheta do Guerra em 18/10/2026.** É o detalhe da seção 5 do `jogo.md`; quando os dois discordarem, vale o `jogo.md`.
+> Desenho de 18/10/2026, guardado como histórico. **A regra em vigor está em `docs/jogos/rankings.md`**; este arquivo não é mais atualizado.
 > Objetivo: o ranking fica sempre quente (alguma coisa zera ou decide toda semana), é justo com torcida pequena e com quem joga pouco, e ainda assim existe um motivo para voltar daqui a um ano.
 
 ---

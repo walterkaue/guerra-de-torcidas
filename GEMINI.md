@@ -16,7 +16,7 @@ As regras do projeto estão em `CLAUDE.md` e `docs/jogo.md`. **Elas valem para v
 
 | Pasta / arquivo | O que é | Você mexe? |
 |---|---|---|
-| `docs/jogo.md` | Fonte da verdade: regras, tom, palavras proibidas (seção 7), nomes reais (seção 8) | Só lê |
+| `docs/jogo.md` | Fonte da verdade: regras, tom, palavras proibidas (seção 3, "Zero aposta"), nomes reais (seção 6, "Nomes reais") | Só lê |
 | `docs/casa.md`, `docs/casa-publicacao.md` | Desenho e plano de publicação da Casa do [time] | Só lê |
 | `dados/casa/*.csv` + `RELATORIO.md` | Casa do [time]: clubes, estádios, títulos, recordes, goleadas, mantos | **Sim** (sua tarefa principal) |
 | `dados/casa/conferencia-outra-ia/` | **Pacote pronto para você:** `prompt.md` (regras e formato de resposta) e `lote-02.md` a `lote-04.md` (dados de cada lote) | Só lê e segue |
@@ -40,7 +40,7 @@ Comandos que você pode rodar: `npm test`, `npm run build`, `npm run importar-ca
    - **Prova de navegação:** no começo de cada conversa de conferência, você abre a página `PROVA` do `prompt.md` e devolve a primeira frase literal e a data. O Kauê compara antes de deixar seguir.
 3. **Fato que nenhuma fonte confirma sai.** Melhor um buraco do que um chute.
 4. **Só domínios de `DOMINIOS_ACEITOS`** (`scripts/perguntas/validar.mjs`). Wikipédia só como apoio, nunca na coluna `fonte`.
-5. **Linhas vermelhas** (`docs/jogo.md` seções 7 e 8): nenhuma palavra de aposta; sem marca de patrocinador, fornecedor ou casa de aposta; sem escudo, símbolo ou número de camisa na descrição de manto; sem tragédia, rebaixamento, vexame ou goleada sofrida; sem opinião sobre pessoa; nunca atleta menor de idade.
+5. **Linhas vermelhas** (`docs/jogo.md`, seções 3 "Zero aposta" e 6 "Tom e zoeira"): nenhuma palavra de aposta; sem marca de patrocinador, fornecedor ou casa de aposta; sem escudo, símbolo ou número de camisa na descrição de manto; sem tragédia, rebaixamento, vexame ou goleada sofrida; sem opinião sobre pessoa; nunca atleta menor de idade.
 6. **Divergência:** registre os dois lados na `observacao`, com as fontes. Não escolha no escuro.
 7. **Formato:** CSV com vírgula, todos os campos entre aspas duplas, aspas internas dobradas (`""`), UTF-8, datas `AAAA-MM-DD`, ids exatamente como estão (ex.: `sao-paulo`, `brasileiro-a`).
 
@@ -100,7 +100,7 @@ Os dados de `dados/casa/` foram escritos pelo Claude e estão em `rascunho`. O l
 Depois dos 20 clubes: para cada buraco listado no `RELATORIO.md` (recordes, goleadas, capacidade, maior público), procure fonte aceita e acrescente a linha como `rascunho` (quem confere é o Claude ou o Kauê, nunca você mesmo).
 
 ### Tarefa 3. Banco da Prova de Boleiro
-Novos lotes em `dados/perguntas/lote-NN.csv`, todos `rascunho`, no formato do `lote-01.csv` e das regras da seção 7.1 do `docs/jogo.md` ("Banco de perguntas"). Rode `npm run importar-perguntas -- --seco dados/perguntas/lote-NN.csv` e `npm test` antes do commit.
+Novos lotes em `dados/perguntas/lote-NN.csv`, todos `rascunho`, no formato do `lote-01.csv` e das regras do `docs/jogos/conhecimento.md` ("Banco de perguntas"). Rode `npm run importar-perguntas -- --seco dados/perguntas/lote-NN.csv` e `npm test` antes do commit.
 
 ### Fora da sua fila (por enquanto)
 Código em `src/` e `supabase/`, migrações, deploy, importação para o banco e mudanças em `docs/jogo.md`. Se achar que uma regra precisa mudar, escreva a sugestão no resumo da tarefa; o Kauê decide.

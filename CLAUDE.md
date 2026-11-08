@@ -1,8 +1,7 @@
 # Guerra de Torcidas — instruções para o Claude Code
 
-Leia `docs/jogo.md` antes de qualquer tarefa. Ele é a fonte da verdade sobre regras, tom e escopo. Exceção: quem recebe uma parte já planejada, com brief, lê só as seções que o brief cita.
-Conforme a tarefa, leia também: `docs/rankings.md` (rankings e justiça), `docs/narrador.md` (frases e regras do narrador), `docs/visual.md` (direção visual), `docs/casa.md` (Casa do [time], a página de história de cada clube). Se um deles discordar do `jogo.md`, vale o `jogo.md`.
-Para saber onde o projeto está e o que vem a seguir, leia `docs/proximos-passos.md`.
+Leia `docs/jogo.md` antes de qualquer tarefa: é curto e traz as regras de hoje, o tom e o escopo. Depois, **só o doc do módulo da tarefa**, pela tabela "Onde está cada coisa" no topo dele: `docs/jogos/` (rankings, lances, pênaltis, conhecimento, crava, contas, aquecimento, boneco-montavel, cards), `docs/narrador.md`, `docs/visual.md` ou `docs/casa.md`. Se um deles discordar do `jogo.md`, vale o `jogo.md`. Exceção: quem recebe uma parte já planejada, com brief, lê só o que o brief cita.
+Para saber onde o projeto está e o que vem a seguir, leia `docs/proximos-passos.md` (só a fila). Ideias sem decisão: `docs/backlog.md`. Datas e histórico: `docs/decisoes.md`, só quando a história importar.
 
 ## Divisão de trabalho (primordial)
 
@@ -29,18 +28,18 @@ Para saber onde o projeto está e o que vem a seguir, leia `docs/proximos-passos
 
 ## Produto
 
-- Interface em português do Brasil, tom de resenha e zoeira (ver seção 8 do `docs/jogo.md`).
+- Interface em português do Brasil, tom de resenha e zoeira (ver "Tom e zoeira" no `docs/jogo.md`).
 - **Celular primeiro.** Teste sempre em 390×844. Toque, nunca hover. Nada de rolagem horizontal.
 - **Sem marcas de clubes:** nada de escudo, uniforme oficial, mascote, hino ou foto de jogador real. Só nome, cores e artigo. Batedores usam camiseta lisa nas cores do time (uniforme 1 ou 2); goleiros, um tom forte de contraste. Nenhum boneco imita jogador real.
 - Zoeira só com o time e a situação. Nunca com raça, orientação, gênero, religião, origem, corpo, deficiência ou pessoa real. Narrador neutro de gênero.
-- **Nomes reais** de jogadores e técnicos só em perguntas factuais dos jogos de conhecimento (quiz, desafios diários), nas fichas factuais da Casa do [time] e na ficha factual dos lances históricos (Lances do Jogo), com fonte guardada junto. Nunca no título, card, narrador ou boneco de um lance (nem apelido ou número da camisa). Nunca imagem, voz, zoeira, vida pessoal ou atleta menor de idade. Regra completa: "Nomes reais" na seção 8 do `docs/jogo.md`.
-- **Zero aposta:** nenhuma das palavras proibidas da seção 7 do `docs/jogo.md` em nenhum texto do jogo.
+- **Nomes reais** de jogadores e técnicos só em perguntas factuais dos jogos de conhecimento (quiz, desafios diários), nas fichas factuais da Casa do [time] e na ficha factual dos lances históricos (Lances do Jogo), com fonte guardada junto. Nunca no título, card, narrador ou boneco de um lance (nem apelido ou número da camisa). Nunca imagem, voz, zoeira, vida pessoal ou atleta menor de idade. Regra completa: "Nomes reais" no `docs/jogo.md`.
+- **Zero aposta:** nenhuma das palavras proibidas da seção "Zero aposta" do `docs/jogo.md` em nenhum texto do jogo.
 - Nunca peça dados pessoais obrigatórios. Login anônimo por padrão. Apelido nunca aparece em ranking público no MVP.
 
 ## Técnica
 
 - Vite + TypeScript. Jogo em canvas. Dependências só quando fazem muito trabalho; o bundle inicial deve ficar abaixo de ~300 KB gzip.
-- O resultado de uma partida é sempre **recalculado no servidor** a partir dos gestos e da semente (ver "Anti-trapaça" no `docs/jogo.md`). O cliente nunca grava pontos direto na tabela.
+- O resultado de uma partida é sempre **recalculado no servidor** a partir dos gestos e da semente (ver "Anti-trapaça" em `docs/jogos/penaltis.md` e `docs/jogos/lances.md`). O cliente nunca grava pontos direto na tabela.
 - Banco: migrações SQL versionadas em `supabase/migrations/`. Toda tabela com Row Level Security ligada e política explícita.
 - **Antes de qualquer migração que apague ou renomeie coluna ou tabela, pergunte.**
 - Lógica de jogo (física, pontuação) em módulos puros, testáveis, compartilhados entre o navegador e a função do servidor.
@@ -50,4 +49,6 @@ Para saber onde o projeto está e o que vem a seguir, leia `docs/proximos-passos
 
 - Commits pequenos, mensagem em português, no formato `tipo: descrição` (ex.: `feat: desafio por link`, `fix: card cortado no iPhone`).
 - Ao terminar uma tarefa: diga o que mudou, como testar no celular e o que ficou pendente.
-- Quando uma decisão de produto mudar durante o trabalho, atualize o `docs/jogo.md` no mesmo commit.
+- Quando uma decisão de produto mudar durante o trabalho, atualize no mesmo commit a regra no `docs/jogo.md` ou no doc do módulo (dizendo só como é agora, sem "até tal dia era…") e ponha uma linha com a data no topo de `docs/decisoes.md`.
+- Ao fechar um item da fila, tire-o do `docs/proximos-passos.md` no mesmo PR.
+- Os docs têm teto de tamanho (`scripts/docs/tamanho.test.ts`). Se estourar, enxugue em vez de subir o teto.

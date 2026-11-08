@@ -9,7 +9,7 @@ Tarefa complexa começa no Opus mais recente, em intensidade alta. Essa conversa
 
 ## 2. Quando dividir
 
-Dividir tem custo. Em 31/10/2026, uma sessão nasceu com cerca de 77 mil tokens de ferramentas e instruções, e o `docs/jogo.md` soma mais 19 mil.
+Dividir tem custo. Em 31/10/2026, uma sessão nasceu com cerca de 77 mil tokens de ferramentas e instruções, e o `docs/jogo.md` somava mais 19 mil. Ele chegou a ~60 mil e foi dividido em 08/11/2026: hoje o `jogo.md` tem ~6 mil, e cada doc de `docs/jogos/` de 1 a 9 mil.
 
 - **Não divida** o que cabe em cerca de 10 chamadas de ferramenta, nem partes que precisam das mesmas alterações ao mesmo tempo.
 - **Divida** quando a parte tem resultado próprio, escopo fechado e dá para escrever "pronto quando" em uma frase.
@@ -43,7 +43,7 @@ O executor não viu a conversa, e cada linha de brief poupa leitura.
 ```
 Tarefa: o que fazer, em uma ou duas frases.
 Arquivos: onde mexer, e onde não mexer.
-Leia: seções exatas dos docs (ex.: docs/jogo.md seção 7).
+Leia: o doc do módulo e as seções exatas (ex.: docs/jogos/lances.md, "X1 dos Lances").
 Decisões já tomadas: o que não deve ser rediscutido.
 Pronto quando: resultado verificável.
 Entrega: branch ou PR, ou o que devolver.
