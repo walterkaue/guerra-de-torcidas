@@ -1,6 +1,7 @@
 # Próximos passos
 
 > Retrato do projeto em 05/11/2026 (fila em trilhos paralelos, decidida no mesmo dia), para retomar em qualquer conversa. Regras e decisões continuam no `docs/jogo.md`; aqui só fica o que vem a seguir.
+> Ideias e melhorias ainda sem decisão ficam em `docs/backlog.md` (montado em 08/11/2026, para os testes com amigos).
 > Ao fechar um item, atualize este arquivo no mesmo PR. Para começar, siga a divisão de trabalho do `CLAUDE.md`.
 
 ## Onde estamos
