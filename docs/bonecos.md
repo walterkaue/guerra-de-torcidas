@@ -81,3 +81,5 @@ Decidido pelo Kauê em 06/11/2026 (C5, Rota B, "você no lance"). Regra completa
 - **Número:** só o que a pessoa escolheu; sem número, camisa lisa. Os bonecos sorteados continuam sem número (seção 2).
 - **Técnica:** o batedor anda, então não há um desenho único para guardar. Por cena, o boneco e as camadas são montados uma vez e o número é desenhado uma vez num canvas fora da tela e reaproveitado com `drawImage` a cada quadro. Nada de texto, `Path2D` ou objeto novo dentro do quadro; nenhum filtro. Tudo vem no pedaço dos jogos (o JS inicial não cresce). Movimento reduzido e qualidade Leve: como nos sorteados.
 - **Sem cópia no aparelho, cópia inválida ou interruptor desligado:** sorteio, sem esperar a rede.
+
+> **Revitalização (08/11/2026):** a junção da cintura (quadril com tronco) e a personalização no Perfil vão ser revistas depois dos testes com amigos. Ideias e feedback em `docs/backlog.md`, item H03.

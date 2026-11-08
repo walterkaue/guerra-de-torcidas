@@ -31,6 +31,7 @@
 3. **B01 + B02:** central de avisos e resultado em duas camadas (ponto 1).
 4. **C04:** replay do gol compartilhável (ponto 3). É o de maior "uau" por esforço, porque o replay já existe.
 5. **C05:** card animado (ponto 2). Reaproveita o motor do C04.
+5a. **H01:** som novo e marca sonora. Dá para desenhar no Chat em paralelo com os testes.
 6. **E01 + F01:** desempenho da 1ª visita e registro de erros na produção.
 
 ---
@@ -102,10 +103,29 @@
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
 | F01 | **Registro de erros na produção** | C | Uma função que recebe exceções do navegador: mensagem, tela, versão do bundle e código do motivo, sem dado pessoal, com limite por minuto. Uma aba no `#admin`. Entra nos Termos. | P1 | M | Claude + Kauê (Termos) |
-| F02 | Documentação mais leve | C | Arquivar o histórico do `jogo.md` (as "Antes, …" da linha de atualização e os blocos "Como está no código" antigos) em `docs/historico/`. O `proximos-passos.md` fica só com a fila. Menos tokens por conversa. | P1 | M | Claude |
+| F02 | Documentação mais leve (**em andamento desde 08/11/2026**) | C | Arquivar o histórico do `jogo.md` (as "Antes, …" da linha de atualização e os blocos "Como está no código" antigos) em `docs/historico/`. O `proximos-passos.md` fica só com a fila. Menos tokens por conversa. | P1 | M | Claude |
 | F03 | Testes mais rápidos e um teste instável | C | O `npm test` leva de 3 a 8 min, e o `supabase/testes/temporada.test.ts` estourou o tempo uma vez. Separar `test:rapido` (lógica pura) de `test:banco` (PGlite). | P2 | P | Claude |
 | F04 | Ordem de publicação dentro do PR | C | Cada PR com função já traz a ordem, mas ela some no histórico. Um script `npm run publicar:conferir` que compara as funções no ar com a `main` (como foi feito à mão para a `lances` v8). | P2 | P | Claude |
 | F05 | Limpezas pequenas | P | `.admin-tabela` e `.conq-falta` sem uso, limite por IP no Código do torcedor, cidade na junção de contas. | P3 | P | Claude |
+
+### H. Som e bonecos (pontos do Kauê, 08/11/2026)
+
+| ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
+|---|---|---|---|---|---|---|
+| H01 | **Revisão do som e marca sonora** | K | Detalhe na seção 4.4. O apito de hoje é um tom de 2.900 Hz com trinado: agudo e cansativo, toca em toda partida. O chute desce a 45 Hz, grave que o alto-falante do celular nem reproduz. Proposta: uma assinatura sonora curta e própria, um apito mais curto e mais macio, e sons com variação. | P1 | M | Chat (direção) → Claude |
+| H02 | Sons que faltam (MVP de áudio) | C | Hoje só existem 4 sons: chute, trave, torcida e apito. Faltam toque de botão, defesa do goleiro, rede balançando, barreira, recorde, medalha e vitória. Lista na seção 4.4. | P2 | M | Claude |
+| H03 | **Revitalização dos bonecos** | K | A junção da cintura (quadril com tronco) ainda incomoda, e a personalização no Perfil merece capricho. **Só backlog por enquanto:** o Kauê coleta feedback e ideias dos amigos antes de desenhar. Base: `docs/bonecos.md` e `docs/jogo.md` 14.5. | P2 | G | Kauê (feedback) → Chat |
+
+### I. Lições dos jogos Flash (material do Kauê, 08/11/2026)
+
+| ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
+|---|---|---|---|---|---|---|
+| I01 | **Momento do jogo escolhido sozinho** | K | O jogo escolhe o melhor lance da partida para o replay compartilhável (C04), sem a pessoa pedir: golaço no ângulo, cavadinha, defesa da última cobrança, vitória no par ou ímpar. Uma pontuação simples, sem IA: o jogo já guarda gesto e semente de cada lance. | P1 | P | Claude (junto do C04) |
+| I02 | Vídeo vertical 9:16 com câmera lenta e a frase do narrador | K | Entra na especificação do C04 e do C05: corte vertical, câmera lenta no gol e a frase que o narrador falou como legenda. | P1 | — | (dentro do C04) |
+| I03 | Onde a pessoa desiste | K | Medir em que tela e em que passo a pessoa abandona: a partida no meio, o link do X1 antes do 1º chute, a triagem. Entra no C01 (funil) e no F01 (erros), sem dado pessoal. | P1 | — | (dentro do C01) |
+| I04 | Som com variação e "combo" | K | Cada som toca com o tom ±10% e o volume variando um pouco. Gols seguidos sobem o tom. A torcida abaixa meio segundo quando o narrador ou o apito entram. Entra no H01. | P2 | — | (dentro do H01) |
+| I05 | **Passada de "sensação de jogo"** | C | O que fazia os jogos Flash grudarem: do fim da partida ao próximo chute em 1 toque e menos de 2 s; uma pequena pausa e tremida no gol (com movimento reduzido, sem tremida); recorde sempre à vista. Medir o tempo do "Mais uma" até o 1º chute, nos pênaltis e nos Lances. | P2 | M | Claude |
+| I06 | Estudar jogos curtos de navegador (sem copiar) | K | Olhar o que dava certo nos jogos de navegador de futebol e de habilidade: reinício instantâneo, uma mecânica só, desafio a um amigo, placar de recordes. Anotar as lições, nunca reproduzir um jogo específico (nome, arte, fases). | P3 | P | Chat |
 
 ### G. Comunidade (fase 2, só depois do balanço)
 
@@ -190,6 +210,52 @@ No fim, uma tela com o título do lance, o placar, "Guerra de Torcidas" e o link
 
 **Variante leve (C08):** em vez de vídeo, um link que redesenha o gol no aparelho de quem abre (só gesto e cena). Para o WhatsApp é melhor, porque abre o jogo. Para o Stories, só vídeo serve.
 
+### 4.4 Som e marca sonora (H01, H02, I04)
+
+**Como está hoje** (`src/jogo/som.ts`, tudo sintetizado com Web Audio, nenhum arquivo):
+- **Apito:** tom de 2.900 Hz com trinado de 28 Hz. É agudo e fino, toca no começo e no fim de toda partida e cansa rápido.
+- **Chute:** desce de 140 Hz para 45 Hz. No alto-falante do celular quase não se ouve: o celular não reproduz abaixo de ~100 Hz.
+- **Torcida:** ruído filtrado ("festa" e "uuuh").
+- **Trave:** tom metálico.
+
+**Proposta:**
+1. **Assinatura sonora** de 1 a 2 s, tocada na abertura e na vitória. Algo que fique na cabeça e seja nosso, como um bumbo de arquibancada, duas palmas e um "ôô" curto de torcida. Nunca hino, cântico de clube real ou som de narrador famoso.
+2. **Apito novo:** duas notas curtas, mais graves (por volta de 1,5 a 2 kHz) e com os agudos cortados. Só no começo e no fim; o meio da partida fica sem apito.
+3. **Faixa certa para o celular:** os sons ficam entre 500 Hz e 4 kHz. Para o chute ter "peso", um estalo médio no lugar do grave que some.
+4. **Variação:** o tom ±10% a cada toque, gols seguidos subindo o tom e a torcida abaixando quando o narrador fala (I04).
+5. **Sons que faltam (H02):** toque de botão, defesa, rede, barreira, recorde, medalha e vitória. Curtos (0,05 a 0,4 s), sem silêncio no começo e sem eco longo.
+
+**De onde tirar:**
+- Seguir sintetizando o que dá (é leve e já funciona).
+- Para o que pede som real (torcida, bumbo, rede), usar bancos com licença **CC0**, sem atribuição obrigatória: Kenney, Sonniss GDC e Freesound filtrado por CC0. A licença de cada arquivo fica anotada num `LICENCAS.md` junto dos sons.
+- Ajustar (tom, corte, mistura) antes de usar. Arquivos em Opus ou OGG, mono, carregados só depois da 1ª tela, para não pesar a entrada.
+
+**Regras que valem:**
+- O botão Som (mudo) e a escolha de cada pessoa continuam.
+- Nada de som de cobrança ou urgência (seção 13).
+- O peso de áudio entra no orçamento do bundle, fora do pacote inicial.
+
+**Desenho no Chat:** ouvir 3 opções de assinatura e 2 de apito antes de construir (dá para gerar uma página de teste com os sons tocando).
+
+### 4.5 O que aproveitar do material sobre jogos Flash
+
+O material traz boas ideias, mas boa parte é para jogo nativo de loja: Godot/Unity, ECS, encoder do sistema, IA rodando no chip do celular. O Guerra de Torcidas é um site leve, aberto pelo WhatsApp, com orçamento de ~300 KB. O filtro ficou assim:
+
+| Ideia do material | Fica? | Como entra aqui |
+|---|---|---|
+| Replay determinístico (guardar entradas, não pixels) | Já temos | Gesto + semente refazem qualquer lance. É a base do C04 e do C08. |
+| Detector de "momento viral" | Sim | I01, com regra simples (golaço, ângulo, defesa decisiva), sem modelo de IA. |
+| Vídeo vertical, câmera lenta, legenda automática | Sim | I02, com a frase do narrador já escrita. |
+| Encoder de vídeo do sistema e compartilhar nativo | Sim, na versão web | `MediaRecorder` do navegador e `navigator.share` com arquivo (C04, C05). |
+| Telemetria de onde a pessoa desiste | Sim | I03, dentro do C01 e do F01, sem dado pessoal. |
+| Pitch aleatório, combos ascendentes, ducking | Sim | I04 e H01. |
+| Faixa de frequência do celular, sons curtos, Opus/OGG mono | Sim | H01 e H02. |
+| Bancos CC0 (Kenney, Sonniss, Freesound CC0) | Sim | H01, com a licença anotada. |
+| IA rodando no celular (modelos de 300 MB) | **Não** | Pesa mais que o jogo inteiro e não roda bem no navegador de celular simples. O conteúdo novo já vem do pipeline do Gemini, com revisão. |
+| Dificuldade que se ajusta a cada jogador (aprendizado por reforço) | **Não** | Quebra a regra de justiça: a dificuldade é igual para todos no mesmo dia (seção 6), senão o ranking não compara ninguém. |
+| Godot/Unity, ECS, física em thread separada | **Não** | O jogo desenha poucos elementos por quadro num canvas, e a qualidade gráfica automática já cuida do celular fraco. Trocar de motor jogaria fora o motor puro que o servidor usa para recalcular a partida (anti-trapaça). |
+| Gestão térmica | Em parte | Vale para o vídeo (C04/C05): gerar só no resultado, com cancelar, e só estático no modo Leve. |
+
 ---
 
 ## 5. Para os dias de teste com amigos
@@ -202,5 +268,7 @@ No fim, uma tela com o título do lance, o placar, "Guerra de Torcidas" e o link
 5. Algo travou, demorou ou mostrou "código: …"? Pedir o print.
 6. Quem é de iPhone: o jogo abriu pelo WhatsApp? O card e os Stories saíram?
 7. Alguém pediu para "ver o gol de novo" ou mandar o gol? (Isso confirma o C04.)
+8. O som: alguém abaixou o volume ou desligou? O que acharam do apito? (H01)
+9. O boneco: o que querem mudar, o que acharam do corpo e da cintura, que peça pediram? (H03)
 
 **Como registrar:** uma linha por observação, com o ID deste backlog quando bater (ex.: "C02: a Ana não achou o X1") ou "novo" quando não bater. Na volta, a gente reordena a seção 2 com o que os testes mostrarem.
