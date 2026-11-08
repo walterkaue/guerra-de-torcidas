@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Simulador de uso: personas do público em aparelhos, telas e navegadores diferentes (Playwright).
 //
-//   npm run simular                                  todo mundo, nos cortes de cada persona
-//   npm run simular -- --persona=ze --corte=depois   uma persona, um corte
+//   npm run simular                                  todo mundo
+//   npm run simular -- --persona=ze                  uma persona
 //   npm run simular -- --persona=ze,duda --alvo=producao   rodada curta no site no ar (só GET)
 //   npm run simular -- --persona=rafa --aparelho=pc-firefox --porta=5302
 //
@@ -31,7 +31,7 @@ function argumentos() {
     if (m) a[m[1]] = m[2] ?? true;
   }
   // "npm run simular --persona=ze" (sem o --) chega como variável npm_config_persona.
-  for (const k of ['persona', 'corte', 'alvo', 'aparelho', 'porta', 'rodada', 'servidor', 'refazer'])
+  for (const k of ['persona', 'alvo', 'aparelho', 'porta', 'rodada', 'servidor', 'refazer'])
     if (a[k] === undefined && process.env[`npm_config_${k}`]) a[k] = process.env[`npm_config_${k}`];
   return a;
 }
@@ -56,7 +56,6 @@ async function main() {
   const personas = todas.filter((p) => pedidas.includes(p.id));
   const faltando = pedidas.filter((id) => !todas.some((p) => p.id === id));
   if (faltando.length) throw new Error(`persona desconhecida: ${faltando.join(', ')} (tem: ${todas.map((p) => p.id).join(', ')})`);
-  if (arg.corte && !['antes', 'depois'].includes(arg.corte)) throw new Error('--corte é antes ou depois');
 
   const rodada = arg.rodada ?? hoje();
   const raizPrints = join(RAIZ, 'prints', 'simulacoes', rodada);
@@ -86,36 +85,33 @@ async function main() {
         console.log(`- ${persona.nome}: sem jornada para ${alvo}, pulando`);
         continue;
       }
-      const cortes = alvo === 'producao' ? [null] : arg.corte ? [arg.corte] : persona.cortes ?? ['depois'];
       const aparelhos = (alvo === 'producao' ? prod.aparelhos : persona.aparelhos).filter(
         (id) => !arg.aparelho || id === arg.aparelho,
       );
-      for (const corte of cortes) {
-        for (const apId of aparelhos) {
-          const aparelho = { id: apId, ...APARELHOS[apId] };
-          if (!APARELHOS[apId]) throw new Error(`aparelho desconhecido: ${apId}`);
-          const nomePasta = alvo === 'producao' ? `${apId}-producao` : `${apId}-${corte}`;
-          const pasta = join(raizPrints, persona.id, nomePasta);
-          console.log(`> ${persona.nome} · ${aparelho.nome} · ${alvo === 'producao' ? 'site no ar' : 'corte ' + corte}`);
-          const s = new Sessao({ persona, aparelho, corte, modo: alvo, origem, pasta, raizPrints, famosos });
-          const t0 = Date.now();
-          try {
-            await s.iniciar();
-            await jornada(s, { aparelho: apId, corte });
-          } catch (e) {
-            s.achado({ regra: 'jornada-quebrou', gravidade: 'atrapalha', tipo: 'erro', oQue: `A jornada parou: ${String(e?.message ?? e).split('\n')[0].slice(0, 240)}`, talvezSimulador: true });
-            console.log(`  ! jornada parou: ${String(e?.message ?? e).split('\n')[0]}`);
-          }
-          const r = await s.encerrar();
-          r.duracaoS = Math.round((Date.now() - t0) / 1000);
-          resultados.push(r);
-          console.log(`  ${r.passos.length} passos, ${r.achados.length} achados, ${r.naoSimulaveis.length} não simuláveis, ${r.duracaoS} s`);
-          if (r.furos.length) {
-            console.error(`  !!! ${r.furos.length} resposta(s) de fora da lista: ${r.furos.map((f) => f.url).join(', ')}`);
-            console.error('  Rodada interrompida. Nada mais roda até alguém olhar a guarda (nucleo/rede.mjs).');
-            process.exitCode = 2;
-            throw new Error('furo na guarda de rede');
-          }
+      for (const apId of aparelhos) {
+        const aparelho = { id: apId, ...APARELHOS[apId] };
+        if (!APARELHOS[apId]) throw new Error(`aparelho desconhecido: ${apId}`);
+        const nomePasta = alvo === 'producao' ? `${apId}-producao` : apId;
+        const pasta = join(raizPrints, persona.id, nomePasta);
+        console.log(`> ${persona.nome} · ${aparelho.nome}${alvo === 'producao' ? ' · site no ar' : ''}`);
+        const s = new Sessao({ persona, aparelho, modo: alvo, origem, pasta, raizPrints, famosos });
+        const t0 = Date.now();
+        try {
+          await s.iniciar();
+          await jornada(s, { aparelho: apId });
+        } catch (e) {
+          s.achado({ regra: 'jornada-quebrou', gravidade: 'atrapalha', tipo: 'erro', oQue: `A jornada parou: ${String(e?.message ?? e).split('\n')[0].slice(0, 240)}`, talvezSimulador: true });
+          console.log(`  ! jornada parou: ${String(e?.message ?? e).split('\n')[0]}`);
+        }
+        const r = await s.encerrar();
+        r.duracaoS = Math.round((Date.now() - t0) / 1000);
+        resultados.push(r);
+        console.log(`  ${r.passos.length} passos, ${r.achados.length} achados, ${r.naoSimulaveis.length} não simuláveis, ${r.duracaoS} s`);
+        if (r.furos.length) {
+          console.error(`  !!! ${r.furos.length} resposta(s) de fora da lista: ${r.furos.map((f) => f.url).join(', ')}`);
+          console.error('  Rodada interrompida. Nada mais roda até alguém olhar a guarda (nucleo/rede.mjs).');
+          process.exitCode = 2;
+          throw new Error('furo na guarda de rede');
         }
       }
     }

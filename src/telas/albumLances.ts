@@ -1,5 +1,5 @@
-// Álbum dos Lances com troféus (jogo.md, 14.3): card-botão com a trilha compacta, filtros "Todos", "Meus troféus" e
-// "Perto do próximo", favoritos só no aparelho e a leitura das medalhas (uma vez ao abrir o álbum).
+// A lista da tela única dos Lances com troféus (jogo.md, 14.3 e 14.7): card-botão com a trilha compacta, filtros
+// "Todos", "Meus troféus" e "Perto do próximo", favoritos só no aparelho e a leitura das medalhas (uma vez ao abrir).
 
 import '../estilos/trofeus.css';
 import { esc } from '../app';

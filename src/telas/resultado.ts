@@ -24,7 +24,6 @@ import { convidarParaAvisos } from './convitePush';
 import { golsDaDisputa, linhaMelhoresDoDia, textoForaDasMelhores } from '../jogo/lancesTextos';
 import { itemPenaltis } from '../jogo/regraLances';
 import { numero, placa, selo } from './blocos';
-import { lancesUnificados } from './corte';
 import { ligarEfeitoNoRanking } from './efeitoRanking';
 import { contar, htmlResultado, htmlSelosDaPosicao, ligarConfete, ligarResultado } from './resultadoPadrao';
 import { mostrarRumoDaDisputa } from './rumoMedalhas';
@@ -63,16 +62,20 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
   const decisao =
     r.decisao === 'par_ou_impar' ? 'No par ou ímpar' : r.decisao === 'morte_subita' ? 'Na morte súbita' : 'Fim de jogo';
 
+  // O valor leva o "+" (pontos); o rótulo leva a quantidade ("3 gols"), para não se ler como 21 gols.
+  const quantos = (n: number, um: string, varios: string) => n + ' ' + (n === 1 ? um : varios);
+  const nGols = r.cobrancas.filter((c) => c.desfecho === 'gol').length;
+  const nAngulos = r.cobrancas.filter((c) => c.desfecho === 'gol' && c.angulo).length;
+  const nCavadinhas = r.cobrancas.filter((c) => c.desfecho === 'gol' && c.cavadinha).length;
+  const nDefesas = r.defesas.filter((x) => x.desfecho === 'defesa' && x.pontos > 0).length;
   const etiquetas: [string, number][] = [
-    ['Gols', p.gols],
-    ['Ângulo', p.angulos],
-    ['Cavadinha', p.cavadinhas],
-    ['Defesas', p.defesas],
+    [quantos(nGols, 'gol', 'gols'), p.gols],
+    [quantos(nAngulos, 'ângulo', 'ângulos'), p.angulos],
+    [quantos(nCavadinhas, 'cavadinha', 'cavadinhas'), p.cavadinhas],
+    [quantos(nDefesas, 'defesa', 'defesas'), p.defesas],
     ['Vitória', p.vitoria],
     ['5 de 5', p.cincoDeCinco],
   ];
-
-  const unificada = lancesUnificados();
 
   // Quando a partida não entrou no ranking, a explicação vem no lugar do efeito.
   const situacao = !d.valendo
@@ -80,12 +83,10 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     : d.servidor?.sobSuspeita
       ? 'Essa ficou fora do ranking até a gente conferir.'
       : !d.servidor?.contaNoRanking
-        ? unificada
-          ? textoForaDasMelhores(d.servidor?.melhoresDoDia)
-          : 'Não superou suas 5 melhores de hoje: o ranking não muda.'
+        ? textoForaDasMelhores(d.servidor?.melhoresDoDia)
         : null;
   // Regra de 08/11: o dia vale as 3 melhores partidas de Lances (pênaltis, faltas e cara a cara juntos).
-  const melhoresDoDia = unificada && !situacao ? linhaMelhoresDoDia(d.servidor?.melhoresDoDia) : null;
+  const melhoresDoDia = !situacao ? linhaMelhoresDoDia(d.servidor?.melhoresDoDia) : null;
 
   // Desafio por link: placar dos dois lado a lado. Mais pontos vence; empate fica com quem desafiou.
   const cmp = d.servidor?.comparacao;
@@ -112,8 +113,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
   const contouProMedalha = !!d.disputa && !!d.servidor && d.valendo && !d.servidor.sobSuspeita;
   const detalhes = etiquetas.filter(([, v]) => v > 0);
   // O efeito no ranking chega depois (até 1 minuto): começa como selo de espera.
-  // Partida que não vale não mostra "+N pro time" (nem o detalhe) desde o corte; antes dele a tela antiga seguia mostrando.
-  const pontos = unificada && !d.valendo ? null : { total: p.total, paraTime };
+  // Partida que não vale não mostra "+N pro time" (nem o detalhe).
+  const pontos = !d.valendo ? null : { total: p.total, paraTime };
   const esperaRanking = !situacao && !!d.servidor && !outro;
 
   root.innerHTML = htmlResultado({
@@ -137,7 +138,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     frases: melhoresDoDia ? [...d.frasesFinais, melhoresDoDia] : d.frasesFinais,
     aviso: situacao ? { texto: situacao, forte: !d.valendo } : null,
     selos:
-      htmlSelosDaPosicao(d.servidor?.desempenho ?? null, unificada ? 'lances' : 'penaltis') +
+      htmlSelosDaPosicao(d.servidor?.desempenho ?? null, 'lances') +
       (esperaRanking ? selo('No ranking em 1 min', undefined, 'data-selo-ranking') : '') +
       (!situacao && !esperaRanking ? selo('Contou pro ranking') : ''),
     zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
@@ -153,7 +154,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     motivoDoConfete({
       venceu: r.venceu,
       novoRecorde: !!d.servidor?.desempenho?.novoRecorde,
-      entrouNasMelhores: unificada && !!d.servidor && !situacao,
+      entrouNasMelhores: !!d.servidor && !situacao,
     }),
   );
   // As medalhas são lidas uma vez e servem ao "Rumo às medalhas" e à "Peça nova no vestiário".
@@ -244,7 +245,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     // Revanche: na disputa histórica, joga a mesma de novo; senão (inclusive depois de um X1, que vale uma vez por
     // pessoa: jogo.md, seção 6), partida nova contra a máquina. Depois do corte não há Disputa livre (seção 14.7):
     // sem disputa (livre começada no domingo e fechada na segunda), volta à escolha, no filtro Pênaltis.
-    maisUma: () => irPara(d.disputa || !lancesUnificados() ? { tela: 'partida', disputa: d.disputa } : { tela: 'lances', aba: 'penaltis' }),
+    maisUma: () => irPara(d.disputa ? { tela: 'partida', disputa: d.disputa } : { tela: 'lances', aba: 'penaltis' }),
     inicio: () => irPara({ tela: 'inicio' }),
   });
 

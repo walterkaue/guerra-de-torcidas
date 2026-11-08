@@ -5,15 +5,15 @@ Personas do público jogando em aparelhos, telas e navegadores diferentes (Playw
 ## Rodar
 
 ```bash
-npm run simular                                   # todo mundo, nos cortes de cada persona
-npm run simular -- --persona=ze --corte=depois     # uma persona, um corte
+npm run simular                                   # todo mundo
+npm run simular -- --persona=ze                   # uma persona
 npm run simular -- --persona=ze,duda --alvo=producao   # rodada curta no site no ar (só GET)
 npm run simular:consolidar                         # junta os achados da rodada de hoje
 ```
 
 Outras opções: `--aparelho=<id>` (um aparelho só), `--porta=5291` (porta do Vite do simulador), `--rodada=AAAA-MM-DD` (nome da pasta).
 
-Prints e resultados: `prints/simulacoes/<rodada>/<persona>/<aparelho>-<corte>/` (fora do Git). O consolidado fica em `prints/simulacoes/<rodada>/consolidado.md`.
+Prints e resultados: `prints/simulacoes/<rodada>/<persona>/<aparelho>/` (fora do Git). O consolidado fica em `prints/simulacoes/<rodada>/consolidado.md`.
 
 ## Nada vai para o banco de verdade
 
@@ -34,8 +34,7 @@ export default {
   toque: { erroPx: 4, demoraMs: 80 },             // mira do dedo e demora para decidir
   gesto: { escalaForca: 1.6, duracaoMs: 150, tremorPx: 1 }, // arraste longo e rápido = chuta forte
   aparelhos: ['android-entrada'],                 // ids de nucleo/aparelhos.mjs
-  cortes: ['depois', 'antes'],
-  async jornada(s, { aparelho, corte }) {
+  async jornada(s, { aparelho }) {
     await s.passo('abre o link do X1', () => s.abrir('/?homeFalsa&penaltiFalso&d=abcdefgh', { esperarPor: 'button' }));
   },
 };
@@ -45,7 +44,7 @@ O que a sessão `s` oferece (`nucleo/sessao.mjs`):
 
 | Método | Para quê |
 |---|---|
-| `s.abrir(caminho, { esperarPor, limiteMs, rotulo })` | Abre com as flags (o `?corte=` entra sozinho) e mede até `esperarPor` aparecer |
+| `s.abrir(caminho, { esperarPor, limiteMs, rotulo })` | Abre com as flags e mede até `esperarPor` aparecer |
 | `s.passo(nome, fn, { tela, fichaFactual, principalNaDobra, axe, paginaInteira })` | Roda o passo, tira print e confere a tela; erro vira achado |
 | `s.conferir(nome, opções)` | Print e conferências sem ação |
 | `s.tocar(alvo, { semMudancaOk, precisao })` | Toque com a mira da persona; anota "não responde" se nada mudar em 2 s |

@@ -88,16 +88,15 @@ describe('Jogar agora', () => {
   });
 
   it('diz o motivo em tom informativo', () => {
-    expect(motivoDoJogo('crava', { ...tudo, cravaFechaEm: 5 * 3600_000 }, 5)).toBe('Crava a Rodada: fecha em 5h, sem palpite seu');
-    expect(motivoDoJogo('dia', tudo, 5)).toBe('Time do Dia: ainda não jogou hoje');
-    expect(motivoDoJogo('dia', { ...tudo, chutesDoDia: 2 }, 5)).toBe('Time do Dia: 2 de 6 chutes hoje');
-    expect(motivoDoJogo('penaltis', tudo, 5)).toBe('Lances do Jogo: faltam 3 partidas que contam hoje');
-    expect(motivoDoJogo('prova', tudo, 5)).toBe('Prova de Boleiro: 8 perguntas, para quando quiser');
+    expect(motivoDoJogo('crava', { ...tudo, cravaFechaEm: 5 * 3600_000 })).toBe('Crava a Rodada: fecha em 5h, sem palpite seu');
+    expect(motivoDoJogo('dia', tudo)).toBe('Time do Dia: ainda não jogou hoje');
+    expect(motivoDoJogo('dia', { ...tudo, chutesDoDia: 2 })).toBe('Time do Dia: 2 de 6 chutes hoje');
+    expect(motivoDoJogo('penaltis', tudo)).toBe('Lances do Jogo: faltam 3 partidas valendo hoje');
+    expect(motivoDoJogo('prova', tudo)).toBe('Prova de Boleiro: 8 perguntas, para quando quiser');
   });
 
-  it('na regra nova, o motivo dos Lances conta as 10 partidas valendo e o Teto antigo some', () => {
-    expect(motivoDoJogo('penaltis', { ...tudo, faltamPartidas: 7 }, 5, true)).toBe('Lances do Jogo: faltam 7 partidas valendo hoje');
-    expect(motivoDoJogo('penaltis', { ...tudo, faltamPartidas: 7 }, 5)).toBe('Lances do Jogo: faltam 7 partidas que contam hoje');
+  it('o motivo dos Lances conta as 10 partidas valendo', () => {
+    expect(motivoDoJogo('penaltis', { ...tudo, faltamPartidas: 7 })).toBe('Lances do Jogo: faltam 7 partidas valendo hoje');
   });
 });
 

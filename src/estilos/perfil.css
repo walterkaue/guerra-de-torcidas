@@ -2,7 +2,7 @@
 
 .perfil {
   gap: 14px;
-  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  padding-bottom: calc(var(--altura-barra-baixo, 88px) + env(safe-area-inset-bottom) + 12px);
 }
 
 /* ---------- cabeçalho isolado: avatar grande (espaço para o boneco montável), apelido e time ---------- */

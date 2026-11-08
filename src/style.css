@@ -85,6 +85,12 @@
   display: none !important;
 }
 
+/* Rolagem automática (scrollIntoView, foco do teclado, voltar para a tela) para antes da barra fixa de baixo.
+   --altura-barra-baixo é medida no navegador (src/telas/alturaBarra.ts); sem barra na tela, só o respiro. */
+html {
+  scroll-padding-bottom: calc(var(--altura-barra-baixo, 0px) + env(safe-area-inset-bottom) + 12px);
+}
+
 /* clip, e não hidden: corta a rolagem lateral sem desligar o position: sticky (faixa do Crava). */
 html,
 body {
@@ -612,7 +618,7 @@ body {
 
 /* ---------- aviso de partida sem valer pontos ---------- */
 .aviso-partida {
-  background: var(--caiu);
+  background: #b3261e; /* o mesmo vermelho fechado do .res-aviso.forte: branco 6,54:1 (o --caiu #ff5a3c dava 3,1:1) */
   color: #fff;
   position: absolute;
   top: calc(64px + env(safe-area-inset-top));
@@ -626,13 +632,16 @@ body {
   pointer-events: none;
 }
 
-/* Código do erro: pequeno, cinza, embaixo da frase (src/servidor/motivo.ts). */
+/* Código do erro: pequeno, embaixo da frase (src/servidor/motivo.ts). 12 px no mínimo e 4,5:1 de contraste (S11).
+   Conta (WCAG): fundo do aviso #b3261e, L = 0,1106 (R 0,4508 · G 0,0194 · B 0,0130). Com opacity 0,75 o branco
+   virava #ecc9c7 (L = 0,6365): (0,6365 + 0,05) / (0,1106 + 0,05) = 4,27:1, abaixo do mínimo. Com opacity 0,9 o texto fica #f7e9e8 (L = 0,842):
+   (0,842 + 0,05) / (0,1106 + 0,05) = 5,55:1. */
 .aviso-codigo {
   display: block;
   margin-top: 2px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
-  opacity: 0.75;
+  opacity: 0.9;
 }
 .res-aviso .aviso-codigo { color: inherit; }
 
@@ -944,12 +953,40 @@ body {
     gap: 4px;
     padding-inline: 6px;
   }
-  .placar-jogo .sigla {
-    font-size: 10px;
-    letter-spacing: 0;
-  }
   .placar-jogo .gols {
     font-size: 26px;
     gap: 3px;
   }
+}
+
+/* Celular estreito (S12, S13): siglas com 12 px no mínimo e o nome longo do adversário em até 2 linhas, sem reticências,
+   mesmo com a fonte do sistema em 130%. Lado a lado, o "BARRANQUILLA" não cabe: os nomes ficam numa linha de cima,
+   cada um com metade da largura do placar, e embaixo ficam as bolinhas e o marcador. */
+@media (max-width: 380px) {
+  .placar-jogo {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+    gap: 2px 8px;
+  }
+  .placar-jogo .lado {
+    display: contents; /* o contra-giro de 8° do filho direto passa para cada peça abaixo */
+  }
+  .placar-jogo .sigla,
+  .placar-jogo .bolinhas,
+  .placar-jogo .gols {
+    transform: skewX(8deg);
+  }
+  .placar-jogo .sigla {
+    font-size: 12px;
+    letter-spacing: 0;
+    overflow-wrap: break-word; /* só quebra entre palavras: nunca corta uma palavra no meio */
+  }
+  .placar-jogo .lado-jogador .sigla { grid-area: 1 / 1; justify-self: start; text-align: left; }
+  .placar-jogo .lado-maquina .sigla { grid-area: 1 / 2; justify-self: end; text-align: right; }
+  .placar-jogo .gols { grid-area: 2 / 1 / 3 / 3; justify-self: center; }
+  .placar-jogo .lado-jogador .bolinhas { grid-area: 2 / 1; justify-self: start; }
+  .placar-jogo .lado-maquina .bolinhas { grid-area: 2 / 2; justify-self: end; }
+  .bolinhas { gap: 3px; }
+  .bolinhas i { width: 9px; height: 9px; }
+  /* O placar em duas linhas ficou mais alto: a instrução desce para não cobrir o marcador. */
+  .partida:has(.placar-jogo) .instrucao { top: calc(98px + env(safe-area-inset-top)); }
 }

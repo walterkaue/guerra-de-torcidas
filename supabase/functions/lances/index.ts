@@ -2,7 +2,7 @@
 // as sementes nunca saem daqui. Duas ações:
 //   { acao: 'nova', lance: id }                    começa a partida: 3 tentativas do mesmo lance
 //   { acao: 'nova', desafio: código }              X1 recebido: o lance de quem desafiou, com sementes novas
-//   { acao: 'nova', lances: [id, id, id] }         formato antigo (3 lances escolhidos): só antes de 08/11/2026
+//   { acao: 'nova', lances: [id, id, id] }         formato antigo (3 lances escolhidos, até 07/11/2026): 426 atualize_o_app
 //   { acao: 'lance', partidaId, i, gesto }         resolve o lance i; no 3º, fecha e grava a partida
 // A regra (tabela, limite do dia, faixa) sai da hora em que a partida foi criada (regraLances.ts).
 // A cena vem do catálogo do servidor (_shared/dados/lances.ts), pelo id: o celular nunca manda a cena.
@@ -20,7 +20,6 @@ import {
   fecharPartidaLances,
   goleiroParaOCelular,
   jogarLanceDoJogo,
-  LANCES_PARTIDAS_POR_DIA,
   LanceForaDeOrdem,
   motivoSuspeitaLances,
   tentativasDoLance,
@@ -61,7 +60,7 @@ interface Hoje {
   feitas: number;
   limite: number;
   melhor: number | null;
-  /** Regra nova: as 3 melhores partidas de Lances que contam hoje. */
+  /** As 3 melhores partidas de Lances que contam hoje. */
   melhores: number[];
 }
 
@@ -72,8 +71,8 @@ async function lancesHoje(sb: SupabaseClient, uid: string): Promise<Hoje> {
   return { feitas: l?.feitas ?? 0, limite: l?.limite ?? limitePadrao(), melhor: l?.melhor ?? null, melhores: l?.melhores ?? [] };
 }
 
-/** Limite do dia de agora, para quando a leitura do banco falhar. */
-const limitePadrao = () => (ehUnificada(new Date()) ? LANCES_PARTIDAS_POR_DIA_UNIFICADO : LANCES_PARTIDAS_POR_DIA);
+/** Limite do dia, para quando a leitura do banco falhar. */
+const limitePadrao = () => LANCES_PARTIDAS_POR_DIA_UNIFICADO;
 const hojeVazio = (): Hoje => ({ feitas: 0, limite: limitePadrao(), melhor: null, melhores: [] });
 
 interface DesafioLances {
@@ -98,9 +97,8 @@ async function lerDesafio(sb: SupabaseClient, codigo: string): Promise<DesafioLa
   return data as DesafioLances | null;
 }
 
-/** A faixa com que a partida nova joga o lance (regra nova: corrigida pela taxa real, a partir de 30 tentativas de 8 pessoas). */
+/** A faixa com que a partida nova joga o lance (corrigida pela taxa real, a partir de 30 tentativas de 8 pessoas). */
 async function faixaParaAPartida(sb: SupabaseClient, lance: Lance, agora: Date): Promise<Faixa> {
-  if (!ehUnificada(agora)) return lance.faixa;
   const { data, error } = await sb.rpc('lances_taxa', { p_lance: lance.id });
   if (error) throw error;
   const t = (data as { tentativas: number; gols: number; pessoas: number }[] | null)?.[0];
@@ -116,14 +114,12 @@ async function criadaDaPartida(sb: SupabaseClient, partidaId: string): Promise<s
 
 async function nova(sb: SupabaseClient, uid: string, corpo: Record<string, unknown>): Promise<RespostaNovaLances> {
   const agora = new Date();
-  const unificada = ehUnificada(agora);
 
-  // Qual lance: X1 recebido, um lance (regra nova) ou, só antes do corte, a lista antiga de 3.
+  // Qual lance: X1 recebido ou um lance. A lista antiga de 3 (celular com o site de antes de 08/11/2026) recebe 426,
+  // e o site novo se carrega sozinho.
   let desafio: DesafioLances | null = null;
   let cenas: Lance[];
   if (typeof corpo.desafio === 'string' && corpo.desafio) {
-    // O X1 dos Lances é da regra nova: antes do corte não existe.
-    if (!unificada) throw new ErroHttp(404, 'desafio_nao_encontrado');
     desafio = await lerDesafio(sb, corpo.desafio);
     if (!desafio) throw new ErroHttp(404, 'desafio_nao_encontrado');
     if (desafio.torcedor_id === uid) throw new ErroHttp(409, 'proprio_desafio');
@@ -138,8 +134,7 @@ async function nova(sb: SupabaseClient, uid: string, corpo: Record<string, unkno
   } else if (typeof corpo.lance === 'string') {
     cenas = cenasDosIds(tentativasDoLance(corpo.lance));
   } else if (corpo.lances !== undefined) {
-    if (unificada) throw new ErroHttp(426, 'atualize_o_app');
-    cenas = cenasDosIds(corpo.lances);
+    throw new ErroHttp(426, 'atualize_o_app');
   } else {
     throw new ErroHttp(400, 'lances_invalidos');
   }
@@ -151,15 +146,14 @@ async function nova(sb: SupabaseClient, uid: string, corpo: Record<string, unkno
   const cfg = await configDeteccao(sb);
   const sementes = cenas.map(() => sortear(0x1_0000_0000));
   const expiraEm = new Date(agora.getTime() + (cfg.minutos_validade_semente ?? 15) * 60_000);
-  // Regra nova: a faixa fica gravada na partida (a corrigida pela taxa real, senão a do catálogo recalibrado).
+  // A faixa fica gravada na partida (a corrigida pela taxa real, senão a do catálogo recalibrado).
   // As 3 tentativas são do mesmo lance, então a conta é uma só.
   // No X1, a faixa de quem desafiou: os dois jogam o mesmo lance com a mesma tabela, mesmo que a faixa suba depois
   // (se ela desceu, o X1 já expirou acima).
-  const faixas = unificada
-    ? (Array(cenas.length).fill(desafio ? desafio.faixa : await faixaParaAPartida(sb, cenas[0], agora)) as Faixa[])
-    : undefined;
-  if (faixas && !ehLanceRepetido(cenas.map((c) => c.id))) throw new ErroHttp(400, 'lances_invalidos');
-  const segredo: GestosLances = { lances: cenas.map((c) => c.id), sementes, cobrancas: [], ...(faixas ? { faixas } : {}) };
+  const faixa: Faixa = desafio ? desafio.faixa : await faixaParaAPartida(sb, cenas[0], agora);
+  const faixas = Array(cenas.length).fill(faixa) as Faixa[];
+  if (!ehLanceRepetido(cenas.map((c) => c.id))) throw new ErroHttp(400, 'lances_invalidos');
+  const segredo: GestosLances = { lances: cenas.map((c) => c.id), sementes, cobrancas: [], faixas };
 
   // Limite do dia (contado ao começar: abandonar uma partida ruim gasta a vaga; na regra nova soma os pênaltis e
   // conta o X1 recebido), limite por minuto e as duas linhas da partida numa transação só, com trava por torcedor.
@@ -186,7 +180,7 @@ async function nova(sb: SupabaseClient, uid: string, corpo: Record<string, unkno
     goleiroX: goleiroParaOCelular(sementes[0], 0, cenas[0]),
     restantesHoje: Math.max(0, comecou.limite - comecou.feitas),
     lances: segredo.lances,
-    faixas: faixas ?? cenas.map((c) => c.faixa),
+    faixas,
     desafio: desafio && { codigo: desafio.id, timeId: desafio.time_id, apelido: desafio.apelido, pontos: desafio.pontos },
   };
 }
@@ -219,7 +213,7 @@ interface PartidaLida {
   time_id: string | null;
 }
 
-/** As cenas guardadas da partida, com a faixa gravada ao começar (regra nova). */
+/** As cenas guardadas da partida, com a faixa gravada ao começar (desde 08/11/2026; antes, a do catálogo). */
 function cenasDaPartida(guardados: GestosLances): Lance[] {
   try {
     return cenasComFaixa(cenasDosIds(guardados.lances), guardados.faixas);

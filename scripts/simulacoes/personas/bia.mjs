@@ -15,10 +15,8 @@ export default {
   toque: { erroPx: 6, demoraMs: 70 },
   gesto: { escalaForca: 1.1, duracaoMs: 140, tremorPx: 3 },
   aparelhos: ['redmi-escuro'],
-  cortes: ['depois', 'antes'],
-  async jornada(s, { corte }) {
+  async jornada(s) {
     const p = s.page;
-    const depois = corte === 'depois';
     await s.semear({ 'gdt:prefs': { time: 'bahia', apelido: 'Bia da UFBA', faixa: '18_mais', termosVistos: '05/11/2026', aquecimento: { visto: true, aquecido: true } } });
     // Conta as partidas e os lances que o jogo começa (toque duplo não pode começar duas).
     await s.contexto.addInitScript(() => {
@@ -38,17 +36,15 @@ export default {
     const inicios = () => p.evaluate(() => window.__contInicios ?? 0).catch(() => -1);
     const home = (extra = '') => s.abrir(`/?${BASE}${extra}`, { esperarPor: '[data-acao="jogar-agora"]', limiteMs: 20000, rotulo: 'Home até o Jogar agora' });
 
-    /** Da lista dos Lances até a primeira ficha do tipo, ou até o botão da disputa livre (antes do corte). */
+    /** Da lista dos Lances até a primeira ficha do tipo Pênaltis. */
     const abrirPenalti = async () => {
-      if (depois) {
-        const t = p.locator('[data-tipo="penaltis"]');
-        if (await t.count()) await s.tocar(t, { semMudancaOk: true });
-        await esperar(400);
-        await s.tocar(p.locator('[data-ficha]').first());
-        await p.locator('dialog[open] [data-jogar]').waitFor({ state: 'visible', timeout: 10000 });
-      } else await p.locator('[data-acao="disputa-livre"]').waitFor({ state: 'visible', timeout: 15000 });
+      const t = p.locator('[data-tipo="penaltis"]');
+      if (await t.count()) await s.tocar(t, { semMudancaOk: true });
+      await esperar(400);
+      await s.tocar(p.locator('[data-ficha]').first());
+      await p.locator('dialog[open] [data-jogar]').waitFor({ state: 'visible', timeout: 10000 });
     };
-    const botaoJogarPenalti = () => (depois ? p.locator('dialog[open] [data-jogar]') : p.locator('[data-acao="disputa-livre"]'));
+    const botaoJogarPenalti = () => p.locator('dialog[open] [data-jogar]');
 
     // ---- Home ----
     await s.passo('Home no Redmi (escuro, economia de dados)', async () => {
@@ -58,7 +54,7 @@ export default {
     // ---- Pênalti, girando o celular no meio da partida ----
     await s.passo('Jogar agora e escolhe a disputa', async () => {
       await tocarSemCobertura(s, p.locator('[data-acao="jogar-agora"]'), 'Jogar agora na Home');
-      await p.locator('[data-ficha], [data-acao="disputa-livre"]').first().waitFor({ state: 'visible', timeout: 15000 });
+      await p.locator('[data-ficha]').first().waitFor({ state: 'visible', timeout: 15000 });
       await abrirPenalti();
     }, { fichaFactual: true });
     await s.passo('começa a partida de pênaltis', async () => {
@@ -95,30 +91,16 @@ export default {
       await esperar(1800); // a Home ainda se mexe quando acaba de abrir (placa do troféu chega tarde)
       for (let k = 0; k < 2; k++) {
         await tocarSemCobertura(s, p.locator('[data-jogo="penaltis"]'), 'card Lances do Jogo');
-        if (await p.locator('[data-ficha], [data-acao="disputa-livre"], [data-disputa]').first().isVisible({ timeout: 6000 }).catch(() => false)) break;
+        if (await p.locator('[data-ficha]').first().isVisible({ timeout: 6000 }).catch(() => false)) break;
         if (k === 0) s.achado({ regra: 'toque-nao-abriu-lances', gravidade: 'atrapalha', tipo: 'layout', oQue: 'O toque no card dos Lances não abriu a lista (a Home mudou de lugar logo depois de abrir?).', talvezSimulador: true });
       }
-      await p.locator('[data-ficha], [data-acao="disputa-livre"], [data-disputa]').first().waitFor({ state: 'visible', timeout: 15000 });
-      if (depois) {
-        await s.tocar(p.locator('[data-tipo="falta"]'), { semMudancaOk: true });
-        await p.locator('[data-filtro="clube"]').selectOption('todos').catch(() => {});
-        await esperar(500);
-        await s.tocar(p.locator('[data-ficha]').first());
-        await esperar(400);
-        await s.tocar(p.getByRole('button', { name: /^jogar/i }).first());
-      } else {
-        const faltas = p.getByRole('tab', { name: /^faltas$/i }).first();
-        if (await faltas.count()) await s.tocar(faltas, { semMudancaOk: true });
-        await p.locator('[data-filtro="clube"]').selectOption('todos').catch(() => {});
-        await esperar(400);
-        for (let i = 0; i < 3; i++) {
-          await s.tocar(p.locator('[data-ficha]').nth(i), { semMudancaOk: true });
-          await esperar(500);
-          await s.tocar(p.locator('[data-por]').first(), { semMudancaOk: true });
-          await esperar(300);
-        }
-        await s.tocar(p.locator('[data-acao="jogar"]'));
-      }
+      await p.locator('[data-ficha]').first().waitFor({ state: 'visible', timeout: 15000 });
+      await s.tocar(p.locator('[data-tipo="falta"]'), { semMudancaOk: true });
+      await p.locator('[data-filtro="clube"]').selectOption('todos').catch(() => {});
+      await esperar(500);
+      await s.tocar(p.locator('[data-ficha]').first());
+      await esperar(400);
+      await s.tocar(p.getByRole('button', { name: /^jogar/i }).first());
       await p.locator('canvas.campo-jogo').waitFor({ state: 'visible', timeout: 30000 });
       await p.waitForFunction(() => window.__lances?.fase?.() === 'mirar', null, { timeout: 40000 });
     }, { fichaFactual: true });
@@ -155,7 +137,7 @@ export default {
       await home();
       await esperar(1500);
       await tocarSemCobertura(s, p.locator('[data-jogo="penaltis"]'), 'card Lances do Jogo');
-      await p.locator('[data-ficha], [data-acao="disputa-livre"]').first().waitFor({ state: 'visible', timeout: 15000 });
+      await p.locator('[data-ficha]').first().waitFor({ state: 'visible', timeout: 15000 });
       await abrirPenalti();
       const antes = await inicios();
       const alvo = botaoJogarPenalti();

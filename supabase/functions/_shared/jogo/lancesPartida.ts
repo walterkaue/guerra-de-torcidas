@@ -152,8 +152,8 @@ export const ehLanceRepetido = (ids: readonly string[]): boolean =>
 // ---------- formato das respostas da função `lances` ----------
 
 /**
- * acao 'nova': começa uma partida valendo. Regra nova (desde 08/11/2026): `{ lance: id }` ou `{ desafio: código }`,
- * e a partida são 3 tentativas desse lance. Antes do corte também vale a lista antiga `{ lances: [id, id, id] }`.
+ * acao 'nova': começa uma partida valendo: `{ lance: id }` ou `{ desafio: código }`, e a partida são 3 tentativas
+ * desse lance. A lista antiga `{ lances: [id, id, id] }` (até 07/11/2026) recebe 426 `atualize_o_app`.
  */
 export interface RespostaNovaLances {
   partidaId: string;

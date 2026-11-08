@@ -27,7 +27,6 @@ import { textoDasMedalhasDosPenaltis } from '../jogo/regrasUnificadas';
 import * as real from '../servidor/api';
 import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
 import { abas, aoTocarNoEstado, baixarPedaco, estado, faixa, marcarAba, numero, trilha } from './blocos';
-import { lancesUnificados } from './corte';
 import { icone } from './icones';
 import { ligarMandarMedalha } from './mandarMedalha';
 
@@ -112,7 +111,7 @@ function desenharMedalhas(el: HTMLElement): () => void {
       <div class="rodape-apoio">${htmlBotaoApoio()}</div>
     </div>`;
   ligarBotaoApoio(el);
-  el.querySelector('[data-acao="jogar"]')!.addEventListener('click', () => irPara(lancesUnificados() ? { tela: 'lances' } : { tela: 'lances', aba: 'falta' }));
+  el.querySelector('[data-acao="jogar"]')!.addEventListener('click', () => irPara({ tela: 'lances' }));
   const minhas = el.querySelector<HTMLElement>('[data-minhas]')!;
   const vitrine = el.querySelector<HTMLElement>('[data-vitrine]')!;
   // Tocar numa medalha abre "Mandar a medalha" (card só da medalha, docs/jogo.md 7.3).

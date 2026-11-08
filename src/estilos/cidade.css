@@ -105,3 +105,26 @@
   text-align: center;
   pointer-events: none;
 }
+
+/* "Escolher a cidade" no estilo claro (S10: um amarelo por tela), como os botões da placa do troféu.
+   A regra fica aqui também porque o CSS da placa (placaTrofeu.css) só chega quando a placa aparece. */
+.convite-cidade .botao-placa {
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--cal);
+  color: var(--tinta);
+  font-family: var(--fonte-rotulo);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4);
+}
+
+.convite-cidade .botao-placa:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}

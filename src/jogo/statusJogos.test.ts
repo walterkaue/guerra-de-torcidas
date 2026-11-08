@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { JogoBasico } from './cravaTela';
-import { faltamDosLances, formatarFecha, formatarVolta, linhaLancesUnificados, linhaPenaltis, statusCrava } from './statusJogos';
+import { faltamDosLances, formatarFecha, formatarVolta, linhaLancesUnificados, statusCrava } from './statusJogos';
 
 const agora = new Date('2026-10-23T12:00:00Z');
 const jogo = (id: string, rodada: number, horasAteInicio: number, extra: Partial<JogoBasico> = {}): JogoBasico => ({
@@ -11,15 +11,6 @@ const jogo = (id: string, rodada: number, horasAteInicio: number, extra: Partial
   confirmado_em: null,
   anulado: false,
   ...extra,
-});
-
-describe('linha dos Pênaltis', () => {
-  it('conta as partidas que ainda valem hoje', () => {
-    expect(linhaPenaltis(3, 5)).toBe('faltam 3 partidas que contam hoje');
-    expect(linhaPenaltis(1, 5)).toBe('falta 1 partida que conta hoje');
-    expect(linhaPenaltis(0, 5)).toBe('hoje só as 5 melhores contam');
-    expect(linhaPenaltis(null, 5)).toBe('As 5 melhores do dia contam');
-  });
 });
 
 describe('linha dos Lances na regra nova', () => {

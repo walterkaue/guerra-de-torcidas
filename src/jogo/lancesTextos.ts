@@ -1,18 +1,16 @@
-// Textos e montagem dos Lances do Jogo valendo (docs/jogo.md, seção 7.3): emoji de cada lance, texto de
-// compartilhar, escolha do texto do resultado, progresso das medalhas e a vitrine das torcidas.
+// Textos e montagem dos Lances do Jogo valendo (docs/jogo.md, seções 7.3 e 14.7): emoji de cada lance, escolha do
+// texto do resultado, progresso das medalhas e a vitrine das torcidas.
 // Puro: sem DOM, sem servidor e sem relógio. A tela e o card só desenham o que sai daqui.
 
 import {
   MEDALHAS,
   medalhaDoLance,
-  TABELA_LANCES_ANTES,
   TABELA_LANCES_UNIFICADA,
   type DesfechoLance,
   type Faixa,
   type Lance,
   type Medalha,
 } from './lances.ts';
-import { LANCES_PARTIDAS_POR_DIA } from './lancesPartida.ts';
 import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MEDALHAS_PENALTIS, medalhaDaDisputa, MELHORES_DO_DIA } from './regraLances.ts';
 
 export const NOME_DA_MEDALHA: Record<Medalha, string> = { bronze: 'Bronze', prata: 'Prata', ouro: 'Ouro' };
@@ -33,24 +31,6 @@ export const EMOJI_DO_LANCE: Record<DesfechoLance, string> = {
 export const emojiDoLance = (d: DesfechoLance): string => EMOJI_DO_LANCE[d];
 
 export const emojisDaPartida = (desfechos: readonly DesfechoLance[]): string => desfechos.map(emojiDoLance).join('');
-
-/** Texto de compartilhar: um emoji por lance, os pontos e o link. */
-export function textoDeCompartilhar(d: {
-  desfechos: readonly DesfechoLance[];
-  pontos: number;
-  paraTime: string | null;
-  link: string;
-  /** "Bronze no lance Gol do título!" */
-  medalha?: string | null;
-}): string {
-  const quanto = `${d.pontos} ${d.pontos === 1 ? 'ponto' : 'pontos'}${d.paraTime ? ` ${d.paraTime}` : ''}`;
-  return [
-    '⚽ Guerra de Torcidas · Lances do Jogo',
-    `${emojisDaPartida(d.desfechos)} · ${quanto}`,
-    ...(d.medalha ? [d.medalha] : []),
-    d.link,
-  ].join('\n');
-}
 
 // ---------- texto do resultado ----------
 
@@ -91,16 +71,11 @@ export function situacaoDoResultado(d: {
   return { tipo: 'ranking', texto: null };
 }
 
-export const AVISO_LIMITE_DO_DIA = `Hoje já deu: ${LANCES_PARTIDAS_POR_DIA} partidas valendo. O treino continua liberado.`;
-
 /**
- * Aviso de quando o servidor diz `limite_do_dia`. Regra nova (seção 14.7): o limite soma pênaltis, faltas e cara a
- * cara, e a partida segue como treino, sem ponto nem medalha.
+ * Aviso de quando o servidor diz `limite_do_dia` (seção 14.7): o limite soma pênaltis, faltas e cara a cara, e a
+ * partida segue como treino, sem ponto nem medalha.
  */
-export function avisoLimiteDoDia(unificada: boolean): string {
-  if (!unificada) return AVISO_LIMITE_DO_DIA;
-  return `Hoje já deu: ${LANCES_PARTIDAS_POR_DIA_UNIFICADO} partidas valendo. Essa vai de treino: sem ponto nem medalha.`;
-}
+export const AVISO_LIMITE_DO_DIA = `Hoje já deu: ${LANCES_PARTIDAS_POR_DIA_UNIFICADO} partidas valendo. Essa vai de treino: sem ponto nem medalha.`;
 
 const listaDePontos = (melhores: readonly number[]) => melhores.join(' · ');
 
@@ -123,15 +98,15 @@ export function textoForaDasMelhores(melhores?: readonly number[] | null): strin
 }
 
 /**
- * A faixa e os pontos de um gol que o álbum mostra. Na regra nova, a do catálogo recalibrado (`faixaUnificada`);
+ * A faixa e os pontos de um gol que a tela mostra: a do catálogo recalibrado (`faixaUnificada`);
  * a partida pode jogar numa faixa abaixo dela (taxa real) e a resposta da função `lances` traz a que vale.
  */
-export function faixaNaTela(l: Pick<Lance, 'faixa' | 'faixaUnificada'>, unificada: boolean): { faixa: Faixa; pontos: number } {
-  const faixa = unificada ? (l.faixaUnificada ?? l.faixa) : l.faixa;
-  return { faixa, pontos: (unificada ? TABELA_LANCES_UNIFICADA : TABELA_LANCES_ANTES).faixa[faixa] };
+export function faixaNaTela(l: Pick<Lance, 'faixa' | 'faixaUnificada'>): { faixa: Faixa; pontos: number } {
+  const faixa = l.faixaUnificada ?? l.faixa;
+  return { faixa, pontos: TABELA_LANCES_UNIFICADA.faixa[faixa] };
 }
 
-/** "Valendo hoje: 2 de 6" (null sem resposta do servidor). */
+/** "Valendo hoje: 2 de 10" (null sem resposta do servidor). */
 export function linhaValendoHoje(h: { feitas: number; limite: number } | null): string | null {
   if (!h || !(h.limite > 0)) return null;
   return `Valendo hoje: ${Math.min(h.feitas, h.limite)} de ${h.limite}`;
@@ -404,35 +379,6 @@ export function trilhaDoItem(id: string, n: NumerosDoItem): Trilha {
 }
 
 export type FiltroAlbum = 'todos' | 'meus' | 'perto';
-
-/**
- * Álbum: "Todos" (ordem do catálogo), "Meus troféus" (só lances com medalha) e "Perto do próximo" (pelos gols
- * que faltam pra próxima medalha; ouro completo vai pro fim). Favoritos sempre primeiro.
- */
-export function filtrarAlbum<T extends { id: string }>(
-  lances: readonly T[],
-  medalhas: ReadonlyMap<string, { gols: number; recriados: number }>,
-  filtro: FiltroAlbum,
-  favoritos: ReadonlySet<string>,
-): T[] {
-  const de = (id: string) => medalhas.get(id) ?? { gols: 0, recriados: 0 };
-  const falta = (id: string) => progressoDaMedalha(de(id).gols, de(id).recriados).proxima?.faltamGols ?? Infinity;
-  const fav = (id: string) => (favoritos.has(id) ? 0 : 1);
-  return lances
-    .map((l, i) => ({ l, i }))
-    .filter(({ l }) => filtro !== 'meus' || medalhaDoLance(de(l.id).gols, de(l.id).recriados) !== null)
-    .sort((a, b) => {
-      if (fav(a.l.id) !== fav(b.l.id)) return fav(a.l.id) - fav(b.l.id);
-      if (filtro === 'perto') {
-        const fa = falta(a.l.id);
-        const fb = falta(b.l.id);
-        if (fa !== fb) return fa < fb ? -1 : 1;
-        if (de(a.l.id).gols !== de(b.l.id).gols) return de(b.l.id).gols - de(a.l.id).gols;
-      }
-      return a.i - b.i;
-    })
-    .map(({ l }) => l);
-}
 
 /** Um item da tela única (regra nova): lance de falta ou cara a cara, ou disputa histórica. */
 export interface ItemDaLista {

@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest';
 import { DICAS } from './dicas';
 import {
   AVISO_LIMITE_DO_DIA,
-  avisoLimiteDoDia,
   faixaNaTela,
   golsDaDisputa,
   linhaMelhoresDoDia,
@@ -127,10 +126,8 @@ describe('tela única: favoritos, seu time, Seleção e outros', () => {
 });
 
 describe('textos da regra nova', () => {
-  it('limite do dia: antes 6 e treino liberado; depois 10 e a partida vira treino', () => {
-    expect(avisoLimiteDoDia(false)).toBe(AVISO_LIMITE_DO_DIA);
-    expect(AVISO_LIMITE_DO_DIA).toBe('Hoje já deu: 6 partidas valendo. O treino continua liberado.');
-    expect(avisoLimiteDoDia(true)).toBe('Hoje já deu: 10 partidas valendo. Essa vai de treino: sem ponto nem medalha.');
+  it('limite do dia: 10 somando pênaltis e Lances, e a partida vira treino', () => {
+    expect(AVISO_LIMITE_DO_DIA).toBe('Hoje já deu: 10 partidas valendo. Essa vai de treino: sem ponto nem medalha.');
     expect(DICAS.lan_dez_valendo).toBe('Hoje as 10 valendo já foram. Treine à vontade.');
     expect(DICAS.lan_recriar_oito).toContain('+8');
   });
@@ -156,10 +153,9 @@ describe('textos da regra nova', () => {
     expect(situacaoDoResultado({ ...base, contaNoRanking: true, melhoresDoDia: [96] })).toEqual({ tipo: 'ranking', texto: null });
   });
 
-  it('faixa no álbum: na regra nova, a do catálogo recalibrado com a tabela nova', () => {
-    expect(faixaNaTela({ faixa: 'facil', faixaUnificada: 'dificil' }, false)).toEqual({ faixa: 'facil', pontos: 10 });
-    expect(faixaNaTela({ faixa: 'facil', faixaUnificada: 'dificil' }, true)).toEqual({ faixa: 'dificil', pontos: 36 });
-    expect(faixaNaTela({ faixa: 'media' }, true)).toEqual({ faixa: 'media', pontos: 30 });
+  it('faixa na tela: a do catálogo recalibrado com a tabela nova', () => {
+    expect(faixaNaTela({ faixa: 'facil', faixaUnificada: 'dificil' })).toEqual({ faixa: 'dificil', pontos: 36 });
+    expect(faixaNaTela({ faixa: 'media' })).toEqual({ faixa: 'media', pontos: 30 });
   });
 });
 

@@ -14,7 +14,6 @@ import { sorteadorDeFrase } from './cardPersonalizado';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { textoForaDasMelhores } from '../jogo/lancesTextos';
 import { numero, placa, selo } from './blocos';
-import { lancesUnificados } from './corte';
 import { motivoDoConfete } from '../jogo/confete';
 import { contar, htmlResultado, htmlSelosDaPosicao, ligarConfete, ligarResultado } from './resultadoPadrao';
 
@@ -46,9 +45,7 @@ ${conviteX1Prova(total, false)} ${link}`;
   const situacao = fim.sobSuspeita
     ? 'Essa ficou fora do ranking até a gente conferir.'
     : !fim.contaNoRanking
-      ? lancesUnificados()
-        ? textoForaDasMelhores() // a Prova tem as 3 dela: sem a lista dos Lances
-        : 'Não superou suas 5 melhores de hoje: o ranking não muda.'
+      ? textoForaDasMelhores() // a Prova tem as 3 dela: sem a lista dos Lances
       : null;
 
   const cmp = fim.comparacao;
@@ -102,7 +99,7 @@ ${conviteX1Prova(total, false)} ${link}`;
     motivoDoConfete({
       venceu: fim.fim === 'perfeita' || !!cmp?.venceu,
       novoRecorde,
-      entrouNasMelhores: lancesUnificados() && !!fim.desempenho && !situacao,
+      entrouNasMelhores: !!fim.desempenho && !situacao,
     }),
   );
   // Carreira: só quando o servidor fechou a prova (o XP sai de lá).

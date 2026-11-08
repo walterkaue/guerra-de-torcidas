@@ -24,7 +24,6 @@ import {
   resolverCobranca,
   resolverDefesa,
   totalizar,
-  PONTOS,
   PONTOS_UNIFICADOS,
   type EscolhaParOuImpar,
   type GestoCobranca,
@@ -34,9 +33,8 @@ import {
   type ResultadoDefesa,
 } from '../jogo/penaltis';
 import { pedirNumeroDoNarrador } from '../jogo/numeroNarrador';
-import { avisoLimiteDoDia } from '../jogo/lancesTextos';
+import { AVISO_LIMITE_DO_DIA } from '../jogo/lancesTextos';
 import { AVISO_DISPUTA_OBRIGATORIA } from '../jogo/lancesTelaUnica';
-import { lancesUnificados } from './corte';
 import * as SERVIDOR from '../servidor/api';
 import {
   ErroServidor,
@@ -158,9 +156,9 @@ export const X1_EXPIROU = 'Esse X1 expirou. Vai uma partida nova!';
 export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   const time: Time = timePorId(prefs.get().time) ?? TIMES[TIMES.length - 1];
   const codigoDesafio = rota.tela === 'partida' ? rota.desafio : undefined;
-  // Depois do corte não há Disputa livre (seção 14.7): partida sem disputa nem X1 (o botão da livre na tela de antes,
-  // aberta de domingo para segunda) vai para a escolha, no filtro Pênaltis, em vez de virar treino com 400.
-  if (lancesUnificados() && !codigoDesafio && !(rota.tela === 'partida' && rota.disputa)) {
+  // Não há Disputa livre desde 08/11/2026 (seção 14.7): partida sem disputa nem X1 (um link ou atalho velho) vai para
+  // a escolha, no filtro Pênaltis, em vez de virar treino com 400.
+  if (!codigoDesafio && !(rota.tela === 'partida' && rota.disputa)) {
     queueMicrotask(() => irPara({ tela: 'lances', aba: 'penaltis' }));
     return () => {};
   }
@@ -178,8 +176,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   let lanceALance = false;
   let dicaDoServidor: number | null = null;
   let desafio: DesafioRecebido | null = null;
-  // Tabela de pontos da partida no aparelho (fallback local e total): a de 08/11 depois do corte, senão a de sempre.
-  const tabela = lancesUnificados() ? PONTOS_UNIFICADOS : PONTOS;
+  // Tabela de pontos da partida no aparelho (fallback local e total): a de 08/11/2026.
+  const tabela = PONTOS_UNIFICADOS;
   /** O servidor disse `limite_do_dia`: a partida segue como treino, e a primeira cobrança lembra disso. */
   let passouDoLimite = false;
   /** Abriu de novo um X1 já jogado (vale uma vez por pessoa): a partida é normal, e a abertura avisa. */
@@ -750,7 +748,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         x1JaJogado = e.codigo === 'desafio_ja_jogado';
         x1Expirou = e.codigo === 'desafio_expirado';
         if (x1JaJogado || x1Expirou) tirarCodigoDoEndereco();
-        if (!disputa && lancesUnificados()) {
+        if (!disputa) {
           disputa = await disputaDoX1QueNaoValeu(codigoDesafio);
           if (disputa) vestirDisputa(disputa);
         }
@@ -780,7 +778,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       if (e instanceof ErroServidor && e.codigo === 'limite_do_dia') {
         // Regra de 08/11: 10 partidas valendo por dia. Esta segue no aparelho, de treino.
         passouDoLimite = true;
-        mostrarAviso(avisoLimiteDoDia(true));
+        mostrarAviso(AVISO_LIMITE_DO_DIA);
       } else if (e instanceof ErroServidor && e.codigo === 'disputa_obrigatoria') {
         // Relógio do aparelho atrasado: o servidor já está na regra sem a Disputa livre. Esta segue de treino.
         mostrarAviso(AVISO_DISPUTA_OBRIGATORIA);

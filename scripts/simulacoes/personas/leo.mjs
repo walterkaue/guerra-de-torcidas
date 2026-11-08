@@ -15,7 +15,6 @@ export default {
   toque: { erroPx: 5, demoraMs: 200 },
   gesto: { escalaForca: 1, duracaoMs: 260, tremorPx: 2 },
   aparelhos: ['fold-dobrado', 'fold-aberto'],
-  cortes: ['depois'],
   async jornada(s, { aparelho }) {
     const p = s.page;
     // Aparelho novo, mas o aquecimento e os Termos já foram vistos (a jornada é sobre a cidade).
@@ -45,7 +44,7 @@ export default {
     }, { paginaInteira: true });
     await s.passo('triagem de idade antes da 1ª partida: 18 ou mais', async () => {
       await s.tocar(p.getByRole('button', { name: '18 ou mais' }));
-      await p.locator('[data-ficha], [data-acao="disputa-livre"]').first().waitFor({ state: 'visible', timeout: 15000 });
+      await p.locator('[data-ficha]').first().waitFor({ state: 'visible', timeout: 15000 });
     });
     await s.passo('abre a ficha e começa a partida', async () => {
       if (await p.locator('[data-tipo="penaltis"]').count()) await s.tocar(p.locator('[data-tipo="penaltis"]'), { semMudancaOk: true });

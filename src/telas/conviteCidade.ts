@@ -31,7 +31,7 @@ export async function convidarParaCidade(el: HTMLElement | null, voltarPara: Rot
     <p class="rotulo">📍 Defende sua cidade também?</p>
     <p>Escolhe a sua cidade e seus pontos somam também pra ela e pro seu estado. Seu apelido não aparece junto.</p>
     <div class="dupla">
-      <button class="botao" type="button" data-acao="cidade-sim">Escolher a cidade</button>
+      <button class="botao-placa" type="button" data-acao="cidade-sim">Escolher a cidade</button>
       <button class="botao botao-sec" type="button" data-acao="cidade-nao">Agora não</button>
     </div>
   </section>`;

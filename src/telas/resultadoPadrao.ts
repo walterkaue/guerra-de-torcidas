@@ -14,6 +14,7 @@ import { criarComemoracao, pedacosDoConfete, type MotivoDoConfete } from '../jog
 import { selosDaPosicao, type Desempenho, type Minigame } from '../jogo/posicao';
 import { seloPre, selo } from './blocos';
 import { abrirCardPersonalizado, desenharComAsEscolhas, prepararBonecoDoCard } from './cardPersonalizado';
+import { medirBarraDeBaixo } from './alturaBarra';
 import { convidarParaCidade } from './conviteCidade';
 import { icone } from './icones';
 import { qualidade } from './qualidade';
@@ -222,6 +223,8 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
     setTimeout(() => (botao.innerHTML = antes), 1800);
   };
   const botao = (acao: string) => root.querySelector<HTMLButtonElement>(`[data-acao="${acao}"]`)!;
+
+  medirBarraDeBaixo(root.querySelector<HTMLElement>('.res-acoes'));
 
   // Resultado da 1ª partida de qualquer jogo: convite para a cidade (uma vez por aparelho).
   void convidarParaCidade(root.querySelector<HTMLElement>('[data-convite-cidade]'));

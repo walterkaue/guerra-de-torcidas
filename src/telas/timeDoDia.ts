@@ -1,6 +1,7 @@
 // Time do Dia (docs/jogo.md, seção 7.2): um clube secreto por dia, 6 chutes, uma linha de pistas por
 // chute. O secreto fica só no servidor; aqui é a lista com busca, a grade e o resultado (com o card).
 
+import { MELHORES_DO_DIA } from '../jogo/regraLances';
 import { esc, irPara, type Rota } from '../app';
 import { corDeTexto, ID_OUTRO, proTime, timePorId, TIMES, type Time } from '../dados/times';
 import { apelidoDoCard, prefs } from '../estado';
@@ -41,7 +42,6 @@ import { dicasDoAparelho, mostrarDica, tirarDica, vezesVista } from './dicas';
 import { DICAS } from '../jogo/dicas';
 import { coresEmAmarelo, primeiraDica, temSeta, terceiroChuteSemVerde } from '../jogo/dicasGatilhos';
 import { abrirRegras } from './regras';
-import { lancesUnificados } from './corte';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 /** Quantos clubes a busca mostra de uma vez (a lista inteira tem 60). */
@@ -419,7 +419,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       frases: frasesFinais,
       // Desde 08/11 (jogo.md 14.7) o dia vale 3 partidas de Lances e 3 da Prova: o texto não fala mais em 5.
       aviso: e.acertou
-        ? { texto: lancesUnificados() ? `+${e.pontos} na semana, por fora das partidas do dia.` : `+${e.pontos} na semana, além das 5 partidas do dia.`, forte: false }
+        ? { texto: `+${e.pontos} na semana, por fora das ${MELHORES_DO_DIA} melhores de Lances e das ${MELHORES_DO_DIA} da Prova.`, forte: false }
         : null,
       selos: htmlSelosDaPosicao(e.desempenho, 'dia'),
       zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,

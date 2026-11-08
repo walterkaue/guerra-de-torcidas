@@ -3,7 +3,7 @@
 // import.meta.env.DEV).
 // ?cenario= escolhe o "Jogar agora": crava (rodada fecha em 5 h sem palpite), dia (ainda não jogou, é o padrão),
 // chutes (2 chutes usados), lances (Time do Dia feito), prova (nada mais conta hoje) ou cravado (tudo feito).
-// Com ?corte=depois: meusLancesHoje falso (4 de 10; prova e cravado esgotam as 10; ?semMelhores zera o dia) e ?l=codigo (X1 dos Lances).
+// meusLancesHoje falso (4 de 10; prova e cravado esgotam as 10; ?semMelhores zera o dia) e ?l=codigo (X1 dos Lances).
 
 import { ID_OUTRO, TIMES } from '../dados/times';
 import { bonecoFalsoDeQuemChamou, timeFalsoDeQuemChamou } from './bonecoDeCampoFalso'; // o boneco falso em campo (&boneco=, &semBoneco, &emCampo=0, &chamouBoneco=, &chamouSemBoneco)
@@ -105,7 +105,7 @@ export const minhaPosicaoMinigame = (minigame: 'penaltis' | 'prova' | 'dia' | 'l
 
 export const minhaPosicaoCrava = (): Promise<MinhaPosicao | null> => espera({ posicao: 37, total: 412, pontos: 44 });
 
-// Regra de 08/11/2026 (use ?corte=depois): as partidas valendo de hoje dos Lances. ?cenario=prova ou cravado esgota as 10.
+// As partidas valendo de hoje dos Lances. ?cenario=prova ou cravado esgota as 10.
 // ?semMelhores mostra o dia sem nenhuma partida ainda.
 export const meusLancesHoje = (): Promise<LancesHoje | null> => {
   if (params.has('semMelhores')) return espera({ feitas: 0, limite: 10, melhor: null, melhores: [] });

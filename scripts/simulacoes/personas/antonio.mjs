@@ -2,7 +2,7 @@
 // reduzido. Lê devagar, toca impreciso e arrasta curto e lento (a dica "Fraquinho, o goleiro pega" tem de aparecer).
 import { chutar, tocarZona, jogarPartida, esperar, tocarSemCobertura, entrarNaProva } from './comum/jogar.mjs';
 
-const FLAGS = 'homeFalsa&aquecimentoFalso&provaFalsa&penaltiFalso&lancesFalsos&corte=depois';
+const FLAGS = 'homeFalsa&aquecimentoFalso&provaFalsa&penaltiFalso&lancesFalsos';
 const DICA_FRACO = /fraquinho/i;
 
 export default {
@@ -15,7 +15,6 @@ export default {
   toque: { erroPx: 10, demoraMs: 900 },
   gesto: { escalaForca: 0.45, duracaoMs: 900, tremorPx: 4 },
   aparelhos: ['s21-samsung'],
-  cortes: ['depois'],
   async jornada(s) {
     const p = s.page;
     const home = (extra = '') => s.abrir(`/?${FLAGS}${extra}`, { esperarPor: '[data-acao="jogar-agora"]', limiteMs: 20000, rotulo: 'Home até o Jogar agora' });

@@ -16,7 +16,6 @@ export default {
   toque: { erroPx: 3, demoraMs: 1100 },
   gesto: { escalaForca: 0.9, duracaoMs: 800, tremorPx: 2 },
   aparelhos: ['ipad-em-pe', 'ipad-deitado'],
-  cortes: ['depois'],
   async jornada(s) {
     let p = s.page;
     await s.semear({ 'gdt:prefs': { time: 'sao-paulo', faixa: '18_mais', termosVistos: '05/11/2026', aquecimento: { visto: true, aquecido: true } } });

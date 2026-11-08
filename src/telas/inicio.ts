@@ -32,7 +32,7 @@ import { linhaMelhoresDoDia } from '../jogo/lancesTextos';
 import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MELHORES_DO_DIA, itemPenaltis, lanceDoDia } from '../jogo/regraLances';
 import { idsDoLanceDoDia } from '../jogo/lancesTelaUnica';
 import { chamadaDaDisputa, type Disputa } from '../jogo/disputas';
-import { faltamDosLances, linhaLancesUnificados, linhaPenaltis, statusCrava } from '../jogo/statusJogos';
+import { faltamDosLances, linhaLancesUnificados, statusCrava } from '../jogo/statusJogos';
 import { escolherFrase } from '../narrador/escolher';
 import { rivalDaSemana, situacaoDoDuelo } from '../narrador/rival';
 import { contextoDoTime } from '../narrador/sessao';
@@ -61,7 +61,6 @@ import { acimaNaUltimaVisita, deveLembrarDaCidade, guardarCidadeVista, linhaDaCi
 import { fraseDaCidade } from '../narrador/cidade';
 import { seloPre, faixa, numero as numeroBloco, posicaoHtml } from './blocos';
 import { arteEscada, arteGrade, htmlDaCasa, htmlDoLanceDoDia, htmlDosCards } from './cardsJogos';
-import { lancesUnificados } from './corte';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
 import { pintarAvatar, pintarBoneco } from './bonecoDoAparelho';
 import type { FraseDoMes } from './blocoDivisoes';
@@ -69,7 +68,6 @@ import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
 import { qualidade } from './qualidade';
 
-export const TETO_DIARIO = 5;
 const SERVIDOR = { rankingDaSemana, minhaPosicaoSemana, partidasFechadasHoje, estadoDoDia, jogosDoCrava, meusDadosDoCrava, meusRecordes, meusLancesHoje, verDesafioLances };
 // Em desenvolvimento, ?homeFalsa troca o servidor por um de mentira (src/dev/homeFalsa.ts) e ?diaFalso
 // usa o Time do Dia de mentira também no card (src/dev/diaFalso.ts).
@@ -147,9 +145,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const time = timePorId(prefs.get().time);
   const codigoDesafio = desafioDoLink();
   const codigoProva = desafioProvaDoLink();
-  // Regra de 08/11/2026 (docs/jogo.md, 14.7): card, "Jogar agora", Lance do Dia e X1 dos Lances. Antes do corte, nada muda.
-  const unificada = lancesUnificados();
-  const codigoLances = unificada ? desafioLancesDoLink() : undefined;
+  // Lances unificados (docs/jogo.md, 14.7): card, "Jogar agora", Lance do Dia e X1 dos Lances.
+  const codigoLances = desafioLancesDoLink();
   const semana = semanaBrasilia();
   let pararRanking: (() => void) | null = null;
   let saiu = false;
@@ -219,7 +216,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       ${prefs.get().aquecimento?.cardNaHome && !prefs.get().aquecimento?.visto ? `<button class="card-aquecimento" type="button" data-acao="aquecimento"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}><span class="rotulo">Aquecimento</span><strong>Conheça os outros jogos</strong><small>1 min</small></button>` : ''}
 
       <section class="grade-jogos" aria-label="Jogos"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>
-        ${htmlDosCards(esc(linhaDosLances(time, LANCES_POR_CLUBE)), unificada ? linhaLancesUnificados(null, MELHORES_DO_DIA) : linhaPenaltis(null, TETO_DIARIO), unificada ? htmlDoLanceDoDia() : '')}
+        ${htmlDosCards(esc(linhaDosLances(time, LANCES_POR_CLUBE)), linhaLancesUnificados(null, MELHORES_DO_DIA), htmlDoLanceDoDia())}
       </section>
 
       <button class="giro faixa-tv" type="button" data-acao="ranking" hidden>
@@ -281,8 +278,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     const proximo = proximoJogo(situacao);
     if (desafioAberto) jogar(desafioAberto, disputaDoX1);
     else if (desafioLancesAberto) jogarLances(desafioLancesAberto);
-    // Depois do corte, "Jogar agora" nos Lances abre a tela única no filtro Pênaltis (sem a Disputa livre).
-    else if (proximo === 'penaltis' && unificada) irPara(time ? { tela: 'lances', aba: 'penaltis' } : { tela: 'times', depois: 'lances' });
+    // "Jogar agora" nos Lances abre a tela única no filtro Pênaltis (não há Disputa livre).
+    else if (proximo === 'penaltis') irPara(time ? { tela: 'lances', aba: 'penaltis' } : { tela: 'times', depois: 'lances' });
     else abrir[proximo]();
   });
   root.querySelector('[data-acao="aquecimento"]')?.addEventListener('click', () => irPara({ tela: 'aquecimento', depois: { tela: 'inicio' } }));
@@ -348,14 +345,14 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const situacao: SituacaoDoDia = {
     cravaFechaEm: null,
     chutesDoDia: time ? null : 0,
-    faltamPartidas: time ? null : unificada ? LANCES_PARTIDAS_POR_DIA_UNIFICADO : TETO_DIARIO,
+    faltamPartidas: time ? null : LANCES_PARTIDAS_POR_DIA_UNIFICADO,
   };
   // A linha do botão só aparece com as respostas na mão, para não trocar de jogo diante dos olhos.
   let respostas = time ? 3 : 0;
   const elMotivo = root.querySelector<HTMLElement>('[data-motivo]')!;
   const atualizarBotao = () => {
     if (desafioAberto || desafioLancesAberto) elMotivo.textContent = 'Aceitar o X1 que te mandaram';
-    else if (respostas === 0) elMotivo.textContent = motivoDoJogo(proximoJogo(situacao), situacao, TETO_DIARIO, unificada);
+    else if (respostas === 0) elMotivo.textContent = motivoDoJogo(proximoJogo(situacao), situacao);
   };
   const respondeu = () => {
     respostas = Math.max(0, respostas - 1);
@@ -389,8 +386,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     if (tique % GIRO_SEGUNDOS === 0) girar();
   }, 1000);
 
-  // Lances, regra nova: as 10 partidas valendo por dia (pênaltis, faltas e cara a cara somados) e as 3 melhores.
-  if (time && unificada) {
+  // Lances: as 10 partidas valendo por dia (pênaltis, faltas e cara a cara somados) e as 3 melhores.
+  if (time) {
     servidor()
       .then((api) => api.meusLancesHoje())
       .then((h) => {
@@ -398,21 +395,6 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         const faltam = faltamDosLances(h);
         situacao.faltamPartidas = faltam;
         status('penaltis', linhaMelhoresDoDia(h.melhores) ?? linhaLancesUnificados(faltam, MELHORES_DO_DIA));
-      })
-      .catch(() => {
-        // sem internet: fica a regra geral
-      })
-      .finally(() => !saiu && respondeu());
-  }
-
-  // Lances, regra de antes: o teto do dia (somado com a Prova).
-  if (time && !unificada) {
-    servidor()
-      .then((api) => api.partidasFechadasHoje(diaBrasilia()))
-      .then((n) => {
-        if (saiu) return;
-        situacao.faltamPartidas = TETO_DIARIO - n;
-        status('penaltis', linhaPenaltis(TETO_DIARIO - n, TETO_DIARIO));
       })
       .catch(() => {
         // sem internet: fica a regra geral
@@ -516,10 +498,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       });
   }
 
-  // ---------- Lance do Dia (regra de 08/11/2026) ----------
+  // ---------- Lance do Dia (14.7) ----------
   // O catálogo dos lances fica fora do bundle da Home: vem depois de desenhar. O mesmo lance para todos, sem bônus.
   const botaoDoDia = root.querySelector<HTMLButtonElement>('[data-acao="lance-do-dia"]');
-  const catalogoDosLances = unificada ? Promise.all([import('../dados/lances'), import('../dados/adversarios'), import('../dados/disputas')]) : null;
+  const catalogoDosLances = Promise.all([import('../dados/lances'), import('../dados/adversarios'), import('../dados/disputas')]);
   if (botaoDoDia && catalogoDosLances) {
     catalogoDosLances
       .then(([{ LANCES }, { SELECAO }, { DISPUTAS }]) => {

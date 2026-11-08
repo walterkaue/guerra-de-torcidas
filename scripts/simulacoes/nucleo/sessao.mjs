@@ -48,7 +48,6 @@ export class Sessao {
    * @param {object} o
    *  persona: { id, nome, menor?, toque: { erroPx, demoraMs }, gesto: { escalaForca, duracaoMs, tremorPx } }
    *  aparelho: entrada de APARELHOS (com .id)
-   *  corte: 'antes' | 'depois'
    *  modo: 'dev' | 'producao'
    *  origem: http://127.0.0.1:porta (dev) ou https://torcida.kauewalter.com.br
    *  pasta: onde ficam prints e resultado desta sessão
@@ -160,10 +159,9 @@ export class Sessao {
     });
   }
 
-  /** Endereço com as flags; a sessão põe ?corte= sozinha. Ex.: s.endereco('/?homeFalsa&cenario=dia#lances') */
+  /** Endereço com as flags. Ex.: s.endereco('/?homeFalsa&cenario=dia#lances') */
   endereco(caminho) {
     const u = new URL(caminho, this.origem);
-    if (this.modo === 'dev' && this.corte && !u.searchParams.has('corte')) u.searchParams.set('corte', this.corte);
     return u.toString().replace(/=(&|#|$)/g, '$1'); // ?homeFalsa em vez de ?homeFalsa=
   }
 
@@ -320,7 +318,6 @@ export class Sessao {
       aparelho: this.aparelho.nome,
       aparelhoId: this.aparelho.id,
       navegador: this.aparelho.navegador,
-      corte: this.corte,
       modo: this.modo,
       passo: this.n,
       tela: this._telaAtual ?? '?',
@@ -604,7 +601,6 @@ export class Sessao {
       aparelho: this.aparelho.nome,
       aparelhoId: this.aparelho.id,
       navegador: this.aparelho.navegador,
-      corte: this.corte,
       modo: this.modo,
       passos: this.passos,
       achados: this.achados.map(({ _chave, ...a }) => a),

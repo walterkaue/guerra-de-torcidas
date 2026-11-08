@@ -3,8 +3,8 @@
 .resultado {
   position: relative;
   gap: 14px;
-  /* Barra de baixo: ~81 px (botão de 60 + sombra + respiro). Sobra folga para o último item nunca ficar atrás dela. */
-  padding-bottom: calc(132px + env(safe-area-inset-bottom));
+  /* Barra de baixo: a altura real vem do navegador (alturaBarra.ts), com a fonte grande inclusive. */
+  padding-bottom: calc(var(--altura-barra-baixo, 96px) + env(safe-area-inset-bottom) + 24px);
 }
 
 .confete {
@@ -338,12 +338,12 @@
   bottom: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 1fr 1.4fr; /* 1 : 1,4, como Salvar × Compartilhar (S14) */
   gap: 10px;
   max-width: 480px;
   margin: 0 auto;
   padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
-  background: rgba(6, 26, 14, 0.96);
+  background: #061a0e; /* opaco: o texto que rola não aparece atrás (S06) */
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
