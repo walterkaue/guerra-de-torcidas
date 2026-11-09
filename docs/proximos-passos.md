@@ -34,11 +34,11 @@ Nada disso tem lembrete automático.
 
 ## No celular (o Kauê, junto com os testes dos amigos)
 
-- **Lances (tela única):** abrir uma ficha e apertar o voltar do Android (fecha a ficha, não sai da tela); jogar uma falta (3 tentativas) e uma disputa de pênaltis ("rumo ao bronze" no resultado); mandar o X1 de pênaltis para outra conta e aceitar (joga a mesma disputa); "Seus 3 melhores de hoje" e o Lance do Dia na Home; "Mandar esse lance" na ficha.
+- **Lances (tela única):** abrir uma ficha e apertar o voltar do Android (fecha a ficha, não sai da tela); jogar uma falta (3 tentativas) e uma disputa de pênaltis ("rumo ao bronze" no resultado); mandar o desafio de pênaltis para outra conta e aceitar (joga a mesma disputa); "Seus 3 melhores de hoje" e o Lance do Dia na Home; "Mandar esse lance" na ficha.
 - **Resultado:** "3 gols · +21" nos pênaltis e a barra de baixo opaca; com a fonte do sistema grande, "Termos e privacidade" tocável no fim da Home.
 - **Partida:** deitar o celular no meio da defesa dos pênaltis (a partida espera); no computador ou iPad, o campo maior com a mira certa.
-- **Boneco em campo:** 60 fps, replay de golaço, o interruptor "Meu boneco em campo", X1 entre duas contas.
-- **Acessibilidade (G3):** fonte do sistema no máximo em Ranking, Lances, Crava e Time do Dia (nada sai da tela); TalkBack numa linha do Ranking (posição, time e pontos antes do "abrir a Casa").
+- **Boneco em campo:** 60 fps, replay de golaço, o interruptor "Meu boneco em campo", desafio entre duas contas.
+- **Acessibilidade (G3):** fonte do sistema no máximo na Tabela, Lances, Palpite da Rodada e Time do Dia (nada sai da tela); TalkBack numa linha da Tabela (posição, time e pontos antes do "abrir a Casa").
 - **Cards:** Salvar imagem no Android e no iPhone; o Pôster no Stories e no Quadrado; o card do troféu pela ficha e pela placa da Galeria.
 - **Primeiro acesso:** num aparelho limpo, a escolha do time como 1ª tela, o "Pular" do aquecimento indo à Home e um link de desafio entrando direto.
 - **Aquecimento:** de ponta a ponta num aparelho limpo; o palpite da estação 5 em Palpites e os +20 XP; não testadas à mão: as dicas de morte súbita, cavadinha pega no meio, altura errada e 3 cobranças sem efeito.
@@ -61,7 +61,7 @@ Nada disso tem lembrete automático.
 
 ## Próximo ciclo
 
-A ordem está no `docs/backlog.md`, seção 2: o que falta para divulgar, o funil e o botão do X1, a central de avisos e o resultado em duas camadas, o replay do gol compartilhável, o card animado, o som novo e o desempenho da 1ª visita. Ela será refeita com o que os testes com amigos mostrarem.
+A ordem está no `docs/backlog.md`, seção 2: o que falta para divulgar, o funil e o botão do desafio, a central de avisos e o resultado em duas camadas, o replay do gol compartilhável, o card animado, o som novo e o desempenho da 1ª visita. Ela será refeita com o que os testes com amigos mostrarem.
 
 ## Antes de divulgar
 

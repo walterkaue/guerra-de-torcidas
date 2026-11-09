@@ -1,7 +1,7 @@
 # Casa do [time] — a página de história de cada clube
 
 > Versão 1.0 · 21/10/2026 · Desenho aprovado em 21/10/2026, a partir da proposta "Galeria dos Clubes".
-> **Tela construída em 25/10/2026** (`src/telas/casa/`, `#casa` e `#casa/<id>`), com ganchos na Home e no Ranking. Só aparecem os clubes com a linha de clube revisada; os outros ficam "em breve" no índice. Ordem de publicação: `docs/casa-publicacao.md`.
+> **Tela construída em 25/10/2026** (`src/telas/casa/`, `#casa` e `#casa/<id>`), com ganchos na Home e na Tabela. Só aparecem os clubes com a linha de clube revisada; os outros ficam "em breve" no índice. Ordem de publicação: `docs/casa-publicacao.md`.
 > Se algo aqui discordar do `docs/jogo.md`, vale o `jogo.md`.
 
 ## 1. O que é
@@ -29,10 +29,10 @@ Por que existe: os minigames dão motivo para jogar 30 segundos; a Casa dá orgu
 - **Índice:** grade dos 20 clubes com o card "faixa de placar" (`#casa`).
 - **Ganchos (só navegação):**
   - **Home:** seção com o estádio e os troféus (`docs/visual.md`, seção 3); tocar abre a Casa do seu time.
-  - **Ranking:** tocar numa torcida abre a Casa dela.
+  - **Tabela:** tocar numa torcida abre a Casa dela.
   - **Time do Dia:** depois que o dia termina (acertou ou não), "Conheça a Casa do [clube]" quando o clube secreto for da Série A. Nunca antes, para não dar pista.
   - **Prova de Boleiro (depois):** no resultado, link para a Casa dos clubes que caíram na partida. O texto das perguntas continua sem aparecer.
-- **Barra de navegação:** não ganha item novo (Jogar, Palpites, Ranking, Perfil ficam). O índice entra pela Home, para quem não tem time, e pelo Ranking.
+- **Barra de navegação:** não ganha item novo (Jogar, Palpites, Tabela, Perfil ficam). O índice entra pela Home, para quem não tem time, e pela Tabela.
 - "Outro time" não tem Casa.
 
 ## 4. Conteúdo da página
@@ -186,7 +186,7 @@ Só entra na tela a linha `revisada` com `aposta_na_pagina` = `não` (`ativa` n�
 1. **Dados:** sessão de escrita → sessão de revisão (pode correr antes do upgrade dos pênaltis).
 2. **Importador e validador** com testes (`npm run importar-casa`).
 3. **Tela da Casa** (blocos A a D, rodapé) e índice, testados em 390×844.
-4. **Ganchos:** Home, Ranking, Time do Dia; depois, Prova de Boleiro.
+4. **Ganchos:** Home, Tabela, Time do Dia; depois, Prova de Boleiro.
 5. **Depois:** prateleira "Aqui no jogo" (quando a Galeria de Troféus existir), comparação lado a lado com o rival, card da sala de troféus para compartilhar.
 6. **Backlog:** campanha por ano (vitórias, empates, derrotas e artilheiro de cada título), marcos de gols do clube (1.000º, 5.000º…).
 
