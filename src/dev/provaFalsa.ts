@@ -1,6 +1,6 @@
 // Só em desenvolvimento (npm run dev, com ?provaFalsa na URL): imita a função "prova" do servidor
 // no próprio navegador, com perguntas de mentira, para conferir a tela sem banco nem login.
-// ?d=abcdefgh&x1Expirado: o X1 responde 410 desafio_expirado (prova normal, com o aviso na abertura).
+// ?p=abcdefgh&x1Expirado: o X1 responde 410 desafio_expirado (prova normal, com o aviso na abertura).
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import {
