@@ -17,7 +17,7 @@ export interface Qualidade {
   /** Torcida balançando (3 quadros pré-desenhados) e ola no gol. */
   torcidaViva: boolean;
   ola: boolean;
-  /** Degradê na pele e no calção dos bonecos (senão, cor chapada). */
+  /** Degradê na pele e no calção dos bonecos e as camadas de luz e sombra do Plus (senão, cor chapada). */
   degrade: boolean;
   /** Tremida da tela no gol. */
   tremida: boolean;

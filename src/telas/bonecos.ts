@@ -1,6 +1,6 @@
-// Bonecos da partida no estilo "Silhueta premium" (docs/bonecos.md): formas chapadas sem contorno,
-// proporção atlética, cortes angulares nas dobras e degradê sutil só na pele e no calção.
-// Só desenho, nada de regra de jogo.
+// Bonecos da partida no estilo "Silhueta premium Plus" (docs/bonecos.md): formas chapadas sem contorno,
+// proporção atlética, cortes angulares nas dobras, degradê sutil na pele e no calção e, fora da qualidade Leve,
+// luz, cor e sombra em cada peça (luz do alto à esquerda). Só desenho, nada de regra de jogo.
 //
 // Esqueleto por rotações: cada pose guarda a posição da pelve e, para cada osso, o ângulo e o quanto
 // ele aparece encurtado (perna indo para longe da câmera fica mais curta). A animação interpola os
@@ -1269,7 +1269,7 @@ class Pecas {
   }
 }
 
-/** Cabelo em volta da cabeça (centro 0,0; cabeça com raios 5,2 × 6,2). "atras" vai antes do corpo. */
+/** Cabelo em volta da cabeça (centro 0,0; cabeça de ~10,6 × 13,3 com queixo). "atras" vai antes do corpo. */
 function cabelo(estilo: Cabelo, deFrente: boolean): { atras: Path2D[] | null; frente: Path2D[] } {
   const frente = new Pecas();
   let atras: Pecas | null = null;
