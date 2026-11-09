@@ -49,6 +49,7 @@ import { lerRecentes, registrarVista } from '../narrador/historico';
 import { ErroServidor, salvarTorcedor } from '../servidor/api';
 import { marcaDe } from '../servidor/torcedor';
 import { lerBoneco } from '../servidor/boneco';
+import { contar } from '../servidor/funil';
 import { nivelParaCard } from './carreira';
 import { icone, type NomeIcone } from './icones';
 
@@ -609,6 +610,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
   btnCompartilhar.addEventListener('click', async () => {
     if (!dados || compartilhando) return;
     compartilhando = true;
+    contar({ ev: 'compartilhou', tipo: 'card', meio: 'card' }); // Salvar não conta
     btnCompartilhar.disabled = true;
     const texto = textoDoCompartilhar(textoPronto, o.link, ligados().has('link'));
     const arquivo = arquivoAtual();

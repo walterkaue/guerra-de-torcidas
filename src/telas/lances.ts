@@ -8,6 +8,7 @@
 // (telas/cena3d.ts) com a câmera de cada tipo (telas/camera.ts).
 
 import { esc, irPara, type Rota } from '../app';
+import { contar as contarFunil, etapa, sairDaEtapa } from '../servidor/funil';
 import { LANCES } from '../dados/lances';
 import { ID_OUTRO, TIMES, corDeTexto, proTime, timePorId, type Time } from '../dados/times';
 import { apelidoDoCard, prefs } from '../estado';
@@ -462,6 +463,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         ${estado('carregando', 'Buscando o X1…')}
       </main>`;
     root.querySelector('[data-voltar]')!.addEventListener('click', () => {
+      sairDaEtapa();
       tirarCodigoDoEndereco();
       irPara({ tela: 'inicio' });
     });
@@ -489,6 +491,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     frase: string | null,
     fim: FechamentoLances | null,
     aviso: string | null,
+    x1Recebido: string | null = null,
   ): void {
     limparJogo?.();
     limparJogo = null;
@@ -514,6 +517,8 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     // O link é o do X1 que esta partida gerou (?l=); sem código, o do time de hoje.
     const codigoX1 = fim?.desafio?.codigo ?? null;
     const link = codigoX1 ? `${SITE}/?l=${codigoX1}` : `${SITE}/?time=${time.id}`;
+    // Funil do X1: terminou a partida de um X1 recebido (resultado() roda uma vez por partida).
+    if (x1Recebido) contarFunil({ ev: 'terminou', tipo: 'x1_lances', x1: x1Recebido });
     const desfechos = resultados.map((r) => r.desfecho);
     const textoShare = [conviteLances(pontos, paraTime, !!codigoX1), emojisDaPartida(desfechos), ...(medalhas[0] ? [medalhas[0]] : []), link].join('\n');
     // Telão e lista: as 3 tentativas do mesmo lance, o título do lance uma vez só.
@@ -682,6 +687,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       textoShare,
       link,
       emoji,
+      funil: codigoX1 ? { tipo: 'x1_lances', x1: codigoX1 } : { tipo: 'resultado', jogo: 'lances' },
       // O mesmo lance, partida normal (também depois de um X1).
       maisUma: () => jogarLance(LANCES.find((o) => o.id === lances[0].id) ?? lances[0]),
       inicio: () => irPara({ tela: 'inicio' }),
@@ -699,6 +705,8 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     const tabela = TABELA_LANCES_UNIFICADA;
     let codigoX1 = op.x1 ?? null;
     limparJogo?.();
+    // Desistência: a partida (não o hub) é a etapa; conclui em proximo() quando acaba.
+    etapa({ tipo: 'partida', jogo: 'lances', ...(op.x1 ? { x1: op.x1 } : {}) });
     root.innerHTML = `
       <main class="partida lances-jogo" style="${estilo(time.cores)}">
         <header class="hud">
@@ -953,6 +961,8 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     }
 
     function chutar(gesto: GestoCobranca): void {
+      // Funil do X1: só o 1º chute de um X1 recebido (codigoX1 vira null se o servidor recusou o X1).
+      if (codigoX1 && indice === 0 && resultados.length === 0) contarFunil({ ev: 'primeiro_chute', tipo: 'x1_lances', x1: codigoX1 });
       const gq = normalizarCobranca(gesto);
       const l = atual();
       if (servidorOk && partidaId) void pedirAoServidor(gq, l, indice);
@@ -1010,9 +1020,10 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         comecarLance();
       } else {
         acabou = true;
+        etapa(null);
         somApito(true);
         const pontos = resultados.reduce((s, r) => s + r.pontos, 0);
-        resultado(lances, resultados, narrador.falar('lance_fim', { pontos }), servidorOk ? fechamento : null, aviso);
+        resultado(lances, resultados, narrador.falar('lance_fim', { pontos }), servidorOk ? fechamento : null, aviso, codigoX1);
       }
     }
 
@@ -1177,7 +1188,10 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     });
     canvas.addEventListener('pointercancel', () => (rastro = []));
 
-    root.querySelector('.voltar')!.addEventListener('click', hubUnico);
+    root.querySelector('.voltar')!.addEventListener('click', () => {
+      sairDaEtapa();
+      hubUnico();
+    });
     elMudo.addEventListener('click', () => {
       prefs.set({ mudo: !prefs.get().mudo });
       atualizarHud();

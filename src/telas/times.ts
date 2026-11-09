@@ -1,11 +1,12 @@
 import { conferidoAoSalvar } from '../jogo/apelidoConferido';
 import '../estilos/times.css';
-import { desafioDoLink, desafioLancesDoLink, desafioProvaDoLink, esc, irPara, linkDoTimeDoDia, type Rota } from '../app';
+import { desafioDoLink, desafioLancesDoLink, desafioProvaDoLink, esc, irPara, linkDoTimeDoDia, x1DoLink, type Rota } from '../app';
 import { TIMES, corDeTexto } from '../dados/times';
 import { APELIDO_MAX, prefs } from '../estado';
 import { abreSozinho } from '../jogo/aquecimento';
 import { destinoDepoisDoTime } from '../jogo/primeiroAcesso';
 import { ErroServidor } from '../servidor/api';
+import { etapa } from '../servidor/funil';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { cabecalhoTela } from './blocos';
 import { ajustarNomesDeTime } from './nomesDeTime';
@@ -52,6 +53,8 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
   `;
 
   ajustarNomesDeTime(root);
+  // Desistência: a escolha do time é a etapa; conclui em confirmar (o voltar não conclui).
+  etapa({ tipo: 'escolha_time', x1: x1DoLink() });
   let escolhido = atual.time;
   const confirmar = root.querySelector<HTMLButtonElement>('[data-acao="confirmar"]')!;
   const input = root.querySelector<HTMLInputElement>('input')!;
@@ -91,6 +94,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
       }
       // Sem internet: fica salvo no aparelho e sobe para o servidor na próxima partida.
     }
+    etapa(null);
     const desafio = rota.tela === 'times' ? rota.desafio : undefined;
     const lance = rota.tela === 'times' ? rota.lance : undefined;
     // X1 dos Lances (?l=) vai direto ao mesmo lance; o link do lance abre a ficha.

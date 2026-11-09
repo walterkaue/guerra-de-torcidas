@@ -3,14 +3,15 @@
 // Definições: "jogou" = partida fechada (com ou sem suspeita). Dias em horário de Brasília (coluna partidas.dia).
 
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { rodarBalanco } from './balanco/balanco.mjs';
 
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 // O SQL vai por arquivo: no Windows o shell quebra argumentos com várias linhas.
-const pasta = mkdtempSync(join(tmpdir(), 'metricas-'));
+let pasta;
 const consulta = (sql) => {
   const arquivo = join(pasta, 'consulta.sql');
   writeFileSync(arquivo, sql);
@@ -33,7 +34,7 @@ const base = `
   ),
   hoje as (select (now() at time zone 'America/Sao_Paulo')::date as d)`;
 
-const secoes = [
+export const secoes = [
   [
     'Jogadores e partidas',
     `${base}
@@ -145,15 +146,124 @@ const secoes = [
      group by desfecho, estacao
      order by case desfecho when 'completou' then 0 when 'pulou' then 1 else 2 end, estacao`,
   ],
+  ...secoesDoFunil(),
 ];
 
-console.log('Métricas do Guerra de Torcidas (só leitura)');
-for (const [titulo, sql] of secoes) {
-  console.log(`\n## ${titulo}`);
-  console.log(consulta(sql));
+/**
+ * Funil do X1 e onde desiste (docs/jogos/contas.md, "Contagem de uso"). "Compartilhados" são toques (Card e Link do
+ * mesmo X1 contam 2); o bloco "ligado pelo código" conta X1 distintos, pela impressão, nos últimos 30 dias.
+ * Os gerados de dias já fechados vêm da contagem (fica para sempre, mesmo depois que o X1 é apagado); os do dia
+ * de hoje, e de algum dia ainda não contado, vêm direto das tabelas de X1.
+ */
+export function secoesDoFunil() {
+  const gerados = `
+    vivos as (
+      select (criado_em at time zone 'America/Sao_Paulo')::date as dia, 'x1_penaltis' as tipo, count(*)::int as n from public.desafios group by 1
+      union all
+      select (criado_em at time zone 'America/Sao_Paulo')::date, 'x1_lances', count(*)::int from public.lances_desafios group by 1
+      union all
+      select (criado_em at time zone 'America/Sao_Paulo')::date, 'x1_prova', count(*)::int from public.prova_desafios group by 1
+    ),
+    gerados as (
+      select dia, tipo, n from public.funil_contagem where evento = 'gerou'
+      union all
+      select v.dia, v.tipo, v.n from vivos v
+      where not exists (select 1 from public.funil_contagem c where c.evento = 'gerou' and c.dia = v.dia and c.tipo = v.tipo)
+    ),
+    inicio as (select coalesce(min(dia), public.hoje_brasilia()) as d from public.funil_contagem where evento <> 'gerou'),
+    passos as (
+      select dia, tipo, evento, sum(n)::int as n from public.funil_contagem
+      where evento <> 'gerou' and tipo like 'x1\\_%' group by 1, 2, 3
+    )`;
+  const colunas = `
+    coalesce(sum(n) filter (where evento = 'compartilhou'), 0) as compartilhados,
+    coalesce(sum(n) filter (where evento = 'abriu'), 0) as abertos,
+    coalesce(sum(n) filter (where evento = 'aceitou'), 0) as aceitos,
+    coalesce(sum(n) filter (where evento = 'primeiro_chute'), 0) as primeiro_chute,
+    coalesce(sum(n) filter (where evento = 'terminou'), 0) as terminados,
+    coalesce(sum(n) filter (where evento = 'revanche'), 0) as revanche`;
+  return [
+    [
+      'Funil do X1 por tipo (desde o 1º dia da contagem)',
+      `with ${gerados}
+       select t.tipo,
+         coalesce((select sum(g.n) from gerados g, inicio i where g.tipo = t.tipo and g.dia >= i.d), 0) as gerados,
+         ${colunas}
+       from (values ('x1_penaltis'), ('x1_lances'), ('x1_prova')) t (tipo)
+       left join passos p on p.tipo = t.tipo
+       group by t.tipo order by t.tipo`,
+    ],
+    [
+      'Funil do X1 por dia e tipo (últimos 14 dias)',
+      `with ${gerados},
+       chaves as (
+         select dia, tipo from gerados union select dia, tipo from passos
+       )
+       select k.dia, k.tipo,
+         coalesce((select sum(g.n) from gerados g where g.dia = k.dia and g.tipo = k.tipo), 0) as gerados,
+         ${colunas}
+       from chaves k left join passos p on p.dia = k.dia and p.tipo = k.tipo
+       where k.dia >= public.hoje_brasilia() - 13
+       group by k.dia, k.tipo order by k.dia desc, k.tipo`,
+    ],
+    [
+      'Funil do X1 ligado pelo código (X1 distintos compartilhados nos últimos 30 dias)',
+      `with compartilhados as (
+         select impressao, min(tipo) as tipo from public.funil_eventos where evento = 'compartilhou' group by impressao
+       )
+       select c.tipo, count(*) as compartilhados,
+         count(*) filter (where exists (select 1 from public.funil_eventos e where e.impressao = c.impressao and e.evento = 'abriu')) as abertos,
+         count(*) filter (where exists (select 1 from public.funil_eventos e where e.impressao = c.impressao and e.evento = 'aceitou')) as aceitos,
+         count(*) filter (where exists (select 1 from public.funil_eventos e where e.impressao = c.impressao and e.evento = 'primeiro_chute')) as primeiro_chute,
+         count(*) filter (where exists (select 1 from public.funil_eventos e where e.impressao = c.impressao and e.evento = 'terminou')) as terminados,
+         count(*) filter (where exists (select 1 from public.funil_eventos e where e.impressao = c.impressao and e.evento = 'revanche')) as revanche
+       from compartilhados c group by c.tipo order by c.tipo`,
+    ],
+    [
+      'Compartilhados por tipo e meio (últimos 30 dias; resultado = sem X1, por jogo)',
+      `select tipo, nullif(jogo, '') as jogo,
+         coalesce(sum(n) filter (where meio = 'grupo'), 0) as grupo,
+         coalesce(sum(n) filter (where meio = 'card'), 0) as card,
+         coalesce(sum(n) filter (where meio = 'stories'), 0) as stories,
+         coalesce(sum(n) filter (where meio = 'emoji'), 0) as emoji,
+         coalesce(sum(n) filter (where meio = 'link'), 0) as link,
+         sum(n) as total
+       from public.funil_contagem
+       where evento = 'compartilhou' and dia >= public.hoje_brasilia() - 29
+       group by tipo, jogo order by total desc`,
+    ],
+    [
+      'Links que abriram o jogo (últimos 30 dias)',
+      `select tipo, sum(n) as aberturas from public.funil_contagem
+       where evento = 'abriu' and dia >= public.hoje_brasilia() - 29 group by tipo order by aberturas desc`,
+    ],
+    [
+      'Onde desiste (últimos 30 dias; desistiu − voltou: quem foi pro WhatsApp e voltou não conta)',
+      `select tipo as etapa, nullif(jogo, '') as jogo, case when x1 then 'X1' else '' end as fluxo,
+         coalesce(sum(n) filter (where evento = 'desistiu'), 0) as saiu,
+         coalesce(sum(n) filter (where evento = 'voltou'), 0) as voltou,
+         coalesce(sum(n) filter (where evento = 'desistiu'), 0) - coalesce(sum(n) filter (where evento = 'voltou'), 0) as desistiu
+       from public.funil_contagem
+       where evento in ('desistiu', 'voltou') and dia >= public.hoje_brasilia() - 29
+       group by tipo, jogo, x1
+       order by case tipo when 'triagem' then 0 when 'escolha_time' then 1 when 'aquecimento' then 2 else 3 end, jogo, x1 desc`,
+    ],
+  ];
 }
 
-rmSync(pasta, { recursive: true, force: true });
+// Só roda quando chamado (npm run metricas); o teste importa as seções para rodar o SQL no PGlite.
+// Caminho real e em minúsculas: no Windows a letra do disco muda de caixa, e junção ou subst muda o caminho.
+const real = (c) => { try { return realpathSync(c).toLowerCase(); } catch { return ''; } };
+if (process.argv[1] && real(fileURLToPath(import.meta.url)) === real(resolve(process.argv[1]))) {
+  pasta = mkdtempSync(join(tmpdir(), 'metricas-'));
+  console.log('Métricas do Guerra de Torcidas (só leitura)');
+  for (const [titulo, sql] of secoes) {
+    console.log(`\n## ${titulo}`);
+    console.log(consulta(sql));
+  }
 
-console.log('\n## Balanço entre minigames');
-rodarBalanco();
+  rmSync(pasta, { recursive: true, force: true });
+
+  console.log('\n## Balanço entre minigames');
+  rodarBalanco();
+}

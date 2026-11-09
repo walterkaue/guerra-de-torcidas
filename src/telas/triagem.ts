@@ -1,9 +1,10 @@
 // Triagem de faixa etária (docs/jogo.md, seção 13): uma vez por aparelho, antes da 1ª partida.
 // Neutra: os três botões têm o mesmo peso e nenhum texto diz o que cada resposta libera.
 
-import { irPara, type Rota } from '../app';
+import { irPara, x1DoLink, type Rota } from '../app';
 import { guardarFaixa } from '../estado';
 import { ehFaixa, soPara18Mais } from '../jogo/faixaEtaria';
+import { etapa } from '../servidor/funil';
 import { sincronizarFaixa } from '../servidor/torcedor';
 import { desligarAvisos } from './convitePush';
 
@@ -21,10 +22,13 @@ export function telaTriagem(root: HTMLElement, rota: Rota): void {
       <button class="link-feedback" type="button" data-acao="termos">Termos e privacidade</button>
     </main>`;
 
+  // Desistência: a triagem é a etapa; conclui ao responder a faixa.
+  etapa({ tipo: 'triagem', x1: x1DoLink() });
   root.querySelectorAll<HTMLButtonElement>('[data-faixa]').forEach((b) =>
     b.addEventListener('click', () => {
       const faixa = b.dataset.faixa;
       if (!ehFaixa(faixa)) return;
+      etapa(null);
       guardarFaixa(faixa);
       void sincronizarFaixa();
       // Aparelho que já tinha o aviso ligado: o servidor apaga a inscrição, e aqui sai do navegador.

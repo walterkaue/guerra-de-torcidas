@@ -7,8 +7,10 @@
 
 import { esc } from '../app';
 import { prefs } from '../estado';
+import { contar as contarFunil } from '../servidor/funil';
 import { htmlDoAviso } from '../servidor/motivo';
 import { corDeTexto, type Time } from '../dados/times';
+import type { JogoFunil, Meio, TipoX1 } from '../jogo/funil';
 import { textoDoCompartilhar, type DadosDoCard } from '../jogo/cardPersonalizado';
 import { criarComemoracao, pedacosDoConfete, type MotivoDoConfete } from '../jogo/confete';
 import { selosDaPosicao, type Desempenho, type Minigame } from '../jogo/posicao';
@@ -213,6 +215,8 @@ export interface Compartilhar {
   emoji: string;
   maisUma: () => void;
   inicio: () => void;
+  /** Funil do X1: o que este resultado é para a contagem. `x1` é o código novo desta partida (o do link compartilhado). */
+  funil: { tipo: TipoX1; x1: string } | { tipo: 'resultado'; jogo: JogoFunil };
 }
 
 /** Liga Card, Stories, Emoji, Link, Início e "Mais uma". */
@@ -223,6 +227,8 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
     setTimeout(() => (botao.innerHTML = antes), 1800);
   };
   const botao = (acao: string) => root.querySelector<HTMLButtonElement>(`[data-acao="${acao}"]`)!;
+  /** Conta no toque, antes de qualquer await. */
+  const contarMeio = (meio: Meio) => contarFunil({ ev: 'compartilhou', meio, ...o.funil } as Parameters<typeof contarFunil>[0]);
 
   medirBarraDeBaixo(root.querySelector<HTMLElement>('.res-acoes'));
 
@@ -232,7 +238,8 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
   // Pôster ou "Meu boneco" guardados: lê o boneco já, para o Stories não esperar a rede no toque (14.6).
   prepararBonecoDoCard();
 
-  botao('card').addEventListener('click', () =>
+  botao('card').addEventListener('click', () => {
+    contarMeio('card');
     abrirCardPersonalizado({
       raiz: root,
       dados: o.dados,
@@ -240,8 +247,8 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
       link: o.link,
       sortearFrase: o.sortearFrase,
       quemComApelido: o.quemComApelido,
-    }),
-  );
+    });
+  });
 
   /** O card com as escolhas guardadas, como arquivo e com o texto que vai junto. */
   const cardPronto = async () => {
@@ -254,6 +261,8 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
 
   // "Mandar no grupo" com o card (Lances, J16). O card fica pronto de antemão porque, no iPhone, o share tem de sair
   // direto do toque, sem await antes. Sem card pronto ou sem share com arquivo, o link do wa.me segue como sempre.
+  // O link do WhatsApp (ou o share com o card) só conta; o comportamento segue com quem trata o toque.
+  root.querySelector('.botao-zap')?.addEventListener('click', () => contarMeio('grupo'));
   const zap = root.querySelector<HTMLAnchorElement>('[data-mandar-card]');
   if (zap) {
     let pronto: { arquivo: File; texto: string; assinatura: string } | null = null;
@@ -286,6 +295,7 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
 
   const btnShare = botao('share');
   btnShare.addEventListener('click', async () => {
+    contarMeio('stories');
     try {
       const { arquivo, texto, comLink } = await cardPronto();
       if (arquivo && navigator.canShare?.({ files: [arquivo] })) {
@@ -303,6 +313,7 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
 
   const btnEmoji = root.querySelector<HTMLButtonElement>('[data-acao="emoji"]');
   btnEmoji?.addEventListener('click', async () => {
+    contarMeio('emoji');
     try {
       if (navigator.share) await navigator.share({ text: o.emoji });
       else {
@@ -316,6 +327,7 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
 
   const btnCopiar = botao('copiar');
   btnCopiar.addEventListener('click', async () => {
+    contarMeio('link');
     try {
       await navigator.clipboard.writeText(o.link);
       avisar(btnCopiar, 'Copiado!');

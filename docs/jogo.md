@@ -222,7 +222,9 @@ O dia de cada jogador vale as **3 melhores partidas de Lances** (pênaltis, falt
 - **Convites por jogador:** quantos amigos cada um traz (meta: mais de 1).
 - **Volta no dia seguinte e em 7 dias.**
 - **Partidas por visita.**
-- **Desafios aceitos / desafios enviados.** Cuidado: o desafio nasce a cada partida, então "enviado" ainda é "gerado" até o toque em compartilhar ser contado (`docs/propostas/funil-do-desafio.md`).
+- **Funil do X1:** gerados → compartilhados → abertos → aceitos → 1º chute → terminados → revanche, por tipo (pênaltis, Lances, Prova) e por dia. O desafio nasce a cada partida, então "gerado" não é "enviado": enviado é o toque em compartilhar.
+- **Onde desiste:** escolha do time, triagem, aquecimento e partida, por jogo e com ou sem X1.
+- Tudo sem identificar ninguém: contagem por dia, e o código do X1 só como impressão, por 30 dias (`jogos/contas.md`, "Contagem de uso").
 - Os números saem do banco por `npm run metricas` (só leitura). O balanço entre minigames está em `jogos/rankings.md`.
 
 ---

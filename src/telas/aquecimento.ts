@@ -5,7 +5,7 @@
 
 import '../estilos/aquecimento.css';
 import '../estilos/prova.css';
-import { esc, irPara, type Rota } from '../app';
+import { esc, irPara, x1DoLink, type Rota } from '../app';
 import { ID_OUTRO, corDeTexto, proTime, timePorId } from '../dados/times';
 import { prefs } from '../estado';
 import {
@@ -24,6 +24,7 @@ import { rodadaEmFoco } from '../jogo/cravaTela';
 import type { Placar } from '../jogo/crava';
 import { somTorcida } from '../jogo/som';
 import { registrarAquecimento } from '../servidor/api';
+import { etapa } from '../servidor/funil';
 import { cravar, jogosDoCrava, type Jogo } from '../servidor/crava';
 import { barra, cabecalhoTela, faixa, placa, selo } from './blocos';
 import { papelPicadoNaTela } from './papelPicado';
@@ -227,6 +228,7 @@ export function telaAquecimento(root: HTMLElement, rota: Rota): () => void {
   async function terminar(): Promise<void> {
     if (acabou) return;
     acabou = true;
+    etapa(null);
     limparEstacao?.();
     limparEstacao = null;
     gravar({ emAndamento: undefined, visto: true, aquecido: true });
@@ -258,6 +260,7 @@ export function telaAquecimento(root: HTMLElement, rota: Rota): () => void {
 
   // ---------- Pular ----------
   root.querySelector('[data-pular]')!.addEventListener('click', () => {
+    etapa(null); // pular segue adiante: não é desistência
     const numero = numeroDaEstacao(atual);
     gravar({ emAndamento: undefined, visto: true });
     void enviar('pulou', numero);
@@ -265,6 +268,8 @@ export function telaAquecimento(root: HTMLElement, rota: Rota): () => void {
   });
 
   // ---------- começo ----------
+  // Desistência: o aquecimento é a etapa; conclui em terminar() e no Pular.
+  etapa({ tipo: 'aquecimento', x1: x1DoLink() });
   const pedida = FALSO ? PARAMETROS.get('estacao') : null;
   if (pedida === 'fim') {
     // Para a conferência no navegador: o fim, com um palpite de mentira se o jogo de mentira existir.

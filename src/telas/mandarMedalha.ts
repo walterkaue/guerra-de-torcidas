@@ -20,6 +20,7 @@ import {
   quemNaMedalha,
   textoDeMandarMedalha,
 } from '../jogo/medalhaTextos';
+import { contar } from '../servidor/funil';
 import { abrirCardPersonalizado, desenharComAsEscolhas } from './cardPersonalizado';
 import { nivelParaCard } from './carreira';
 import { icone } from './icones';
@@ -100,8 +101,11 @@ export function abrirMandarMedalha(o: { raiz: HTMLElement; itemId: string; medal
     botao.textContent = aviso;
     setTimeout(() => (botao.innerHTML = antes), 1800);
   };
+  // Funil: conta no toque, antes de qualquer await.
+  d.querySelector('.botao-zap')!.addEventListener('click', () => contar({ ev: 'compartilhou', tipo: 'medalha', meio: 'grupo' }));
   const btnShare = d.querySelector<HTMLButtonElement>('[data-acao="share"]')!;
   btnShare.addEventListener('click', async () => {
+    contar({ ev: 'compartilhou', tipo: 'medalha', meio: 'stories' });
     try {
       const { canvas, comLink } = await card;
       const enviado = textoDoCompartilhar(texto, link, comLink);
@@ -117,11 +121,13 @@ export function abrirMandarMedalha(o: { raiz: HTMLElement; itemId: string; medal
       // cancelou o compartilhamento
     }
   });
-  d.querySelector('[data-acao="card"]')!.addEventListener('click', () =>
-    abrirCardPersonalizado({ raiz: d, dados, texto, link, quemComApelido: (a) => quemNaMedalha(a, paraTime) }),
-  );
+  d.querySelector('[data-acao="card"]')!.addEventListener('click', () => {
+    contar({ ev: 'compartilhou', tipo: 'medalha', meio: 'card' });
+    abrirCardPersonalizado({ raiz: d, dados, texto, link, quemComApelido: (a) => quemNaMedalha(a, paraTime) });
+  });
   const btnCopiar = d.querySelector<HTMLButtonElement>('[data-acao="copiar"]')!;
   btnCopiar.addEventListener('click', async () => {
+    contar({ ev: 'compartilhou', tipo: 'medalha', meio: 'link' });
     try {
       await navigator.clipboard.writeText(link);
       avisar(btnCopiar, 'Copiado!');
