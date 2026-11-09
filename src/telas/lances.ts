@@ -61,7 +61,18 @@ import { sorteadorDeFrase } from './cardPersonalizado';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { abas, aoTocarNoEstado, cabecalhoTela, estado, marcarAba, numero, placa, selo } from './blocos';
 import { ligarEfeitoNoRanking } from './efeitoRanking';
-import { contar, htmlResultado, htmlSelosDaPosicao, ligarConfete, ligarResultado } from './resultadoPadrao';
+import {
+  contar,
+  destaqueDaPeca,
+  destaqueDoDuelo,
+  destaqueDoRecorde,
+  destaqueDoTop3,
+  htmlResultado,
+  htmlSelosDaPosicao,
+  ligarConfete,
+  ligarResultado,
+  promoverDestaque,
+} from './resultadoPadrao';
 import {
   LANCES_POR_PARTIDA,
   TABELA_LANCES_UNIFICADA,
@@ -585,18 +596,32 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
             .join('')}
         </ul>
         ${recriou ? `<div class="numeros dois">${numero(String(recriou), recriou === 1 ? 'Lance carimbado' : 'Lances carimbados', 'destaque')}</div>` : ''}
-        ${linhaMelhores ? `<p class="melhores-linha">${esc(linhaMelhores)}</p>` : ''}
         <button type="button" class="botao-linha" data-acao="album">Ver os lances</button>`,
         { titulo: tituloDoLance, filete: true },
       ) + duelo + (contouProMedalha ? '<div data-rumo hidden></div>' : ''),
       frases: frase ? [frase] : [],
       aviso: situacao.texto ? { texto: situacao.texto, forte: !valendo } : null,
-      selos:
-        htmlSelosDaPosicao(desempenho, 'lances') +
-        medalhas.map((t) => selo(`${icone('estrela')} ${esc(t)}`, 'ouro')).join('') +
-        (esperaRanking ? selo('Subindo pro placar…', undefined, 'data-selo-ranking') : '') +
-        (valendo && situacao.tipo === 'ranking' && outro ? selo('Tá no placar') : ''),
-      zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
+      situacao: esperaRanking
+        ? selo('Subindo pro placar…', undefined, 'data-selo-ranking')
+        : valendo && situacao.tipo === 'ranking' && outro
+          ? selo('Tá no placar')
+          : '',
+      // Destaque da dobra: o desafio recebido, a medalha nova, o recorde ou as 3 melhores do dia (a peça chega depois).
+      destaques: [
+        cmp ? (() => {
+          const x = placarDoX1(pontos, cmp);
+          return destaqueDoDuelo({ voce: x.voce, outro: x.outro, nomeDoOutro: x.nomeDoOutro, venceu: x.venceu });
+        })() : null,
+        medalhas.length
+          ? { tipo: 'medalha', html: `<div class="selos">${medalhas.map((t) => selo(`${icone('estrela')} ${esc(t)}`, 'ouro')).join('')}</div>` }
+          : null,
+        destaqueDoRecorde(desempenho, 'lances'),
+        destaqueDoTop3(linhaMelhores),
+      ],
+      selos: desempenho?.novoRecorde ? '' : htmlSelosDaPosicao(desempenho, 'lances'),
+      mensagem: textoShare,
+      // O desafio recebido não gera código; sem rede ou sem valer, também não: o "Mandar no grupo" de hoje, com o card.
+      comDesafio: !!codigoX1 && valendo,
       mandarCard: true,
       maisUma: 'Mais uma',
     });
@@ -645,7 +670,9 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         comemorar,
         bronzeNoDev: true,
       }),
-    ).catch(() => {});
+    )
+      .then((novas) => novas.length && promoverDestaque(root, destaqueDaPeca(novas.map((p) => p.nome))))
+      .catch(() => {});
     // Efeito no ranking: selo "No ranking em 1 min" que vira "Subiu de 5º pra 3º" (mesmo fluxo dos pênaltis).
     let pararEfeito: (() => void) | null = null;
     if (esperaRanking && fim) {

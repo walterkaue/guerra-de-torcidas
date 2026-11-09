@@ -1,6 +1,7 @@
-// Resultado dos Pênaltis no resultado padrão (telas/resultadoPadrao.ts): placar gigante, VITÓRIA/DERROTA,
-// "+85 PRO [TIME]" contando, pontos da partida em placas, narrador, selos (posição, recorde, efeito no
-// ranking), Carreira, "Mandar no grupo" e Mais uma/Revanche como ação principal.
+// Resultado dos Pênaltis no resultado padrão em duas camadas (telas/resultadoPadrao.ts): VITÓRIA/DERROTA, placar,
+// "+85 PRO [TIME]" contando com a situação no placar, um destaque (aviso, desafio recebido, medalha, peça, recorde,
+// 3 melhores do dia ou frase), a prévia da mensagem e "Desafiar a galera"; o resto em "Ver detalhes da partida".
+// Mais uma / Jogo de volta como ação principal.
 
 import { esc, irPara, type DadosResultado, type Rota } from '../app';
 import { SELECAO } from '../dados/adversarios';
@@ -21,11 +22,24 @@ import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { bomMomentoDosLances } from '../jogo/apoio';
 import { oferecerApoio } from './apoio';
 import { convidarParaAvisos } from './convitePush';
-import { golsDaDisputa, linhaMelhoresDoDia, textoForaDasMelhores } from '../jogo/lancesTextos';
+import { golsDaDisputa, linhaMelhoresDoDia, NOME_DA_MEDALHA, textoForaDasMelhores } from '../jogo/lancesTextos';
 import { itemPenaltis } from '../jogo/regraLances';
 import { numero, placa, selo } from './blocos';
 import { ligarEfeitoNoRanking } from './efeitoRanking';
-import { contar, htmlResultado, htmlSelosDaPosicao, ligarConfete, ligarResultado } from './resultadoPadrao';
+import {
+  contar,
+  destaqueDaMedalha,
+  destaqueDaPeca,
+  destaqueDoDuelo,
+  destaqueDoRecorde,
+  destaqueDoTop3,
+  htmlResultado,
+  htmlSelosDaPosicao,
+  ligarConfete,
+  ligarResultado,
+  promoverDestaque,
+  umConvite,
+} from './resultadoPadrao';
 import { mostrarRumoDaDisputa } from './rumoMedalhas';
 import { vibrar } from './toque';
 import { contar as contarFunil } from '../servidor/funil';
@@ -131,18 +145,25 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
       </section>
       ${d.disputa ? `<p class="res-disputa rotulo">${esc(lembrancaDaDisputa(d.disputa))}</p>` : ''}`,
     pontos,
+    situacao: esperaRanking ? selo('Subindo pro placar…', undefined, 'data-selo-ranking') : !situacao ? selo('Tá no placar') : '',
     detalhe: `${
       pontos && detalhes.length > 1 // uma parcela só repetiria o total de cima (J24)
         ? `<div class="numeros${detalhes.length === 3 ? ' tres' : ''}">${detalhes.map(([nome, v]) => numero(`+${v}`, nome)).join('')}</div>`
         : ''
     }${blocoDesafio}${contouProMedalha ? '<div data-rumo hidden></div>' : ''}`,
-    frases: melhoresDoDia ? [...d.frasesFinais, melhoresDoDia] : d.frasesFinais,
+    frases: d.frasesFinais,
     aviso: situacao ? { texto: situacao, forte: !d.valendo } : null,
-    selos:
-      htmlSelosDaPosicao(d.servidor?.desempenho ?? null, 'lances') +
-      (esperaRanking ? selo('Subindo pro placar…', undefined, 'data-selo-ranking') : '') +
-      (!situacao && !esperaRanking ? selo('Tá no placar') : ''),
-    zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
+    // Destaque da dobra: o desafio recebido, o recorde novo ou as 3 melhores do dia (a medalha e a peça chegam depois).
+    destaques: [
+      cmp ? destaqueDoDuelo({ voce: p.total, outro: cmp.pontosDesafiante, nomeDoOutro: cmp.desafiante, venceu: cmp.venceu }) : null,
+      destaqueDoRecorde(d.servidor?.desempenho ?? null, 'lances'),
+      destaqueDoTop3(melhoresDoDia),
+    ],
+    // Recorde novo: os selos da posição vão no destaque (ou descem com ele para os detalhes).
+    selos: d.servidor?.desempenho?.novoRecorde ? '' : htmlSelosDaPosicao(d.servidor?.desempenho ?? null, 'lances'),
+    mensagem: textoShare,
+    // Sem código (sem rede, treino) ou partida sem valer: o "Mandar no grupo" de hoje.
+    comDesafio: !!codigo && d.valendo,
     maisUma: r.venceu ? 'Mais uma' : 'Jogo de volta',
   });
   // X1: o busto de cada um ao lado do apelido (sem boneco ou com o interruptor desligado, nada muda).
@@ -172,7 +193,12 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     void mostrarRumoDaDisputa({
       alvo: root.querySelector<HTMLElement>('[data-rumo]')!,
       partida: { id: d.disputa.id, titulo: d.disputa.titulo, gols: golsDaDisputa(r.cobrancas), venceu: r.venceu },
-      aoSubir: () => comemorar('medalha'),
+      // Subiu de medalha: comemora e, se for mais importante que o destaque da vez, a placa sobe para a dobra.
+      aoSubir: (medalha) => {
+        comemorar('medalha');
+        // "Bronze: O título da Sul-Americana" (o textoDaMedalhaNova diz "no lance", feito para os Lances).
+        promoverDestaque(root, destaqueDaMedalha(`${NOME_DA_MEDALHA[medalha]}: ${d.disputa!.titulo}`));
+      },
       ler: () => medalhasLidas!,
     });
   // Fim da morte súbita: o coração para (na vitória, quem explode é a comemoração de cima, docs/jogo.md 14.2).
@@ -195,11 +221,13 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
       jogadas: d.disputa ? [{ item: itemPenaltis(d.disputa.id), gols: golsDaDisputa(r.cobrancas), recriados: 0, vitorias: r.venceu ? 1 : 0 }] : [],
       comemorar,
     }),
-  ).catch(() => {});
+  )
+    .then((novas) => novas.length && promoverDestaque(root, destaqueDaPeca(novas.map((p) => p.nome))))
+    .catch(() => {});
   // Bom momento para oferecer o aviso de domingo: vitória que valeu pra torcida.
-  if (r.venceu && d.valendo) convidarParaAvisos(root.querySelector<HTMLElement>('[data-convite-push]'));
+  if (r.venceu && d.valendo) convidarParaAvisos(umConvite(root, 'push'));
   oferecerApoio(
-    root.querySelector<HTMLElement>('[data-apoio]'),
+    umConvite(root, 'apoio'),
     bomMomentoDosLances({ venceu: r.venceu, valendo: d.valendo, novoRecorde: !!d.servidor?.desempenho?.novoRecorde }),
   );
 

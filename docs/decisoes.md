@@ -6,6 +6,7 @@
 
 | Data | Decisão ou mudança |
 |---|---|
+| 09/11/2026 | B02 + C02 + B05: resultado em duas camadas (Rota B): primeira dobra com placar, pontos, um destaque, a prévia da mensagem e o "Desafiar a galera" (verde, no lugar do "Mandar no grupo" quando há código de desafio); o resto em "Ver detalhes da partida"; nome longo do placar quebra em duas linhas; `docs/visual.md`. |
 | 09/11/2026 | H03b: camisa por fora ou por dentro do calção, escolhida no vestiário (aba Camisa). Não é peça (vale para todo mundo, não conta nas 26), conta nova começa por fora, aparece em todo lugar onde o boneco aparece, inclusive em campo e no boneco de quem chamou o desafio; `jogos/boneco-montavel.md`. |
 | 09/11/2026 | H03 entregue: o boneco passa ao estilo "Silhueta premium Plus" (três tons chapados por peça, camisa sem ombreira e sem a cintura de saia, calção que gira com o corpo, peso numa perna na pose parada, só desenho). Camisa por fora ou por dentro do calção: o desenho aceita (`Aparencia.barra`) e a escolha no vestiário é o H03b; `bonecos.md`, `jogos/boneco-montavel.md`. |
 | 09/11/2026 | Prazo dos desafios: o link vale 7 dias (vencido, 410 `desafio_expirado` e partida normal com aviso) e o desafio é apagado com 30, no dia 1º às 4h45, depois de contar os gerados; linha na Política e Termos em 09/11/2026, que também passam a dizer "Palpite da Rodada" em vez de "Crava a Rodada"; `jogos/penaltis.md` |

@@ -145,10 +145,12 @@
   color: var(--texto-suave);
 }
 
+/* B05: nome longo ("JUNIOR BARRANQUILLA" a 360 px com fonte 130%) quebra em duas linhas, nunca com reticências. */
 .res-placar .rotulo {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+  line-height: 1.1;
   font-size: 15px;
 }
 
@@ -350,6 +352,9 @@
 .res-acoes .botao {
   min-height: 60px;
   justify-content: center;
+  /* Sempre numa linha: se não couber, a letra diminui (caberNumaLinha, telas/resultadoPadrao.ts), sem reticências. */
+  padding-inline: 12px;
+  white-space: nowrap;
 }
 
 .res-acoes .botao-sec {
@@ -535,4 +540,571 @@
   80% {
     transform: translateY(-3px);
   }
+}
+
+/* ---------- resultado em duas camadas (B02 + C02, Rota B de 09/11/2026; telas/resultadoPadrao.ts) ----------
+   Primeira dobra: título, placar, pontos com a situação, um destaque, a prévia da mensagem e "Desafiar a galera",
+   sem rolar em 390 × 844 e em 360 × 740 com a fonte do sistema em 130%. */
+.res-padrao {
+  gap: 12px;
+}
+
+.res-padrao .res-topo-linha {
+  min-height: 32px;
+}
+
+.res-padrao .res-titulo {
+  font-size: 48px;
+  margin-top: 0.14em;
+}
+
+.res-padrao .res-placar {
+  padding: 8px 12px;
+}
+
+.res-padrao .res-placar strong {
+  font-size: 60px;
+}
+
+.res-padrao .res-placar em {
+  font-size: 28px;
+}
+
+.res-padrao .res-disputa {
+  margin-top: -4px;
+  font-size: 13px;
+}
+
+.res-padrao .res-pontos {
+  gap: 6px;
+}
+
+.res-padrao .res-total strong {
+  font-size: 48px;
+}
+
+.res-padrao .res-total span {
+  font-size: 24px;
+}
+
+.res-situacao {
+  display: flex;
+  justify-content: center;
+}
+
+.res-situacao .selo {
+  font-size: 15px;
+}
+
+.res-situacao-texto {
+  max-width: 34ch;
+  text-align: center;
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+/* O destaque: um só. */
+.res-destaque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.res-destaque:empty {
+  display: none;
+}
+
+.res-destaque .adesivo {
+  font-size: 18px;
+  align-self: center;
+}
+
+.res-destaque .selos {
+  justify-content: center;
+}
+
+.res-destaque .duelo-desafio strong {
+  font-size: 34px;
+}
+
+.res-destaque .duelo-desafio .adesivo {
+  font-size: 15px;
+}
+
+/* Desafio recebido na dobra: uma linha, você × quem desafiou; o número de quem venceu em amarelo. */
+.res-duelo-curto {
+  padding: 6px 12px;
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: inset 0 3px 0 var(--c1), var(--sombra-placa);
+}
+
+.res-duelo-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.res-duelo-linha .lado {
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.res-duelo-linha .lado:first-child {
+  text-align: right;
+}
+
+.res-duelo-linha strong {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.1;
+  color: var(--cal);
+}
+
+.res-duelo-curto.venceu .voce,
+.res-duelo-curto.perdeu .outro {
+  color: var(--amarelo);
+}
+
+.res-duelo-linha em {
+  font-family: var(--fonte-placar);
+  font-style: normal;
+  opacity: 0.6;
+}
+
+.res-linha-destaque {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.res-linha-destaque .ico {
+  color: var(--amarelo);
+}
+
+/* ---------- a prévia da mensagem ---------- */
+.res-desafio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.res-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.res-msg-rotulo {
+  margin-right: 8px;
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #3ddc84;
+}
+
+.res-msg-caixa {
+  position: relative;
+  max-width: 90%;
+  margin-right: 7px; /* o rabinho */
+}
+
+.res-msg-balao {
+  position: relative;
+  /* Contém o "agora" (float) mesmo quando a última linha ocupa a largura toda. */
+  display: flow-root;
+  margin: 0;
+  padding: 7px 10px 6px 12px;
+  border-radius: 14px 14px 3px 14px;
+  background: #e7f5dc;
+  color: #111;
+  box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.35);
+  font-family: var(--fonte-texto);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.38;
+  text-align: left;
+  /* As quebras de linha da mensagem ficam; nada corta nem vira reticências. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  transform-origin: 100% 100%;
+}
+
+/* O rabinho, no canto de baixo à direita. */
+.res-msg-balao::after {
+  content: '';
+  position: absolute;
+  right: -7px;
+  bottom: 0;
+  width: 8px;
+  height: 12px;
+  background: #e7f5dc;
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+}
+
+.res-msg-link {
+  color: #0b57b3;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.res-msg-hora {
+  float: right;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin: 7px 0 -3px 12px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  color: #52605a;
+  white-space: nowrap;
+}
+
+.res-msg-tiques {
+  width: 17px;
+  height: 11px;
+  fill: none;
+  stroke: #8a968e;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Antes de entrar: o espaço já está ali, o balão não aparece. */
+.res-msg.espera .res-msg-balao {
+  visibility: hidden;
+}
+
+.res-msg-digitando {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: none;
+  gap: 4px;
+  padding: 11px 13px;
+  border-radius: 14px 14px 3px 14px;
+  background: #e7f5dc;
+  box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.35);
+}
+
+.res-msg.digitando .res-msg-digitando {
+  display: inline-flex;
+}
+
+.res-msg-digitando i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #7d8a81;
+  animation: res-digita 0.9s ease-in-out infinite;
+}
+
+.res-msg-digitando i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.res-msg-digitando i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.res-msg.entra .res-msg-balao {
+  animation: res-pulinho 180ms var(--mola-firme) both;
+}
+
+@keyframes res-digita {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+@keyframes res-pulinho {
+  from {
+    transform: scale(0.96);
+    opacity: 0.6;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* "Desafiar a galera": verde largo, texto verde-escuro, ícone de balão (sem a logo do WhatsApp). */
+.botao-desafiar {
+  flex-direction: row;
+  justify-content: center;
+  gap: 10px;
+  min-height: 60px;
+  background: #25d366;
+  color: #0b3d1f;
+  box-shadow: 0 5px 0 #158a41;
+  font-size: 24px;
+  text-decoration: none;
+}
+
+.botao-desafiar .ico {
+  font-size: 26px;
+}
+
+/* "Mostrar o resultado": a linha pequena com os botões de hoje. */
+.res-mostrar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.res-mostrar-rotulo {
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.res-mostrar-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 2px;
+}
+
+.res-mostrar-botoes button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--raio-p);
+  background: none;
+  color: var(--cal);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+
+.res-mostrar-botoes button:active {
+  background: var(--placa);
+}
+
+.res-mostrar-botoes .ico {
+  font-size: 18px;
+}
+
+.formatos.tres {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* ---------- "Ver detalhes da partida": abre logo embaixo ---------- */
+.res-detalhes-caixa,
+.res-detalhes,
+.res-detalhes-resto {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.res-detalhes[hidden],
+.res-detalhes-resto:empty {
+  display: none;
+}
+
+.res-detalhes-resto .selos {
+  justify-content: flex-start;
+}
+
+.res-ver {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  border: 1px solid rgba(245, 245, 240, 0.28);
+  border-radius: var(--raio);
+  background: transparent;
+  color: var(--cal);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+
+.res-ver::after {
+  content: '\25BE';
+  font-size: 18px;
+  transition: transform var(--medio) var(--mola-firme);
+}
+
+.res-ver[aria-expanded='true']::after {
+  transform: rotate(180deg);
+}
+
+/* Convites: um por vez; sem nenhum, a caixa não ocupa espaço. */
+.res-convites:not(:has(> :not(:empty))) {
+  display: none;
+}
+
+.res-convites > :empty {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .res-msg-digitando i,
+  .res-msg.entra .res-msg-balao {
+    animation: none;
+  }
+  .res-ver::after {
+    transition: none;
+  }
+}
+
+/* ---------- celular estreito (360 px, inclusive com a fonte do sistema grande) ---------- */
+@media (max-width: 380px) {
+  .res-padrao {
+    gap: 8px;
+  }
+  .res-padrao .res-topo-linha {
+    min-height: 28px;
+  }
+  .res-padrao .res-titulo {
+    font-size: 36px;
+    margin-top: 0.08em;
+  }
+  .res-padrao .res-placar {
+    padding: 4px 10px;
+  }
+  .res-padrao .res-placar strong {
+    font-size: 44px;
+  }
+  .res-padrao .res-pontos {
+    gap: 4px;
+  }
+  .res-situacao .selo {
+    font-size: 14px;
+  }
+  .res-desafio {
+    gap: 6px;
+  }
+  .res-msg {
+    gap: 4px;
+  }
+  .res-padrao .res-placar .rotulo {
+    font-size: 13px;
+  }
+  .res-padrao .res-placar em {
+    font-size: 24px;
+  }
+  .res-padrao .res-total strong {
+    font-size: 42px;
+  }
+  .res-padrao .res-total span {
+    font-size: 21px;
+  }
+  .res-destaque .placa {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .res-destaque .duelo-desafio strong {
+    font-size: 30px;
+  }
+  .botao-desafiar {
+    min-height: 56px;
+    font-size: 22px;
+  }
+  /* Card, Stories, Emoji e Link numa linha só, também com a fonte grande. */
+  .res-mostrar-botoes {
+    gap: 0;
+  }
+  .res-mostrar-botoes button {
+    gap: 4px;
+    padding: 0 4px;
+  }
+  .res-padrao .botao-zap {
+    min-height: 58px;
+    font-size: 22px;
+  }
+}
+
+/* Não coube na dobra (ajustarDobra, em telas/resultadoPadrao.ts): primeiro o destaque e os espaços, depois a letra do
+   balão (14 px e, no fim, 13 px). Nunca corta texto. */
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) {
+  gap: 6px;
+}
+
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) {
+  padding-top: calc(4px + env(safe-area-inset-top));
+}
+
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) .res-titulo {
+  font-size: 32px;
+  margin-top: 0;
+}
+
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) .res-placar {
+  padding-block: 2px;
+}
+
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) :is(.res-pontos, .res-msg) {
+  gap: 2px;
+}
+
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) .res-desafio {
+  gap: 4px;
+}
+
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) .botao-desafiar {
+  min-height: 52px;
+  padding-block: 10px;
+}
+
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) .res-placar strong {
+  font-size: 38px;
+}
+
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) .res-destaque .adesivo {
+  font-size: 15px;
+}
+
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) .res-duelo-linha strong {
+  font-size: 26px;
+}
+
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) .res-msg-balao {
+  padding-top: 5px;
+  padding-bottom: 4px;
+}
+
+.res-padrao[data-aperto='2'] .res-msg-balao {
+  font-size: 14px;
+}
+
+.res-padrao[data-aperto='3'] .res-msg-balao {
+  font-size: 13px;
 }

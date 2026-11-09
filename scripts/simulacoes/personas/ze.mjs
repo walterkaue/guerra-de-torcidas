@@ -77,7 +77,7 @@ export default {
       if (await p.locator('dialog[open]').count()) await s.tocar(p.getByRole('button', { name: /fechar/i }).first(), { semMudancaOk: true });
     });
     await s.passo('mandar no grupo (WhatsApp)', async () => {
-      const zap = p.locator('a.botao-zap').first();
+      const zap = p.locator('a.botao-desafiar:visible, a.botao-zap:visible').first();
       await zap.scrollIntoViewIfNeeded();
       const href = await zap.getAttribute('href');
       s.medir(`endereço que o WhatsApp abriria: ${href}`, 0);

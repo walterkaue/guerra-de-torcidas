@@ -1,6 +1,7 @@
-// Resultado da Prova de Boleiro no resultado padrão (telas/resultadoPadrao.ts): escada e resumo, pontos
-// pro time, pontos da prova e X1 em placas, narrador, selos (posição, recorde, ranking), Carreira,
-// "Mandar no grupo" (sem o texto das perguntas) e Mais uma / Revanche como ação principal.
+// Resultado da Prova de Boleiro no resultado padrão em duas camadas (telas/resultadoPadrao.ts): resumo, pontos pro
+// time com a situação no placar, um destaque (aviso, desafio recebido, peça, recorde ou frase), a prévia da mensagem
+// (sem o texto das perguntas) e "Desafiar a galera"; escada, pontos da prova e o resto em "Ver detalhes da partida".
+// Mais uma / Jogo de volta como ação principal.
 
 import { esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, proTime, timePorId, TIMES } from '../dados/times';
@@ -16,7 +17,7 @@ import { textoForaDasMelhores } from '../jogo/lancesTextos';
 import { numero, placa, selo } from './blocos';
 import { motivoDoConfete } from '../jogo/confete';
 import { contar as contarFunil } from '../servidor/funil';
-import { contar, htmlResultado, htmlSelosDaPosicao, ligarConfete, ligarResultado } from './resultadoPadrao';
+import { contar, destaqueDaPeca, destaqueDoDuelo, destaqueDoRecorde, htmlResultado, htmlSelosDaPosicao, ligarConfete, ligarResultado, promoverDestaque } from './resultadoPadrao';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 const maiuscula = (s: string) => s.charAt(0).toLocaleUpperCase('pt-BR') + s.slice(1);
@@ -82,8 +83,14 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
     }${blocoDesafio}`,
     frases,
     aviso: situacao ? { texto: situacao, forte: false } : null,
-    selos: htmlSelosDaPosicao(fim.desempenho, 'prova') + (situacao ? '' : selo('Tá no placar')),
-    zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
+    situacao: situacao ? '' : selo('Tá no placar'),
+    destaques: [
+      cmp ? destaqueDoDuelo({ voce: total, outro: cmp.pontosDesafiante, nomeDoOutro: cmp.desafiante, venceu: cmp.venceu }) : null,
+      destaqueDoRecorde(fim.desempenho, 'prova'),
+    ],
+    selos: novoRecorde ? '' : htmlSelosDaPosicao(fim.desempenho, 'prova'),
+    mensagem: textoShare,
+    comDesafio: !!codigo,
     maisUma: cmp && !cmp.venceu ? 'Jogo de volta' : 'Mais uma',
   });
 
@@ -105,7 +112,9 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
   // Peça nova no vestiário: só o nível muda na Prova (import() lazy).
   void import('./pecaNovaBloco').then((m) =>
     m.pecaNovaDoResultado({ alvo: root.querySelector<HTMLElement>('[data-peca-nova]'), contou: !!fim.desempenho && !situacao, carreira, comemorar }),
-  ).catch(() => {});
+  )
+    .then((novas) => novas.length && promoverDestaque(root, destaqueDaPeca(novas.map((p) => p.nome))))
+    .catch(() => {});
 
   // Card personalizável (jogo.md 14.6): o Card abre a tela "Seu card" e o Stories manda o card com as escolhas guardadas.
   const paraOCard = outro ? null : paraTime;

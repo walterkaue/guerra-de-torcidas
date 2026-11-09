@@ -87,7 +87,10 @@ export interface PartidaDaDisputa {
  * Placa da disputa histórica ("+3 rumo ao bronze · 8/10") com a trilha compacta. `depois` é a leitura de
  * minhas_medalhas() logo depois do fechamento; o "antes" sai dela menos o que a partida deu. Puro: só HTML.
  */
-export function placaRumoDisputa(j: PartidaDaDisputa, depois: readonly LinhaMedalha[]): { html: string; subiu: boolean } | null {
+export function placaRumoDisputa(
+  j: PartidaDaDisputa,
+  depois: readonly LinhaMedalha[],
+): { html: string; subiu: boolean; medalha: Medalha | null } | null {
   const d = depois.find((l) => l.lance_id === itemPenaltis(j.id));
   const vit = j.venceu ? 1 : 0;
   // A partida deu gol ou vitória e o servidor não anotou (disputa que ele não conhece): sem linha, para não inventar.
@@ -101,7 +104,7 @@ export function placaRumoDisputa(j: PartidaDaDisputa, depois: readonly LinhaMeda
         ${trilha(trilhaDaDisputa(fim.gols, fim.vitorias), { compacta: true })}
         ${linha.subiu ? botaoMandarMedalha(itemPenaltis(j.id), linha.subiu) : ''}
       </li></ul>`;
-  return { html, subiu: !!linha.subiu };
+  return { html, subiu: !!linha.subiu, medalha: linha.subiu ?? null };
 }
 
 /**
@@ -111,8 +114,8 @@ export function placaRumoDisputa(j: PartidaDaDisputa, depois: readonly LinhaMeda
 export async function mostrarRumoDaDisputa(o: {
   alvo: HTMLElement;
   partida: PartidaDaDisputa;
-  /** Subiu de medalha: a comemoração do resultado (confete e vibração, uma vez por resultado). */
-  aoSubir?: () => void;
+  /** Subiu de medalha: a comemoração do resultado (confete e vibração, uma vez por resultado) e qual medalha. */
+  aoSubir?: (medalha: Medalha) => void;
   ler: () => Promise<readonly LinhaMedalha[]>;
 }): Promise<void> {
   let depois: readonly LinhaMedalha[];
@@ -127,5 +130,5 @@ export async function mostrarRumoDaDisputa(o: {
   o.alvo.innerHTML = placa(p.html, { titulo: 'Rumo às medalhas', filete: true, classe: 'rumo-placa' });
   o.alvo.hidden = false;
   ligarMandarMedalha(o.alvo, o.alvo);
-  if (p.subiu) o.aoSubir?.();
+  if (p.medalha) o.aoSubir?.(p.medalha);
 }

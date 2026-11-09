@@ -28,7 +28,7 @@
 ## 2. Ordem sugerida para depois dos testes
 
 0. **Agora, durante os testes:** A10 e H01a. O C01 (com o I03) está pronto e falta publicar.
-1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); B02 + C02 desenhados juntos no Chat (resultado em duas camadas, com o "Desafiar" como ação própria); C06 (link do desafio com menos toques); B03 (um aviso por vez na Home).
+1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); C06 (link do desafio com menos toques); B03 (um aviso por vez na Home).
 2. **Semana de 16/11:** C03 + C08 (ver o gol de quem chamou, redesenhado no aparelho de quem abre); E01 (1ª visita); E04 (roteiro de iPhone); D07 (Palpite da Rodada na entressafra).
 3. **Depois:** C04 (com a prova de conceito antes), C05, H01b e H02, B01, F01 e A08 (e a personalização do Perfil, com o que os amigos disserem).
 4. **Antes da divulgação pública:** A01 a A05.
@@ -57,10 +57,10 @@
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
 | B01 | **Central de avisos** (o sininho vira caixa de entrada) | K | Detalhe na seção 4.1. Tira da tela os avisos que não são do momento: Termos mudaram, lembrete da cidade, convite de push, aquecimento, peça nova esperando, troféu da semana. | P1 | G | Chat → Claude |
-| B02 | **Resultado em duas camadas** | C | Primeira dobra: placar, pontos, um destaque (o mais importante: recorde, medalha ou desafio) e os botões. O resto ("Ver detalhes da partida") abre embaixo ou numa folha. Regra: no máximo 1 aviso e 1 amarelo por dobra. | P1 | M | Chat → Claude |
+| B02 | ~~Resultado em duas camadas~~ **feito em 09/11/2026** | C | Primeira dobra: placar, pontos, um destaque, a prévia da mensagem e "Desafiar a galera". O resto em "Ver detalhes da partida", na mesma tela. `docs/visual.md`, 4.6. | — | — | — |
 | B03 | Regra de "um aviso por vez" na Home | C | Fila de prioridade: o desafio recebido ganha de tudo, depois a placa do troféu e o card das divisões; o resto vai para a central (B01). | P1 | M | Chat → Claude |
 | B04 | "O que mudou" para quem já jogava | C | Uma placa, uma vez, depois de mudança de regra (ex.: 3 tentativas do mesmo lance, 3 melhores). Também vai para a central. | P2 | P | Claude |
-| B05 | Nome longo no placar grande do resultado | P | "JUNIOR BARRANQUILLA" sai com reticências a 360 px com fonte 130% (resto do S13). | P2 | P | Claude |
+| B05 | ~~Nome longo no placar grande do resultado~~ **feito em 09/11/2026** | P | Quebra em duas linhas, sem reticências ("JUNIOR BARRANQUILLA" a 360 px com fonte 130%). | — | — | — |
 | B06 | Barra de navegação opaca, como a do resultado | C | Hoje é 96% opaca, e dá para ver um pouco do que rola atrás. | P3 | P | Claude |
 | B07 | Dois amarelos na tela "Seu card" e no vestiário (Salvar duplo) | P | O simulador acusou na rodada de 07/11. | P2 | P | Claude |
 
@@ -69,11 +69,12 @@
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
 | C01 | ~~Contar o funil do desafio~~ **feito em 08/11/2026** | P | Compartilhou (por tipo e meio), abriu, aceitou, 1º chute, terminou e jogo de volta, sem identificar ninguém; "Funil do desafio" no `npm run metricas`. Regra em `jogos/contas.md`, "Contagem de uso". Conta desde a publicação da função `funil`. | — | — | — |
-| C02 | **Botão "Desafiar"** no resultado (Lances e pênaltis) | K/C | O desafio sai de dentro do compartilhar e vira ação própria, com texto pronto. Respeitar um amarelo por tela: talvez substitua o "Mandar no grupo". | P1 | M | Chat → Claude |
+| C02 | ~~Botão "Desafiar" no resultado (Lances e pênaltis)~~ **feito em 09/11/2026** | K/C | "Desafiar a galera" é ação própria, verde, no lugar do "Mandar no grupo" quando há código de desafio. `docs/visual.md`, 4.6. | — | — | — |
 | C03 | **Ver as tentativas de quem chamou** antes de jogar o desafio dos Lances | K | Hoje quem aceita vê só "Camisa10 fez 96". Mostrar os 3 desfechos (e, com C04, o replay dos gols). Precisa do `ver_desafio_lances` devolver os desfechos. **Lances:** quem aceita joga com sementes novas, então dá para mostrar antes. **Pênaltis:** as cobranças gravadas de quem chamou são o alvo das defesas de quem aceita; só podem aparecer depois que o desafio termina. | P1 | M | Chat → Claude (servidor) |
 | C04 | **Replay do gol compartilhável** | K | Detalhe na seção 4.3. No resultado: "Compartilhar o replay do gol N". Vídeo curto: a cobrança de trás do batedor e o replay. **Antes do G, uma prova de conceito P:** gravar 3 s do replay e mandar pelo WhatsApp no Android e no iPhone, conferindo se o formato é aceito. | P1 | G | Chat → Claude |
 | C05 | **Card animado** (vídeo curto para Stories e WhatsApp) | K | Detalhe na seção 4.2. O card de hoje com confete, o número contando, o boneco comemorando e o fundo do vestiário mexendo. | P2 | G | Chat → Claude |
 | C06 | Link do desafio com menos toques (J41) | P | Hoje são 4 toques e uma lista de 20 times até o 1º chute. A idade vem antes (ECA) e o time sai sugerido do link de quem chamou. Decisão de fluxo do Kauê (proposta de 31/10, itens 2 e 3). | P1 | M | Kauê decide → Claude |
+| C11 | Prévia do link do desafio no WhatsApp | C | Hoje o link chega com a prévia genérica do site (título "Guerra de Torcidas", sem imagem); estudar uma prévia por desafio, com o placar a bater. | P2 | M | Claude |
 | C07 | Placar acumulado do desafio entre duas pessoas (J42) | P | "Zé 2 x 1 Camisa10" na série de jogos de volta, sem apelido público. Primeiro passo do ranking entre amigos. | P2 | M | Chat → Claude |
 | C08 | Link de replay que roda no celular de quem abre | C | Em vez de vídeo, o link leva só o gesto e a cena, e o jogo redesenha o gol no aparelho de quem abre. Leve e bom para o WhatsApp. O vídeo (C04) fica para o Stories. Nos pênaltis, as cobranças gravadas de quem chamou só aparecem depois que o desafio termina (ver C03); nos Lances, quem aceita joga com sementes novas, então dá para mostrar antes. | P2 | M | Claude |
 | C09 | Prévia bonita do link (Open Graph) por tipo | C | Quem recebe o link no WhatsApp vê hoje a mesma prévia para tudo. Uma imagem por tipo (desafio, lance, medalha) aumenta o clique. Como o site é estático, uma por tipo, não por partida. | P2 | P | Claude |
