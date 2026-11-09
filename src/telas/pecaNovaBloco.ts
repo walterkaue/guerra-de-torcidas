@@ -126,12 +126,15 @@ export interface DoResultado {
   bronzeNoDev?: boolean;
 }
 
-/** Liga o bloco a um resultado: espera o que o resultado já lê e mostra. Nunca estoura (o bloco só enfeita). */
-export async function pecaNovaDoResultado(r: DoResultado): Promise<void> {
+/**
+ * Liga o bloco a um resultado: espera o que o resultado já lê e mostra. Nunca estoura (o bloco só enfeita).
+ * Devolve as peças que o bloco anunciou (vazio: não apareceu), para o resultado em duas camadas pôr no destaque.
+ */
+export async function pecaNovaDoResultado(r: DoResultado): Promise<Peca[]> {
   try {
     if (pecaNovaForcada()) {
       const dev = r.bronzeNoDev ? { lance_id: 'dev-lance', gols: 5, recriados: 0, vitorias: 0 } : null;
-      await mostrarPecaNova(r.alvo, {
+      const novas = await mostrarPecaNova(r.alvo, {
         contou: true,
         xpAntes: 990,
         xpDepois: 1010,
@@ -140,13 +143,13 @@ export async function pecaNovaDoResultado(r: DoResultado): Promise<void> {
         comemorar: r.comemorar,
         ignorarVistas: true,
       });
-      return;
+      return r.alvo?.hidden === false ? novas : [];
     }
-    if (!r.contou) return;
+    if (!r.contou) return [];
     const par = await r.carreira;
-    if (!par) return;
+    if (!par) return [];
     const medalhasDepois = r.medalhas ? await r.medalhas.catch(() => []) : [];
-    await mostrarPecaNova(r.alvo, {
+    const novas = await mostrarPecaNova(r.alvo, {
       contou: true,
       xpAntes: par.antes,
       xpDepois: par.depois,
@@ -154,7 +157,9 @@ export async function pecaNovaDoResultado(r: DoResultado): Promise<void> {
       jogadas: r.jogadas ?? [],
       comemorar: r.comemorar,
     });
+    return r.alvo?.hidden === false ? novas : [];
   } catch {
     // sem o bloco, o resultado segue igual
+    return [];
   }
 }

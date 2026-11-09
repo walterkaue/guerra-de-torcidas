@@ -202,6 +202,9 @@ if (import.meta.env.DEV && app && new URLSearchParams(location.search).has('vitr
       m.ligarVestiarioFalso(new URLSearchParams(location.search));
       irPara({ tela: 'vestiario' });
     });
+  // Só em desenvolvimento: ?resultadoFalso=<cenário> abre o resultado com dados de mentira (src/dev/resultadoFalso.ts).
+  else if (import.meta.env.DEV && new URLSearchParams(location.search).has('resultadoFalso'))
+    void import('./dev/resultadoFalso').then((m) => m.abrirResultadoFalso(new URLSearchParams(location.search).get('resultadoFalso')));
   else if (comecaPelaEscolha({ jaTinhaTime: jaJoga, tela: entrada.tela, comDesafio })) irPara({ tela: 'times', depois: 'inicio', primeira: true });
   else irPara(jaJoga && !faixaDoAparelho() && !semTriagem ? { tela: 'triagem', depois: entrada } : entrada);
   // Só em desenvolvimento: ?cardFalso abre a tela "Seu card" com dados de mentira (src/dev/cardFalso.ts).

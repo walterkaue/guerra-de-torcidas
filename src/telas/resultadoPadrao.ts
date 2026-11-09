@@ -1,7 +1,11 @@
-// Resultado padrão dos 5 jogos (docs/jogo.md 14.2, docs/visual.md 4.6), sempre nesta ordem:
-// placar → pontos pro time → detalhe em placas → frase do narrador → selos → Carreira →
-// "Mandar no grupo" com Card (abre a tela "Seu card"), Stories, Emoji e Link → Início e "Mais uma".
-// O que cada jogo tem de próprio entra como placa no detalhe, sem quebrar a ordem.
+// Resultado padrão dos jogos de partida, em duas camadas (B02 + C02, Rota B de 09/11/2026; docs/visual.md, "Resultado").
+// 1. Primeira dobra: título → placar → pontos com a linha curta de situação → UM destaque → prévia da mensagem →
+//    "Desafiar a galera" (verde) → "Mostrar o resultado" (Card, Stories, Emoji, Link). Sem código de desafio, no lugar
+//    da prévia e do botão verde fica o "Mandar no grupo" de hoje.
+// 2. "Ver detalhes da partida" abre logo embaixo, na mesma tela: placas, as outras frases, selos, Carreira, peça nova.
+// 3. Um convite por vez (aviso de domingo, apoio, cidade), depois dos detalhes. Início e "Mais uma" fixos no rodapé.
+// O destaque segue jogo/resultadoDuasCamadas.ts; o que chega depois (peça nova, medalha da disputa) só passa na frente
+// de um destaque que vem depois dele na ordem, e o que sai desce para os detalhes.
 // Comemoração (ligarConfete): papel picado nas cores do time e vibração, uma vez por resultado, em vitória, recorde
 // novo, partida nas 3 melhores do dia, Time do Dia acertado e medalha nova (jogo/confete.ts).
 
@@ -14,6 +18,14 @@ import type { JogoFunil, Meio, TipoX1 } from '../jogo/funil';
 import { textoDoCompartilhar, type DadosDoCard } from '../jogo/cardPersonalizado';
 import { criarComemoracao, pedacosDoConfete, type MotivoDoConfete } from '../jogo/confete';
 import { selosDaPosicao, type Desempenho, type Minigame } from '../jogo/posicao';
+import {
+  escolherDestaque,
+  htmlDoBalao,
+  linkDoWhatsApp,
+  mensagemParaLeitor,
+  passaNaFrente,
+  type TipoDestaque,
+} from '../jogo/resultadoDuasCamadas';
 import { seloPre, selo } from './blocos';
 import { abrirCardPersonalizado, desenharComAsEscolhas, prepararBonecoDoCard } from './cardPersonalizado';
 import { medirBarraDeBaixo } from './alturaBarra';
@@ -23,6 +35,14 @@ import { qualidade } from './qualidade';
 import { vibrar } from './toque';
 
 const semMovimento = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+/** Um candidato a destaque, já em HTML. O que não vira destaque desce para os detalhes. */
+export interface Destaque {
+  tipo: Exclude<TipoDestaque, 'aviso' | 'frase'>;
+  html: string;
+  /** Resumo que só existe na dobra: a versão inteira já está nos detalhes, então, se não virar destaque, some. */
+  soNaDobra?: boolean;
+}
 
 export interface PartesDoResultado {
   time: Time;
@@ -34,26 +54,32 @@ export interface PartesDoResultado {
   titulo: string;
   /** Título em amarelo (ganhou) ou claro. */
   ganhou: boolean;
-  /** 1. Placar (HTML). */
+  /** Placar (HTML). */
   placar: string;
-  /** 2. Pontos pro time; null quando o jogo não dá pontos. */
+  /** Pontos pro time; null quando o jogo não dá pontos. */
   pontos: { total: number; paraTime: string | null } | null;
-  /** 3. Detalhe em placas (HTML). */
+  /** Linha curta de situação embaixo dos pontos: o selo "Tá no placar" ou "Subindo pro placar…" (HTML). */
+  situacao?: string;
+  /** Detalhe em placas (HTML), em "Ver detalhes da partida". */
   detalhe: string;
-  /** 4. Frases do narrador (texto). */
+  /** Frases do narrador (texto). A primeira é a candidata a destaque. */
   frases: readonly string[];
-  /** 5. Selos já prontos (HTML), além dos da posição. */
+  /** Selos já prontos (HTML), nos detalhes. */
   selos?: string;
-  /** Aviso que troca o efeito no ranking (sem valer pontos, sob suspeita…), em texto. */
+  /** Aviso de partida sem valer (sem rede, treino, sob suspeita…), em texto: o destaque que passa na frente de todos. */
   aviso?: { texto: string; forte: boolean } | null;
-  /** 7. Link do WhatsApp ("Mandar no grupo"). */
-  zap: string;
+  /** Os outros candidatos a destaque (desafio recebido, medalha, recorde, 3 melhores do dia). */
+  destaques?: readonly (Destaque | null)[];
+  /** O texto que vai ao WhatsApp, inteiro (as funções do TEXTOS: textoShareLances, textoSharePenaltis…). */
+  mensagem: string;
+  /** A partida gerou código de desafio: prévia da mensagem e "Desafiar a galera". Sem: o "Mandar no grupo" de hoje. */
+  comDesafio: boolean;
   /**
    * J16 (06/11/2026), só nos Lances: "Mandar no grupo" manda o card com o texto pela folha de compartilhar (o link do
    * WhatsApp fica de reserva) e o botão Emoji sai (o placar em emoji é um quadradinho da tela "Seu card").
    */
   mandarCard?: boolean;
-  /** 8. Texto do botão principal. */
+  /** Texto do botão principal. */
   maisUma: string;
 }
 
@@ -64,8 +90,94 @@ export function htmlSelosDaPosicao(d: Desempenho | null, minigame: Minigame): st
     .join('');
 }
 
+/** O candidato "recorde novo": os selos da posição, quando a partida bateu o recorde (aí eles saem dos detalhes). */
+export const destaqueDoRecorde = (d: Desempenho | null, minigame: Minigame): Destaque | null =>
+  d?.novoRecorde ? { tipo: 'recorde', html: `<div class="selos">${htmlSelosDaPosicao(d, minigame)}</div>` } : null;
+
+/**
+ * O candidato "resultado do desafio recebido": uma linha só, você × quem desafiou (sem apelido, "Rival do dia"), com o
+ * número de quem venceu em amarelo. A placa inteira do duelo (bustos, gols, frase) fica nos detalhes.
+ */
+export function destaqueDoDuelo(o: { voce: number; outro: number; nomeDoOutro: string | null; venceu: boolean }): Destaque {
+  const nome = o.nomeDoOutro?.trim() || 'Rival do dia';
+  return {
+    tipo: 'desafio',
+    soNaDobra: true,
+    html: `<p class="res-duelo-curto ${o.venceu ? 'venceu' : 'perdeu'}"><span class="so-leitor">${esc(`Desafio: você ${o.voce}, ${nome} ${o.outro}.`)}</span><span class="res-duelo-linha" aria-hidden="true">
+        <span class="lado">Você</span><strong class="voce">${o.voce}</strong><em>x</em><strong class="outro">${o.outro}</strong><span class="lado">${esc(nome)}</span>
+      </span></p>`,
+  };
+}
+
+/** Uma linha de destaque com a estrela: curta, para caber na dobra. */
+const linhaDeDestaque = (texto: string) => `<p class="res-linha-destaque">${icone('estrela')}<span>${esc(texto)}</span></p>`;
+
+/** O candidato "entrou nas 3 melhores do dia", com a lista de hoje. */
+export const destaqueDoTop3 = (linha: string | null): Destaque | null => (linha ? { tipo: 'top3', html: linhaDeDestaque(linha) } : null);
+
+/** Peça nova no vestiário, em uma linha (a placa com o boneco e o "Vestir agora" fica nos detalhes). */
+export const destaqueDaPeca = (nomes: readonly string[]): Destaque => ({
+  tipo: 'peca',
+  soNaDobra: true,
+  html: linhaDeDestaque(`Peça nova no vestiário: ${nomes.join(', ')}`),
+});
+
+/** Medalha nova da disputa, em uma linha (o rumo às medalhas, com o botão de mandar, fica nos detalhes). */
+export const destaqueDaMedalha = (texto: string): Destaque => ({ tipo: 'medalha', soNaDobra: true, html: linhaDeDestaque(texto) });
+
+/** Os botões de hoje (Card, Stories, Emoji onde existe, Link). */
+const formatos = (comEmoji: boolean) => `
+  <button type="button" data-acao="card">${icone('imagem')}Card</button>
+  <button type="button" data-acao="share">${icone('celular')}Stories</button>
+  ${comEmoji ? `<button type="button" data-acao="emoji">${icone('sorriso')}Emoji</button>` : ''}
+  <button type="button" data-acao="copiar">${icone('corrente')}Link</button>`;
+
+/** Dois tiques cinza da mensagem enviada. */
+const TIQUES = '<svg class="res-msg-tiques" viewBox="0 0 18 11" aria-hidden="true"><path d="M1 6l3 3 6-7M7 8l1 1 6-7"/></svg>';
+
+/**
+ * Prévia da mensagem, "Desafiar a galera" e a linha "Mostrar o resultado". O balão é a mensagem de verdade (a mesma
+ * do link do botão), fica escondido do leitor de tela e de quem navega por foco; o leitor lê a versão `so-leitor`,
+ * uma vez, antes do botão. O espaço do balão já existe desde o começo (só fica invisível até entrar).
+ */
+function htmlDoDesafio(p: PartesDoResultado): string {
+  return `<section class="res-desafio" aria-label="Desafiar a galera">
+      <div class="res-msg espera" data-msg>
+        <p class="res-msg-rotulo" aria-hidden="true">Vai junto no WhatsApp</p>
+        <p class="so-leitor">${esc(mensagemParaLeitor(p.mensagem))}</p>
+        <div class="res-msg-caixa" aria-hidden="true">
+          <p class="res-msg-balao"><span class="res-msg-texto">${htmlDoBalao(p.mensagem, esc)}</span><span class="res-msg-hora">agora${TIQUES}</span></p>
+          <span class="res-msg-digitando"><i></i><i></i><i></i></span>
+        </div>
+      </div>
+      <a class="botao botao-desafiar" data-desafiar data-sem-aviso target="_blank" rel="noopener" href="${linkDoWhatsApp(p.mensagem)}">${icone('balao')}Desafiar a galera</a>
+      <div class="res-mostrar" role="group" aria-label="Mostrar o resultado">
+        <p class="res-mostrar-rotulo" aria-hidden="true">Mostrar o resultado</p>
+        <div class="res-mostrar-botoes">${formatos(!p.mandarCard)}</div>
+      </div>
+    </section>`;
+}
+
+/** O "Mandar no grupo" de hoje (sem código de desafio). */
+const htmlDoMandar = (p: PartesDoResultado) => `<section class="mandar" aria-label="Compartilhar">
+      <a class="botao botao-zap" data-sem-aviso${p.mandarCard ? ' data-mandar-card' : ''} target="_blank" rel="noopener" href="${linkDoWhatsApp(p.mensagem)}">Mandar no grupo</a>
+      <div class="formatos${p.mandarCard ? ' tres' : ''}">${formatos(!p.mandarCard)}</div>
+    </section>`;
+
 export function htmlResultado(p: PartesDoResultado): string {
   const t = p.time;
+  const candidatos: { tipo: TipoDestaque; html: string; soNaDobra?: boolean }[] = [
+    ...(p.aviso
+      ? [{ tipo: 'aviso' as const, html: `<p class="res-aviso${p.aviso.forte ? ' forte' : ''}" role="note">${htmlDoAviso(p.aviso.texto, esc)}</p>` }]
+      : []),
+    ...(p.destaques ?? []).filter((d): d is Destaque => !!d),
+    ...(p.frases.length ? [{ tipo: 'frase' as const, html: `<p class="adesivo">${esc(p.frases[0])}</p>` }] : []),
+  ];
+  const tipo = escolherDestaque(candidatos.map((c) => c.tipo));
+  const destaque = candidatos.find((c) => c.tipo === tipo);
+  // A frase que não virou destaque continua na lista das frases; os outros descem para o topo dos detalhes.
+  const resto = candidatos.filter((c) => c !== destaque && c.tipo !== 'frase' && !c.soNaDobra).map((c) => c.html).join('');
+  const frases = tipo === 'frase' ? p.frases.slice(1) : p.frases;
   return `
     <main class="tela ${p.classe} res-padrao"
       style="--c1:${t.cores[0]};--c2:${t.cores[1]};--txt:${corDeTexto(t.cores[0])}">
@@ -78,46 +190,91 @@ export function htmlResultado(p: PartesDoResultado): string {
 
       ${
         p.pontos
-          ? `<p class="res-total"><strong data-contador>+${p.pontos.total}</strong>${
-              p.pontos.paraTime ? `<span>${esc(p.pontos.paraTime)}</span>` : ''
-            }</p>`
+          ? `<div class="res-pontos">
+              <p class="res-total"><strong data-contador>+${p.pontos.total}</strong>${p.pontos.paraTime ? `<span>${esc(p.pontos.paraTime)}</span>` : ''}</p>
+              ${p.situacao ? `<div class="res-situacao" aria-live="polite">${p.situacao}</div>` : ''}
+            </div>`
           : ''
       }
 
-      ${p.detalhe}
+      <div class="res-destaque" data-destaque${tipo ? ` data-tipo="${tipo}"` : ''}${destaque?.soNaDobra ? ' data-so-na-dobra' : ''}>${destaque?.html ?? ''}</div>
 
-      ${p.frases.map((f, i) => `<p class="adesivo${i ? ' segundo' : ''}">${esc(f)}</p>`).join('')}
+      ${p.comDesafio ? htmlDoDesafio(p) : htmlDoMandar(p)}
 
-      ${p.aviso ? `<p class="res-aviso${p.aviso.forte ? ' forte' : ''}" role="note">${htmlDoAviso(p.aviso.texto, esc)}</p>` : ''}
-      <section class="res-selos" aria-label="Seus números" aria-live="polite">
-        <div class="selos" data-selos>${p.selos ?? ''}</div>
-        <p class="res-nota" data-nota hidden></p>
-      </section>
+      <div class="res-detalhes-caixa">
+        <button type="button" class="res-ver" data-acao="detalhes" aria-expanded="false" aria-controls="res-detalhes">Ver detalhes da partida</button>
+        <section id="res-detalhes" class="res-detalhes" aria-label="Detalhes da partida" hidden>
+          <div class="res-detalhes-resto" data-destaque-resto>${resto}</div>
+          ${p.detalhe}
+          ${frases.map((f, i) => `<p class="adesivo${i ? ' segundo' : ''}">${esc(f)}</p>`).join('')}
+          <section class="res-selos" aria-label="Seus números" aria-live="polite">
+            <div class="selos" data-selos>${p.selos ?? ''}</div>
+            <p class="res-nota" data-nota hidden></p>
+          </section>
+          <div data-carreira hidden></div>
+          <div data-peca-nova hidden></div>
+        </section>
+      </div>
 
-      <div data-carreira hidden></div>
-      <div data-peca-nova hidden></div>
-
-      <section class="mandar" aria-label="Compartilhar">
-        <a class="botao botao-zap" data-sem-aviso${p.mandarCard ? ' data-mandar-card' : ''} target="_blank" rel="noopener" href="${p.zap}">Mandar no grupo</a>
-        <div class="formatos">
-          <button type="button" data-acao="card">${icone('imagem')}Card</button>
-          <button type="button" data-acao="share">${icone('celular')}Stories</button>
-          ${p.mandarCard ? '' : `<button type="button" data-acao="emoji">${icone('sorriso')}Emoji</button>`}
-          <button type="button" data-acao="copiar">${icone('corrente')}Link</button>
-        </div>
-      </section>
-
-      <div data-convite-push></div>
-      <div class="res-apoio" data-apoio></div>
+      <!-- Convites: um por vez (umConvite), depois dos detalhes, nunca na primeira dobra. -->
+      <div class="res-convites">
+        <div data-convite="push"></div>
+        <div class="res-apoio" data-convite="apoio"></div>
+        <div data-convite="cidade"></div>
+      </div>
 
       <div class="res-acoes">
         <button class="botao botao-sec" type="button" data-acao="inicio">Início</button>
         <button class="botao" type="button" data-acao="mais-uma">${esc(p.maisUma)}</button>
       </div>
-
-      <!-- No fim da página, depois de tudo: entra tarde (rede) e não empurra nada. -->
-      <div data-convite-cidade></div>
     </main>`;
+}
+
+/**
+ * Onde pôr um convite (aviso de domingo, apoio ou cidade): o lugar dele, ou null se outro convite já está na tela.
+ * Um convite por vez: o primeiro que aparece fica, os outros esperam a próxima partida (sem gastar a vez deles).
+ */
+export function umConvite(root: HTMLElement, qual: 'push' | 'apoio' | 'cidade'): HTMLElement | null {
+  const lugares = [...root.querySelectorAll<HTMLElement>('[data-convite]')];
+  if (lugares.some((el) => el.dataset.convite !== qual && el.childElementCount > 0)) return null;
+  return lugares.find((el) => el.dataset.convite === qual) ?? null;
+}
+
+/**
+ * Destaque que chegou depois (peça nova no vestiário, medalha da disputa): toma o lugar do destaque da dobra se vem
+ * antes dele na ordem; o que estava lá desce para o topo dos detalhes. Devolve se passou na frente. Só o destaque
+ * muda de altura; o balão e o botão verde descem juntos, sem pular de novo.
+ */
+export function promoverDestaque(root: HTMLElement, d: Destaque): boolean {
+  const lugar = root.querySelector<HTMLElement>('[data-destaque]');
+  const resto = root.querySelector<HTMLElement>('[data-destaque-resto]');
+  if (!lugar || !resto || !lugar.isConnected) return false;
+  const atual = (lugar.dataset.tipo as TipoDestaque | undefined) ?? null;
+  if (!passaNaFrente(d.tipo, atual)) return false;
+  // O resumo que só existe na dobra some; o resto desce para o topo dos detalhes.
+  if (lugar.dataset.soNaDobra === undefined) resto.prepend(...lugar.childNodes);
+  lugar.innerHTML = d.html;
+  lugar.dataset.tipo = d.tipo;
+  lugar.toggleAttribute('data-so-na-dobra', !!d.soNaDobra);
+  ajustarDobra(root);
+  return true;
+}
+
+/**
+ * O balão e o "Desafiar a galera" inteiros na primeira dobra (360 × 740 com a fonte do sistema em 130%): se o botão
+ * passa da dobra, aperta em degraus (`data-aperto`, resultado.css) — primeiro o destaque e os espaços, depois a letra
+ * do balão (14 px, e no fim 13 px). Sem o botão verde, nada a fazer.
+ */
+export function ajustarDobra(root: HTMLElement): void {
+  const tela = root.querySelector<HTMLElement>('.res-padrao');
+  const botao = root.querySelector<HTMLElement>('[data-desafiar]');
+  const rodape = root.querySelector<HTMLElement>('.res-acoes');
+  if (!tela || !botao || !rodape || !tela.isConnected) return;
+  const cabe = () => botao.getBoundingClientRect().bottom + scrollY <= innerHeight - rodape.getBoundingClientRect().height;
+  for (let n = 0; n <= 3; n++) {
+    tela.dataset.aperto = String(n);
+    if (cabe()) return;
+  }
 }
 
 /**
@@ -186,11 +343,19 @@ export function ligarConfete(root: HTMLElement, time: Time): (motivo: MotivoDoCo
   return (motivo) => root.isConnected && soltar(motivo);
 }
 
-/** Conta de 0 até `total` em ~700 ms (sem animação para quem pediu menos movimento). */
+/** Evento que o contador solta quando chega ao total (o balão da mensagem entra nessa hora). */
+const CONTOU = 'contador-fim';
+
+/** Conta de 0 até `total` em ~700 ms (sem animação para quem pediu menos movimento). No fim, `data-contou`. */
 export function contar(el: HTMLElement | null, total: number): void {
   if (!el) return;
+  const acabou = () => {
+    el.dataset.contou = '';
+    el.dispatchEvent(new Event(CONTOU, { bubbles: true }));
+  };
   if (semMovimento() || total <= 0) {
     el.textContent = `+${total}`;
+    acabou();
     return;
   }
   el.textContent = '+0';
@@ -199,8 +364,33 @@ export function contar(el: HTMLElement | null, total: number): void {
     const t = Math.min(1, (agora - inicio) / 700);
     el.textContent = `+${Math.round(total * (1 - (1 - t) ** 3))}`;
     if (t < 1) requestAnimationFrame(passo);
+    else acabou();
   };
   requestAnimationFrame(passo);
+}
+
+/**
+ * O balão entra quando o contador de pontos termina: três pontinhos de "digitando" por ~0,6 s e um pulinho
+ * (escala 0,96 → 1, ~180 ms). Com movimento reduzido, aparece direto. O espaço já estava reservado.
+ */
+function entrarComOBalao(root: HTMLElement, msg: HTMLElement): void {
+  const mostrar = () => msg.classList.remove('espera', 'digitando');
+  if (semMovimento()) return mostrar();
+  let foi = false;
+  const digitar = () => {
+    if (foi || !msg.isConnected) return;
+    foi = true;
+    msg.classList.add('digitando');
+    window.setTimeout(() => {
+      if (!msg.isConnected) return;
+      mostrar();
+      msg.classList.add('entra');
+    }, 600);
+  };
+  const contador = root.querySelector<HTMLElement>('[data-contador]');
+  if (!contador || contador.dataset.contou !== undefined) return void window.setTimeout(digitar, 200);
+  contador.addEventListener(CONTOU, digitar, { once: true });
+  window.setTimeout(digitar, 1500); // contador que não terminou (aba no fundo): o balão não fica esperando
 }
 
 export interface Compartilhar {
@@ -219,7 +409,7 @@ export interface Compartilhar {
   funil: { tipo: TipoX1; x1: string } | { tipo: 'resultado'; jogo: JogoFunil };
 }
 
-/** Liga Card, Stories, Emoji, Link, Início e "Mais uma". */
+/** Liga "Desafiar a galera", "Mandar no grupo", Card, Stories, Emoji, Link, os detalhes, Início e "Mais uma". */
 export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
   const avisar = (botao: HTMLButtonElement, texto: string) => {
     const antes = botao.innerHTML;
@@ -232,11 +422,35 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
 
   medirBarraDeBaixo(root.querySelector<HTMLElement>('.res-acoes'));
 
-  // Resultado da 1ª partida de qualquer jogo: convite para a cidade (uma vez por aparelho).
-  void convidarParaCidade(root.querySelector<HTMLElement>('[data-convite-cidade]'));
+  // Resultado da 1ª partida de qualquer jogo: convite para a cidade (uma vez por aparelho), se nenhum outro já está na tela.
+  void convidarParaCidade(umConvite(root, 'cidade'));
 
   // Pôster ou "Meu boneco" guardados: lê o boneco já, para o Stories não esperar a rede no toque (14.6).
   prepararBonecoDoCard();
+
+  // "Ver detalhes da partida": abre logo embaixo, na mesma tela.
+  const ver = botao('detalhes');
+  const detalhes = root.querySelector<HTMLElement>('#res-detalhes')!;
+  ver.addEventListener('click', () => {
+    const abrir = detalhes.hidden;
+    detalhes.hidden = !abrir;
+    ver.setAttribute('aria-expanded', String(abrir));
+  });
+
+  // "Desafiar a galera": o link do wa.me com a mensagem inteira, direto do toque (sem await nem share com o card), para
+  // o link do desafio ir sempre. O toque só conta (meio "grupo", com o tipo do desafio).
+  const msg = root.querySelector<HTMLElement>('[data-msg]');
+  if (msg) {
+    // A dobra se ajusta antes do balão aparecer (o espaço dele já está ali), de novo quando a fonte chega e ao girar.
+    ajustarDobra(root);
+    requestAnimationFrame(() => ajustarDobra(root));
+    void document.fonts?.ready.then(() => ajustarDobra(root));
+    // O root é o do app inteiro: quem diz se o resultado ainda está na tela é o balão.
+    const aoMudar = () => (msg.isConnected ? ajustarDobra(root) : removeEventListener('resize', aoMudar));
+    addEventListener('resize', aoMudar);
+    entrarComOBalao(root, msg);
+  }
+  root.querySelector('[data-desafiar]')?.addEventListener('click', () => contarMeio('grupo'));
 
   botao('card').addEventListener('click', () => {
     contarMeio('card');

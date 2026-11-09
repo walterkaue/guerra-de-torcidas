@@ -36,7 +36,7 @@ import { oferecerApoio } from './apoio';
 import { convidarParaAvisos } from './convitePush';
 import { aoTocarNoEstado, cabecalhoTela, estado as blocoEstado, numero, placa } from './blocos';
 import { motivoDoConfete } from '../jogo/confete';
-import { contar, htmlResultado, htmlSelosDaPosicao, ligarConfete, ligarResultado } from './resultadoPadrao';
+import { contar, destaqueDaPeca, destaqueDoRecorde, htmlResultado, htmlSelosDaPosicao, ligarConfete, ligarResultado, promoverDestaque, umConvite } from './resultadoPadrao';
 import { vibrar } from './toque';
 import { dicasDoAparelho, mostrarDica, tirarDica, vezesVista } from './dicas';
 import { DICAS } from '../jogo/dicas';
@@ -418,19 +418,23 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
         </div>`,
       frases: frasesFinais,
       // Desde 08/11 (jogo.md 14.7) o dia vale 3 partidas de Lances e 3 da Prova: o texto não fala mais em 5.
-      aviso: e.acertou
-        ? { texto: `+${e.pontos} na semana, por fora das ${MELHORES_DO_DIA} melhores de Lances e das ${MELHORES_DO_DIA} da Prova.`, forte: false }
-        : null,
-      selos: htmlSelosDaPosicao(e.desempenho, 'dia'),
-      zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
+      // Não é aviso de partida sem valer: é a linha de situação embaixo dos pontos (o destaque fica livre).
+      situacao: e.acertou
+        ? `<p class="res-situacao-texto">+${e.pontos} na semana, por fora das ${MELHORES_DO_DIA} melhores de Lances e das ${MELHORES_DO_DIA} da Prova.</p>`
+        : '',
+      destaques: [destaqueDoRecorde(e.desempenho, 'dia')],
+      selos: novoRecorde ? '' : htmlSelosDaPosicao(e.desempenho, 'dia'),
+      // Time do Dia não tem desafio: o "Mandar no grupo" de hoje.
+      mensagem: textoShare,
+      comDesafio: false,
       // Time do Dia é um por dia: o botão principal leva ao próximo jogo (Lances do Jogo).
       maisUma: 'Lances do Jogo',
     });
     if (e.acertou) contar(root.querySelector<HTMLElement>('[data-contador]'), e.pontos);
     scrollTo(0, 0);
     // Bom momento para oferecer o aviso de domingo: acertou o time do dia.
-    if (e.acertou) convidarParaAvisos(root.querySelector<HTMLElement>('[data-convite-push]'));
-    oferecerApoio(root.querySelector<HTMLElement>('[data-apoio]'), bomMomentoDoDia({ acertou: e.acertou }));
+    if (e.acertou) convidarParaAvisos(umConvite(root, 'push'));
+    oferecerApoio(umConvite(root, 'apoio'), bomMomentoDoDia({ acertou: e.acertou }));
     const comemorar = ligarConfete(root, time);
     if (primeiraVez)
       comemorar(motivoDoConfete({ acertouTimeDoDia: e.acertou, novoRecorde: !!e.desempenho?.novoRecorde }));
@@ -451,7 +455,9 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     // Peça nova no vestiário: só o nível muda no Time do Dia (import() lazy; reabrir o dia feito tem XP igual: nada).
     void import('./pecaNovaBloco').then((m) =>
       m.pecaNovaDoResultado({ alvo: root.querySelector<HTMLElement>('[data-peca-nova]'), contou: !!e.desempenho, carreira, comemorar }),
-    ).catch(() => {});
+    )
+      .then((novas) => novas.length && promoverDestaque(root, destaqueDaPeca(novas.map((p) => p.nome))))
+      .catch(() => {});
 
     // Card personalizável (jogo.md 14.6): o Card abre a tela "Seu card" e o Stories manda o card com as escolhas guardadas.
     const apelido = apelidoDoCard();
