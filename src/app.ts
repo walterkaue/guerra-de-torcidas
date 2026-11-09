@@ -38,7 +38,7 @@ export type Rota =
   /** Código do torcedor (docs/jogo.md, seção 14.1): mostrar o código deste aparelho. */
   | { tela: 'outroAparelho' }
   /** Entrar com o código de outro aparelho; `codigo` vem do QR (nunca fica no endereço); `de` é para onde o voltar leva. */
-  | { tela: 'entrar'; codigo?: string; de?: 'perfil' | 'times' }
+  | { tela: 'entrar'; codigo?: string; de?: 'perfil' | 'times' | 'convite' }
   | { tela: 'admin' }
   | { tela: 'apoie' }
   /** Faixa etária (docs/jogo.md, seção 13): depois de responder, segue para `depois`. */

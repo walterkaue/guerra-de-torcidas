@@ -3,10 +3,11 @@
 // O código só vive no campo desta tela e na chamada ao servidor; nunca em console, armazenamento ou endereço.
 
 import '../estilos/aparelhos.css';
-import { esc, irPara, type Rota } from '../app';
+import { desafioDoLink, desafioLancesDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
 import { ID_OUTRO, corDeTexto, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { mensagemDoCodigo } from '../jogo/aparelhos';
+import { conviteDoLink } from '../jogo/conviteDesafio';
 import { TAMANHO_CODIGO, formatarCodigo, limparDigitado } from '../jogo/codigoTorcedor';
 import { ErroServidor } from '../servidor/api';
 import { servidorDoCodigo } from './codigoApi';
@@ -35,13 +36,17 @@ export function telaEntrarComCodigo(root: HTMLElement, rota: Rota): () => void {
   let paraHome: number | undefined;
 
   // Volta à escolha do time de onde veio; quem ainda não tinha time está no primeiro acesso (jogo.md 14.8).
+  // Vindo do convite do desafio (C06), volta a ele enquanto o link ainda estiver no endereço.
+  const convite = de === 'convite' ? conviteDoLink({ d: desafioDoLink(), l: desafioLancesDoLink(), p: desafioProvaDoLink() }) : undefined;
   const voltar = () =>
     irPara(
-      de === 'times'
-        ? temTime
-          ? { tela: 'times' }
-          : { tela: 'times', depois: 'inicio', primeira: true }
-        : { tela: de === 'perfil' || temTime ? 'perfil' : 'inicio' },
+      convite
+        ? { tela: 'convite', ...convite }
+        : de === 'times' || de === 'convite'
+          ? temTime
+            ? { tela: 'times' }
+            : { tela: 'times', depois: 'inicio', primeira: true }
+          : { tela: de === 'perfil' || temTime ? 'perfil' : 'inicio' },
     );
 
   root.innerHTML = `

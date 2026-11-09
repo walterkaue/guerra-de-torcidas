@@ -30,7 +30,7 @@ import {
   type SituacaoDoConvite,
   type TipoConvite,
 } from '../jogo/conviteDesafio';
-import { chamadaDaDisputa } from '../jogo/disputas';
+import { chamadaDaDisputa, type Disputa } from '../jogo/disputas';
 import { textoDoConviteLances, tituloDoConviteLances } from '../jogo/home';
 import {
   verDesafio,
@@ -95,6 +95,8 @@ interface Aberto {
   timeDeQuemChamou: Time | undefined;
   faixas: Time[];
   boneco: unknown;
+  /** A disputa de quem chamou (pênaltis), que segue na rota para a partida abrir já no cenário dela. */
+  disputa?: Disputa;
 }
 
 export function telaConvite(root: HTMLElement, rota: Rota): () => void {
@@ -126,11 +128,12 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
     let texto = '';
     let extra = '';
     let como = '';
+    let disputa: Disputa | undefined;
     if (tipo === 'penaltis') {
       const p = d as ResumoDesafio;
       texto = textoDoConvitePenaltis({ apelido: p.apelido, time_id: p.time_id, pontos: p.pontos, gols_jogador: p.gols_jogador, gols_maquina: p.gols_maquina });
       // A ficha da disputa de quem chamou; fora do catálogo, o convite segue sem ela.
-      const disputa = p.disputa_id ? (await catalogoDisputas)?.DISPUTAS.find((x) => x.id === p.disputa_id) : undefined;
+      disputa = p.disputa_id ? (await catalogoDisputas)?.DISPUTAS.find((x) => x.id === p.disputa_id) : undefined;
       if (disputa) extra = `<p class="convite-como">Disputa: ${esc(disputa.titulo)}. ${esc(chamadaDaDisputa(disputa))}</p>`;
       como = COMO_PENALTIS;
     } else if (tipo === 'lances') {
@@ -152,6 +155,7 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
       timeDeQuemChamou: t,
       faixas: faixasDoConvite(d.time_id),
       boneco: 'boneco' in d ? d.boneco : undefined,
+      disputa,
     };
   }
 
@@ -223,13 +227,19 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
       .finally(conviteResolvido);
   }
 
+  // Um aceite só: o 2º toque rápido (a troca de tela é adiada pela transição) não conta de novo nem troca de tela outra vez.
+  let aceitou = false;
   const encarar = () => {
+    if (aceitou) return;
+    aceitou = true;
     contar({ ev: 'aceitou', tipo: TIPO_DO_FUNIL[tipo], x1: codigo });
-    irPara(destinoDoDesafio(tipo, codigo));
+    const destino = destinoDoDesafio(tipo, codigo);
+    irPara(destino.tela === 'partida' && aberto?.disputa ? { ...destino, disputa: aberto.disputa } : destino);
   };
 
   /** Tocar numa faixa escolhe a torcida e já aceita o desafio: o aquecimento fica para depois (card na Home). */
   function escolherFaixa(timeId: string): void {
+    if (aceitou) return;
     prefs.set({ time: timeId });
     void sincronizarTorcedor().catch(() => {}); // sem rede, o time fica salvo no aparelho e sobe na próxima partida
     etapa(null);
@@ -261,7 +271,7 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
       case 'tentar':
         return buscar();
       case 'outro-aparelho':
-        return irPara({ tela: 'entrar', de: 'times' });
+        return irPara({ tela: 'entrar', de: 'convite' });
     }
   });
 
@@ -269,5 +279,7 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
 
   return () => {
     saiu = true;
+    // Saiu antes de o resumo chegar (rede pendurada): o resto da Home não precisa mais esperar o convite.
+    conviteResolvido();
   };
 }
