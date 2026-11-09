@@ -261,20 +261,29 @@ export function promoverDestaque(root: HTMLElement, d: Destaque): boolean {
 }
 
 /**
- * O balão e o "Desafiar a galera" inteiros na primeira dobra (360 × 740 com a fonte do sistema em 130%): se o botão
- * passa da dobra, aperta em degraus (`data-aperto`, resultado.css) — primeiro o destaque e os espaços, depois a letra
- * do balão (14 px, e no fim 13 px). Sem o botão verde, nada a fazer.
+ * A primeira dobra (360 × 740 com a fonte do sistema em 130%). O balão e o "Desafiar a galera" inteiros nela: se o
+ * botão passa da dobra, aperta em degraus (`data-aperto`, resultado.css) — primeiro o destaque e os espaços, depois a
+ * letra do balão (14 px, e no fim 13 px). E nenhum convite nela: em tela curta, ele desce para depois da dobra.
  */
 export function ajustarDobra(root: HTMLElement): void {
   const tela = root.querySelector<HTMLElement>('.res-padrao');
-  const botao = root.querySelector<HTMLElement>('[data-desafiar]');
   const rodape = root.querySelector<HTMLElement>('.res-acoes');
-  if (!tela || !botao || !rodape || !tela.isConnected) return;
-  const cabe = () => botao.getBoundingClientRect().bottom + scrollY <= innerHeight - rodape.getBoundingClientRect().height;
-  for (let n = 0; n <= 3; n++) {
-    tela.dataset.aperto = String(n);
-    if (cabe()) return;
-  }
+  if (!tela || !rodape || !tela.isConnected) return;
+  const dobra = () => innerHeight - rodape.getBoundingClientRect().height;
+  const fundo = (el: Element) => el.getBoundingClientRect().bottom + scrollY;
+  const botao = root.querySelector<HTMLElement>('[data-desafiar]');
+  if (botao)
+    for (let n = 0; n <= 3; n++) {
+      tela.dataset.aperto = String(n);
+      if (fundo(botao) <= dobra()) break;
+    }
+  // Convite nunca na primeira dobra: em tela curta (sem desafio, sem rede), ele desce até logo depois da dobra.
+  const convites = root.querySelector<HTMLElement>('.res-convites');
+  if (!convites) return;
+  convites.style.marginTop = '';
+  if (![...convites.children].some((c) => c.childElementCount > 0)) return;
+  const falta = dobra() - (convites.getBoundingClientRect().top + scrollY);
+  if (falta > 0) convites.style.marginTop = `${Math.ceil(falta) + 12}px`;
 }
 
 /**
@@ -393,7 +402,7 @@ function entrarComOBalao(root: HTMLElement, msg: HTMLElement): void {
   window.setTimeout(digitar, 1500); // contador que não terminou (aba no fundo): o balão não fica esperando
 }
 
-/** Tira o ouvinte de resize do último resultado (um por vez). */
+/** Desliga o ajuste da dobra do último resultado (um por vez). */
 let pararDeAjustar: (() => void) | null = null;
 
 export interface Compartilhar {
@@ -442,22 +451,29 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
 
   // "Desafiar a galera": o link do wa.me com a mensagem inteira, direto do toque (sem await nem share com o card), para
   // o link do desafio ir sempre. O toque só conta (meio "grupo", com o tipo do desafio).
+  // A dobra se ajusta já (antes do balão aparecer: o espaço dele já está ali) e de novo quando a tela ou um convite
+  // muda de tamanho: a fonte chegou, a letra do sistema cresceu, o aparelho girou, o convite entrou. O ajuste sai num
+  // setTimeout curto, fora da entrega do ResizeObserver (sem laço) e sem depender de quadro de animação. Um observador por vez: o do resultado anterior
+  // sai aqui (o root é o do app inteiro e não avisa a saída).
+  ajustarDobra(root);
+  pararDeAjustar?.();
+  const tela = root.querySelector<HTMLElement>('.res-padrao');
+  let quadro = 0;
+  const observador =
+    typeof ResizeObserver === 'undefined' || !tela
+      ? null
+      : new ResizeObserver(() => {
+          clearTimeout(quadro);
+          quadro = window.setTimeout(() => (tela.isConnected ? ajustarDobra(root) : pararDeAjustar?.()), 30);
+        });
+  if (tela) for (const el of [tela, ...tela.querySelectorAll('.res-convites > *')]) observador?.observe(el);
+  pararDeAjustar = () => {
+    clearTimeout(quadro);
+    observador?.disconnect();
+    pararDeAjustar = null;
+  };
   const msg = root.querySelector<HTMLElement>('[data-msg]');
-  if (msg) {
-    // A dobra se ajusta antes do balão aparecer (o espaço dele já está ali), de novo quando a fonte chega e ao girar.
-    ajustarDobra(root);
-    requestAnimationFrame(() => ajustarDobra(root));
-    void document.fonts?.ready.then(() => ajustarDobra(root));
-    // Um ouvinte de resize por vez: o do resultado anterior sai aqui (o root é o do app inteiro e não avisa a saída).
-    pararDeAjustar?.();
-    const aoMudar = () => (msg.isConnected ? ajustarDobra(root) : pararDeAjustar?.());
-    addEventListener('resize', aoMudar);
-    pararDeAjustar = () => {
-      removeEventListener('resize', aoMudar);
-      pararDeAjustar = null;
-    };
-    entrarComOBalao(root, msg);
-  }
+  if (msg) entrarComOBalao(root, msg);
   root.querySelector('[data-desafiar]')?.addEventListener('click', () => contarMeio('grupo'));
 
   botao('card').addEventListener('click', () => {

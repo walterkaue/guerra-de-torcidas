@@ -722,6 +722,8 @@
 
 .res-msg-balao {
   position: relative;
+  /* Contém o "agora" (float) mesmo quando a última linha ocupa a largura toda. */
+  display: flow-root;
   margin: 0;
   padding: 7px 10px 6px 12px;
   border-radius: 14px 14px 3px 14px;
