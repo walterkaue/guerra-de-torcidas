@@ -74,6 +74,7 @@ Home nova, decidida em 31/10/2026. De cima para baixo:
 
 - Convite de desafio com borda neutra fina, não amarela. É a única exceção ao botão principal único: só aparece para quem chegou por um link de desafio.
 - Barra de navegação: Jogar, Palpites, Tabela, Perfil.
+- Textos e botões seguem as "Regras de estilo dos textos" do `docs/narrador.md`.
 
 ### Partida
 - **Perspectiva:** gol maior e mais baixo, linhas da área convergindo, marca do pênalti com a bola grande perto do dedo.
