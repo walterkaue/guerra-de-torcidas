@@ -181,3 +181,51 @@ describe('funil: desistência por etapa', () => {
     expect(fetches).toHaveLength(0);
   });
 });
+
+describe('funil: módulo de envio que não baixa (sem rede)', () => {
+  let falhas: number;
+  let lotes: string[][];
+  async function comImportQueFalha(vezes: number) {
+    falhas = vezes;
+    lotes = [];
+    vi.doMock('./funilEnvio', () => {
+      if (falhas-- > 0) throw new Error('Failed to fetch dynamically imported module');
+      return { mandar: (l: { ev: string }[]) => void lotes.push(l.map((e) => e.ev)) };
+    });
+    return carregar();
+  }
+  afterEach(() => vi.doUnmock('./funilEnvio'));
+
+  it('falha uma vez: sem exceção, e o lote sai inteiro, uma vez só, no envio seguinte', async () => {
+    const { contar, enviar } = await comImportQueFalha(1);
+    const soltas: unknown[] = [];
+    const ouvir = (r: unknown) => soltas.push(r);
+    process.on('unhandledRejection', ouvir);
+    contar({ ev: 'abriu', tipo: 'lance' });
+    contar({ ev: 'abriu', tipo: 'disputa' });
+    vi.advanceTimersByTime(3000);
+    await pronto();
+    expect(lotes).toEqual([]);
+    enviar();
+    await pronto();
+    enviar();
+    await pronto();
+    process.off('unhandledRejection', ouvir);
+    expect(soltas).toEqual([]);
+    expect(lotes).toEqual([['abriu', 'abriu']]);
+  });
+
+  it('falha sempre: a fila não passa do teto e, quando a rede volta, sai só o teto', async () => {
+    const { contar, enviar } = await comImportQueFalha(1000);
+    for (let i = 0; i < 150; i++) contar(abriu);
+    vi.advanceTimersByTime(3000);
+    await pronto();
+    enviar();
+    await pronto();
+    falhas = 0;
+    enviar();
+    await pronto();
+    expect(lotes.flat()).toHaveLength(100);
+    expect(lotes).toHaveLength(1);
+  });
+});
