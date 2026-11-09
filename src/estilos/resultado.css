@@ -1047,9 +1047,30 @@
   gap: 6px;
 }
 
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) {
+  padding-top: calc(4px + env(safe-area-inset-top));
+}
+
 .res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) .res-titulo {
   font-size: 32px;
-  margin-top: 0.06em;
+  margin-top: 0;
+}
+
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) .res-placar {
+  padding-block: 2px;
+}
+
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) :is(.res-pontos, .res-msg) {
+  gap: 2px;
+}
+
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) .res-desafio {
+  gap: 4px;
+}
+
+.res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) .botao-desafiar {
+  min-height: 52px;
+  padding-block: 10px;
 }
 
 .res-padrao:is([data-aperto='1'], [data-aperto='2'], [data-aperto='3']) .res-placar strong {
