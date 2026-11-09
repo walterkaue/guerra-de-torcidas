@@ -814,7 +814,7 @@ interface Membro {
 }
 
 const MEMBROS = {
-  coxa: { ini: [-4.8, -0.04], esq: [[-5.8, 0.38, -3.8, 1.0]], fundo: [[-1.0, 1.06], [3.4, 1.0]], dir: [[4.9, 0.42, 4.5, -0.04]], topo: [] },
+  coxa: { ini: [-4.8, -0.04], esq: [[-4.8, 0.38, -3.8, 1.0]], fundo: [[-1.0, 1.06], [3.4, 1.0]], dir: [[4.9, 0.42, 4.5, -0.04]], topo: [] },
   canela: { ini: [-3.8, -0.03], esq: [[-4.3, 0.25, -2.4, 0.88]], fundo: [[-1.8, 1.03], [1.9, 1.03], [2.4, 0.88]], dir: [[4.7, 0.36, 3.4, -0.03]], topo: [] },
   meiao: { ini: [-4.45, 0.27], esq: [[-4.6, 0.55, -2.6, 0.9], [-2.05, 1.06]], fundo: [[2.1, 1.06]], dir: [[2.6, 0.9], [4.65, 0.5, 4.0, 0.24]], topo: [] },
   braco: { ini: [-3.5, 0], esq: [[-4.2, 0.4, -2.4, 0.97]], fundo: [[-0.5, 1.05], [2.2, 0.96]], dir: [[3.2, 0.42, 3.1, 0]], topo: [[0, -0.28, -3.5, 0]] },
@@ -1751,7 +1751,7 @@ const CHANFRO_BARRA = 1.1;
 const INCLINACAO_DA_SOMBRA = 0.1;
 
 /** Vértices do calção (x, y relativos à pelve): 2 cantos de cima, 4 de cada boca e a virilha. */
-const VERTICES_DO_CALCAO = 11;
+const VERTICES_DO_CALCAO = 13;
 const BUF_CALCAO = new Float64Array(VERTICES_DO_CALCAO * 2);
 const BUF_CORTE = new Float64Array(VERTICES_DO_CALCAO * 4 + 8);
 const BUF_COS = new Float64Array(8);
@@ -1824,7 +1824,64 @@ export function montarCalcao(J: Float32Array, m: MedidasDaCamisa, p: Pose, out: 
   k = bocaDaPerna(out, k, J, p, 1, f);
   out[k++] = cx * ca - f.cantoY * sa;
   out[k++] = cx * sa + f.cantoY * ca;
-  return k / 2;
+  let n = k / 2;
+  if (!m.dentro) {
+    // Camisa por fora: a lateral do calção entra sob a camisa e só sai pela quina da bainha (primeiro a direita da tela,
+    // para os índices da esquerda não mudarem).
+    n = recolherSobACamisa(out, n, n - 2, n - 3, m, p, 1);
+    n = recolherSobACamisa(out, n, 1, 2, m, p, -1);
+  }
+  return n;
+}
+
+/** Folga entre o calção e a lateral da camisa (unidades): o calção nunca encosta na borda de cima da barra. */
+const FOLGA_DA_CAMISA = 0.12;
+
+/**
+ * Faz a lateral de uma boca do calção (do topo de fora `io` ao chanfro `ia`) ficar sob a camisa acima da barra: puxa o
+ * topo de fora para dentro da lateral da camisa e põe um vértice na quina da bainha, de onde a boca abre para fora.
+ * `lado` é 1 para a direita da tela e -1 para a esquerda. Devolve o novo número de vértices.
+ */
+function recolherSobACamisa(v: Float64Array, n: number, io: number, ia: number, m: MedidasDaCamisa, p: Pose, lado: number): number {
+  const ct = Math.cos(p[TR]);
+  const st = Math.sin(p[TR]);
+  const kx = p[OMK];
+  const ky = p[TRK];
+  const ox = v[2 * io];
+  const oy = v[2 * io + 1];
+  const ax = v[2 * ia];
+  const ay = v[2 * ia + 1];
+  // Vértices no quadro da camisa (x em unidades, y em unidades de tronco sem a escala do TRK).
+  const oX = (ox * ct + oy * st) / kx;
+  const oY = (-ox * st + oy * ct) / ky;
+  const aX = (ax * ct + ay * st) / kx;
+  const aY = (-ax * st + ay * ct) / ky;
+  const [cintura, barra] = [m.cintura, m.barra];
+  const yCintura = m.cinturaY * TRONCO;
+  const yBarra = (lado > 0 ? m.bainha[5] : m.bainha[1]) * TRONCO;
+  // Meia largura da camisa na altura y: reta da cintura à quina da bainha.
+  const meia = (y: number) => cintura + (barra - cintura) * Math.max(0, Math.min(1, (y - yCintura) / (yBarra - yCintura)));
+  let nx = oX;
+  let nY = oY;
+  if (oY < yBarra) {
+    const limite = meia(oY) - FOLGA_DA_CAMISA;
+    if (lado * oX > limite) nx = lado * limite;
+  }
+  // A quina da bainha só entra se o chanfro está abaixo da barra e mais para fora que ela.
+  const hX = lado * (barra - FOLGA_DA_CAMISA);
+  const poeQuina = aY > yBarra && lado * aX > lado * hX;
+  v[2 * io] = nx * kx * ct - nY * ky * st;
+  v[2 * io + 1] = nx * kx * st + nY * ky * ct;
+  if (!poeQuina) return n;
+  // Abre espaço entre o topo de fora e o chanfro (a ordem dos vértices muda de sentido nos dois lados).
+  const pos = lado > 0 ? ia + 1 : io + 1;
+  for (let i = n - 1; i >= pos; i--) {
+    v[2 * i + 2] = v[2 * i];
+    v[2 * i + 3] = v[2 * i + 1];
+  }
+  v[2 * pos] = hX * kx * ct - yBarra * ky * st;
+  v[2 * pos + 1] = hX * kx * st + yBarra * ky * ct;
+  return n + 1;
 }
 
 /** Mantém a parte do polígono onde nx·(x − px) + ny·(y − py) ≥ 0 (um corte pelo semiplano, sem criar nada). */
@@ -2053,6 +2110,15 @@ export const POSES_DE_FRENTE = {
     bD: [40, 1, -46, 0.95, 1],
     pE: [-6, 1, -2, 1, -35, 0.5, -1],
     pD: [6, 1, 2, 1, 35, 0.5, -1],
+  }),
+  /** Busto com a pose "braços pra cima": os braços para cima de antes do peso numa perna, sem inclinar. */
+  bustoBracos: frente({
+    y: -50,
+    trk: 1.02,
+    bE: [-152, 1, -158, 1, 1],
+    bD: [152, 1, 158, 1, 1],
+    pE: [-8, 1, -3, 1, -35, 0.5, -1],
+    pD: [8, 1, 3, 1, 35, 0.5, -1],
   }),
   /** Os dois braços para cima, abertos em V, com o peso numa perna. */
   bracos: frente({

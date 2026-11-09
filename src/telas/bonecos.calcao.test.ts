@@ -196,7 +196,7 @@ function coxaNoMundo(j: Float32Array, p: Pose, lado: number): Pt[] {
 }
 
 const j = new Float32Array(30);
-const buf = new Float64Array(24);
+const buf = new Float64Array(32);
 
 /** Pontos do contorno do calção e das duas coxas no mundo (e, à parte, os pontos de origem da perna, junto ao quadril). */
 function silhuetaDaPerna(m: MedidasDaCamisa, p: Pose): { tudo: Pt[]; quadril: Pt[] } {
@@ -243,9 +243,9 @@ function piorAcimaDaBarra(m: MedidasDaCamisa, camisa: number[], pontos: Pt[], p:
  */
 const POSES_EM_PE = ['frente.parado', 'frente.busto', 'frente.bracos', 'batedor.parado', 'batedor.olhando', 'batedor.espera', 'batedor.apoio', 'batedor.correA', 'batedor.correB', 'batedor.festaA', 'batedor.festaB', 'batedor.lamenta', 'batedor.lamenta2'];
 
-/** Nos cantos de cima: menos de um terço de pixel num boneco de 150 px. Na perna inteira, em pé: cerca de 1 unidade (1 a 2 px). */
+/** Nos cantos de cima, de perna aberta ou não: 0,6 unidade. Na perna inteira, em pé: só a folga da amostragem (0,1). */
 const TOLERANCIA = 0.6;
-const TOLERANCIA_EM_PE = 1.0;
+const TOLERANCIA_EM_PE = 0.1;
 
 describe('o calção e a coxa nunca aparecem acima da barra da camisa por fora', () => {
   for (const mulher of CORPOS) {

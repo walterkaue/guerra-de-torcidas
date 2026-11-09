@@ -471,7 +471,8 @@ function camadasDe(v: Vestimenta, cores: CoresDoTime): Camadas {
 /** O boneco vestido, de frente, com os pés na origem (unidades do boneco: ~98 de altura). O busto usa a pose reta. */
 function desenharFiguraVestida(c: CanvasRenderingContext2D, v: Vestimenta, cores: CoresDoTime, recorte: Recorte = 'corpo'): void {
   const boneco = criarBoneco(aparenciaDe(v), uniformeDaVestimenta(v, cores), true);
-  const pose = v.pose === 'bracos' ? POSES_DE_FRENTE.bracos : recorte === 'busto' ? POSES_DE_FRENTE.busto : POSES_DE_FRENTE.parado;
+  const pose =
+    recorte === 'busto' ? (v.pose === 'bracos' ? POSES_DE_FRENTE.bustoBracos : POSES_DE_FRENTE.busto) : v.pose === 'bracos' ? POSES_DE_FRENTE.bracos : POSES_DE_FRENTE.parado;
   desenharFigura(c, boneco, pose, false, camadasDe(v, cores));
 }
 

@@ -21,7 +21,7 @@ Unidades do esqueleto: tronco 33, pelve a 50 do chão; `x` à direita da tela. N
 - **Camisa por dentro (`Aparencia.barra = 'dentro'`, a escolha é o H03b):** cintura 9,2 / 8,6 em `y` -0,20, termina reta em `y` -0,02 e o calção vem **depois** da camisa, com cós de 1,7 de altura (no tom 0,82 do calção). Sem a escolha, vale `'fora'`; em desenvolvimento, `&barra=dentro` põe todos por dentro.
 - **Sombra, luz e dobra da camisa são pedaços exatos dela** (o teste confere), e a sombra do calção começa onde a da camisa termina e desce inclinada 1,2 para fora.
 - **Calção:** os cantos de cima giram TR + QD em volta da pelve e as bocas seguem as coxas. Com a camisa por fora, os cantos de cima ficam escondidos sob ela; a boca tem a abertura lateral cortada no canto de fora da barra.
-- **Regra do calção (`bonecos.calcao.test.ts`):** em todas as poses, nos dois corpos, os cantos de cima do calção e das coxas ficam sob a camisa; nas poses em pé, a perna e o calção inteiros não aparecem acima da barra (tolerância de 1 unidade). Perna aberta ou pulo faz a coxa sair pela lateral do quadril, e isso nenhuma camisa esconde.
+- **Regra do calção (`bonecos.calcao.test.ts`):** em todas as poses, nos dois corpos, os cantos de cima do calção e das coxas ficam sob a camisa; nas poses em pé, a perna e o calção inteiros não aparecem acima da barra (só a folga de amostragem, 0,1 unidade). Para isso, a lateral do calção entra sob a camisa e só sai pela quina da bainha, e a coxa não tem barriga na borda de fora. Perna aberta ou pulo faz a coxa sair pela lateral do quadril, e isso nenhuma camisa esconde.
 
 ## 2. Uniforme (pilar: sem marcas de clubes)
 
@@ -50,7 +50,7 @@ Esqueleto simples: quadril, tronco, cabeça, ombros, cotovelos, joelhos, tornoze
 | Batedor | parado, ajeitando a bola, corrida (3 passos), chute (pé de apoio, puxada, contato, finalização), cavadinha (toque curto), comemoração, mãos na cabeça |
 | Goleiro | base na linha, balançando, pulo baixo esquerda/direita, pulo alto esquerda/direita, de pé no meio, defesa encaixada, caído no chão |
 
-- **Peso numa perna (parado):** de frente (vestiário, Pôster, corpo 76 × 112) e de costas (antes do apito) o tronco pende 2,5° (3° com os braços para cima), o quadril inclina 4,5°, a perna da direita da tela relaxa e as mãos na cintura encostam na camisa. O **busto** (Home 52 e crachá 84) continua com a pose reta. No chute, o quadril gira -6° no contato (metade na puxada e no final). A espera, a corrida e o goleiro não mudaram.
+- **Peso numa perna (parado):** de frente (vestiário, Pôster, corpo 76 × 112) e de costas (antes do apito) o tronco pende 2,5° (3° com os braços para cima), o quadril inclina 4,5°, a perna da direita da tela relaxa e as mãos na cintura encostam na camisa. O **busto** (Home 52 e crachá 84) continua com a pose reta, também com os braços para cima (`bustoBracos`). No chute, o quadril gira -6° no contato (metade na puxada e no final). A espera, a corrida e o goleiro não mudaram.
 - As 6 zonas do gol mapeiam para os pulos (baixo ou alto, esquerda, meio ou direita).
 - O **pé de apoio** (a dica da defesa) precisa ficar bem visível na pose de chute do batedor da máquina.
 - Duração e cortes seguem o `visual.md`, seção 4 (150 a 400 ms, câmera lenta só na cavadinha, sem tremida com `prefers-reduced-motion`).
