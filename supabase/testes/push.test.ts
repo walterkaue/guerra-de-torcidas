@@ -9,6 +9,7 @@ const TEMPO = 60_000;
 const ANA = '00000000-0000-4000-8000-0000000000a1';
 const BIA = '00000000-0000-4000-8000-0000000000b2';
 const CAIO = '00000000-0000-4000-8000-0000000000c3';
+const DANI = '00000000-0000-4000-8000-0000000000d4';
 const chaves = { p256dh: 'B'.repeat(87), auth: 'a'.repeat(22) };
 const ep = (n: number) => `https://fcm.googleapis.com/fcm/send/aparelho-${n}`;
 
@@ -31,8 +32,9 @@ const inscricoes = async (uid: string) =>
 
 beforeAll(async () => {
   db = await bancoDeTeste();
-  await db.query('insert into auth.users (id) values ($1), ($2), ($3)', [ANA, BIA, CAIO]);
+  await db.query('insert into auth.users (id) values ($1), ($2), ($3), ($4)', [ANA, BIA, CAIO, DANI]);
   await db.query(`insert into public.torcedores (id, time_id, faixa_etaria) values ($1, 'bahia', '18_mais'), ($2, 'bahia', '18_mais')`, [ANA, BIA]);
+  await db.query(`insert into public.torcedores (id, time_id) values ($1, 'bahia')`, [DANI]);
 }, TEMPO);
 
 describe('inscrições de push', () => {
@@ -76,19 +78,25 @@ describe('push só para 18+ (docs/jogo.md, seção 13)', () => {
   }, TEMPO);
 
   it('menos de 18 não se inscreve', async () => {
-    for (const f of ['menos_16', '16_17']) {
+    // Da menos protetora para a mais: a faixa gravada só desce (20261109200000_apelido_16.sql).
+    for (const f of ['16_17', 'menos_16']) {
       await faixa(CAIO, f);
       await expect(salvar(CAIO, ep(50))).rejects.toThrow(/so_18_mais/);
     }
     expect(await inscricoes(CAIO)).toEqual([]);
   }, TEMPO);
 
-  it('18+ se inscreve, e quem deixa de ser 18+ é desinscrito', async () => {
+  it('quem marcou menos de 18 não vira 18+ por chamada direta', async () => {
     expect(await faixa(CAIO, '18_mais')).toEqual([{ achou: true }]);
-    await salvar(CAIO, ep(50));
-    expect(await inscricoes(CAIO)).toEqual([ep(50)]);
-    await faixa(CAIO, '16_17');
-    expect(await inscricoes(CAIO)).toEqual([]);
+    await expect(salvar(CAIO, ep(50))).rejects.toThrow(/so_18_mais/);
+  }, TEMPO);
+
+  it('18+ se inscreve, e quem deixa de ser 18+ é desinscrito', async () => {
+    expect(await faixa(DANI, '18_mais')).toEqual([{ achou: true }]);
+    await salvar(DANI, ep(51));
+    expect(await inscricoes(DANI)).toEqual([ep(51)]);
+    await faixa(DANI, '16_17');
+    expect(await inscricoes(DANI)).toEqual([]);
   }, TEMPO);
 
   it('só as três faixas valem, e só a própria pessoa grava', async () => {

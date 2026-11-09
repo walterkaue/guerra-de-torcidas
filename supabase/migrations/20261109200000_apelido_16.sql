@@ -8,16 +8,23 @@
 --    erro. A linha devolvida vem com apelido null; o app lê "mandei apelido e voltou vazio" como 'apelido_idade'.
 --    Sem erro porque um raise desfaria a chamada inteira, e o site antigo manda o apelido na escolha do time, antes
 --    da triagem: o time não seria gravado e as partidas não valeriam.
--- 2. Gatilhos em torcedores: com faixa menos_16 o apelido é sempre null; quando a faixa vira menos_16
+-- 2. salvar_faixa_etaria: a faixa gravada só muda para uma mais protetora (a regra da junção). Sem isso, quem
+--    marcou menos de 16 subia para 18_mais com uma chamada direta e depois gravava o apelido (e o push).
+-- 3. Gatilhos em torcedores: com faixa menos_16 o apelido é sempre null; quando a faixa vira menos_16
 --    (salvar_faixa_etaria, juntar_torcedores ou qualquer outro caminho), os desafios da pessoa perdem o apelido.
 --    Na junção, os desafios da conta que entrou somem com ela (on delete cascade); os do dono, pelo gatilho.
--- 3. Gatilho nas três tabelas de desafio: um desafio novo (ou que muda de dono) só leva apelido de quem é 16+.
--- 4. Limpeza única: torcedores menos_16 e os desafios deles ficam sem apelido. Guarda só quando e quantos
---    (apelidos_apagados, com o motivo novo 'idade'), nunca o apelido.
+-- 4. Gatilho nas três tabelas de desafio: um desafio novo (ou que muda de dono) só leva apelido de quem é 16+.
+-- 5. Limpeza única: torcedores menos_16 e os desafios deles ficam sem apelido; quem não respondeu a triagem perde
+--    o dos desafios (qualquer um com o link vê). Guarda só quando e quantos (apelidos_apagados, com o motivo novo
+--    'idade'), nunca o apelido.
 --
--- Site antigo com esta migração no ar: continua funcionando. Quem tem menos de 16 (ou não respondeu) e manda
--- apelido tem o time gravado e o apelido descartado; o card dele pode mostrar o apelido até o próximo carregamento,
--- quando o aparelho adota o do servidor (vazio). Ordem de publicação: qualquer uma; a recomendada é o site primeiro.
+-- Ordem de publicação: esta migração primeiro, o site logo depois. Com o site primeiro, até a migração entrar o
+-- servidor antigo segue gravando apelido de quem tem menos de 16 (aba aberta do site antigo, chamada direta) e os
+-- desafios deles seguem mostrando o apelido a quem abre o link, no site novo também. Com a migração primeiro, o site
+-- antigo continua funcionando: quem tem menos de 16 (ou não respondeu) e manda apelido tem o time gravado e o apelido
+-- descartado, e só o card do próprio aparelho pode mostrar o apelido até o próximo carregamento, quando o aparelho
+-- adota o do servidor (vazio). O custo: um 16+ novo que digita o apelido na escolha do time do site antigo, antes da
+-- triagem, perde o apelido sem aviso.
 
 -- ---------------------------------------------------------------------------
 -- 1. salvar_torcedor
@@ -68,7 +75,47 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 2. Gatilhos em torcedores
+-- 2. salvar_faixa_etaria: igual ao de 20261103400000_codigo_torcedor.sql, mas a faixa gravada só fica mais
+--    protetora. A primeira resposta (null) vale qualquer faixa. Pedido de faixa menos protetora: fica a gravada, sem
+--    erro, e devolve true como antes (o aparelho adota a do servidor na próxima carga; erro faria ele tentar de novo
+--    a cada sincronização). A tela não oferece trocar a faixa: nenhum aparelho de verdade pede para subir.
+-- ---------------------------------------------------------------------------
+create or replace function public.salvar_faixa_etaria(p_faixa text)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_ordem constant text[] := array['menos_16', '16_17', '18_mais'];
+  v_faixa text;
+begin
+  if auth.uid() is null then
+    raise exception 'sem_login' using errcode = '42501';
+  end if;
+  if not public.sessao_ativa() then
+    raise exception 'sessao_encerrada' using errcode = '42501';
+  end if;
+  if p_faixa is null or p_faixa not in ('menos_16', '16_17', '18_mais') then
+    raise exception 'faixa_invalida' using errcode = '22023';
+  end if;
+  update public.torcedores t
+    set faixa_etaria = case
+      when t.faixa_etaria is null then p_faixa
+      else v_ordem[least(array_position(v_ordem, t.faixa_etaria), array_position(v_ordem, p_faixa))]
+    end
+    where t.id = auth.uid()
+    returning t.faixa_etaria into v_faixa;
+  -- Só 18+ recebe o aviso de domingo: vale a faixa que ficou gravada.
+  if coalesce(v_faixa, p_faixa) <> '18_mais' then
+    delete from public.push_inscricoes where torcedor_id = auth.uid();
+  end if;
+  return v_faixa is not null;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 3. Gatilhos em torcedores
 -- ---------------------------------------------------------------------------
 create or replace function public.torcedor_sem_apelido_menos_16()
 returns trigger
@@ -110,7 +157,7 @@ create trigger desafios_sem_apelido_menos_16
   execute function public.desafios_sem_apelido_menos_16();
 
 -- ---------------------------------------------------------------------------
--- 3. Desafio novo só leva apelido de quem é 16+
+-- 4. Desafio novo só leva apelido de quem é 16+
 -- ---------------------------------------------------------------------------
 create or replace function public.desafio_apelido_so_16()
 returns trigger
@@ -151,7 +198,7 @@ revoke execute on function public.torcedor_sem_apelido_menos_16(), public.desafi
   public.desafio_apelido_so_16() from public, anon, authenticated;
 
 -- ---------------------------------------------------------------------------
--- 4. Limpeza única
+-- 5. Limpeza única
 -- ---------------------------------------------------------------------------
 -- 'admin': o #admin apagou (apelido_apagar, que não informa o motivo e fica com o padrão); 'idade': esta limpeza.
 alter table public.apelidos_apagados
@@ -161,15 +208,21 @@ do $$
 declare
   v_n integer;
 begin
+  -- Menos de 16: perde o apelido do perfil e o dos desafios. Sem resposta da triagem: perde só o dos desafios, que
+  -- qualquer um com o link vê (sem resposta conta como não, como no gatilho do desafio novo). O do perfil fica: só a
+  -- própria pessoa o vê, e ele volta a valer se ela responder 16+ (ou some, pelo gatilho, se responder menos de 16).
   with alvo as (
-    select t.id from public.torcedores t
-    where t.faixa_etaria = 'menos_16'
-      and (t.apelido is not null
+    select t.id, t.faixa_etaria from public.torcedores t
+    where (t.faixa_etaria is null or t.faixa_etaria = 'menos_16')
+      and ((t.faixa_etaria = 'menos_16' and t.apelido is not null)
         or exists (select 1 from public.desafios d where d.torcedor_id = t.id and d.apelido is not null)
         or exists (select 1 from public.prova_desafios d where d.torcedor_id = t.id and d.apelido is not null)
         or exists (select 1 from public.lances_desafios d where d.torcedor_id = t.id and d.apelido is not null))
   ),
-  t as (update public.torcedores x set apelido = null from alvo where x.id = alvo.id and x.apelido is not null returning 1),
+  t as (
+    update public.torcedores x set apelido = null from alvo
+    where x.id = alvo.id and alvo.faixa_etaria = 'menos_16' and x.apelido is not null returning 1
+  ),
   d as (update public.desafios x set apelido = null from alvo where x.torcedor_id = alvo.id and x.apelido is not null returning 1),
   p as (update public.prova_desafios x set apelido = null from alvo where x.torcedor_id = alvo.id and x.apelido is not null returning 1),
   l as (update public.lances_desafios x set apelido = null from alvo where x.torcedor_id = alvo.id and x.apelido is not null returning 1)

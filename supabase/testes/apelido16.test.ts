@@ -134,6 +134,41 @@ describe('apelido só 16+', () => {
     }, TEMPO);
   });
 
+  describe('a faixa gravada só fica mais protetora', () => {
+    const faixa = (uid: string, f: string) => celular<{ ok: boolean }>(db, uid, 'select public.salvar_faixa_etaria($1) as ok', [f]);
+    const faixaDe = async (uid: string) =>
+      (await db.query<{ f: string | null }>('select faixa_etaria as f from public.torcedores where id = $1', [uid])).rows[0]?.f;
+
+    it('menos de 16 não sobe por chamada direta: o apelido e o push continuam fechados', async () => {
+      const eu = await torcedor(db, 'menos_16', null);
+      for (const f of ['18_mais', '16_17']) {
+        expect(await faixa(eu, f)).toEqual([{ ok: true }]);
+        expect(await faixaDe(eu)).toBe('menos_16');
+      }
+      expect(await celular(db, eu, 'select apelido from public.salvar_torcedor($1, $2)', ['remo', 'Rei do Gol'])).toEqual([{ apelido: null }]);
+      expect(await apelidoDe(db, eu)).toBeNull();
+      await expect(
+        celular(db, eu, 'select public.salvar_inscricao_push($1, $2, $3)', ['https://fcm.googleapis.com/fcm/send/x', 'B'.repeat(87), 'a'.repeat(22)]),
+      ).rejects.toThrow(/so_18_mais/);
+    }, TEMPO);
+
+    it('16 ou 17 não vira 18+; descer sempre vale; a primeira resposta vale qualquer faixa', async () => {
+      const eu = await torcedor(db, null, null);
+      await faixa(eu, '18_mais');
+      expect(await faixaDe(eu)).toBe('18_mais');
+      await faixa(eu, '16_17');
+      expect(await faixaDe(eu)).toBe('16_17');
+      await faixa(eu, '18_mais');
+      expect(await faixaDe(eu)).toBe('16_17');
+      await faixa(eu, 'menos_16');
+      expect(await faixaDe(eu)).toBe('menos_16');
+    }, TEMPO);
+
+    it('sem torcedor ainda devolve false, como antes', async () => {
+      expect(await faixa(await usuario(db), '16_17')).toEqual([{ ok: false }]);
+    }, TEMPO);
+  });
+
   describe('a faixa vira menos_16', () => {
     it('pela triagem: o apelido e o dos desafios somem; os pontos não mudam', async () => {
       const eu = await torcedor(db, '18_mais');
@@ -195,6 +230,35 @@ describe('apelido só 16+', () => {
       );
       expect(r).toEqual([{ apelido: 'Bia Gol', faixa_etaria: '16_17' }]);
     }, TEMPO);
+
+    it('junção com o dono menos de 16: o apelido da conta 16+ que entrou não passa', async () => {
+      const dono = await torcedor(db, 'menos_16', null);
+      const origem = await torcedor(db, '16_17', 'Bia Gol');
+      await servidor(db, 'select public.codigo_gerar($1, $2)', [dono, impressao('NNNN2222')]);
+      await servidor(db, 'select * from public.codigo_conferir($1, $2)', [origem, impressao('NNNN2222')]);
+      const r = await servidor<{ apelido: string | null; faixa_etaria: string }>(
+        db,
+        'select apelido, faixa_etaria from public.juntar_torcedores($1, $2, null)',
+        [impressao('NNNN2222'), origem],
+      );
+      expect(r).toEqual([{ apelido: null, faixa_etaria: 'menos_16' }]);
+      expect(await apelidoDe(db, dono)).toBeNull();
+    }, TEMPO);
+
+    it('junção de uma conta sem resposta com uma menos de 16: fica menos de 16, sem apelido', async () => {
+      const dono = await torcedor(db, null, 'Cau Gol'); // apelido de antes da regra
+      await desafios(db, dono, 'Cau Gol', 'jun01');
+      const origem = await torcedor(db, 'menos_16', null);
+      await servidor(db, 'select public.codigo_gerar($1, $2)', [dono, impressao('PPPP2222')]);
+      await servidor(db, 'select * from public.codigo_conferir($1, $2)', [origem, impressao('PPPP2222')]);
+      const r = await servidor<{ apelido: string | null; faixa_etaria: string }>(
+        db,
+        'select apelido, faixa_etaria from public.juntar_torcedores($1, $2, null)',
+        [impressao('PPPP2222'), origem],
+      );
+      expect(r).toEqual([{ apelido: null, faixa_etaria: 'menos_16' }]);
+      expect(await apelidosDosDesafios(db, dono)).toEqual([null, null, null]);
+    }, TEMPO);
   });
 
   describe('desafio novo', () => {
@@ -245,6 +309,23 @@ describe('apelido só 16+', () => {
     );
     expect(rows.every((r) => !r.pode)).toBe(true);
   }, TEMPO);
+
+  it('quem pode chamar salvar_torcedor e salvar_faixa_etaria continua o mesmo: só o celular com login', async () => {
+    const { rows } = await db.query<{ papel: string; f: string; pode: boolean }>(
+      `select papel, f, has_function_privilege(papel, f, 'execute') as pode
+       from unnest(array['anon', 'authenticated']) papel,
+            unnest(array['public.salvar_torcedor(text, text)', 'public.salvar_faixa_etaria(text)']) f`,
+    );
+    for (const r of rows) expect(r.pode, `${r.papel} ${r.f}`).toBe(r.papel === 'authenticated');
+    // Todas as funções novas ou mudadas fixam o search_path (as security definer não podem ser enganadas por um schema).
+    const { rows: funcoes } = await db.query<{ f: string; config: string[] | null }>(
+      `select p.proname as f, p.proconfig as config from pg_proc p
+       where p.pronamespace = 'public'::regnamespace and p.proname in ('salvar_torcedor', 'salvar_faixa_etaria',
+         'desafios_sem_apelido_menos_16', 'desafio_apelido_so_16', 'torcedor_sem_apelido_menos_16')`,
+    );
+    expect(funcoes).toHaveLength(5);
+    for (const r of funcoes) expect(r.config, r.f).toContain('search_path=""');
+  }, TEMPO);
 });
 
 describe('limpeza única', () => {
@@ -259,6 +340,7 @@ describe('limpeza única', () => {
     const maior = await torcedor(db, '16_17', 'Cau Gol');
     await desafios(db, maior, 'Cau Gol', 'lim02');
     const semResposta = await torcedor(db, null, 'Dani Gol');
+    await desafios(db, semResposta, 'Dani Gol', 'lim03');
 
     await aplicarMigracao(db, MIGRACAO);
 
@@ -268,11 +350,13 @@ describe('limpeza única', () => {
     expect(await apelidoDe(db, menorLimpo)).toBeNull();
     expect(await apelidoDe(db, maior)).toBe('Cau Gol');
     expect(await apelidosDosDesafios(db, maior)).toEqual(['Cau Gol', 'Cau Gol', 'Cau Gol']);
+    // Sem resposta da triagem: o desafio (que qualquer um com o link vê) perde o apelido; o do perfil fica, só ela vê.
+    expect(await apelidosDosDesafios(db, semResposta)).toEqual([null, null, null]);
     expect(await apelidoDe(db, semResposta)).toBe('Dani Gol');
 
     const { rows } = await db.query<Record<string, unknown>>('select * from public.apelidos_apagados');
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ torcedores: 2, motivo: 'idade' });
+    expect(rows[0]).toMatchObject({ torcedores: 3, motivo: 'idade' });
     expect(Object.keys(rows[0]).sort()).toEqual(['apagado_em', 'id', 'motivo', 'torcedores']);
     expect(JSON.stringify(rows)).not.toMatch(/Gol/);
 
