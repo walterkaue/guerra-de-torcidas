@@ -7,6 +7,7 @@ import { MEDALHAS, type Medalha } from './lances.ts';
 import { MEDALHAS_PENALTIS } from './regraLances.ts';
 import {
   CABELOS,
+  BARRAS,
   CORPOS,
   FORMATO_DO_NUMERO,
   PADRAO,
@@ -88,6 +89,9 @@ export const NOMES_DOS_CABELOS: Record<(typeof CABELOS)[number], string> = {
 
 /** Os dois corpos aparecem só desenhados; o nome é para leitor de tela, sem rótulo de gênero. */
 export const NOMES_DOS_CORPOS: Record<(typeof CORPOS)[number], string> = { h: 'Corpo 1', m: 'Corpo 2' };
+
+/** Os dois jeitos de usar a camisa (não é peça: vale para todo mundo, nunca tranca). */
+export const NOMES_DAS_BARRAS: Record<(typeof BARRAS)[number], string> = { fora: 'Camisa por fora', dentro: 'Camisa por dentro' };
 
 /** Campos que podem ficar vazios: tocar de novo na peça vestida tira (volta ao PADRAO). Camisa e fundo nunca ficam vazios. */
 const OPCIONAIS: readonly CampoDaPeca[] = ['cabeca', 'punho', 'braco', 'peito', 'pescoco', 'chuteira', 'pose', 'moldura'];

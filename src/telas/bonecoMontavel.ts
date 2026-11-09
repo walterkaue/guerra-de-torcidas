@@ -146,7 +146,7 @@ export function chaveDoCache(v: Vestimenta, cores: CoresDoTime, recorte: Recorte
   // O corpo inteiro não desenha moldura: a mesma imagem serve para qualquer moldura.
   const moldura = recorte === 'busto' ? v.moldura : '-';
   return [
-    v.corpo, v.pele, v.cabelo, v.corCabelo, v.camisa, v.numero ?? '-', v.cabeca, v.punho, v.braco, v.peito, v.pescoco, v.chuteira, v.pose, v.fundo, moldura,
+    v.corpo, v.pele, v.cabelo, v.corCabelo, v.camisa, v.barra, v.numero ?? '-', v.cabeca, v.punho, v.braco, v.peito, v.pescoco, v.chuteira, v.pose, v.fundo, moldura,
     cores[0], cores[1], recorte, largura, altura, dpr, degrade ? 'd' : 'c',
   ].join('|');
 }
@@ -177,6 +177,7 @@ export const aparenciaDe = (v: Vestimenta): Aparencia => ({
   cabelo: v.cabelo,
   corCabelo: CORES_DE_CABELO[v.corCabelo] ?? CORES_DE_CABELO[0],
   mulher: v.corpo === 'm',
+  barra: v.barra,
 });
 
 function noTronco(c: CanvasRenderingContext2D, b: Boneco, p: Pose, escalado: boolean, fn: (comprimento: number) => void): void {

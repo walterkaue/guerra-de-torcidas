@@ -18,6 +18,11 @@ export const CABELOS = ['raspado', 'curto', 'crespo', 'trancas', 'coque', 'rabo'
 /** Índices das 6 cores de cabelo (CORES_DE_CABELO em src/telas/bonecos.ts). */
 export const CORES_DE_CABELO = [0, 1, 2, 3, 4, 5] as const;
 export const CAMISAS = ['uni1', 'uni2', 'goleiro'] as const;
+/**
+ * Camisa por fora (a barra sobre o calção) ou por dentro (o calção por cima). Não é peça: vale para todo mundo, como
+ * corpo e número, e não conta nas 26. Campo que chegou depois do v: 1: sem ele, vale 'fora'.
+ */
+export const BARRAS = ['fora', 'dentro'] as const;
 export const CABECAS = ['nenhum', 'testeira'] as const;
 export const PUNHOS = ['nenhum', 'munhequeira', 'munhequeira_bronze'] as const;
 export const BRACOS = ['nenhum', 'bracadeira'] as const;
@@ -51,6 +56,7 @@ export interface Vestimenta {
   cabelo: (typeof CABELOS)[number];
   corCabelo: (typeof CORES_DE_CABELO)[number];
   camisa: (typeof CAMISAS)[number];
+  barra: (typeof BARRAS)[number];
   numero: string | null;
   cabeca: (typeof CABECAS)[number];
   punho: (typeof PUNHOS)[number];
@@ -71,6 +77,7 @@ export const PADRAO: Readonly<Vestimenta> = {
   cabelo: 'raspado',
   corCabelo: 0,
   camisa: 'uni1',
+  barra: 'fora',
   numero: null,
   cabeca: 'nenhum',
   punho: 'nenhum',
@@ -110,7 +117,7 @@ export type Condicao =
   | { tipo: 'ouros'; quantos: number }
   | { tipo: 'aquecido' };
 
-/** Campos da vestimenta que têm peça (pele, cabelo, corpo e número são do começo e não contam). */
+/** Campos da vestimenta que têm peça (pele, cabelo, corpo, barra e número são do começo e não contam). */
 export type CampoDaPeca = 'camisa' | 'cabeca' | 'punho' | 'braco' | 'peito' | 'pescoco' | 'chuteira' | 'pose' | 'fundo' | 'moldura';
 
 export interface Peca {
@@ -249,6 +256,7 @@ export function validar(vestimenta: unknown, liberadas: Iterable<string>): Vesti
     pele: dentro(PELES, x.pele, PADRAO.pele),
     cabelo: dentro(CABELOS, x.cabelo, PADRAO.cabelo),
     corCabelo: dentro(CORES_DE_CABELO, x.corCabelo, PADRAO.corCabelo),
+    barra: dentro(BARRAS, x.barra, PADRAO.barra),
     numero: typeof x.numero === 'string' && FORMATO_DO_NUMERO.test(x.numero) ? x.numero : null,
   };
   const escrita = saida as unknown as Record<string, unknown>;
@@ -261,7 +269,7 @@ export function validar(vestimenta: unknown, liberadas: Iterable<string>): Vesti
   return saida;
 }
 
-/** Teto da vestimenta em JSON, em caracteres. A maior possível tem cerca de 230; o servidor recusa acima disto. */
+/** Teto da vestimenta em JSON, em caracteres. A maior possível tem cerca de 250; o servidor recusa acima disto. */
 export const TAMANHO_MAXIMO = 512;
 
 const LISTAS: Record<Exclude<keyof Vestimenta, 'v' | 'numero'>, readonly unknown[]> = {
@@ -270,6 +278,7 @@ const LISTAS: Record<Exclude<keyof Vestimenta, 'v' | 'numero'>, readonly unknown
   cabelo: CABELOS,
   corCabelo: CORES_DE_CABELO,
   camisa: CAMISAS,
+  barra: BARRAS,
   cabeca: CABECAS,
   punho: PUNHOS,
   braco: BRACOS,
@@ -281,18 +290,37 @@ const LISTAS: Record<Exclude<keyof Vestimenta, 'v' | 'numero'>, readonly unknown
   moldura: MOLDURAS,
 };
 const CHAVES = Object.keys(PADRAO).sort().join(',');
+/** As chaves de antes da barra (H03b): a cópia guardada no aparelho e o site antigo ainda mandam assim. */
+const CHAVES_SEM_BARRA = Object.keys(PADRAO)
+  .filter((k) => k !== 'barra')
+  .sort()
+  .join(',');
+
+/** Vestimenta de antes da barra: as mesmas chaves, sem `barra` (vale 'fora'). */
+export type VestimentaSemBarra = Omit<Vestimenta, 'barra'>;
 
 /**
- * O formato que o servidor aceita em salvar_boneco, antes de olhar o que está liberado: exatamente as chaves de PADRAO,
- * cada valor dentro do catálogo, número no formato ou null e JSON pequeno. Fora disso, recusa (não conserta).
- * Peça trancada passa aqui: quem troca pela padrão é o `validar`.
+ * O formato que o servidor aceita em salvar_boneco, antes de olhar o que está liberado: exatamente as chaves de PADRAO
+ * (ou elas sem `barra`, o formato de antes), cada valor dentro do catálogo, número no formato ou null e JSON pequeno.
+ * Fora disso, recusa (não conserta). Peça trancada passa aqui: quem troca pela padrão é o `validar`.
+ * Para desenhar, use `comFormato`, que completa a barra.
  */
-export function conferirFormato(x: unknown): x is Vestimenta {
+export function conferirFormato(x: unknown): x is Vestimenta | VestimentaSemBarra {
   if (!ehObjeto(x) || x.v !== 1) return false;
-  if (Object.keys(x).sort().join(',') !== CHAVES) return false;
+  const chaves = Object.keys(x).sort().join(',');
+  if (chaves !== CHAVES && chaves !== CHAVES_SEM_BARRA) return false;
   if (!(x.numero === null || (typeof x.numero === 'string' && FORMATO_DO_NUMERO.test(x.numero)))) return false;
-  for (const [campo, lista] of Object.entries(LISTAS)) if (!lista.includes(x[campo])) return false;
+  for (const [campo, lista] of Object.entries(LISTAS)) {
+    if (campo === 'barra' && !('barra' in x)) continue;
+    if (!lista.includes(x[campo])) return false;
+  }
   return JSON.stringify(x).length <= TAMANHO_MAXIMO;
+}
+
+/** A vestimenta no formato do catálogo (conferirFormato), com a barra completada ('fora' quando falta), ou null. */
+export function comFormato(x: unknown): Vestimenta | null {
+  if (!conferirFormato(x)) return null;
+  return 'barra' in x ? x : { ...x, barra: PADRAO.barra };
 }
 
 function indice(sortear: () => number, n: number): number {
@@ -326,12 +354,14 @@ export function sortearComPecas(liberadas: Iterable<string>, sortear: () => numb
     const n = indice(sortear, doisDigitos ? 100 : 10);
     numero = doisDigitos ? String(n).padStart(2, '0') : String(n);
   }
-  return { v: 1, corpo, pele, cabelo, corCabelo, camisa, numero, cabeca, punho, braco, peito, pescoco, chuteira, pose: 'parado', fundo, moldura } as Vestimenta;
+  // Por último, para o resto do sorteio sair igual ao de antes da barra com a mesma sequência.
+  const barra = escolher(BARRAS, sortear);
+  return { v: 1, corpo, pele, cabelo, corCabelo, camisa, barra, numero, cabeca, punho, braco, peito, pescoco, chuteira, pose: 'parado', fundo, moldura } as Vestimenta;
 }
 
-/** Vestimenta da conta nova: só peças do começo. */
+/** Vestimenta da conta nova: só peças do começo, com a camisa por fora (a barra só muda no vestiário). */
 export function sortearDoComeco(sortear: () => number = Math.random): Vestimenta {
-  return sortearComPecas([], sortear);
+  return { ...sortearComPecas([], sortear), barra: PADRAO.barra };
 }
 
 const ORDEM_DA_FACILIDADE = ['aquecido', 'bronze', 'prata', 'ouro', 'ouroDisputa', 'ouroSelecao', 'ouros'];

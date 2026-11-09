@@ -3,7 +3,7 @@
 
 import { ID_OUTRO, timePorId } from '../dados/times';
 import { prefs } from '../estado';
-import { conferirFormato, type Vestimenta } from '../jogo/vestiario';
+import { comFormato, type Vestimenta } from '../jogo/vestiario';
 import type { BonecoDoServidor } from '../servidor/boneco';
 import { bonecoGuardado, guardarBoneco, marcarVistas, type Pintura } from './bonecoDoAparelho';
 import { vestimentaDeCampo } from './bonecoEmCampo';
@@ -23,7 +23,7 @@ function coresDeAgora(): readonly [string, string] {
 /** A cópia guardada, se ainda tiver o formato do catálogo. */
 export function vestimentaGuardada(): Vestimenta | null {
   const v = bonecoGuardado();
-  return conferirFormato(v) ? v : null;
+  return comFormato(v);
 }
 
 /** Desenha num canvas novo e troca o conteúdo do alvo por ele. Sem vestimenta, não toca no alvo. */

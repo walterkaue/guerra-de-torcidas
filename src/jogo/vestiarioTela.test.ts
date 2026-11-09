@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { PADRAO, PECAS, pecaPorId, pecasLiberadas, type EstadoDoVestiario, type Vestimenta } from './vestiario';
+import { BARRAS, PADRAO, PECAS, pecaPorId, pecasLiberadas, type EstadoDoVestiario, type Vestimenta } from './vestiario';
 import {
   aoVoltar,
   folhaDaTrancada,
   gruposDaAba,
   mudou,
+  NOMES_DAS_BARRAS,
   pecasQueTem,
   quadrosDoNumero,
   sortearNaTela,
@@ -87,6 +88,7 @@ describe('sair sem salvar', () => {
     expect(aoVoltar(gravada, { ...gravada, numero: null })).toBe('perguntar');
     expect(aoVoltar(gravada, { ...gravada, fundo: 'arquibancada' })).toBe('perguntar');
     expect(aoVoltar(gravada, { ...gravada, pele: 3 })).toBe('perguntar');
+    expect(aoVoltar(gravada, { ...gravada, barra: 'dentro' })).toBe('perguntar');
   });
   it('voltar ao que estava gravado também sai direto', () => {
     const trocou = { ...gravada, camisa: 'uni2' as const };
@@ -224,7 +226,28 @@ describe('folha da peça trancada', () => {
   });
 });
 
+describe('Camisa por fora ou por dentro', () => {
+  it('tem nome para cada barra do catálogo', () => {
+    expect(Object.keys(NOMES_DAS_BARRAS).sort()).toEqual([...BARRAS].sort());
+    expect(NOMES_DAS_BARRAS).toEqual({ fora: 'Camisa por fora', dentro: 'Camisa por dentro' });
+  });
+  it('não é peça: nada de barra no catálogo de peças', () => {
+    expect(PECAS.some((p) => (p.campo as string) === 'barra')).toBe(false);
+  });
+});
+
 describe('Sortear', () => {
+  it('sorteia a barra, mesmo sem nenhuma peça liberada', () => {
+    const sorteio = semente(11);
+    const vistas = new Set<string>();
+    for (let i = 0; i < 100; i++) vistas.add(sortearNaTela(PADRAO, [], sorteio).barra);
+    expect(vistas).toEqual(new Set(['fora', 'dentro']));
+  });
+  it('pode trocar só a barra', () => {
+    const nova = { ...sortearNaTela(PADRAO, [], semente(5)) };
+    expect(mudou(PADRAO, { ...PADRAO, barra: 'dentro' })).toBe(true);
+    expect(nova.barra === 'fora' || nova.barra === 'dentro').toBe(true);
+  });
   it('só usa peças liberadas (Estreante: nada trancado aparece)', () => {
     const livres = pecasLiberadas({ nivel: 0, medalhas: [], aquecido: false });
     const sorteio = semente(7);

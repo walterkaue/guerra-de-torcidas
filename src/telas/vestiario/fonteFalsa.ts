@@ -26,6 +26,7 @@ export function estadoFalso(params: URLSearchParams): EstadoDaTela {
 
 const INICIAL: Vestimenta = {
   v: 1,
+  barra: 'fora',
   corpo: 'h',
   pele: 2,
   cabelo: 'curto',
@@ -49,7 +50,8 @@ let gravadaNaAba: Vestimenta | null = null;
 export function fonteFalsa(params: URLSearchParams): FonteDoVestiario {
   const estado = estadoFalso(params);
   const liberadas = pecasLiberadas(estado);
-  let gravada = validar(gravadaNaAba ?? INICIAL, liberadas);
+  // &barra=dentro: a camisa por dentro na vestimenta inicial (como no bonecos.ts).
+  let gravada = validar(gravadaNaAba ?? { ...INICIAL, barra: params.get('barra') === 'dentro' ? 'dentro' : 'fora' }, liberadas);
   const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
   return {
     async ler() {

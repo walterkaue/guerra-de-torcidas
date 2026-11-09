@@ -146,8 +146,11 @@ export async function salvarBoneco(s: Servicos, uid: string, sessao: string, cor
   const args = { p_torcedor: uid, p_sessao: sessao };
   const banco = (await chamar(s, 'boneco_estado', args)) as unknown as EstadoDoBanco;
   const estado = estadoDoVestiario(banco);
-  const final = validar(pedida, pecasLiberadas(estado));
-  const trocou = (Object.keys(final) as (keyof Vestimenta)[]).some((k) => final[k] !== pedida[k]);
+  // Site antigo manda sem `barra` (o formato de antes): fica a barra já gravada ('fora' sem boneco), e isso não é
+  // troca de peça. Barra não é peça: o `validar` só confere se é do catálogo.
+  const completa: Vestimenta = { barra: validar(banco.vestimenta, []).barra, ...pedida };
+  const final = validar(completa, pecasLiberadas(estado));
+  const trocou = (Object.keys(final) as (keyof Vestimenta)[]).some((k) => final[k] !== completa[k]);
   const gravado = await chamar(s, 'boneco_gravar', { ...args, p_vestimenta: final });
   return { ...resposta(gravado.vestimenta, estado, banco.em_campo), trocou };
 }

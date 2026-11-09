@@ -28,13 +28,16 @@
 //   &chamouSemBoneco          o servidor devolve boneco null (sem boneco, ou interruptor dele desligado): batedores
 //                             sorteados e nenhum busto
 //   &chamouTime=<id>          o time de quem chamou (padrão: o do resumo falso de cada tela), para ver as cores dele
-//   Sem nenhum dos dois, o falso devolve o boneco padrão de quem chamou. Só as 9 chaves de campo, como o servidor.
+//   Sem nenhum dos dois, o falso devolve o boneco padrão de quem chamou. Só as 10 chaves de campo, como o servidor.
 
 import { definirFonteDoBoneco } from '../telas/bonecoEmCampoCena';
-import { PADRAO, conferirFormato, type Vestimenta } from '../jogo/vestiario';
+import { PADRAO, comFormato, type Vestimenta } from '../jogo/vestiario';
 import type { VestimentaDeCampo } from '../telas/bonecoEmCampo';
 
-const PADRAO_DE_CAMPO: Vestimenta = { ...PADRAO, corpo: 'h', pele: 3, cabelo: 'curto', corCabelo: 0, numero: '10', cabeca: 'testeira', punho: 'munhequeira', braco: 'bracadeira' };
+/** &barra=dentro (o mesmo do bonecos.ts) vale também para a vestimenta inicial dos falsos. */
+const barraDoEndereco = (): Vestimenta['barra'] => (new URLSearchParams(location.search).get('barra') === 'dentro' ? 'dentro' : 'fora');
+
+const PADRAO_DE_CAMPO: Vestimenta = { ...PADRAO, barra: barraDoEndereco(), corpo: 'h', pele: 3, cabelo: 'curto', corCabelo: 0, numero: '10', cabeca: 'testeira', punho: 'munhequeira', braco: 'bracadeira' };
 
 const CHAMOU_PADRAO: Vestimenta = { ...PADRAO_DE_CAMPO, corpo: 'm', pele: 2, cabelo: 'trancas', corCabelo: 1, numero: '7' };
 
@@ -89,20 +92,19 @@ export function vestimentaFalsaDeCampo(busca: string = location.search): Vestime
   const params = new URLSearchParams(busca);
   if (params.has('semBoneco')) return null;
   const v = (params.get('boneco') ?? '').split('-').filter(Boolean).reduce(aplicar, PADRAO_DE_CAMPO);
-  return conferirFormato(v) ? v : PADRAO_DE_CAMPO;
+  return comFormato(v) ?? PADRAO_DE_CAMPO;
 }
 
 /** O time de quem chamou nos resumos falsos: &chamouTime=<id> ou o `padrao` de cada tela. */
 export const timeFalsoDeQuemChamou = (padrao: string, busca: string = location.search): string => new URLSearchParams(busca).get('chamouTime') ?? padrao;
 
-/** O `boneco` do resumo falso do desafio (só as 9 chaves de campo), ou null com &chamouSemBoneco. */
+/** O `boneco` do resumo falso do desafio (só as 10 chaves de campo), ou null com &chamouSemBoneco. */
 export function bonecoFalsoDeQuemChamou(busca: string = location.search): VestimentaDeCampo | null {
   const params = new URLSearchParams(busca);
   if (params.has('chamouSemBoneco')) return null;
   const v = (params.get('chamouBoneco') ?? '').split('-').filter(Boolean).reduce(aplicar, CHAMOU_PADRAO);
-  if (!conferirFormato(v)) return null;
-  const { corpo, pele, cabelo, corCabelo, numero, cabeca, punho, braco, chuteira } = v;
-  return { corpo, pele, cabelo, corCabelo, numero, cabeca, punho, braco, chuteira };
+  const { corpo, pele, cabelo, corCabelo, numero, cabeca, punho, braco, chuteira, barra } = v;
+  return { corpo, pele, cabelo, corCabelo, numero, cabeca, punho, braco, chuteira, barra };
 }
 
 definirFonteDoBoneco(() => ({ vestimenta: vestimentaFalsaDeCampo(), ligado: new URLSearchParams(location.search).get('emCampo') !== '0' }));
