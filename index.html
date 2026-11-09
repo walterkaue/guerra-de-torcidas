@@ -12,6 +12,31 @@
     <meta property="og:url" content="https://torcida.kauewalter.com.br/" />
     <link rel="preload" href="/fontes/anton.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fontes/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- A conexão com o Supabase abre enquanto o JS baixa: no 4G ruim são ~3 idas e voltas a menos antes do convite. -->
+    <link rel="preconnect" href="%VITE_SUPABASE_URL%" crossorigin />
+    <script>
+      // Link de desafio (?d=, ?l=, ?p=): o resumo já sai daqui, enquanto o JS baixa. Quem lê é src/servidor/api.ts
+      // (lerResumo), uma vez; sem isto, ou se falhar, ele mesmo pede. Mesma ordem de app.ts (x1DoLink).
+      (function () {
+        try {
+          var q = new URLSearchParams(location.search);
+          var rpcs = [['d', 'ver_desafio'], ['l', 'ver_desafio_lances'], ['p', 'ver_prova_desafio']];
+          for (var i = 0; i < rpcs.length; i++) {
+            var id = q.get(rpcs[i][0]);
+            if (!id || !/^[a-z0-9]{8}$/i.test(id)) continue;
+            id = id.toLowerCase();
+            var resposta = fetch('%VITE_SUPABASE_URL%/rest/v1/rpc/' + rpcs[i][1], {
+              method: 'POST',
+              headers: { apikey: '%VITE_SUPABASE_PUBLISHABLE_KEY%', 'Content-Type': 'application/json' },
+              body: JSON.stringify({ p_id: id }),
+            });
+            resposta.catch(function () {});
+            window.__resumoDoLink = { rpc: rpcs[i][1], id: id, resposta: resposta };
+            return;
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icones/apple-touch-icon.png" />
