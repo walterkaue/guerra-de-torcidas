@@ -53,7 +53,8 @@ Nada disso tem lembrete automático.
 - **Data do zerar da pré-temporada:** até 06/12, para estrear em dezembro; o balanço (`npm run balanco`) roda antes.
 - **Perguntas:** importar as 2 de `dados/perguntas/lote-02.csv` e dizer se tema de guerra entra na lista de proibidos (`dados/perguntas/piloto-lote-02.md`).
 - **`#admin`:** apagar o apelido já gravado que bate com a lista de jogadores famosos (1 em 06/11).
-- **Funil do desafio:** decidir as propostas que sobraram de `docs/propostas/funil-do-desafio.md` (item C06 do backlog; o C01 já conta o funil).
+- **Funil do desafio:** decidir as propostas que sobraram de `docs/propostas/funil-do-desafio.md` (o C01 conta o funil e o C06 já encurtou o caminho).
+- **Link do desafio com menos toques (C06):** num aparelho limpo, abrir um link de cada tipo pelo WhatsApp: o convite com as duas faixas aparece, um toque no time leva à triagem e ao jogo; conferir também o link vencido, o de quem chamou com "Outro time" e quem já joga.
 
 ## Em andamento
 

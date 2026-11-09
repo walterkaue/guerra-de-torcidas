@@ -6,6 +6,7 @@
 
 | Data | Decisão ou mudança |
 |---|---|
+| 09/11/2026 | C06, link do desafio com menos toques: o link abre uma tela própria de convite, e quem é novo toca na faixa do time de quem chamou ou do rival para aceitar (2 toques até o 1º chute; quem já joga, 1); a escolha do time perde o campo de apelido fora do Perfil; a Prova vinda do convite começa com "3, 2, 1". Regra em `jogos/contas.md` ("Primeiro acesso"), `jogos/penaltis.md`, `jogos/lances.md`, `jogos/conhecimento.md`, `visual.md` e `jogo.md` (seção 7). |
 | 09/11/2026 | Revisão de segurança do apelido 16+: no servidor, a faixa gravada só muda para uma mais protetora (`salvar_faixa_etaria`), e a limpeza única tira também o apelido dos desafios de quem não respondeu a triagem. Publicação: migração antes do site; `jogos/contas.md`. |
 | 09/11/2026 | Apelido só para quem marcou 16 ou mais na triagem; quem tem menos de 16 joga sem apelido e o servidor descarta o apelido (corte do art. 24 da Lei 15.211). Termos: versão 09/11/2026 (2ª). |
 | 09/11/2026 | Funil do C01: se o módulo de envio não baixa (sem rede), a falha é tratada, o lote volta à fila (teto de 100 eventos, os mais antigos caem) e o próximo envio tenta de novo. Nada muda no servidor nem nos eventos. |
