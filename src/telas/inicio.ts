@@ -695,7 +695,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     const duelo = situacaoDoDuelo(meu, rival, chave in vistos ? vistos[chave] : null);
     if (duelo) {
       memoria(CHAVE_DUELO, { [chave]: duelo.frente });
-      const ctx = { ...contextoDoTime(time), rival: { nome: tRival.nome, artigo: tRival.artigo }, dif: duelo.dif };
+      const ctx = { ...contextoDoTime(time), rival: { nome: tRival.nome, artigo: tRival.artigo }, dif: duelo.dif, etiquetas: duelo.etiquetas };
       fraseDoDuelo = { evento: duelo.evento, texto: escolherFrase(duelo.evento, ctx, Math.random)?.texto ?? null };
     } else {
       fraseDoDuelo = null;

@@ -9,7 +9,7 @@ import { prefs } from '../estado';
 import { sementeNova } from '../jogo/aleatorio';
 import { DISPUTAS } from '../dados/disputas';
 import { ID_SELECAO, chamadaDaDisputa, type Disputa } from '../jogo/disputas';
-import { etiquetasDaCobranca, etiquetasDaDefesa, eventoDaCobranca, eventoDaDefesa, eventosDoFim } from '../narrador/lance';
+import { etiquetasDaCobranca, etiquetasDaDefesa, etiquetasDoFim, eventoDaCobranca, eventoDaDefesa, eventosDoFim } from '../narrador/lance';
 import { criarNarrador } from '../narrador/sessao';
 import {
   COBRANCAS,
@@ -862,6 +862,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
               placar: `${resultado.golsJogador} x ${resultado.golsMaquina}`,
               pontos: resultado.pontos.total,
               numero: parOuImpar?.numeroNarrador,
+              etiquetas: etiquetasDoFim(resultado),
             }),
           )
           .filter((f): f is string => !!f),

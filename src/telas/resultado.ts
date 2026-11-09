@@ -95,7 +95,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     cmp &&
     escolherFrase(
       cmp.venceu ? 'desafio_vitoria' : 'desafio_derrota',
-      { ...contextoDoTime(time, apelido), desafiante: d.desafio?.apelido ?? 'o rival do dia' },
+      { ...contextoDoTime(time, apelido), desafiante: d.desafio?.apelido ?? 'quem te desafiou' },
       Math.random,
     )?.texto;
   const blocoDesafio = cmp

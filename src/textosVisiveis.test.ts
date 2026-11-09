@@ -107,7 +107,8 @@ export const PROIBIDOS: readonly { nome: string; re: RegExp }[] = [
   { nome: 'crava (texto)', re: /(?<![\w\-.#])crava(?![\w\-])/ },
   { nome: 'Bate Contra Mim', re: /Bate Contra Mim/i },
   { nome: 'Feedback ou bug', re: /Feedback ou bug/i },
-  { nome: 'Revanche', re: /\bRevanche\b/ },
+  // Só o botão: "revanche" como palavra comum pode ficar no narrador (Palpite da Rodada, Time do Dia).
+  { nome: 'Revanche (botão)', re: /^\s*Revanche[!?.]?\s*$/ },
   { nome: 'Contou pro ranking / No ranking em', re: /Contou pro ranking|No ranking em/i },
   { nome: 'Placar seco', re: /Placar seco/i },
   { nome: 'Recriar/recriou/recriados', re: /\bRecri\w+|\brecri(?:ando|ados|ado|ou|ar|e)\b/ },

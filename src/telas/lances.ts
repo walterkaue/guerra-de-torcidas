@@ -529,7 +529,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     // ou pro link dali: na derrota, a frase neutra, que leva a jogar de novo para ter o próprio link.
     const doNarrador =
       cmp?.venceu
-        ? escolherFrase('desafio_vitoria', { ...contextoDoTime(time, apelido), desafiante: cmp.desafiante ?? 'o rival do dia' }, Math.random)?.texto
+        ? escolherFrase('desafio_vitoria', { ...contextoDoTime(time, apelido), desafiante: cmp.desafiante ?? 'quem te desafiou' }, Math.random)?.texto
         : undefined;
     const fraseX1 = cmp ? (doNarrador ?? fraseNeutraDoX1(cmp.venceu)) : null;
     const duelo = cmp
