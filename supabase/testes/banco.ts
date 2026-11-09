@@ -51,14 +51,34 @@ export async function aplicarMigracao(db: PGlite, arquivo: string): Promise<void
   }
 }
 
-/** Banco com as migrações em ordem; com `antesDe`, para antes dela (para testar a própria migração). */
-export async function bancoDeTeste(antesDe?: string): Promise<PGlite> {
+async function construir(antesDe?: string): Promise<PGlite> {
   const db = new PGlite();
   await db.exec(ESBOCO_SUPABASE);
   for (const arquivo of migracoes()) {
     if (antesDe && arquivo >= antesDe) break;
     await aplicarMigracao(db, arquivo);
   }
+  return db;
+}
+
+/**
+ * Aplicar as ~50 migrações leva alguns segundos e vários testes pedem um banco novo cada. Em vez de repetir, o
+ * banco completo é montado uma vez por arquivo de teste, guardado como cópia da pasta de dados, e cada pedido
+ * abre uma cópia (isolada, como um banco novo). Foi a repetição, somada à CPU disputada com os outros arquivos
+ * rodando juntos, que estourou o tempo do temporada.test.ts.
+ */
+let molde: Promise<Blob | File> | undefined;
+
+/** Banco com as migrações em ordem; com `antesDe`, para antes dela (para testar a própria migração). */
+export async function bancoDeTeste(antesDe?: string): Promise<PGlite> {
+  if (antesDe) return construir(antesDe);
+  molde ??= construir().then(async (base) => {
+    const copia = await base.dumpDataDir('none');
+    await base.close();
+    return copia;
+  });
+  const db = new PGlite({ loadDataDir: await molde });
+  await db.waitReady;
   return db;
 }
 
