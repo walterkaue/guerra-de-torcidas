@@ -29,19 +29,42 @@ function ruido(a: AudioContext, duracao: number): AudioBufferSourceNode {
   return src;
 }
 
+/** Variação de ±pct (0,1 = ±10%) em torno de base. `r` é um sorteio de 0 a 1 (injetável nos testes). */
+export function variar(base: number, pct = 0.1, r: number = Math.random()): number {
+  return base * (1 + (r * 2 - 1) * pct);
+}
+
+/** Chute: estalo médio (500 Hz a 4 kHz), que o alto-falante do celular reproduz. */
+export function tocarChuteEm(a: AudioContext): void {
+  const t = a.currentTime;
+  const tom = variar(1, 0.1);
+  const vol = variar(1, 0.15);
+  // Estalo: ruído filtrado na faixa média.
+  const src = ruido(a, 0.1);
+  const filtro = a.createBiquadFilter();
+  filtro.type = 'bandpass';
+  filtro.frequency.value = 1500 * tom;
+  filtro.Q.value = 0.7;
+  const g = a.createGain();
+  g.gain.setValueAtTime(0.9 * vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+  src.connect(filtro).connect(g).connect(a.destination);
+  src.start(t);
+  // Corpo: tom curto que desce, sem sair da faixa.
+  const o = a.createOscillator();
+  const go = a.createGain();
+  o.frequency.setValueAtTime(900 * tom, t);
+  o.frequency.exponentialRampToValueAtTime(550 * tom, t + 0.06);
+  go.gain.setValueAtTime(0.5 * vol, t);
+  go.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+  o.connect(go).connect(a.destination);
+  o.start(t);
+  o.stop(t + 0.09);
+}
+
 export function somChute(): void {
   const a = audio();
-  if (!a) return;
-  const t = a.currentTime;
-  const o = a.createOscillator();
-  const g = a.createGain();
-  o.frequency.setValueAtTime(140, t);
-  o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
-  g.gain.setValueAtTime(0.9, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-  o.connect(g).connect(a.destination);
-  o.start(t);
-  o.stop(t + 0.16);
+  if (a) tocarChuteEm(a);
 }
 
 /** Bola na trave: "plém" metálico curto (dois tons agudos que somem rápido). */
@@ -84,26 +107,40 @@ export function somTorcida(intensidade: 'festa' | 'uuuh'): void {
   src.start(t);
 }
 
+/** Apito: duas notas curtas (1,5 a 2 kHz), agudos cortados, sem trinado. */
+export function tocarApitoEm(a: AudioContext, longo = false): void {
+  const t = a.currentTime;
+  const tom = variar(1, 0.1);
+  const vol = 0.2 * variar(1, 0.15);
+  const corte = a.createBiquadFilter();
+  corte.type = 'lowpass';
+  corte.frequency.value = 2600;
+  corte.connect(a.destination);
+  const notas: Array<[number, number, number]> = longo
+    ? [
+        [1700, 0, 0.14],
+        [1950, 0.17, 0.55],
+      ]
+    : [
+        [1700, 0, 0.1],
+        [1950, 0.13, 0.17],
+      ];
+  for (const [freq, ini, dur] of notas) {
+    const o = a.createOscillator();
+    const g = a.createGain();
+    o.type = 'triangle';
+    o.frequency.value = freq * tom;
+    g.gain.setValueAtTime(0.0001, t + ini);
+    g.gain.exponentialRampToValueAtTime(vol, t + ini + 0.015);
+    g.gain.setValueAtTime(vol, t + ini + dur - 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + ini + dur);
+    o.connect(g).connect(corte);
+    o.start(t + ini);
+    o.stop(t + ini + dur);
+  }
+}
+
 export function somApito(longo = false): void {
   const a = audio();
-  if (!a) return;
-  const t = a.currentTime;
-  const o = a.createOscillator();
-  const lfo = a.createOscillator();
-  const lfoGanho = a.createGain();
-  const g = a.createGain();
-  o.frequency.value = 2900;
-  lfo.frequency.value = 28;
-  lfoGanho.gain.value = 180;
-  lfo.connect(lfoGanho).connect(o.frequency);
-  const dur = longo ? 0.9 : 0.35;
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.18, t + 0.03);
-  g.gain.setValueAtTime(0.18, t + dur - 0.05);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g).connect(a.destination);
-  o.start(t);
-  lfo.start(t);
-  o.stop(t + dur);
-  lfo.stop(t + dur);
+  if (a) tocarApitoEm(a, longo);
 }
