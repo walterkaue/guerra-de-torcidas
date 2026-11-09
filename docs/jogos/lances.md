@@ -76,12 +76,13 @@ Um jogo só para faltas, cara a cara e disputas de pênaltis históricas: mesma 
 - Botões: "Jogar de novo" (o mesmo lance) e "Ver os lances".
 - **Card "Telão do estádio"** (`src/jogo/cardLances.ts`, só da partida valendo): "LANCES DO JOGO", os pontos, o título do lance uma vez e as 3 tentativas (desfecho desenhado, "CARIMBOU O LANCE" e pontos), mais a linha da medalha nova. No texto de compartilhar, um emoji antigo por lance: ⚽ gol, ✋ defesa, 🚧 barreira, ❌ fora ou trave (`jogos/cards.md`).
 
-### desafio dos Lances
+### Desafio dos Lances
 - Toda partida normal gera um código com o resumo público da faixa usada. Compartilhar: o link `?l=código`, com "Te desafio nos Lances do Jogo: fiz {quanto}. Faz mais?".
 - **Quem aceita** joga o mesmo lance, **na mesma faixa**, com sementes novas; mais pontos vence, e o empate fica com quem desafiou. O desafio recebido não gera outro código e conta no limite do dia.
-- **Convite na Home:** "<quem> (<time>): N pontos no lance <título>. Mesmo lance, 3 tentativas. Faz mais?". "Encarar o desafio" (ou "Jogar agora") vai direto à partida, com "desafio: <apelido> fez N" no topo; o `?l=` sai do endereço.
+- **Convite na Home:** "<quem> (<time>): N pontos no lance <título>. Mesmo lance, 3 tentativas. Faz mais?". "Encarar o desafio" (ou "Jogar agora") vai direto à partida, com "Desafio: <apelido> fez N" no topo; o `?l=` sai do endereço.
+- **Prazo:** o desafio vale 7 dias desde a criação e é apagado com 30 (`jogos/penaltis.md`, "Desafio por link").
 - **Expira** (410 `desafio_expirado`) se o lance desceu de faixa depois do desafio (`desafioNaFaixa`), para um código antigo não guardar a faixa que pagava mais. Também expira o desafio cuja partida foi criada antes do corte.
-- **Erros** (404, 409, 410) viram partida normal do mesmo lance, com uma linha do narrador ("Esse desafio expirou. Vai uma partida normal!"). O resultado mostra o placar dos dois; frase do narrador que fala em link cai na neutra.
+- **Erros** (404, 409, 410) viram partida normal do mesmo lance, com uma linha do narrador (no 410, "Apitou o fim: esse desafio valia 7 dias. Bora outro!"). O resultado mostra o placar dos dois; frase do narrador que fala em link cai na neutra.
 - Boneco de quem chamou: `jogos/penaltis.md` (Desafio por link) e `jogos/boneco-montavel.md`.
 
 ### Anti-trapaça

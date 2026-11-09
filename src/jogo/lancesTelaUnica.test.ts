@@ -83,7 +83,7 @@ describe('textos da tela única', () => {
   it('erros do desafio viram partida normal; os outros, não', () => {
     expect(avisoDoErroDoX1('desafio_nao_encontrado')).toBe('Esse desafio não existe mais. Bora outro!');
     expect(avisoDoErroDoX1('proprio_desafio')).toBe('Esse desafio é seu. Bora outro!');
-    expect(avisoDoErroDoX1('desafio_expirado')).toBe('Apitou o fim: esse desafio acabou. Bora outro!');
+    expect(avisoDoErroDoX1('desafio_expirado')).toBe('Apitou o fim: esse desafio valia 7 dias. Bora outro!');
     expect(avisoDoErroDoX1('limite_do_dia')).toBeNull();
   });
 

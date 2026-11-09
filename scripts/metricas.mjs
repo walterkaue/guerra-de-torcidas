@@ -68,7 +68,7 @@ export const secoes = [
      from estreia e, hoje h`,
   ],
   [
-    'Desafios',
+    'Desafios (só os dos últimos 30 dias: os mais antigos são apagados; o total de gerados está no funil)',
     `select
        (select count(*) from public.desafios) as enviados,
        (select count(distinct desafio_id) from public.partidas where modo = 'desafio' and desafio_id is not null and fechada_em is not null) as com_alguem_jogando,
@@ -78,7 +78,7 @@ export const secoes = [
           where p.modo = 'desafio' and p.fechada_em is not null and p.torcedor_id = d.torcedor_id) as revanches_do_proprio`,
   ],
   [
-    'Desafios por pessoa (o desafio nasce sozinho a cada partida normal: "enviado" não quer dizer compartilhado)',
+    'Desafios por pessoa, últimos 30 dias (o desafio nasce sozinho a cada partida normal: "enviado" não quer dizer compartilhado)',
     `with pessoas as (
        select d.torcedor_id, count(*) as gerados,
          count(*) filter (where exists (
@@ -89,7 +89,7 @@ export const secoes = [
      from pessoas order by gerados desc`,
   ],
   [
-    'Aceites entre quem já jogava (testadores trocando X1) x aceites de quem chegou novo',
+    'Aceites entre quem já jogava (testadores trocando X1) x aceites de quem chegou novo, desafios dos últimos 30 dias',
     `${base}
      select
        count(*) filter (where (select count(*) from fechadas q where q.torcedor_id = p.torcedor_id and q.fechada_em < p.fechada_em) > 0) as de_quem_ja_jogava,
@@ -105,7 +105,7 @@ export const secoes = [
      group by 1 order by 1`,
   ],
   [
-    'Convites (jogadores cuja 1ª partida foi um desafio de outra pessoa)',
+    'Convites (jogadores cuja 1ª partida foi um desafio de outra pessoa; só acha o convite de desafio dos últimos 30 dias)',
     `${base}
      select
        (select count(*) from estreia where convidador is not null and convidador <> torcedor_id) as entraram_por_link,
