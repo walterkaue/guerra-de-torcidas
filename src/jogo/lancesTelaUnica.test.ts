@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   LINHA_DO_HUB,
   alvoDoX1,
+  fraseNeutraDoX1,
+  placarDoX1,
   avisoDoErroDoX1,
   clubeInicial,
   clubeValido,
@@ -73,20 +75,27 @@ describe('textos da tela única', () => {
     expect(linhasDeTentativas(3)).toEqual(['Tentativa 1', 'Tentativa 2', 'Tentativa 3']);
   });
 
-  it('alvo do X1, com e sem apelido', () => {
-    expect(alvoDoX1('Camisa10', 96)).toBe('X1: Camisa10 fez 96');
-    expect(alvoDoX1(null, 96)).toBe('X1: Alguém fez 96');
+  it('alvo do desafio, com e sem apelido', () => {
+    expect(alvoDoX1('Camisa10', 96)).toBe('Desafio: Camisa10 fez 96');
+    expect(alvoDoX1(null, 96)).toBe('Desafio: alguém fez 96');
   });
 
-  it('erros do X1 viram partida normal; os outros, não', () => {
-    expect(avisoDoErroDoX1('desafio_nao_encontrado')).toBe('Esse X1 não existe mais. Vai uma partida normal!');
-    expect(avisoDoErroDoX1('proprio_desafio')).toBe('Esse X1 é seu. Vai uma partida normal!');
-    expect(avisoDoErroDoX1('desafio_expirado')).toBe('Esse X1 expirou. Vai uma partida normal!');
+  it('erros do desafio viram partida normal; os outros, não', () => {
+    expect(avisoDoErroDoX1('desafio_nao_encontrado')).toBe('Esse desafio não existe mais. Bora outro!');
+    expect(avisoDoErroDoX1('proprio_desafio')).toBe('Esse desafio é seu. Bora outro!');
+    expect(avisoDoErroDoX1('desafio_expirado')).toBe('Apitou o fim: esse desafio acabou. Bora outro!');
     expect(avisoDoErroDoX1('limite_do_dia')).toBeNull();
   });
 
   it('convite', () => {
-    expect(conviteLances(96, 'pro Flamengo', true)).toBe('Te chamei no X1 dos Lances: fiz 96 pro Flamengo. Faz mais?');
-    expect(conviteLances(1, null, false)).toBe('Fiz 1 ponto nos Lances do Jogo. Joga também:');
+    expect(conviteLances(96, 'pro Flamengo', true)).toBe('Te desafio nos Lances do Jogo: fiz 96 pro Flamengo. Faz mais?');
+    expect(conviteLances(1, null, false)).toBe('Fiz 1 ponto nos Lances do Jogo. Vem pro jogo:');
+  });
+
+  it('frase neutra e placar do desafio recebido', () => {
+    expect(fraseNeutraDoX1(true)).toBe('Desafio vencido! Agora é resenha no grupo.');
+    expect(fraseNeutraDoX1(false)).toBe('Dessa vez deu o outro lado. Tem jogo de volta?');
+    expect(placarDoX1(80, { desafiante: null, pontosDesafiante: 96, venceu: false }).nomeDoOutro).toBe('Rival do dia');
+    expect(placarDoX1(80, { desafiante: ' Camisa10 ', pontosDesafiante: 96, venceu: false }).nomeDoOutro).toBe('Camisa10');
   });
 });

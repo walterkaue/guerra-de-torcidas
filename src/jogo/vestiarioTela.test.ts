@@ -163,12 +163,12 @@ describe('folha da peça trancada', () => {
     expect(f.falta).toEqual(['O bronze sai com 5 gols num mesmo lance ou 10 gols numa mesma disputa de pênaltis.', 'Faltam 2 gols no lance mais perto.']);
     expect(f.junto).toEqual([]);
   });
-  it('1º ouro pede gols e recriando; junta chuteira dourada e Rede', () => {
+  it('1º ouro pede gols e carimbando; junta chuteira dourada e Rede', () => {
     const f = folhaDaTrancada(peca('chuteira_dourada'), {
       ...semNada,
       medalhas: [{ tipo: 'lance', gols: 49, recriados: 8, vitorias: 0, daSelecao: false }],
     });
-    expect(f.falta?.[1]).toBe('Faltam 1 gol e 2 recriando no lance mais perto.');
+    expect(f.falta?.[1]).toBe('Faltam 1 gol e 2 carimbando no lance mais perto.');
     expect(f.junto).toEqual(['Rede balançando']);
   });
   it('um só que falta usa "Falta"', () => {
@@ -191,9 +191,9 @@ describe('folha da peça trancada', () => {
     });
     expect(f.falta).toEqual(['O ouro sai com 100 gols e 10 vitórias numa mesma disputa de pênaltis.', 'Faltam 40 gols e 7 vitórias na disputa mais perto.']);
   });
-  it('singular de recriando e vitória', () => {
+  it('singular de carimbando e vitória', () => {
     const lance = folhaDaTrancada(peca('chuteira_dourada'), { ...semNada, medalhas: [{ tipo: 'lance', gols: 50, recriados: 9, vitorias: 0, daSelecao: false }] });
-    expect(lance.falta?.[1]).toBe('Falta 1 recriando no lance mais perto.');
+    expect(lance.falta?.[1]).toBe('Falta 1 carimbando no lance mais perto.');
     const disputa = folhaDaTrancada(peca('goleiro'), { ...semNada, medalhas: [{ tipo: 'disputa', gols: 100, recriados: 0, vitorias: 9, daSelecao: false }] });
     expect(disputa.falta?.[1]).toBe('Falta 1 vitória na disputa mais perto.');
   });

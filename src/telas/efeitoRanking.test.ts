@@ -1,6 +1,6 @@
 // Efeito no ranking do resultado (telas/efeitoRanking.ts), que desde 05/11/2026 serve aos Lances e aos Pênaltis:
-// o selo "No ranking em 1 min" vira "Subiu de 5º pra 3º" (e a nota) quando chega a primeira tabela calculada depois
-// da partida; sem tabela nova até o fim da espera, só "Contou pro ranking".
+// o selo "Subindo pro placar…" vira "Subiu de 5º pra 3º" (e a nota) quando chega a primeira tabela calculada depois
+// da partida; sem tabela nova até o fim da espera, só "Tá no placar".
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ligarEfeitoNoRanking, type Leitores } from './efeitoRanking';
@@ -8,7 +8,7 @@ import { ESPERA_RANKING_MS } from '../jogo/rankingMinuto';
 import type { LinhaRanking } from '../servidor/api';
 
 /** O mínimo de um elemento que o efeito mexe (o teste roda sem DOM). */
-const elemento = () => ({ className: 'selo', innerHTML: 'No ranking em 1 min', textContent: '', hidden: true }) as unknown as HTMLElement;
+const elemento = () => ({ className: 'selo', innerHTML: 'Subindo pro placar…', textContent: '', hidden: true }) as unknown as HTMLElement;
 
 const linha = (time_id: string, posicao: number, media30: number): LinhaRanking => ({
   time_id,
@@ -67,13 +67,13 @@ describe('efeito no ranking do resultado', () => {
     await vi.waitFor(() => expect(alvo.selo!.innerHTML).toBe('Entrou em 7º na semana'));
   });
 
-  it('tabela de antes da partida não conta; passada a espera, só "Contou pro ranking"', async () => {
+  it('tabela de antes da partida não conta; passada a espera, só "Tá no placar"', async () => {
     const alvo = { selo: elemento(), nota: elemento() };
     ligarEfeitoNoRanking(alvo, { timeId: 'flamengo', semana: 's', confirmadaEm: PARTIDA, antes: null }, leitores(ANTES, [linha('flamengo', 2, 10)]));
     await esperarPromessas();
-    expect(alvo.selo!.innerHTML).toBe('No ranking em 1 min');
+    expect(alvo.selo!.innerHTML).toBe('Subindo pro placar…');
     vi.advanceTimersByTime(ESPERA_RANKING_MS);
-    expect(alvo.selo!.innerHTML).toBe('Contou pro ranking');
+    expect(alvo.selo!.innerHTML).toBe('Tá no placar');
     expect(alvo.nota.hidden).toBe(true);
   });
 
@@ -82,6 +82,6 @@ describe('efeito no ranking do resultado', () => {
     const parar = ligarEfeitoNoRanking(alvo, { timeId: 'flamengo', semana: 's', confirmadaEm: PARTIDA, antes: null }, leitores(ANTES, []));
     parar();
     vi.advanceTimersByTime(ESPERA_RANKING_MS);
-    expect(alvo.selo!.innerHTML).toBe('No ranking em 1 min');
+    expect(alvo.selo!.innerHTML).toBe('Subindo pro placar…');
   });
 });
