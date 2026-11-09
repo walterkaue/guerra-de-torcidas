@@ -16,6 +16,9 @@ export const DIA_DO_CORTE = '2026-11-08';
 
 /** Partidas de Lances valendo por dia na regra nova, somando pênaltis, faltas e cara a cara (o X1 recebido conta). */
 export const LANCES_PARTIDAS_POR_DIA_UNIFICADO = 10;
+
+/** O texto do limite do dia, sem o ponto final (cada tela completa do seu jeito): vem da constante, nunca com o número escrito à mão. */
+export const TEXTO_DO_LIMITE = `Já jogou as ${LANCES_PARTIDAS_POR_DIA_UNIFICADO} valendo de hoje. Agora é treino, pra calibrar o pé`;
 /** Quantas partidas de cada grupo valem no dia: Lances (os três tipos) e Prova. */
 export const MELHORES_DO_DIA = 3;
 
