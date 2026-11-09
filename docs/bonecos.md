@@ -1,16 +1,27 @@
-# Bonecos — estilo "Silhueta premium"
+# Bonecos — estilo "Silhueta premium Plus"
 
-> Versão 1.1 · 19/10/2026 · Estilo aprovado pelo Kauê em 19/10/2026. Na 1.1: 5 batedores diferentes por lado, uniforme 1 e 2, goleiros com tom de contraste. Complementa o `visual.md`; quando discordarem, vale o `jogo.md`.
+> Versão 1.2 · 09/11/2026 · Estilo aprovado pelo Kauê em 19/10/2026; o Plus (H03) foi decidido em 09/11/2026. Na 1.1: 5 batedores diferentes por lado, uniforme 1 e 2, goleiros com tom de contraste. Complementa o `visual.md`; quando discordarem, vale o `jogo.md`.
 > Referência visual: ilustrações de jogadores em vetor chapado (imagem enviada pelo Kauê em 19/10). **É só referência de estilo**: não copiar personagens, poses exatas nem uniformes de nenhuma imagem de banco.
 
 ## 1. O estilo
 
 - **Formas chapadas, sem contorno.** Cada peça é um bloco de cor sólida: pele, camiseta, calção, meião, chuteira, cabelo.
+- **Três tons chapados por peça (o Plus):** luz, cor e sombra, com a luz vindo do alto à esquerda da tela. Nunca contorno, `filter` ou `shadowBlur`. Só com `qualidade().degrade` ligado (Alta e Média); em **Leve** o boneco fica na v2, sem as camadas do Plus.
 - **Curvas anatômicas com cortes angulares** nas dobras (cotovelo, joelho, barra da camiseta). Dá sensação de força e velocidade.
 - **Proporção atlética e alongada** (cabeça pequena, pernas longas), diferente do cartoon cabeçudo.
 - **Volume com um degradê sutil** só na pele e no calção: do tom base para um tom **mais escuro da mesma cor** na ponta do membro. Nunca degradê para preto, vermelho ou outra cor (fica estranho em pele escura e parece sujeira).
+- **Faixas contínuas:** a sombra dos membros é uma faixa que segue a borda (1,7 na perna, 1,3 no braço) e contorna a junta sem degrau: no joelho, no cotovelo e na capa do ombro a junta vai por baixo dos dois ossos e leva um gomo de sombra.
 - **Sombra no chão:** uma elipse escura translúcida. Nada de filtro de desfoque.
 - **Legível pequeno:** o boneco precisa ser reconhecível com 80 px de altura no celular.
+
+### O corpo e a camisa (H03, 09/11/2026)
+
+Unidades do esqueleto: tronco 33, pelve a 50 do chão; `x` à direita da tela. Nas formas da camisa, `y` é fração do tronco (0 = pelve, -1 = pescoço). **Todas as medidas moram em `medidasDaCamisa()` (`bonecos.ts`)**; o colete do boneco montável lê dali (`b.medidas`).
+- **Camisa por fora (o padrão), homem / mulher:** ombro 12,5 / 11, cintura 9,8 / 9,3 em `y` -0,25 (controle da curva do peito em cintura + 0,7), barra 10,6 / 11,2 (bainha em (-barra, 0,095), (-0,15·barra, 0,12), (barra, 0,085)), quadril 5,2 / 5,6. Sem ombreira: a junta do ombro fica em 84% do tronco e a capa do ombro (círculo de 3,5 na cor da camisa) vem logo depois da manga.
+- **Camisa por dentro (`Aparencia.barra = 'dentro'`, a escolha é o H03b):** cintura 9,2 / 8,6 em `y` -0,20, termina reta em `y` -0,02 e o calção vem **depois** da camisa, com cós de 1,7 de altura (no tom 0,82 do calção). Sem a escolha, vale `'fora'`; em desenvolvimento, `&barra=dentro` põe todos por dentro.
+- **Sombra, luz e dobra da camisa são pedaços exatos dela** (o teste confere), e a sombra do calção começa onde a da camisa termina e desce inclinada 1,2 para fora.
+- **Calção:** os cantos de cima giram TR + QD em volta da pelve e as bocas seguem as coxas. Com a camisa por fora, os cantos de cima ficam escondidos sob ela; a boca tem a abertura lateral cortada no canto de fora da barra.
+- **Regra do calção (`bonecos.calcao.test.ts`):** em todas as poses, nos dois corpos, os cantos de cima do calção e das coxas ficam sob a camisa; nas poses em pé, a perna e o calção inteiros não aparecem acima da barra (só a folga de amostragem, 0,1 unidade). Para isso, a lateral do calção entra sob a camisa e só sai pela quina da bainha, e a coxa não tem barriga na borda de fora. Perna aberta ou pulo faz a coxa sair pela lateral do quadril, e isso nenhuma camisa esconde.
 
 ## 2. Uniforme (pilar: sem marcas de clubes)
 
@@ -39,6 +50,7 @@ Esqueleto simples: quadril, tronco, cabeça, ombros, cotovelos, joelhos, tornoze
 | Batedor | parado, ajeitando a bola, corrida (3 passos), chute (pé de apoio, puxada, contato, finalização), cavadinha (toque curto), comemoração, mãos na cabeça |
 | Goleiro | base na linha, balançando, pulo baixo esquerda/direita, pulo alto esquerda/direita, de pé no meio, defesa encaixada, caído no chão |
 
+- **Peso numa perna (parado):** de frente (vestiário, Pôster, corpo 76 × 112) e de costas (antes do apito) o tronco pende 2,5° (3° com os braços para cima), o quadril inclina 4,5°, a perna da direita da tela relaxa e as mãos na cintura encostam na camisa. O **busto** (Home 52 e crachá 84) continua com a pose reta, também com os braços para cima (`bustoBracos`). No chute, o quadril gira -6° no contato (metade na puxada e no final). A espera, a corrida e o goleiro não mudaram.
 - As 6 zonas do gol mapeiam para os pulos (baixo ou alto, esquerda, meio ou direita).
 - O **pé de apoio** (a dica da defesa) precisa ficar bem visível na pose de chute do batedor da máquina.
 - Duração e cortes seguem o `visual.md`, seção 4 (150 a 400 ms, câmera lenta só na cavadinha, sem tremida com `prefers-reduced-motion`).
@@ -47,7 +59,7 @@ Esqueleto simples: quadril, tronco, cabeça, ombros, cotovelos, joelhos, tornoze
 
 O jogo é em **canvas 2D**, então o boneco é desenhado no canvas, não em SVG na página.
 
-- Formas criadas **uma vez** (`Path2D`) e reaproveitadas. Degradês criados **uma vez por time e tom de pele** e guardados; nunca dentro do quadro.
+- Formas criadas **uma vez** (`Path2D`, a partir de listas de pontos que os testes também leem) e reaproveitadas. O calção é montado a cada quadro em vetores reaproveitados e a sombra dele sai de um corte do polígono por um semiplano, sem `clip`. O Plus soma uns 15 preenchimentos por boneco. Degradês criados **uma vez por time e tom de pele** e guardados; nunca dentro do quadro.
 - **Nenhum filtro** (`blur`, `shadowBlur`, `filter`) no loop.
 - Loop com `requestAnimationFrame` e tempo decorrido (`dt`), para rodar igual em 60 e 120 Hz.
 - **Sem criar objetos novos a cada quadro** (vetores, arrays, strings): reaproveite.
@@ -65,7 +77,7 @@ O avatar do Perfil, da Home e do vestiário (`docs/jogo.md`, seção 14.5). Desd
 - **Número:** na frente da camisa, em Anton, na cor `corDeTexto` da camisa. O colete e a faixa cobrem o número; com apito, ele desce um pouco para não bater. No busto de 40 px pode sumir.
 - **Fundos:** formas simples em canvas, sem escudo, bandeira, marca, texto, número ou pessoa. A Barreira são placas lisas de treino; o Verde e amarelo são faixas diagonais, nunca losango com círculo.
 - **Recortes e tamanhos:** busto em círculo, com o fundo recortado e a moldura por fora (40, 52 e 84 px; 280 na vitrine). Corpo inteiro com o fundo atrás, sem moldura (76 × 112, 104 × 154 e ~390 × 404).
-- **Pose:** de frente, mãos na cintura (`POSES_DE_FRENTE.parado`); `bracos` só quando a vestimenta pede (card). O `poseParado` das partidas é de costas.
+- **Pose:** de frente, mãos na cintura e peso numa perna (`POSES_DE_FRENTE.parado`); no busto, a pose reta (`busto`); `bracos` só quando a vestimenta pede (card). O `poseParado` das partidas é de costas.
 - **Técnica:** `desenharBoneco(ctx, vestimenta, coresDoTime, recorte, largura, altura)` em `src/telas/bonecoMontavel.ts` (fundos em `bonecoFundos.ts`). Desenha uma vez num canvas fora da tela, no tamanho × devicePixelRatio, guarda até 24 imagens e depois só faz `drawImage`. Nenhum filtro nem `shadowBlur`. Com número, a imagem só vai ao cache com a Anton carregada: chame `prepararFonteDoNumero()` e redesenhe. As peças entram por ganchos opcionais (`Camadas`) no `desenharBoneco` de `bonecos.ts`; sem eles, o desenho das partidas é o mesmo.
 - **Legibilidade (o que ainda é fraco):** braçadeira e munhequeira quase somem abaixo de 52 px; o Telão vira pontilhado no busto pequeno; colete contra camisa de goleiro amarela tem contraste baixo.
 - **Vitrine:** `?vitrineBoneco` em dev (`src/dev/vitrineBoneco.ts`, fora do bundle), com `&so=prancha|bustos|tamanhos|uniformes|fundos|molduras|times`, `&estado=novo|meio|tudo` e `&time=<id>`. Prints em `docs/auditoria/2026-11-05/boneco/`.
@@ -82,4 +94,4 @@ Decidido pelo Kauê em 06/11/2026 (C5, Rota B, "você no lance"). Regra completa
 - **Técnica:** o batedor anda, então não há um desenho único para guardar. Por cena, o boneco e as camadas são montados uma vez e o número é desenhado uma vez num canvas fora da tela e reaproveitado com `drawImage` a cada quadro. Nada de texto, `Path2D` ou objeto novo dentro do quadro; nenhum filtro. Tudo vem no pedaço dos jogos (o JS inicial não cresce). Movimento reduzido e qualidade Leve: como nos sorteados.
 - **Sem cópia no aparelho, cópia inválida ou interruptor desligado:** sorteio, sem esperar a rede.
 
-> **Revitalização (08/11/2026):** a junção da cintura (quadril com tronco) e a personalização no Perfil vão ser revistas depois dos testes com amigos. Ideias e feedback em `docs/backlog.md`, item H03.
+> **Em aberto (H03b):** o vestiário escolher a camisa por fora ou por dentro. O desenho já aceita (`Aparencia.barra`); falta a peça, o código curto na vestimenta e a chave do cache (`chaveDoCache`). A personalização no Perfil segue no `docs/backlog.md`.

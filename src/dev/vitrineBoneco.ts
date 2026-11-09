@@ -1,7 +1,8 @@
 // Vitrine do boneco montável (só em desenvolvimento: abre com ?vitrineBoneco no endereço da raiz).
 // Mostra as peças, os tamanhos, os uniformes, os fundos, as molduras e os times difíceis para o Kauê aprovar.
 // Filtros: &so=<seção> (prancha, bustos, tamanhos, uniformes, fundos, molduras, times), &tam=<tamanho>
-// (b40, b52, b84, b280, c76, c104, c390), &estado=novo|meio|tudo (o que a prancha mostra trancado) e &time=<id>.
+// (b40, b52, b84, b280, c76, c104, c390), &estado=novo|meio|tudo (o que a prancha mostra trancado), &time=<id> e
+// &barra=dentro (camisa por dentro do calção, lida por bonecos.ts).
 
 import '../style.css';
 import { TIMES, type Time } from '../dados/times';

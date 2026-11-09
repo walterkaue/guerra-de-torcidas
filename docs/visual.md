@@ -135,7 +135,7 @@ Card 'Telão do estádio' (decidido em 31/10/2026): arquibancada do clube no alt
 - **Ranking público só de torcidas:** nenhum apelido aparece em ranking; cada pessoa vê só a própria posição.
 
 ### Bonecos
-- Estilo "Silhueta premium", aprovado em 19/10: ver `docs/bonecos.md`.
+- Estilo "Silhueta premium Plus" (aprovado em 19/10; Plus em 09/11): ver `docs/bonecos.md`.
 - **Boneco em campo (06/11/2026, `docs/bonecos.md` seção 7):** o batedor da pessoa é o boneco montável dela, de costas, nas cores da cena, com o número nas costas e as peças do vestiário que vão a campo; no replay, de frente comemorando. No desafio, o batedor de quem chamou é o boneco dele, e o resultado põe o busto de cada um ao lado do apelido no placar (o convite da Home mostra o busto de quem chamou). Sem boneco ou com o interruptor desligado, tudo como antes.
 
 ## 3.1 Perfil
@@ -188,7 +188,7 @@ Amostra aprovada em 26/10 (página "Qualidade Alta, Média e Leve"). Código em 
 |---|---|---|---|
 | Nitidez do canvas | 2× | 1,5× | 1× |
 | Torcida | balança e faz ola no gol | balança, sem ola | parada |
-| Bonecos | degradê na pele e no calção | degradê | cor lisa |
+| Bonecos | degradê na pele e no calção, mais a luz e a sombra do Plus | idem | cor lisa, sem as camadas do Plus |
 | Tremida no gol | sim | sim | não |
 | Replay de TV | sim, com a câmera fechando | sim, câmera parada | não |
 

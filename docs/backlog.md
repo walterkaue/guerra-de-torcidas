@@ -30,7 +30,7 @@
 0. **Agora, durante os testes:** A10 e H01a. O C01 (com o I03) está pronto e falta publicar.
 1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); B02 + C02 desenhados juntos no Chat (resultado em duas camadas, com o "Desafiar" como ação própria); C06 (link do desafio com menos toques); B03 (um aviso por vez na Home).
 2. **Semana de 16/11:** C03 + C08 (ver o gol de quem chamou, redesenhado no aparelho de quem abre); E01 (1ª visita); E04 (roteiro de iPhone); D07 (Palpite da Rodada na entressafra).
-3. **Depois:** C04 (com a prova de conceito antes), C05, H01b e H02, B01, F01, A08 e H03 (com o que os amigos disserem).
+3. **Depois:** C04 (com a prova de conceito antes), C05, H01b e H02, B01, F01, A08 e H03b (e a personalização do Perfil, com o que os amigos disserem).
 4. **Antes da divulgação pública:** A01 a A05.
 
 ---
@@ -124,7 +124,8 @@
 | H01a | **Apito mais curto e mais grave e chute com estalo médio** | K | Detalhe na seção 4.4. O apito de hoje é um tom de 2.900 Hz com trinado: agudo e cansativo, toca em toda partida. O chute desce a 45 Hz, grave que o alto-falante do celular nem reproduz. Ajuste direto, já. | P1 | P | Claude |
 | H01b | **Assinatura sonora e sons que faltam** | K | Detalhe na seção 4.4. Uma assinatura sonora curta e própria, com variação (I04). Desenho no Chat com página de teste. | P1 | M | Chat (desenho) → Claude |
 | H02 | Sons que faltam (MVP de áudio) | C | Hoje só existem 4 sons: chute, trave, torcida e apito. Faltam toque de botão, defesa do goleiro, rede balançando, barreira, recorde, medalha e vitória. Lista na seção 4.4. | P2 | M | Claude |
-| H03 | **Revitalização dos bonecos** | K | A junção da cintura (quadril com tronco) ainda incomoda, e a personalização no Perfil merece capricho. **Só backlog por enquanto:** o Kauê coleta feedback e ideias dos amigos antes de desenhar. Base: `docs/jogos/boneco-montavel.md`. | P2 | G | Kauê (feedback) → Chat |
+| H03 | ~~Revitalização dos bonecos~~ | K | **Entregue em 09/11/2026:** estilo "Silhueta premium Plus" (`docs/bonecos.md`). A cintura e o calção foram refeitos; a personalização no Perfil segue com o feedback dos amigos. | — | — | — |
+| H03b | **Camisa por fora ou por dentro no vestiário** | K | O desenho já aceita (`Aparencia.barra`, `&barra=dentro` em dev). Falta a peça do vestiário (aba Camisa), o código curto na `Vestimenta` (catálogo no celular e no servidor, `npm run compartilhar`) e a chave do cache de `desenharBoneco`. Em campo, entra a mesma escolha. | P3 | M | Chat (desenho da aba) → Claude |
 
 ### I. Lições dos jogos Flash (material do Kauê, 08/11/2026)
 

@@ -19,6 +19,7 @@
 //                 camisa de goleiro): prova que nenhuma aparece
 //   Atalhos prontos: coque, trancas, rabo, crespo, comprido, clara, escura, tudo, foras, liso.
 //   &time=<id>  muda o time do coração (as cores da testeira, da munhequeira e da chuteira "time").
+//   &barra=dentro  a camisa por dentro do calção, para todos os bonecos da cena (a opção do H03b; padrão: por fora). Quem lê é bonecos.ts.
 //
 // O boneco de quem chamou o X1 (os resumos falsos do desafio, `boneco` de ver_desafio e ver_desafio_lances; ?penaltiFalso
 // com ?d=, ?lancesFalsos com ?l= e ?homeFalsa com o convite):

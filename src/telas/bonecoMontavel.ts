@@ -21,6 +21,7 @@ import {
   desenharBoneco as desenharFigura,
   diferencaDeCor,
   escalaDoOsso,
+  formaDaCabeca,
   uniformeDeGoleiro,
   uniformeDeLinha,
   type Aparencia,
@@ -178,12 +179,6 @@ export const aparenciaDe = (v: Vestimenta): Aparencia => ({
   mulher: v.corpo === 'm',
 });
 
-/** Medidas do tronco para pôr peças no mesmo desenho da camisa (x em unidades, y de 0 na pelve a -1 no pescoço). */
-function medidasDaCamisa(b: Boneco): { om: number; cintura: number; barra: number } {
-  const m = b.aparencia.mulher;
-  return { om: b.ombro, cintura: m ? 7.4 : 8.2, barra: m ? 9.4 : 9.0 };
-}
-
 function noTronco(c: CanvasRenderingContext2D, b: Boneco, p: Pose, escalado: boolean, fn: (comprimento: number) => void): void {
   const tl = GEOMETRIA.TRONCO * p[INDICE.TRK];
   c.save();
@@ -195,7 +190,8 @@ function noTronco(c: CanvasRenderingContext2D, b: Boneco, p: Pose, escalado: boo
 }
 
 function desenharColete(c: CanvasRenderingContext2D, b: Boneco, p: Pose): void {
-  const { om, cintura, barra } = medidasDaCamisa(b);
+  // As medidas da camisa (por fora ou por dentro) vêm do boneco: um lugar só, em bonecos.ts.
+  const { om, cintura, cinturaY, controle, axila, bainha } = b.medidas;
   noTronco(c, b, p, true, () => {
     const colete = new Path2D();
     // Cava larga: a camisa aparece nos ombros e nas mangas. Gola em V.
@@ -204,14 +200,13 @@ function desenharColete(c: CanvasRenderingContext2D, b: Boneco, p: Pose): void {
     colete.quadraticCurveTo(-3.2, -0.82, 0, -0.74);
     colete.quadraticCurveTo(3.2, -0.82, 3.9, -1.0);
     colete.lineTo(7.0, -0.985);
-    colete.quadraticCurveTo(om - 4.2, -0.86, om - 1.8, -0.665);
-    colete.quadraticCurveTo(cintura + 1.0, -0.45, cintura, -0.22);
-    colete.lineTo(barra, 0.05);
-    colete.lineTo(barra * 0.15, 0.1);
-    colete.lineTo(-barra * 0.15, 0.1);
-    colete.lineTo(-barra, 0.05);
-    colete.lineTo(-cintura, -0.22);
-    colete.quadraticCurveTo(-cintura - 1.0, -0.45, -(om - 1.8), -0.665);
+    colete.quadraticCurveTo(om - 4.2, -0.86, axila, -0.665);
+    colete.quadraticCurveTo(controle, -0.45, cintura, cinturaY);
+    colete.lineTo(bainha[4], bainha[5]);
+    colete.lineTo(bainha[2], bainha[3]);
+    colete.lineTo(bainha[0], bainha[1]);
+    colete.lineTo(-cintura, cinturaY);
+    colete.quadraticCurveTo(-controle, -0.45, -axila, -0.665);
     colete.quadraticCurveTo(-(om - 4.2), -0.86, -7.0, -0.985);
     colete.closePath();
     const cor = corDoColete(b.uniforme.camisa);
@@ -360,9 +355,7 @@ function desenharTesteira(c: CanvasRenderingContext2D, b: Boneco, p: Pose, cor: 
   c.save();
   c.translate(b.j[JUNTA.CABECA], b.j[JUNTA.CABECA + 1]);
   c.rotate(p[INDICE.CB]);
-  c.beginPath();
-  c.ellipse(0, 0, 5.3, 6.3, 0, 0, Math.PI * 2);
-  c.clip();
+  c.clip(formaDaCabeca());
   c.fillStyle = cor;
   c.beginPath();
   c.moveTo(-7, -4.2);
@@ -475,10 +468,11 @@ function camadasDe(v: Vestimenta, cores: CoresDoTime): Camadas {
   return camadas;
 }
 
-/** O boneco vestido, de frente, com os pés na origem (unidades do boneco: ~98 de altura). */
-function desenharFiguraVestida(c: CanvasRenderingContext2D, v: Vestimenta, cores: CoresDoTime): void {
+/** O boneco vestido, de frente, com os pés na origem (unidades do boneco: ~98 de altura). O busto usa a pose reta. */
+function desenharFiguraVestida(c: CanvasRenderingContext2D, v: Vestimenta, cores: CoresDoTime, recorte: Recorte = 'corpo'): void {
   const boneco = criarBoneco(aparenciaDe(v), uniformeDaVestimenta(v, cores), true);
-  const pose = v.pose === 'bracos' ? POSES_DE_FRENTE.bracos : POSES_DE_FRENTE.parado;
+  const pose =
+    recorte === 'busto' ? (v.pose === 'bracos' ? POSES_DE_FRENTE.bustoBracos : POSES_DE_FRENTE.busto) : v.pose === 'bracos' ? POSES_DE_FRENTE.bracos : POSES_DE_FRENTE.parado;
   desenharFigura(c, boneco, pose, false, camadasDe(v, cores));
 }
 
@@ -538,7 +532,7 @@ function renderizar(v: Vestimenta, cores: CoresDoTime, recorte: Recorte, largura
     const escala = (r * 2) / JANELA_DO_BUSTO;
     c.scale(escala, escala);
     c.translate(0, -CENTRO_DO_BUSTO);
-    desenharFiguraVestida(c, v, cores);
+    desenharFiguraVestida(c, v, cores, 'busto');
     c.restore();
     moldura(c, v, cx, cy, lado / 2, espessura);
   } else {

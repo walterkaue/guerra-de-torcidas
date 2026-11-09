@@ -160,7 +160,7 @@ O dia de cada jogador vale as **3 melhores partidas de Lances** (pênaltis, falt
 - **Regras de tela:** **amarelo só no botão principal, um por tela**; aviso de pré-temporada como selo único no cabeçalho; números como bloco (número grande + rótulo curto); título de tela igual em todas; telas vazias e de erro com convite e "tentar de novo"; texto pequeno com contraste de pelo menos 4,5:1; alvo de toque de 44 px; par principal × secundário em 1 : 1,4.
 - **Resultado padrão** (`src/telas/resultadoPadrao.ts`) nos jogos de partida: placar → pontos pro time → detalhe → frase do narrador → selos → Carreira → "Mandar no grupo" com Card, Stories, Emoji e Link → Início e "Mais uma" fixos no rodapé.
 - **Celular primeiro:** testar em 390×844; toque, nunca hover; nada de rolagem horizontal. Movimento e vibração respeitam "movimento reduzido" e o botão Vibração.
-- **Bonecos sorteados:** estilo "Silhueta premium" (formas chapadas sem contorno, camiseta lisa, tons de pele e cabelos variados, homens e mulheres; 5 batedores diferentes por lado e 1 goleiro, sorteados por partida). Detalhe em `docs/bonecos.md`.
+- **Bonecos sorteados:** estilo "Silhueta premium Plus" (formas chapadas sem contorno, três tons por peça, camiseta lisa, tons de pele e cabelos variados, homens e mulheres; 5 batedores diferentes por lado e 1 goleiro, sorteados por partida). Detalhe em `docs/bonecos.md`.
 - **Fora:** nenhum espaço, aviso ou gatilho de compra em lugar nenhum.
 - Detalhe tela a tela: `docs/visual.md`.
 

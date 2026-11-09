@@ -1,6 +1,6 @@
-// Bonecos da partida no estilo "Silhueta premium" (docs/bonecos.md): formas chapadas sem contorno,
-// proporção atlética, cortes angulares nas dobras e degradê sutil só na pele e no calção.
-// Só desenho, nada de regra de jogo.
+// Bonecos da partida no estilo "Silhueta premium Plus" (docs/bonecos.md): formas chapadas sem contorno,
+// proporção atlética, cortes angulares nas dobras, degradê sutil na pele e no calção e, fora da qualidade Leve,
+// luz, cor e sombra em cada peça (luz do alto à esquerda). Só desenho, nada de regra de jogo.
 //
 // Esqueleto por rotações: cada pose guarda a posição da pelve e, para cada osso, o ângulo e o quanto
 // ele aparece encurtado (perna indo para longe da câmera fica mais curta). A animação interpola os
@@ -153,6 +153,11 @@ function sequencia(s: Sequencia, ms: number, out: Pose): Pose {
   return out;
 }
 
+// Peso numa perna (H03, 09/11/2026): na pose parada o tronco pende um pouco e o quadril inclina.
+const PESO_X = -1.4;
+const PESO_TR = -2.5;
+const PESO_QD = 4.5;
+
 // ---------- poses do batedor (visto de costas; chuta com o pé direito, o da direita da tela) ----------
 const costas = (o: Partial<Def>): Pose =>
   criarPose({
@@ -175,7 +180,7 @@ const PE_DE_APOIO: Perna = [-8, 0.72, -4, 0.95, 178, 0.7, -1];
 
 const B = {
   /** Mãos na cintura, esperando o apito. */
-  parado: costas({ bE: [-40, 1, 46, 0.95, 1], bD: [40, 1, -46, 0.95, 1], pE: [-6, 1, -1, 1, 170, 0.3, -1], pD: [6, 1, 1, 1, 190, 0.3, -1] }),
+  parado: costas({ x: PESO_X, tr: PESO_TR, qd: PESO_QD, bE: [-38, 1, 50, 0.95, 1], bD: [36, 1, -46, 0.95, 1], pE: [1, 1, 0, 1, 170, 0.3, -1], pD: [13, 0.98, 1, 0.97, 190, 0.3, -1] }),
   /** Olhando a bola ir, braços soltos. */
   olhando: costas({ bE: [-16, 1, -8, 1, 1], bD: [16, 1, 8, 1, 1], pE: [-5, 1, -1, 1, 172, 0.3, -1], pD: [5, 1, 1, 1, 188, 0.3, -1] }),
   /** Curvado sobre a bola, ajeitando. */
@@ -227,8 +232,9 @@ const B = {
     pD: [12, 1, 32, 0.85, 200, 0.45, 1],
   }),
   puxada: costas({
-    y: -49,
+    y: -49.2,
     tr: -8,
+    qd: -3,
     trk: 0.95,
     bE: [-78, 1, -62, 1, 1],
     bD: [22, 0.92, 44, 0.85, 1],
@@ -236,8 +242,9 @@ const B = {
     pD: [22, 0.9, 162, 0.72, -5, 0.55, 1],
   }),
   contato: costas({
-    y: -49,
+    y: -49.4,
     tr: -10,
+    qd: -6,
     trk: 0.96,
     bE: [-88, 1, -76, 1, 1],
     bD: [30, 0.92, 12, 0.92, 1],
@@ -245,8 +252,9 @@ const B = {
     pD: [30, 0.85, 42, 0.8, 92, 0.7, -1],
   }),
   final: costas({
-    y: -49,
+    y: -49.2,
     tr: -6,
+    qd: -3,
     trk: 1,
     cb: -4,
     bE: [-104, 1, -124, 1, 1],
@@ -527,12 +535,23 @@ export function poseGoleiroEsperando(ms: number, out: Pose): Pose {
 // ---------- aparência ----------
 export type Cabelo = 'raspado' | 'curto' | 'crespo' | 'trancas' | 'coque' | 'rabo' | 'comprido';
 
+/** Camisa por fora (a barra aparece sobre o calção, o padrão) ou por dentro (o calção por cima, com cós). */
+export type BarraDaCamisa = 'fora' | 'dentro';
+
 export interface Aparencia {
   pele: string;
   cabelo: Cabelo;
   corCabelo: string;
   mulher: boolean;
+  /** Ausente = 'fora'. A escolha no vestiário é o H03b. */
+  barra?: BarraDaCamisa;
 }
+
+/**
+ * A barra de quem não escolheu. Só em desenvolvimento, &barra=dentro no endereço põe a camisa por dentro em todos os
+ * bonecos da tela (vitrine, vestiário, modos falsos em campo), para ver a opção antes de o vestiário ganhá-la (H03b).
+ */
+const barraPadrao: BarraDaCamisa = import.meta.env.DEV && typeof location !== 'undefined' && new URLSearchParams(location.search).get('barra') === 'dentro' ? 'dentro' : 'fora';
 
 /** Do mais claro ao mais escuro. */
 export const TONS_DE_PELE = ['#f1cfb3', '#e0ac85', '#c68d63', '#a3693f', '#7a4a2a', '#4f2f1c'];
@@ -698,7 +717,223 @@ export function uniformesDaPartida(
 /** Distância entre duas cores (0 a 441), exposta para os testes de contraste. */
 export const diferencaDeCor = (a: string, b: string): number => distancia(a, b);
 
-// ---------- formas (criadas uma vez) ----------
+// ---------- traços: as formas como listas de números ----------
+// Uma forma é uma lista [op, ...números]: 0 moveTo(x, y), 1 lineTo(x, y), 2 quadraticCurveTo(cx, cy, x, y), 3 closePath.
+// O desenho monta o Path2D a partir dela (uma vez); os testes, que rodam sem canvas, amostram os mesmos pontos.
+
+const OP_M = 0;
+const OP_L = 1;
+const OP_Q = 2;
+const OP_Z = 3;
+export type Traco = number[];
+
+class Tracador {
+  readonly a: Traco = [];
+  M(x: number, y: number): this {
+    this.a.push(OP_M, x, y);
+    return this;
+  }
+  L(x: number, y: number): this {
+    this.a.push(OP_L, x, y);
+    return this;
+  }
+  Q(cx: number, cy: number, x: number, y: number): this {
+    this.a.push(OP_Q, cx, cy, x, y);
+    return this;
+  }
+  Z(): this {
+    this.a.push(OP_Z);
+    return this;
+  }
+}
+
+/** O Path2D de um traço; `espelho` -1 inverte o x (o membro do outro lado). */
+export function emPath2D(t: readonly number[], espelho = 1): Path2D {
+  const p = new Path2D();
+  for (let i = 0; i < t.length; ) {
+    const op = t[i];
+    if (op === OP_M) {
+      p.moveTo(t[i + 1] * espelho, t[i + 2]);
+      i += 3;
+    } else if (op === OP_L) {
+      p.lineTo(t[i + 1] * espelho, t[i + 2]);
+      i += 3;
+    } else if (op === OP_Q) {
+      p.quadraticCurveTo(t[i + 1] * espelho, t[i + 2], t[i + 3] * espelho, t[i + 4]);
+      i += 5;
+    } else {
+      p.closePath();
+      i += 1;
+    }
+  }
+  return p;
+}
+
+/** Os pontos do contorno (x, y, x, y…): os vértices e `passos` amostras em cada curva. O contorno fecha sozinho. */
+export function amostrar(t: readonly number[], passos = 12): number[] {
+  const r: number[] = [];
+  let x0 = 0;
+  let y0 = 0;
+  for (let i = 0; i < t.length; ) {
+    const op = t[i];
+    if (op === OP_M || op === OP_L) {
+      x0 = t[i + 1];
+      y0 = t[i + 2];
+      r.push(x0, y0);
+      i += 3;
+    } else if (op === OP_Q) {
+      const cx = t[i + 1];
+      const cy = t[i + 2];
+      const x1 = t[i + 3];
+      const y1 = t[i + 4];
+      for (let k = 1; k <= passos; k++) {
+        const u = k / passos;
+        const v = 1 - u;
+        r.push(v * v * x0 + 2 * v * u * cx + u * u * x1, v * v * y0 + 2 * v * u * cy + u * u * y1);
+      }
+      x0 = x1;
+      y0 = y1;
+      i += 5;
+    } else i += 1;
+  }
+  return r;
+}
+
+// ---------- membros ----------
+// Cada membro é descrito pelo lado esquerdo (s = 1); o do outro lado é o espelho. x em unidades, y de 0 (junta de
+// cima) a 1 (junta de baixo). A forma anda por quatro trechos: `esq` (a borda -x, de cima para baixo), `fundo`,
+// `dir` (a borda +x, de baixo para cima) e `topo`. As faixas de sombra seguem uma das bordas.
+
+type Seg = readonly number[];
+interface Membro {
+  ini: readonly [number, number];
+  esq: readonly Seg[];
+  fundo: readonly Seg[];
+  dir: readonly Seg[];
+  topo: readonly Seg[];
+}
+
+const MEMBROS = {
+  coxa: { ini: [-4.8, -0.04], esq: [[-4.8, 0.38, -3.8, 1.0]], fundo: [[-1.0, 1.06], [3.4, 1.0]], dir: [[4.9, 0.42, 4.5, -0.04]], topo: [] },
+  canela: { ini: [-3.8, -0.03], esq: [[-4.3, 0.25, -2.4, 0.88]], fundo: [[-1.8, 1.03], [1.9, 1.03], [2.4, 0.88]], dir: [[4.7, 0.36, 3.4, -0.03]], topo: [] },
+  meiao: { ini: [-4.45, 0.27], esq: [[-4.6, 0.55, -2.6, 0.9], [-2.05, 1.06]], fundo: [[2.1, 1.06]], dir: [[2.6, 0.9], [4.65, 0.5, 4.0, 0.24]], topo: [] },
+  braco: { ini: [-3.5, 0], esq: [[-4.2, 0.4, -2.4, 0.97]], fundo: [[-0.5, 1.05], [2.2, 0.96]], dir: [[3.2, 0.42, 3.1, 0]], topo: [[0, -0.28, -3.5, 0]] },
+  manga: { ini: [-3.7, 0], esq: [[-4.6, 0.5]], fundo: [[4.2, 0.4]], dir: [[3.4, 0]], topo: [[0, -0.34, -3.7, 0]] },
+  antebraco: {
+    ini: [-2.5, 0],
+    esq: [[-3.1, 0.32, -1.5, 0.94], [-1.9, 1.04]],
+    fundo: [[-1.9, 1.3, 0, 1.36], [1.9, 1.3, 1.8, 1.04]],
+    dir: [[1.5, 0.94], [2.7, 0.32, 2.3, 0]],
+    topo: [],
+  },
+} as const satisfies Record<string, Membro>;
+
+function segEm(t: Tracador, s: Seg): void {
+  if (s.length === 2) t.L(s[0], s[1]);
+  else t.Q(s[0], s[1], s[2], s[3]);
+}
+
+function tracoDoMembro(m: Membro): Traco {
+  const t = new Tracador().M(m.ini[0], m.ini[1]);
+  for (const g of [m.esq, m.fundo, m.dir, m.topo]) for (const s of g) segEm(t, s);
+  return t.Z().a;
+}
+
+const fimDe = (s: Seg): [number, number] => [s[s.length - 2], s[s.length - 1]];
+
+/**
+ * Faixa de sombra de uma borda do membro: a curva da borda e a mesma curva deslocada `w` para dentro. `antes` e `depois`
+ * prolongam a borda em reta até esse y (a faixa passa por cima do começo do osso vizinho, sem desconectar).
+ */
+export function tracoDaFaixa(m: Membro, borda: 'esq' | 'dir', w: number, antes?: number, depois?: number): Traco {
+  const nos: { x: number; y: number; c?: [number, number] }[] = [];
+  const noDe = (s: Seg) => {
+    const [x, y] = fimDe(s);
+    return s.length === 2 ? { x, y } : { x, y, c: [s[0], s[1]] as [number, number] };
+  };
+  if (borda === 'esq') {
+    nos.push({ x: m.ini[0], y: m.ini[1] });
+    for (const s of m.esq) nos.push(noDe(s));
+  } else {
+    // A borda +x vem de baixo para cima no traço: aqui, de cima para baixo.
+    const pontos: [number, number][] = [fimDe(m.fundo[m.fundo.length - 1])];
+    for (const s of m.dir) pontos.push(fimDe(s));
+    nos.push({ x: pontos[pontos.length - 1][0], y: pontos[pontos.length - 1][1] });
+    for (let i = m.dir.length - 1; i >= 0; i--) {
+      const s = m.dir[i];
+      const [x, y] = pontos[i];
+      nos.push(s.length === 2 ? { x, y } : { x, y, c: [s[0], s[1]] });
+    }
+  }
+  if (antes !== undefined) nos.unshift({ x: nos[0].x, y: antes });
+  if (depois !== undefined) nos.push({ x: nos[nos.length - 1].x, y: depois });
+  const dx = borda === 'esq' ? w : -w;
+  const t = new Tracador().M(nos[0].x, nos[0].y);
+  for (let i = 1; i < nos.length; i++) {
+    const n = nos[i];
+    if (n.c) t.Q(n.c[0], n.c[1], n.x, n.y);
+    else t.L(n.x, n.y);
+  }
+  t.L(nos[nos.length - 1].x + dx, nos[nos.length - 1].y);
+  for (let i = nos.length - 2; i >= 0; i--) {
+    const c = nos[i + 1].c;
+    if (c) t.Q(c[0] + dx, c[1], nos[i].x + dx, nos[i].y);
+    else t.L(nos[i].x + dx, nos[i].y);
+  }
+  return t.Z().a;
+}
+
+/** A faixa de cada peça: largura (1,7 na perna, 1,3 no braço) e até onde passa por cima do osso vizinho. */
+const FAIXAS = {
+  coxa: { membro: MEMBROS.coxa, w: 1.7, depois: 1.07 },
+  canela: { membro: MEMBROS.canela, w: 1.7, antes: -0.06 },
+  meiao: { membro: MEMBROS.meiao, w: 1.7 },
+  braco: { membro: MEMBROS.braco, w: 1.3, depois: 1.07 },
+  manga: { membro: MEMBROS.manga, w: 1.3 },
+  antebraco: { membro: MEMBROS.antebraco, w: 1.3, antes: -0.04 },
+} as const;
+type PecaDeMembro = keyof typeof FAIXAS;
+const PECAS_DE_MEMBRO = Object.keys(FAIXAS) as PecaDeMembro[];
+
+/** Largura da faixa e raio das juntas (a parte do círculo com x > r − largura recebe o gomo de sombra). */
+const R_JOELHO = 3.5;
+const R_COTOVELO = 2.3;
+const R_OMBRO = 3.5;
+const LARG_PERNA = 1.7;
+const LARG_BRACO = 1.3;
+
+/** Gomo de sombra de uma junta: a parte do círculo unitário com x > 1 − largura/raio. */
+function gomoDa(largura: number, raio: number): Path2D {
+  const a = Math.acos(1 - largura / raio);
+  const p = new Path2D();
+  p.arc(0, 0, 1, -a, a);
+  p.closePath();
+  return p;
+}
+
+// ---------- cabeça, pescoço e luva ----------
+
+/** Cabeça com queixo (centro na origem): a elipse de antes virou uma forma com o queixo mais fino. */
+const CABECA = new Tracador()
+  .M(0, -6.3)
+  .Q(5.5, -6.3, 5.3, -0.4)
+  .Q(5.0, 3.7, 2.3, 5.9)
+  .Q(0, 7.0, -2.3, 5.9)
+  .Q(-5.0, 3.7, -5.3, -0.4)
+  .Q(-5.5, -6.3, 0, -6.3)
+  .Z().a;
+
+/** Sombra do queixo no pescoço: do alto do pescoço até uma borda de baixo em curva, logo abaixo do queixo. */
+const PESCOCO_SOMBRA = new Tracador()
+  .M(-2.1, -PESCOCO - 0.5)
+  .L(2.1, -PESCOCO - 0.5)
+  .L(2.4, -0.3)
+  .Q(0, 1.6, -2.4, -0.3)
+  .Z().a;
+
+/** Brilho do cabelo (luz do alto à esquerda): meia-lua, nunca no raspado. */
+const BRILHO_DO_CABELO = new Tracador().M(-4.7, -3.0).Q(-4.6, -6.7, 0.4, -6.9).Q(-3.2, -5.7, -3.7, -2.6).Z().a;
+
 interface Formas {
   coxa: [Path2D, Path2D];
   canela: [Path2D, Path2D];
@@ -706,84 +941,43 @@ interface Formas {
   braco: [Path2D, Path2D];
   manga: [Path2D, Path2D];
   antebraco: [Path2D, Path2D];
+  /** Faixas de sombra: [peça][lado do membro][borda +x (0) ou -x (1)]. */
+  faixa: Record<PecaDeMembro, [[Path2D, Path2D], [Path2D, Path2D]]>;
+  gomoJoelho: Path2D;
+  gomoCotovelo: Path2D;
+  gomoOmbro: Path2D;
   luva: Path2D;
   bota: Path2D;
   pescoco: Path2D;
+  pescocoSombra: Path2D;
   cabeca: Path2D;
   orelhas: Path2D;
+  brilhoCabelo: Path2D;
   junta: Path2D;
 }
 
 let formasProntas: Formas | null = null;
 
-/** Membros: x em unidades, y de 0 (junta de cima) a 1 (junta de baixo). s = -1 espelha (lado direito). */
+/** Todas as formas dos membros e da cabeça, criadas uma vez. */
 function membros(): Formas {
   if (formasProntas) return formasProntas;
-  const par = (f: (s: number) => Path2D): [Path2D, Path2D] => [f(1), f(-1)];
-  const coxa = (s: number) => {
-    const p = new Path2D();
-    p.moveTo(-5.6 * s, -0.04);
-    p.quadraticCurveTo(-6.6 * s, 0.38, -3.7 * s, 0.97);
-    p.lineTo(-1.0 * s, 1.06);
-    p.lineTo(3.3 * s, 0.97);
-    p.quadraticCurveTo(4.9 * s, 0.42, 4.5 * s, -0.04);
-    p.closePath();
-    return p;
+  const par = (m: Membro): [Path2D, Path2D] => {
+    const t = tracoDoMembro(m);
+    return [emPath2D(t, 1), emPath2D(t, -1)];
   };
-  const canela = (s: number) => {
-    const p = new Path2D();
-    p.moveTo(-3.8 * s, -0.03);
-    p.quadraticCurveTo(-5.0 * s, 0.3, -2.4 * s, 0.88);
-    p.lineTo(-1.8 * s, 1.03);
-    p.lineTo(1.9 * s, 1.03);
-    p.lineTo(2.4 * s, 0.88);
-    p.quadraticCurveTo(4.1 * s, 0.3, 3.4 * s, -0.03);
-    p.closePath();
-    return p;
-  };
-  const meiao = (s: number) => {
-    const p = new Path2D();
-    p.moveTo(-4.45 * s, 0.27);
-    p.quadraticCurveTo(-4.6 * s, 0.55, -2.6 * s, 0.9);
-    p.lineTo(-2.05 * s, 1.06);
-    p.lineTo(2.1 * s, 1.06);
-    p.lineTo(2.6 * s, 0.9);
-    p.quadraticCurveTo(4.2 * s, 0.5, 3.85 * s, 0.24);
-    p.closePath();
-    return p;
-  };
-  const braco = (s: number) => {
-    const p = new Path2D();
-    p.moveTo(-3.5 * s, 0);
-    p.quadraticCurveTo(-4.2 * s, 0.4, -2.4 * s, 0.97);
-    p.lineTo(-0.5 * s, 1.05);
-    p.lineTo(2.2 * s, 0.96);
-    p.quadraticCurveTo(3.2 * s, 0.42, 3.1 * s, 0);
-    p.quadraticCurveTo(0, -0.28, -3.5 * s, 0);
-    p.closePath();
-    return p;
-  };
-  const manga = (s: number) => {
-    const p = new Path2D();
-    p.moveTo(-4.2 * s, -0.06);
-    p.quadraticCurveTo(0, -0.4, 4.0 * s, -0.06);
-    p.lineTo(3.9 * s, 0.36);
-    p.lineTo(-4.4 * s, 0.48);
-    p.closePath();
-    return p;
-  };
-  const antebraco = (s: number) => {
-    const p = new Path2D();
-    p.moveTo(-2.5 * s, 0);
-    p.quadraticCurveTo(-3.1 * s, 0.32, -1.5 * s, 0.94);
-    p.lineTo(-1.9 * s, 1.04);
-    p.quadraticCurveTo(-1.9 * s, 1.3, 0, 1.36);
-    p.quadraticCurveTo(1.9 * s, 1.3, 1.8 * s, 1.04);
-    p.lineTo(1.5 * s, 0.94);
-    p.quadraticCurveTo(2.7 * s, 0.32, 2.3 * s, 0);
-    p.closePath();
-    return p;
-  };
+  const faixa = {} as Formas['faixa'];
+  for (const nome of PECAS_DE_MEMBRO) {
+    const f: { membro: Membro; w: number; antes?: number; depois?: number } = FAIXAS[nome];
+    const doLado = (lado: number, ladoX: number) => {
+      // No membro da esquerda, a borda +x é a `dir`; no espelho, a +x é a `esq` espelhada.
+      const borda = (lado ^ ladoX) === 0 ? 'dir' : 'esq';
+      return emPath2D(tracoDaFaixa(f.membro, borda, f.w, f.antes, f.depois), lado ? -1 : 1);
+    };
+    faixa[nome] = [
+      [doLado(0, 0), doLado(0, 1)],
+      [doLado(1, 0), doLado(1, 1)],
+    ];
+  }
   const luva = new Path2D();
   luva.moveTo(-2.7, 0.82);
   luva.lineTo(2.7, 0.82);
@@ -806,63 +1000,244 @@ function membros(): Formas {
   pescoco.lineTo(2.1, -PESCOCO - 0.5);
   pescoco.lineTo(-2.1, -PESCOCO - 0.5);
   pescoco.closePath();
-  const cabeca = new Path2D();
-  cabeca.ellipse(0, 0, 5.2, 6.2, 0, 0, DOIS_PI);
   const orelhas = new Path2D();
   orelhas.ellipse(-5.0, 0.6, 1.2, 1.9, 0, 0, DOIS_PI);
   orelhas.ellipse(5.0, 0.6, 1.2, 1.9, 0, 0, DOIS_PI);
   const junta = new Path2D();
   junta.arc(0, 0, 1, 0, DOIS_PI);
   formasProntas = {
-    coxa: par(coxa),
-    canela: par(canela),
-    meiao: par(meiao),
-    braco: par(braco),
-    manga: par(manga),
-    antebraco: par(antebraco),
+    coxa: par(MEMBROS.coxa),
+    canela: par(MEMBROS.canela),
+    meiao: par(MEMBROS.meiao),
+    braco: par(MEMBROS.braco),
+    manga: par(MEMBROS.manga),
+    antebraco: par(MEMBROS.antebraco),
+    faixa,
+    gomoJoelho: gomoDa(LARG_PERNA, R_JOELHO),
+    gomoCotovelo: gomoDa(LARG_BRACO, R_COTOVELO),
+    gomoOmbro: gomoDa(LARG_BRACO, R_OMBRO),
     luva,
     bota,
     pescoco,
-    cabeca,
+    pescocoSombra: emPath2D(PESCOCO_SOMBRA),
+    cabeca: emPath2D(CABECA),
     orelhas,
+    brilhoCabelo: emPath2D(BRILHO_DO_CABELO),
     junta,
   };
   return formasProntas;
 }
 
-/** Camiseta lisa: ombros largos, cintura fina, barra com corte reto. Tronco: x em unidades, y de 0 (pelve) a -1 (pescoço). */
-function camisa(om: number, cintura: number, barra: number): Path2D {
-  const p = new Path2D();
-  p.moveTo(-3.6, -1.0);
-  p.quadraticCurveTo(-om * 0.55, -1.02, -om - 0.8, -0.935);
-  p.quadraticCurveTo(-om - 2.6, -0.88, -om - 0.8, -0.72);
-  p.lineTo(-om + 1.8, -0.665);
-  p.quadraticCurveTo(-cintura - 1.0, -0.45, -cintura, -0.22);
-  p.lineTo(-barra, 0.05);
-  p.lineTo(-barra * 0.15, 0.1);
-  p.lineTo(barra, 0.04);
-  p.lineTo(cintura, -0.22);
-  p.quadraticCurveTo(cintura + 1.0, -0.45, om - 1.8, -0.665);
-  p.lineTo(om + 0.8, -0.72);
-  p.quadraticCurveTo(om + 2.6, -0.88, om + 0.8, -0.935);
-  p.quadraticCurveTo(om * 0.55, -1.02, 3.6, -1.0);
-  p.quadraticCurveTo(0, -0.96, -3.6, -1.0);
-  p.closePath();
-  return p;
+/** A forma da cabeça (a testeira do boneco montável recorta nela). */
+export const formaDaCabeca = (): Path2D => membros().cabeca;
+/** O contorno da cabeça, em pontos (para os testes). */
+export const contornoDaCabeca = (): number[] => amostrar(CABECA);
+
+// ---------- a camisa ----------
+
+/** Quanto o calção ocupa e onde ficam as bocas das pernas (unidades; y de 0 na pelve, negativo para cima). */
+export interface FormaDoCalcao {
+  /** Cantos de cima: a quadril + cantoX, a y = cantoY. */
+  cantoX: number;
+  cantoY: number;
+  /** Boca da perna, medida a partir do quadril: topo de fora, barra de fora e barra de dentro. */
+  topo: number;
+  fora: number;
+  dentro: number;
+  /** Comprimento da perna do calção, em fração da coxa. */
+  comprimento: number;
+  /** y da virilha. */
+  virilha: number;
 }
 
-/** Lado da camiseta na sombra (luz vem do alto à esquerda): bloco chapado, sem degradê. */
-function sombraDaCamisa(om: number, cintura: number, barra: number): Path2D {
-  const p = new Path2D();
-  p.moveTo(om - 4.4, -0.665);
-  p.lineTo(om - 1.8, -0.665);
-  p.quadraticCurveTo(cintura + 1.0, -0.45, cintura, -0.22);
-  p.lineTo(barra, 0.04);
-  p.lineTo(barra - 4.8, 0.07);
-  p.lineTo(cintura - 4.2, -0.3);
-  p.closePath();
-  return p;
+/** Tudo o que depende do corpo (homem ou mulher) e da barra da camisa, num lugar só: o desenho, o colete e os testes leem daqui. */
+export interface MedidasDaCamisa {
+  dentro: boolean;
+  /** Meia largura dos ombros. */
+  om: number;
+  cintura: number;
+  /** y da cintura (fração do tronco, 0 = pelve, -1 = pescoço). */
+  cinturaY: number;
+  /** x do controle da curva do peito. */
+  controle: number;
+  /** x da axila. */
+  axila: number;
+  barra: number;
+  quadril: number;
+  /** Bainha, do lado esquerdo da tela para o direito: x, y, x, y, x, y (y em fração do tronco). */
+  bainha: readonly [number, number, number, number, number, number];
+  calcao: FormaDoCalcao;
+  /** Onde a sombra da camisa termina e a do calção começa: x em unidades e y em fração do tronco. */
+  fimDaSombra: readonly [number, number];
+  /** Cós (só com a camisa por dentro): altura e quanto passa de cada lado. */
+  cos: { altura: number; folga: number } | null;
 }
+
+const CALCAO_FORA: FormaDoCalcao = { cantoX: 3.0, cantoY: -4, topo: 4.9, fora: 6.2, dentro: 4.8, comprimento: 0.44, virilha: 8.0 };
+const CALCAO_DENTRO: FormaDoCalcao = { cantoX: 4.0, cantoY: -7, topo: 5.4, fora: 6.4, dentro: 4.8, comprimento: 0.5, virilha: 8.6 };
+
+/** y (fração do tronco) da bainha na posição x: a linha quebrada de três pontos. */
+function yNaBainha(bainha: MedidasDaCamisa['bainha'], x: number): number {
+  const [x0, y0, x1, y1, x2, y2] = bainha;
+  if (x <= x1) return x <= x0 ? y0 : y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
+  return x >= x2 ? y2 : y1 + ((y2 - y1) * (x - x1)) / (x2 - x1);
+}
+
+function medidas(mulher: boolean, dentro: boolean): MedidasDaCamisa {
+  const om = mulher ? 11 : 12.5;
+  const quadril = mulher ? 5.6 : 5.2;
+  if (dentro) {
+    const cintura = mulher ? 8.6 : 9.2;
+    // Por dentro, a camisa termina reta, sob o calção: a barra é a própria cintura.
+    const barra = cintura;
+    const cinturaY = -0.2;
+    const bainha = [-barra, -0.02, -0.15 * barra, -0.02, barra, -0.02] as const;
+    // A sombra do calção começa na borda de baixo da sombra da camisa, na altura do cós.
+    const xs = barra - 4.8;
+    const yCos = CALCAO_DENTRO.cantoY / TRONCO;
+    const yA = cinturaY - 0.08;
+    const t = Math.max(0, Math.min(1, (yCos - yA) / (bainha[5] - yA)));
+    return {
+      dentro,
+      om,
+      cintura,
+      cinturaY,
+      controle: cintura + 0.8,
+      axila: om - 1.6,
+      barra,
+      quadril,
+      bainha,
+      calcao: CALCAO_DENTRO,
+      fimDaSombra: [cintura - 4.2 + (xs - (cintura - 4.2)) * t, yCos],
+      cos: { altura: 1.7, folga: 0.15 },
+    };
+  }
+  const cintura = mulher ? 9.3 : 9.8;
+  const barra = mulher ? 11.2 : 10.6;
+  const bainha = [-barra, 0.095, -0.15 * barra, 0.12, barra, 0.085] as const;
+  const xs = barra - 4.8;
+  return {
+    dentro,
+    om,
+    cintura,
+    cinturaY: -0.25,
+    controle: cintura + 0.7,
+    axila: om - 1.6,
+    barra,
+    quadril,
+    bainha,
+    calcao: CALCAO_FORA,
+    fimDaSombra: [xs, yNaBainha(bainha, xs)],
+    cos: null,
+  };
+}
+
+const MEDIDAS = {
+  h: { fora: medidas(false, false), dentro: medidas(false, true) },
+  m: { fora: medidas(true, false), dentro: medidas(true, true) },
+};
+
+/** As medidas da camisa de um corpo e de uma barra (o mesmo objeto sempre). */
+export const medidasDaCamisa = (mulher: boolean, barra: BarraDaCamisa = 'fora'): MedidasDaCamisa => MEDIDAS[mulher ? 'm' : 'h'][barra];
+
+/** y (fração do tronco) da bainha da camisa na posição x: a linha quebrada de três pontos. */
+export const yDaBainha = (m: MedidasDaCamisa, x: number): number => yNaBainha(m.bainha, x);
+
+/** Ponto de t = 0,45 da curva de cima da camisa (do pescoço ao ombro) e o controle do pedaço que sobra, para a luz. */
+const T_DA_LUZ = 0.45;
+function curvaDoOmbro(om: number): { x: number; y: number; cx: number; cy: number } {
+  const t = T_DA_LUZ;
+  const v = 1 - t;
+  const [x0, y0, cx, cy, x2, y2] = [-3.4, -1.0, -0.6 * om, -0.99, -om + 0.2, -0.935];
+  return { x: v * v * x0 + 2 * v * t * cx + t * t * x2, y: v * v * y0 + 2 * v * t * cy + t * t * y2, cx: v * cx + t * x2, cy: v * cy + t * y2 };
+}
+
+/** Camiseta lisa, sem ombreira: ombros largos, cintura marcada, barra reta. Tronco: x em unidades, y de 0 (pelve) a -1 (pescoço). */
+export function tracoDaCamisa(m: MedidasDaCamisa): Traco {
+  const { om, cintura, cinturaY, controle, axila, bainha } = m;
+  return new Tracador()
+    .M(-3.4, -1.0)
+    .Q(-0.6 * om, -0.99, -om + 0.2, -0.935)
+    .Q(-om - 1.2, -0.9, -om - 0.6, -0.8)
+    .L(-axila, -0.665)
+    .Q(-controle, -0.45, -cintura, cinturaY)
+    .L(bainha[0], bainha[1])
+    .L(bainha[2], bainha[3])
+    .L(bainha[4], bainha[5])
+    .L(cintura, cinturaY)
+    .Q(controle, -0.45, axila, -0.665)
+    .L(om + 0.6, -0.8)
+    .Q(om + 1.2, -0.9, om - 0.2, -0.935)
+    .Q(0.6 * om, -0.99, 3.4, -1.0)
+    .Q(0, -0.955, -3.4, -1.0)
+    .Z().a;
+}
+
+/** Onde a sombra da camisa termina na bainha (x) e o ponto dela sobre a linha da bainha. */
+const xFimDaSombra = (m: MedidasDaCamisa): number => m.barra - 4.8;
+
+/** Lado da camiseta na sombra (luz do alto à esquerda): pedaço exato da camisa, bloco chapado, sem degradê. */
+export function tracoDaSombra(m: MedidasDaCamisa): Traco {
+  const xs = xFimDaSombra(m);
+  return new Tracador()
+    .M(m.om - 4.4, -0.665)
+    .L(m.axila, -0.665)
+    .Q(m.controle, -0.45, m.cintura, m.cinturaY)
+    .L(m.bainha[4], m.bainha[5])
+    .L(xs, yDaBainha(m, xs))
+    .L(m.cintura - 4.2, m.cinturaY - 0.08)
+    .Z().a;
+}
+
+/** Plano de luz da camisa (Plus): largo, do ombro esquerdo à barra, nunca uma listra. */
+export function tracoDaLuz(m: MedidasDaCamisa): Traco {
+  const { om, cintura, cinturaY, controle, axila, barra, bainha } = m;
+  const o = curvaDoOmbro(om);
+  const x = -barra + 3.4;
+  return new Tracador()
+    .M(o.x, o.y)
+    .Q(o.cx, o.cy, -om + 0.2, -0.935)
+    .Q(-om - 1.2, -0.9, -om - 0.6, -0.8)
+    .L(-axila, -0.665)
+    .Q(-controle, -0.45, -cintura, cinturaY)
+    .L(bainha[0], bainha[1])
+    .L(x, yDaBainha(m, x))
+    .L(-cintura + 3.1, cinturaY)
+    .Q(-4.2, -0.62, o.x, o.y)
+    .Z().a;
+}
+
+/** Dobra na barriga (Plus), na cor da sombra. */
+export function tracoDaDobra(m: MedidasDaCamisa): Traco {
+  return new Tracador()
+    .M(m.cintura - 0.2, m.cinturaY - 0.09)
+    .L(-1.5, m.cinturaY + 0.035)
+    .L(m.cintura - 3.4, m.cinturaY - 0.035)
+    .Z().a;
+}
+
+interface FormasDaCamisa {
+  camisa: Path2D;
+  sombra: Path2D;
+  luz: Path2D;
+  dobra: Path2D;
+}
+const camisasProntas = new Map<MedidasDaCamisa, FormasDaCamisa>();
+function formasDaCamisa(m: MedidasDaCamisa): FormasDaCamisa {
+  let f = camisasProntas.get(m);
+  if (!f) {
+    f = { camisa: emPath2D(tracoDaCamisa(m)), sombra: emPath2D(tracoDaSombra(m)), luz: emPath2D(tracoDaLuz(m)), dobra: emPath2D(tracoDaDobra(m)) };
+    camisasProntas.set(m, f);
+  }
+  return f;
+}
+
+/** A coxa de um lado (para os testes: o contorno antes de girar e esticar). */
+export const contornoDaCoxa = (lado: number): number[] => {
+  const pts = amostrar(tracoDoMembro(MEMBROS.coxa));
+  if (lado) for (let i = 0; i < pts.length; i += 2) pts[i] = -pts[i];
+  return pts;
+};
 
 
 /**
@@ -894,7 +1269,7 @@ class Pecas {
   }
 }
 
-/** Cabelo em volta da cabeça (centro 0,0; cabeça com raios 5,2 × 6,2). "atras" vai antes do corpo. */
+/** Cabelo em volta da cabeça (centro 0,0; cabeça de ~10,6 × 13,3 com queixo). "atras" vai antes do corpo. */
 function cabelo(estilo: Cabelo, deFrente: boolean): { atras: Path2D[] | null; frente: Path2D[] } {
   const frente = new Pecas();
   let atras: Pecas | null = null;
@@ -1029,7 +1404,7 @@ const J_TORNOZELO = 26; // E 26, D 28
 interface Degrades {
   ctx: CanvasRenderingContext2D;
   /** Pele do osso de cima (base → meio) e do de baixo (meio → escuro). */
-  /** Qualidade leve: cores lisas no lugar dos degradês. */
+  /** Qualidade leve: cores lisas no lugar dos degradês (e sem as camadas de luz e volume do Plus). */
   chapado: boolean;
   peleA: CanvasGradient | string;
   peleB: CanvasGradient | string;
@@ -1042,14 +1417,27 @@ export interface Boneco {
   deFrente: boolean;
   ombro: number;
   quadril: number;
+  /** Camisa por fora ou por dentro, e as medidas dela (as mesmas que o colete do boneco montável usa). */
+  barra: BarraDaCamisa;
+  medidas: MedidasDaCamisa;
   camisa: Path2D;
   sombraCamisa: Path2D;
+  luzCamisa: Path2D;
+  dobraCamisa: Path2D;
   cabeloAtras: Path2D[] | null;
   cabeloFrente: Path2D[];
   cor: {
     peleMeio: string;
     camisaSombra: string;
     cabelo: string;
+    /** Camadas do Plus (luz do alto à esquerda). */
+    camisaLuz: string;
+    peleSombra: string;
+    meiaoSombra: string;
+    calcaoSombra: string;
+    calcaoCos: string;
+    calcaoCosSombra: string;
+    brilho: string;
   };
   degrades: Degrades | null;
   /** Juntas da última pose resolvida. */
@@ -1062,32 +1450,45 @@ export interface Boneco {
   virar?: () => Boneco;
 }
 
+const BRANCO = '#ffffff';
+
 export function criarBoneco(aparencia: Aparencia, uniforme: Uniforme, deFrente: boolean): Boneco {
-  const ombro = aparencia.mulher ? 11 : 12.5;
-  const cintura = aparencia.mulher ? 7.4 : 8.2;
-  const barra = aparencia.mulher ? 9.4 : 9.0;
-  const quadril = aparencia.mulher ? 6.8 : 6;
+  const barra = aparencia.barra ?? barraPadrao;
+  const m = medidasDaCamisa(aparencia.mulher, barra);
+  const f = formasDaCamisa(m);
   const cab = cabelo(aparencia.cabelo, deFrente);
+  const calcaoCos = escurecer(uniforme.calcao, 0.82);
   const b: Boneco = {
     aparencia,
     uniforme,
     deFrente,
-    ombro,
-    quadril,
-    camisa: camisa(ombro, cintura, barra),
-    sombraCamisa: sombraDaCamisa(ombro, cintura, barra),
+    ombro: m.om,
+    quadril: m.quadril,
+    barra,
+    medidas: m,
+    camisa: f.camisa,
+    sombraCamisa: f.sombra,
+    luzCamisa: f.luz,
+    dobraCamisa: f.dobra,
     cabeloAtras: cab.atras,
     cabeloFrente: cab.frente,
     cor: {
       peleMeio: escurecer(aparencia.pele, 0.88),
       camisaSombra: escurecer(uniforme.camisa, 0.84),
       cabelo: corDoCabeloVisivel(aparencia),
+      camisaLuz: misturarCor(uniforme.camisa, BRANCO, 0.09),
+      peleSombra: escurecer(aparencia.pele, 0.8),
+      meiaoSombra: escurecer(uniforme.meiao, 0.84),
+      calcaoSombra: escurecer(uniforme.calcao, 0.78),
+      calcaoCos,
+      calcaoCosSombra: escurecer(calcaoCos, 0.78),
+      brilho: misturarCor(corDoCabeloVisivel(aparencia), BRANCO, 0.2),
     },
     degrades: null,
     j: new Float32Array(30),
     apoio: { x: 0, y: 0 },
   };
-  resolver(b, B.espera);
+  resolverPose(b, B.espera);
   b.apoio.x = b.j[J_TORNOZELO];
   b.apoio.y = b.j[J_TORNOZELO + 1];
   return b;
@@ -1129,8 +1530,11 @@ function prepararDegrades(c: CanvasRenderingContext2D, b: Boneco): Degrades {
   return b.degrades;
 }
 
+/** O que `resolverPose` precisa do boneco: as medidas do corpo e onde gravar as juntas. */
+export type Esqueleto = Pick<Boneco, 'ombro' | 'quadril' | 'j'>;
+
 /** Calcula as juntas da pose (cinemática direta) em b.j. */
-function resolver(b: Boneco, p: Pose): void {
+export function resolverPose(b: Esqueleto, p: Pose): void {
   const J = b.j;
   const px = p[RX];
   const py = p[RY];
@@ -1142,9 +1546,9 @@ function resolver(b: Boneco, p: Pose): void {
   const tl = TRONCO * p[TRK];
   J[J_PESCOCO] = px + tl * st;
   J[J_PESCOCO + 1] = py - tl * ct;
-  // Ombros: no tronco, a 90% da altura, afastados do meio.
+  // Ombros: no tronco, a 84% da altura, afastados do meio.
   const om = b.ombro * p[OMK];
-  const ly = -0.9 * tl;
+  const ly = -0.84 * tl;
   J[J_OMBRO] = px - om * ct - ly * st;
   J[J_OMBRO + 1] = py - om * st + ly * ct;
   J[J_OMBRO + 2] = px + om * ct - ly * st;
@@ -1182,7 +1586,7 @@ function resolver(b: Boneco, p: Pose): void {
 
 /** Centro das duas mãos (onde a bola fica na defesa), em unidades locais. */
 export function maos(b: Boneco, p: Pose, out: { x: number; y: number }): void {
-  resolver(b, p);
+  resolverPose(b, p);
   const J = b.j;
   const ke = 0.16 * ANTEBRACO * p[BE + 3];
   const kd = 0.16 * ANTEBRACO * p[BD + 3];
@@ -1193,7 +1597,7 @@ export function maos(b: Boneco, p: Pose, out: { x: number; y: number }): void {
 /** Escala que nunca zera (osso apontando para a câmera ainda aparece um pouco), mantendo o sinal. */
 const comSinal = (v: number, min: number) => (v < 0 ? Math.min(v, -min) : Math.max(v, min));
 
-/** Junta redonda (joelho, cotovelo) para não abrir fresta entre os ossos. */
+/** Junta redonda (joelho, cotovelo, capa do ombro) para não abrir fresta entre os ossos. */
 function junta(c: CanvasRenderingContext2D, x: number, y: number, r: number, cor: string): void {
   c.save();
   c.translate(x, y);
@@ -1203,6 +1607,36 @@ function junta(c: CanvasRenderingContext2D, x: number, y: number, r: number, cor
   c.restore();
 }
 
+/**
+ * Lado da faixa de sombra de um membro (luz do alto à esquerda): 0 = borda +x do osso, 1 = borda -x. Decidido pelo
+ * osso de cima (coxa ou braço); canela, meião, antebraço, manga e capa usam o mesmo lado.
+ */
+export const ladoDaSombra = (anguloDoOsso: number): 0 | 1 => (0.6 * Math.cos(anguloDoOsso) - 0.8 * Math.sin(anguloDoOsso) >= 0 ? 0 : 1);
+
+/** Gomo de sombra da junta no ângulo de um osso (a parte do círculo que a faixa daquele osso cobriria). */
+function gomo(c: CanvasRenderingContext2D, x: number, y: number, r: number, angulo: number, lado: number, forma: Path2D, cor: string): void {
+  c.save();
+  c.translate(x, y);
+  c.rotate(-angulo);
+  c.scale(lado ? -r : r, r);
+  c.fillStyle = cor;
+  c.fill(forma);
+  c.restore();
+}
+
+/** Plus: a junta por baixo dos dois ossos, com o gomo de sombra no ângulo de cada um (a faixa contorna a dobra sem degrau). */
+function juntaPlus(c: CanvasRenderingContext2D, x: number, y: number, r: number, cor: string, forma: Path2D, corSombra: string, aCima: number, aBaixo: number, lado: number): void {
+  junta(c, x, y, r, cor);
+  gomo(c, x, y, r, aCima, lado, forma, corSombra);
+  gomo(c, x, y, r, aBaixo, lado, forma, corSombra);
+}
+
+function joelho(c: CanvasRenderingContext2D, b: Boneco, p: Pose, lado: number, lx: number): void {
+  const o = lado * 2;
+  const ip = lado ? PND : PNE;
+  juntaPlus(c, b.j[J_JOELHO + o], b.j[J_JOELHO + o + 1], R_JOELHO, b.cor.peleMeio, membros().gomoJoelho, b.cor.peleSombra, p[ip], p[ip + 2], lx);
+}
+
 /** Canela, meião, chuteira e joelho de uma perna. */
 function canela(c: CanvasRenderingContext2D, b: Boneco, d: Degrades, p: Pose, lado: number, realce: boolean): void {
   const F = membros();
@@ -1210,14 +1644,26 @@ function canela(c: CanvasRenderingContext2D, b: Boneco, d: Degrades, p: Pose, la
   const o = lado * 2;
   const ip = lado ? PND : PNE;
   const u = b.uniforme;
+  const plus = !d.chapado;
+  const lx = ladoDaSombra(p[ip]);
+  // Plus: a junta fica por baixo dos dois ossos. Perna dobrada para a câmera: ela vem na coxa(), antes do osso de cima.
+  if (plus && p[ip + 6] <= 0) joelho(c, b, p, lado, lx);
   c.save();
   c.translate(J[J_JOELHO + o], J[J_JOELHO + o + 1]);
   c.rotate(-p[ip + 2]);
   c.scale(1, comSinal(CANELA * p[ip + 3], 0.05));
   c.fillStyle = d.peleB;
   c.fill(F.canela[lado]);
+  if (plus) {
+    c.fillStyle = b.cor.peleSombra;
+    c.fill(F.faixa.canela[lado][lx]);
+  }
   c.fillStyle = u.meiao;
   c.fill(F.meiao[lado]);
+  if (plus) {
+    c.fillStyle = b.cor.meiaoSombra;
+    c.fill(F.faixa.meiao[lado][lx]);
+  }
   c.restore();
   // Chuteira por cima do meião: de costas aparece o calcanhar; de frente, o bico.
   c.save();
@@ -1227,7 +1673,7 @@ function canela(c: CanvasRenderingContext2D, b: Boneco, d: Degrades, p: Pose, la
   c.fillStyle = realce ? '#ffd23f' : u.chuteira;
   c.fill(F.bota);
   c.restore();
-  junta(c, J[J_JOELHO + o], J[J_JOELHO + o + 1], 3.5, b.cor.peleMeio);
+  if (!plus) junta(c, J[J_JOELHO + o], J[J_JOELHO + o + 1], R_JOELHO, b.cor.peleMeio);
 }
 
 /** Coxa: sempre por baixo do calção, que cobre o começo dela. */
@@ -1235,12 +1681,19 @@ function coxa(c: CanvasRenderingContext2D, b: Boneco, d: Degrades, p: Pose, lado
   const J = b.j;
   const o = lado * 2;
   const ip = lado ? PND : PNE;
+  const plus = !d.chapado;
+  const lx = ladoDaSombra(p[ip]);
+  if (plus && p[ip + 6] > 0) joelho(c, b, p, lado, lx);
   c.save();
   c.translate(J[J_QUADRIL + o], J[J_QUADRIL + o + 1]);
   c.rotate(-p[ip]);
   c.scale(1, comSinal(COXA * p[ip + 1], 0.05));
   c.fillStyle = d.peleA;
   c.fill(membros().coxa[lado]);
+  if (plus) {
+    c.fillStyle = b.cor.peleSombra;
+    c.fill(membros().faixa.coxa[lado][lx]);
+  }
   c.restore();
 }
 
@@ -1249,36 +1702,68 @@ function braco(c: CanvasRenderingContext2D, b: Boneco, d: Degrades, p: Pose, lad
   const J = b.j;
   const o = lado * 2;
   const ib = lado ? BD : BE;
+  const plus = !d.chapado;
+  const lx = ladoDaSombra(p[ib]);
+  if (plus) juntaPlus(c, J[J_COTOVELO + o], J[J_COTOVELO + o + 1], R_COTOVELO, b.cor.peleMeio, F.gomoCotovelo, b.cor.peleSombra, p[ib], p[ib + 2], lx);
   c.save();
   c.translate(J[J_COTOVELO + o], J[J_COTOVELO + o + 1]);
   c.rotate(-p[ib + 2]);
   c.scale(1, comSinal(ANTEBRACO * p[ib + 3], 0.05));
   c.fillStyle = d.peleB;
   c.fill(F.antebraco[lado]);
+  if (plus) {
+    c.fillStyle = b.cor.peleSombra;
+    c.fill(F.faixa.antebraco[lado][lx]);
+  }
   if (b.uniforme.luva) {
     c.fillStyle = b.uniforme.luva;
     c.fill(F.luva);
   }
   c.restore();
-  junta(c, J[J_COTOVELO + o], J[J_COTOVELO + o + 1], 2.3, b.cor.peleMeio);
+  if (!plus) junta(c, J[J_COTOVELO + o], J[J_COTOVELO + o + 1], R_COTOVELO, b.cor.peleMeio);
   c.save();
   c.translate(J[J_OMBRO + o], J[J_OMBRO + o + 1]);
   c.rotate(-p[ib]);
   c.scale(1, comSinal(BRACO * p[ib + 1], 0.05));
   c.fillStyle = d.peleA;
   c.fill(F.braco[lado]);
+  if (plus) {
+    c.fillStyle = b.cor.peleSombra;
+    c.fill(F.faixa.braco[lado][lx]);
+  }
   c.fillStyle = b.uniforme.camisa;
   c.fill(F.manga[lado]);
+  if (plus) {
+    c.fillStyle = b.cor.camisaSombra;
+    c.fill(F.faixa.manga[lado][lx]);
+  }
   c.restore();
+  // Capa do ombro: um círculo na cor da camisa na junta, logo depois da manga.
+  junta(c, J[J_OMBRO + o], J[J_OMBRO + o + 1], R_OMBRO, b.uniforme.camisa);
+  if (plus) gomo(c, J[J_OMBRO + o], J[J_OMBRO + o + 1], R_OMBRO, p[ib], lx, F.gomoOmbro, b.cor.camisaSombra);
 }
 
+// ---------- calção ----------
+/** Chanfro do canto de fora da barra (a abertura lateral): quanto sobe pela lateral e quanto entra pela barra. */
+const CHANFRO_LATERAL = 1.43;
+const CHANFRO_BARRA = 1.1;
+/** A sombra do calção desce inclinada: 1,2 para fora em 12 de altura. */
+const INCLINACAO_DA_SOMBRA = 0.1;
+
+/** Vértices do calção (x, y relativos à pelve): 2 cantos de cima, 4 de cada boca e a virilha. */
+const VERTICES_DO_CALCAO = 13;
+const BUF_CALCAO = new Float64Array(VERTICES_DO_CALCAO * 2);
+const BUF_CORTE = new Float64Array(VERTICES_DO_CALCAO * 4 + 8);
+const BUF_COS = new Float64Array(8);
+const BUF_COS_CORTE = new Float64Array(24);
+const PLANO = new Float64Array(4);
+
 /**
- * Boca de uma perna do calção: do quadril até a barra, que fica numa altura da coxa. Coxa
- * encurtada (perna para a frente ou para trás) puxa a barra para perto do quadril, em vez de
- * girar uma peça solta e deixar o calção torto.
+ * Boca de uma perna do calção: do quadril até a barra, que fica numa altura da coxa. Coxa encurtada (perna para a
+ * frente ou para trás) puxa a barra para perto do quadril, em vez de girar uma peça solta e deixar o calção torto.
+ * Grava topo de fora, abertura lateral (2 pontos do chanfro) e barra de dentro; devolve o próximo índice livre.
  */
-function bocaDaPerna(c: CanvasRenderingContext2D, b: Boneco, p: Pose, lado: number): void {
-  const J = b.j;
+function bocaDaPerna(out: Float64Array, k: number, J: Float32Array, p: Pose, lado: number, f: FormaDoCalcao): number {
   const o = lado * 2;
   const ip = lado ? PND : PNE;
   const hx = J[J_QUADRIL + o] - J[J_PELVE];
@@ -1286,65 +1771,254 @@ function bocaDaPerna(c: CanvasRenderingContext2D, b: Boneco, p: Pose, lado: numb
   const dx = Math.sin(p[ip]);
   const dy = Math.cos(p[ip]);
   const fora = lado ? 1 : -1;
-  const s = COXA * 0.42 * Math.max(p[ip + 1], 0.22) + 1.5;
-  // Topo (lado de fora do quadril), barra de fora, barra de dentro, virilha.
-  const ox = hx + fora * dy * 5.6;
-  const oy = hy - fora * dx * 5.6 - 1;
-  const bx = hx + dx * s + fora * dy * 6.6;
-  const by = hy + dy * s - fora * dx * 6.6;
-  const ix = hx + dx * s - fora * dy * 5.0;
-  const iy = hy + dy * s + fora * dx * 5.0;
+  const s = COXA * f.comprimento * Math.max(p[ip + 1], 0.22) + 1.5;
+  const ox = hx + fora * dy * f.topo;
+  const oy = hy - fora * dx * f.topo - 1;
+  const bx = hx + dx * s + fora * dy * f.fora;
+  const by = hy + dy * s - fora * dx * f.fora;
+  const ix = hx + dx * s - fora * dy * f.dentro;
+  const iy = hy + dy * s + fora * dx * f.dentro;
+  // Canto de fora da barra cortado: sobe pela lateral e entra pela barra.
+  const ax = bx - dx * CHANFRO_LATERAL;
+  const ay = by - dy * CHANFRO_LATERAL;
+  const gx = bx - fora * dy * CHANFRO_BARRA;
+  const gy = by + fora * dx * CHANFRO_BARRA;
   if (lado === 0) {
-    c.lineTo(ox, oy);
-    c.lineTo(bx, by);
-    c.lineTo(ix, iy);
-    c.lineTo(0, 6.6);
+    out[k++] = ox;
+    out[k++] = oy;
+    out[k++] = ax;
+    out[k++] = ay;
+    out[k++] = gx;
+    out[k++] = gy;
+    out[k++] = ix;
+    out[k++] = iy;
   } else {
-    c.lineTo(ix, iy);
-    c.lineTo(bx, by);
-    c.lineTo(ox, oy);
+    out[k++] = ix;
+    out[k++] = iy;
+    out[k++] = gx;
+    out[k++] = gy;
+    out[k++] = ax;
+    out[k++] = ay;
+    out[k++] = ox;
+    out[k++] = oy;
   }
+  return k;
+}
+
+/**
+ * Monta o calção em `out` (x, y relativos à pelve) e devolve quantos vértices tem. Os dois cantos de cima giram TR + QD
+ * em volta da pelve; as bocas já seguem as coxas.
+ */
+export function montarCalcao(J: Float32Array, m: MedidasDaCamisa, p: Pose, out: Float64Array): number {
+  const f = m.calcao;
+  const ang = p[TR] + p[QD];
+  const ca = Math.cos(ang);
+  const sa = Math.sin(ang);
+  const cx = m.quadril + f.cantoX;
+  let k = 0;
+  out[k++] = -cx * ca - f.cantoY * sa;
+  out[k++] = -cx * sa + f.cantoY * ca;
+  k = bocaDaPerna(out, k, J, p, 0, f);
+  out[k++] = 0;
+  out[k++] = f.virilha;
+  k = bocaDaPerna(out, k, J, p, 1, f);
+  out[k++] = cx * ca - f.cantoY * sa;
+  out[k++] = cx * sa + f.cantoY * ca;
+  let n = k / 2;
+  if (!m.dentro) {
+    // Camisa por fora: a lateral do calção entra sob a camisa e só sai pela quina da bainha (primeiro a direita da tela,
+    // para os índices da esquerda não mudarem).
+    n = recolherSobACamisa(out, n, n - 2, n - 3, m, p, 1);
+    n = recolherSobACamisa(out, n, 1, 2, m, p, -1);
+  }
+  return n;
+}
+
+/** Folga entre o calção e a lateral da camisa (unidades): o calção nunca encosta na borda de cima da barra. */
+const FOLGA_DA_CAMISA = 0.12;
+
+/**
+ * Faz a lateral de uma boca do calção (do topo de fora `io` ao chanfro `ia`) ficar sob a camisa acima da barra: puxa o
+ * topo de fora para dentro da lateral da camisa e põe um vértice na quina da bainha, de onde a boca abre para fora.
+ * `lado` é 1 para a direita da tela e -1 para a esquerda. Devolve o novo número de vértices.
+ */
+function recolherSobACamisa(v: Float64Array, n: number, io: number, ia: number, m: MedidasDaCamisa, p: Pose, lado: number): number {
+  const ct = Math.cos(p[TR]);
+  const st = Math.sin(p[TR]);
+  const kx = p[OMK];
+  const ky = p[TRK];
+  const ox = v[2 * io];
+  const oy = v[2 * io + 1];
+  const ax = v[2 * ia];
+  const ay = v[2 * ia + 1];
+  // Vértices no quadro da camisa (x em unidades, y em unidades de tronco sem a escala do TRK).
+  const oX = (ox * ct + oy * st) / kx;
+  const oY = (-ox * st + oy * ct) / ky;
+  const aX = (ax * ct + ay * st) / kx;
+  const aY = (-ax * st + ay * ct) / ky;
+  const [cintura, barra] = [m.cintura, m.barra];
+  const yCintura = m.cinturaY * TRONCO;
+  const yBarra = (lado > 0 ? m.bainha[5] : m.bainha[1]) * TRONCO;
+  // Meia largura da camisa na altura y: reta da cintura à quina da bainha.
+  const meia = (y: number) => cintura + (barra - cintura) * Math.max(0, Math.min(1, (y - yCintura) / (yBarra - yCintura)));
+  let nx = oX;
+  let nY = oY;
+  if (oY < yBarra) {
+    const limite = meia(oY) - FOLGA_DA_CAMISA;
+    if (lado * oX > limite) nx = lado * limite;
+  }
+  // A quina da bainha só entra se o chanfro está abaixo da barra e mais para fora que ela.
+  const hX = lado * (barra - FOLGA_DA_CAMISA);
+  const poeQuina = aY > yBarra && lado * aX > lado * hX;
+  v[2 * io] = nx * kx * ct - nY * ky * st;
+  v[2 * io + 1] = nx * kx * st + nY * ky * ct;
+  if (!poeQuina) return n;
+  // Abre espaço entre o topo de fora e o chanfro (a ordem dos vértices muda de sentido nos dois lados).
+  const pos = lado > 0 ? ia + 1 : io + 1;
+  for (let i = n - 1; i >= pos; i--) {
+    v[2 * i + 2] = v[2 * i];
+    v[2 * i + 3] = v[2 * i + 1];
+  }
+  v[2 * pos] = hX * kx * ct - yBarra * ky * st;
+  v[2 * pos + 1] = hX * kx * st + yBarra * ky * ct;
+  return n + 1;
+}
+
+/** Mantém a parte do polígono onde nx·(x − px) + ny·(y − py) ≥ 0 (um corte pelo semiplano, sem criar nada). */
+function cortarPeloPlano(ent: Float64Array, n: number, sai: Float64Array, px: number, py: number, nx: number, ny: number): number {
+  let m = 0;
+  for (let i = 0; i < n; i++) {
+    const j = i + 1 === n ? 0 : i + 1;
+    const ax = ent[2 * i];
+    const ay = ent[2 * i + 1];
+    const bx = ent[2 * j];
+    const by = ent[2 * j + 1];
+    const fa = nx * (ax - px) + ny * (ay - py);
+    const fb = nx * (bx - px) + ny * (by - py);
+    if (fa >= 0) {
+      sai[2 * m] = ax;
+      sai[2 * m + 1] = ay;
+      m++;
+    }
+    if ((fa >= 0) !== (fb >= 0)) {
+      const t = fa / (fa - fb);
+      sai[2 * m] = ax + (bx - ax) * t;
+      sai[2 * m + 1] = ay + (by - ay) * t;
+      m++;
+    }
+  }
+  return m;
+}
+
+function poligono(c: CanvasRenderingContext2D, v: Float64Array, n: number): void {
+  c.beginPath();
+  c.moveTo(v[0], v[1]);
+  for (let i = 1; i < n; i++) c.lineTo(v[2 * i], v[2 * i + 1]);
+  c.closePath();
+}
+
+/** O plano da sombra do calção em PLANO (ponto e normal, girando com o calção): começa onde termina a sombra da camisa. */
+function planoDaSombra(m: MedidasDaCamisa, p: Pose): void {
+  const ang = p[TR] + p[QD];
+  const ca = Math.cos(ang);
+  const sa = Math.sin(ang);
+  const rx = m.fimDaSombra[0] * p[OMK];
+  const ry = m.fimDaSombra[1] * TRONCO * p[TRK];
+  PLANO[0] = rx * ca - ry * sa;
+  PLANO[1] = rx * sa + ry * ca;
+  // Normal de (1, -INCLINACAO) girada: o lado da sombra é o da direita da tela.
+  PLANO[2] = ca + INCLINACAO_DA_SOMBRA * sa;
+  PLANO[3] = sa - INCLINACAO_DA_SOMBRA * ca;
 }
 
 /** Calção num polígono só, montado a cada quadro a partir das juntas. */
 function calcao(c: CanvasRenderingContext2D, b: Boneco, d: Degrades, p: Pose): void {
+  const m = b.medidas;
+  const plus = !d.chapado;
+  const n = montarCalcao(b.j, m, p, BUF_CALCAO);
   c.save();
   c.translate(b.j[J_PELVE], b.j[J_PELVE + 1]);
   c.fillStyle = d.calcao;
-  c.beginPath();
-  c.moveTo(-b.quadril - 3.4, -5.5);
-  bocaDaPerna(c, b, p, 0);
-  bocaDaPerna(c, b, p, 1);
-  c.lineTo(b.quadril + 3.4, -5.5);
-  c.closePath();
+  poligono(c, BUF_CALCAO, n);
   c.fill();
+  if (plus) planoDaSombra(m, p);
+  if (plus) {
+    const k = cortarPeloPlano(BUF_CALCAO, n, BUF_CORTE, PLANO[0], PLANO[1], PLANO[2], PLANO[3]);
+    if (k >= 3) {
+      c.fillStyle = b.cor.calcaoSombra;
+      poligono(c, BUF_CORTE, k);
+      c.fill();
+    }
+  }
+  // Camisa por dentro: cós no topo do calção, uma faixa um pouco mais larga de cada lado.
+  const cos = m.cos;
+  if (cos) {
+    const ang = p[TR] + p[QD];
+    const ca = Math.cos(ang);
+    const sa = Math.sin(ang);
+    const y0 = m.calcao.cantoY;
+    const y1 = y0 + cos.altura;
+    const wt = m.quadril + m.calcao.cantoX + cos.folga;
+    const wb = wt + 0.4;
+    BUF_COS[0] = -wt * ca - y0 * sa;
+    BUF_COS[1] = -wt * sa + y0 * ca;
+    BUF_COS[2] = wt * ca - y0 * sa;
+    BUF_COS[3] = wt * sa + y0 * ca;
+    BUF_COS[4] = wb * ca - y1 * sa;
+    BUF_COS[5] = wb * sa + y1 * ca;
+    BUF_COS[6] = -wb * ca - y1 * sa;
+    BUF_COS[7] = -wb * sa + y1 * ca;
+    c.fillStyle = b.cor.calcaoCos;
+    poligono(c, BUF_COS, 4);
+    c.fill();
+    if (plus) {
+      const k = cortarPeloPlano(BUF_COS, 4, BUF_COS_CORTE, PLANO[0], PLANO[1], PLANO[2], PLANO[3]);
+      if (k >= 3) {
+        c.fillStyle = b.cor.calcaoCosSombra;
+        poligono(c, BUF_COS_CORTE, k);
+        c.fill();
+      }
+    }
+  }
   c.restore();
 }
 
 function tronco(c: CanvasRenderingContext2D, b: Boneco, d: Degrades, p: Pose): void {
   const J = b.j;
-  calcao(c, b, d, p);
+  // Camisa por fora: o calção vai por baixo. Por dentro, ele vem depois (desenharBoneco), por cima da camisa.
+  if (!b.medidas.dentro) calcao(c, b, d, p);
+  const plus = !d.chapado;
   c.save();
   c.translate(J[J_PELVE], J[J_PELVE + 1]);
   c.rotate(p[TR]);
   c.scale(p[OMK], TRONCO * p[TRK]);
   c.fillStyle = b.uniforme.camisa;
   c.fill(b.camisa);
+  // Plus: três planos chapados, luz à esquerda, a cor do time no meio e a sombra à direita.
+  if (plus) {
+    c.fillStyle = b.cor.camisaLuz;
+    c.fill(b.luzCamisa);
+  }
   c.fillStyle = b.cor.camisaSombra;
   c.fill(b.sombraCamisa);
+  if (plus) c.fill(b.dobraCamisa);
   c.restore();
 }
 
-function pescoco(c: CanvasRenderingContext2D, b: Boneco, p: Pose): void {
+function pescoco(c: CanvasRenderingContext2D, b: Boneco, p: Pose, plus: boolean): void {
   c.save();
   c.translate(b.j[J_PESCOCO], b.j[J_PESCOCO + 1]);
   c.rotate(p[CB]);
   c.fillStyle = b.cor.peleMeio;
   c.fill(membros().pescoco);
+  if (plus) {
+    c.fillStyle = b.cor.peleSombra;
+    c.fill(membros().pescocoSombra);
+  }
   c.restore();
 }
 
-function cabeca(c: CanvasRenderingContext2D, b: Boneco, p: Pose, soCabeloDeTras: boolean): void {
+function cabeca(c: CanvasRenderingContext2D, b: Boneco, p: Pose, soCabeloDeTras: boolean, plus: boolean): void {
   c.save();
   c.translate(b.j[J_CABECA], b.j[J_CABECA + 1]);
   c.rotate(p[CB]);
@@ -1360,6 +2034,10 @@ function cabeca(c: CanvasRenderingContext2D, b: Boneco, p: Pose, soCabeloDeTras:
     c.fill(F.cabeca);
     c.fillStyle = b.cor.cabelo;
     for (let i = 0; i < b.cabeloFrente.length; i++) c.fill(b.cabeloFrente[i]);
+    if (plus && b.aparencia.cabelo !== 'raspado') {
+      c.fillStyle = b.cor.brilho;
+      c.fill(F.brilhoCabelo);
+    }
   }
   c.restore();
 }
@@ -1371,21 +2049,23 @@ function cabeca(c: CanvasRenderingContext2D, b: Boneco, p: Pose, soCabeloDeTras:
 export function desenharBoneco(c: CanvasRenderingContext2D, b: Boneco, p: Pose, realcePeDeApoio = false, camadasPedidas?: Camadas): void {
   const camadas = camadasPedidas ?? b.camadas;
   const d = prepararDegrades(c, b);
-  resolver(b, p);
-  if (b.deFrente && b.cabeloAtras) cabeca(c, b, p, true);
+  const plus = !d.chapado;
+  resolverPose(b, p);
+  if (b.deFrente && b.cabeloAtras) cabeca(c, b, p, true, plus);
   if (p[PNE + 6] <= 0) canela(c, b, d, p, 0, realcePeDeApoio);
   if (p[PND + 6] <= 0) canela(c, b, d, p, 1, false);
   coxa(c, b, d, p, 0);
   coxa(c, b, d, p, 1);
   if (p[BE + 4] < 0) braco(c, b, d, p, 0);
   if (p[BD + 4] < 0) braco(c, b, d, p, 1);
-  pescoco(c, b, p);
+  pescoco(c, b, p, plus);
   tronco(c, b, d, p);
   camadas?.tronco?.(c, b, p);
+  if (b.medidas.dentro) calcao(c, b, d, p);
   // Perna dobrada para a câmera: a canela passa na frente do calção e da camiseta.
   if (p[PNE + 6] > 0) canela(c, b, d, p, 0, realcePeDeApoio);
   if (p[PND + 6] > 0) canela(c, b, d, p, 1, false);
-  cabeca(c, b, p, false);
+  cabeca(c, b, p, false, plus);
   camadas?.cabeca?.(c, b, p);
   if (p[BE + 4] >= 0) braco(c, b, d, p, 0);
   if (p[BD + 4] >= 0) braco(c, b, d, p, 1);
@@ -1414,20 +2094,43 @@ export const escalaDoOsso = comSinal;
 
 /** Poses de frente do boneco montável (avatar e card): mãos na cintura e braços para cima em V. */
 export const POSES_DE_FRENTE = {
+  /** Corpo inteiro parado: peso numa perna, mãos na cintura encostando na camisa. */
   parado: frente({
+    x: PESO_X,
+    tr: PESO_TR,
+    qd: PESO_QD,
+    bE: [-38, 1, 50, 0.95, 1],
+    bD: [36, 1, -46, 0.95, 1],
+    pE: [1, 1, 0, 1, -35, 0.5, -1],
+    pD: [13, 0.98, 1, 0.97, 35, 0.5, -1],
+  }),
+  /** Busto (Home 52 e crachá 84): a pose reta de antes do peso numa perna. */
+  busto: frente({
     bE: [-40, 1, 46, 0.95, 1],
     bD: [40, 1, -46, 0.95, 1],
     pE: [-6, 1, -2, 1, -35, 0.5, -1],
     pD: [6, 1, 2, 1, 35, 0.5, -1],
   }),
-  /** Os dois braços para cima, abertos em V. */
-  bracos: frente({
+  /** Busto com a pose "braços pra cima": os braços para cima de antes do peso numa perna, sem inclinar. */
+  bustoBracos: frente({
     y: -50,
     trk: 1.02,
     bE: [-152, 1, -158, 1, 1],
     bD: [152, 1, 158, 1, 1],
     pE: [-8, 1, -3, 1, -35, 0.5, -1],
     pD: [8, 1, 3, 1, 35, 0.5, -1],
+  }),
+  /** Os dois braços para cima, abertos em V, com o peso numa perna. */
+  bracos: frente({
+    x: PESO_X,
+    y: -50,
+    tr: -3,
+    trk: 1.02,
+    qd: PESO_QD,
+    bE: [-152, 1, -158, 1, 1],
+    bD: [152, 1, 158, 1, 1],
+    pE: [1, 1, 0, 1, -35, 0.5, -1],
+    pD: [13, 0.98, 1, 0.97, 35, 0.5, -1],
   }),
 };
 
