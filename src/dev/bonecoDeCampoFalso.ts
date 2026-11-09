@@ -19,6 +19,7 @@
 //                 camisa de goleiro): prova que nenhuma aparece
 //   Atalhos prontos: coque, trancas, rabo, crespo, comprido, clara, escura, tudo, foras, liso.
 //   &time=<id>  muda o time do coração (as cores da testeira, da munhequeira e da chuteira "time").
+//   &barra=dentro  a camisa por dentro do calção, para todos os bonecos da cena (a opção do H03b; padrão: por fora).
 //
 // O boneco de quem chamou o X1 (os resumos falsos do desafio, `boneco` de ver_desafio e ver_desafio_lances; ?penaltiFalso
 // com ?d=, ?lancesFalsos com ?l= e ?homeFalsa com o convite):
@@ -30,6 +31,7 @@
 //   Sem nenhum dos dois, o falso devolve o boneco padrão de quem chamou. Só as 9 chaves de campo, como o servidor.
 
 import { definirFonteDoBoneco } from '../telas/bonecoEmCampoCena';
+import { definirBarraPadrao } from '../telas/bonecos';
 import { PADRAO, conferirFormato, type Vestimenta } from '../jogo/vestiario';
 import type { VestimentaDeCampo } from '../telas/bonecoEmCampo';
 
@@ -104,4 +106,5 @@ export function bonecoFalsoDeQuemChamou(busca: string = location.search): Vestim
   return { corpo, pele, cabelo, corCabelo, numero, cabeca, punho, braco, chuteira };
 }
 
+if (new URLSearchParams(location.search).get('barra') === 'dentro') definirBarraPadrao('dentro');
 definirFonteDoBoneco(() => ({ vestimenta: vestimentaFalsaDeCampo(), ligado: new URLSearchParams(location.search).get('emCampo') !== '0' }));
