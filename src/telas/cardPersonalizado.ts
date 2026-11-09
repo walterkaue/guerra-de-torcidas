@@ -8,7 +8,8 @@ import '../estilos/trofeus.css';
 import '../estilos/cardPersonalizado.css';
 import { esc } from '../app';
 import { corDeTexto } from '../dados/times';
-import { APELIDO_MAX, apelidoDoCard, prefs } from '../estado';
+import { APELIDO_MAX, apelidoDoCard, faixaDoAparelho, prefs } from '../estado';
+import { podeTerApelido } from '../jogo/faixaEtaria';
 import { prontoParaDesenhar } from '../jogo/card';
 import {
   ACOES,
@@ -47,7 +48,7 @@ import { escolherFrase, type ContextoNarrador } from '../narrador/escolher';
 import type { EventoNarrador } from '../narrador/frases';
 import { lerRecentes, registrarVista } from '../narrador/historico';
 import { ErroServidor, salvarTorcedor } from '../servidor/api';
-import { marcaDe } from '../servidor/torcedor';
+import { marcaDe, sincronizarFaixa } from '../servidor/torcedor';
 import { lerBoneco } from '../servidor/boneco';
 import { contar } from '../servidor/funil';
 import { nivelParaCard } from './carreira';
@@ -379,6 +380,9 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
     const L = ligados();
     for (const b of grade.querySelectorAll<HTMLButtonElement>('[data-chave]')) b.setAttribute('aria-pressed', String(L.has(b.dataset.chave as Chave)));
     grade.querySelector<HTMLButtonElement>('[data-acao="sortear"]')!.disabled = !o.sortearFrase;
+    // Apelido só 16+ (jogo.md, seção 4): para os outros o quadradinho fica apagado e não abre a folha.
+    const apelido = grade.querySelector<HTMLButtonElement>('[data-chave="apelido"]');
+    if (apelido) apelido.disabled = !podeTerApelido(faixaDoAparelho());
     const m = estadoDoMeuBoneco(estilo(), temBoneco(), escolhas.comBoneco);
     const b = grade.querySelector<HTMLButtonElement>('[data-boneco]')!;
     b.setAttribute('aria-pressed', String(m.ligado));
@@ -390,6 +394,7 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
 
   async function aoLigar(chave: Chave): Promise<void> {
     if (!dados) return;
+    if (chave === 'apelido' && !podeTerApelido(faixaDoAparelho())) return;
     if (chave === 'apelido' && !apelidoDoCard()) {
       abrirFolhaDoApelido();
       return;
@@ -747,8 +752,11 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
       }
       salvar.disabled = true;
       salvar.textContent = 'Salvando…';
+      let recusado = false;
       try {
-        await salvarTorcedor(prefs.get().time ?? dados!.time.id, apelido);
+        // A faixa 16+ chega antes do apelido: sem ela no servidor, ele descartaria o apelido ('apelido_idade').
+        await sincronizarFaixa();
+        recusado = (await salvarTorcedor(prefs.get().time ?? dados!.time.id, apelido)).apelidoRecusado;
       } catch (e) {
         salvar.disabled = false;
         salvar.textContent = 'Salvar apelido';
@@ -757,6 +765,13 @@ export function abrirCardPersonalizado(o: OpcoesDoCard): () => void {
             ? 'Esse apelido não passa no filtro. Tenta outro?'
             : 'Sem conexão agora. Tenta de novo daqui a pouco.',
         );
+        return;
+      }
+      if (recusado) {
+        // 'apelido_idade': o servidor não guarda apelido de quem não é 16+. Nada muda no aparelho.
+        salvar.disabled = false;
+        salvar.textContent = 'Salvar apelido';
+        mostrarErro('Não deu para guardar esse apelido agora.');
         return;
       }
       if (fechado) return;

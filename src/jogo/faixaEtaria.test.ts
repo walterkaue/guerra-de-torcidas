@@ -30,3 +30,12 @@ describe('faixa etária', () => {
     expect(destinoDaInscricao(undefined)).toBe('esperar');
   });
 });
+
+describe('apelido só para 16+', () => {
+  it('16_17 e 18_mais podem; o resto não', async () => {
+    const { podeTerApelido } = await import('./faixaEtaria');
+    expect(podeTerApelido('16_17')).toBe(true);
+    expect(podeTerApelido('18_mais')).toBe(true);
+    for (const v of ['menos_16', '', 'adulto', null, undefined]) expect(podeTerApelido(v)).toBe(false);
+  });
+});

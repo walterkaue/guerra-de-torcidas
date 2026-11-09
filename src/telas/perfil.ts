@@ -10,7 +10,7 @@ import { ID_OUTRO, corDeTexto, timePorId } from '../dados/times';
 import { faixaDoAparelho, prefs } from '../estado';
 import { rodadaEmFoco } from '../jogo/cravaTela';
 import { ordinalRodada } from '../jogo/crava';
-import { podeVerPush } from '../jogo/faixaEtaria';
+import { podeTerApelido, podeVerPush } from '../jogo/faixaEtaria';
 import { nomeNoCracha } from '../jogo/perfil';
 import type { PosicaoSemana } from '../jogo/posicao';
 import { ErroServidor, meusRecordes, minhaPosicaoMinigame, minhaPosicaoSemana, type MinigameDoRecorde } from '../servidor/api';
@@ -54,7 +54,8 @@ const NOME_DO_RECORDE: Record<MinigameDoRecorde, string> = {
 };
 
 export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
-  const { apelido, nivelNoCard, semVibracao } = prefs.get();
+  const { nivelNoCard, semVibracao } = prefs.get();
+  const apelido = podeTerApelido(faixaDoAparelho()) ? prefs.get().apelido : undefined;
   // Lances unificados (jogo.md 14.7): posição e recorde dos pênaltis são os dos Lances (o servidor junta os dois),
   // então o Perfil mostra só "Lances".
   const time = timePorId(prefs.get().time);
@@ -66,7 +67,9 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
     ? `<button class="perfil-destaque convite" type="button" data-acao="trocar">Escolha seu time ${icone('lapis')}</button>`
     : apelido
       ? `<p class="perfil-destaque">${esc(apelido)}</p>`
-      : `<button class="perfil-destaque convite" type="button" data-acao="apelido">Dar um apelido (opcional) ${icone('lapis')}</button>`;
+      : !podeTerApelido(faixaDoAparelho())
+        ? `<p class="perfil-destaque">${esc(nomeNoCracha(undefined, time))}</p>`
+        : `<button class="perfil-destaque convite" type="button" data-acao="apelido">Dar um apelido (opcional) ${icone('lapis')}</button>`;
 
   root.innerHTML = `
     <main class="tela perfil"
