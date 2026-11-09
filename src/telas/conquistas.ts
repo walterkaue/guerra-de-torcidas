@@ -74,7 +74,7 @@ function linhaDoClube(c: MedalhasDoClube): string {
 /** O que vem depois do clube: recriados nos lances, vitórias nos pênaltis. */
 function detalheDoItem(l: MedalhaDoLanceMontada): string {
   if (l.penaltis) return l.vitorias ? ` · ${l.vitorias} ${l.vitorias === 1 ? 'vitória' : 'vitórias'}` : '';
-  return l.recriados ? ` · ${l.recriados} recriando` : '';
+  return l.recriados ? ` · ${l.recriados} carimbando` : '';
 }
 
 function linhaDoLance(l: MedalhaDoLanceMontada): string {
@@ -106,7 +106,7 @@ function desenharMedalhas(el: HTMLElement): () => void {
   el.innerHTML = `<div class="conquistas">
       <section class="placa" aria-label="Suas medalhas" data-minhas aria-live="polite"></section>
       <section class="placa" aria-label="Vitrine das torcidas" data-vitrine aria-live="polite"></section>
-      <p class="explica">Medalha por lance, só com gol em partida valendo: bronze com 5 gols, prata com 20 e ouro com 50, 10 deles recriando o lance. ${textoDasMedalhasDosPenaltis()} Não vale ponto e não zera.</p>
+      <p class="explica">Medalha por lance, só com gol em partida valendo: bronze com 5 gols, prata com 20 e ouro com 50, 10 deles carimbando o lance. ${textoDasMedalhasDosPenaltis()} Não vale ponto e não zera.</p>
       <button class="botao-linha conq-jogar" type="button" data-acao="jogar">Jogar os Lances do Jogo</button>
       <div class="rodape-apoio">${htmlBotaoApoio()}</div>
     </div>`;

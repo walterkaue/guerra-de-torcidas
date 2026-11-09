@@ -60,7 +60,7 @@ describe('escada do telão', () => {
 
 describe('acertos do Crava', () => {
   it('conta só o que aconteceu, no singular e no plural', () => {
-    expect(resumoDosAcertos(['exato', 'exato', 'saldo', 'vencedor', 'errou'])).toBe('2 EXATOS · 1 NO SALDO · 1 VENCEDOR · 1 ERRO');
+    expect(resumoDosAcertos(['exato', 'exato', 'saldo', 'vencedor', 'errou'])).toBe('2 NA MOSCA · 1 NO SALDO · 1 VENCEDOR · 1 ERRO');
     expect(resumoDosAcertos(['errou', 'errou'])).toBe('2 ERROS');
   });
 });

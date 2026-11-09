@@ -1,6 +1,7 @@
 // Linhas de status dos cards da Home (docs/jogo.md, seção 9, "Home"). Puro: sem DOM nem relógio.
 
 import { ordinalRodada } from './crava';
+import { TEXTO_DO_LIMITE } from './regraLances';
 import { faseDoJogo, rodadaEmFoco, type JogoBasico } from './cravaTela';
 
 /**
@@ -15,7 +16,7 @@ export function faltamDosLances(h: { feitas: number; limite: number } | null | u
 /** A linha de baixo do card e do "Jogar agora": "faltam 3 partidas valendo hoje". */
 export function linhaLancesUnificados(faltam: number | null, melhores: number): string {
   if (faltam === null) return `As ${melhores} melhores do dia contam`;
-  if (faltam <= 0) return 'hoje já deu: o treino segue liberado';
+  if (faltam <= 0) return `${TEXTO_DO_LIMITE}.`;
   return `${faltam === 1 ? 'falta 1 partida valendo' : `faltam ${faltam} partidas valendo`} hoje`;
 }
 
@@ -57,7 +58,7 @@ export function statusCrava(
   const nome = `${ordinalRodada(rodada)} rodada`;
   if (!abertos.length) return { rodada, linha: `${nome} · bola rolando`, cravado: false };
   const cravado = !!palpites && abertos.every((j) => palpites.has(j.id));
-  if (cravado) return { rodada, linha: 'Cravado ✓', cravado };
+  if (cravado) return { rodada, linha: 'Palpite salvo ✓', cravado };
   const proximo = Math.min(...abertos.map((j) => Date.parse(j.inicio)));
   const primeiro = !jogos.some((j) => j.rodada === rodada && Date.parse(j.inicio) < proximo);
   const qual = primeiro ? '1º jogo' : 'próximo jogo';

@@ -20,7 +20,7 @@ export default {
 
     // 1. O link do grupo: a Home com o convite.
     await s.passo('abre o link do X1', async () => {
-      const ms = await s.abrir(LINK_X1, { esperarPor: 'text=Aceitar o X1', limiteMs: 20000, rotulo: 'link do X1 até o convite na Home' });
+      const ms = await s.abrir(LINK_X1, { esperarPor: 'text=Encarar o desafio', limiteMs: 20000, rotulo: 'link do X1 até o convite na Home' });
       s.medir('tempo até a Home aparecer', ms, 4000);
     });
 

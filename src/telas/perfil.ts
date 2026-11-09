@@ -49,7 +49,7 @@ const NOME_DO_RECORDE: Record<MinigameDoRecorde, string> = {
   penaltis: 'Pênaltis',
   prova: 'Prova',
   dia: 'Time do Dia',
-  crava: 'Crava',
+  crava: 'Palpite',
   lances: 'Lances',
 };
 
@@ -350,7 +350,7 @@ export function telaPerfil(root: HTMLElement, _rota: Rota): () => void {
           ${posicao(prova, 'Prova')}
           ${posicao(dia, 'Time do Dia hoje')}
           ${posicao(lances, 'Lances')}
-          ${rodada === null ? '' : posicao(crava, `Crava ${ordinalRodada(rodada)}`)}
+          ${rodada === null ? '' : posicao(crava, `Palpite ${ordinalRodada(rodada)}`)}
         </div>`;
     } catch {
       if (!saiu) semConexao(el, () => void carregarSemana(el));

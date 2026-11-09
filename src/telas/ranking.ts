@@ -33,7 +33,7 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
   const eu = timePorId(meuTime);
   root.innerHTML = `
     <main class="tela ranking"${eu ? ` style="--c1:${eu.cores[0]};--c2:${eu.cores[1]}"` : ''}>
-      ${cabecalhoTela({ titulo: 'Ranking' })}
+      ${cabecalhoTela({ titulo: 'Tabela' })}
       ${abas('ranking', [
         { id: 'semana', texto: 'Semana' },
         { id: 'temporada', texto: 'Temporada' },

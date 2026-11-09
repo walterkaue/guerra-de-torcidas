@@ -8,6 +8,7 @@ import { ID_OUTRO, corDeTexto, proTime, timePorId } from '../dados/times';
 import { prefs } from '../estado';
 import { GOLS_MAX, PESO_TORCIDA, PONTOS_ACERTO, TETO_RODADA } from '../jogo/crava';
 import { LANCES_POR_PARTIDA, TABELA_LANCES_UNIFICADA } from '../jogo/lances';
+import { TEXTO_DO_LIMITE } from '../jogo/regraLances';
 import { PONTOS_UNIFICADOS, RODADAS_EXTRAS_MAX } from '../jogo/penaltis';
 import {
   BONUS_PERFEITA,
@@ -65,8 +66,8 @@ function dosLances(): Regras {
     passos: [
       ['Escolha um lance.', `Um toque em Jogar. Na falta e no cara a cara, a partida são ${LANCES_POR_PARTIDA} tentativas do mesmo lance; nos pênaltis, a disputa de sempre.`],
       ['O gesto é o do pênalti.', 'Arraste da bola até o gol: direção, força e curva. Na falta, a bola tem de passar da barreira. No cara a cara, o goleiro pode sair do gol e a cavadinha encobre quem saiu.'],
-      ['Recriar o lance.', `Gol na área marcada onde o gol de verdade entrou vale mais ${t.recriou}.`],
-      ['X1.', 'Depois de uma partida valendo, mande o link do X1: quem recebe joga o mesmo lance e tenta bater seus pontos. Passou do limite do dia, a partida vira treino, sem ponto nem medalha.'],
+      ['Carimbar o lance.', `Gol na área marcada onde o gol de verdade entrou vale mais ${t.recriou}.`],
+      ['Desafio.', `Depois de uma partida valendo, mande o link do desafio: quem recebe joga o mesmo lance e tenta fazer mais pontos. ${TEXTO_DO_LIMITE}: sem ponto nem medalha.`],
     ],
     pontos: pontosDosLances(t),
     nota: notaDosLances(t),
@@ -106,15 +107,15 @@ function doDia(): Regras {
 
 function doCrava(): Regras {
   return {
-    titulo: 'Crava a Rodada',
+    titulo: 'Palpite da Rodada',
     passos: [
-      ['Crave o placar.', `Use − e + nos dois times (de 0 a ${GOLS_MAX}) e toque em Cravar. Dá pra mudar até a bola rolar, e pode pular os jogos que quiser.`],
+      ['Dê seu palpite.', `Use − e + nos dois times (de 0 a ${GOLS_MAX}) e toque em Salvar palpite. Dá pra mudar até a bola rolar, e pode pular os jogos que quiser.`],
       ['Jogo da certeza.', 'A estrela marca 1 jogo por rodada que conta em dobro. Escolha até o 1º jogo da rodada começar; depois trava.'],
       ['Na dúvida, olhe os números.', 'Embaixo de cada time: posição, pontos e os últimos 5 jogos (V vitória, E empate, D derrota). A aba Tabela mostra o campeonato.'],
-      ['Bola rolando.', 'O palpite tranca e aparece como a torcida cravou (com 20 palpites ou mais). Os pontos saem quando o placar é confirmado.'],
+      ['Bola rolando.', 'O palpite tranca e aparece como a torcida palpitou (com 20 palpites ou mais). Os pontos saem quando o placar é confirmado.'],
     ],
     pontos: [
-      ['🎯 Placar exato', String(PONTOS_ACERTO.exato)],
+      ['🎯 Na mosca', String(PONTOS_ACERTO.exato)],
       ['✅ Vencedor e saldo certos', String(PONTOS_ACERTO.saldo)],
       ['👍 Só o vencedor ou só o empate', String(PONTOS_ACERTO.vencedor)],
       ['❌ Errou', String(PONTOS_ACERTO.errou)],

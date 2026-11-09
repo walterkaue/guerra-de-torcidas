@@ -56,8 +56,8 @@ const TUDO: ReadonlySet<Chave> = new Set(['frase', 'apelido', 'nivel', 'placar',
 const NADA: ReadonlySet<Chave> = new Set();
 
 describe('estilos e formatos', () => {
-  it('Telão é o padrão, depois o Placar seco e o Pôster; Stories é o formato padrão; Meu boneco começa desligado', () => {
-    expect(ESTILOS.map((e) => e.nome)).toEqual(['Telão', 'Placar seco', 'Pôster']);
+  it('Telão é o padrão, depois o Só o placar e o Pôster; Stories é o formato padrão; Meu boneco começa desligado', () => {
+    expect(ESTILOS.map((e) => e.nome)).toEqual(['Telão', 'Só o placar', 'Pôster']);
     expect(ESCOLHAS_PADRAO).toEqual({ estilo: 'telao', formato: 'stories', desligados: [], comBoneco: false });
   });
 
@@ -94,18 +94,18 @@ describe('estilos com e sem boneco', () => {
   it('os nomes embaixo do card viram botões, com o atual marcado', () => {
     expect(botoesDeEstilo('placar', true)).toEqual([
       { id: 'telao', nome: 'Telão', atual: false },
-      { id: 'placar', nome: 'Placar seco', atual: true },
+      { id: 'placar', nome: 'Só o placar', atual: true },
       { id: 'poster', nome: 'Pôster', atual: false },
     ]);
     expect(botoesDeEstilo('poster', false)).toEqual([
       { id: 'telao', nome: 'Telão', atual: true },
-      { id: 'placar', nome: 'Placar seco', atual: false },
+      { id: 'placar', nome: 'Só o placar', atual: false },
     ]);
   });
 });
 
 describe('Meu boneco', () => {
-  it('Telão e Placar seco: liga e desliga, guardado nas escolhas', () => {
+  it('Telão e Só o placar: liga e desliga, guardado nas escolhas', () => {
     expect(estadoDoMeuBoneco('telao', true, false)).toEqual({ ligado: false, travado: false, aviso: null });
     expect(estadoDoMeuBoneco('placar', true, true)).toEqual({ ligado: true, travado: false, aviso: null });
     const liga = tocarMeuBoneco(ESCOLHAS_PADRAO, true);
@@ -141,11 +141,11 @@ describe('quadradinhos', () => {
     for (const q of [...Object.values(TIPOS_DE_CARD).flat(), ...ACOES, MEU_BONECO]) expect(q.nome.split('\n')).toHaveLength(2);
   });
 
-  it('jogo sem X1 troca "Link do X1" por "Link do jogo"', () => {
+  it('jogo sem desafio troca "Link do desafio" por "Link do jogo"', () => {
     const nome = (tipo: keyof typeof TIPOS_DE_CARD) => TIPOS_DE_CARD[tipo].find((q) => q.chave === 'link')!.nome;
     expect(tipoDoJogo(true)).toBe('jogo-x1');
     expect(tipoDoJogo(false)).toBe('jogo');
-    expect(nome('jogo-x1')).toBe('Link do\nX1');
+    expect(nome('jogo-x1')).toBe('Link do\ndesafio');
     expect(nome('jogo')).toBe('Link do\njogo');
     expect(nome('medalha')).toBe('Link do\nlance');
   });
@@ -228,7 +228,7 @@ describe('o que entra em cada estilo e formato', () => {
     });
   });
 
-  it('Placar seco, tudo ligado: número, time, lance, emoji, apelido e link', () => {
+  it('Só o placar, tudo ligado: número, time, lance, emoji, apelido e link', () => {
     const p = planoDoCard(dados(), { estilo: 'placar', formato: 'stories', ligados: TUDO });
     expect(p).toMatchObject({
       destaque: '+47',
@@ -243,7 +243,7 @@ describe('o que entra em cada estilo e formato', () => {
     });
   });
 
-  it('Placar seco, tudo desligado: número, time e lance', () => {
+  it('Só o placar, tudo desligado: número, time e lance', () => {
     const p = planoDoCard(dados(), { estilo: 'placar', formato: 'quadrado', ligados: NADA });
     expect(p).toMatchObject({ destaque: '+47', time: 'Flamengo', lance: 'Falta no ângulo', placarEmoji: null, quem: null, frase: null, nivel: null, link: null });
   });
@@ -270,7 +270,7 @@ describe('o boneco no card', () => {
   const semPose: BonecoDoCard = { vestimenta: { ...vestimenta, pose: 'bracos' }, liberadas: ['uni1'] };
   const opcoes = { ligados: TUDO, boneco: comPose, apelido: 'Zé da Geral' } as const;
 
-  it('Telão e Placar seco: busto só com Meu boneco ligado e boneco carregado', () => {
+  it('Telão e Só o placar: busto só com Meu boneco ligado e boneco carregado', () => {
     expect(planoDoCard(dados(), { ...opcoes, estilo: 'telao', formato: 'stories', comBoneco: true }).busto).toEqual(vestimenta);
     expect(planoDoCard(dados(), { ...opcoes, estilo: 'placar', formato: 'quadrado', comBoneco: true }).busto).toEqual(vestimenta);
     expect(planoDoCard(dados(), { ...opcoes, estilo: 'telao', formato: 'stories', comBoneco: false }).busto).toBeNull();

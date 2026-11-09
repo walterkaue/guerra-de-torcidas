@@ -25,7 +25,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
       ${cabecalhoTela({ titulo: 'Qual é a sua torcida?', voltar: !primeira, pre: false })}
       ${primeira ? '<p class="campo-dica">Sem cadastro: escolha o time e já entra jogando. O apelido é opcional.</p>' : ''}
       ${saiuDaConta ? '<p class="aviso-caixa" role="note">Este aparelho saiu da conta: foi desconectado em outro aparelho ou a conta foi apagada. Escolha seu time pra começar de novo, ou entre com um código.</p>' : ''}
-      ${rota.tela === 'times' && rota.desafio ? '<p class="campo-dica">É só escolher o time: o X1 que te mandaram começa em seguida.</p>' : ''}
+      ${rota.tela === 'times' && rota.desafio ? '<p class="campo-dica">É só escolher o time: o desafio que te mandaram começa em seguida.</p>' : ''}
 
       <div class="grade-times" role="radiogroup" aria-label="Times">
         ${TIMES.map(

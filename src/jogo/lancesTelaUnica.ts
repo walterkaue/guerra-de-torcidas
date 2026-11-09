@@ -89,13 +89,13 @@ export const textoDaTentativa = (i: number, total = TENTATIVAS_POR_PARTIDA): str
 /** Linha da lista de tentativas do resultado: "Tentativa 1". */
 export const rotuloDaTentativa = (i: number): string => `Tentativa ${i + 1}`;
 
-/** O alvo no HUD do X1: "X1: Fulano fez 96". Sem apelido, "Alguém". */
-export const alvoDoX1 = (apelido: string | null | undefined, pontos: number): string => `X1: ${apelido?.trim() || 'Alguém'} fez ${pontos}`;
+/** O alvo no HUD do desafio: "Desafio: Fulano fez 96". Sem apelido, "alguém". */
+export const alvoDoX1 = (apelido: string | null | undefined, pontos: number): string => `Desafio: ${apelido?.trim() || 'alguém'} fez ${pontos}`;
 
 /** Quando o X1 não vale, a partida é normal do mesmo lance; a linha do narrador na abertura. */
 const AVISOS_DO_X1: Record<string, string> = {
-  desafio_nao_encontrado: 'Esse X1 não existe mais. Vai uma partida normal!',
-  proprio_desafio: 'Esse X1 é seu. Vai uma partida normal!',
+  desafio_nao_encontrado: 'Esse desafio não existe mais. Bora outro!',
+  proprio_desafio: 'Esse desafio é seu. Bora outro!',
   desafio_expirado: 'Apitou o fim: esse desafio valia 7 dias. Bora outro!',
 };
 
@@ -110,20 +110,24 @@ export interface ComparacaoX1 {
 
 /** O que mostrar no placar do X1: quem fez quanto, lado a lado. */
 export function placarDoX1(pontos: number, c: ComparacaoX1): { voce: number; outro: number; nomeDoOutro: string; venceu: boolean } {
-  return { voce: pontos, outro: c.pontosDesafiante, nomeDoOutro: c.desafiante?.trim() || 'Quem te chamou', venceu: c.venceu };
+  return { voce: pontos, outro: c.pontosDesafiante, nomeDoOutro: c.desafiante?.trim() || 'Rival do dia', venceu: c.venceu };
 }
 
 /** Frase neutra do X1 quando o narrador não tem uma que sirva. Sem zoeira com a pessoa. */
 export function fraseNeutraDoX1(venceu: boolean): string {
-  // Na derrota, nada de "revanche" ali: o X1 recebido não gera link; jogar de novo gera o seu.
-  return venceu ? 'Venceu o X1! Manda o placar pro grupo.' : 'Esse X1 ficou com quem chamou. Joga de novo e manda o seu.';
+  // O desafio recebido não gera link; jogar de novo gera o seu.
+  return venceu ? 'Desafio vencido! Agora é resenha no grupo.' : 'Dessa vez deu o outro lado. Tem jogo de volta?';
 }
 
-/** Texto que acompanha o link no WhatsApp: com X1 chama alguém; sem, só convida. */
+/** Texto que acompanha o link no WhatsApp: com desafio chama alguém; sem, só convida. */
 export function conviteLances(pontos: number, paraTime: string | null, comX1: boolean): string {
   const quanto = paraTime ? `${pontos} ${paraTime}` : `${pontos} ${pontos === 1 ? 'ponto' : 'pontos'}`;
-  return comX1 ? `Te chamei no X1 dos Lances: fiz ${quanto}. Faz mais?` : `Fiz ${quanto} nos Lances do Jogo. Joga também:`;
+  return comX1 ? `Te desafio nos Lances do Jogo: fiz ${quanto}. Faz mais?` : `Fiz ${quanto} nos Lances do Jogo. Vem pro jogo:`;
 }
+
+/** O texto completo do WhatsApp: convite, emojis (com a medalha na mesma linha, se houver) e o link na última linha. */
+export const textoShareLances = (convite: string, emojis: string, medalha: string | null, link: string): string =>
+  [convite, medalha ? `${emojis} ${medalha}` : emojis, link].join('\n');
 
 /** As 3 tentativas do resultado: o título da placa é o do lance, as linhas são "Tentativa N". */
 export function linhasDeTentativas(n: number): string[] {

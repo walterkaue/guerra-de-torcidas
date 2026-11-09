@@ -26,7 +26,7 @@ describe('ver meus dados', () => {
       'Partidas',
       'Time do Dia',
       'Desafios criados',
-      'Palpites do Crava',
+      'Palpites da Rodada',
       'Carreira',
       'Medalhas dos Lances',
       'Aviso de domingo',
@@ -105,7 +105,7 @@ describe('ver meus dados', () => {
 
   it('a mensagem mostra a data de Brasília, o tipo, o texto e o que foi junto', () => {
     expect(resumoDaMensagem(dados.mensagens[0])).toEqual({
-      cabeca: '31/10/2026 · Bug',
+      cabeca: '31/10/2026 · Erro',
       texto: 'o card cortou',
       junto: 'tela: inicio · navegador: Firefox',
     });

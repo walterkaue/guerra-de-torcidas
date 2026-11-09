@@ -56,7 +56,7 @@ export default {
           await s.arrastar(seletor, [0.5, 0.78], [0.56, 0.45]);
         } else if (/Prova/i.test(etapa)) {
           await s.tocar(p.locator('[data-alt]').first());
-        } else if (/Crava/i.test(etapa)) {
+        } else if (/Palpite/i.test(etapa)) {
           await s.tocar(p.locator('[data-passo$=":1"]').first(), { semMudancaOk: true });
           await s.tocar(p.locator('[data-cravar]'));
         } else await esperar(1500);
@@ -112,7 +112,7 @@ export default {
     });
 
     // 4. Crava a rodada, com a certeza.
-    await s.passo('abre o Crava a Rodada', async () => {
+    await s.passo('abre o Palpite da Rodada', async () => {
       await s.tocar(p.locator('[data-jogo="crava"]'));
       await p.locator('[data-jogo]').first().waitFor({ state: 'visible', timeout: 15000 });
     });

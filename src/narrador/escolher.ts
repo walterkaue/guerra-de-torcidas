@@ -55,6 +55,8 @@ export const ETIQUETAS = [
   'empate', 'contra',
   // Prova de Boleiro (seção 10): qual ajuda foi usada.
   'tira_duas', 'arquibancada', 'troca',
+  // Fim dos pênaltis: vitória por 1 gol (`apertada`) ou por 3 ou mais (`passeio`). Duelo: na frente por pouco (`colado`).
+  'apertada', 'passeio', 'colado',
 ] as const;
 
 export type Etiqueta = (typeof ETIQUETAS)[number];

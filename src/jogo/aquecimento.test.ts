@@ -42,7 +42,7 @@ describe('aquecimento', () => {
     expect(TEXTO_DA_ESTACAO.defesa.frase).toBe('Olhe o pé de apoio, marcado em amarelo, e toque onde pular.');
     expect(TEXTO_DA_ESTACAO.falta.frase).toBe('Passe por cima ou ao lado da barreira.');
     expect(TEXTO_DA_ESTACAO.prova.frase).toBe('Toque na resposta antes do tempo.');
-    expect(TEXTO_DA_ESTACAO.crava.frase).toBe('Use − e + e toque em Cravar.');
+    expect(TEXTO_DA_ESTACAO.crava.frase).toBe('Use − e + e toque em Salvar palpite.');
   });
 
   it('jogo do Crava: o próximo do time ainda aberto', () => {

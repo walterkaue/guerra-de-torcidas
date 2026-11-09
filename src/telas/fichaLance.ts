@@ -55,7 +55,7 @@ export function blocoDasMedalhas(n: NumerosDoLance | null | 'carregando', id = '
       <p class="ficha-recriados-rotulo"><span>${rotulo}</span><strong>${feitos}/${pede}</strong></p>
       ${barra(feitos / pede, `${rotulo} ${feitos}/${pede}`)}
     </div>
-    ${ehItemPenaltis(id) ? '' : '<p class="ficha-ensina">Recriar = gol na área marcada, onde o gol de verdade entrou. Vale pontos a mais.</p>'}
+    ${ehItemPenaltis(id) ? '' : '<p class="ficha-ensina">Carimbar = gol na área marcada, onde o gol de verdade entrou. Vale pontos a mais.</p>'}
     <p class="ficha-falta">${esc(t.faltaProOuro)}</p>
     ${ehItemPenaltis(id) ? '' : `<p class="ficha-previa"><span>No próximo gol:</span> ${esc(previaDoProximoGol(n.gols, n.recriados))}</p>`}`;
 }

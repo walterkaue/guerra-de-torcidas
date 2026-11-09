@@ -13,7 +13,7 @@ import { avisoCurto } from './avisoCurto';
 import { aoTocarNoEstado, cabecalhoTela, estado, faixa } from './blocos';
 
 export const AVISO_DA_CIDADE =
-  'Os pontos que você já fez ficam onde foram feitos. A cidade só aparece somada no ranking de cidades e estados, nunca junto do seu apelido.';
+  'Os pontos que você já fez ficam onde foram feitos. A cidade só aparece somada na tabela de cidades e estados, nunca junto do seu apelido.';
 
 const MENSAGEM: Record<string, string> = {
   cidade_invalida: 'Essa cidade não está na lista. Escolhe outra.',
@@ -37,7 +37,7 @@ export function telaCidade(root: HTMLElement, rota: Rota): () => void {
       ${cabecalhoTela({ titulo: 'Sua cidade', voltar: true, pre: false })}
       <section class="placa" aria-label="Escolher a cidade">
         ${faixa('Defende sua cidade também?')}
-        <p class="cidade-dica">Seus pontos passam a somar também para a sua cidade e o seu estado, em rankings separados.</p>
+        <p class="cidade-dica">Seus pontos passam a somar também para a sua cidade e o seu estado, em tabelas separadas.</p>
         <div data-atual aria-live="polite"></div>
         <label class="campo cidade-campo">
           <span>Procure pelo nome</span>
@@ -106,7 +106,7 @@ export function telaCidade(root: HTMLElement, rota: Rota): () => void {
       const escolhida = codigo === null ? undefined : indice?.find((i) => i.m[0] === codigo)?.m[1];
       voltar();
       // Para quem joga por "Outro time" a cidade é a única camisa (J29).
-      if (escolhida) avisoCurto(prefs.get().time === ID_OUTRO ? `${escolhida} joga por você no ranking.` : `${escolhida} é sua segunda camisa.`);
+      if (escolhida) avisoCurto(prefs.get().time === ID_OUTRO ? `${escolhida} joga por você na tabela.` : `${escolhida} é sua segunda camisa.`);
     } catch (e) {
       if (saiu) return;
       ocupado = false;

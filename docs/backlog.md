@@ -14,8 +14,8 @@
 
 ## 1. Análise crítica (o que vejo hoje)
 
-1. **O jogo cresceu mais rápido que a hierarquia das telas.** O resultado dos pênaltis empilha até 14 blocos: placar, pontos, parcelas, X1, rumo às medalhas, frase, 3 melhores, selos, peça nova, Carreira, Mandar no grupo, Card/Stories/Emoji/Link e o convite da cidade. A Home soma faixa da pré-temporada, aquecimento, placa do troféu, lembrete da cidade, Termos mudaram, sininho e card das divisões. Cada peça faz sentido sozinha, mas juntas viram texto demais. É o ponto 1 do Kauê e, para mim, **o maior risco de produto hoje**: quem chega por link não entende o que importa.
-2. **O X1 é o motor de crescimento e está escondido.** Ele mora dentro do "Mandar no grupo" e do "Link", sem botão próprio. Quem recebe não vê o que o outro fez. E o funil continua sem medida: "enviado" ainda quer dizer "gerado" (proposta de 31/10, item 1, nunca feita). Sem isso, os testes com amigos não respondem se o X1 funciona.
+1. **O jogo cresceu mais rápido que a hierarquia das telas.** O resultado dos pênaltis empilha até 14 blocos: placar, pontos, parcelas, desafio, rumo às medalhas, frase, 3 melhores, selos, peça nova, Carreira, Mandar no grupo, Card/Stories/Emoji/Link e o convite da cidade. A Home soma faixa da pré-temporada, aquecimento, placa do troféu, lembrete da cidade, Termos mudaram, sininho e card das divisões. Cada peça faz sentido sozinha, mas juntas viram texto demais. É o ponto 1 do Kauê e, para mim, **o maior risco de produto hoje**: quem chega por link não entende o que importa.
+2. **O desafio é o motor de crescimento e está escondido.** Ele mora dentro do "Mandar no grupo" e do "Link", sem botão próprio. Quem recebe não vê o que o outro fez. E o funil continua sem medida: "enviado" ainda quer dizer "gerado" (proposta de 31/10, item 1, nunca feita). Sem isso, os testes com amigos não respondem se o desafio funciona.
 3. **Compartilhar é forte no papel e fraco no movimento.** Card estático, medalha e lance já existem. O que mais emociona no jogo, o gol com replay e o boneco comemorando, não sai do celular. Os pontos 2 e 3 do Kauê atacam exatamente isso.
 4. **Muita regra mudou em pouco tempo.** Corte antecipado duas vezes, tabelas novas, faixas recalibradas, 3 melhores. O jogo ensina pela dica na hora do erro, mas não existe um "o que mudou" para quem já jogava. Para a turma dos testes, vale uma nota curta na Home, uma vez.
 5. **Não há olho na produção.** Erro de tela só aparece se alguém mandar print com o código do motivo. Não há registro de exceção do navegador nem contagem de eventos (abriu link, compartilhou, desistiu na triagem). Com amigos testando, metade dos problemas vai passar sem ninguém ver.
@@ -28,8 +28,8 @@
 ## 2. Ordem sugerida para depois dos testes
 
 0. **Agora, durante os testes:** A10 e H01a. O C01 (com o I03) está pronto e falta publicar.
-1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); B02 + C02 desenhados juntos no Chat (resultado em duas camadas, com o "Chamar no X1" como ação própria); C06 (link do X1 com menos toques); B03 (um aviso por vez na Home).
-2. **Semana de 16/11:** C03 + C08 (ver o gol de quem chamou, redesenhado no aparelho de quem abre); E01 (1ª visita); E04 (roteiro de iPhone); D07 (Crava na entressafra).
+1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); B02 + C02 desenhados juntos no Chat (resultado em duas camadas, com o "Desafiar" como ação própria); C06 (link do desafio com menos toques); B03 (um aviso por vez na Home).
+2. **Semana de 16/11:** C03 + C08 (ver o gol de quem chamou, redesenhado no aparelho de quem abre); E01 (1ª visita); E04 (roteiro de iPhone); D07 (Palpite da Rodada na entressafra).
 3. **Depois:** C04 (com a prova de conceito antes), C05, H01b e H02, B01, F01, A08 e H03 (com o que os amigos disserem).
 4. **Antes da divulgação pública:** A01 a A05.
 
@@ -50,33 +50,33 @@
 | A07 | Testes no celular que ficaram para trás (aquecimento, troféus, G3 com TalkBack, boneco em campo, limpeza dos Lances) | P | Lista na seção "No celular" do `proximos-passos.md`. Dá para fazer junto com os amigos. | P0 | P | Kauê |
 | A08 | Perguntas até 800 (hoje 328) | P | Perguntas nascidas de páginas reais; os 5 crons do Gemini ficam como estão (decidido em 07/11). | P1 | G | Claude + Gemini |
 | A09 | Auditor do Gemini com falhas 429 | P/C | Decidido em 07/11: ficam os 5 crons. Espaçar a auditoria se os 429 crescerem (a coluna `codigos` separa 429 de 503). | P3 | P | Claude |
-| A10 | **Acompanhamento diário dos testes** | C | O Chat lê, só leitura: partidas, X1 gerados e aceitos, partidas sem valer por motivo, mensagens do "Achei um erro" e erros das funções, até o F01 existir. Os amigos usam o "Achei um erro" para relatar. | P0 | P | Chat |
+| A10 | **Acompanhamento diário dos testes** | C | O Chat lê, só leitura: partidas, desafios gerados e aceitos, partidas sem valer por motivo, mensagens do "Achei um erro" e erros das funções, até o F01 existir. Os amigos usam o "Achei um erro" para relatar. | P0 | P | Chat |
 
 ### B. Clareza das telas (ponto 1 do Kauê)
 
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
 | B01 | **Central de avisos** (o sininho vira caixa de entrada) | K | Detalhe na seção 4.1. Tira da tela os avisos que não são do momento: Termos mudaram, lembrete da cidade, convite de push, aquecimento, peça nova esperando, troféu da semana. | P1 | G | Chat → Claude |
-| B02 | **Resultado em duas camadas** | C | Primeira dobra: placar, pontos, um destaque (o mais importante: recorde, medalha ou X1) e os botões. O resto ("Ver detalhes da partida") abre embaixo ou numa folha. Regra: no máximo 1 aviso e 1 amarelo por dobra. | P1 | M | Chat → Claude |
-| B03 | Regra de "um aviso por vez" na Home | C | Fila de prioridade: o X1 recebido ganha de tudo, depois a placa do troféu e o card das divisões; o resto vai para a central (B01). | P1 | M | Chat → Claude |
+| B02 | **Resultado em duas camadas** | C | Primeira dobra: placar, pontos, um destaque (o mais importante: recorde, medalha ou desafio) e os botões. O resto ("Ver detalhes da partida") abre embaixo ou numa folha. Regra: no máximo 1 aviso e 1 amarelo por dobra. | P1 | M | Chat → Claude |
+| B03 | Regra de "um aviso por vez" na Home | C | Fila de prioridade: o desafio recebido ganha de tudo, depois a placa do troféu e o card das divisões; o resto vai para a central (B01). | P1 | M | Chat → Claude |
 | B04 | "O que mudou" para quem já jogava | C | Uma placa, uma vez, depois de mudança de regra (ex.: 3 tentativas do mesmo lance, 3 melhores). Também vai para a central. | P2 | P | Claude |
 | B05 | Nome longo no placar grande do resultado | P | "JUNIOR BARRANQUILLA" sai com reticências a 360 px com fonte 130% (resto do S13). | P2 | P | Claude |
 | B06 | Barra de navegação opaca, como a do resultado | C | Hoje é 96% opaca, e dá para ver um pouco do que rola atrás. | P3 | P | Claude |
 | B07 | Dois amarelos na tela "Seu card" e no vestiário (Salvar duplo) | P | O simulador acusou na rodada de 07/11. | P2 | P | Claude |
 
-### C. Compartilhar, X1 e crescimento (pontos 2 e 3 do Kauê)
+### C. Compartilhar, desafio e crescimento (pontos 2 e 3 do Kauê)
 
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
-| C01 | ~~Contar o funil do X1~~ **feito em 08/11/2026** | P | Compartilhou (por tipo e meio), abriu, aceitou, 1º chute, terminou e revanche, sem identificar ninguém; "Funil do X1" no `npm run metricas`. Regra em `jogos/contas.md`, "Contagem de uso". Conta desde a publicação da função `funil`. | — | — | — |
-| C02 | **Botão "Chamar no X1"** no resultado (Lances e pênaltis) | K/C | O X1 sai de dentro do compartilhar e vira ação própria, com texto pronto. Respeitar um amarelo por tela: talvez substitua o "Mandar no grupo". | P1 | M | Chat → Claude |
-| C03 | **Ver as tentativas de quem chamou** antes de jogar o X1 dos Lances | K | Hoje quem aceita vê só "Camisa10 fez 96". Mostrar os 3 desfechos (e, com C04, o replay dos gols). Precisa do `ver_desafio_lances` devolver os desfechos. **Lances:** quem aceita joga com sementes novas, então dá para mostrar antes. **Pênaltis:** as cobranças gravadas de quem chamou são o alvo das defesas de quem aceita; só podem aparecer depois que o X1 termina. | P1 | M | Chat → Claude (servidor) |
+| C01 | ~~Contar o funil do desafio~~ **feito em 08/11/2026** | P | Compartilhou (por tipo e meio), abriu, aceitou, 1º chute, terminou e jogo de volta, sem identificar ninguém; "Funil do desafio" no `npm run metricas`. Regra em `jogos/contas.md`, "Contagem de uso". Conta desde a publicação da função `funil`. | — | — | — |
+| C02 | **Botão "Desafiar"** no resultado (Lances e pênaltis) | K/C | O desafio sai de dentro do compartilhar e vira ação própria, com texto pronto. Respeitar um amarelo por tela: talvez substitua o "Mandar no grupo". | P1 | M | Chat → Claude |
+| C03 | **Ver as tentativas de quem chamou** antes de jogar o desafio dos Lances | K | Hoje quem aceita vê só "Camisa10 fez 96". Mostrar os 3 desfechos (e, com C04, o replay dos gols). Precisa do `ver_desafio_lances` devolver os desfechos. **Lances:** quem aceita joga com sementes novas, então dá para mostrar antes. **Pênaltis:** as cobranças gravadas de quem chamou são o alvo das defesas de quem aceita; só podem aparecer depois que o desafio termina. | P1 | M | Chat → Claude (servidor) |
 | C04 | **Replay do gol compartilhável** | K | Detalhe na seção 4.3. No resultado: "Compartilhar o replay do gol N". Vídeo curto: a cobrança de trás do batedor e o replay. **Antes do G, uma prova de conceito P:** gravar 3 s do replay e mandar pelo WhatsApp no Android e no iPhone, conferindo se o formato é aceito. | P1 | G | Chat → Claude |
 | C05 | **Card animado** (vídeo curto para Stories e WhatsApp) | K | Detalhe na seção 4.2. O card de hoje com confete, o número contando, o boneco comemorando e o fundo do vestiário mexendo. | P2 | G | Chat → Claude |
-| C06 | Link do X1 com menos toques (J41) | P | Hoje são 4 toques e uma lista de 20 times até o 1º chute. A idade vem antes (ECA) e o time sai sugerido do link de quem chamou. Decisão de fluxo do Kauê (proposta de 31/10, itens 2 e 3). | P1 | M | Kauê decide → Claude |
-| C07 | Placar acumulado do X1 entre duas pessoas (J42) | P | "Zé 2 x 1 Camisa10" na série de revanches, sem apelido público. Primeiro passo do ranking entre amigos. | P2 | M | Chat → Claude |
-| C08 | Link de replay que roda no celular de quem abre | C | Em vez de vídeo, o link leva só o gesto e a cena, e o jogo redesenha o gol no aparelho de quem abre. Leve e bom para o WhatsApp. O vídeo (C04) fica para o Stories. Nos pênaltis, as cobranças gravadas de quem chamou só aparecem depois que o X1 termina (ver C03); nos Lances, quem aceita joga com sementes novas, então dá para mostrar antes. | P2 | M | Claude |
-| C09 | Prévia bonita do link (Open Graph) por tipo | C | Quem recebe o link no WhatsApp vê hoje a mesma prévia para tudo. Uma imagem por tipo (X1, lance, medalha) aumenta o clique. Como o site é estático, uma por tipo, não por partida. | P2 | P | Claude |
+| C06 | Link do desafio com menos toques (J41) | P | Hoje são 4 toques e uma lista de 20 times até o 1º chute. A idade vem antes (ECA) e o time sai sugerido do link de quem chamou. Decisão de fluxo do Kauê (proposta de 31/10, itens 2 e 3). | P1 | M | Kauê decide → Claude |
+| C07 | Placar acumulado do desafio entre duas pessoas (J42) | P | "Zé 2 x 1 Camisa10" na série de jogos de volta, sem apelido público. Primeiro passo do ranking entre amigos. | P2 | M | Chat → Claude |
+| C08 | Link de replay que roda no celular de quem abre | C | Em vez de vídeo, o link leva só o gesto e a cena, e o jogo redesenha o gol no aparelho de quem abre. Leve e bom para o WhatsApp. O vídeo (C04) fica para o Stories. Nos pênaltis, as cobranças gravadas de quem chamou só aparecem depois que o desafio termina (ver C03); nos Lances, quem aceita joga com sementes novas, então dá para mostrar antes. | P2 | M | Claude |
+| C09 | Prévia bonita do link (Open Graph) por tipo | C | Quem recebe o link no WhatsApp vê hoje a mesma prévia para tudo. Uma imagem por tipo (desafio, lance, medalha) aumenta o clique. Como o site é estático, uma por tipo, não por partida. | P2 | P | Claude |
 | C10 | ~~Prazo de validade dos desafios~~ **feito em 09/11/2026** | C | Link vale 7 dias, desafio apagado com 30, chamando `funil_contar_gerados()` antes (`jogos/penaltis.md`, "Desafio por link"; `jogos/contas.md`). Falta publicar. | P1 | M | Claude |
 
 ### D. Jogo e conteúdo
@@ -86,16 +86,16 @@
 | D01 | Pênalti com teclado no PC (J46) | P | Setas miram e Espaço segura e solta a força. A Prova já aceita 1 a 4. | P3 | M | Claude |
 | D02 | "Outro time" com clube do interior (J44) | P | Antes dos times criados (fase 2): deixar escrever o clube e mostrar a Seleção como casa. | P2 | M | Chat |
 | D03 | Tabela de todos os tempos na Casa (J48) | P | A Casa é a tela que mais prende os mais velhos. | P3 | G | Chat → dados |
-| D04 | Ligas do Crava com amigos e cidade (J47) | P | Fase 2 (comunidade). | P3 | G | Chat |
+| D04 | Ligas do Palpite da Rodada com amigos e cidade (J47) | P | Fase 2 (comunidade). | P3 | G | Chat |
 | D05 | Embaixadinha e os jogos da fase 4 | P | Roadmap; só depois do balanço. | P3 | G | Chat |
 | D06 | Lance do Dia com algo a mais que o destaque | C | Hoje ele não dá bônus (decidido). Sem mexer em pontos, pode ganhar card próprio ("Fiz o Lance do Dia") ou um selo na Galeria. | P3 | P | Chat |
-| D07 | **Crava na entressafra** | C | O Brasileirão acaba em 02/12. Decidir o que o card do Crava e o "Jogar agora" mostram de dezembro a janeiro (ver V09 do backlog de pesquisa do Chat: Prova e Time do Dia seguram o ritmo). | P1 | P | Chat |
+| D07 | **Palpite da Rodada na entressafra** | C | O Brasileirão acaba em 02/12. Decidir o que o card do Palpite da Rodada e o "Jogar agora" mostram de dezembro a janeiro (ver V09 do backlog de pesquisa do Chat: Prova e Time do Dia seguram o ritmo). | P1 | P | Chat |
 
 ### E. Acessibilidade e desempenho
 
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
-| E01 | 1ª visita em 4G ruim (S20) | P | Home em 4,2 s e 1ª visita em 5,2 s até a escolha do time, com 185 KB de JS. O link do X1 baixa 248 KB. Separar o que a 1ª tela não usa. | P1 | M | Claude |
+| E01 | 1ª visita em 4G ruim (S20) | P | Home em 4,2 s e 1ª visita em 5,2 s até a escolha do time, com 185 KB de JS. O link do desafio baixa 248 KB. Separar o que a 1ª tela não usa. | P1 | M | Claude |
 | E02 | Movimento reduzido no aquecimento (S19) | P | A cena continua mudando sozinha. | P2 | P | Claude |
 | E03 | Fontes pré-carregadas sem uso no Safari (S21) | P | Conferir no iPhone de verdade antes de mexer. | P3 | P | Kauê + Claude |
 | E04 | Plano de teste no iPhone de verdade | C | O WebKit do simulador trava no Windows. Uma lista curta por tela para o Kauê ou um amigo com iPhone, ou um serviço de aparelhos reais por um mês. | P1 | P | Kauê |
@@ -132,7 +132,7 @@
 |---|---|---|---|---|---|---|
 | I01 | **Momento do jogo escolhido sozinho** | K | O jogo escolhe o melhor lance da partida para o replay compartilhável (C04), sem a pessoa pedir: golaço no ângulo, cavadinha, defesa da última cobrança, vitória no par ou ímpar. Uma pontuação simples, sem IA: o jogo já guarda gesto e semente de cada lance. | P1 | P | Claude (junto do C04) |
 | I02 | Vídeo vertical 9:16 com câmera lenta e a frase do narrador | K | Entra na especificação do C04 e do C05: corte vertical, câmera lenta no gol e a frase que o narrador falou como legenda. | P1 | — | (dentro do C04) |
-| I03 | ~~Onde a pessoa desiste~~ **feito em 08/11/2026, com o C01** | K | Escolha do time, triagem, aquecimento e partida (por jogo, com e sem X1), saiu − voltou; "Onde desiste" no `npm run metricas`. Os erros ficam com o F01. | — | — | — |
+| I03 | ~~Onde a pessoa desiste~~ **feito em 08/11/2026, com o C01** | K | Escolha do time, triagem, aquecimento e partida (por jogo, com e sem desafio), saiu − voltou; "Onde desiste" no `npm run metricas`. Os erros ficam com o F01. | — | — | — |
 | I04 | Som com variação e "combo" | K | Cada som toca com o tom ±10% e o volume variando um pouco. Gols seguidos sobem o tom. A torcida abaixa meio segundo quando o narrador ou o apito entram. Entra no H01. | P2 | — | (dentro do H01) |
 | I05 | **Passada de "sensação de jogo"** | C | O que fazia os jogos Flash grudarem: do fim da partida ao próximo chute em 1 toque e menos de 2 s; uma pequena pausa e tremida no gol (com movimento reduzido, sem tremida); recorde sempre à vista. Medir o tempo do "Mais uma" até o 1º chute, nos pênaltis e nos Lances. | P2 | M | Claude |
 | I06 | Estudar jogos curtos de navegador (sem copiar) | K | Olhar o que dava certo nos jogos de navegador de futebol e de habilidade: reinício instantâneo, uma mecânica só, desafio a um amigo, placar de recordes. Anotar as lições, nunca reproduzir um jogo específico (nome, arte, fases). | P3 | P | Chat |
@@ -153,26 +153,26 @@
 - peça nova no vestiário esperando para vestir;
 - troféu ou placa da semana já vistos (a placa grande aparece uma vez na Home, e depois fica na caixa);
 - "o que mudou" (B04);
-- X1 recebido que a pessoa não abriu na hora.
+- desafio recebido que a pessoa não abriu na hora.
 
 **O que continua na tela:**
-- o que é do momento e muda a ação: o X1 recebido ao abrir o link, o aviso de conexão caída na partida, o limite do dia;
+- o que é do momento e muda a ação: o desafio recebido ao abrir o link, o aviso de conexão caída na partida, o limite do dia;
 - o primeiro acesso (escolha do time, triagem de idade): não pode ir para a caixa (`docs/jogo.md` seção 7).
 
 **Regras:**
 - Sem urgência e sem contagem regressiva (`docs/jogo.md` seção 7 e `docs/narrador.md` 13).
 - O número no sininho mostra quantos avisos há, nunca "Corre!".
 - Sem push para menor.
-- Guardado no aparelho (como os avisos de hoje). Os avisos que vêm do servidor (troféu, X1 recebido) são lidos na hora de abrir.
+- Guardado no aparelho (como os avisos de hoje). Os avisos que vêm do servidor (troféu, desafio recebido) são lidos na hora de abrir.
 - Cada aviso some quando é resolvido ou quando a pessoa toca em "Dispensar".
 
 **Desenho no Chat:** a lista, os ícones e o que acontece com o sininho de quem é menor (vira só a caixa, sem a parte de push).
 
-**Risco:** virar um lugar que ninguém abre. Por isso o X1 recebido e a placa do troféu ainda aparecem uma vez na tela.
+**Risco:** virar um lugar que ninguém abre. Por isso o desafio recebido e a placa do troféu ainda aparecem uma vez na tela.
 
 ### 4.2 Card animado (C05)
 
-**Ideia:** os mesmos estilos do card de hoje (Telão, Placar seco, Pôster), em vídeo de 3 a 5 s:
+**Ideia:** os mesmos estilos do card de hoje (Telão, Só o placar, Pôster), em vídeo de 3 a 5 s:
 - o número contando até os pontos;
 - confete nas cores do time;
 - o boneco fazendo a pose de comemoração;
@@ -264,7 +264,7 @@ O material traz boas ideias, mas boa parte é para jogo nativo de loja: Godot/Un
 ## 5. Para os dias de teste com amigos
 
 **O que observar (sem explicar nada antes):**
-1. Quem recebeu um X1 chegou ao 1º chute? Onde parou (time, idade, Jogar)?
+1. Quem recebeu um desafio chegou ao 1º chute? Onde parou (time, idade, Jogar)?
 2. Depois da 1ª partida, a pessoa achou sozinha como chamar alguém?
 3. No resultado, o que ela leu e o que ela pulou? (Pedir para contar em voz alta o que entendeu.)
 4. Ela entendeu que só as 3 melhores do dia contam?
@@ -274,4 +274,4 @@ O material traz boas ideias, mas boa parte é para jogo nativo de loja: Godot/Un
 8. O som: alguém abaixou o volume ou desligou? O que acharam do apito? (H01)
 9. O boneco: o que querem mudar, o que acharam do corpo e da cintura, que peça pediram? (H03)
 
-**Como registrar:** uma linha por observação, com o ID deste backlog quando bater (ex.: "C02: a Ana não achou o X1") ou "novo" quando não bater. Na volta, a gente reordena a seção 2 com o que os testes mostrarem.
+**Como registrar:** uma linha por observação, com o ID deste backlog quando bater (ex.: "C02: a Ana não achou o desafio") ou "novo" quando não bater. Na volta, a gente reordena a seção 2 com o que os testes mostrarem.

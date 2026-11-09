@@ -18,7 +18,7 @@ import {
   type TimeNarrado,
 } from './escolher';
 import { FRASES, type EventoNarrador, type Frase } from './frases';
-import { etiquetasDaCobranca, etiquetasDaDefesa, eventoDaCobranca, eventoDaDefesa, eventoDoErroNaProva } from './lance';
+import { etiquetasDaCobranca, etiquetasDaDefesa, etiquetasDoFim, eventoDaCobranca, eventoDaDefesa, eventoDoErroNaProva } from './lance';
 import {
   coluna,
   planejarDefesa,
@@ -26,6 +26,7 @@ import {
   resolverDefesa,
   type ResultadoCobranca,
   type ResultadoDefesa,
+  type ResultadoPartida,
 } from '../jogo/penaltis';
 
 const TODAS = Object.entries(FRASES) as [EventoNarrador, readonly Frase[]][];
@@ -111,6 +112,9 @@ const ETIQUETAS_POR_EVENTO: Partial<Record<EventoNarrador, Etiqueta[]>> = {
   crava_errou: ['contra'],
   // Prova de Boleiro (narrador.md, seção 10).
   prova_ajuda: ['tira_duas', 'arquibancada', 'troca'],
+  // Fim dos pênaltis e duelo com o rival (narrador.md, seção 2).
+  vitoria: ['apertada', 'passeio'],
+  rival_frente: ['colado'],
 };
 const DE_LANCE = Object.keys(ETIQUETAS_POR_EVENTO) as EventoNarrador[];
 const fraseDe = (ev: EventoNarrador, id: string) => (FRASES[ev] as readonly Frase[]).find((f) => f.t === id)!;
@@ -170,6 +174,17 @@ describe('banco de frases', () => {
 
   it('todo tipo de lance tem pelo menos uma frase sem etiqueta', () => {
     for (const ev of DE_LANCE) expect((FRASES[ev] as readonly Frase[]).some((f) => !f.e), ev).toBe(true);
+  });
+
+  it('nenhuma frase com jargão de site de aposta (regras de estilo, item 10)', () => {
+    const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const proibidas = ['placar exato', 'palpite certeiro', 'retorno', 'mercado', 'cravar', 'cravou', 'cravado', 'cravada', 'crava', 'crave'];
+    const achadas = TODAS.flatMap(([ev, l]) =>
+      l.flatMap((f) =>
+        proibidas.filter((p) => new RegExp(`(^|[^a-z])${p}($|[^a-z])`).test(normal(f.t))).map((p) => `${ev}: "${p}" em "${f.t}"`),
+      ),
+    );
+    expect(achadas).toEqual([]);
   });
 
   it('etiqueta nunca vai pra tela', () => {
@@ -270,8 +285,8 @@ describe('escolherFrase', () => {
 
   it('pula frases com variável faltando e devolve null se nada servir', () => {
     const rng = criarAleatorio(5);
-    // Sem desafiante, nenhuma frase de desafio_vitoria serve.
-    expect(escolherFrase('desafio_vitoria', ctxFla, rng)).toBeNull();
+    // Sem desafiante, nenhuma frase de desafio_derrota serve (a vitória tem frases sem {desafiante}).
+    expect(escolherFrase('desafio_derrota', ctxFla, rng)).toBeNull();
     for (let i = 0; i < 50; i++) expect(escolherFrase('vitoria', { time: ctxFla.time }, rng)!.id).not.toMatch(/rival|placar/);
   });
 
@@ -390,6 +405,16 @@ describe('situação do lance', () => {
     expect(eventoDaCobranca({ ...base, desfecho: 'trave' })).toBe('trave');
     expect(eventoDaCobranca({ ...base, desfecho: 'fora', y: 1.3 })).toBe('fora_cima');
     expect(eventoDaCobranca({ ...base, desfecho: 'fora', x: 1.3, y: 0.4 })).toBe('fora_lado');
+  });
+
+  it('vitória por 1 gol é apertada; por 3 ou mais, passeio; derrota não tem etiqueta', () => {
+    const fim = (golsJogador: number, golsMaquina: number, venceu = golsJogador > golsMaquina) =>
+      [...etiquetasDoFim({ golsJogador, golsMaquina, venceu } as ResultadoPartida)];
+    expect(fim(4, 3)).toEqual(['apertada']);
+    expect(fim(5, 3)).toEqual([]);
+    expect(fim(5, 2)).toEqual(['passeio']);
+    expect(fim(3, 3, true)).toEqual([]);
+    expect(fim(2, 3)).toEqual([]);
   });
 
   it('Prova: o 1º erro diz o motivo e o 2º avisa da última vida', () => {

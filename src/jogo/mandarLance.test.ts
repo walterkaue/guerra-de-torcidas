@@ -12,7 +12,7 @@ describe('mandar esse lance', () => {
 
   it('os dois textos', () => {
     expect(textoDoLanceParaMandar({ titulo: 'A virada em Lima', clube: 'Flamengo', adversario: 'River Plate', data: '2019-11-23' })).toBe(
-      '⚽ Lance do Guerra de Torcidas: A virada em Lima (Flamengo x River Plate, 2019). Consegue recriar?',
+      '⚽ Lance do Guerra de Torcidas: A virada em Lima (Flamengo x River Plate, 2019). Consegue carimbar?',
     );
     expect(textoDaDisputaParaMandar('A final da Copa do Brasil')).toBe(
       '⚽ Disputa de pênaltis no Guerra de Torcidas: A final da Copa do Brasil. Bate comigo?',

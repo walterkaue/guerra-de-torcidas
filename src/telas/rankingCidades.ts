@@ -140,8 +140,8 @@ export function desenharCidades(el: HTMLElement, inicial?: 'campeas'): () => voi
     if (vazio) {
       elTabela.innerHTML =
         sub === 'estado' && minha
-          ? estado('vazio', `Nenhuma cidade de ${minha.uf} no ranking ainda.`)
-          : estado('vazio', 'Nenhuma cidade no ranking ainda.') + convite;
+          ? estado('vazio', `Nenhuma cidade de ${minha.uf} na tabela ainda.`)
+          : estado('vazio', 'Nenhuma cidade na tabela ainda.') + convite;
       return;
     }
     if (sub === 'estados') {

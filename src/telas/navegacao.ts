@@ -9,7 +9,7 @@ type Aba = 'jogar' | 'palpites' | 'ranking' | 'perfil';
 const ITENS: { id: Aba; rotulo: string; icone: NomeIcone }[] = [
   { id: 'jogar', rotulo: 'Jogar', icone: 'bola' },
   { id: 'palpites', rotulo: 'Palpites', icone: 'lapis' },
-  { id: 'ranking', rotulo: 'Ranking', icone: 'podio' },
+  { id: 'ranking', rotulo: 'Tabela', icone: 'podio' },
   { id: 'perfil', rotulo: 'Perfil', icone: 'pessoa' },
 ];
 

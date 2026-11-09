@@ -62,7 +62,7 @@ describe('medalhas das disputas de pênaltis (10 · 50 · 100, ouro com 10 vitó
     expect(progressoDoItem('algum-lance', { gols: 5, recriados: 0 }).medalha).toBe('bronze');
     expect(trilhaDoItem('penaltis:x', { gols: 12, recriados: 0, vitorias: 1 }).extraDoOuro.rotulo).toBe('Vitórias');
     expect(trilhaDoItem('algum-lance', { gols: 12, recriados: 1 })).toEqual(trilhaDoLance(12, 1));
-    expect(trilhaDoLance(12, 1).extraDoOuro).toEqual({ rotulo: 'Recriados', feitos: 1, pede: 10 });
+    expect(trilhaDoLance(12, 1).extraDoOuro).toEqual({ rotulo: 'Carimbados', feitos: 1, pede: 10 });
   });
 
   it('Conquistas: pênaltis entram só quando a ficha os conhece', () => {
@@ -127,7 +127,7 @@ describe('tela única: favoritos, seu time, Seleção e outros', () => {
 
 describe('textos da regra nova', () => {
   it('limite do dia: 10 somando pênaltis e Lances, e a partida vira treino', () => {
-    expect(AVISO_LIMITE_DO_DIA).toBe('Hoje já deu: 10 partidas valendo. Essa vai de treino: sem ponto nem medalha.');
+    expect(AVISO_LIMITE_DO_DIA).toBe('Já jogou as 10 valendo de hoje. Agora é treino, pra calibrar o pé: sem ponto nem medalha.');
     expect(DICAS.lan_dez_valendo).toBe('Hoje as 10 valendo já foram. Treine à vontade.');
     expect(DICAS.lan_recriar_oito).toContain('+8');
   });
@@ -141,7 +141,7 @@ describe('textos da regra nova', () => {
   });
 
   it('fora das 3 melhores', () => {
-    expect(textoForaDasMelhores()).toBe('Não superou suas 3 melhores de hoje: o ranking não muda.');
+    expect(textoForaDasMelhores()).toBe('Não superou suas 3 melhores de hoje: a tabela não muda.');
     expect(textoForaDasMelhores([96, 72, 54])).toBe('Não entrou nas suas 3 melhores de hoje: 96 · 72 · 54.');
     const base = { fechou: true, contaNoRanking: false, sobSuspeita: false, melhorDoDia: 96 };
     expect(situacaoDoResultado({ ...base, melhoresDoDia: [96, 72, 54] })).toEqual({

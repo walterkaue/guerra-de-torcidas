@@ -398,7 +398,7 @@ export function conteudoPenaltis(c: CanvasRenderingContext2D, { x, y, l, a }: Ca
 
 /** O placar de um jogo que tem dois lados: Pênaltis e as sessões dos Lances. */
 export function desenharCard(d: DadosCard): HTMLCanvasElement {
-  return desenharModelo(modeloDePontos(d, d.jogo ?? 'Bate Contra Mim', d.pontos), (c, caixa) => conteudoPenaltis(c, caixa, d.golsJogador, d.golsMaquina));
+  return desenharModelo(modeloDePontos(d, d.jogo ?? 'Disputa de pênaltis', d.pontos), (c, caixa) => conteudoPenaltis(c, caixa, d.golsJogador, d.golsMaquina));
 }
 
 /** Espera as fontes do card e uma folga da tela: no celular simples, o resultado aparece antes do desenho. */

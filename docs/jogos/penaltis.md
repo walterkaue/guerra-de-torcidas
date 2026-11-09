@@ -1,8 +1,8 @@
-# Pênaltis ("Bate Contra Mim")
+# Pênaltis ("Disputa de pênaltis")
 
 > Regra em vigor em 08/11/2026. Quando discordar do `docs/jogo.md`, vale o `jogo.md`. Datas e histórico: `docs/decisoes.md`.
 
-Os pênaltis são uma sessão dos Lances do Jogo (`jogos/lances.md`): o card dos Lances na Home abre a tela única, e as disputas históricas ficam no filtro **Pênaltis**. Limite do dia, as 3 melhores do dia, troféus e X1 por tela estão em `jogos/lances.md`; aqui ficam o motor, os pontos, o desempate e as disputas.
+Os pênaltis são uma sessão dos Lances do Jogo (`jogos/lances.md`): o card dos Lances na Home abre a tela única, e as disputas históricas ficam no filtro **Pênaltis**. Limite do dia, as 3 melhores do dia, troféus e desafio por tela estão em `jogos/lances.md`; aqui ficam o motor, os pontos, o desempate e as disputas.
 
 ## Regra
 
@@ -17,7 +17,7 @@ Os pênaltis são uma sessão dos Lances do Jogo (`jogos/lances.md`): o card dos
 ### Disputas históricas
 - Disputas de pênaltis que o clube **venceu**, com o adversário de verdade já escolhido (nome, artigo e cores, sem escudo) e a ficha do jogo ("Final de 2018: foi 4 x 3. E hoje?"). Os chutes **não** são pré-definidos: o formato é o de sempre (semente, goleiro e batedor da máquina, morte súbita, par ou ímpar).
 - Cada pessoa vê as disputas **do time do coração** e as da **Seleção Brasileira** (pelo menos 2, para todo mundo). Meta: 3 por clube; clube com menos disputas marcantes é completado pelas da Seleção. "Outro time" joga as da Seleção (o filtro de clube abre nela) e as dos outros clubes.
-- **Sem Disputa livre:** só itens históricos. Partida de pênaltis valendo sem disputa do catálogo é recusada (400 `disputa_obrigatoria`, conferido também na `penaltis_comecar`) e o celular joga sem valer pontos. Partida sem disputa nem X1 (link ou atalho velho) abre a tela única no filtro Pênaltis.
+- **Sem Disputa livre:** só itens históricos. Partida de pênaltis valendo sem disputa do catálogo é recusada (400 `disputa_obrigatoria`, conferido também na `penaltis_comecar`) e o celular joga sem valer pontos. Partida sem disputa nem desafio (link ou atalho velho) abre a tela única no filtro Pênaltis.
 - **Troféu** por disputa: 10 · 50 · 100 gols, ouro com 10 vitórias (`jogos/lances.md`).
 - **Uniformes:** adversário nas cores dele, camiseta lisa (`jogo.md`, seção 3). Na disputa da Seleção, placar e batedor são da Seleção, a arquibancada fica verde e amarela, e os pontos vão para o time do coração. A ficha pode citar o goleiro pelo nome, como fato (`jogos/lances.md`, Catálogo).
 - **Tela:** o placar mostra o adversário, a chamada entra embaixo da frase do narrador, o resultado lembra o placar de verdade e "Mais uma" repete a mesma disputa. Sem nenhuma revisada, a aba mostra "Em breve".
@@ -56,15 +56,15 @@ Os pênaltis são uma sessão dos Lances do Jogo (`jogos/lances.md`): o card dos
 
 - Gols e defesas da morte súbita valem os pontos normais. O bônus de 5 de 5 olha só as 5 primeiras cobranças e as 5 primeiras defesas.
 - A tabela sai da **hora em que a partida foi criada** (`jogos/lances.md`, Data de corte); partida fechada nunca muda.
-- **Limite:** as partidas entram nas 10 do dia dos Lances e nas 3 melhores do dia (`jogos/lances.md`). Passou, a partida vira treino. O X1 criado antes de 08/11/2026 não pode ser aceito (`desafio_expirado`), porque os pontos estão em outra tabela.
+- **Limite:** as partidas entram nas 10 do dia dos Lances e nas 3 melhores do dia (`jogos/lances.md`). Passou, a partida vira treino. O desafio criado antes de 08/11/2026 não pode ser aceito (`desafio_expirado`), porque os pontos estão em outra tabela.
 
-### Desafio por link (X1)
+### Desafio por link
 - Toda partida normal registrada gera um código (`?d=xxxxxxxx`) com as cobranças gravadas: "duvido você me vencer". Quem abre defende as cobranças gravadas de quem desafiou e cobra contra o goleiro da máquina. No fim, placar dos dois lado a lado.
 - Vence quem fizer **mais pontos**; empate fica com quem desafiou. Partida de desafio não gera outro desafio.
 - **Boneco de quem chamou** (`jogos/boneco-montavel.md`): as cobranças gravadas são batidas pelo boneco dele, nas cores do time dele; quando quem aceitou cobra, é o dele. O placar do resultado (pênaltis e Lances) ganha o busto de cada um ao lado do apelido, e o convite na Home, o de quem chamou. Sem boneco, ou com "Meu boneco em campo" desligado: batedores sorteados e nenhum busto. O boneco é buscado na hora (`ver_desafio`, `ver_desafio_lances`), nunca gravado no desafio.
-- **Cada X1 vale uma vez por pessoa** (a bola de cada defesa vai para a zona da cobrança gravada, então repetir mostraria onde viriam as 5 cobranças). Abrir de novo um X1 já jogado vira partida normal contra a máquina, valendo, com "Esse X1 você já jogou. Vai uma partida nova!" embaixo da frase do narrador. O X1 da Prova já valia uma vez por pessoa (`desafio_ja_jogado` na função `prova`).
-- **Revanche** é uma partida nova contra a máquina, também depois de um X1; na disputa histórica, repete a disputa.
-- **X1 recebido:** a pessoa joga a disputa de quem chamou (adversário de verdade, ficha, "foi X x Y"), e a medalha vai para a mesma disputa; `ver_desafio` e a resposta da `nova-partida` devolvem o id. X1 que não vale (expirado, já jogado, próprio) vira partida normal **da disputa daquele X1**, ou da primeira do time, ou da Seleção.
+- **Cada desafio vale uma vez por pessoa** (a bola de cada defesa vai para a zona da cobrança gravada, então repetir mostraria onde viriam as 5 cobranças). Abrir de novo um desafio já jogado vira partida normal contra a máquina, valendo, com "Esse desafio você já encarou. Bora outro!" embaixo da frase do narrador. O desafio da Prova já valia uma vez por pessoa (`desafio_ja_jogado` na função `prova`).
+- **Jogo de volta** é uma partida nova contra a máquina, também depois de um desafio; na disputa histórica, repete a disputa.
+- **Desafio recebido:** a pessoa joga a disputa de quem chamou (adversário de verdade, ficha, "foi X x Y"), e a medalha vai para a mesma disputa; `ver_desafio` e a resposta da `nova-partida` devolvem o id. Desafio que não vale (expirado, já jogado, próprio) vira partida normal **da disputa daquele desafio**, ou da primeira do time, ou da Seleção.
 - **Prazo:** todo desafio (pênaltis, Lances e Prova) vale **7 dias** desde a criação. Vencido, quem abre recebe 410 `desafio_expirado` (conferido no banco, na mesma trava de quem começa a partida; na Prova, na função `prova`) e joga a partida normal da disputa daquele desafio (na Prova, uma prova normal), com "Apitou o fim: esse desafio valia 7 dias. Bora outro!". `ver_desafio`, `ver_desafio_lances` e `ver_prova_desafio` devolvem `vencido`: a Home não mostra o convite, e a tela ainda lê a disputa ou o lance para a partida normal. Os desafios com mais de **30 dias** são apagados no dia 1º de cada mês, às 4h45 (depois das contas paradas), pela `apagar_desafios_antigos` (só o cron chama; recusa prazo menor que 30 dias e data no futuro), que antes chama `funil_contar_gerados()`; as partidas de quem aceitou ficam.
 - **Ordem de publicação do prazo:** 1º a migração, 2º as funções (`nova-partida`, `lances`, `prova`), 3º o site logo em seguida (o site antigo não trata o 410 da Prova).
 - **410 `desafio_expirado`** (vencido, lance fora do catálogo ou faixa que desceu) vira partida nova com o aviso acima; **429** joga sem valer pontos, com o aviso do limite.
@@ -78,20 +78,20 @@ Os pênaltis são uma sessão dos Lances do Jogo (`jogos/lances.md`): o card dos
   - **Defesas:** nas últimas 30 defesas contra o batedor da máquina com chute no gol, 27 ou mais defendidas.
   - **Cobranças:** nas últimas 40 cobranças em que o goleiro pulou por sorteio (sem "ler"), nenhuma no canto dele.
   - Partida marcada fica **sob suspeita**, fora do ranking até revisão. As suspeitas de todos os minigames (pênaltis, Prova, Time do Dia e Lances) vão para a fila **"Partidas sob suspeita"** do `#admin`, com o motivo, os pontos e o histórico (só o começo do id, sem apelido). **Liberar** devolve a partida ao teto, ao recorde e ao ranking; **Manter fora** tira da fila e ela segue sem contar. Semana já confirmada (segunda 12h) não reabre: a partida liberada depois volta para a pessoa, mas o ranking das torcidas daquela semana fica como estava.
-- **Risco aceito (X1):** uma segunda conta que grava as cobranças em zonas escolhidas e manda o código para a principal. Cada X1 armado custa uma partida inteira na outra conta, e só as 3 melhores do dia contam. As defesas contra cobrança gravada ficam fora da detecção.
+- **Risco aceito (desafio):** uma segunda conta que grava as cobranças em zonas escolhidas e manda o código para a principal. Cada desafio armado custa uma partida inteira na outra conta, e só as 3 melhores do dia contam. As defesas contra cobrança gravada ficam fora da detecção.
 
 ### Card de resultado
 - **Emojis básicos:** no texto de compartilhamento só emojis antigos e universais (sem seletor de variação nem quadrados coloridos), para não quebrar no WhatsApp; a imagem é o card "Telão do estádio" (`jogos/cards.md`).
 - Imagem gerada no celular: placar, arquibancada do time, frase do narrador, "+47" e "Fulano {pro_time}" (sem apelido, "Fiz 47 pontos {pro_time}") e o link do desafio. Botões: WhatsApp, stories, placar em emoji, copiar link.
-- **Botão principal:** "MAIS UMA" depois de vitória e "REVANCHE" depois de derrota.
+- **Botão principal:** "MAIS UMA" depois de vitória e "JOGO DE VOLTA" depois de derrota.
 
 ## Como está no código
 - **Catálogo:** `dados/disputas/` (formato e conferência no `README.md` da pasta; validado por `npm test`). Nasce `rascunho`, uma segunda sessão confere, e `npm run catalogo-disputas` gera `src/dados/disputas.ts` só com `revisada` ou `ativa`. O catálogo vai para as funções pelo `npm run compartilhar`.
 - **Adversários:** `src/dados/adversarios.ts` guarda nome, artigo e cores (também dos Lances); adversário de fora da Série A ou estrangeiro ganha cadastro próprio. O teste barra adversário sem cadastro.
-- **Servidor:** `nova-partida` começa a partida pela `penaltis_comecar` (uma transação, com a mesma trava por torcedor dos Lances, que aplica o limite do dia) e grava `disputa_id` (sem chave estrangeira, porque o catálogo mora no código; não entra em pontos, teto ou detecção). Só vale id do catálogo: uma disputa inventada abriria medalhas sem fim na vitrine. `penaltis_comecar` recusa com `desafio_ja_jogado` (409 na `nova-partida`) quem já começou uma partida com aquele código (fechada ou não, e as de antes da regra), dentro da trava, sem gravar partida nem gastar o limite do dia. No X1 a partida de quem aceita grava a disputa de quem chamou.
+- **Servidor:** `nova-partida` começa a partida pela `penaltis_comecar` (uma transação, com a mesma trava por torcedor dos Lances, que aplica o limite do dia) e grava `disputa_id` (sem chave estrangeira, porque o catálogo mora no código; não entra em pontos, teto ou detecção). Só vale id do catálogo: uma disputa inventada abriria medalhas sem fim na vitrine. `penaltis_comecar` recusa com `desafio_ja_jogado` (409 na `nova-partida`) quem já começou uma partida com aquele código (fechada ou não, e as de antes da regra), dentro da trava, sem gravar partida nem gastar o limite do dia. No desafio a partida de quem aceita grava a disputa de quem chamou.
 - **Ranking:** time sem nenhum torcedor ativo fica com 0; a "torcida emprestada" (vagas a 80% da média geral) só completa time que já tem gente jogando. **Rival "colado":** diferença de até 4 pontos na média dos 30 melhores. **Horário de Brasília:** UTC−3 fixo.
-- **Ordem de publicação:** catálogo novo de disputas, a `nova-partida` antes do site (senão a disputa nova é recusada). Mudança de semente: a migração, depois `lance-penalti` e `fechar-partida`, e a `nova-partida` por último; essas duas não voltam à versão anterior depois que houver partidas com sementes por lance. X1 uma vez (`20261105200000_x1_penaltis_uma_vez.sql`): depois da `20261105100000_lances_unificados.sql`, e a `nova-partida` com o `desafio_ja_jogado` depois das duas; sem ela, o X1 repetido volta como erro 500 e o celular joga sem valer pontos. Site antigo com X1 repetido: partida sem valer pontos, com o código `desafio_ja_jogado`.
+- **Ordem de publicação:** catálogo novo de disputas, a `nova-partida` antes do site (senão a disputa nova é recusada). Mudança de semente: a migração, depois `lance-penalti` e `fechar-partida`, e a `nova-partida` por último; essas duas não voltam à versão anterior depois que houver partidas com sementes por lance. Desafio uma vez (`20261105200000_x1_penaltis_uma_vez.sql`): depois da `20261105100000_lances_unificados.sql`, e a `nova-partida` com o `desafio_ja_jogado` depois das duas; sem ela, o desafio repetido volta como erro 500 e o celular joga sem valer pontos. Site antigo com desafio repetido: partida sem valer pontos, com o código `desafio_ja_jogado`.
 
 ## Em desenvolvimento
-- `?penaltiFalso` (`&limite`, `&x1Expirado`, `&x1JaJogado&d=abcdefgh` mostra o aviso do X1 repetido).
+- `?penaltiFalso` (`&limite`, `&x1Expirado`, `&x1JaJogado&d=abcdefgh` mostra o aviso do desafio repetido).
 - `?disputasFalsas` enche a lista com disputas de mentira, para testar a tela sem publicar nada.

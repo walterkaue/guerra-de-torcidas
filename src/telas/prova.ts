@@ -54,7 +54,7 @@ const PAUSA_RESPOSTA_MS = 1400;
 const MENSAGENS: Record<string, string> = {
   muitas_partidas: 'Calma! São até 3 partidas por minuto. Respira e tenta de novo já já.',
   sem_perguntas: 'O banco de perguntas ainda tá sendo montado. Volta logo!',
-  desafio_sem_perguntas: 'Esse X1 usa perguntas que saíram do banco. Bora numa prova nova?',
+  desafio_sem_perguntas: 'Esse desafio usa perguntas que saíram do banco. Bora numa prova nova?',
   sem_conexao: 'Sem conexão: a Prova de Boleiro precisa de internet.',
   tempo_esgotado: 'O servidor demorou pra responder. Confere a internet e tenta de novo.',
 };
@@ -174,7 +174,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   const mostrarConvite = (d: Pick<DesafioProvaRecebido, 'apelido' | 'timeId' | 'pontos' | 'escada' | 'resumo'>) => {
     const t = timePorId(d.timeId);
     const el = $('[data-convite]');
-    el.innerHTML = `<p class="rotulo">Te chamaram no X1</p>
+    el.innerHTML = `<p class="rotulo">${d.apelido ? `${esc(d.apelido)} te desafiou` : 'Te desafiaram'}</p>
       <p><strong>${esc(d.apelido ?? 'Alguém')}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''}: ${esc(d.resumo)},
       <strong>${d.pontos} pontos</strong>.</p><p class="escada-emoji">${esc(d.escada)}</p>
       <p class="nota">As mesmas 8 perguntas, na mesma ordem. Faz mais pontos e vence.</p>`;
@@ -460,9 +460,9 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
         if (!(e instanceof ErroServidor) || !codigoDesafio || !['proprio_desafio', 'desafio_nao_encontrado', 'desafio_sem_perguntas', 'desafio_ja_jogado', 'desafio_expirado'].includes(e.codigo)) throw e;
         // Link do próprio desafio, quebrado ou expirado: vira prova normal.
         const aviso =
-          e.codigo === 'desafio_ja_jogado' ? 'Esse X1 você já jogou. Vai uma prova nova!'
+          e.codigo === 'desafio_ja_jogado' ? 'Esse desafio você já encarou. Vai uma prova nova!'
           : e.codigo === 'desafio_expirado' ? 'Apitou o fim: esse desafio valia 7 dias. Bora outro!'
-          : 'X1 indisponível. Vai uma prova nova!';
+          : 'Desafio indisponível. Vai uma prova nova!';
         codigoDesafio = undefined;
         p = await pedir();
         window.setTimeout(() => !saiu && gritar(aviso), 50);
@@ -478,7 +478,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
     } catch (e) {
       if (saiu) return;
       btnComecar.disabled = false;
-      btnComecar.textContent = codigoDesafio ? 'Aceitar o X1' : 'Começar a prova';
+      btnComecar.textContent = codigoDesafio ? 'Encarar o desafio' : 'Começar a prova';
       mostrarErro(mensagemDe(e), 'Tentar de novo');
     }
   }
@@ -504,7 +504,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
         // Vencido: sem convite; ao começar, o servidor responde 410 e vai uma prova normal com o aviso.
         if (!d || d.vencido || saiu) return;
         mostrarConvite({ apelido: d.apelido, timeId: d.time_id, pontos: d.pontos, escada: d.escada, resumo: d.resumo });
-        btnComecar.textContent = 'Aceitar o X1';
+        btnComecar.textContent = 'Encarar o desafio';
       })
       .catch(() => {});
   }

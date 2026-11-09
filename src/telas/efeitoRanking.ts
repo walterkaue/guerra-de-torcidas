@@ -104,7 +104,7 @@ export function ligarEfeitoNoRanking(alvo: AlvoDoEfeito, d: DadosDoEfeito, leito
   espera = setTimeout(() => {
     if (saiu || pronto) return;
     encerrar();
-    trocarSelo('Contou pro ranking');
+    trocarSelo('Tá no placar');
   }, ESPERA_RANKING_MS);
 
   return () => {

@@ -10,7 +10,7 @@ const faltam: MinhaCidade = { ...base, faltam: 2, posicao_estado: null, media30:
 describe('Home', () => {
   it('posição ou faltam', () => {
     expect(linhaDaCidadeNaHome(base)).toBe('Sua cidade está em 3º em SP');
-    expect(linhaDaCidadeNaHome(faltam)).toBe('Faltam 2 pra sua cidade entrar no ranking. Chama a galera.');
+    expect(linhaDaCidadeNaHome(faltam)).toBe('Faltam 2 pra sua cidade entrar na tabela. Chama a galera.');
     expect(textoFaltam(1)).toMatch(/^Falta 1 /);
   });
   it('lembrete: depois de jogar, sem cidade, 1 vez por semana', () => {
