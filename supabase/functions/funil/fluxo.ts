@@ -1,6 +1,7 @@
 // O caminho da função `funil`, sem Supabase: quem fala com o Auth e o banco é o index.ts, pelos `Servicos`.
 // Separado para o teste rodar contra o SQL de verdade (supabase/testes/funil.test.ts).
-// O código do X1 só passa por aqui para virar impressão; nunca é gravado nem impresso.
+// O código do X1 passa por aqui para virar impressão e segue ao banco só para conferir que o X1 existe; nunca é
+// gravado nem impresso.
 
 import { chaveDoLimite, conferirLote, impressaoDoX1 } from '../_shared/jogo/funil.ts';
 
@@ -13,6 +14,11 @@ export interface EventoParaGravar {
   meio: string;
   jogo: string;
   impressao: string | null;
+  /**
+   * O código do X1, só para o banco conferir que ele existe (vai no corpo do RPC, nunca na URL nem em log, e não
+   * é gravado). Código inventado não vira linha.
+   */
+  codigo: string | null;
 }
 
 export interface Servicos {
@@ -52,6 +58,7 @@ export async function processar(s: Servicos, texto: string, ip: string | null): 
       meio: ev.meio,
       jogo: ev.jogo,
       impressao: ev.x1 ? await impressaoDoX1(ev.x1, s.segredo) : null,
+      codigo: ev.x1,
     })),
   );
   return s.registrar(chave, eventos, !sessao);

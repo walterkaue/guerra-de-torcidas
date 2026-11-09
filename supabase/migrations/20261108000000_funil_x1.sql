@@ -3,8 +3,10 @@
 --
 -- Nenhuma tabela guarda torcedor, apelido, IP ou o código do X1:
 --   funil_contagem  para sempre: quantos por dia, evento, tipo, meio, jogo e se era fluxo de X1.
---   funil_eventos   uma linha por evento que tem X1, com a impressão do código (HMAC com o segredo das funções,
---                   feita na função `funil`), para ligar compartilhou → abriu → aceitou. Some em 30 dias.
+--   funil_eventos   uma linha por X1 e evento, só de X1 que existe, com a impressão do código (HMAC com o segredo
+--                   das funções, feita na função `funil`), para ligar compartilhou → abriu → aceitou. Some em 30 dias.
+--                   O código chega aqui só para conferir que o X1 existe (no corpo do pedido, nunca na URL) e não é
+--                   gravado: código inventado não vira linha, então a tabela não cresce além dos X1 de verdade.
 --   funil_limite    o limite por minuto: a impressão da sessão (ou do IP, sem sessão) e o minuto corrente.
 --                   Os minutos que já passaram saem a cada envio e a cada minuto (cron funil-limite).
 -- A lista fechada é a de src/jogo/funil.ts; o check abaixo confere a mesma combinação de novo.
@@ -72,7 +74,8 @@ create table public.funil_eventos (
   impressao text not null check (impressao ~ '^[0-9a-f]{32}$'),
   check (public.funil_evento_valido(evento, tipo, meio, jogo, true))
 );
-create index funil_eventos_impressao on public.funil_eventos (impressao, evento);
+-- Uma linha por X1 e evento: repetir (abrir o mesmo link 10 vezes) só soma na contagem.
+create unique index funil_eventos_impressao on public.funil_eventos (impressao, evento);
 create index funil_eventos_criado_em on public.funil_eventos (criado_em);
 
 create table public.funil_limite (
@@ -96,8 +99,8 @@ create policy "ninguém pelo cliente" on public.funil_limite
 
 revoke all on public.funil_contagem, public.funil_eventos, public.funil_limite from public, anon, authenticated;
 grant all on public.funil_contagem, public.funil_eventos, public.funil_limite to service_role;
--- O npm run metricas (Supabase CLI 3, `db query --remote --read-only`) roda como supabase_read_only_user.
-grant select on public.funil_contagem, public.funil_eventos to supabase_read_only_user;
+-- O npm run metricas (Supabase CLI 3, `db query --remote --read-only`) roda como supabase_read_only_user, que já
+-- lê todas as tabelas (inclusive funil_limite): não precisa de grant.
 
 -- ---------------------------------------------------------------------------
 -- 3. Gravação (chamada só pela função `funil`, com a secret key)
@@ -125,7 +128,8 @@ $$;
 -- Limites: 40 eventos por minuto por aparelho (sessão ou, sem sessão, IP), 1000 por minuto somando todos os que
 -- chegam sem sessão (o IP é o ponto fraco: assim quem forja IP não toma a vaga de quem joga) e 3000 no geral. O que
 -- passa do limite é descartado sem erro. Evento fora da lista também (a função já confere; aqui confere de novo).
--- p_eventos: [{ evento, tipo, meio, jogo, impressao | null }], no máximo 20. Devolve quantos contou.
+-- p_eventos: [{ evento, tipo, meio, jogo, impressao | null, codigo | null }], no máximo 20. Devolve quantos contou.
+-- X1 que não existe: o evento de X1 é descartado; a desistência conta como fora do fluxo de X1.
 create or replace function public.funil_registrar(p_chave text, p_eventos jsonb, p_sem_sessao boolean default false)
 returns integer
 language plpgsql
@@ -149,8 +153,8 @@ begin
     return 0;
   end if;
 
-  -- O limite guarda só o minuto corrente.
-  delete from public.funil_limite where minuto < v_minuto;
+  -- Os minutos que passaram saem pelo cron funil-limite (aqui não: apagar dentro da gravação podia travar duas
+  -- gravações na virada do minuto). A reserva já zera o contador de uma chave quando o minuto muda.
 
   -- Tetos gerais estourados: nem grava a linha do aparelho.
   if exists (
@@ -172,28 +176,47 @@ begin
     return 0;
   end if;
 
-  select coalesce(jsonb_agg(v), '[]'::jsonb) into v_validos
+  select coalesce(jsonb_agg(jsonb_build_object('evento', f.evento, 'tipo', f.tipo, 'meio', f.meio, 'jogo', f.jogo,
+           'impressao', f.impressao)), '[]'::jsonb)
+  into v_validos
   from (
-    select e.evento, e.tipo, e.meio, e.jogo, e.impressao
+    select x.evento, x.tipo, x.meio, x.jogo, case when x.existe then x.impressao end as impressao
     from (
-      select
-        a.e ->> 'evento' as evento,
-        coalesce(a.e ->> 'tipo', '') as tipo,
-        coalesce(a.e ->> 'meio', '') as meio,
-        coalesce(a.e ->> 'jogo', '') as jogo,
-        a.e ->> 'impressao' as impressao
-      from jsonb_array_elements(p_eventos) with ordinality as a (e, i)
-      where a.i <= v_cabe and jsonb_typeof(a.e) = 'object'
-    ) e
-    where e.evento <> 'gerou'
-      and (e.impressao is null or e.impressao ~ '^[0-9a-f]{32}$')
-      and public.funil_evento_valido(e.evento, e.tipo, e.meio, e.jogo, e.impressao is not null)
-  ) v;
+      select e.*,
+        e.codigo is not null and (
+          (e.tipo in ('x1_penaltis', 'escolha_time', 'triagem', 'aquecimento', 'partida')
+            and exists (select 1 from public.desafios d where d.id = e.codigo))
+          or (e.tipo in ('x1_lances', 'escolha_time', 'triagem', 'aquecimento', 'partida')
+            and exists (select 1 from public.lances_desafios d where d.id = e.codigo))
+          or (e.tipo in ('x1_prova', 'escolha_time', 'triagem', 'aquecimento', 'partida')
+            and exists (select 1 from public.prova_desafios d where d.id = e.codigo))
+        ) as existe
+      from (
+        select
+          a.e ->> 'evento' as evento,
+          coalesce(a.e ->> 'tipo', '') as tipo,
+          coalesce(a.e ->> 'meio', '') as meio,
+          coalesce(a.e ->> 'jogo', '') as jogo,
+          a.e ->> 'impressao' as impressao,
+          a.e ->> 'codigo' as codigo
+        from jsonb_array_elements(p_eventos) with ordinality as a (e, i)
+        where a.i <= v_cabe and jsonb_typeof(a.e) = 'object'
+      ) e
+      where e.evento <> 'gerou'
+        and (e.impressao is null) = (e.codigo is null)
+        and (e.impressao is null or e.impressao ~ '^[0-9a-f]{32}$')
+        and (e.codigo is null or e.codigo ~ '^[a-z0-9]{8}$')
+    ) x
+    -- Código que não é de um X1 que existe: o evento cai, menos a desistência, que segue como fora do fluxo de X1.
+    where (x.codigo is null or x.existe or x.evento in ('desistiu', 'voltou'))
+      and public.funil_evento_valido(x.evento, x.tipo, x.meio, x.jogo, x.existe)
+  ) f;
 
   insert into public.funil_eventos (evento, tipo, meio, jogo, impressao)
   select r.evento, r.tipo, r.meio, r.jogo, r.impressao
   from jsonb_to_recordset(v_validos) as r (evento text, tipo text, meio text, jogo text, impressao text)
-  where r.impressao is not null;
+  where r.impressao is not null
+  on conflict (impressao, evento) do nothing;
 
   insert into public.funil_contagem as c (dia, evento, tipo, meio, jogo, x1, n)
   select public.hoje_brasilia(), r.evento, r.tipo, r.meio, r.jogo, r.impressao is not null, count(*)::integer
@@ -216,7 +239,8 @@ grant execute on function public.funil_registrar(text, jsonb, boolean), public.f
 -- Conta os X1 gerados por dia (Brasília) e por tipo, até p_ate, nos dias que ainda não foram contados. É um piso:
 -- X1 de conta apagada no mesmo dia ("Apagar meus dados", junção de contas) sai antes da contagem. Um dia
 -- contado não muda mais ("do nothing"): o D8 chama isto antes de apagar X1 antigos, e apagar depois não mexe na
--- contagem. A rotina diária conta até ontem; o dia de hoje o npm run metricas lê direto das tabelas.
+-- contagem. Nunca conta além de ontem (um dia em andamento ficaria congelado incompleto); o dia de hoje o
+-- npm run metricas lê direto das tabelas.
 create or replace function public.funil_contar_gerados(p_ate date default null)
 returns integer
 language plpgsql
@@ -224,7 +248,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_ate date := coalesce(p_ate, public.hoje_brasilia() - 1);
+  v_ate date := least(coalesce(p_ate, public.hoje_brasilia() - 1), public.hoje_brasilia() - 1);
   v_n integer;
 begin
   insert into public.funil_contagem (dia, evento, tipo, meio, jogo, x1, n)
@@ -244,15 +268,31 @@ begin
 end;
 $$;
 
--- Apaga as linhas por evento com mais de 30 dias (a contagem fica) e o limite que já passou.
-create or replace function public.funil_limpar()
+-- Tira o limite dos minutos que passaram. Pula a linha que uma gravação estiver usando (skip locked): ela sai no
+-- minuto seguinte, sem ninguém esperar ninguém.
+create or replace function public.funil_limpar_limite()
 returns void
 language sql
 security definer
 set search_path = ''
 as $$
+  delete from public.funil_limite
+  where chave in (
+    select l.chave from public.funil_limite l where l.minuto < date_trunc('minute', now()) for update skip locked
+  );
+$$;
+
+-- Apaga as linhas por evento com mais de 30 dias (a contagem fica) e o limite que já passou.
+create or replace function public.funil_limpar()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
   delete from public.funil_eventos where criado_em < now() - interval '30 days';
-  delete from public.funil_limite where minuto < date_trunc('minute', now());
+  perform public.funil_limpar_limite();
+end;
 $$;
 
 create or replace function public.funil_rotina_diaria()
@@ -267,11 +307,11 @@ begin
 end;
 $$;
 
-revoke execute on function public.funil_contar_gerados(date), public.funil_limpar(), public.funil_rotina_diaria()
-  from public, anon, authenticated;
-grant execute on function public.funil_contar_gerados(date), public.funil_limpar(), public.funil_rotina_diaria()
-  to service_role;
+revoke execute on function public.funil_contar_gerados(date), public.funil_limpar(), public.funil_limpar_limite(),
+  public.funil_rotina_diaria() from public, anon, authenticated;
+grant execute on function public.funil_contar_gerados(date), public.funil_limpar(), public.funil_limpar_limite(),
+  public.funil_rotina_diaria() to service_role;
 
 -- Todo dia às 03h15 de Brasília (06h15 UTC). E, a cada minuto, o limite do minuto que passou sai mesmo sem envio.
 select cron.schedule('funil-diario', '15 6 * * *', 'select public.funil_rotina_diaria()');
-select cron.schedule('funil-limite', '* * * * *', $$delete from public.funil_limite where minuto < date_trunc('minute', now())$$);
+select cron.schedule('funil-limite', '* * * * *', 'select public.funil_limpar_limite()');

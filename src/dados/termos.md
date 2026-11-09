@@ -51,7 +51,7 @@
 
 **Sem rastreio:** o jogo não tem anúncio, não segue você em outros sites e não monta perfil sobre você.
 
-**Contagem de uso:** para saber se o jogo funciona, ele conta, por dia, os toques em compartilhar, os links abertos, os desafios aceitos e jogados e a tela em que as pessoas param, sem guardar quem foi. Para ligar o envio de um desafio à abertura dele, guarda por até 30 dias uma versão embaralhada do código do desafio, que não leva a você. O endereço IP, também embaralhado, só serve por um minuto para limitar envios repetidos.
+**Contagem de uso:** para saber se o jogo funciona, ele conta, por dia, os toques em compartilhar, os links abertos, os desafios aceitos e jogados e a tela em que as pessoas param, sem guardar quem foi. Para ligar o envio de um desafio à abertura dele, guarda por até 30 dias uma versão embaralhada do código do desafio, que só o servidor do jogo consegue ligar ao desafio, e só enquanto ele existe. Para limitar envios repetidos, o código da sessão do aparelho (ou, sem sessão, o endereço IP), também embaralhado, fica guardado só por um minuto.
 
 **No seu celular:** algumas escolhas (som, gráficos, se mostra seu nível no card) ficam guardadas só no aparelho.
 

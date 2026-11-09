@@ -54,8 +54,34 @@ async function contagem(): Promise<Record<string, number>> {
   return Object.fromEntries(rows.map((r) => [r.k, r.n]));
 }
 
+/** Cria um X1 de verdade (o funil só grava linha de X1 que existe). */
+async function criarX1(tabela: 'desafios' | 'lances_desafios' | 'prova_desafios', id: string): Promise<void> {
+  const dono = '00000000-0000-4000-8000-0000000f0009';
+  const { rows } = await db.query<{ id: string }>(
+    `insert into public.partidas (torcedor_id, modo, semente, dificuldade, expira_em)
+     values ($1, 'normal', 1, 0.5, now()) returning id`,
+    [dono],
+  );
+  const sql = {
+    desafios: `insert into public.desafios (id, partida_id, torcedor_id, time_id, cobrancas, gols_jogador, gols_maquina, pontos)
+      values ($1, $2, $3, 'flamengo', '[]', 3, 2, 50)`,
+    lances_desafios: `insert into public.lances_desafios (id, partida_id, torcedor_id, time_id, lance_id, pontos, gols, recriados, faixa)
+      values ($1, $2, $3, 'flamengo', 'lance-1', 40, 2, 0, 'media')`,
+    prova_desafios: `insert into public.prova_desafios (id, partida_id, torcedor_id, time_id, perguntas, pontos, escada, resumo)
+      values ($1, $2, $3, 'flamengo', array['a','b','c','d','e','f','g','h'], 70, 'x', 'parei na 6ª')`,
+  }[tabela];
+  await db.query(sql, [id, rows[0].id, dono]);
+}
+
 beforeAll(async () => {
   db = await bancoDeTeste();
+  await db.exec(`
+    insert into auth.users (id) values ('00000000-0000-4000-8000-0000000f0009');
+    insert into public.torcedores (id, time_id) values ('00000000-0000-4000-8000-0000000f0009', 'flamengo');
+  `);
+  for (const id of ['abcd2345', 'abcd23a2', 'abcd23a3']) await criarX1('desafios', id);
+  await criarX1('lances_desafios', 'lanc2345');
+  for (const id of ['abcd2345', 'abcd2346']) await criarX1('prova_desafios', id);
 }, TEMPO);
 
 beforeEach(async () => {
@@ -143,6 +169,36 @@ describe('funil do X1: gravação', () => {
     });
   });
 
+  it('X1 inventado não vira linha: o evento de X1 cai, e a desistência conta sem X1', async () => {
+    const n = await processar(
+      servicos(),
+      lote(
+        [
+          { ev: 'abriu', tipo: 'x1_penaltis', x1: 'zzzz9999' },
+          { ev: 'aceitou', tipo: 'x1_lances', x1: 'abcd2345' }, // existe, mas é de pênaltis e Prova, não dos Lances
+          { ev: 'aceitou', tipo: 'x1_lances', x1: 'lanc2345' },
+          { ev: 'desistiu', tipo: 'triagem', x1: 'zzzz9999' },
+          { ev: 'desistiu', tipo: 'partida', jogo: 'lances', x1: 'lanc2345' },
+        ],
+        TOKEN_BOM,
+      ),
+      null,
+    );
+    expect(n).toBe(3);
+    expect(await contagem()).toEqual({ 'aceitou/x1_lances/x1': 1, 'desistiu/triagem': 1, 'desistiu/partida/lances/x1': 1 });
+    const { rows } = await db.query<{ n: number }>('select count(*)::int as n from public.funil_eventos');
+    expect(rows[0].n).toBe(2);
+  });
+
+  it('uma linha por X1 e evento: abrir o mesmo link de novo só soma na contagem', async () => {
+    const abriu = { ev: 'abriu', tipo: 'x1_penaltis', x1: 'abcd2345' };
+    await processar(servicos(), lote([abriu, abriu], TOKEN_BOM), null);
+    await processar(servicos(), lote([abriu], TOKEN_BOM), null);
+    expect((await contagem())['abriu/x1_penaltis/x1']).toBe(3);
+    const { rows } = await db.query<{ n: number }>("select count(*)::int as n from public.funil_eventos where evento = 'abriu'");
+    expect(rows[0].n).toBe(1);
+  });
+
   it('descarta o que está fora da lista, nos dois lados', async () => {
     // Pelo fluxo: a lista do celular nem chega ao banco.
     expect(await processar(servicos(), lote([{ ev: 'gerou', tipo: 'x1_penaltis', x1: 'abcd2345' }, { ev: 'abriu', tipo: 'x' }]), '203.0.113.9')).toBe(0);
@@ -150,12 +206,14 @@ describe('funil do X1: gravação', () => {
     const n = await comoServico(async () => {
       const { rows } = await db.query<{ n: number }>("select public.funil_registrar(repeat('a', 32), $1::jsonb) as n", [
         JSON.stringify([
-          { evento: 'gerou', tipo: 'x1_penaltis', meio: '', jogo: '', impressao: 'b'.repeat(32) },
-          { evento: 'aceitou', tipo: 'x1_penaltis', meio: '', jogo: '', impressao: null },
-          { evento: 'abriu', tipo: 'lance', meio: '', jogo: '', impressao: 'b'.repeat(32) },
-          { evento: 'aceitou', tipo: 'x1_penaltis', meio: '', jogo: '', impressao: 'nao-e-hex' },
+          { evento: 'gerou', tipo: 'x1_penaltis', meio: '', jogo: '', impressao: 'b'.repeat(32), codigo: 'abcd2345' },
+          { evento: 'aceitou', tipo: 'x1_penaltis', meio: '', jogo: '', impressao: null, codigo: null },
+          { evento: 'abriu', tipo: 'lance', meio: '', jogo: '', impressao: 'b'.repeat(32), codigo: 'abcd2345' },
+          { evento: 'aceitou', tipo: 'x1_penaltis', meio: '', jogo: '', impressao: 'nao-e-hex', codigo: 'abcd2345' },
+          { evento: 'aceitou', tipo: 'x1_penaltis', meio: '', jogo: '', impressao: 'b'.repeat(32), codigo: null },
+          { evento: 'aceitou', tipo: 'x1_penaltis', meio: '', jogo: '', impressao: 'b'.repeat(32), codigo: 'ABCD-234' },
           'texto solto',
-          { evento: 'abriu', tipo: 'lance', meio: '', jogo: '', impressao: null },
+          { evento: 'abriu', tipo: 'lance', meio: '', jogo: '', impressao: null, codigo: null },
         ]),
       ]);
       return rows[0].n;
@@ -189,14 +247,20 @@ describe('funil do X1: limites', () => {
     expect((await contagem())['abriu/lance']).toBe(42);
   });
 
-  it('no minuto seguinte o aparelho volta a contar, e o minuto velho some', async () => {
+  it('no minuto seguinte o aparelho volta a contar, e o minuto velho sai pela limpeza do cron', async () => {
     const s = servicos('s-minuto');
     for (let i = 0; i < 2; i++) await processar(s, lote(Array(20).fill(abriu), TOKEN_BOM), null);
     expect(await processar(s, lote([abriu], TOKEN_BOM), null)).toBe(0);
     await db.exec("update public.funil_limite set minuto = minuto - interval '1 minute'");
     expect(await processar(s, lote([abriu], TOKEN_BOM), null)).toBe(1);
-    const { rows } = await db.query<{ n: number }>("select count(*)::int as n from public.funil_limite where minuto < date_trunc('minute', now())");
-    expect(rows[0].n).toBe(0);
+    // A gravação não apaga nada; a limpeza do cron tira só os minutos que passaram.
+    await db.exec("insert into public.funil_limite (chave, minuto, n) values (repeat('c', 32), date_trunc('minute', now()) - interval '2 minutes', 5)");
+    await comoServico(() => db.query('select public.funil_limpar_limite()'));
+    const { rows } = await db.query<{ velhos: number; atuais: number }>(
+      `select count(*) filter (where minuto < date_trunc('minute', now()))::int as velhos,
+              count(*) filter (where minuto = date_trunc('minute', now()))::int as atuais from public.funil_limite`,
+    );
+    expect(rows[0]).toEqual({ velhos: 0, atuais: 2 });
   });
 
   it('sem sessão: 1000 por minuto somando todos os IPs, e quem tem sessão continua contando', async () => {
@@ -260,6 +324,11 @@ describe('funil do X1: gerados, 30 dias e acesso', () => {
     const hoje = await db.query("select 1 from public.funil_contagem where evento = 'gerou' and dia = public.hoje_brasilia()");
     expect(hoje.rows).toHaveLength(0);
 
+    // Pedir até hoje (ou depois) não conta o dia em andamento: ele ficaria congelado incompleto.
+    await comoServico(() => db.query("select public.funil_contar_gerados(public.hoje_brasilia() + 3)"));
+    const congelado = await db.query("select 1 from public.funil_contagem where evento = 'gerou' and dia >= public.hoje_brasilia()");
+    expect(congelado.rows).toHaveLength(0);
+
     // O D8 apaga o X1 antigo depois de contar: a contagem de ontem continua 2.
     await db.exec("delete from public.desafios where id = 'gerado01'");
     await contar();
@@ -290,6 +359,7 @@ describe('funil do X1: gerados, 30 dias e acesso', () => {
         await expect(db.query("select public.funil_evento_valido('abriu', 'lance', '', '', false)")).rejects.toThrow(/permission denied/);
         await expect(db.query('select public.funil_contar_gerados()')).rejects.toThrow(/permission denied/);
         await expect(db.query('select public.funil_limpar()')).rejects.toThrow(/permission denied/);
+        await expect(db.query('select public.funil_limpar_limite()')).rejects.toThrow(/permission denied/);
       } finally {
         await db.exec('reset role');
       }
@@ -299,7 +369,7 @@ describe('funil do X1: gerados, 30 dias e acesso', () => {
   it('a rotina diária está agendada (o esboço do cron não grava a tabela: confere o texto da migração)', () => {
     const sql = readFileSync(join(import.meta.dirname, '..', 'migrations', '20261108000000_funil_x1.sql'), 'utf8');
     expect(sql).toMatch(/cron\.schedule\('funil-diario', '15 6 \* \* \*', 'select public\.funil_rotina_diaria\(\)'\)/);
-    expect(sql).toMatch(/cron\.schedule\('funil-limite', '\* \* \* \* \*'/);
+    expect(sql).toMatch(/cron\.schedule\('funil-limite', '\* \* \* \* \*', 'select public\.funil_limpar_limite\(\)'\)/);
   });
 });
 
