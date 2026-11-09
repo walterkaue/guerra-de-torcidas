@@ -1,6 +1,7 @@
 # Banco do narrador — pênaltis, palpites, quiz, Time do Dia e Lances
 
-> Versão 2.0 · 06/11/2026 · Fonte das frases do narrador (pênaltis e Crava a Rodada) e das provocações entre torcidas e cidades.
+> Versão 2.1 · 08/11/2026 · Fonte das frases do narrador (pênaltis e Palpite da Rodada) e das provocações entre torcidas e cidades.
+> Mudanças da 2.1: glossário do jogo (decidido pelo Kauê em 08/11/2026): X1 vira desafio, Revanche vira Jogo de volta, recriar vira carimbar, Crava a Rodada vira Palpite da Rodada (sem "cravar"); seções novas **Regras de estilo dos textos** e **Bordões do jogo**; frases novas e as etiquetas `[apertada]`, `[passeio]` e `[colado]`.
 > Mudanças da 2.0: seção 16, **Divisões** (Home durante o mês, placa e card do fim do mês; decididas pelo Kauê em 06/11/2026).
 > Mudanças da 1.9: seção 15, **Galeria de Troféus** (uma frase na ficha de cada troféu; aprovadas pelo Kauê em 06/11/2026).
 > Mudanças da 1.8: três erros e fora na Prova: 3 frases comuns em `prova_errou` e situação nova `prova_ultima_vida` (aprovadas pelo Kauê em 01/11/2026).
@@ -18,11 +19,44 @@
 - Zoa o **lance, a bola, a situação e o time**. Nunca a pessoa.
 - **Neutra de gênero:** fala do lance, não de quem joga. "Cavou!", não "Ele cavou!". Nada de "artilheiro", "herói", "representante" ou "goleiro" se referindo a quem está jogando.
 - Nada sobre raça, orientação, gênero, religião, origem, corpo, deficiência ou saúde.
-- Nada de pessoa real: jogador, técnico, narrador, comentarista. Nada de bordão famoso de narrador real nem trecho de música.
+- Nada de pessoa real: jogador, técnico, narrador, comentarista. Nada de bordão ou frase célebre de pessoa real (narrador, comentarista, jogador), nem adaptado, nem trecho de música. Vale o jargão comum do futebol e os bordões do jogo (abaixo).
+- Nada de "cravar", "cravou", "cravado", "placar exato", "palpite certeiro", "retorno" ou "mercado": lembram site de aposta (o teste do narrador barra).
 - **Classificação livre:** sem palavrão, bebida, aposta ou violência. Escolas entram na fase 2.
 - Sem nome de clube escrito na frase: só as variáveis de time.
 - **Cidades:** só posição no ranking. Nada de sotaque, origem, economia, tamanho da cidade ou estereótipo de quem mora lá.
-- Derrota zoa, mas sempre aponta a saída (revanche, "os pontos contam igual").
+- Derrota zoa, mas sempre aponta a saída (jogo de volta, "bola pro centro", "os pontos contam igual").
+- "Frango" só para o goleiro da máquina, nunca para quem joga.
+
+### Regras de estilo dos textos
+
+Valem para todo texto do jogo, não só o narrador (o `docs/visual.md` aponta para cá).
+
+1. **Um nome por coisa:** o mesmo nome no botão, na Home, no aviso, no card e no narrador. O nome interno pode ser outro (o desafio é `x1` no código; o Palpite da Rodada é `crava`).
+2. **Botão:** infinitivo, de 1 a 3 palavras, até ~20 caracteres (cabe a 360 px com fonte 130%), sem ponto de interrogação.
+3. **Frase e texto do WhatsApp:** imperativo de conversa, como se fala no grupo.
+4. **Texto que vai com o link:** primeira pessoa de quem manda ("Te desafio", "Fiz"), com o jogo, o número e a regra; no máximo 2 linhas antes do link.
+5. **Vocabulário boleiro sem viajar:** jargão que o torcedor médio entende sem explicação. Gíria de nicho só no narrador, e só se o sentido sair do contexto.
+6. **Estrangeirismo só sem troca:** se existe palavra que o torcedor usa, ela ganha (tabela, imagem, erro). Ficam link, emoji e siglas que todo mundo fala (VAR).
+7. **Nenhum bordão ou frase célebre de pessoa real** (narrador, comentarista, jogador), nem adaptado. O estilo pode inspirar; as palavras são nossas.
+8. **Variedade:** cada situação do narrador caminha para 8 frases ou mais, sorteadas sem repetir a mesma em seguida.
+9. **Zoa o time e a situação.** O apelido de quem desafiou pode aparecer, mas a piada é sobre o placar. "Frango" só para o goleiro da máquina.
+10. **Zero aposta, além da lista proibida:** nada de "placar exato", "retorno", "mercado", "palpite certeiro" nem "cravar"; nada que lembre narrador ou comentarista que é embaixador de casa de aposta.
+11. **Sem palavra de dois sentidos na mesma tela** ("venceu" = ganhou ou prazo; "valeu" = contou ou obrigado; "bate aí" = placar ou mão).
+12. **Neutro de gênero:** fala do lance ou de "você", nunca de "ele" ou "ela".
+13. **Termo novo** sai de estudo com evidência e passa por enquete rápida com a turma; com o funil do desafio, comparar envios e aceites antes e depois.
+
+### Bordões do jogo
+
+A assinatura do nosso narrador. Entram como frase normal das situações abaixo e são sorteados como as outras, nunca em toda fala.
+
+| Bordão | Quando | Onde está |
+|---|---|---|
+| "Bota no placar!" | gol que vale ponto | `gol` |
+| "Ponto pro time!" | partida que contou | `vitoria`, `prova_fim` |
+| "Arquibancada em pé!" | golaço | `gol_angulo` |
+| "Bola pro centro!" | depois da derrota | `derrota`, `desafio_derrota` |
+| "Isso vai pro grupo!" | lance raro | `lance_recriou` (⭐) |
+| "Respira, torcedor!" | antes da cobrança decisiva | `decisiva` |
 
 ## 2. Regras para o código
 
@@ -34,7 +68,7 @@
 - **Desempate:** `morte_subita` sai quando a morte súbita começa; `par_ou_impar_escolha` enquanto o servidor responde; `par_ou_impar_ganhou` ou `par_ou_impar_perdeu` no resultado, antes da frase de vitória ou derrota.
 - **Tamanho:** até ~75 caracteres depois de trocar as variáveis, para caber em 2 linhas em 390 px. Grito em MAIÚSCULAS só no começo.
 - **Primeira letra** da frase final sempre maiúscula (para `{o_time}` no começo virar "O Flamengo").
-- **Variável faltando** (ex.: jogador sem rival, partida fora de X1, jogador sem cidade): pular a frase e sortear outra.
+- **Variável faltando** (ex.: jogador sem rival, partida fora de desafio, jogador sem cidade): pular a frase e sortear outra.
 - **"Outro time":** quem escolheu "Outro time" não recebe frases com variáveis de time ou rival; recebe as de cidade.
 - **Etiquetas de lance (1.2):** uma frase pode terminar com etiquetas entre colchetes, por exemplo `[canto] [goleiro_outro_lado]`. Ela **só pode ser sorteada se todas as etiquetas forem verdadeiras** naquele lance. Frase sem etiqueta vale para qualquer lance. Entre as frases possíveis, as que têm etiqueta têm **peso 2** (combinam mais com o lance). As etiquetas nunca aparecem na tela.
 - **Cidade sem preposição:** `{cidade}` nunca vem depois de "de", "do", "da", "em", "no" ou "na" (cada cidade pede um artigo diferente). Escreva "{cidade} tá em 3º", nunca "a torcida de {cidade}".
@@ -49,7 +83,7 @@
 | `{no_time}` | no Galo da Vila | na Ponte Rasa |
 | `{o_rival}`, `{do_rival}`, `{pro_rival}` | idem, para o rival | |
 | `{apelido}` | apelido do jogador | |
-| `{desafiante}` | apelido de quem chamou no X1 | |
+| `{desafiante}` | apelido de quem te desafiou | |
 | `{placar}` | 4 x 3 | |
 | `{pontos}` | 47 | |
 | `{dif}` | 300 pontos · 1 ponto | |
@@ -78,6 +112,9 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 | `[pulou_outro_lado]` | quem joga pulou numa coluna diferente da bola | defesa |
 | `[mesma_coluna]` | quem joga acertou a coluna, mas errou a altura | defesa |
 | `[nao_pulou]` | quem joga não tocou em nenhuma zona a tempo | defesa |
+| `[apertada]` | a disputa terminou com 1 gol de diferença | vitória (pênaltis) |
+| `[passeio]` | a disputa terminou com 3 gols de diferença ou mais | vitória (pênaltis) |
+| `[colado]` | seu time está na frente do rival por pouco (até `COLADO` na média) | `rival_frente` |
 | `[dica_honesta]` | o pé de apoio apontava a coluna certa | defesa |
 | `[cobranca]` / `[defesa]` | o lance decisivo é uma cobrança / uma defesa | decisiva |
 | `[tira_duas]` / `[arquibancada]` / `[troca]` | a ajuda usada na pergunta | prova_ajuda |
@@ -117,6 +154,10 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - GOL! Encheu o pé lá no alto, sem chance! [alto]
 - Rasteiro e no cantinho! Bola de sinuca! [canto] [baixo]
 - ⭐ GOL! O goleiro tá até agora procurando a bola no bolso.
+- Estufou a rede! Bota no placar!
+- No fundo do barbante! A máquina só olhou.
+- Pombo sem asa! O goleiro nem viu passar.
+- Canudo! A rede pediu arrego.
 
 ### `gol_angulo` — gol no ângulo
 - NO ÂNGULO! Tirou a teia de aranha da gaveta!
@@ -131,6 +172,8 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - NO ÂNGULO! Tem gente na arquibancada chorando de emoção.
 - Bateu no cantinho que nem o GPS achava!
 - ⭐ NO ÂNGULO! A coruja acordou e pediu silêncio.
+- Onde a coruja dorme! Arquibancada em pé!
+- Na gaveta! Essa vai pra parede do museu.
 
 ### `cavadinha` — cavadinha que entra
 - É CAVADINHAAA! Que categoria, que deboche!
@@ -145,6 +188,7 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - É de cavadinha! Põe no telão e reprisa em câmera lenta!
 - CAVADINHA! A torcida {do_time} não tá acreditando no que viu!
 - ⭐ Cavadinha! A bola subiu, deu tchau pro goleiro e desceu na rede.
+- Cavou com a calma de quem tá no quintal de casa!
 
 ### `cavadinha_falhou` — tentou cavadinha e não entrou
 - Cavadinha no colo do goleiro! Ele agradece o presente.
@@ -168,6 +212,7 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - Bateu no travessão! O barulho foi de dar dó. [travessao]
 - NA TRAVE! A rede ficou só na vontade.
 - ⭐ Trave! A trave tá jogando no time adversário hoje.
+- Carimbou a trave! Faltou um dedo.
 
 ### `fora_cima` — isolou (força demais)
 - Isolou! Foi pra Marte, a bola tá orbitando!
@@ -183,6 +228,7 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - Por cima! Tava mirando no placar eletrônico?
 - O vizinho do estádio vai ganhar uma bola nova.
 - ⭐ ISOLOU! A estação espacial confirmou: a bola passou por lá.
+- Isolou! Essa foi buscar pipoca na arquibancada.
 
 ### `fora_lado` — pra fora pelo lado
 - Pra fora! Pegou o caminho do estacionamento.
@@ -193,6 +239,7 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - Pra fora, e a torcida {do_time} pôs a mão na cabeça.
 - Pra fora! O poste agradece, nem teve trabalho.
 - ⭐ Fora! A bola foi ver se tinha lanche na saída.
+- Pro mato! Chama o gandula.
 
 ### `goleiro_pegou` — o goleiro da máquina defendeu sua cobrança
 - Pegou! O goleiro tava com o almoço pago!
@@ -230,6 +277,8 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - Paredão {do_time}! Mais 10 pra conta!
 - Ficou no meio e a bola veio no colo! Leitura perfeita! [meio]
 - ⭐ Pegou! O batedor vai pedir pra mudar de gol.
+- Paredão! Fechou o gol com cadeado.
+- Voou no canto e espalmou!
 
 ### `sofreu_gol` — você não defendeu
 - Gol do batedor! Você foi pra um lado e a bola pro outro. [pulou_outro_lado]
@@ -256,6 +305,8 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - Tudo depende dessa defesa. Olho no pé de apoio! [defesa]
 - Silêncio total. Até o pipoqueiro parou.
 - Momento decisivo! Hora de virar lenda ou virar meme.
+- Bola na marca da cal. É agora ou agora!
+- Respira, torcedor!
 
 ### `maquina_fora` — o batedor da máquina errou o gol (não conta como defesa)
 - Pra fora! O batedor sentiu a pressão da torcida {do_time}!
@@ -291,7 +342,7 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 ### `par_ou_impar_perdeu`
 - O narrador mostrou {numero}. Perdeu no par ou ímpar!
 - Perdeu no dedo! Mas os pontos vão {pro_time} do mesmo jeito.
-- Par ou ímpar não perdoa! Revanche tá a um toque.
+- Par ou ímpar não perdoa! O jogo de volta tá a um toque.
 - Foi no detalhe! Bora de novo que a sorte vira.
 - ⭐ O narrador ganhou no par ou ímpar e tá se achando.
 
@@ -310,19 +361,23 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - Sufoco, mas venceu! O importante é o resultado... e a zoeira.
 - Venceu por {placar}! Isso é jogo de gente grande!
 - ⭐ Vitória! A torcida {do_time} vai fazer até faixa.
+- Ponto pro time! Vitória {do_time} na marca da cal.
+- Vitória no sufoco, mas vale igual! [apertada]
+- Chocolate! Que passeio na marca da cal. [passeio]
 
 ### `derrota`
-- Fim de jogo. Hoje não deu, mas a revanche tá a um toque.
+- Fim de jogo. Hoje não deu, mas o jogo de volta tá a um toque.
 - Perdeu! O goleiro da máquina vai se achar a semana toda.
 - Derrota... Respira, bebe uma água e volta.
 - Não foi dessa vez. A torcida {do_time} ainda acredita!
 - Perdeu, mas os pontos vão {pro_time} do mesmo jeito!
 - Isolar acontece. Bora de novo!
-- Perdeu! Treino é treino, jogo é jogo, e revanche é agora.
+- Perdeu! Mas jogo bom é jogo de volta.
 - Hoje a máquina ganhou. Amanhã é outro campeonato.
 - Perdeu... A torcida {do_rival} não pode saber disso. Joga de novo!
 - Fim! Ficou {placar}. Bora virar isso na próxima?
 - ⭐ Perdeu! O goleiro da máquina já tá pedindo aumento.
+- Não foi dessa vez. Bola pro centro e mais uma!
 
 ### `cinco_cobrancas` — 5 de 5 nas cobranças
 - 5 DE 5! Faro de gol com carteirinha!
@@ -343,23 +398,23 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - Cinco defesas! A torcida {do_time} já tá encomendando estátua.
 - ⭐ 5 de 5! O gol pediu folga porque não teve trabalho.
 
-## 6. X1 (desafio por link)
+## 6. Desafio (por link)
 
-O convite que vai com o link é texto fixo, sem sorteio (glossário de 20/10): "Te chamei no X1: fiz {pontos} {pro_time}. Faz mais?". Por isso não existe mais a situação `desafio_convite`.
+O texto que vai com o link é fixo, sem sorteio (`src/jogo/convites.ts`): "Te desafio nos pênaltis: fiz {pontos} {pro_time}. Faz mais?", e o mesmo formato nos Lances e na Prova. Por isso não existe a situação `desafio_convite`.
 
-### `desafio_vitoria` — você venceu quem te chamou no X1
-- Venceu o X1! {desafiante} chamou e agora vai ter que respeitar.
-- X1 aceito e vencido! Manda o placar pra {desafiante}.
-- {desafiante} achou que ia ser fácil. Achou.
+### `desafio_vitoria` — você venceu quem te desafiou
+- Venceu o desafio! Agora o placar fala por você.
+- Desafio aceito e vencido! Manda o placar pra {desafiante}.
+- Desafio aceito e vencido. Essa vai pro grupo.
 - Ganhou de {desafiante}! Essa vai pro grupo com print e tudo.
 - ⭐ Vitória sobre {desafiante}! O grupo inteiro precisa ver.
 
-### `desafio_derrota` — quem te chamou no X1 venceu
-- {desafiante} venceu essa. Revanche?
-- Perdeu pra {desafiante}! Agora é você que chama no X1.
-- Deu {desafiante}. Bora devolver o X1?
+### `desafio_derrota` — quem te desafiou venceu
+- {desafiante} venceu essa. Jogo de volta?
+- Deu {desafiante} na ida. Tem jogo de volta!
+- {desafiante} levou essa. Bola pro centro e jogo de volta!
 - {desafiante} levou essa. Vai deixar barato?
-- ⭐ {desafiante} venceu. Finge que foi o vento e manda a revanche.
+- ⭐ {desafiante} venceu. Finge que foi o vento e manda o jogo de volta.
 
 ## 7. Provocação entre torcidas (ranking da semana)
 
@@ -384,6 +439,8 @@ Sempre ao time, nunca à pessoa. O rival segue a regra da seção 8 do `jogo.md`
 - Na frente {do_rival}! E a torcida deles não tá gostando nada.
 - Defende essa vantagem como se fosse pênalti.
 - {o_rival} tá {dif} atrás e a torcida deles já tá nervosa.
+- {o_rival} tá virando freguês essa semana.
+- Salto alto não: {o_rival} tá colado. [colado]
 
 ### `rival_passou` — seu time acabou de passar o rival
 - PASSOU! {o_time} deixou {o_rival} pra trás!
@@ -402,10 +459,10 @@ Sempre ao time, nunca à pessoa. O rival segue a regra da seção 8 do `jogo.md`
 - Domingo à noite, {dif} de diferença. Hora da verdade.
 - A semana tá acabando e {o_time} precisa de mais uma lenda em campo.
 
-### `mais_braba` — ranking "Torcida mais braba"
-- {o_time} pode não ser o maior, mas é torcida braba!
-- Poucos, mas brabos! {o_time} tá em {posicao} no Mais Braba.
-- No Mais Braba não importa tamanho. Importa vontade.
+### `mais_braba` — "Torcida raiz": o Campeão da semana, que é por média
+- {o_time} pode não ser o maior, mas é torcida raiz!
+- Poucos, mas raiz! {o_time} tá em {posicao} no Campeão da semana.
+- No Campeão da semana não importa tamanho. Importa vontade.
 - Torcida pequena, média gigante. Respeita {o_time}!
 
 ### `campeao_semana` — card do campeão no domingo à noite
@@ -438,11 +495,11 @@ Só posição no ranking. Ver o checklist da seção 1. Regra de preposição da
 - Semana fechada: {cidade} no topo do estado!
 - {cidade} campeã da semana! O print é eterno.
 
-## 9. Crava a Rodada (palpites)
+## 9. Palpite da Rodada
 
 Mesmo checklist da seção 1, com dois cuidados a mais:
-- **Nunca** as palavras proibidas da seção 7 do `jogo.md` (aposta, bet, odd, cotação, banca, bolão valendo, green, red), nem "valendo", "prêmio" ou "lucro".
-- A porcentagem da torcida nunca aparece como chance de acontecer: é "como a torcida cravou", e só depois do início do jogo.
+- **Nunca** as palavras proibidas da seção 7 do `jogo.md` (aposta, bet, odd, cotação, banca, bolão valendo, green, red), nem "valendo", "prêmio" ou "lucro", nem "cravar", "placar exato" ou "palpite certeiro".
+- A porcentagem da torcida nunca aparece como chance de acontecer: é "como a torcida palpitou", e só depois do início do jogo.
 
 ### Variáveis e etiquetas novas
 
@@ -451,7 +508,7 @@ Mesmo checklist da seção 1, com dois cuidados a mais:
 | `{rodada}` | 34ª |
 | `{acertos}` | jogos com algum ponto na rodada (ex.: 6) |
 | `{jogos}` | jogos palpitados na rodada (ex.: 9) |
-| `{placar}` | o placar cravado, com o mandante primeiro (ex.: 2 x 1) |
+| `{placar}` | o placar do palpite, com o mandante primeiro (ex.: 2 x 1) |
 
 | Etiqueta | Verdadeira quando |
 |---|---|
@@ -463,23 +520,23 @@ Mesmo checklist da seção 1, com dois cuidados a mais:
 - `crava_rodada_fim` sai uma vez, quando o último jogo palpitado da rodada é confirmado.
 
 ### `crava_abertura` — abre a tela da rodada
-- A {rodada} rodada tá aberta! Crava os placares e defende {o_time}.
-- Rodada nova, palpite novo. Quem crava, zoa!
-- Tá aberta a {rodada} rodada. Bora cravar!
-- Placar na cabeça, palpite na ponta do dedo. Crava aí!
-- ⭐ O pipoqueiro já cravou os dele. Só falta você.
+- A {rodada} rodada tá aberta! Dá seus palpites e defende {o_time}.
+- Rodada nova, palpite novo. Quem acerta, zoa!
+- Tá aberta a {rodada} rodada. Bora palpitar!
+- Placar na cabeça, palpite na ponta do dedo. Manda aí!
+- ⭐ O pipoqueiro já deu os palpites dele. Só falta você.
 
 ### `crava_salvo` — palpite salvo
-- Cravado! Agora é torcer.
+- Palpite salvo! Agora é torcer.
 - Palpite guardado! Até o apito, ninguém vê.
 - Tá registrado. Se acertar, a resenha é sua.
 - Anotado no caderninho do narrador!
 
 ### `crava_contra_time` — palpitou derrota do próprio time
-- Cravou derrota {do_time}? Coragem ou realismo?
+- Palpite de derrota {do_time}? Coragem ou realismo?
 - Palpite contra o próprio time! O narrador viu, hein.
-- Torce de um lado, crava do outro. Que frieza!
-- ⭐ Cravou contra {o_time}. A torcida vai fingir que não viu.
+- Torce de um lado, palpita do outro. Que frieza!
+- ⭐ Palpite contra {o_time}. A torcida vai fingir que não viu.
 
 ### `crava_certeza` — marcou o jogo da certeza
 - Jogo da certeza marcado! Se acertar, vale o dobro.
@@ -488,40 +545,40 @@ Mesmo checklist da seção 1, com dois cuidados a mais:
 
 ### `crava_fechou` — o jogo começou e o palpite trancou
 - Bola rolando, palpite trancado! Agora é com eles.
-- Fechou! Olha só como a torcida cravou esse.
+- Fechou! Olha só como a torcida palpitou nesse.
 - Apito inicial: palpites lacrados.
 
 ### `crava_lembrete` — tela inicial ou notificação antes da rodada
-- Faltam {horas} pro primeiro jogo da rodada. Já cravou?
+- Faltam {horas} pro primeiro jogo da rodada. Já deu seu palpite?
 - Rodada começando e seu palpite tá em branco!
 - O jogo da certeza trava em {horas}. Escolhe o seu!
 
-### `crava_exato` — placar exato
-- CRAVOU! {placar} na mosca!
-- NA MOSCA! Placar exato, sem tirar nem pôr!
-- Placar exato! Isso é bola de cristal ou estudo?
-- CRAVOU O PLACAR! Pode mandar o print!
+### `crava_exato` — acertou o placar
+- NA MOSCA! {placar} certinho!
+- ACERTOU EM CHEIO! Sem tirar nem pôr!
+- Placar certinho! Isso é bola de cristal ou estudo?
+- ACERTOU O PLACAR! Pode mandar o print!
 - Acertou até a derrota {do_time}. Dói, mas pontua! [contra]
-- ⭐ {placar} exato! O narrador tá pensando em te contratar.
+- ⭐ {placar} certinho! O narrador tá pensando em te contratar.
 
 ### `crava_saldo` — vencedor e saldo certos (ou empate com outro placar)
 - Quase! Vencedor e saldo certinhos. Faltou só o placar.
-- Na trave do placar exato! Saldo no capricho.
-- Empate cravado! O placar foi outro, mas conta. [empate]
+- Na trave do placar! Saldo no capricho.
+- Deu empate, como você disse! O placar foi outro, mas conta. [empate]
 - Palpite contra e acertou o saldo. Os pontos vão {pro_time} igual! [contra]
 
 ### `crava_vencedor` — só o vencedor (ou só o empate)
 - Acertou quem ganhou! O placar fica pra próxima.
 - Vencedor certo! Faltou calibrar os gols.
-- Cravou o lado certo. Pontinhos na conta {do_time}.
-- Cravou empate e deu empate! Os gols é que não bateram. [empate]
+- Foi no lado certo. Pontinhos na conta {do_time}.
+- Disse empate e deu empate! Os gols é que não bateram. [empate]
 
 ### `crava_errou`
 - Errou esse! O futebol não leu seu palpite.
 - Passou longe! Mas tem mais jogo na rodada.
 - Não deu! A bola é redonda, o palpite também.
 - Esse foi pra arquibancada! Bora no próximo.
-- Cravou contra e o time te desmentiu. Bom sinal, né? [contra]
+- Palpitou contra e o time te desmentiu. Bom sinal, né? [contra]
 - ⭐ Errou com convicção. O narrador respeita.
 
 ### `crava_certeza_acertou` — jogo da certeza com algum ponto
@@ -537,7 +594,7 @@ Mesmo checklist da seção 1, com dois cuidados a mais:
 ### `crava_rodada_fim` — resumo da rodada
 - Rodada fechada: {acertos} de {jogos} com ponto. {pontos} {pro_time}!
 - Fim da {rodada} rodada! {pontos} pontos na conta {do_time}.
-- Rodada encerrada! Manda o card e vê quem cravou mais no grupo.
+- Rodada encerrada! Manda o card e vê quem acertou mais no grupo.
 - {acertos} de {jogos}! Na próxima rodada tem revanche.
 - ⭐ Fechou a rodada! O caderninho do narrador tá cheio de anotação.
 
@@ -605,7 +662,8 @@ Só uma frase por erro. O 3º erro não tem grito: a partida acaba e quem fala �
 ### `prova_fim`
 - Fim da prova: {pontos} {pro_time}!
 - Prova entregue! {pontos} pontos na conta {do_time}.
-- Fechou com {pontos}. Chama alguém do grupo no X1?
+- Fechou com {pontos}. Quem do grupo faz mais?
+- Ponto pro time! {pontos} na conta {do_time}.
 
 ## 11. Time do Dia (desafio diário)
 
@@ -656,7 +714,7 @@ Nas jogadas, os Lances usam as frases da seção 3 que servem para qualquer chut
 ### `lance_abertura` — começo da partida de 3 lances
 - Três chutes, três chances de fazer história {pro_time}!
 - A história tá aí de novo. Agora a perna é sua!
-- Bola parada, torcida em pé. Bora recriar!
+- Bola parada, torcida em pé. Bora carimbar!
 - ⭐ O narrador já viu esse filme. Quer ver o final de novo!
 
 ### `lance_barreira` — a bola parou na barreira
@@ -666,11 +724,12 @@ Nas jogadas, os Lances usam as frases da seção 3 que servem para qualquer chut
 - Parou no muro! Mais curva ou mais altura da próxima.
 - ⭐ A barreira agradece o presente. Mas não era pra ela!
 
-### `lance_recriou` — gol no mesmo canto do lance de verdade
-- IGUALZINHO! Recriou o lance do jeito que a história conta!
+### `lance_recriou` — carimbou o lance: gol no mesmo canto do lance de verdade
+- IGUALZINHO! Carimbou o lance do jeito que a história conta!
 - No mesmo canto da história! Isso é aula!
-- Recriou o lance! A torcida {do_time} jura que é replay!
+- Carimbou o lance! A torcida {do_time} jura que é replay!
 - ⭐ Igual ao original! Já pode pedir a placa.
+- ⭐ Igualzinho à história! Isso vai pro grupo!
 
 ### `lance_fim` — fim da partida de 3 lances
 - Fim dos lances: {pontos} {pro_time}!
@@ -693,7 +752,7 @@ Título: Sua torcida na semana
 
 ## 14. Aquecimento
 
-Gritos curtos das 5 estações do aquecimento (docs/jogo.md, seção 14.4), um por estação, acertando ou não. Texto em `src/jogo/aquecimento.ts` (`GRITO_ACERTOU`, `GRITO_ERROU`), não neste banco: o `npm run frases` não lê esta seção. Na Prova e no Crava, sem "valendo" (seções 9 e 10).
+Gritos curtos das 5 estações do aquecimento (docs/jogo.md, seção 14.4), um por estação, acertando ou não. Texto em `src/jogo/aquecimento.ts` (`GRITO_ACERTOU`, `GRITO_ERROU`), não neste banco: o `npm run frases` não lê esta seção. Na Prova e no Palpite, sem "valendo" (seções 9 e 10).
 
 | Estação | Acertou | Errou |
 |---|---|---|
@@ -701,7 +760,7 @@ Gritos curtos das 5 estações do aquecimento (docs/jogo.md, seção 14.4), um p
 | Defesa | PEGOU! Leu o pé e foi buscar. · Defesa! O gol tá trancado hoje. | Quase! No jogo valendo você pega. · Foi no outro canto! Agora você já sabe. |
 | Falta | Por cima da barreira! Que cobrança. · Passou da barreira e foi pra rede! | Quase! No jogo valendo você acerta. · A barreira ganhou essa. A próxima é sua. |
 | Prova | Na mosca! Começou bem a prova. · Certinha! Tem cabeça de boleiro. | Quase! Na Prova de verdade você acerta. · Essa escapou! A próxima você crava. |
-| Crava | Cravado! Esse vale de verdade. · Palpite feito! Agora é torcer. | (sempre comemora como acerto) |
+| Palpite | Palpite salvo! Esse vale de verdade. · Palpite feito! Agora é torcer. | (sempre comemora como acerto) |
 
 Fim: "Aquecido! Agora vale ponto {pro_time}" (sem time oficial: "Aquecido! Agora vale ponto de verdade").
 

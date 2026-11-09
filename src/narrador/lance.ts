@@ -71,6 +71,16 @@ export function eventosDoFim(r: ResultadoPartida): EventoNarrador[] {
   return lista.slice(0, 2);
 }
 
+/** Etiquetas da frase de vitória: diferença de 1 gol é `apertada`; de 3 ou mais, `passeio` (narrador.md, seção 2). */
+export function etiquetasDoFim(r: ResultadoPartida): Set<Etiqueta> {
+  const e = new Set<Etiqueta>();
+  if (!r.venceu) return e;
+  const dif = r.golsJogador - r.golsMaquina;
+  if (dif === 1) e.add('apertada');
+  if (dif >= 3) e.add('passeio');
+  return e;
+}
+
 /** Coluna do gol (0, 1 ou 2) de um x de -1 a 1, como em zonaDoPonto. */
 const colunaDoX = (x: number) => (x < -1 / 3 ? 0 : x > 1 / 3 ? 2 : 1);
 

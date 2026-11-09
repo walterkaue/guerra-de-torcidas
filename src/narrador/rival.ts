@@ -1,5 +1,6 @@
 // Rival da semana e a situação do duelo (seção 8 do jogo.md). Puro, sem servidor.
 
+import type { Etiqueta } from './escolher';
 import type { EventoNarrador } from './frases';
 
 export interface LinhaDuelo {
@@ -29,6 +30,8 @@ export interface Duelo {
   /** "12 pontos" / "1 ponto" (diferença na média dos 30 melhores). */
   dif: string;
   frente: boolean;
+  /** `colado`: na frente por até COLADO de média (frase "Salto alto não"). */
+  etiquetas: Set<Etiqueta>;
 }
 
 const formatarDif = (n: number) => {
@@ -45,9 +48,11 @@ export function situacaoDoDuelo(eu: LinhaDuelo, rival: LinhaDuelo, estavaNaFrent
   const frente = eu.posicao_campeao < rival.posicao_campeao;
   const diferenca = eu.media30 - rival.media30;
   const dif = formatarDif(diferenca);
+  const colado = Math.abs(diferenca) <= COLADO;
+  const etiquetas = new Set<Etiqueta>(frente && colado ? ['colado'] : []);
   if (estavaNaFrente !== null && estavaNaFrente !== frente) {
-    return { evento: frente ? 'rival_passou' : 'rival_passado', dif, frente };
+    return { evento: frente ? 'rival_passou' : 'rival_passado', dif, frente, etiquetas };
   }
-  if (frente) return { evento: 'rival_frente', dif, frente };
-  return { evento: Math.abs(diferenca) <= COLADO ? 'rival_colado' : 'rival_atras', dif, frente };
+  if (frente) return { evento: 'rival_frente', dif, frente, etiquetas };
+  return { evento: colado ? 'rival_colado' : 'rival_atras', dif, frente, etiquetas };
 }

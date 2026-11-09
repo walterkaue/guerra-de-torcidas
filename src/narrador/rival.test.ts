@@ -25,6 +25,10 @@ describe('duelo', () => {
     expect(situacaoDoDuelo(linha('c', 3, 80), linha('a', 1, 100), null)).toMatchObject({ evento: 'rival_atras', dif: '20 pontos' });
     expect(situacaoDoDuelo(linha('c', 3, 87), linha('b', 2, 90), null)).toMatchObject({ evento: 'rival_colado', dif: '3 pontos' });
     expect(situacaoDoDuelo(linha('a', 1, 100), linha('b', 2, 99), null)).toMatchObject({ evento: 'rival_frente', dif: '1 ponto' });
+    // Na frente por pouco: rival_frente com [colado] ("Salto alto não"); longe na frente ou atrás, sem etiqueta.
+    expect([...situacaoDoDuelo(linha('a', 1, 100), linha('b', 2, 99), null)!.etiquetas]).toEqual(['colado']);
+    expect([...situacaoDoDuelo(linha('a', 1, 100), linha('b', 2, 80), null)!.etiquetas]).toEqual([]);
+    expect([...situacaoDoDuelo(linha('c', 3, 87), linha('b', 2, 90), null)!.etiquetas]).toEqual([]);
   });
   it('passou e foi passado comparando com o que o aparelho viu antes', () => {
     expect(situacaoDoDuelo(linha('a', 1, 100), linha('b', 2, 90), false)?.evento).toBe('rival_passou');
