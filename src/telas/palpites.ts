@@ -106,7 +106,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     <main class="tela palpites">
       <p class="aviso-resenha" role="note">${esc(AVISO_RESENHA)}</p>
       ${cabecalhoTela({
-        titulo: 'Crava a Rodada',
+        titulo: 'Palpite da Rodada',
         extra: '<button class="ajuda" type="button" data-acao="como-cravar" aria-label="Regras e pontos">?</button>',
       })}
       ${abas('visao', [{ id: 'palpites', texto: 'Palpites' }, { id: 'tabela', texto: 'Tabela' }], 'palpites', 1)}
@@ -123,17 +123,17 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
         <p class="nota" data-lembrete hidden></p>
         <section class="lista-jogos" aria-live="polite">${estado('carregando', 'Buscando os jogos…')}</section>
         <section class="placa crava-ranking" data-ranking-placa hidden>
-          ${faixa('Ranking do Crava')}
+          ${faixa('Tabela dos palpites')}
           ${abas('rk', [{ id: 'rodada', texto: 'Rodada' }, { id: 'tudo', texto: 'Brasileirão' }], 'rodada', 2)}
           <p class="crava-posicao" data-posicao></p>
-          <div class="tabela" data-ranking>${estado('carregando', 'Buscando o ranking…')}</div>
+          <div class="tabela" data-ranking>${estado('carregando', 'Buscando a tabela…')}</div>
           <p class="explica">Média dos 30 melhores de cada torcida. Na semana, vale em dobro (até 300 por rodada).</p>
         </section>
         <section class="mandar crava-compartilhar" aria-label="Mandar no grupo" hidden>
           ${faixa('Mandar no grupo')}
           <button class="botao botao-zap" type="button" data-acao="card-meus">
             Mandar meus palpites
-            <small>Card com os placares que você cravou, sem porcentagem</small>
+            <small>Card com os placares que você palpitou, sem porcentagem</small>
           </button>
           <button class="botao-linha mandar-resultado" type="button" data-acao="card-resultado" hidden>
             Mandar o resultado da rodada
@@ -225,11 +225,11 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   function blocoComo(j: Jogo): string {
     const c = como.get(j.id);
     if (!c) return '';
-    if (c.total === null) return '<p class="como-pouca">Pouca gente cravou esse.</p>';
+    if (c.total === null) return '<p class="como-pouca">Pouca gente palpitou nesse.</p>';
     const linha = (rotulo: string, pct: number | null) =>
       `<div class="como-linha"><span>${esc(rotulo)}</span><span class="como-barra" style="--p:${pct ?? 0}"></span><strong>${pct ?? 0}%</strong></div>`;
     return `<div class="como">
-      <p class="rotulo">Como a torcida cravou · ${c.total} palpites</p>
+      <p class="rotulo">Como a torcida palpitou · ${c.total} palpites</p>
       ${linha(`${nomeDo(j.mandante_id)} vence`, c.pct_mandante)}
       ${linha('Empate', c.pct_empate)}
       ${linha(`${nomeDo(j.visitante_id)} vence`, c.pct_visitante)}
@@ -265,15 +265,15 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
         ${linhaTime(j.visitante_id, 'v', atual.v, true)}
         ${dicasHtml(j)}
         <div class="jogo-rodape">
-          <span class="situacao">${salvo ? `Cravado: <strong>${placarTexto(salvo)}</strong>` : 'Ainda não cravado'}</span>
-          <button type="button" class="cravar${pronto ? ' feito' : ''}" data-acao="cravar" ${pronto ? 'disabled' : ''}>${pronto ? 'Cravado ✓' : 'Cravar'}</button>
+          <span class="situacao">${salvo ? `Palpite: <strong>${placarTexto(salvo)}</strong>` : 'Sem palpite ainda'}</span>
+          <button type="button" class="cravar${pronto ? ' feito' : ''}" data-acao="cravar" ${pronto ? 'disabled' : ''}>${pronto ? 'Palpite salvo ✓' : 'Salvar palpite'}</button>
         </div>
       </article>`;
     }
 
     const meuTexto = salvo
       ? `Seu palpite: <strong>${placarTexto(salvo)}</strong>${certeza ? ' ⭐' : ''}`
-      : 'Você não cravou esse.';
+      : 'Sem palpite seu nesse.';
     if (fase === 'anulado') {
       return `${abre(' fechado')}${topo}
         ${linhaTime(j.mandante_id, 'm', null, false)}${linhaTime(j.visitante_id, 'v', null, false)}
@@ -509,7 +509,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       const onde = rankingDe === 'rodada' ? 'na rodada' : 'no Brasileirão';
       elPos.textContent = pos
         ? `Sua posição: ${pos.posicao}º de ${pos.total} ${onde}.`
-        : 'Sua posição aparece quando sair o primeiro resultado que você cravou.';
+        : 'Sua posição aparece quando sair o primeiro resultado que você palpitou.';
       if (!linhas.some((l) => l.palpiteiros > 0)) {
         mostrar(elRk, estado('vazio', 'Sai quando o primeiro placar for confirmado.'));
         return;
@@ -593,7 +593,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     }
     const placar = rascunho.get(j.id) ?? meus.palpites.get(j.id) ?? { m: 0, v: 0 };
     botao.disabled = true;
-    botao.textContent = 'Cravando…';
+    botao.textContent = 'Salvando…';
     try {
       await api.sincronizarTorcedor();
       await api.cravar(j.id, placar);
@@ -695,8 +695,8 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       dados: (async (): Promise<DadosDoCard> => ({
         tipo: 'jogo',
         time: timeDoCard(),
-        jogo: `Crava a Rodada · ${ordinalRodada(rodadaDoCard)}`,
-        destaque: `${linhas.length} ${linhas.length === 1 ? 'CRAVADO' : 'CRAVADOS'}`,
+        jogo: `Palpite da Rodada · ${ordinalRodada(rodadaDoCard)}`,
+        destaque: `${linhas.length} ${linhas.length === 1 ? 'PALPITE' : 'PALPITES'}`,
         quem: { comApelido: meusPalpites(apelidoDoCard()), semApelido: meusPalpites() },
         lance: `${ordinalRodada(rodadaDoCard)} rodada`,
         placarEmoji: '',
@@ -726,7 +726,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       dados: (async (): Promise<DadosDoCard> => ({
         tipo: 'jogo',
         time: timeDoCard(),
-        jogo: `Crava a Rodada · ${ordinalRodada(rodadaDoCard)}`,
+        jogo: `Palpite da Rodada · ${ordinalRodada(rodadaDoCard)}`,
         destaque: `+${pontos}`,
         quem: { comApelido: linhaDoTorcedor(apelido, pontos, paraTime), semApelido: linhaDoTorcedor(undefined, pontos, paraTime) },
         lance: `${ordinalRodada(rodadaDoCard)} rodada`,

@@ -45,7 +45,7 @@ export const INTERVALO_LEMBRETE_DIAS = 7;
 
 /** "Faltam 2 pra sua cidade entrar no ranking. Chama a galera." */
 export function textoFaltam(faltam: number): string {
-  return `${faltam === 1 ? 'Falta 1' : `Faltam ${faltam}`} pra sua cidade entrar no ranking. Chama a galera.`;
+  return `${faltam === 1 ? 'Falta 1' : `Faltam ${faltam}`} pra sua cidade entrar na tabela. Chama a galera.`;
 }
 
 /** Linha da Home: "Sua cidade está em 3º em SP" ou o "Faltam N". */

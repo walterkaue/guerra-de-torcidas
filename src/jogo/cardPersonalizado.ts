@@ -21,7 +21,7 @@ export type EstiloCard = 'telao' | 'placar' | 'poster';
 /** Na ordem do deslizar; o primeiro é o padrão. O Pôster só existe com o boneco carregado (`estilosDisponiveis`). */
 export const ESTILOS: readonly { id: EstiloCard; nome: string }[] = [
   { id: 'telao', nome: 'Telão' },
-  { id: 'placar', nome: 'Placar seco' },
+  { id: 'placar', nome: 'Só o placar' },
   { id: 'poster', nome: 'Pôster' },
 ];
 

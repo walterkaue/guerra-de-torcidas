@@ -176,7 +176,7 @@ export function situacaoDoLance(l: Lance): string {
 }
 
 function legenda(r: ResultadoLance): string {
-  if (r.desfecho === 'gol') return r.recriou ? `Recriou o lance! · +${r.pontos}` : `Gol · +${r.pontos}`;
+  if (r.desfecho === 'gol') return r.recriou ? `Carimbou o lance! · +${r.pontos}` : `Gol · +${r.pontos}`;
   if (r.desfecho === 'barreira') return 'Na barreira';
   if (r.desfecho === 'defesa') return 'O goleiro pegou';
   return r.desfecho === 'trave' ? 'Na trave' : 'Pra fora';
@@ -584,7 +584,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
             })
             .join('')}
         </ul>
-        ${recriou ? `<div class="numeros dois">${numero(String(recriou), recriou === 1 ? 'Lance recriado' : 'Lances recriados', 'destaque')}</div>` : ''}
+        ${recriou ? `<div class="numeros dois">${numero(String(recriou), recriou === 1 ? 'Lance carimbado' : 'Lances carimbados', 'destaque')}</div>` : ''}
         ${linhaMelhores ? `<p class="melhores-linha">${esc(linhaMelhores)}</p>` : ''}
         <button type="button" class="botao-linha" data-acao="album">Ver os lances</button>`,
         { titulo: tituloDoLance, filete: true },
@@ -594,11 +594,11 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       selos:
         htmlSelosDaPosicao(desempenho, 'lances') +
         medalhas.map((t) => selo(`${icone('estrela')} ${esc(t)}`, 'ouro')).join('') +
-        (esperaRanking ? selo('No ranking em 1 min', undefined, 'data-selo-ranking') : '') +
-        (valendo && situacao.tipo === 'ranking' && outro ? selo('Contou pro ranking') : ''),
+        (esperaRanking ? selo('Subindo pro placar…', undefined, 'data-selo-ranking') : '') +
+        (valendo && situacao.tipo === 'ranking' && outro ? selo('Tá no placar') : ''),
       zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
       mandarCard: true,
-      maisUma: 'Jogar de novo',
+      maisUma: 'Mais uma',
     });
     if (cmp) void import('./bustosDoDuelo').then((m) => m.bustosDoDuelo(root, quemChamouX1?.boneco, quemChamouX1?.timeId));
     contar(root.querySelector<HTMLElement>('[data-contador]'), pontos);

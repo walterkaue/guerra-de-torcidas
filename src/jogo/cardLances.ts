@@ -143,7 +143,7 @@ export function conteudoLances(c: CanvasRenderingContext2D, { x, y, l, a }: Caix
       if (lance.recriou) {
         c.fillStyle = AMARELO;
         c.font = `700 24px ${ROTULO}`;
-        c.fillText('RECRIOU O LANCE', x + raio * 2 + 26, cy + 32);
+        c.fillText('CARIMBOU O LANCE', x + raio * 2 + 26, cy + 32);
       }
     });
 

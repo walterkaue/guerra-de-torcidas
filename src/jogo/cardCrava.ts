@@ -107,7 +107,7 @@ export function conteudoAcertos(c: CanvasRenderingContext2D, { x, y, l, a }: Cai
 }
 
 export function desenharCardCrava(d: DadosCardCrava): HTMLCanvasElement {
-  const jogo = `Crava a Rodada · ${ordinalRodada(d.rodada)}`;
+  const jogo = `Palpite da Rodada · ${ordinalRodada(d.rodada)}`;
   const comum = { avisoFixo: AVISO_RESENHA };
   if (d.tipo === 'meus') {
     const n = d.linhas.length;
@@ -115,7 +115,7 @@ export function desenharCardCrava(d: DadosCardCrava): HTMLCanvasElement {
       ...d,
       ...comum,
       jogo,
-      destaque: `${n} ${n === 1 ? 'CRAVADO' : 'CRAVADOS'}`,
+      destaque: `${n} ${n === 1 ? 'PALPITE' : 'PALPITES'}`,
       quem: `Meus palpites${d.paraTime ? ` ${d.paraTime}` : ''}`,
       frase: '',
       novoRecorde: false,

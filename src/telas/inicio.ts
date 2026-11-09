@@ -188,9 +188,9 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         ${tarjaDoTime(time)}
       </section>
 
-      <section class="cabo placa" aria-label="Duelo com o rival"${time?.id === ID_OUTRO ? '' : ' hidden'}>
+      <section class="cabo placa" aria-label="Placar do clássico"${time?.id === ID_OUTRO ? '' : ' hidden'}>
         <div class="cabo-duelo" data-duelo hidden>
-          ${faixa('Duelo com o rival')}
+          ${faixa('Placar do clássico')}
           <div class="cabo-nomes">
             <p><strong data-cabo-v-eu></strong><span data-cabo-eu></span></p>
             <p><strong data-cabo-v-rival></strong><span data-cabo-rival></span></p>
@@ -201,7 +201,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           </div>
           <p class="adesivo" data-frase-rival hidden></p>
         </div>
-        ${time?.id === ID_OUTRO ? '<div class="cabo-nota" data-nota-cidade hidden><p>Escolha sua cidade: é ela que joga por você no ranking.</p><button class="botao botao-sec" type="button" data-acao="escolher-cidade">Escolher minha cidade</button></div>' : ''}
+        ${time?.id === ID_OUTRO ? '<div class="cabo-nota" data-nota-cidade hidden><p>Escolha sua cidade: é ela que joga por você na tabela.</p><button class="botao botao-sec" type="button" data-acao="escolher-cidade">Escolher minha cidade</button></div>' : ''}
         <p class="cabo-voce" data-posicao-semana aria-live="polite" hidden></p>
       </section>
 
@@ -221,12 +221,12 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       </section>
 
       <button class="giro faixa-tv" type="button" data-acao="ranking" hidden>
-        <span class="giro-selo rotulo">Giro</span><span class="giro-frase" data-giro></span><span class="so-leitor">. Ver o ranking da semana</span>
+        <span class="giro-selo rotulo">Giro</span><span class="giro-frase" data-giro></span><span class="so-leitor">. Ver a tabela da semana</span>
       </button>
 
       <div class="casa-secao"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>${htmlDaCasa(esc(tituloDaCasa(time)))}</div>
 
-      <button class="link-feedback" type="button" data-acao="feedback">${icone('balao')} Feedback ou bug? Conta pra gente</button>
+      <button class="link-feedback" type="button" data-acao="feedback">${icone('balao')} Pediu VAR? Conta o que aconteceu</button>
       ${htmlBotaoApoio()}
       <button class="link-feedback" type="button" data-acao="termos">Termos e privacidade</button>
 

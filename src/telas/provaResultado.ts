@@ -38,7 +38,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
 
   // Quando a prova não entrou no ranking, a explicação vem no lugar do selo.
   const situacao = fim.sobSuspeita
-    ? 'Essa ficou fora do ranking até a gente conferir.'
+    ? 'Essa ficou fora da tabela até a gente conferir.'
     : !fim.contaNoRanking
       ? textoForaDasMelhores() // a Prova tem as 3 dela: sem a lista dos Lances
       : null;
@@ -82,9 +82,9 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
     }${blocoDesafio}`,
     frases,
     aviso: situacao ? { texto: situacao, forte: false } : null,
-    selos: htmlSelosDaPosicao(fim.desempenho, 'prova') + (situacao ? '' : selo('Contou pro ranking')),
+    selos: htmlSelosDaPosicao(fim.desempenho, 'prova') + (situacao ? '' : selo('Tá no placar')),
     zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
-    maisUma: cmp && !cmp.venceu ? 'Revanche' : 'Mais uma',
+    maisUma: cmp && !cmp.venceu ? 'Jogo de volta' : 'Mais uma',
   });
 
   contar(root.querySelector<HTMLElement>('[data-contador]'), total);

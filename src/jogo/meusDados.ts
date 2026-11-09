@@ -40,7 +40,7 @@ export interface LinhaDosDados {
 
 const FAIXA: Record<string, string> = { menos_16: 'menos de 16', '16_17': '16 ou 17', '18_mais': '18 ou mais' };
 const MINIGAME: Record<string, string> = { penaltis: 'de pênaltis', prova: 'da Prova de Boleiro', lances: 'de faltas e cara a cara' };
-const TIPO: Record<string, string> = { bug: 'Bug', ideia: 'Ideia', outro: 'Outro' };
+const TIPO: Record<string, string> = { bug: 'Erro', ideia: 'Ideia', outro: 'Outro' };
 
 const plural = (n: number, um: string, varios: string) => `${n.toLocaleString('pt-BR')} ${n === 1 ? um : varios}`;
 
@@ -73,7 +73,7 @@ export function linhasDosMeusDados(d: MeusDados | null, nomeDoTime: (id: string)
     { rotulo: 'Partidas', valor: total ? `${plural(total, 'partida', 'partidas')} (${porJogo.join(', ')})` : 'nenhuma' },
     { rotulo: 'Time do Dia', valor: d.time_do_dia ? plural(d.time_do_dia, 'dia jogado', 'dias jogados') : 'nenhum' },
     { rotulo: 'Desafios criados', valor: d.desafios ? plural(d.desafios, 'desafio', 'desafios') : 'nenhum' },
-    { rotulo: 'Palpites do Crava', valor: d.palpites ? plural(d.palpites, 'palpite', 'palpites') : 'nenhum' },
+    { rotulo: 'Palpites da Rodada', valor: d.palpites ? plural(d.palpites, 'palpite', 'palpites') : 'nenhum' },
     { rotulo: 'Carreira', valor: `${(d.carreira_xp ?? 0).toLocaleString('pt-BR')} XP` },
     { rotulo: 'Medalhas dos Lances', valor: d.gols_lances ? plural(d.gols_lances, 'gol guardado', 'gols guardados') : 'nenhuma' },
     ...(d.boneco ? [{ rotulo: 'Boneco do avatar', valor: 'escolhas de visual, sem foto' }] : []),

@@ -38,7 +38,7 @@ const JOGOS = PARES.map(([m, v], i) => {
 });
 
 const FEEDBACKS = [
-  { id: 1, tipo: 'bug', texto: 'O botão de cravar não responde no meu celular depois da segunda rodada.', tela: 'palpites', aparelho: 'Android 14 · Chrome 130', lido: false, criado_em: h(-3) },
+  { id: 1, tipo: 'bug', texto: 'O botão de salvar palpite não responde no meu celular depois da segunda rodada.', tela: 'palpites', aparelho: 'Android 14 · Chrome 130', lido: false, criado_em: h(-3) },
   { id: 2, tipo: 'ideia', texto: 'Queria ver o ranking só do meu grupo.\nPode ser?', tela: 'ranking', aparelho: 'iPhone iOS 18', lido: false, criado_em: h(-30) },
   { id: 3, tipo: 'outro', texto: 'Muito bom, só falta mais perguntas do meu time.', tela: 'prova', aparelho: 'Android 13', lido: true, criado_em: h(-90) },
 ];

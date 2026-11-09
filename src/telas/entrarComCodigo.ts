@@ -13,7 +13,7 @@ import { servidorDoCodigo } from './codigoApi';
 import { cabecalhoTela, faixa } from './blocos';
 
 export const AVISO_DE_JUNTAR =
-  'Este aparelho já tem time e carreira. Ao entrar, tudo junta com a conta do outro aparelho: XP, medalhas e recordes. Os pontos que já contaram no ranking ficam onde estão.';
+  'Este aparelho já tem time e carreira. Ao entrar, tudo junta com a conta do outro aparelho: XP, medalhas e recordes. Os pontos que já contaram na tabela ficam onde estão.';
 
 const nomeDoTime = (id: string) => {
   const t = timePorId(id);

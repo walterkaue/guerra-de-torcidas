@@ -76,7 +76,7 @@ export const placarTexto = (p: Placar): string => `${p.m} x ${p.v}`;
 
 /** Nome curto de cada acerto, para o selo do cartão (o emoji sozinho não diz nada ao leitor de tela). */
 export const NOME_DO_ACERTO: Record<Acerto, string> = {
-  exato: 'Placar exato',
+  exato: 'Na mosca',
   saldo: 'Vencedor e saldo',
   vencedor: 'Só o vencedor',
   errou: 'Errou',
@@ -113,7 +113,7 @@ export function textoResultadoRodada(
   link: string,
 ): string {
   return [
-    `Crava a Rodada, ${ordinalRodada(rodada)}: ${pontos} pontos${paraTime ? ` ${paraTime}` : ''}`,
+    `Palpite da Rodada, ${ordinalRodada(rodada)}: ${pontos} pontos${paraTime ? ` ${paraTime}` : ''}`,
     linhaEmoji(resultados),
     '',
     AVISO_RESENHA,

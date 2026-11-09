@@ -81,7 +81,7 @@ export function proximoJogo(s: SituacaoDoDia): JogoDaHome {
 
 /** A linha de baixo do botão: só informa o motivo, sem pressa nem cobrança. */
 export function motivoDoJogo(jogo: JogoDaHome, s: SituacaoDoDia): string {
-  if (jogo === 'crava') return `Crava a Rodada: fecha em ${formatarFecha(s.cravaFechaEm ?? 0)}, sem palpite seu`;
+  if (jogo === 'crava') return `Palpite da Rodada: fecha em ${formatarFecha(s.cravaFechaEm ?? 0)}, sem palpite seu`;
   if (jogo === 'dia') {
     return s.chutesDoDia ? `Time do Dia: ${linhaChutes(s.chutesDoDia)}` : 'Time do Dia: ainda não jogou hoje';
   }

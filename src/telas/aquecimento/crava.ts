@@ -59,7 +59,7 @@ export function estacaoCrava({ jogo, cravar, aoCravar }: OpcoesDoCrava): Estacao
           )
           .join('<span class="aq-x" aria-hidden="true">x</span>')}
       </div>
-      <button class="botao" type="button" data-cravar>Cravar</button>
+      <button class="botao" type="button" data-cravar>Salvar palpite</button>
       <p class="aq-erro" role="alert" hidden></p>
       <p class="aq-resenha" role="note">${esc(AVISO_RESENHA)}</p>`;
     palco.append(secao);

@@ -3,7 +3,7 @@
 
 import { FAIXAS, TABELA_LANCES_UNIFICADA, type Faixa, type TabelaLances } from './lances';
 import { PONTOS_UNIFICADOS, type TabelaPenaltis } from './penaltis';
-import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MEDALHAS_PENALTIS, MELHORES_DO_DIA } from './regraLances';
+import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MEDALHAS_PENALTIS, MELHORES_DO_DIA, TEXTO_DO_LIMITE } from './regraLances';
 
 export type LinhaDePontos = readonly [rotulo: string, valor: string];
 
@@ -26,7 +26,7 @@ export function pontosDosPenaltis(t: TabelaPenaltis = PONTOS_UNIFICADOS): LinhaD
 export function pontosDosLances(t: TabelaLances = TABELA_LANCES_UNIFICADA): LinhaDePontos[] {
   return [
     ...FAIXAS.map((f): LinhaDePontos => [`Gol em lance ${NOME_DA_FAIXA[f]}`, String(t.faixa[f])]),
-    ['Recriou o lance', `+${t.recriou}`],
+    ['Carimbou o lance', `+${t.recriou}`],
   ];
 }
 
@@ -39,7 +39,7 @@ export function textoDasMedalhasDosPenaltis(): string {
 
 /** O que as duas folhas dizem do teto e do dia. */
 export function textoDoDia(teto: number): string {
-  return `Cada partida vale no máximo ${teto}. São ${LANCES_PARTIDAS_POR_DIA_UNIFICADO} partidas valendo por dia, somando pênaltis, faltas e cara a cara, e as ${MELHORES_DO_DIA} melhores contam. Passou disso, vira treino.`;
+  return `Cada partida vale no máximo ${teto}. São ${LANCES_PARTIDAS_POR_DIA_UNIFICADO} partidas valendo por dia, somando pênaltis, faltas e cara a cara, e as ${MELHORES_DO_DIA} melhores contam. ${TEXTO_DO_LIMITE}.`;
 }
 
 /** Nota final da folha dos pênaltis. */
