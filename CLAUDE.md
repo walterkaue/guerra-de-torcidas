@@ -43,7 +43,8 @@ Para saber onde o projeto está e o que vem a seguir, leia `docs/proximos-passos
 - Banco: migrações SQL versionadas em `supabase/migrations/`. Toda tabela com Row Level Security ligada e política explícita.
 - **Antes de qualquer migração que apague ou renomeie coluna ou tabela, pergunte.**
 - Lógica de jogo (física, pontuação) em módulos puros, testáveis, compartilhados entre o navegador e a função do servidor.
-- Testes: `npm test` para a lógica pura; rode antes de cada commit.
+- Testes: `npm run test:rapido` (lógica pura, ~20 s) enquanto trabalha; `npm test` (rápido + `test:banco`, o SQL no PGlite, ~2 min) antes de cada commit que toque `supabase/`, e antes de abrir o PR.
+- Publicação: depois do merge de PR com função ou migração, rode `npm run publicar:conferir` (só leitura: compara cada função e migração no ar com a `main`; ~1 min). `-- --local` compara com a pasta atual, antes do merge.
 
 ## Fluxo de trabalho
 
