@@ -6,6 +6,7 @@
 
 | Data | Decisão ou mudança |
 |---|---|
+| 09/11/2026 | Apelido só para quem marcou 16 ou mais na triagem; quem tem menos de 16 joga sem apelido e o servidor descarta o apelido (corte do art. 24 da Lei 15.211). Termos: versão 09/11/2026 (2ª). |
 | 09/11/2026 | Funil do C01: se o módulo de envio não baixa (sem rede), a falha é tratada, o lote volta à fila (teto de 100 eventos, os mais antigos caem) e o próximo envio tenta de novo. Nada muda no servidor nem nos eventos. |
 | 09/11/2026 | B02 + C02 + B05: resultado em duas camadas (Rota B): primeira dobra com placar, pontos, um destaque, a prévia da mensagem e o "Desafiar a galera" (verde, no lugar do "Mandar no grupo" quando há código de desafio); o resto em "Ver detalhes da partida"; nome longo do placar quebra em duas linhas; `docs/visual.md`. |
 | 09/11/2026 | H03b: camisa por fora ou por dentro do calção, escolhida no vestiário (aba Camisa). Não é peça (vale para todo mundo, não conta nas 26), conta nova começa por fora, aparece em todo lugar onde o boneco aparece, inclusive em campo e no boneco de quem chamou o desafio; `jogos/boneco-montavel.md`. |

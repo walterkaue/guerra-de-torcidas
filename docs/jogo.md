@@ -88,7 +88,7 @@ O rival não precisa ser recíproco: o Botafogo provoca o Flamengo, e o Flamengo
 Os pontos somam também para a cidade e o estado do jogador, escolhidos depois da 1ª partida. Regras e ranking em `jogos/rankings.md`.
 
 ### Apelido
-- Opcional, até 20 caracteres, passa por um filtro de palavras no servidor antes de ser gravado.
+- Opcional, até 20 caracteres, só para quem marcou 16 ou mais na triagem, e fica no Perfil, fora da entrada do jogo. Quem tem menos de 16 joga sem apelido: o card e o desafio saem como "Torcedor do [time]". Passa por um filtro de palavras no servidor antes de ser gravado, e o servidor recusa apelido de quem tem menos de 16.
 - Nomes e apelidos de jogadores famosos são bloqueados (Seleção, elencos da Série A e ídolos dos 20 clubes; `palavras_bloqueadas`), porque "boneco + número + apelido famoso" imitaria uma pessoa real. Nome comum sozinho passa; nome com sobrenome ou apelido conhecido, não. O `#admin` apaga apelido já gravado.
 - O card só mostra o apelido **depois que o servidor o aceitou** (`apelidoConferido`, `src/jogo/apelidoConferido.ts`). Até lá, e sem internet, sai "Torcedor do [time]".
 - **Nenhum ranking público mostra apelido.** Ele aparece só no card que o próprio jogador compartilha e no desafio que ele manda. Ranking individual só depois da moderação da fase 2.
@@ -143,7 +143,7 @@ O dia de cada jogador vale as **3 melhores partidas de Lances** (pênaltis, falt
 ## 7. Proteção de menores (ECA Digital)
 
 - **O jogo inteiro é seguro para menores**, não só uma área: as regras valem para todas as telas e para o que vier depois.
-- **Triagem de faixa etária:** uma vez por aparelho, antes da 1ª partida, neutra, com três botões (menos de 16, 16 ou 17, 18 ou mais). Guarda só a faixa e não usa para mais nada.
+- **Triagem de faixa etária:** uma vez por aparelho, antes da 1ª partida, neutra, com três botões (menos de 16, 16 ou 17, 18 ou mais). Guarda só a faixa, que decide só duas coisas: o que é para 18+ e o apelido (só 16+). O corte dos 16 vem do art. 24 da Lei 15.211 (contas de até 16 anos ligadas a um responsável): fica guardado para não perguntar de novo se um dia houver conta.
 - **Só para 18+:** oferta de push (e o sininho), "Apoie o jogo", "Oferecido por" e o "Seja sócio" da Casa.
 - **Push:** só com opt-in, oferecido depois de um bom momento, no máximo a cada 14 dias, nunca de novo se a pessoa recusou; **um aviso por semana**, domingo 18h, com a situação da torcida e do rival, **sem urgência** (`src/jogo/avisos.ts`). O sininho 🔔 no topo da Home liga, desliga ou explica por que o aparelho não recebe: no iPhone só chega com o jogo instalado na tela inicial; no navegador embutido do WhatsApp e do Instagram não chega; no Opera a inscrição funciona, mas o aviso não chega.
 - **Sem sequência de dias:** nem na Carreira, nem no Time do Dia, em nenhuma tela, card ou frase do narrador.
