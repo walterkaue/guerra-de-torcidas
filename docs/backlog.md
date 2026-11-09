@@ -27,9 +27,9 @@
 
 ## 2. Ordem sugerida para depois dos testes
 
-0. **Agora, durante os testes:** A10 e H01a. O C01 (com o I03) está pronto e falta publicar.
+0. **Agora, durante os testes:** A10 e H01a. O C01 (com o I03) está no ar desde 09/11.
 1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); C06 (link do desafio com menos toques); B03 (um aviso por vez na Home).
-2. **Semana de 16/11:** C03 + C08 (ver o gol de quem chamou, redesenhado no aparelho de quem abre); E01 (1ª visita); E04 (roteiro de iPhone); D07 (Palpite da Rodada na entressafra).
+2. **Semana de 16/11:** C03 + C08 (ver o gol de quem chamou, redesenhado no aparelho de quem abre); E04 (roteiro de iPhone); D07 (Palpite da Rodada na entressafra).
 3. **Depois:** C04 (com a prova de conceito antes), C05, H01b e H02, B01, F01 e A08 (e a personalização do Perfil, com o que os amigos disserem).
 4. **Antes da divulgação pública:** A01 a A05.
 
@@ -45,7 +45,7 @@
 | A02 | Termos com o advogado (pontos 4 e 5, código do torcedor, cidade, boneco em campo, contagem de uso) | P | O parecer veio sem OAB, e a página tem valor legal (ECA Digital). | P0 | M | Kauê |
 | A03 | Balanço rodado e pré-temporada zerada (até 06/12) | P | O balanço tem de rodar antes de zerar. A semana de 02/11 já soma as duas regras. | P0 | P | Kauê + Claude |
 | A04 | Prova calibrada com as partidas de 20 s | P | A mediana e os 4 erros usam só partidas desde 06/11, 16h47. | P0 | P | Claude + Kauê decide |
-| A05 | Funil do desafio medido (ver C01) | P | Feito no C01: falta só publicar e esperar dias de teste com o link indo para gente de fora. | P0 | P | Kauê |
+| A05 | Funil do desafio medido (ver C01) | P | Feito no C01 e no ar desde 09/11: falta esperar dias de teste com o link indo para gente de fora. | P0 | P | Kauê |
 | A06 | Conferências marcadas: bloco 8 (09/11, 12h), fechamento do mês (07/12) | P | Só leitura, sem lembrete automático. | P0 | P | Kauê + Claude |
 | A07 | Testes no celular que ficaram para trás (aquecimento, troféus, G3 com TalkBack, boneco em campo, limpeza dos Lances) | P | Lista na seção "No celular" do `proximos-passos.md`. Dá para fazer junto com os amigos. | P0 | P | Kauê |
 | A08 | Perguntas até 800 (hoje 328) | P | Perguntas nascidas de páginas reais; os 5 crons do Gemini ficam como estão (decidido em 07/11). | P1 | G | Claude + Gemini |
@@ -78,7 +78,7 @@
 | C07 | Placar acumulado do desafio entre duas pessoas (J42) | P | "Zé 2 x 1 Camisa10" na série de jogos de volta, sem apelido público. Primeiro passo do ranking entre amigos. | P2 | M | Chat → Claude |
 | C08 | Link de replay que roda no celular de quem abre | C | Em vez de vídeo, o link leva só o gesto e a cena, e o jogo redesenha o gol no aparelho de quem abre. Leve e bom para o WhatsApp. O vídeo (C04) fica para o Stories. Nos pênaltis, as cobranças gravadas de quem chamou só aparecem depois que o desafio termina (ver C03); nos Lances, quem aceita joga com sementes novas, então dá para mostrar antes. | P2 | M | Claude |
 | C09 | Prévia bonita do link (Open Graph) por tipo | C | Quem recebe o link no WhatsApp vê hoje a mesma prévia para tudo. Uma imagem por tipo (desafio, lance, medalha) aumenta o clique. Como o site é estático, uma por tipo, não por partida. | P2 | P | Claude |
-| C10 | ~~Prazo de validade dos desafios~~ **feito em 09/11/2026** | C | Link vale 7 dias, desafio apagado com 30, chamando `funil_contar_gerados()` antes (`jogos/penaltis.md`, "Desafio por link"; `jogos/contas.md`). Falta publicar. | P1 | M | Claude |
+| C10 | ~~Prazo de validade dos desafios~~ **feito em 09/11/2026** | C | Link vale 7 dias, desafio apagado com 30, chamando `funil_contar_gerados()` antes (`jogos/penaltis.md`, "Desafio por link"; `jogos/contas.md`). No ar desde 09/11. | — | — | — |
 
 ### D. Jogo e conteúdo
 
@@ -96,7 +96,7 @@
 
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
-| E01 | 1ª visita em 4G ruim (S20) | P | Home em 4,2 s e 1ª visita em 5,2 s até a escolha do time, com 185 KB de JS. O link do desafio baixa 248 KB. Separar o que a 1ª tela não usa. | P1 | M | Claude |
+| E01 | ~~1ª visita em 4G ruim (S20)~~ **feito em 09/11/2026** | P | No Zé (360×740, CPU 6×, 4G ruim), o link do desafio chega ao convite em 3,2 a 3,4 s com 68 a 83 kB de JS (eram 7,6 s e 285 kB): o resumo sai do `index.html` sem o supabase-js, e o resto da Home e o preaquecer esperam o convite. Home e escolha do time em 2,4 a 2,9 s. Medido por `npm run simular:entradas`. O próximo corte é o `index` (~47 kB gzip; o maior pedaço são as frases do narrador) e o supabase-js por partes (auth, Realtime e storage). | — | — | — |
 | E02 | Movimento reduzido no aquecimento (S19) | P | A cena continua mudando sozinha. | P2 | P | Claude |
 | E03 | Fontes pré-carregadas sem uso no Safari (S21) | P | Conferir no iPhone de verdade antes de mexer. | P3 | P | Kauê + Claude |
 | E04 | Plano de teste no iPhone de verdade | C | O WebKit do simulador trava no Windows. Uma lista curta por tela para o Kauê ou um amigo com iPhone, ou um serviço de aparelhos reais por um mês. | P1 | P | Kauê |

@@ -407,12 +407,43 @@ export interface ResumoDesafio {
   vencido?: boolean;
 }
 
-/** Resumo do desafio para a tela inicial (sem as cobranças). */
-export async function verDesafio(id: string): Promise<ResumoDesafio | null> {
+/**
+ * Resumo de desafio por link (?d=, ?l=, ?p=), lido sem o supabase-js: quem chega pelo WhatsApp vê o convite sem
+ * esperar os ~55 kB gzip do cliente (E01). As três RPCs são só leitura, aceitam o papel anônimo e a chave pública
+ * basta. O pedido do link que abriu o jogo já sai do index.html, junto com o JS, e é aproveitado aqui uma vez. Se o
+ * atalho responder com erro (o gateway mudou, por exemplo), tenta pelo cliente de sempre.
+ */
+async function lerResumo<T>(rpc: 'ver_desafio' | 'ver_desafio_lances' | 'ver_prova_desafio', id: string): Promise<T | null> {
+  if (!URL_SUPABASE || !CHAVE_PUBLICA) throw new ErroServidor('sem_configuracao');
+  const pagina = globalThis as { __resumoDoLink?: { rpc: string; id: string; resposta: Promise<Response> } };
+  const cedo = pagina.__resumoDoLink?.rpc === rpc && pagina.__resumoDoLink.id === id ? pagina.__resumoDoLink.resposta : null;
+  if (cedo) pagina.__resumoDoLink = undefined; // a resposta só se lê uma vez
+  const pedir = () =>
+    fetch(`${URL_SUPABASE}/rest/v1/rpc/${rpc}`, {
+      method: 'POST',
+      headers: { apikey: CHAVE_PUBLICA, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_id: id }),
+    });
+  let resposta: Response;
+  try {
+    // O pedido do index.html que falhou (rede caiu no meio da carga) ganha uma segunda chance daqui.
+    resposta = await comTempoLimite(cedo ? cedo.catch(pedir) : pedir());
+  } catch {
+    throw new ErroServidor('falha'); // sem rede ou tempo esgotado
+  }
+  if (resposta.ok) {
+    const data = (await comTempoLimite(resposta.json()).catch(() => null)) as T[] | null;
+    return (Array.isArray(data) ? data[0] : null) ?? null;
+  }
   const sb = await supabase();
-  const { data, error } = await comTempoLimite(sb.rpc('ver_desafio', { p_id: id }));
+  const { data, error } = await comTempoLimite(sb.rpc(rpc, { p_id: id }));
   if (error) throw new ErroServidor('falha');
-  return ((data as ResumoDesafio[] | null) ?? [])[0] ?? null;
+  return ((data as T[] | null) ?? [])[0] ?? null;
+}
+
+/** Resumo do desafio para a tela inicial (sem as cobranças). */
+export function verDesafio(id: string): Promise<ResumoDesafio | null> {
+  return lerResumo<ResumoDesafio>('ver_desafio', id);
 }
 
 // ---------------------------------------------------------------------------
@@ -448,11 +479,8 @@ export interface ResumoDesafioLances {
 }
 
 /** Resumo do X1 dos Lances para quem abre o link (?l=): quem chamou, o lance e os pontos a bater. */
-export async function verDesafioLances(id: string): Promise<ResumoDesafioLances | null> {
-  const sb = await supabase();
-  const { data, error } = await comTempoLimite(sb.rpc('ver_desafio_lances', { p_id: id }));
-  if (error) throw new ErroServidor('falha');
-  return ((data as ResumoDesafioLances[] | null) ?? [])[0] ?? null;
+export function verDesafioLances(id: string): Promise<ResumoDesafioLances | null> {
+  return lerResumo<ResumoDesafioLances>('ver_desafio_lances', id);
 }
 
 /** Um lance: o celular manda só o gesto; o servidor resolve com a semente que só ele conhece. */
@@ -623,11 +651,8 @@ export interface ResumoDesafioProva {
 }
 
 /** Resumo do desafio da prova para a tela inicial (sem as perguntas). */
-export async function verDesafioProva(id: string): Promise<ResumoDesafioProva | null> {
-  const sb = await supabase();
-  const { data, error } = await comTempoLimite(sb.rpc('ver_prova_desafio', { p_id: id }));
-  if (error) throw new ErroServidor('falha');
-  return ((data as ResumoDesafioProva[] | null) ?? [])[0] ?? null;
+export function verDesafioProva(id: string): Promise<ResumoDesafioProva | null> {
+  return lerResumo<ResumoDesafioProva>('ver_prova_desafio', id);
 }
 
 // ---------- Time do Dia (função time-do-dia) ----------

@@ -8,10 +8,10 @@
 
 | Área | Estado |
 |---|---|
-| Código | `main` com o PR #156 (limpeza dos Lances depois do corte + lote A4). 2.507 testes passando, `tsc` limpo. |
-| Publicação | Site da `main` `b7790e5` no ar desde 08/11, 8h10 (GitHub Pages). 49 migrações, a última `20261107200000_lances_corte_domingo.sql` (local = remoto em 07/11). Funções: `lances` v8 (08/11), `nova-partida` v25, `lance-penalti` v11, `fechar-partida` v26, `boneco` v4 (07/11). |
+| Código | `main` com o PR #172: resultado em duas camadas (B02, C02, B05), prazo de 7 dias dos desafios (C10), funil do desafio (C01) que volta o lote à fila quando falta rede; depois dele, o E01 (link do desafio mais leve na 1ª visita). 2.678 testes passando, `tsc` limpo. |
+| Publicação | Site da `main` `6828130` (PR #172) no ar desde 09/11, 15h (GitHub Pages). 52 migrações, a última `20261109100000_boneco_barra.sql`, e as 15 funções iguais à `main` (`npm run publicar:conferir`, 09/11). |
 | Regra em vigor | Lances unificados desde domingo 08/11, 0h: tela única, 10 partidas de Lances por dia, 3 melhores de Lances e 3 da Prova. A semana de 02/11 fecha com as duas regras somadas (aceito: pré-temporada). |
-| Tamanho | `index-*.js` de ~46,6 kB gzip (06/11), limite ~300 KB. |
+| Tamanho | `index-*.js` de ~47 kB gzip (09/11), limite ~300 KB. No Zé (`npm run simular:entradas`), o link do desafio chega ao convite em 3,2 a 3,4 s com 68 a 83 kB de JS (eram 7,6 s e 285 kB); Home e escolha do time em 2,4 a 2,9 s. |
 | Conteúdo | Casa com os 20 clubes e os 808 títulos revisados; 64 disputas históricas de pênaltis; 328 perguntas no ar (meta do lançamento: 800). |
 | Uso | Retrato de 04/11: 18 pessoas jogaram. Desde 08/11, 0h: 16 partidas, 0 X1 aceitos. Amostra pequena. O Kauê testa com amigos a partir de 08/11. |
 
@@ -39,6 +39,7 @@ Nada disso tem lembrete automático.
 - **Boneco em campo:** 60 fps, replay de golaço, o interruptor "Meu boneco em campo", desafio entre duas contas.
 - **Acessibilidade (G3):** fonte do sistema no máximo na Tabela, Lances, Palpite da Rodada e Time do Dia (nada sai da tela); TalkBack numa linha da Tabela (posição, time e pontos antes do "abrir a Casa").
 - **Cards:** Salvar imagem no Android e no iPhone; o Pôster no Stories e no Quadrado; o card do troféu pela ficha e pela placa da Galeria.
+- **Link do desafio no 4G fraco (E01):** num aparelho limpo, abrir um link de cada tipo (pênaltis, Lances e Prova) pelo WhatsApp: o convite aparece antes do placar e dos palpites, e o "abriu" conta no `npm run metricas`.
 - **Primeiro acesso:** num aparelho limpo, a escolha do time como 1ª tela, o "Pular" do aquecimento indo à Home e um link de desafio entrando direto.
 - **Aquecimento:** de ponta a ponta num aparelho limpo; o palpite da estação 5 em Palpites e os +20 XP; não testadas à mão: as dicas de morte súbita, cavadinha pega no meio, altura errada e 3 cobranças sem efeito.
 - **Cidade:** escolher pelo convite do resultado e pelo Perfil; tocar duas vezes no lembrete da Home; a aba Cidades.
@@ -60,7 +61,7 @@ Nada disso tem lembrete automático.
 
 ## Próximo ciclo
 
-A ordem está no `docs/backlog.md`, seção 2: o que falta para divulgar, o link do desafio com menos toques, a central de avisos, o replay do gol compartilhável, o card animado, o som novo e o desempenho da 1ª visita. Ela será refeita com o que os testes com amigos mostrarem.
+A ordem está no `docs/backlog.md`, seção 2: o que falta para divulgar, o link do desafio com menos toques, a central de avisos, o replay do gol compartilhável, o card animado e o som novo. Ela será refeita com o que os testes com amigos mostrarem.
 
 ## Antes de divulgar
 

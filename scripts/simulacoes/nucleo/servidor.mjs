@@ -123,19 +123,23 @@ function conferirPacote(raiz, pasta) {
   if (!achouFalso) throw new Error('o pacote não tem o Supabase falso; rodada cancelada');
 }
 
-export async function subirPacote({ raiz, porta, refazer = false, log = console.log }) {
-  const pasta = join(raiz, 'prints', 'simulacoes', '.pacote');
+/**
+ * `modo: 'production'` monta o build que vai para o ar (sem src/dev), ainda com o Supabase falso: serve para medir
+ * peso e tempo de verdade (npm run simular:entradas), não para as jornadas, que precisam dos servidores de mentira.
+ */
+export async function subirPacote({ raiz, porta, refazer = false, log = console.log, modo = 'development' }) {
+  const pasta = join(raiz, 'prints', 'simulacoes', modo === 'production' ? '.pacote-producao' : '.pacote');
   const env = {
     ...process.env,
-    NODE_ENV: 'development',
+    NODE_ENV: modo,
     VITE_SUPABASE_URL: SUPABASE_FALSO,
     VITE_SUPABASE_PUBLISHABLE_KEY: CHAVE_FALSA,
   };
   const carimbo = join(pasta, '.feito');
   const fontes = Math.max(maisNovo(join(raiz, 'src')), maisNovo(join(raiz, 'public')), statSync(join(raiz, 'index.html')).mtimeMs);
   if (refazer || !existsSync(carimbo) || statSync(carimbo).mtimeMs < fontes) {
-    log('Montando o pacote do simulador (build em modo development, Supabase falso)…');
-    await rodar(raiz, ['build', '--mode', 'development', '--outDir', pasta, '--emptyOutDir', '--logLevel', 'warn'], env);
+    log(`Montando o pacote do simulador (build em modo ${modo}, Supabase falso)…`);
+    await rodar(raiz, ['build', '--mode', modo, '--outDir', pasta, '--emptyOutDir', '--logLevel', 'warn'], env);
     writeFileSync(carimbo, new Date().toISOString());
   }
   conferirPacote(raiz, pasta);

@@ -25,6 +25,7 @@ import { telaFeedback } from './telas/feedback';
 import { telaCarregando, telaSemRede } from './telas/esqueleto';
 import { registrarServiceWorker } from './pwa';
 import { ligarToqueDosBotoes } from './telas/toque';
+import { depoisDoConvite, segurarParaOConvite } from './telas/primeiraTela';
 
 registrarServiceWorker();
 ligarToqueDosBotoes();
@@ -105,7 +106,7 @@ registrarTela('vestiario', sobDemanda('Abrindo o vestiário…', () => import('.
 
 /**
  * Baixa as telas de jogo por trás, com o navegador ocioso, para o toque em "Jogar" abrir na hora.
- * Quem ligou a economia de dados só baixa o que abrir.
+ * Quem ligou a economia de dados só baixa o que abrir. Quem chegou por link de desafio vê o convite antes.
  */
 function preaquecer(): void {
   const conexao = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
@@ -114,10 +115,12 @@ function preaquecer(): void {
     'requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 1500);
   // O aquecimento só interessa a quem ainda não viu (ele abre logo depois de escolher o time).
   const jaViuOAquecimento = !!prefs.get().aquecimento?.visto;
-  ocioso(() =>
-    Object.entries(TELAS_DE_JOGO).forEach(([nome, carregar]) => {
-      if (nome !== 'aquecimento' || !jaViuOAquecimento) void carregar().catch(() => {});
-    }),
+  void depoisDoConvite().then(() =>
+    ocioso(() =>
+      Object.entries(TELAS_DE_JOGO).forEach(([nome, carregar]) => {
+        if (nome !== 'aquecimento' || !jaViuOAquecimento) void carregar().catch(() => {});
+      }),
+    ),
   );
 }
 
@@ -196,6 +199,9 @@ if (import.meta.env.DEV && app && new URLSearchParams(location.search).has('vitr
   // Primeiro acesso (docs/jogo.md 14.8): quem é novo começa pela escolha do time; a triagem e o aquecimento vêm
   // logo depois dela (times.ts), e só então a Home. Link de desafio segue direto para o convite na Home.
   const comDesafio = !!(desafioDoLink() || desafioProvaDoLink() || desafioLancesDoLink());
+  // No 4G ruim, o convite vem antes do resto da Home e das telas de jogo (telas/primeiraTela.ts).
+  // Só quando a entrada é a Home, onde o convite mora (#termos, #perfil e companhia não seguram nada).
+  if (comDesafio && entrada.tela === 'inicio') segurarParaOConvite();
   // Só em desenvolvimento: ?vestiarioFalso liga a fonte falsa e abre o vestiário (src/dev/vestiarioFalso.ts).
   if (import.meta.env.DEV && new URLSearchParams(location.search).has('vestiarioFalso'))
     void import('./dev/vestiarioFalso').then((m) => {

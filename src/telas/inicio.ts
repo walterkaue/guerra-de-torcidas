@@ -57,6 +57,7 @@ import { sincronizarTorcedor } from '../servidor/torcedor';
 import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
 import { ligarArquibancada } from './arquibancada';
 import { anotarCarreira } from './carreira';
+import { conviteResolvido, depoisDoConvite } from './primeiraTela';
 import * as realCidade from '../servidor/rankingCidades';
 import { acimaNaUltimaVisita, deveLembrarDaCidade, guardarCidadeVista, linhaDaCidadeNaHome, type CidadeVista } from '../jogo/rankingCidades';
 import { fraseDaCidade } from '../narrador/cidade';
@@ -87,7 +88,7 @@ const FALSA_DIA = import.meta.env.DEV && new URLSearchParams(location.search).ha
 // Em desenvolvimento, ?penaltiFalso também responde o convite do X1 (src/dev/penaltiFalso.ts).
 const FALSO_PENALTI = import.meta.env.DEV && new URLSearchParams(location.search).has('penaltiFalso');
 const verDesafioDoLink = (id: string) => (FALSO_PENALTI || FALSA ? import('../dev/penaltiFalso').then((m) => m.verDesafio(id)) : verDesafio(id));
-const servidor = async (): Promise<typeof SERVIDOR> => {
+const servidorJa = async (): Promise<typeof SERVIDOR> => {
   if (FALSA) return import('../dev/homeFalsa');
   return FALSA_DIA ? { ...SERVIDOR, estadoDoDia: (await import('../dev/diaFalso')).estadoDoDia } : SERVIDOR;
 };
@@ -151,6 +152,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const semana = semanaBrasilia();
   let pararRanking: (() => void) | null = null;
   let saiu = false;
+  // O resto da Home espera o convite de quem chegou por link de desafio (telas/primeiraTela.ts) e não sai se a pessoa
+  // já deixou a Home nesse meio-tempo (todos os pedidos abaixo tratam a falha). Os convites usam servidorJa.
+  const naHome = (): Promise<void> => depoisDoConvite().then(() => (saiu ? Promise.reject(new Error('saiu da Home')) : undefined));
+  const servidor = (): Promise<typeof SERVIDOR> => naHome().then(servidorJa);
 
   const estiloTime = (t: Time) => `--c1:${t.cores[0]};--c2:${t.cores[1]};--txt:${corDeTexto(t.cores[0])}`;
 
@@ -459,12 +464,14 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         // sem internet: a escada fica apagada
       });
     // O resultado da próxima partida conta o "+10 XP" a partir daqui.
-    if (!FALSA) anotarCarreira();
+    if (!FALSA) void naHome().then(anotarCarreira, () => {});
   }
 
   // ---------- convite de desafio (link ?d=) ----------
   if (codigoDesafio) {
     const caixa = root.querySelector<HTMLElement>('.convite-desafio')!;
+    // O catálogo das disputas vem junto com o resumo, e não depois dele (a ficha do X1 sai no próprio convite).
+    const catalogoDoX1 = import('../dados/disputas').catch(() => null);
     // A caixa já nasce na tela, para o convite não empurrar o resto quando a resposta chega
     // e para ninguém tocar em "Jogar agora" sem saber que foi chamado.
     caixa.innerHTML = `
@@ -480,7 +487,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         }
         // O X1 leva a disputa de quem chamou. O catálogo fica fora do bundle da Home; fora dele, o convite segue sem a ficha.
         if (d.disputa_id) {
-          const catalogo = await import('../dados/disputas').catch(() => null);
+          const catalogo = await catalogoDoX1;
           if (saiu) return;
           disputaDoX1 = catalogo?.DISPUTAS.find((x) => x.id === d.disputa_id);
         }
@@ -503,13 +510,17 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       .catch(() => {
         // sem internet: o desafio fica para quando voltar
         if (!saiu) caixa.hidden = true;
-      });
+      })
+      .finally(conviteResolvido);
   }
 
   // ---------- Lance do Dia (14.7) ----------
   // O catálogo dos lances fica fora do bundle da Home: vem depois de desenhar. O mesmo lance para todos, sem bônus.
   const botaoDoDia = root.querySelector<HTMLButtonElement>('[data-acao="lance-do-dia"]');
-  const catalogoDosLances = Promise.all([import('../dados/lances'), import('../dados/adversarios'), import('../dados/disputas')]);
+  // O X1 dos Lances precisa dele no convite; com outro convite no link, espera o convite.
+  const baixarCatalogo = () => Promise.all([import('../dados/lances'), import('../dados/adversarios'), import('../dados/disputas')]);
+  const catalogoDosLances = codigoLances ? baixarCatalogo() : naHome().then(baixarCatalogo);
+  catalogoDosLances.catch(() => {}); // sem botão do Lance do Dia nem convite, ninguém mais olha a falha
   if (botaoDoDia && catalogoDosLances) {
     catalogoDosLances
       .then(([{ LANCES }, { SELECAO }, { DISPUTAS }]) => {
@@ -535,7 +546,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   // ---------- convite de X1 dos Lances (link ?l=) ----------
   if (codigoLances && catalogoDosLances) {
     const caixa = root.querySelector<HTMLElement>('.convite-desafio')!;
-    servidor()
+    servidorJa()
       .then((api) => api.verDesafioLances(codigoLances))
       .then(async (d) => {
         if (!d || d.vencido || saiu) return; // código que não existe, desafio vencido ou sem resposta: a caixa some
@@ -561,7 +572,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       })
       .catch(() => {
         // sem internet: o desafio fica para quando voltar (a caixa continua escondida)
-      });
+      })
+      .finally(conviteResolvido);
   }
 
   // ---------- convite de desafio da Prova de Boleiro (link ?p=) ----------
@@ -583,7 +595,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       })
       .catch(() => {
         // sem internet: o desafio fica para quando voltar
-      });
+      })
+      .finally(conviteResolvido);
   }
 
   // ---------- ranking ao vivo ----------
@@ -623,7 +636,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   let semanaAoVivo: LinhaRanking[] | null = null;
   let atualizarDivisoes: ((l: LinhaRanking[]) => FraseDoMes | null) | null = null;
   if (elDivisoes && time) {
-    void import('./blocoDivisoes')
+    void naHome()
+      .then(() => import('./blocoDivisoes'))
       .then((m) => m.ligarBlocoDivisoes(elDivisoes, time, semana, () => saiu))
       .then((atualizar) => {
         atualizarDivisoes = atualizar;
@@ -742,7 +756,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const carregarCidade = () => {
     // Sem time ainda, não cria login só para isso.
     if (!time || lembreteMostrado) return;
-    servidorCidade()
+    naHome()
+      .then(servidorCidade)
       .then(async (api) => ({ api, minha: await api.minhaCidadeSemana(semana) }))
       .then(async ({ api, minha }) => {
         if (saiu) return;
@@ -803,12 +818,17 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   void carregar();
   // Uma placa só por abertura: a de fim do mês tem a vez e, sem ela, entra a de "Troféu novo" (telas/placaTemporada.ts).
   const elPlaca = root.querySelector<HTMLElement>('[data-placa-trofeu]')!;
-  void import('./placaTemporada')
-    .then((m) => m.mostrarPlacaDaHome(elPlaca, time?.id, () => saiu))
-    .catch(() => import('./placaTrofeu').then((m) => m.mostrarPlacaTrofeu(elPlaca, time?.id, () => saiu)))
+  void depoisDoConvite()
+    .then(() => {
+      if (saiu) return;
+      return import('./placaTemporada')
+        .then((m) => m.mostrarPlacaDaHome(elPlaca, time?.id, () => saiu))
+        .catch(() => import('./placaTrofeu').then((m) => m.mostrarPlacaTrofeu(elPlaca, time?.id, () => saiu)));
+    })
     .catch(() => {});
   if (!FALSA) {
-    ouvirRanking(semana, () => void carregar())
+    naHome()
+      .then(() => ouvirRanking(semana, () => void carregar()))
       .then((f) => (saiu ? f() : (pararRanking = f)))
       .catch(() => {
         // sem Realtime: fica a foto do momento
