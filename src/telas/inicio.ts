@@ -1,8 +1,7 @@
 // Tela inicial (docs/visual.md, seção 3): cabeçalho com avatar, arquibancada do time, cabo de guerra contra o
 // rival com a sua posição, "Jogar agora", cards dos jogos com desenho e estado vivo, e o giro da semana.
 
-import { desafioDoLink, desafioLancesDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
-import { contar } from '../servidor/funil';
+import { esc, irPara, type Rota } from '../app';
 import { LANCES_POR_CLUBE } from '../dados/lancesResumo';
 import { ID_OUTRO, TIMES, corDeTexto, corDoRivalNoDuelo, timePorId, type Time } from '../dados/times';
 import { faixaDoAparelho, prefs } from '../estado';
@@ -21,8 +20,6 @@ import {
   placarCravado,
   proximoJogo,
   rotuloDoLanceDoDia,
-  textoDoConviteLances,
-  tituloDoConviteLances,
   tituloDaCasa,
   tonsDosChutes,
   type JogoDaHome,
@@ -32,7 +29,6 @@ import { linhaPosicaoSemana, linhaRecorde, setaDaPosicao } from '../jogo/posicao
 import { linhaMelhoresDoDia } from '../jogo/lancesTextos';
 import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MELHORES_DO_DIA, itemPenaltis, lanceDoDia } from '../jogo/regraLances';
 import { idsDoLanceDoDia } from '../jogo/lancesTelaUnica';
-import { chamadaDaDisputa, type Disputa } from '../jogo/disputas';
 import { faltamDosLances, linhaLancesUnificados, statusCrava } from '../jogo/statusJogos';
 import { escolherFrase } from '../narrador/escolher';
 import { rivalDaSemana, situacaoDoDuelo } from '../narrador/rival';
@@ -45,10 +41,7 @@ import {
   ouvirRanking,
   partidasFechadasHoje,
   rankingDaSemana,
-  verDesafio,
   registrarAquecimento,
-  verDesafioLances,
-  verDesafioProva,
   type LinhaRanking,
 } from '../servidor/api';
 import { jogosDoCrava, meusDadosDoCrava, type Jogo } from '../servidor/crava';
@@ -57,27 +50,23 @@ import { sincronizarTorcedor } from '../servidor/torcedor';
 import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
 import { ligarArquibancada } from './arquibancada';
 import { anotarCarreira } from './carreira';
-import { conviteResolvido, depoisDoConvite } from './primeiraTela';
+import { depoisDoConvite } from './primeiraTela';
 import * as realCidade from '../servidor/rankingCidades';
 import { acimaNaUltimaVisita, deveLembrarDaCidade, guardarCidadeVista, linhaDaCidadeNaHome, type CidadeVista } from '../jogo/rankingCidades';
 import { fraseDaCidade } from '../narrador/cidade';
 import { seloPre, faixa, numero as numeroBloco, posicaoHtml } from './blocos';
 import { arteEscada, arteGrade, htmlDaCasa, htmlDoLanceDoDia, htmlDosCards } from './cardsJogos';
 import { estadoDoAviso, painelDoAviso } from './convitePush';
-import { pintarAvatar, pintarBoneco } from './bonecoDoAparelho';
+import { pintarAvatar } from './bonecoDoAparelho';
 import type { FraseDoMes } from './blocoDivisoes';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
 import { qualidade } from './qualidade';
 
-const SERVIDOR = { rankingDaSemana, minhaPosicaoSemana, partidasFechadasHoje, estadoDoDia, jogosDoCrava, meusDadosDoCrava, meusRecordes, meusLancesHoje, verDesafioLances };
+const SERVIDOR = { rankingDaSemana, minhaPosicaoSemana, partidasFechadasHoje, estadoDoDia, jogosDoCrava, meusDadosDoCrava, meusRecordes, meusLancesHoje };
 // Em desenvolvimento, ?homeFalsa troca o servidor por um de mentira (src/dev/homeFalsa.ts) e ?diaFalso
 // usa o Time do Dia de mentira também no card (src/dev/diaFalso.ts).
 const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
-/** Convite do X1 (docs/jogo.md 14.5, "Boneco em campo"): o busto de quem chamou, ao lado do texto (40 px, nas cores do time dele). */
-const bustoDoConvite = (caixa: HTMLElement, boneco: unknown, cores?: Time['cores']): void => {
-  if (boneco) pintarBoneco(caixa.querySelector<HTMLElement>('p:not(.rotulo)')!, { recorte: 'busto', largura: 40, altura: 40, deCampo: boneco, cores, aoLado: true });
-};
 /** O resultado da sincronização fica guardado: redesenha só uma vez por carregamento, senão repetiria sem fim. */
 let jaRedesenhou = false;
 // Em desenvolvimento, ?cidadesFalsas=com|sem|faltam|vazia|erro troca o servidor da cidade por um de mentira.
@@ -85,9 +74,6 @@ const FALSA_CIDADE = import.meta.env.DEV && new URLSearchParams(location.search)
 const CHAVE_CIDADE_VISTA = 'gdt:cidade-acima';
 const servidorCidade = async (): Promise<typeof realCidade> => (FALSA_CIDADE ? import('../dev/cidadesFalsas') : realCidade);
 const FALSA_DIA = import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso');
-// Em desenvolvimento, ?penaltiFalso também responde o convite do X1 (src/dev/penaltiFalso.ts).
-const FALSO_PENALTI = import.meta.env.DEV && new URLSearchParams(location.search).has('penaltiFalso');
-const verDesafioDoLink = (id: string) => (FALSO_PENALTI || FALSA ? import('../dev/penaltiFalso').then((m) => m.verDesafio(id)) : verDesafio(id));
 const servidorJa = async (): Promise<typeof SERVIDOR> => {
   if (FALSA) return import('../dev/homeFalsa');
   return FALSA_DIA ? { ...SERVIDOR, estadoDoDia: (await import('../dev/diaFalso')).estadoDoDia } : SERVIDOR;
@@ -145,15 +131,11 @@ function tarjaDoTime(time: Time | undefined): string {
 
 export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const time = timePorId(prefs.get().time);
-  const codigoDesafio = desafioDoLink();
-  const codigoProva = desafioProvaDoLink();
-  // Lances unificados (docs/jogo.md, 14.7): card, "Jogar agora", Lance do Dia e X1 dos Lances.
-  const codigoLances = desafioLancesDoLink();
   const semana = semanaBrasilia();
   let pararRanking: (() => void) | null = null;
   let saiu = false;
-  // O resto da Home espera o convite de quem chegou por link de desafio (telas/primeiraTela.ts) e não sai se a pessoa
-  // já deixou a Home nesse meio-tempo (todos os pedidos abaixo tratam a falha). Os convites usam servidorJa.
+  // O resto da Home espera o convite de quem chegou por link de desafio (telas/primeiraTela.ts; a tela do convite o
+  // libera) e não sai se a pessoa já deixou a Home nesse meio-tempo (todos os pedidos abaixo tratam a falha).
   const naHome = (): Promise<void> => depoisDoConvite().then(() => (saiu ? Promise.reject(new Error('saiu da Home')) : undefined));
   const servidor = (): Promise<typeof SERVIDOR> => naHome().then(servidorJa);
 
@@ -185,8 +167,6 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       ${termos === 'mostrar' ? '<button class="faixa-termos" type="button" data-acao="termos">Os Termos mudaram <span>Ler</span></button>' : ''}
 
       <div data-painel-push></div>
-
-      <section class="convite-desafio" hidden></section>
 
       <section class="arquibancada" style="${estiloTime(dono)}" aria-label="Sua torcida">
         <canvas class="arquibancada-tela" aria-hidden="true"></canvas>
@@ -257,27 +237,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
   const pararArquibancada = ligarArquibancada(root.querySelector('canvas')!, dono.cores, luzDoHorario(horaDaLuz()));
 
-  /** Desafio do link já conferido no servidor: o botão grande da home aceita esse X1 em vez de abrir outro jogo. */
-  let desafioAberto: string | undefined;
-  // Funil do X1: aceitou = tocou em "Aceitar o X1" ou no "Jogar agora" com o convite aberto (as três funções abaixo).
-  const jogar = (desafio?: string, disputa?: Disputa) => {
-    if (desafio) contar({ ev: 'aceitou', tipo: 'x1_penaltis', x1: desafio });
-    irPara(time ? { tela: 'partida', desafio, disputa } : { tela: 'times', depois: 'partida', desafio });
-  };
-  /** X1 dos Lances (?l=) já conferido: o "Jogar agora" também aceita. */
-  let desafioLancesAberto: string | undefined;
-  const jogarLances = (desafio?: string) => {
-    if (desafio) contar({ ev: 'aceitou', tipo: 'x1_lances', x1: desafio });
-    irPara(time ? { tela: 'lances', desafio } : { tela: 'times', depois: 'lances', desafio });
-  };
-  const jogarProva = (desafio?: string) => {
-    if (desafio) contar({ ev: 'aceitou', tipo: 'x1_prova', x1: desafio });
-    irPara(time ? { tela: 'prova', desafio } : { tela: 'times', depois: 'prova', desafio });
-  };
   const abrir: Record<JogoDaHome, () => void> = {
-    // O card dos Lances abre o hub (Pênaltis, Faltas e Cara a cara); o convite de X1 continua indo direto para a partida.
+    // O card dos Lances abre o hub (Pênaltis, Faltas e Cara a cara).
     penaltis: () => irPara(time ? { tela: 'lances' } : { tela: 'times', depois: 'lances' }),
-    prova: () => jogarProva(),
+    prova: () => irPara(time ? { tela: 'prova' } : { tela: 'times', depois: 'prova' }),
     dia: () => irPara(time ? { tela: 'timeDoDia' } : { tela: 'times', depois: 'timeDoDia' }),
     // Palpites funciona sem time (pede o time só na hora de cravar), como antes.
     crava: () => irPara({ tela: 'palpites' }),
@@ -285,14 +248,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   root.querySelectorAll<HTMLElement>('[data-jogo]').forEach((b) =>
     b.addEventListener('click', () => abrir[b.dataset.jogo as JogoDaHome]()),
   );
-  /** O X1 dos pênaltis conferido: a disputa de quem chamou, se ela está no catálogo daqui. */
-  let disputaDoX1: Disputa | undefined;
   root.querySelector('[data-acao="jogar-agora"]')?.addEventListener('click', () => {
     const proximo = proximoJogo(situacao);
-    if (desafioAberto) jogar(desafioAberto, disputaDoX1);
-    else if (desafioLancesAberto) jogarLances(desafioLancesAberto);
     // "Jogar agora" nos Lances abre a tela única no filtro Pênaltis (não há Disputa livre).
-    else if (proximo === 'penaltis') irPara(time ? { tela: 'lances', aba: 'penaltis' } : { tela: 'times', depois: 'lances' });
+    if (proximo === 'penaltis') irPara(time ? { tela: 'lances', aba: 'penaltis' } : { tela: 'times', depois: 'lances' });
     else abrir[proximo]();
   });
   root.querySelector('[data-acao="aquecimento"]')?.addEventListener('click', () => irPara({ tela: 'aquecimento', depois: { tela: 'inicio' } }));
@@ -364,8 +323,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   let respostas = time ? 3 : 0;
   const elMotivo = root.querySelector<HTMLElement>('[data-motivo]')!;
   const atualizarBotao = () => {
-    if (desafioAberto || desafioLancesAberto) elMotivo.textContent = 'Encarar o desafio que te mandaram';
-    else if (respostas === 0) elMotivo.textContent = motivoDoJogo(proximoJogo(situacao), situacao);
+    if (respostas === 0) elMotivo.textContent = motivoDoJogo(proximoJogo(situacao), situacao);
   };
   const respondeu = () => {
     respostas = Math.max(0, respostas - 1);
@@ -467,60 +425,13 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     if (!FALSA) void naHome().then(anotarCarreira, () => {});
   }
 
-  // ---------- convite de desafio (link ?d=) ----------
-  if (codigoDesafio) {
-    const caixa = root.querySelector<HTMLElement>('.convite-desafio')!;
-    // O catálogo das disputas vem junto com o resumo, e não depois dele (a ficha do X1 sai no próprio convite).
-    const catalogoDoX1 = import('../dados/disputas').catch(() => null);
-    // A caixa já nasce na tela, para o convite não empurrar o resto quando a resposta chega
-    // e para ninguém tocar em "Jogar agora" sem saber que foi chamado.
-    caixa.innerHTML = `
-      <p class="rotulo">Te desafiaram</p>
-      <p>Buscando o desafio…</p>`;
-    caixa.hidden = false;
-    verDesafioDoLink(codigoDesafio)
-      .then(async (d) => {
-        if (saiu) return;
-        if (!d || d.vencido) {
-          caixa.hidden = true; // código que não existe ou desafio vencido: segue a home normal
-          return;
-        }
-        // O X1 leva a disputa de quem chamou. O catálogo fica fora do bundle da Home; fora dele, o convite segue sem a ficha.
-        if (d.disputa_id) {
-          const catalogo = await catalogoDoX1;
-          if (saiu) return;
-          disputaDoX1 = catalogo?.DISPUTAS.find((x) => x.id === d.disputa_id);
-        }
-        const disputa = disputaDoX1;
-        const ficha = disputa ? `<p class="convite-como">Disputa: ${esc(disputa.titulo)}. ${esc(chamadaDaDisputa(disputa))}</p>` : '';
-        const t = timePorId(d.time_id);
-        const quem = d.apelido ? esc(d.apelido) : 'Alguém';
-        caixa.innerHTML = `
-          <p class="rotulo">${d.apelido ? `${quem} te desafiou` : 'Te desafiaram'}</p>
-          <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''} te desafiou:
-          <strong>${d.pontos} pontos</strong>, ${d.gols_jogador} x ${d.gols_maquina} contra a máquina.</p>
-          ${ficha}
-          <p class="convite-como">Você defende as cobranças de quem te desafiou e bate as suas. Quem fizer mais pontos ganha.</p>
-          <button class="botao-linha" type="button" data-acao="desafio">Encarar o desafio</button>`;
-        desafioAberto = d.id;
-        bustoDoConvite(caixa, d.boneco, t?.cores);
-        atualizarBotao();
-        caixa.querySelector('[data-acao="desafio"]')!.addEventListener('click', () => jogar(d.id, disputa));
-      })
-      .catch(() => {
-        // sem internet: o desafio fica para quando voltar
-        if (!saiu) caixa.hidden = true;
-      })
-      .finally(conviteResolvido);
-  }
-
   // ---------- Lance do Dia (14.7) ----------
   // O catálogo dos lances fica fora do bundle da Home: vem depois de desenhar. O mesmo lance para todos, sem bônus.
   const botaoDoDia = root.querySelector<HTMLButtonElement>('[data-acao="lance-do-dia"]');
-  // O X1 dos Lances precisa dele no convite; com outro convite no link, espera o convite.
+  // Depois que a Home desenha (e, com link de desafio, depois do convite).
   const baixarCatalogo = () => Promise.all([import('../dados/lances'), import('../dados/adversarios'), import('../dados/disputas')]);
-  const catalogoDosLances = codigoLances ? baixarCatalogo() : naHome().then(baixarCatalogo);
-  catalogoDosLances.catch(() => {}); // sem botão do Lance do Dia nem convite, ninguém mais olha a falha
+  const catalogoDosLances = naHome().then(baixarCatalogo);
+  catalogoDosLances.catch(() => {}); // sem botão do Lance do Dia, ninguém mais olha a falha
   if (botaoDoDia && catalogoDosLances) {
     catalogoDosLances
       .then(([{ LANCES }, { SELECAO }, { DISPUTAS }]) => {
@@ -541,62 +452,6 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         // sem o catálogo (rede): o botão some
         botaoDoDia.hidden = true;
       });
-  }
-
-  // ---------- convite de X1 dos Lances (link ?l=) ----------
-  if (codigoLances && catalogoDosLances) {
-    const caixa = root.querySelector<HTMLElement>('.convite-desafio')!;
-    servidorJa()
-      .then((api) => api.verDesafioLances(codigoLances))
-      .then(async (d) => {
-        if (!d || d.vencido || saiu) return; // código que não existe, desafio vencido ou sem resposta: a caixa some
-        const [{ LANCES }] = await catalogoDosLances;
-        if (saiu) return;
-        const t = timePorId(d.time_id);
-        const titulo = LANCES.find((l) => l.id === d.lance_id)?.titulo ?? null;
-        const texto = textoDoConviteLances({
-          quem: d.apelido,
-          time: t && t.id !== ID_OUTRO ? t.nome : null,
-          pontos: d.pontos,
-          titulo,
-        });
-        caixa.innerHTML = `
-          <p class="rotulo">${esc(tituloDoConviteLances(d.apelido))}</p>
-          <p>${esc(texto)}</p>
-          <button class="botao-linha" type="button" data-acao="desafio-lances">Encarar o desafio</button>`;
-        caixa.hidden = false;
-        desafioLancesAberto = d.id;
-        bustoDoConvite(caixa, d.boneco, t?.cores);
-        atualizarBotao();
-        caixa.querySelector('[data-acao="desafio-lances"]')!.addEventListener('click', () => jogarLances(d.id));
-      })
-      .catch(() => {
-        // sem internet: o desafio fica para quando voltar (a caixa continua escondida)
-      })
-      .finally(conviteResolvido);
-  }
-
-  // ---------- convite de desafio da Prova de Boleiro (link ?p=) ----------
-  if (codigoProva) {
-    const caixa = root.querySelector<HTMLElement>('.convite-desafio')!;
-    verDesafioProva(codigoProva)
-      .then((d) => {
-        if (!d || d.vencido || saiu) return; // vencido: sem convite
-        const t = timePorId(d.time_id);
-        const quem = d.apelido ? esc(d.apelido) : 'Alguém';
-        caixa.innerHTML = `
-          <p class="rotulo">${d.apelido ? `${quem} te desafiou` : 'Te desafiaram'} na Prova de Boleiro</p>
-          <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''}: ${esc(d.resumo)},
-          <strong>${d.pontos} pontos</strong>. Mesmas 8 perguntas, faz mais?</p>
-          <p class="escada-emoji">${esc(d.escada)}</p>
-          <button class="botao-linha" type="button" data-acao="desafio-prova">Encarar o desafio</button>`;
-        caixa.hidden = false;
-        caixa.querySelector('[data-acao="desafio-prova"]')!.addEventListener('click', () => jogarProva(d.id));
-      })
-      .catch(() => {
-        // sem internet: o desafio fica para quando voltar
-      })
-      .finally(conviteResolvido);
   }
 
   // ---------- ranking ao vivo ----------

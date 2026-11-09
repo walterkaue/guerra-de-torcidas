@@ -4,9 +4,10 @@ import { desafioDoLink, desafioLancesDoLink, desafioProvaDoLink, esc, irPara, li
 import { TIMES, corDeTexto } from '../dados/times';
 import { APELIDO_MAX, prefs } from '../estado';
 import { abreSozinho } from '../jogo/aquecimento';
+import { TIPO_DO_FUNIL, type TipoConvite } from '../jogo/conviteDesafio';
 import { destinoDepoisDoTime } from '../jogo/primeiroAcesso';
 import { ErroServidor } from '../servidor/api';
-import { etapa } from '../servidor/funil';
+import { contar, etapa } from '../servidor/funil';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { cabecalhoTela } from './blocos';
 import { ajustarNomesDeTime } from './nomesDeTime';
@@ -15,6 +16,11 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
   const depois = rota.tela === 'times' ? (rota.depois ?? 'partida') : 'partida';
   // Primeiro acesso (docs/jogo.md 14.8): a primeira tela de quem é novo, sem voltar (não há Home atrás dela ainda).
   const primeira = rota.tela === 'times' && !!rota.primeira;
+  // O campo de apelido é do Perfil ("Escolher apelido"): o primeiro acesso e o convite do desafio não perguntam.
+  const comApelido = rota.tela === 'times' && rota.apelido === true;
+  // Aberta pelo convite do desafio (telas/convite.ts): o voltar leva de volta a ele e "Bora pro jogo" conta o "aceitou".
+  const doConvite = rota.tela === 'times' && !!rota.convite && !!rota.desafio;
+  const tipoDoConvite: TipoConvite = depois === 'prova' ? 'prova' : depois === 'lances' ? 'lances' : 'penaltis';
   const atual = prefs.get();
   // Aparelho que perdeu a conta: avisa uma vez e limpa a marca.
   const saiuDaConta = !!atual.saiuDaConta;
@@ -23,7 +29,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
   root.innerHTML = `
     <main class="tela times">
       ${cabecalhoTela({ titulo: 'Qual é a sua torcida?', voltar: !primeira, pre: false })}
-      ${primeira ? '<p class="campo-dica">Sem cadastro: escolha o time e já entra jogando. O apelido é opcional.</p>' : ''}
+      ${primeira ? '<p class="campo-dica">Sem cadastro: escolha o time e já entra jogando.</p>' : ''}
       ${saiuDaConta ? '<p class="aviso-caixa" role="note">Este aparelho saiu da conta: foi desconectado em outro aparelho ou a conta foi apagada. Escolha seu time pra começar de novo, ou entre com um código.</p>' : ''}
       ${rota.tela === 'times' && rota.desafio ? '<p class="campo-dica">É só escolher o time: o desafio que te mandaram começa em seguida.</p>' : ''}
 
@@ -38,12 +44,16 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
         ).join('')}
       </div>
 
-      <label class="campo">
+      ${
+        comApelido
+          ? `<label class="campo">
         <span>Seu apelido no card <small>(opcional)</small></span>
         <input type="text" maxlength="${APELIDO_MAX}" autocomplete="off" placeholder="Ex.: Zé da Geral"
           value="${esc(atual.apelido ?? '')}" />
         <small class="erro-campo" role="alert" hidden></small>
-      </label>
+      </label>`
+          : ''
+      }
 
       <button class="botao" type="button" data-acao="confirmar" ${atual.time ? '' : 'disabled'}>
         ${primeira || depois === 'partida' || depois === 'prova' || depois === 'timeDoDia' || depois === 'lances' ? 'Bora pro jogo' : 'Salvar'}
@@ -57,7 +67,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
   etapa({ tipo: 'escolha_time', x1: x1DoLink() });
   let escolhido = atual.time;
   const confirmar = root.querySelector<HTMLButtonElement>('[data-acao="confirmar"]')!;
-  const input = root.querySelector<HTMLInputElement>('input')!;
+  const input = root.querySelector<HTMLInputElement>('label.campo input');
 
   root.querySelectorAll<HTMLButtonElement>('.cartao-time').forEach((b) => {
     b.addEventListener('click', () => {
@@ -67,22 +77,27 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
     });
   });
 
-  const erro = root.querySelector<HTMLElement>('.erro-campo')!;
+  const erro = root.querySelector<HTMLElement>('.erro-campo');
   const textoBotao = confirmar.textContent;
 
   confirmar.addEventListener('click', async () => {
     if (!escolhido) return;
-    erro.hidden = true;
+    if (erro) erro.hidden = true;
     confirmar.disabled = true;
     confirmar.textContent = 'Salvando…';
     const anterior = prefs.get();
+    // O apelido só muda quando o campo está na tela (vindo do Perfil); sem ele, o que há no aparelho fica como está.
     // O apelido novo só vai para o card depois que o servidor aceitar (apelidoConferido, J26).
-    const apelidoNovo = input.value.trim().replace(/\s+/g, ' ').slice(0, APELIDO_MAX) || undefined;
-    prefs.set({ time: escolhido, apelido: apelidoNovo, apelidoConferido: conferidoAoSalvar(anterior, apelidoNovo) });
+    if (input) {
+      const apelidoNovo = input.value.trim().replace(/\s+/g, ' ').slice(0, APELIDO_MAX) || undefined;
+      prefs.set({ time: escolhido, apelido: apelidoNovo, apelidoConferido: conferidoAoSalvar(anterior, apelidoNovo) });
+    } else {
+      prefs.set({ time: escolhido });
+    }
     try {
       await sincronizarTorcedor();
     } catch (e) {
-      if (e instanceof ErroServidor && e.codigo === 'apelido_bloqueado') {
+      if (input && erro && e instanceof ErroServidor && e.codigo === 'apelido_bloqueado') {
         // Volta o apelido anterior e pede outro.
         prefs.set({ apelido: anterior.apelido, apelidoConferido: anterior.apelidoConferido });
         erro.textContent = 'Esse apelido não passa no filtro. Tenta outro?';
@@ -96,6 +111,7 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
     }
     etapa(null);
     const desafio = rota.tela === 'times' ? rota.desafio : undefined;
+    if (doConvite && desafio) contar({ ev: 'aceitou', tipo: TIPO_DO_FUNIL[tipoDoConvite], x1: desafio });
     const lance = rota.tela === 'times' ? rota.lance : undefined;
     // X1 dos Lances (?l=) vai direto ao mesmo lance; o link do lance abre a ficha.
     const destino: Rota = destinoDepoisDoTime(depois, desafio, lance);
@@ -110,11 +126,13 @@ export function telaTimes(root: HTMLElement, rota: Rota): void {
   });
 
   root.querySelector('[data-acao="outro-aparelho"]')?.addEventListener('click', () => irPara({ tela: 'entrar', de: 'times' }));
-  root.querySelector('.voltar')?.addEventListener('click', () =>
-    irPara({ tela: depois === 'palpites' || depois === 'perfil' ? depois : 'inicio' }),
-  );
+  root.querySelector('.voltar')?.addEventListener('click', () => {
+    // A lista aberta pelo convite volta ao convite (o desafio continua esperando).
+    if (doConvite && rota.tela === 'times' && rota.desafio) return irPara({ tela: 'convite', tipo: tipoDoConvite, codigo: rota.desafio });
+    irPara({ tela: depois === 'palpites' || depois === 'perfil' ? depois : 'inicio' });
+  });
 
-  if (rota.tela === 'times' && rota.apelido) {
+  if (input && comApelido) {
     input.scrollIntoView({ block: 'center' });
     input.focus({ preventScroll: true });
   }

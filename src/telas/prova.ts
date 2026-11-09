@@ -34,6 +34,7 @@ import { DICAS } from '../jogo/dicas';
 import { primeiraDica } from '../jogo/dicasGatilhos';
 import { abrirRegras } from './regras';
 import { contar as contarFunil, etapa } from '../servidor/funil';
+import { CONTAGEM, CONTAGEM_PASSO_MS } from '../jogo/conviteDesafio';
 
 export interface DadosResultadoProva {
   timeId: string;
@@ -74,6 +75,8 @@ const nomeOrigem = (clube: string) => {
 export function telaProva(root: HTMLElement, rota: Rota): () => void {
   const time: Time = timePorId(prefs.get().time) ?? TIMES[TIMES.length - 1];
   let codigoDesafio = rota.tela === 'prova' ? rota.desafio : undefined;
+  // Vinda do convite (telas/convite.ts), a Prova começa sozinha depois de uma contagem 3, 2, 1 (C06).
+  const comContagem = rota.tela === 'prova' && !!rota.contagem && !!codigoDesafio;
   const narrador = criarNarrador(time, prefs.get().apelido);
   const falar = (ev: EventoNarrador, extra: Partial<ContextoNarrador> = {}) => narrador.falar(ev, extra);
 
@@ -114,7 +117,8 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       <section class="prova-inicio" data-inicio>
         <p class="adesivo" data-abertura></p>
         <div class="convite-desafio" data-convite hidden></div>
-        <button class="botao" type="button" data-comecar>Começar a prova</button>
+        <button class="botao" type="button" data-comecar${comContagem ? ' hidden' : ''}>Começar a prova</button>
+        <p class="prova-contagem" data-contagem aria-live="assertive" aria-atomic="true"${comContagem ? '' : ' hidden'}></p>
         <div class="prova-erro" data-erro hidden></div>
       </section>
 
@@ -477,6 +481,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       mostrarPergunta(p.pergunta);
     } catch (e) {
       if (saiu) return;
+      btnComecar.hidden = false;
       btnComecar.disabled = false;
       btnComecar.textContent = codigoDesafio ? 'Encarar o desafio' : 'Começar a prova';
       mostrarErro(mensagemDe(e), 'Tentar de novo');
@@ -497,8 +502,30 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
     irPara({ tela: 'inicio' });
   });
 
-  // Convite do desafio (se veio pelo link).
-  if (codigoDesafio) {
+  // Contagem 3, 2, 1 no lugar do botão: depois do 1, a prova começa sozinha (os erros do desafio seguem como sempre).
+  const elContagem = $('[data-contagem]');
+  const passosDaContagem: number[] = [];
+  if (comContagem) {
+    CONTAGEM.forEach((n, i) =>
+      passosDaContagem.push(
+        window.setTimeout(() => {
+          elContagem.textContent = String(n);
+          elContagem.classList.remove('pop');
+          void elContagem.offsetWidth;
+          elContagem.classList.add('pop');
+        }, i * CONTAGEM_PASSO_MS),
+      ),
+    );
+    passosDaContagem.push(
+      window.setTimeout(() => {
+        elContagem.hidden = true;
+        void comecar();
+      }, CONTAGEM.length * CONTAGEM_PASSO_MS),
+    );
+  }
+
+  // Convite do desafio (se veio pelo link). Vinda do convite, a pessoa já viu o desafio: não repete.
+  if (codigoDesafio && !comContagem) {
     verDesafioProva(codigoDesafio)
       .then((d) => {
         // Vencido: sem convite; ao começar, o servidor responde 410 e vai uma prova normal com o aviso.
@@ -515,5 +542,6 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
     saiu = true;
     pararRelogio();
     clearTimeout(pausa);
+    passosDaContagem.forEach((t) => clearTimeout(t));
   };
 }
