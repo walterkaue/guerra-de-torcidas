@@ -2,7 +2,7 @@
 // Mostra as peças, os tamanhos, os uniformes, os fundos, as molduras e os times difíceis para o Kauê aprovar.
 // Filtros: &so=<seção> (prancha, bustos, tamanhos, uniformes, fundos, molduras, times), &tam=<tamanho>
 // (b40, b52, b84, b280, c76, c104, c390), &estado=novo|meio|tudo (o que a prancha mostra trancado), &time=<id> e
-// &barra=dentro (camisa por dentro do calção).
+// &barra=dentro (camisa por dentro do calção, lida por bonecos.ts).
 
 import '../style.css';
 import { TIMES, type Time } from '../dados/times';
@@ -21,11 +21,9 @@ import {
   type Vestimenta,
 } from '../jogo/vestiario';
 import { desenharBoneco, prepararFonteDoNumero, type Recorte } from '../telas/bonecoMontavel';
-import { TONS_DE_PELE, CORES_DE_CABELO, definirBarraPadrao } from '../telas/bonecos';
+import { TONS_DE_PELE, CORES_DE_CABELO } from '../telas/bonecos';
 
 const parametros = new URLSearchParams(location.search);
-// &barra=dentro mostra a camisa por dentro do calção (a opção que o vestiário vai ganhar no H03b).
-if (parametros.get('barra') === 'dentro') definirBarraPadrao('dentro');
 const secaoPedida = parametros.get('so');
 const tamanhoPedido = parametros.get('tam');
 

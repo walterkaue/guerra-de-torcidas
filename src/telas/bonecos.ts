@@ -547,11 +547,11 @@ export interface Aparencia {
   barra?: BarraDaCamisa;
 }
 
-let barraPadrao: BarraDaCamisa = 'fora';
-/** Só desenvolvimento (&barra=dentro na vitrine e nos modos falsos): a barra de quem não escolheu. */
-export function definirBarraPadrao(b: BarraDaCamisa): void {
-  barraPadrao = b;
-}
+/**
+ * A barra de quem não escolheu. Só em desenvolvimento, &barra=dentro no endereço põe a camisa por dentro em todos os
+ * bonecos da tela (vitrine, vestiário, modos falsos em campo), para ver a opção antes de o vestiário ganhá-la (H03b).
+ */
+const barraPadrao: BarraDaCamisa = import.meta.env.DEV && typeof location !== 'undefined' && new URLSearchParams(location.search).get('barra') === 'dentro' ? 'dentro' : 'fora';
 
 /** Do mais claro ao mais escuro. */
 export const TONS_DE_PELE = ['#f1cfb3', '#e0ac85', '#c68d63', '#a3693f', '#7a4a2a', '#4f2f1c'];

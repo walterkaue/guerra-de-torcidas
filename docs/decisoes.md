@@ -6,6 +6,7 @@
 
 | Data | Decisão ou mudança |
 |---|---|
+| 09/11/2026 | H03 entregue: o boneco passa ao estilo "Silhueta premium Plus" (três tons chapados por peça, camisa sem ombreira e sem a cintura de saia, calção que gira com o corpo, peso numa perna na pose parada, só desenho). Camisa por fora ou por dentro do calção: o desenho aceita (`Aparencia.barra`) e a escolha no vestiário é o H03b; `bonecos.md`, `jogos/boneco-montavel.md`. |
 | 08/11/2026 | glossário do jogo decidido pelo Kauê. X1 vira desafio, Crava a Rodada vira Palpite da Rodada (sem cravar), Revanche vira Jogo de volta, Ranking vira Tabela, recriar vira carimbar, Placar seco vira Só o placar, Mais Braba vira Torcida raiz, e entram as regras de estilo e os bordões do narrador (`docs/narrador.md`). Os Termos trocam o nome do Palpite com o D8. |
 | 08/11/2026 | Contagem de uso: funil do X1 (compartilhou por tipo e meio, abriu, aceitou, 1º chute, terminou, revanche) e onde desiste (escolha do time, triagem, aquecimento e partida; desistiu − voltou), sem pessoa, com a impressão do código por 30 dias; linha na Política e Termos em 08/11/2026 (C01 + I03); `jogos/contas.md` |
 | 08/11/2026 | Documentação dividida: `jogo.md` curto com as regras de hoje e um doc por módulo em `docs/jogos/`; este registro guarda as datas. |
