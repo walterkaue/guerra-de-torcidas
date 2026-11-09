@@ -4,6 +4,7 @@ import { linhaDoCard } from './cardProva';
 import { conviteLances, textoShareLances } from './lancesTelaUnica';
 import { emojisDaPartida, textoDaMedalhaNova } from './lancesTextos';
 import {
+  dividirDestaques,
   escolherDestaque,
   htmlDoBalao,
   juntarPedacos,
@@ -88,6 +89,21 @@ describe('destaque da dobra', () => {
     expect(escolherDestaque(['medalha', 'desafio'])).toBe('desafio');
     expect(escolherDestaque(['frase'])).toBe('frase');
     expect(escolherDestaque([])).toBeNull();
+  });
+
+  it('divide: um destaque na dobra; o resto desce, menos a frase (fica nas frases) e o resumo só da dobra', () => {
+    const c = [
+      { tipo: 'aviso' as const, id: 'aviso' },
+      { tipo: 'desafio' as const, id: 'duelo-curto', soNaDobra: true },
+      { tipo: 'recorde' as const, id: 'selos' },
+      { tipo: 'frase' as const, id: 'frase' },
+    ];
+    const { destaque, resto } = dividirDestaques(c);
+    expect(destaque?.id).toBe('aviso');
+    expect(resto.map((r) => r.id)).toEqual(['selos']);
+    expect(dividirDestaques([{ tipo: 'frase' as const }]).resto).toEqual([]);
+    expect(dividirDestaques([{ tipo: 'desafio' as const, soNaDobra: true }]).destaque?.tipo).toBe('desafio');
+    expect(dividirDestaques([])).toEqual({ destaque: null, resto: [] });
   });
 
   it('o que chega depois só passa na frente de quem vem depois na ordem', () => {

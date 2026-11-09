@@ -60,7 +60,7 @@ Nada disso tem lembrete automático.
 
 ## Próximo ciclo
 
-A ordem está no `docs/backlog.md`, seção 2: o que falta para divulgar, o funil e o botão do desafio, a central de avisos e o resultado em duas camadas, o replay do gol compartilhável, o card animado, o som novo e o desempenho da 1ª visita. Ela será refeita com o que os testes com amigos mostrarem.
+A ordem está no `docs/backlog.md`, seção 2: o que falta para divulgar, o link do desafio com menos toques, a central de avisos, o replay do gol compartilhável, o card animado, o som novo e o desempenho da 1ª visita. Ela será refeita com o que os testes com amigos mostrarem.
 
 ## Antes de divulgar
 

@@ -18,6 +18,22 @@ export function escolherDestaque(tem: Iterable<TipoDestaque>): TipoDestaque | nu
   return melhor;
 }
 
+/** Candidato a destaque: o tipo e, se for um resumo que só existe na dobra, `soNaDobra` (a versão inteira já está nos detalhes). */
+export interface Candidato {
+  tipo: TipoDestaque;
+  soNaDobra?: boolean;
+}
+
+/**
+ * Divide os candidatos: o destaque da dobra e o que desce para o topo dos detalhes. A frase não desce por aqui (fica
+ * na lista das frases) e o resumo `soNaDobra` some (a versão inteira já está nos detalhes).
+ */
+export function dividirDestaques<T extends Candidato>(candidatos: readonly T[]): { destaque: T | null; resto: T[] } {
+  const tipo = escolherDestaque(candidatos.map((c) => c.tipo));
+  const destaque = candidatos.find((c) => c.tipo === tipo) ?? null;
+  return { destaque, resto: candidatos.filter((c) => c !== destaque && c.tipo !== 'frase' && !c.soNaDobra) };
+}
+
 /** Um destaque que chegou depois (peça nova, medalha da disputa) só toma o lugar de um que vem depois dele na ordem. */
 export const passaNaFrente = (novo: TipoDestaque, atual: TipoDestaque | null): boolean => atual === null || lugar(novo) < lugar(atual);
 

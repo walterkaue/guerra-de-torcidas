@@ -22,7 +22,7 @@ import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { bomMomentoDosLances } from '../jogo/apoio';
 import { oferecerApoio } from './apoio';
 import { convidarParaAvisos } from './convitePush';
-import { golsDaDisputa, linhaMelhoresDoDia, textoDaMedalhaNova, textoForaDasMelhores } from '../jogo/lancesTextos';
+import { golsDaDisputa, linhaMelhoresDoDia, NOME_DA_MEDALHA, textoForaDasMelhores } from '../jogo/lancesTextos';
 import { itemPenaltis } from '../jogo/regraLances';
 import { numero, placa, selo } from './blocos';
 import { ligarEfeitoNoRanking } from './efeitoRanking';
@@ -196,7 +196,8 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
       // Subiu de medalha: comemora e, se for mais importante que o destaque da vez, a placa sobe para a dobra.
       aoSubir: (medalha) => {
         comemorar('medalha');
-        promoverDestaque(root, destaqueDaMedalha(textoDaMedalhaNova(medalha, d.disputa!.titulo)));
+        // "Bronze: O título da Sul-Americana" (o textoDaMedalhaNova diz "no lance", feito para os Lances).
+        promoverDestaque(root, destaqueDaMedalha(`${NOME_DA_MEDALHA[medalha]}: ${d.disputa!.titulo}`));
       },
       ler: () => medalhasLidas!,
     });

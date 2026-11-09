@@ -19,7 +19,7 @@ import { textoDoCompartilhar, type DadosDoCard } from '../jogo/cardPersonalizado
 import { criarComemoracao, pedacosDoConfete, type MotivoDoConfete } from '../jogo/confete';
 import { selosDaPosicao, type Desempenho, type Minigame } from '../jogo/posicao';
 import {
-  escolherDestaque,
+  dividirDestaques,
   htmlDoBalao,
   linkDoWhatsApp,
   mensagemParaLeitor,
@@ -173,10 +173,10 @@ export function htmlResultado(p: PartesDoResultado): string {
     ...(p.destaques ?? []).filter((d): d is Destaque => !!d),
     ...(p.frases.length ? [{ tipo: 'frase' as const, html: `<p class="adesivo">${esc(p.frases[0])}</p>` }] : []),
   ];
-  const tipo = escolherDestaque(candidatos.map((c) => c.tipo));
-  const destaque = candidatos.find((c) => c.tipo === tipo);
   // A frase que não virou destaque continua na lista das frases; os outros descem para o topo dos detalhes.
-  const resto = candidatos.filter((c) => c !== destaque && c.tipo !== 'frase' && !c.soNaDobra).map((c) => c.html).join('');
+  const { destaque, resto: desce } = dividirDestaques(candidatos);
+  const tipo = destaque?.tipo ?? null;
+  const resto = desce.map((c) => c.html).join('');
   const frases = tipo === 'frase' ? p.frases.slice(1) : p.frases;
   return `
     <main class="tela ${p.classe} res-padrao"
@@ -393,6 +393,9 @@ function entrarComOBalao(root: HTMLElement, msg: HTMLElement): void {
   window.setTimeout(digitar, 1500); // contador que não terminou (aba no fundo): o balão não fica esperando
 }
 
+/** Tira o ouvinte de resize do último resultado (um por vez). */
+let pararDeAjustar: (() => void) | null = null;
+
 export interface Compartilhar {
   /** O que o card pode mostrar (o Card abre a tela "Seu card", o Stories manda o card com as escolhas guardadas). */
   dados: Promise<DadosDoCard>;
@@ -445,9 +448,14 @@ export function ligarResultado(root: HTMLElement, o: Compartilhar): void {
     ajustarDobra(root);
     requestAnimationFrame(() => ajustarDobra(root));
     void document.fonts?.ready.then(() => ajustarDobra(root));
-    // O root é o do app inteiro: quem diz se o resultado ainda está na tela é o balão.
-    const aoMudar = () => (msg.isConnected ? ajustarDobra(root) : removeEventListener('resize', aoMudar));
+    // Um ouvinte de resize por vez: o do resultado anterior sai aqui (o root é o do app inteiro e não avisa a saída).
+    pararDeAjustar?.();
+    const aoMudar = () => (msg.isConnected ? ajustarDobra(root) : pararDeAjustar?.());
     addEventListener('resize', aoMudar);
+    pararDeAjustar = () => {
+      removeEventListener('resize', aoMudar);
+      pararDeAjustar = null;
+    };
     entrarComOBalao(root, msg);
   }
   root.querySelector('[data-desafiar]')?.addEventListener('click', () => contarMeio('grupo'));
