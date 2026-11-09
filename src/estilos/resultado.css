@@ -352,6 +352,9 @@
 .res-acoes .botao {
   min-height: 60px;
   justify-content: center;
+  /* Sempre numa linha: se não couber, a letra diminui (caberNumaLinha, telas/resultadoPadrao.ts), sem reticências. */
+  padding-inline: 12px;
+  white-space: nowrap;
 }
 
 .res-acoes .botao-sec {
@@ -1034,6 +1037,14 @@
   .botao-desafiar {
     min-height: 56px;
     font-size: 22px;
+  }
+  /* Card, Stories, Emoji e Link numa linha só, também com a fonte grande. */
+  .res-mostrar-botoes {
+    gap: 0;
+  }
+  .res-mostrar-botoes button {
+    gap: 4px;
+    padding: 0 4px;
   }
   .res-padrao .botao-zap {
     min-height: 58px;

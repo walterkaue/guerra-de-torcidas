@@ -8,11 +8,16 @@
 //   pen-recorde     vitória com recorde novo
 //   prova-desafio   Prova com desafio gerado
 //   prova-recebido  Prova de um desafio recebido e perdido (Jogo de volta)
+//   lances-vitoria  Lances com 2 gols, prata nova e desafio gerado (junte &lancesFalsos)
+//   lances-recebido desafio recebido e vencido nos Lances: sem código, volta o "Mandar no grupo" com o card
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { irPara, type DadosResultado } from '../app';
 import { prefs } from '../estado';
 import { DISPUTAS } from '../dados/disputas';
+import { LANCES } from '../dados/lances';
+import type { ResultadoLance } from '../jogo/lances';
+import type { FechamentoLances } from '../jogo/lancesPartida';
 import type { ResultadoCobranca, ResultadoDefesa, ResultadoPartida } from '../jogo/penaltis';
 import type { FimProva } from '../servidor/api';
 
@@ -148,9 +153,58 @@ function medirDobra() {
   };
 }
 
+const tentativa = (desfecho: ResultadoLance['desfecho'], pontos: number, recriou = false): ResultadoLance => ({
+  desfecho,
+  x: 0.6,
+  y: 0.7,
+  zonaBola: 5,
+  cavadinha: false,
+  angulo: desfecho === 'gol',
+  raspouTrave: false,
+  recriou,
+  goleiroX: -0.4,
+  tFim: 1,
+  pontos,
+});
+
+/**
+ * Lances: abre a tela dos Lances e chama o resultado de verdade (o `window.__lancesResultado` que ela deixa em dev).
+ * `lances-vitoria`: 2 gols em 3, prata nova e desafio gerado. `lances-recebido`: desafio recebido e vencido, sem
+ * código (volta o "Mandar no grupo" com o card).
+ */
+function lances(cenario: string): void {
+  const recebido = cenario === 'lances-recebido';
+  const lance = LANCES.find((l) => l.id === 'palmeiras-2022-falta-da-recopa') ?? LANCES[0];
+  const resultados = [tentativa('gol', 42, true), tentativa('barreira', 0), tentativa('gol', 42)];
+  const pontos = 84;
+  const fim = {
+    resultado: { lances: [], gols: 2, recriados: 1, pontos },
+    semana: '2026-11-09',
+    contaNoRanking: true,
+    sobSuspeita: false,
+    melhorDoDia: pontos,
+    ranking: { antes: null, depois: null },
+    confirmadaEm: new Date().toISOString(),
+    desempenho: { posicao: 3, total: 27, recorde: 130, novo_recorde: false },
+    medalhas: recebido ? [] : [{ lanceId: lance.id, medalha: 'prata' as const }],
+    restantesHoje: 7,
+    melhoresDoDia: [pontos, 72, 54],
+    desafio: recebido ? null : { codigo: 'abcd2345' },
+    comparacao: recebido ? { desafiante: null, pontosDesafiante: 62, venceu: true } : null,
+  } satisfies FechamentoLances;
+  irPara({ tela: 'lances' });
+  const chamar = (tentativas: number) => {
+    const r = (window as unknown as { __lancesResultado?: (...a: unknown[]) => void }).__lancesResultado;
+    if (r) r([lance, lance, lance], resultados, 'Na gaveta! Que falta, que categoria!', fim, null, recebido ? 'abcdefgh' : null);
+    else if (tentativas > 0) setTimeout(() => chamar(tentativas - 1), 100);
+  };
+  chamar(50);
+}
+
 export function abrirResultadoFalso(cenario: string | null): void {
   const c = cenario ?? 'pen-vitoria';
   if (c.startsWith('prova')) irPara({ tela: 'provaResultado', dados: prova(c) });
+  else if (c.startsWith('lances')) lances(c);
   else irPara({ tela: 'resultado', dados: penaltis(c) });
   const fonte = Number(new URLSearchParams(location.search).get('fonte'));
   if (fonte > 100) crescerFonte(fonte / 100);

@@ -269,21 +269,56 @@ export function ajustarDobra(root: HTMLElement): void {
   const tela = root.querySelector<HTMLElement>('.res-padrao');
   const rodape = root.querySelector<HTMLElement>('.res-acoes');
   if (!tela || !rodape || !tela.isConnected) return;
+  // O rodapé numa linha antes de medir a dobra: ele não cresce e não cobre o "Mostrar o resultado".
+  for (const b of rodape.querySelectorAll<HTMLElement>('.botao')) caberNumaLinha(b);
   const dobra = () => innerHeight - rodape.getBoundingClientRect().height;
   const fundo = (el: Element) => el.getBoundingClientRect().bottom + scrollY;
   const botao = root.querySelector<HTMLElement>('[data-desafiar]');
-  if (botao)
-    for (let n = 0; n <= 3; n++) {
+  if (botao) {
+    let n = 0;
+    for (; n <= 3; n++) {
       tela.dataset.aperto = String(n);
       if (fundo(botao) <= dobra()) break;
     }
-  // Convite nunca na primeira dobra: em tela curta (sem desafio, sem rede), ele desce até logo depois da dobra.
+    // "Mostrar o resultado" inteiro na dobra, se o 1º degrau (só espaços) bastar; senão a tela não aperta por ele.
+    const mostrar = root.querySelector<HTMLElement>('.res-mostrar');
+    if (n === 0 && mostrar && fundo(mostrar) > dobra()) {
+      tela.dataset.aperto = '1';
+      if (fundo(mostrar) > dobra()) tela.dataset.aperto = '0';
+    }
+  }
+  // Nada cortado pela barra de baixo: o bloco de toque que a dobra cortaria ao meio ("Mostrar o resultado", "Ver
+  // detalhes") desce até começar nela, inteiro para baixo. Convite nunca na primeira dobra: em tela curta (sem
+  // desafio, sem rede), ele desce até logo depois dela.
+  const topo = (el: Element) => el.getBoundingClientRect().top + scrollY;
   const convites = root.querySelector<HTMLElement>('.res-convites');
-  if (!convites) return;
-  convites.style.marginTop = '';
-  if (![...convites.children].some((c) => c.childElementCount > 0)) return;
-  const falta = dobra() - (convites.getBoundingClientRect().top + scrollY);
+  const blocos: [HTMLElement | null, Element | null][] = [
+    [root.querySelector<HTMLElement>('.res-mostrar'), root.querySelector('.res-mostrar')],
+    [root.querySelector<HTMLElement>('.res-detalhes-caixa'), root.querySelector('.res-ver')],
+  ];
+  for (const [bloco] of blocos) if (bloco) bloco.style.marginTop = '';
+  if (convites) convites.style.marginTop = '';
+  for (const [bloco, medida] of blocos) {
+    if (!bloco || !medida) continue;
+    const falta = dobra() - topo(medida);
+    if (falta > 0 && fundo(medida) > dobra()) bloco.style.marginTop = `${Math.ceil(falta)}px`;
+  }
+  if (!convites || ![...convites.children].some((c) => c.childElementCount > 0)) return;
+  const falta = dobra() - topo(convites);
   if (falta > 0) convites.style.marginTop = `${Math.ceil(falta) + 12}px`;
+}
+
+/**
+ * O texto do botão do rodapé sempre numa linha ("Jogo de volta" a 360 px com a fonte do sistema em 130%): sem quebra
+ * (resultado.css), a letra diminui de 1 em 1 px até caber, nunca abaixo de 14 px e sem reticências. `important`
+ * porque a fonte grande do sistema, nas simulações, também vem como estilo do próprio elemento.
+ */
+function caberNumaLinha(b: HTMLElement): void {
+  let px = parseFloat(getComputedStyle(b).fontSize);
+  while (b.scrollWidth > b.clientWidth + 1 && px > 14) {
+    px -= 1;
+    b.style.setProperty('font-size', `${px}px`, 'important');
+  }
 }
 
 /**
