@@ -15,6 +15,7 @@ import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { textoForaDasMelhores } from '../jogo/lancesTextos';
 import { numero, placa, selo } from './blocos';
 import { motivoDoConfete } from '../jogo/confete';
+import { contar as contarFunil } from '../servidor/funil';
 import { contar, htmlResultado, htmlSelosDaPosicao, ligarConfete, ligarResultado } from './resultadoPadrao';
 
 const SITE = 'https://torcida.kauewalter.com.br';
@@ -93,6 +94,9 @@ ${conviteX1Prova(total, false)} ${link}`;
   });
 
   contar(root.querySelector<HTMLElement>('[data-contador]'), total);
+  // Funil do X1: o código do X1 recebido vem junto nos dados da prova (`desafio`, null se o servidor recusou).
+  const x1Recebido = rota.dados.desafio?.id;
+  if (x1Recebido) contarFunil({ ev: 'terminou', tipo: 'x1_prova', x1: x1Recebido });
   // Confete e vibração, uma vez por resultado: 8 de 8 ou X1 vencido, recorde novo ou entrou nas 3 melhores da Prova.
   const comemorar = ligarConfete(root, time);
   comemorar(
@@ -137,8 +141,12 @@ ${conviteX1Prova(total, false)} ${link}`;
     link,
     emoji: `${linha}
 ${fim.escada}`,
+    funil: codigo ? { tipo: 'x1_prova', x1: codigo } : { tipo: 'resultado', jogo: 'prova' },
     // Sempre prova nova: o mesmo desafio de novo seria com as perguntas já vistas (o servidor recusa).
-    maisUma: () => irPara({ tela: 'prova' }),
+    maisUma: () => {
+      if (cmp && !cmp.venceu && x1Recebido) contarFunil({ ev: 'revanche', tipo: 'x1_prova', x1: x1Recebido });
+      irPara({ tela: 'prova' });
+    },
     inicio: () => irPara({ tela: 'inicio' }),
   });
 }

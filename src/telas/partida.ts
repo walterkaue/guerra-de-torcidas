@@ -2,6 +2,7 @@
 // Toda decisão de resultado vem do motor puro (jogo/penaltis.ts); aqui é só gesto e desenho.
 
 import { esc, irPara, type Rota } from '../app';
+import { contar, etapa } from '../servidor/funil';
 import { SELECAO, TORCIDA_SELECAO, coresDoAdversario } from '../dados/adversarios';
 import { corDeTexto, timePorId, TIMES, type Time } from '../dados/times';
 import { prefs } from '../estado';
@@ -489,6 +490,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   function chutar(gesto: GestoCobranca): void {
     const gq = normalizarCobranca(gesto);
     gestosCobranca.push(gq);
+    // Funil do X1: só o 1º gesto de um X1 recebido (`desafio` fica null se o servidor recusou o X1).
+    if (gestosCobranca.length === 1 && desafio) contar({ ev: 'primeiro_chute', tipo: 'x1_penaltis', x1: desafio.id });
     if (fase.tipo === 'mirar') pertoNoChute = pertoDaBola(relogio() - fase.inicio);
     const chute: Fase & { tipo: 'chute' } = { tipo: 'chute', inicio: relogio(), r: null, gesto: gq };
     fase = chute;
@@ -760,6 +763,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       dificuldade = p.dificuldade;
       partidaId = p.partidaId;
       desafio = p.desafio;
+      // O X1 pode ter sido recusado (ou a disputa vir só agora): a etapa leva o código só se ele valeu.
+      etapa({ tipo: 'partida', jogo: 'penaltis', ...(desafio ? { x1: desafio.id } : {}) });
       if (desafio) {
         // O convite já foi aceito: tira o ?d= do endereço para não oferecer de novo.
         tirarCodigoDoEndereco();
@@ -822,6 +827,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
 
   async function encerrar(escolha?: EscolhaParOuImpar, parOuImpar?: ResultadoParOuImpar): Promise<void> {
     acabou = true;
+    etapa(null);
     let resultado = totalizar(cobrancas, defesas, parOuImpar, tabela);
     let servidor: FechamentoDoServidor | undefined;
     const fechando = fecharNoServidor(escolha);
@@ -1175,6 +1181,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   }
   medir();
   atualizarHud();
+  // Desistência: a partida é a etapa; conclui em encerrar().
+  etapa({ tipo: 'partida', jogo: 'penaltis', ...(codigoDesafio ? { x1: codigoDesafio } : {}) });
   void preparar();
   let raf = proximoQuadro(quadro, relogio);
   // Deitado: pausa (e solta o arraste que estava no meio); ao virar, segue de onde parou.

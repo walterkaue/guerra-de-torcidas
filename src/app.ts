@@ -7,6 +7,7 @@ import type { DadosResultadoProva } from './telas/prova';
 import { faixaDoAparelho } from './estado';
 import { precisaDaTriagem } from './jogo/faixaEtaria';
 import { qualidade } from './telas/qualidade';
+import { sairDaEtapa } from './servidor/funil';
 
 export interface DadosResultado {
   timeId: string;
@@ -103,6 +104,7 @@ let primeiraTela = true;
 export function irPara(pedida: Rota): void {
   const rota: Rota = precisaDaTriagem(pedida.tela, faixaDoAparelho()) ? { tela: 'triagem', depois: pedida } : pedida;
   const trocar = () => {
+    sairDaEtapa();
     if (typeof limparAtual === 'function') limparAtual();
     raiz.innerHTML = '';
     window.scrollTo(0, 0);
@@ -133,6 +135,9 @@ export function desafioLancesDoLink(): string | undefined {
   const l = new URLSearchParams(location.search).get('l');
   return l && /^[a-z0-9]{8}$/i.test(l) ? l.toLowerCase() : undefined;
 }
+
+/** Código do X1 que veio no link e ainda está no endereço (funil: a etapa de quem chegou por um X1). */
+export const x1DoLink = (): string | undefined => desafioDoLink() ?? desafioLancesDoLink() ?? desafioProvaDoLink();
 
 /** O link do Time do Dia (?dia) abre direto no jogo. */
 export function linkDoTimeDoDia(): boolean {

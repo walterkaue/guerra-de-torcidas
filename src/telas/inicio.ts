@@ -2,6 +2,7 @@
 // rival com a sua posição, "Jogar agora", cards dos jogos com desenho e estado vivo, e o giro da semana.
 
 import { desafioDoLink, desafioLancesDoLink, desafioProvaDoLink, esc, irPara, type Rota } from '../app';
+import { contar } from '../servidor/funil';
 import { LANCES_POR_CLUBE } from '../dados/lancesResumo';
 import { ID_OUTRO, TIMES, corDeTexto, corDoRivalNoDuelo, timePorId, type Time } from '../dados/times';
 import { faixaDoAparelho, prefs } from '../estado';
@@ -253,14 +254,21 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
   /** Desafio do link já conferido no servidor: o botão grande da home aceita esse X1 em vez de abrir outro jogo. */
   let desafioAberto: string | undefined;
-  const jogar = (desafio?: string, disputa?: Disputa) =>
+  // Funil do X1: aceitou = tocou em "Aceitar o X1" ou no "Jogar agora" com o convite aberto (as três funções abaixo).
+  const jogar = (desafio?: string, disputa?: Disputa) => {
+    if (desafio) contar({ ev: 'aceitou', tipo: 'x1_penaltis', x1: desafio });
     irPara(time ? { tela: 'partida', desafio, disputa } : { tela: 'times', depois: 'partida', desafio });
+  };
   /** X1 dos Lances (?l=) já conferido: o "Jogar agora" também aceita. */
   let desafioLancesAberto: string | undefined;
-  const jogarLances = (desafio?: string) =>
+  const jogarLances = (desafio?: string) => {
+    if (desafio) contar({ ev: 'aceitou', tipo: 'x1_lances', x1: desafio });
     irPara(time ? { tela: 'lances', desafio } : { tela: 'times', depois: 'lances', desafio });
-  const jogarProva = (desafio?: string) =>
+  };
+  const jogarProva = (desafio?: string) => {
+    if (desafio) contar({ ev: 'aceitou', tipo: 'x1_prova', x1: desafio });
     irPara(time ? { tela: 'prova', desafio } : { tela: 'times', depois: 'prova', desafio });
+  };
   const abrir: Record<JogoDaHome, () => void> = {
     // O card dos Lances abre o hub (Pênaltis, Faltas e Cara a cara); o convite de X1 continua indo direto para a partida.
     penaltis: () => irPara(time ? { tela: 'lances' } : { tela: 'times', depois: 'lances' }),

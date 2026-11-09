@@ -6,6 +6,7 @@
 
 import '../estilos/trofeus.css';
 import { esc } from '../app';
+import { contar } from '../servidor/funil';
 import { textoParaCopiar } from '../jogo/mandarLance';
 import { ehItemPenaltis, previaDoProximoGol, trilhaDoItem } from '../jogo/lancesTextos';
 import { barra, trilha } from './blocos';
@@ -120,6 +121,8 @@ export function abrirFicha(o: OpcoesDaFicha): () => void {
     btnMandar.addEventListener('click', async () => {
       if (mandando) return;
       mandando = true;
+      // Funil: conta no toque; sem a folha de compartilhar do aparelho, o caminho é a cópia do link.
+      contar({ ev: 'compartilhou', tipo: 'lance', meio: typeof navigator.share === 'function' ? 'grupo' : 'link' });
       btnMandar.disabled = true;
       const copiar = async () => {
         await navigator.clipboard.writeText(textoParaCopiar(texto, link));

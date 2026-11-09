@@ -480,6 +480,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
       textoShare,
       link,
       emoji: `${linha}\n${grade}`,
+      funil: { tipo: 'resultado', jogo: 'time_do_dia' },
       maisUma: () => irPara({ tela: 'lances' }),
       inicio: () => irPara({ tela: 'inicio' }),
     });

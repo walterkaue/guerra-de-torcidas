@@ -28,6 +28,7 @@ import { ligarEfeitoNoRanking } from './efeitoRanking';
 import { contar, htmlResultado, htmlSelosDaPosicao, ligarConfete, ligarResultado } from './resultadoPadrao';
 import { mostrarRumoDaDisputa } from './rumoMedalhas';
 import { vibrar } from './toque';
+import { contar as contarFunil } from '../servidor/funil';
 
 const SITE = 'https://torcida.kauewalter.com.br';
 const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
@@ -148,6 +149,9 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
   if (cmp) void import('./bustosDoDuelo').then((m) => m.bustosDoDuelo(root, d.desafio?.boneco, d.desafio?.timeId));
 
   contar(root.querySelector<HTMLElement>('[data-contador]'), p.total);
+  // Funil do X1: terminou a partida de um X1 recebido (uma vez por tela de resultado).
+  const x1Recebido = d.desafio?.id;
+  if (x1Recebido) contarFunil({ ev: 'terminou', tipo: 'x1_penaltis', x1: x1Recebido });
   // Confete e vibração, uma vez por resultado: vitória, recorde novo, entrou nas 3 melhores do dia ou medalha nova.
   const comemorar = ligarConfete(root, time);
   comemorar(
@@ -245,7 +249,11 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     // Revanche: na disputa histórica, joga a mesma de novo; senão (inclusive depois de um X1, que vale uma vez por
     // pessoa: jogo.md, seção 6), partida nova contra a máquina. Depois do corte não há Disputa livre (seção 14.7):
     // sem disputa (livre começada no domingo e fechada na segunda), volta à escolha, no filtro Pênaltis.
-    maisUma: () => irPara(d.disputa ? { tela: 'partida', disputa: d.disputa } : { tela: 'lances', aba: 'penaltis' }),
+    funil: codigo ? { tipo: 'x1_penaltis', x1: codigo } : { tipo: 'resultado', jogo: 'penaltis' },
+    maisUma: () => {
+      if (!r.venceu && x1Recebido) contarFunil({ ev: 'revanche', tipo: 'x1_penaltis', x1: x1Recebido });
+      irPara(d.disputa ? { tela: 'partida', disputa: d.disputa } : { tela: 'lances', aba: 'penaltis' });
+    },
     inicio: () => irPara({ tela: 'inicio' }),
   });
 

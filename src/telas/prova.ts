@@ -33,6 +33,7 @@ import { dicasDoAparelho, mostrarDica, tirarDica } from './dicas';
 import { DICAS } from '../jogo/dicas';
 import { primeiraDica } from '../jogo/dicasGatilhos';
 import { abrirRegras } from './regras';
+import { contar as contarFunil, etapa } from '../servidor/funil';
 
 export interface DadosResultadoProva {
   timeId: string;
@@ -273,6 +274,8 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   // ---------- responder ----------
   async function responder(id: string | null): Promise<void> {
     if (travado || !partidaId || saiu) return;
+    // Funil do X1: o 1º gesto de uma prova de X1 recebido (`desafio` fica null se o servidor recusou o X1).
+    if (desafio && pergunta?.numero === 1) contarFunil({ ev: 'primeiro_chute', tipo: 'x1_prova', x1: desafio.id });
     travar(true);
     pararRelogio();
     elRelogio.classList.remove('correndo');
@@ -404,6 +407,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   // ---------- fim ----------
   function terminar(fim: FimProva): void {
     pararRelogio();
+    etapa(null);
     // Uma frase só: a do fim (o 8 de 8 ganha a própria; a de "parou" era de transição e saiu).
     const frase = fim.fim === 'perfeita' ? falar('prova_perfeita') : falar('prova_fim', { pontos: fim.pontos.total });
     irPara({
@@ -464,6 +468,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       if (saiu) return;
       partidaId = p.partidaId;
       desafio = p.desafio;
+      etapa({ tipo: 'partida', jogo: 'prova', ...(desafio ? { x1: desafio.id } : {}) });
       elInicio.hidden = true;
       degraus.fill('futuro');
       usadas.clear();

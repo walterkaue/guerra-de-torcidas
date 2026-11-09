@@ -14,6 +14,7 @@ import { ROTA_ENTRAR, codigoDoEndereco } from './jogo/codigoTorcedor';
 import { itemDoEndereco } from './jogo/enderecoDoLance';
 import { comecaPelaEscolha } from './jogo/primeiroAcesso';
 import { quandoSairDaConta } from './servidor/api';
+import { contar } from './servidor/funil';
 import { apoioLiberado, telaApoio } from './telas/apoio';
 import { telaInicio } from './telas/inicio';
 import { ligarAvisoDeSaida } from './telas/saida';
@@ -171,6 +172,17 @@ if (import.meta.env.DEV && app && new URLSearchParams(location.search).has('vitr
   iniciarApp(app);
   // Aparelho que perdeu a conta (desconectado em outro aparelho ou conta apagada): volta à escolha do time, com aviso.
   quandoSairDaConta(() => irPara({ tela: 'times', depois: 'inicio' }));
+  // Funil do X1: o link que abriu o jogo, contado uma vez por carga (antes de rotaDoHash limpar o endereço).
+  {
+    const x1d = desafioDoLink();
+    const x1l = desafioLancesDoLink();
+    const x1p = desafioProvaDoLink();
+    const hashLance = /^#(lance|disputa)\//.exec(location.hash);
+    if (x1d) contar({ ev: 'abriu', tipo: 'x1_penaltis', x1: x1d });
+    else if (x1l) contar({ ev: 'abriu', tipo: 'x1_lances', x1: x1l });
+    else if (x1p) contar({ ev: 'abriu', tipo: 'x1_prova', x1: x1p });
+    else if (hashLance && itemDoEndereco(location.hash)) contar({ ev: 'abriu', tipo: hashLance[1] as 'lance' | 'disputa' });
+  }
   // ?dia (link do card do Time do Dia) abre direto no jogo; sem time escolhido, passa antes pela escolha.
   const dia = linkDoTimeDoDia() || (import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso'));
   const entrada: Rota =
