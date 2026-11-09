@@ -3,6 +3,7 @@
 > Montado em 08/11/2026, com o jogo no ar depois do corte dos Lances unificados, para os dias de teste com amigos.
 > Junta três origens: **K** (pontos do Kauê), **P** (já previsto no `docs/proximos-passos.md`, nos relatórios das jornadas e do simulador e nas propostas) e **C** (análise e propostas do Claude).
 > Regras e decisões continuam no `docs/jogo.md`. Este arquivo é a fila de ideias. Um item sai daqui quando vira decisão no `jogo.md` ou trabalho no `proximos-passos.md`.
+> Os códigos de antes de 08/11 (M, R, S, D, I, V, T, X, G, do backlog de pesquisa do projeto do Chat) são outra lista; aqui valem só os IDs desta página.
 
 **Como ler:**
 - **Prioridade:** **P0** antes de divulgar · **P1** próximo ciclo · **P2** quando der · **P3** ideia guardada.
@@ -26,13 +27,11 @@
 
 ## 2. Ordem sugerida para depois dos testes
 
-1. **A01 a A05:** o que falta para divulgar (Supabase Pro, advogado, balanço e zerar, Prova calibrada, funil medido).
-2. **C01 + C02:** medir o funil do X1 e dar a ele um botão próprio. É barato e responde à pergunta mais importante dos testes.
-3. **B01 + B02:** central de avisos e resultado em duas camadas (ponto 1).
-4. **C04:** replay do gol compartilhável (ponto 3). É o de maior "uau" por esforço, porque o replay já existe.
-5. **C05:** card animado (ponto 2). Reaproveita o motor do C04.
-5a. **H01:** som novo e marca sonora. Dá para desenhar no Chat em paralelo com os testes.
-6. **E01 + F01:** desempenho da 1ª visita e registro de erros na produção.
+0. **Agora, durante os testes:** A10, C01 (com o I03) e H01a.
+1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); B02 + C02 desenhados juntos no Chat (resultado em duas camadas, com o "Chamar no X1" como ação própria); C06 (link do X1 com menos toques); B03 (um aviso por vez na Home); C10 (prazo dos X1).
+2. **Semana de 16/11:** C03 + C08 (ver o gol de quem chamou, redesenhado no aparelho de quem abre); E01 (1ª visita); E04 (roteiro de iPhone); D07 (Crava na entressafra).
+3. **Depois:** C04 (com a prova de conceito antes), C05, H01b e H02, B01, F01, A08 e H03 (com o que os amigos disserem).
+4. **Antes da divulgação pública:** A01 a A05.
 
 ---
 
@@ -42,15 +41,16 @@
 
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
-| A01 | Plano do Supabase decidido (Pro) | P | Limites do plano grátis, pausa por inatividade e backups. Está na lista "Antes de divulgar". | P0 | P | Kauê |
+| A01 | Plano do Supabase decidido (Pro) | P | Pro quando o banco passar de 250 MB, ou ~150 pessoas jogarem por dia, ou antes da divulgação pública (o que vier primeiro); os testes com amigos seguem no Free. Limites do plano grátis, pausa por inatividade e backups. | P0 | P | Kauê |
 | A02 | Termos com o advogado (pontos 4 e 5, código do torcedor, cidade, boneco em campo) | P | O parecer veio sem OAB, e a página tem valor legal (ECA Digital). | P0 | M | Kauê |
 | A03 | Balanço rodado e pré-temporada zerada (até 06/12) | P | O balanço tem de rodar antes de zerar. A semana de 02/11 já soma as duas regras. | P0 | P | Kauê + Claude |
 | A04 | Prova calibrada com as partidas de 20 s | P | A mediana e os 4 erros usam só partidas desde 06/11, 16h47. | P0 | P | Claude + Kauê decide |
 | A05 | Funil do desafio medido (ver C01) | P | Sem isso, nenhuma taxa de convite é confiável. | P0 | M | Claude |
 | A06 | Conferências marcadas: bloco 8 (09/11, 12h), fechamento do mês (07/12) | P | Só leitura, sem lembrete automático. | P0 | P | Kauê + Claude |
-| A07 | Testes no celular que ficaram para trás (aquecimento, troféus, G3 com TalkBack, boneco em campo, limpeza dos Lances) | P | Lista no `proximos-passos.md`, item 11 e trilhos. Dá para fazer junto com os amigos. | P0 | P | Kauê |
-| A08 | Perguntas até 800 (hoje ~280) | P | Perguntas nascidas de páginas reais; os robôs do Gemini seguem na decisão de domingo. | P1 | G | Claude + Gemini |
-| A09 | Auditor do Gemini com 51% de falha | P/C | Separar 429 de 503 (a coluna `codigos` já guarda) e decidir: espaçar, trocar de modelo Flash ou aceitar. | P1 | P | Kauê decide |
+| A07 | Testes no celular que ficaram para trás (aquecimento, troféus, G3 com TalkBack, boneco em campo, limpeza dos Lances) | P | Lista na seção "No celular" do `proximos-passos.md`. Dá para fazer junto com os amigos. | P0 | P | Kauê |
+| A08 | Perguntas até 800 (hoje 328) | P | Perguntas nascidas de páginas reais; os 5 crons do Gemini ficam como estão (decidido em 07/11). | P1 | G | Claude + Gemini |
+| A09 | Auditor do Gemini com falhas 429 | P/C | Decidido em 07/11: ficam os 5 crons. Espaçar a auditoria se os 429 crescerem (a coluna `codigos` separa 429 de 503). | P3 | P | Claude |
+| A10 | **Acompanhamento diário dos testes** | C | O Chat lê, só leitura: partidas, X1 gerados e aceitos, partidas sem valer por motivo, mensagens do "Achei um erro" e erros das funções, até o F01 existir. Os amigos usam o "Achei um erro" para relatar. | P0 | P | Chat |
 
 ### B. Clareza das telas (ponto 1 do Kauê)
 
@@ -70,13 +70,14 @@
 |---|---|---|---|---|---|---|
 | C01 | **Contar o funil do X1** | P | Uma tabela de eventos mínimos, sem identificar ninguém: toque em compartilhar, abertura do link, aceite, partida jogada, revanche. Relatório no `npm run metricas`. | P0 | M | Claude |
 | C02 | **Botão "Chamar no X1"** no resultado (Lances e pênaltis) | K/C | O X1 sai de dentro do compartilhar e vira ação própria, com texto pronto. Respeitar um amarelo por tela: talvez substitua o "Mandar no grupo". | P1 | M | Chat → Claude |
-| C03 | **Ver as tentativas de quem chamou** antes de jogar o X1 dos Lances | K | Hoje quem aceita vê só "Camisa10 fez 96". Mostrar os 3 desfechos (e, com C04, o replay dos gols). Precisa do `ver_desafio_lances` devolver os desfechos. Não abre brecha: quem aceita joga com sorteio novo. | P1 | M | Chat → Claude (servidor) |
-| C04 | **Replay do gol compartilhável** | K | Detalhe na seção 4.3. No resultado: "Compartilhar o replay do gol N". Vídeo curto: a cobrança de trás do batedor e o replay. | P1 | G | Chat → Claude |
+| C03 | **Ver as tentativas de quem chamou** antes de jogar o X1 dos Lances | K | Hoje quem aceita vê só "Camisa10 fez 96". Mostrar os 3 desfechos (e, com C04, o replay dos gols). Precisa do `ver_desafio_lances` devolver os desfechos. **Lances:** quem aceita joga com sementes novas, então dá para mostrar antes. **Pênaltis:** as cobranças gravadas de quem chamou são o alvo das defesas de quem aceita; só podem aparecer depois que o X1 termina. | P1 | M | Chat → Claude (servidor) |
+| C04 | **Replay do gol compartilhável** | K | Detalhe na seção 4.3. No resultado: "Compartilhar o replay do gol N". Vídeo curto: a cobrança de trás do batedor e o replay. **Antes do G, uma prova de conceito P:** gravar 3 s do replay e mandar pelo WhatsApp no Android e no iPhone, conferindo se o formato é aceito. | P1 | G | Chat → Claude |
 | C05 | **Card animado** (vídeo curto para Stories e WhatsApp) | K | Detalhe na seção 4.2. O card de hoje com confete, o número contando, o boneco comemorando e o fundo do vestiário mexendo. | P2 | G | Chat → Claude |
 | C06 | Link do X1 com menos toques (J41) | P | Hoje são 4 toques e uma lista de 20 times até o 1º chute. A idade vem antes (ECA) e o time sai sugerido do link de quem chamou. Decisão de fluxo do Kauê (proposta de 31/10, itens 2 e 3). | P1 | M | Kauê decide → Claude |
 | C07 | Placar acumulado do X1 entre duas pessoas (J42) | P | "Zé 2 x 1 Camisa10" na série de revanches, sem apelido público. Primeiro passo do ranking entre amigos. | P2 | M | Chat → Claude |
-| C08 | Link de replay que roda no celular de quem abre | C | Em vez de vídeo, o link leva só o gesto e a cena, e o jogo redesenha o gol no aparelho de quem abre. Leve e bom para o WhatsApp. O vídeo (C04) fica para o Stories. | P2 | M | Claude |
+| C08 | Link de replay que roda no celular de quem abre | C | Em vez de vídeo, o link leva só o gesto e a cena, e o jogo redesenha o gol no aparelho de quem abre. Leve e bom para o WhatsApp. O vídeo (C04) fica para o Stories. Nos pênaltis, as cobranças gravadas de quem chamou só aparecem depois que o X1 termina (ver C03); nos Lances, quem aceita joga com sementes novas, então dá para mostrar antes. | P2 | M | Claude |
 | C09 | Prévia bonita do link (Open Graph) por tipo | C | Quem recebe o link no WhatsApp vê hoje a mesma prévia para tudo. Uma imagem por tipo (X1, lance, medalha) aumenta o clique. Como o site é estático, uma por tipo, não por partida. | P2 | P | Claude |
+| C10 | Prazo de validade dos X1: 7 dias, apagados com 30 | C | Decidido em 07/11. Vem depois do C01, que dá a contagem do funil antes de apagar. | P1 | M | Claude |
 
 ### D. Jogo e conteúdo
 
@@ -88,6 +89,7 @@
 | D04 | Ligas do Crava com amigos e cidade (J47) | P | Fase 2 (comunidade). | P3 | G | Chat |
 | D05 | Embaixadinha e os jogos da fase 4 | P | Roadmap; só depois do balanço. | P3 | G | Chat |
 | D06 | Lance do Dia com algo a mais que o destaque | C | Hoje ele não dá bônus (decidido). Sem mexer em pontos, pode ganhar card próprio ("Fiz o Lance do Dia") ou um selo na Galeria. | P3 | P | Chat |
+| D07 | **Crava na entressafra** | C | O Brasileirão acaba em 02/12. Decidir o que o card do Crava e o "Jogar agora" mostram de dezembro a janeiro (ver V09 do backlog de pesquisa do Chat: Prova e Time do Dia seguram o ritmo). | P1 | P | Chat |
 
 ### E. Acessibilidade e desempenho
 
@@ -108,13 +110,21 @@
 | F04 | Ordem de publicação dentro do PR | C | Cada PR com função já traz a ordem, mas ela some no histórico. Um script `npm run publicar:conferir` que compara as funções no ar com a `main` (como foi feito à mão para a `lances` v8). | P2 | P | Claude |
 | F05 | Limpezas pequenas | P | `.admin-tabela` e `.conq-falta` sem uso, limite por IP no Código do torcedor, cidade na junção de contas. | P3 | P | Claude |
 
+### G. Comunidade (fase 2, só depois do balanço)
+
+| ID | Item | Origem | Por quê | Prioridade | Tamanho | Quem |
+|---|---|---|---|---|---|---|
+| G01 | Times criados pelos jogadores, com moderação | P | `docs/jogo.md` seção 3. A moderação vem antes de liberar. | P3 | G | Chat |
+| G02 | Ligas e campeonatos combinados (ranking entre amigos com apelido) | P | Seção 4. Começa pelo C07. | P3 | G | Chat |
+
 ### H. Som e bonecos (pontos do Kauê, 08/11/2026)
 
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
-| H01 | **Revisão do som e marca sonora** | K | Detalhe na seção 4.4. O apito de hoje é um tom de 2.900 Hz com trinado: agudo e cansativo, toca em toda partida. O chute desce a 45 Hz, grave que o alto-falante do celular nem reproduz. Proposta: uma assinatura sonora curta e própria, um apito mais curto e mais macio, e sons com variação. | P1 | M | Chat (direção) → Claude |
+| H01a | **Apito mais curto e mais grave e chute com estalo médio** | K | Detalhe na seção 4.4. O apito de hoje é um tom de 2.900 Hz com trinado: agudo e cansativo, toca em toda partida. O chute desce a 45 Hz, grave que o alto-falante do celular nem reproduz. Ajuste direto, já. | P1 | P | Claude |
+| H01b | **Assinatura sonora e sons que faltam** | K | Detalhe na seção 4.4. Uma assinatura sonora curta e própria, com variação (I04). Desenho no Chat com página de teste. | P1 | M | Chat (desenho) → Claude |
 | H02 | Sons que faltam (MVP de áudio) | C | Hoje só existem 4 sons: chute, trave, torcida e apito. Faltam toque de botão, defesa do goleiro, rede balançando, barreira, recorde, medalha e vitória. Lista na seção 4.4. | P2 | M | Claude |
-| H03 | **Revitalização dos bonecos** | K | A junção da cintura (quadril com tronco) ainda incomoda, e a personalização no Perfil merece capricho. **Só backlog por enquanto:** o Kauê coleta feedback e ideias dos amigos antes de desenhar. Base: `docs/bonecos.md` e `docs/jogo.md` 14.5. | P2 | G | Kauê (feedback) → Chat |
+| H03 | **Revitalização dos bonecos** | K | A junção da cintura (quadril com tronco) ainda incomoda, e a personalização no Perfil merece capricho. **Só backlog por enquanto:** o Kauê coleta feedback e ideias dos amigos antes de desenhar. Base: `docs/jogos/boneco-montavel.md`. | P2 | G | Kauê (feedback) → Chat |
 
 ### I. Lições dos jogos Flash (material do Kauê, 08/11/2026)
 
@@ -126,13 +136,6 @@
 | I04 | Som com variação e "combo" | K | Cada som toca com o tom ±10% e o volume variando um pouco. Gols seguidos sobem o tom. A torcida abaixa meio segundo quando o narrador ou o apito entram. Entra no H01. | P2 | — | (dentro do H01) |
 | I05 | **Passada de "sensação de jogo"** | C | O que fazia os jogos Flash grudarem: do fim da partida ao próximo chute em 1 toque e menos de 2 s; uma pequena pausa e tremida no gol (com movimento reduzido, sem tremida); recorde sempre à vista. Medir o tempo do "Mais uma" até o 1º chute, nos pênaltis e nos Lances. | P2 | M | Claude |
 | I06 | Estudar jogos curtos de navegador (sem copiar) | K | Olhar o que dava certo nos jogos de navegador de futebol e de habilidade: reinício instantâneo, uma mecânica só, desafio a um amigo, placar de recordes. Anotar as lições, nunca reproduzir um jogo específico (nome, arte, fases). | P3 | P | Chat |
-
-### G. Comunidade (fase 2, só depois do balanço)
-
-| ID | Item | Origem | Por quê | Prioridade | Tamanho | Quem |
-|---|---|---|---|---|---|---|
-| G01 | Times criados pelos jogadores, com moderação | P | `docs/jogo.md` seção 3. A moderação vem antes de liberar. | P3 | G | Chat |
-| G02 | Ligas e campeonatos combinados (ranking entre amigos com apelido) | P | Seção 4. Começa pelo C07. | P3 | G | Chat |
 
 ---
 
@@ -154,10 +157,10 @@
 
 **O que continua na tela:**
 - o que é do momento e muda a ação: o X1 recebido ao abrir o link, o aviso de conexão caída na partida, o limite do dia;
-- o primeiro acesso (escolha do time, triagem de idade): não pode ir para a caixa (seção 13).
+- o primeiro acesso (escolha do time, triagem de idade): não pode ir para a caixa (`docs/jogo.md` seção 7).
 
 **Regras:**
-- Sem urgência e sem contagem regressiva (seção 13 e `docs/narrador.md` 13).
+- Sem urgência e sem contagem regressiva (`docs/jogo.md` seção 7 e `docs/narrador.md` 13).
 - O número no sininho mostra quantos avisos há, nunca "Corre!".
 - Sem push para menor.
 - Guardado no aparelho (como os avisos de hoje). Os avisos que vêm do servidor (troféu, X1 recebido) são lidos na hora de abrir.
@@ -204,7 +207,7 @@ No fim, uma tela com o título do lance, o placar, "Guerra de Torcidas" e o link
 
 **Regras:**
 - **Boneco:** o batedor é o boneco da pessoa (se "Meu boneco em campo" estiver ligado), nas cores do lance.
-- **Nomes reais:** só o título do lance, nunca nome de jogador (seção 8).
+- **Nomes reais:** só o título do lance, nunca nome de jogador (`docs/jogo.md` seção 6).
 - **Anti-trapaça:** nada muda. O replay é desenho de algo que o servidor já fechou.
 - **Partida sem valer:** o replay pode sair também do treino que vira partida sem valer? Proposta: sim, com a marca "Treino" no vídeo. Decisão do Kauê.
 
@@ -232,7 +235,7 @@ No fim, uma tela com o título do lance, o placar, "Guerra de Torcidas" e o link
 
 **Regras que valem:**
 - O botão Som (mudo) e a escolha de cada pessoa continuam.
-- Nada de som de cobrança ou urgência (seção 13).
+- Nada de som de cobrança ou urgência (`docs/jogo.md` seção 7).
 - O peso de áudio entra no orçamento do bundle, fora do pacote inicial.
 
 **Desenho no Chat:** ouvir 3 opções de assinatura e 2 de apito antes de construir (dá para gerar uma página de teste com os sons tocando).
