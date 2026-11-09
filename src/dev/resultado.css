@@ -1,0 +1,587 @@
+/* Protótipo do resultado em 3 rotas (só dev: /dev/resultado.html, src/dev/resultado.ts).
+   Só vale dentro de .proto (a tela) e .pr-painel (o painel): nada daqui chega às telas de verdade. */
+
+/* ---------- a tela: cabeça mais curta, para a dobra caber título, placar, pontos, destaque e ações ---------- */
+.proto {
+  gap: 10px;
+}
+
+.proto .res-topo-linha {
+  min-height: 32px;
+}
+
+.proto .res-titulo {
+  font-size: 44px;
+  margin-top: 0.12em;
+}
+
+.proto .res-placar {
+  padding: 6px 12px;
+}
+
+.proto .res-placar strong {
+  font-size: 52px;
+}
+
+.proto .res-placar .rotulo {
+  font-size: 14px;
+}
+
+.proto .res-placar em {
+  font-size: 26px;
+}
+
+.proto .res-disputa {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.proto .prova-placar .rotulo {
+  white-space: normal;
+  font-size: 16px;
+  padding: 6px 0;
+}
+
+.pr-pontos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.proto .res-total strong {
+  font-size: 48px;
+}
+
+.proto .res-total span {
+  font-size: 24px;
+}
+
+.pr-linha {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+/* ---------- o destaque (um só) ---------- */
+.proto .adesivo.pr-destaque {
+  font-size: 18px;
+  margin: 2px 0 4px;
+}
+
+.pr-recorde {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.pr-recorde .selo {
+  font-size: 18px;
+}
+
+.pr-recorde p {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.pr-top3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.pr-medalha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+}
+
+.pr-medalha .medalha {
+  width: 28px;
+  height: 28px;
+}
+
+.pr-duelo .duelo-desafio strong {
+  font-size: 36px;
+}
+
+.pr-peca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pr-peca-lista {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  font-size: 15px;
+}
+
+.pr-peca-lista .peca-conquista {
+  font-size: 20px;
+}
+
+.pr-peca-lista .botao-linha {
+  margin-top: 4px;
+}
+
+/* ---------- as ações ---------- */
+.pr-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pr-x1 {
+  text-decoration: none;
+  justify-content: center;
+}
+
+.pr-x1-zap {
+  flex-direction: row;
+  gap: 10px;
+  min-height: 64px;
+  font-size: 24px;
+}
+
+.pr-x1-zap .ico {
+  font-size: 26px;
+}
+
+/* Prévia do texto que vai junto, como um balão de conversa (uma linha). */
+.pr-previa {
+  padding: 6px 10px;
+  border-left: 3px solid #25d366;
+  border-radius: 8px;
+  background: rgba(37, 211, 102, 0.12);
+  font-size: 14px;
+  color: var(--cal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* "Mostrar o resultado: Card · Stories · Link": texto pequeno, alvo de 44 px. */
+.pr-mostrar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  column-gap: 2px;
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.pr-mostrar > span {
+  margin-right: 4px;
+}
+
+.pr-mostrar i {
+  font-style: normal;
+}
+
+.pr-mostrar button {
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--cal);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  touch-action: manipulation;
+}
+
+/* Rota C: a placa do X1, com o que o amigo vai ver e os dois botões dentro. */
+.pr-placa-x1 {
+  gap: 8px;
+}
+
+.pr-x1-ve {
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.pr-x1-alvo {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.pr-x1-alvo strong {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 48px;
+  line-height: 1;
+  color: var(--cal);
+}
+
+.pr-x1-alvo span {
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.pr-x1-alvo b {
+  font-family: var(--fonte-rotulo);
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.pr-x1-botoes {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr; /* secundário × principal, 1 : 1,4 */
+  gap: 8px;
+}
+
+.pr-x1-botoes .botao {
+  min-height: 52px;
+  padding: 8px 10px;
+  font-size: 18px;
+  line-height: 1.1;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.pr-x1-botoes .botao-sec {
+  flex-direction: row;
+  gap: 6px;
+  font-size: 15px;
+}
+
+.proto .formatos.tres {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* ---------- "Ver detalhes da partida": abre logo embaixo ---------- */
+.pr-detalhes-caixa {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pr-ver {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  border: 1px solid rgba(245, 245, 240, 0.28);
+  border-radius: var(--raio);
+  background: transparent;
+  color: var(--cal);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+
+.pr-ver::after {
+  content: '▾';
+  font-size: 18px;
+  transition: transform var(--medio) var(--mola-firme);
+}
+
+.pr-ver[aria-expanded='true']::after {
+  transform: rotate(180deg);
+}
+
+.pr-detalhes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pr-detalhes[hidden] {
+  display: none;
+}
+
+.pr-apoio {
+  text-align: center;
+}
+
+/* Rota A: Início e Mais uma do mesmo tamanho, os dois secundários. */
+.res-acoes.pr-iguais {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* ---------- só do protótipo ---------- */
+.pr-chip {
+  /* Fora da grade: não muda o layout da linha (os prints saem como a tela de verdade). */
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--cal);
+  font: 700 12px var(--fonte-rotulo);
+  text-decoration: none;
+}
+
+.pr-toast {
+  position: fixed;
+  top: 12px;
+  left: 16px;
+  right: 16px;
+  z-index: 30;
+  max-width: 448px;
+  margin: 0 auto;
+  padding: 10px 14px;
+  border-radius: var(--raio);
+  background: var(--cal);
+  color: var(--tinta);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: pre-line;
+  box-shadow: var(--sombra-alta);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pr-ver::after {
+    transition: none;
+  }
+}
+
+/* ---------- o painel ---------- */
+.pr-painel-corpo {
+  background: #082414;
+}
+
+.pr-painel {
+  padding: 16px;
+  color: var(--cal);
+  font-family: var(--fonte-texto);
+}
+
+.pr-cab h1 {
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 28px;
+  text-transform: uppercase;
+}
+
+.pr-cab h1 small {
+  display: block;
+  font-family: var(--fonte-texto);
+  font-size: 14px;
+  text-transform: none;
+  color: var(--texto-suave);
+}
+
+.pr-seletores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.pr-seletores fieldset {
+  min-width: 0;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-p);
+  padding: 6px 12px 8px;
+}
+
+.pr-seletores legend {
+  font: 700 13px var(--fonte-rotulo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.pr-seletores label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  margin-right: 12px;
+  font-size: 15px;
+}
+
+.pr-seletores select {
+  max-width: 100%;
+  min-height: 40px;
+  font: inherit;
+  font-size: 15px;
+}
+
+.pr-celular {
+  font-size: 15px;
+  color: var(--texto-suave);
+}
+
+.pr-celular .botao {
+  margin: 10px 0 6px;
+  min-height: 52px;
+  font-size: 20px;
+  text-decoration: none;
+  justify-content: center;
+}
+
+.pr-fonte {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+}
+
+.pr-fileira {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.pr-quadro {
+  margin: 0;
+}
+
+.pr-quadro figcaption {
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.pr-quadro iframe {
+  display: block;
+  border: 0;
+  border-radius: 14px;
+  background: var(--gramado);
+  box-shadow: 0 0 0 3px #000, 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+.pr-medida {
+  max-width: 390px;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--subiu);
+}
+
+.pr-medida.ruim {
+  color: #ff8a70;
+}
+
+.pr-medida small {
+  font-weight: 400;
+  color: var(--texto-suave);
+}
+
+/* No celular, o painel só escolhe e abre em tela cheia (iframe de 390 px estouraria a largura). */
+@media (max-width: 799px) {
+  .pr-quadros {
+    display: none;
+  }
+}
+
+@media (min-width: 800px) {
+  .pr-celular .botao {
+    display: inline-flex;
+    width: auto;
+    padding: 8px 20px;
+  }
+}
+
+/* ---------- celular estreito (360 px, inclusive com a fonte do sistema grande) ---------- */
+@media (max-width: 380px) {
+  .proto {
+    gap: 8px;
+  }
+  .proto .selo-pre .sp-cheio {
+    display: none;
+  }
+  .proto .selo-pre .sp-curto {
+    display: inline;
+  }
+  .proto .res-titulo {
+    font-size: 38px;
+  }
+  .proto .res-placar strong {
+    font-size: 42px;
+  }
+  .proto .res-placar .rotulo {
+    font-size: 13px;
+  }
+  .proto .res-total strong {
+    font-size: 42px;
+  }
+  .proto .res-total span {
+    font-size: 21px;
+  }
+  .pr-mostrar .pr-longo {
+    display: none;
+  }
+  .pr-mostrar button {
+    padding: 0 6px;
+  }
+  .pr-x1-alvo strong {
+    font-size: 40px;
+  }
+  .pr-x1-alvo span {
+    font-size: 14px;
+  }
+  .pr-placa-x1 {
+    padding-top: 10px;
+    padding-bottom: 12px;
+  }
+  .pr-x1-botoes .botao {
+    min-height: 48px;
+    font-size: 16px;
+  }
+  .pr-x1-botoes .botao-sec {
+    font-size: 14px;
+  }
+  .pr-duelo .duelo-desafio strong {
+    font-size: 30px;
+  }
+  .proto .placa.pr-destaque {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .proto .mandar .botao-zap {
+    min-height: 58px;
+    font-size: 22px;
+  }
+  .proto .formatos button {
+    min-height: 50px;
+  }
+  .proto .botao.pr-x1 {
+    min-height: 58px;
+    padding: 10px 16px;
+  }
+  .pr-x1-zap {
+    min-height: 58px;
+    font-size: 22px;
+  }
+}
