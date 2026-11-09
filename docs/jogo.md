@@ -8,14 +8,14 @@
 | Assunto | Doc |
 |---|---|
 | Rankings, semana, temporada (Série A/B), cidades, 52 semanas, Galeria, Carreira, balanço | `docs/jogos/rankings.md` |
-| Lances do Jogo: pênaltis (disputas históricas), faltas, cara a cara, X1, troféus, catálogo | `docs/jogos/lances.md` |
+| Lances do Jogo: pênaltis (disputas históricas), faltas, cara a cara, desafio, troféus, catálogo | `docs/jogos/lances.md` |
 | Motor dos pênaltis, desempate, anti-trapaça lance a lance, desafio por link | `docs/jogos/penaltis.md` |
 | Prova de Boleiro e Time do Dia | `docs/jogos/conhecimento.md` |
-| Crava a Rodada | `docs/jogos/crava.md` |
+| Palpite da Rodada | `docs/jogos/crava.md` |
 | Contas e aparelhos: código do torcedor, primeiro acesso, proteção de menores no código | `docs/jogos/contas.md` |
 | Aquecimento e dicas na hora do erro | `docs/jogos/aquecimento.md` |
 | Boneco montável, vestiário e boneco em campo | `docs/jogos/boneco-montavel.md` |
-| Cards personalizáveis (Telão, Placar seco, Pôster) | `docs/jogos/cards.md` |
+| Cards personalizáveis (Telão, Só o placar, Pôster) | `docs/jogos/cards.md` |
 | Casa do [time] | `docs/casa.md` (publicação: `docs/casa-publicacao.md`) |
 | Frases do narrador | `docs/narrador.md` |
 | Direção visual e bonecos sorteados | `docs/visual.md`, `docs/bonecos.md` |
@@ -40,7 +40,7 @@ Minigames de futebol de 30 segundos em que **cada ponto que você faz vai para o
 ## 3. Zero aposta (linha vermelha)
 
 - Nenhum minigame envolve dinheiro, prêmio em dinheiro, odds ou qualquer coisa que pareça casa de aposta. Nem anúncio de aposta.
-- **Palavras proibidas em todo o jogo:** aposta, apostar, bet, odd, cotação, banca, bolão valendo, "green", "red" (gírias de aposta). Só duas exceções nomeiam a aposta para negá-la: o aviso fixo do Crava ("Aqui é só resenha: sem aposta, sem dinheiro, sem prêmio em dinheiro. Nunca.") e os Termos (`src/dados/termos.md`), que são o texto legal.
+- **Palavras proibidas em todo o jogo:** aposta, apostar, bet, odd, cotação, banca, bolão valendo, "green", "red" (gírias de aposta). Só duas exceções nomeiam a aposta para negá-la: o aviso fixo do Palpite da Rodada ("Aqui é só resenha: sem aposta, sem dinheiro, sem prêmio em dinheiro. Nunca.") e os Termos (`src/dados/termos.md`), que são o texto legal.
 - Nenhum anúncio, link ou patrocínio de casa de aposta em nenhuma tela. Se um dia houver anúncio, a categoria apostas fica bloqueada.
 - Porcentagem da torcida só aparece depois que o palpite fecha, nunca como "cotação".
 
@@ -98,14 +98,14 @@ Livre por enquanto. Os pontos já feitos ficam onde foram feitos. Reavaliar ante
 
 ## 5. Os jogos hoje (resumo)
 
-O dia de cada jogador vale as **3 melhores partidas de Lances** (pênaltis, faltas e cara a cara juntos) e as **3 melhores da Prova**, até 150 cada. Time do Dia e Crava somam por fora. Detalhes em `jogos/rankings.md`.
+O dia de cada jogador vale as **3 melhores partidas de Lances** (pênaltis, faltas e cara a cara juntos) e as **3 melhores da Prova**, até 150 cada. Time do Dia e Palpite da Rodada somam por fora. Detalhes em `jogos/rankings.md`.
 
 | Jogo | Em uma linha | Doc |
 |---|---|---|
-| **Lances do Jogo** | Tela única com disputas históricas de pênaltis, faltas e cara a cara de lances que celebram os clubes. Um toque em Jogar; faltas e cara a cara são 3 tentativas do mesmo lance. Até 10 partidas valendo por dia (depois vira treino). Teto 150. Troféus por lance. X1 por link. | `jogos/lances.md`, `jogos/penaltis.md` |
+| **Lances do Jogo** | Tela única com disputas históricas de pênaltis, faltas e cara a cara de lances que celebram os clubes. Um toque em Jogar; faltas e cara a cara são 3 tentativas do mesmo lance. Até 10 partidas valendo por dia (depois vira treino). Teto 150. Troféus por lance. Desafio por link. | `jogos/lances.md`, `jogos/penaltis.md` |
 | **Prova de Boleiro** | 8 perguntas, 4 alternativas, 20 s cada, escada de 4 degraus, 3 ajudas, três erros e fora. Máximo 150. | `jogos/conhecimento.md` |
 | **Time do Dia** | Um clube secreto por dia, igual para todos, 6 tentativas com pistas. 100 a 0 pontos, uma partida por dia. | `jogos/conhecimento.md` |
-| **Crava a Rodada** | Palpite de placar da rodada do Brasileirão. Pontos ×2 na torcida, teto de 300 por rodada. | `jogos/crava.md` |
+| **Palpite da Rodada** | Palpite de placar da rodada do Brasileirão. Pontos ×2 na torcida, teto de 300 por rodada. | `jogos/crava.md` |
 | **Casa do [time]** | Vitrine da história do clube: estádio, troféus, recordes e manto. Não dá pontos. | `docs/casa.md` |
 
 **Regras que valem para todos os jogos de partida:** o resultado é sempre recalculado no servidor a partir dos gestos ou respostas e da semente; o celular nunca grava pontos. Caiu a conexão: a partida segue no aparelho e não vale pontos, com o código do motivo no aviso. A dificuldade é igual para todos no mesmo dia.
@@ -114,15 +114,16 @@ O dia de cada jogador vale as **3 melhores partidas de Lances** (pênaltis, falt
 
 - **Narrador:** exagerado, rádio de domingo. Ex.: "É CAVADINHAAAA! Que categoria, que deboche!", "Pegou! O goleiro tava com o almoço pago!".
 - **Banco de frases:** `docs/narrador.md`. Frase nova entra lá e passa pelo checklist de tom do arquivo.
+- **Regras de estilo dos textos:** um nome por coisa, botão no infinitivo de 1 a 3 palavras, texto do WhatsApp em primeira pessoa e no máximo 2 linhas antes do link. Lista completa em `docs/narrador.md`.
 - **Narrador com voz:** formato definido (só gritos curtos em áudio; vozes Narrador e Narradora e a opção Só efeitos; nunca imitar narrador real), mas fica no backlog.
 - **Neutro de gênero:** o narrador fala do lance, não da pessoa ("Cavou!", não "Ele cavou!").
 - **Provocação ao rival** (só ao time, nunca à pessoa): "Sua torcida tá 300 pontos atrás do [rival]. Vai deixar?"
 - **Quem é o rival:** o clássico da tabela da seção 4. Sem clássico, o time logo acima no ranking da semana da sua divisão (ou logo abaixo, se for o líder); antes das divisões, no ranking geral. Quem escolheu "Outro time" recebe só provocação de cidade.
 - **Zoeira de cidade:** só sobre posição no ranking. Nada de sotaque, origem, economia, "cidade pequena" ou estereótipo.
 - **Avisos e notificações:** só informam, sem urgência nem chamada para voltar (seção 7).
-- **Limite:** zoeira com o time e com a situação, nunca com raça, orientação, gênero, religião, origem, corpo, deficiência ou pessoa real (jogador, técnico, narrador). Nada de bordão de narrador real nem trecho de música.
+- **Limite:** zoeira com o time e com a situação, nunca com raça, orientação, gênero, religião, origem, corpo, deficiência ou pessoa real (jogador, técnico, narrador). Nada de bordão ou frase célebre de pessoa real (narrador, comentarista, jogador), nem adaptado, nem trecho de música. Vale o jargão comum do futebol e os bordões do jogo (`docs/narrador.md`).
 - **Classificação livre:** sem palavrão, bebida, aposta ou violência em nenhum texto do jogo.
-- **Derrota zoa, mas aponta a saída:** revanche, desafio, "os pontos contam igual pro seu time".
+- **Derrota zoa, mas aponta a saída:** jogo de volta, desafio, "os pontos contam igual pro seu time".
 
 ### Nomes reais
 - **Pode:**
@@ -193,7 +194,7 @@ O dia de cada jogador vale as **3 melhores partidas de Lances** (pênaltis, falt
 ## 11. Casa do [time]
 
 - Uma página por clube da Série A 2026 (`#casa/<id>`): estádio, sala de troféus, livro de recordes, cores e manto. Só fatos com fonte, revisados por uma segunda sessão.
-- **Vitrine, não minigame:** não dá pontos, XP nem selo. Entra pela Home, pelo Ranking (tocar numa torcida) e pelo fim do Time do Dia (depois que o dia termina).
+- **Vitrine, não minigame:** não dá pontos, XP nem selo. Entra pela Home, pela Tabela (tocar numa torcida) e pelo fim do Time do Dia (depois que o dia termina).
 - Competições pelo nome real da entidade, **sem patrocinador**. Títulos: na Casa vale o lado da torcida (com nota neutra do que a entidade reconhece); fora da Casa, a lista oficial.
 - Estático, fora do bundle inicial, sem servidor (exceto a contagem de cliques do "Seja sócio").
 - **"Seja sócio":** link direto para o programa oficial de sócio torcedor, igual para os 20 clubes, só texto, com aviso de saída e `utm_source=guerradetorcidas`; cliques contados por clube e dia, sem dado pessoal; sem afiliado ou comissão; se a página promover aposta, o clube fica sem o bloco. **Só 18+.**
@@ -210,21 +211,21 @@ O dia de cada jogador vale as **3 melhores partidas de Lances** (pênaltis, falt
 | Fase | Conteúdo |
 |---|---|
 | **1. MVP** | Pênaltis, times oficiais com artigo e rival, ranking da semana, desafio por link, card de resultado. Em teste com amigos. |
-| **1.5 Logo depois** | Crava a Rodada; Carreira; fechamento da semana gravado; cidade; Série A e B mensais; Galeria; ranking de 52 semanas; anti-trapaça completo antes de divulgar; Casa do [time]. |
+| **1.5 Logo depois** | Palpite da Rodada; Carreira; fechamento da semana gravado; cidade; Série A e B mensais; Galeria; ranking de 52 semanas; anti-trapaça completo antes de divulgar; Casa do [time]. |
 | **2. Comunidade** | Times criados, ligas e campeonatos combinados (com ranking entre amigos com apelido), moderação, Copa das Torcidas. |
 | **3. Mais minigames** | Prova de Boleiro, Time do Dia e Lances do Jogo no ar. Depois: Embaixadinha (com chinelo, laranja e bola murcha). |
 | **4. Coleção e resenha** | Álbum de figurinhas com jogadores fictícios e trocas, Técnico por Um Jogo, Pelada de Rua. |
 
-**Nomes candidatos:** Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · Bate Contra Mim (nome do minigame) · Treta FC · Torcida Braba.
+**Nomes candidatos:** Guerra de Torcidas (provisório) · Arquibancada · Resenha FC · Rivalzão · Bate Contra Mim · Treta FC · Torcida Braba.
 
 ## 14. Como saber se está funcionando
 
 - **Convites por jogador:** quantos amigos cada um traz (meta: mais de 1).
 - **Volta no dia seguinte e em 7 dias.**
 - **Partidas por visita.**
-- **Funil do X1:** gerados → compartilhados → abertos → aceitos → 1º chute → terminados → revanche, por tipo (pênaltis, Lances, Prova) e por dia. O desafio nasce a cada partida, então "gerado" não é "enviado": enviado é o toque em compartilhar.
-- **Onde desiste:** escolha do time, triagem, aquecimento e partida, por jogo e com ou sem X1.
-- Tudo sem identificar ninguém: contagem por dia, e o código do X1 só como impressão, por 30 dias (`jogos/contas.md`, "Contagem de uso").
+- **Funil do desafio:** gerados → compartilhados → abertos → aceitos → 1º chute → terminados → jogo de volta, por tipo (pênaltis, Lances, Prova) e por dia. O desafio nasce a cada partida, então "gerado" não é "enviado": enviado é o toque em compartilhar.
+- **Onde desiste:** escolha do time, triagem, aquecimento e partida, por jogo e com ou sem desafio.
+- Tudo sem identificar ninguém: contagem por dia, e o código do desafio só como impressão, por 30 dias (`jogos/contas.md`, "Contagem de uso").
 - Os números saem do banco por `npm run metricas` (só leitura). O balanço entre minigames está em `jogos/rankings.md`.
 
 ---
