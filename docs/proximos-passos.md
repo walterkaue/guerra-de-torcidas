@@ -12,7 +12,7 @@
 | Publicação | Site da `main` `b7790e5` no ar desde 08/11, 8h10 (GitHub Pages). 49 migrações, a última `20261107200000_lances_corte_domingo.sql` (local = remoto em 07/11). Funções: `lances` v8 (08/11), `nova-partida` v25, `lance-penalti` v11, `fechar-partida` v26, `boneco` v4 (07/11). |
 | Regra em vigor | Lances unificados desde domingo 08/11, 0h: tela única, 10 partidas de Lances por dia, 3 melhores de Lances e 3 da Prova. A semana de 02/11 fecha com as duas regras somadas (aceito: pré-temporada). |
 | Tamanho | `index-*.js` de ~46,6 kB gzip (06/11), limite ~300 KB. |
-| Conteúdo | Casa com os 20 clubes e os 808 títulos revisados; 64 disputas históricas de pênaltis; ~280 perguntas no ar (meta do lançamento: 800). |
+| Conteúdo | Casa com os 20 clubes e os 808 títulos revisados; 64 disputas históricas de pênaltis; 328 perguntas no ar (meta do lançamento: 800). |
 | Uso | Retrato de 04/11: 18 pessoas jogaram. Amostra pequena. O Kauê testa com amigos a partir de 08/11. |
 
 **Cuidado:** não volte as funções `lances`, `nova-partida`, `lance-penalti` e `fechar-partida` para versões de antes de 08/11: já há partidas com a faixa gravada e a regra nova.
@@ -21,23 +21,16 @@
 
 Nada disso tem lembrete automático.
 
-1. **Domingo 08/11, 17h: robôs do Gemini.** Decidir se mantém os 5 crons de `gerar-conteudo` e de `auditar-conteudo` (o auditor falhou em 51% das chamadas de 02 a 06/11). Proposta e medida em `docs/propostas/robos-gemini-perguntas.md`, seção 8. Só leitura:
-   ```sql
-   select criada_em::date dia, funcao, sum(chamadas) chamadas, sum(falhas) falhas, sum(entrada) entrada, sum(saida) saida
-   from staging_gt.uso_gemini group by 1, 2 order by 1, 2;
-   select criada_em::date, funcao, codigos, count(*) from staging_gt.uso_gemini where codigos is not null group by 1,2,3 order by 1,2;
-   select status, count(*) from staging_gt.rascunhos_perguntas where criada_em > '2026-11-03' group by 1;
-   ```
-2. **Segunda 09/11, 12h (a semana de 02/11 trava):**
+1. **Segunda 09/11, 12h (a semana de 02/11 trava):**
    - a conferência só de leitura do PR #108 (bloco 8, com o corte em 08/11) e as consultas da Disputa livre na descrição do PR #116; cada consulta traz o esperado;
    - a semana de 02/11 aparece nos pontos da temporada;
    - no celular: o bloco das divisões na Home (1ª semana de novembro travada).
-3. **Segunda 07/12, depois das 12h01:** novembro fechado e dezembro aberto com 10 times em cada série; no celular, a placa de fim de novembro e o card de fim de temporada. Só leitura:
+2. **Segunda 07/12, depois das 12h01:** novembro fechado e dezembro aberto com 10 times em cada série; no celular, a placa de fim de novembro e o card de fim de temporada. Só leitura:
    ```sql
    select mes, serie, count(*) from public.temporada_serie group by 1, 2 order by 1, 2;
    select * from public.classificacao_temporada where mes = '2026-11-01' order by posicao;
    ```
-4. **Prova com três erros e fora:** jogar uma partida real errando de propósito (3º erro encerra e leva 75%).
+3. **Prova com três erros e fora:** jogar uma partida real errando de propósito (3º erro encerra e leva 75%).
 
 ## No celular (o Kauê, junto com os testes dos amigos)
 
@@ -54,7 +47,8 @@ Nada disso tem lembrete automático.
 
 ## Só o Kauê faz
 
-- **Supabase Pro** antes de divulgar (o Free pausa depois de 1 semana sem uso; hoje um agendamento evita).
+- **Supabase Pro** quando o banco passar de 250 MB, ou ~150 pessoas jogarem por dia, ou antes da divulgação pública (o que vier primeiro); os testes com amigos seguem no Free. O Free pausa depois de 1 semana sem uso; hoje um agendamento evita.
+- **Robôs do Gemini:** ficam os 5 crons, sem cobrança (decidido em 07/11). Ajuste de cron só se os 429 crescerem.
 - **Advogado:** pontos 4 (triagem autodeclarada × art. 9º do ECA Digital) e 5 (DPO × alto risco) dos Termos, a frase do código do torcedor, a da cidade, a do boneco em campo e a da contagem de uso (`docs/termos-x-jogo.md`). O parecer de 02/11 veio sem OAB.
 - **Data do zerar da pré-temporada:** até 06/12, para estrear em dezembro; o balanço (`npm run balanco`) roda antes.
 - **Perguntas:** importar as 2 de `dados/perguntas/lote-02.csv` e dizer se tema de guerra entra na lista de proibidos (`dados/perguntas/piloto-lote-02.md`).
