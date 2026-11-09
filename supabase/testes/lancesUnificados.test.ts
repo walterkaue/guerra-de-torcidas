@@ -202,6 +202,16 @@ describe('limite do dia', () => {
       [eu],
     );
     for (let k = 0; k < 4; k++) await db.query(`select * from public.lances_comecar($1, $2, now() + interval '15 minutes', '{}'::jsonb)`, [eu, k]);
+    // O X1 dos Lances recebido precisa existir e valer (prazo de 7 dias, 20261109000000).
+    await db.query(
+      `with p as (
+         insert into public.partidas (torcedor_id, modo, semente, dificuldade, expira_em, minigame)
+         values ($1, 'normal', 1, 0, now() + interval '15 minutes', 'lances') returning id
+       )
+       insert into public.lances_desafios (id, partida_id, torcedor_id, time_id, lance_id, pontos, gols, recriados, faixa)
+       select 'zzzzzzzz', p.id, $1, 'palmeiras', 'gol-100', 50, 1, 0, 'media' from p`,
+      [outro],
+    );
     const { rows } = await db.query<{ feitas: number; limite: number }>(
       `select * from public.lances_comecar($1, 9, now() + interval '15 minutes', '{}'::jsonb, 'desafio', 'zzzzzzzz')`,
       [eu],
@@ -295,7 +305,7 @@ describe('X1 dos Lances', () => {
     });
     expect(codigo).toBe('lancex1a');
     const resumo = await como(db, null, 'anon', 'select * from public.ver_desafio_lances($1)', ['LANCEX1A']);
-    expect(resumo).toEqual([{ id: 'lancex1a', time_id: 'palmeiras', apelido: null, lance_id: 'gol-100', pontos: 66, gols: 2, recriados: 1, faixa: 'media', boneco: null }]);
+    expect(resumo).toEqual([{ id: 'lancex1a', time_id: 'palmeiras', apelido: null, lance_id: 'gol-100', pontos: 66, gols: 2, recriados: 1, faixa: 'media', boneco: null, vencido: false }]);
     // Código repetido: tenta o próximo.
     const { codigo: segundo } = await partida(db, eu, 10, {
       minigame: 'lances',

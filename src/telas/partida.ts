@@ -152,7 +152,7 @@ export const AVISO_CAIU = 'Caiu a conexão: essa não vale mais pontos. Joga de 
 /** Cada X1 dos pênaltis vale uma vez por pessoa (jogo.md, seção 6): na segunda, vira partida normal. */
 export const X1_JA_JOGADO = 'Esse desafio você já encarou. Bora outro!';
 /** X1 de partida criada antes de 08/11/2026 (ou de lance que mudou de faixa) não pode ser aceito depois (jogo.md, 14.7). */
-export const X1_EXPIROU = 'Apitou o fim: esse desafio acabou. Bora outro!';
+export const X1_EXPIROU = 'Apitou o fim: esse desafio valia 7 dias. Bora outro!';
 
 export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   const time: Time = timePorId(prefs.get().time) ?? TIMES[TIMES.length - 1];

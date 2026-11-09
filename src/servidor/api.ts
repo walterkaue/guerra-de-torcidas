@@ -403,6 +403,8 @@ export interface ResumoDesafio {
    * interruptor dele desligado. Ausente: servidor antigo (trate como sem boneco).
    */
   boneco?: VestimentaDeCampo | null;
+  /** Passou dos 7 dias (desde 20261109000000): a Home não mostra o convite, e aceitar responde 410. Ausente: servidor antigo. */
+  vencido?: boolean;
 }
 
 /** Resumo do desafio para a tela inicial (sem as cobranças). */
@@ -441,6 +443,8 @@ export interface ResumoDesafioLances {
   faixa: string;
   /** O boneco de quem chamou (mesma regra de `ResumoDesafio.boneco`). */
   boneco?: VestimentaDeCampo | null;
+  /** Passou dos 7 dias (desde 20261109000000): a Home não mostra o convite, e aceitar responde 410. Ausente: servidor antigo. */
+  vencido?: boolean;
 }
 
 /** Resumo do X1 dos Lances para quem abre o link (?l=): quem chamou, o lance e os pontos a bater. */
@@ -614,6 +618,8 @@ export interface ResumoDesafioProva {
   pontos: number;
   escada: string;
   resumo: string;
+  /** Passou dos 7 dias (desde 20261109000000): a Home não mostra o convite, e aceitar responde 410. Ausente: servidor antigo. */
+  vencido?: boolean;
 }
 
 /** Resumo do desafio da prova para a tela inicial (sem as perguntas). */

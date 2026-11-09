@@ -15,7 +15,7 @@
 1. **Quem faz o jogo.** O Guerra de Torcidas é um jogo independente feito por Kauê Sevilhano Walter. Ele não tem ligação com clubes, federações, jogadores ou patrocinadores.
 2. **Como funciona.** Você escolhe seu time e joga partidas curtas. Seus pontos vão para o placar da sua torcida. Por dia, só algumas partidas contam pontos; jogar mais é só por diversão.
 3. **É de graça.** Nada no jogo é vendido. Ninguém compra pontos, vidas ou vantagem.
-4. **Zero aposta.** O jogo não envolve dinheiro, prêmio em dinheiro ou qualquer coisa parecida com aposta. Os palpites do Crava a Rodada valem só pontos.
+4. **Zero aposta.** O jogo não envolve dinheiro, prêmio em dinheiro ou qualquer coisa parecida com aposta. O Palpite da Rodada vale só pontos.
 5. **Respeito.** O apelido não pode ofender ninguém. Apelido ofensivo é bloqueado ou apagado.
 6. **Jogo limpo.** O servidor confere todas as partidas. Partida com sinal de trapaça, como script ou automação, fica fora do ranking da torcida.
 7. **Fatos e nomes reais.** Perguntas, lances históricos e a Casa do clube contam fatos com fonte. Os bonecos são inventados e não representam jogadores reais. Escudos e uniformes oficiais não são usados.
@@ -55,7 +55,7 @@
 
 **No seu celular:** algumas escolhas (som, gráficos, se mostra seu nível no card) ficam guardadas só no aparelho.
 
-**Por quanto tempo:** enquanto você jogar. Conta sem nenhuma partida, resposta ou palpite por mais de 6 meses seguidos é apagada automaticamente. Antes, os pontos que ela deu à torcida viram um total anônimo, para o placar não mudar.
+**Por quanto tempo:** enquanto você jogar. Conta sem nenhuma partida, resposta ou palpite por mais de 6 meses seguidos é apagada automaticamente. Antes, os pontos que ela deu à torcida viram um total anônimo, para o placar não mudar. O link de um desafio vale 7 dias, e o desafio é apagado depois de 30.
 
 **Seus direitos:** você, ou seu responsável, pode ver ou apagar seus dados a qualquer momento, nos botões "Ver meus dados" e "Apagar meus dados" desta página. Como o jogo não pede e-mail, CPF nem cadastro, isso é feito no próprio aparelho em que você joga: por e-mail não dá para saber qual conta é a sua. Ao apagar, saem o código do aparelho, o seu histórico e as suas mensagens do Achei um erro. Ficam só totais de pontos da torcida, da cidade e do estado, e estatísticas das respostas da Prova, sem nada que identifique você.
 

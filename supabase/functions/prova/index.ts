@@ -91,6 +91,8 @@ function lerConfig(c: Record<string, number>) {
   };
 }
 
+/** Dias que um desafio vale (o mesmo de desafio_vale_ate, no banco). */
+const DIAS_DO_DESAFIO = 7;
 const ALFABETO = 'abcdefghjkmnpqrstuvwxyz23456789';
 const codigo = (n: number) => Array.from({ length: n }, () => ALFABETO[sortear(ALFABETO.length)]).join('');
 const sorteio = (n: number) => sortear(n);
@@ -325,11 +327,13 @@ async function nova(sb: SupabaseClient, uid: string, corpo: Record<string, unkno
     }
   }
 
+  // A hora da partida: a mesma confere o prazo do desafio e vai para criada_em.
+  const agora = new Date();
   let desafio: { id: string; time_id: string; apelido: string | null; pontos: number; escada: string; resumo: string; perguntas: string[] } | null = null;
   if (typeof corpo.desafio === 'string' && corpo.desafio) {
     const { data, error } = await sb
       .from('prova_desafios')
-      .select('id, torcedor_id, time_id, apelido, pontos, escada, resumo, perguntas')
+      .select('id, torcedor_id, time_id, apelido, pontos, escada, resumo, perguntas, criado_em')
       .eq('id', corpo.desafio.toLowerCase())
       .maybeSingle();
     if (error) throw error;
@@ -344,6 +348,11 @@ async function nova(sb: SupabaseClient, uid: string, corpo: Record<string, unkno
       .limit(1);
     if (eJ) throw eJ;
     if (jogadas?.length) throw new ErroHttp(409, 'desafio_ja_jogado');
+    // Vale 7 dias a partir da criação, como desafio_vale_ate (20261109000000_prazo_desafios.sql). A Prova não tem
+    // trava no banco ao começar: a conferência usa a mesma hora que a partida grava.
+    if (agora.getTime() >= Date.parse(data.criado_em as string) + DIAS_DO_DESAFIO * 86_400_000) {
+      throw new ErroHttp(410, 'desafio_expirado');
+    }
     desafio = data;
   }
 
@@ -394,7 +403,6 @@ async function nova(sb: SupabaseClient, uid: string, corpo: Record<string, unkno
     }
   }
 
-  const agora = new Date();
   const expiraEm = new Date(agora.getTime() + cfg.validadeMin * 60_000);
   const { data: partida, error: eP } = await sb
     .from('partidas')

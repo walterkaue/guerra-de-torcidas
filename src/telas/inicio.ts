@@ -474,8 +474,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     verDesafioDoLink(codigoDesafio)
       .then(async (d) => {
         if (saiu) return;
-        if (!d) {
-          caixa.hidden = true; // código que não existe: segue a home normal
+        if (!d || d.vencido) {
+          caixa.hidden = true; // código que não existe ou desafio vencido: segue a home normal
           return;
         }
         // O X1 leva a disputa de quem chamou. O catálogo fica fora do bundle da Home; fora dele, o convite segue sem a ficha.
@@ -538,7 +538,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     servidor()
       .then((api) => api.verDesafioLances(codigoLances))
       .then(async (d) => {
-        if (!d || saiu) return; // código que não existe, ou sem resposta: a caixa some
+        if (!d || d.vencido || saiu) return; // código que não existe, desafio vencido ou sem resposta: a caixa some
         const [{ LANCES }] = await catalogoDosLances;
         if (saiu) return;
         const t = timePorId(d.time_id);
@@ -569,7 +569,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     const caixa = root.querySelector<HTMLElement>('.convite-desafio')!;
     verDesafioProva(codigoProva)
       .then((d) => {
-        if (!d || saiu) return;
+        if (!d || d.vencido || saiu) return; // vencido: sem convite
         const t = timePorId(d.time_id);
         const quem = d.apelido ? esc(d.apelido) : 'Alguém';
         caixa.innerHTML = `
