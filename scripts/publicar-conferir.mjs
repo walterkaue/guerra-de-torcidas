@@ -130,7 +130,7 @@ async function main() {
 
   // ---- Funções ----
   const locais = listarLocal('supabase/functions').filter((n) => n !== '_shared' && codigoLocal(`supabase/functions/${n}/index.ts`) !== null);
-  const publicadas = new Set(lerJson(await supabase(['functions', 'list', `--remote=${refProjeto}`], raiz)).functions.map((f) => f.slug));
+  const publicadas = new Set(lerJson(await supabase(['functions', 'list', `--remote=${refProjeto}`, '--output-format', 'json'], raiz)).functions.map((f) => f.slug));
   const base = mkdtempSync(join(tmpdir(), 'conferir-'));
   const resultados = [];
   try {
@@ -157,7 +157,7 @@ async function main() {
 
   // ---- Migrações ----
   const remotas = new Set(
-    lerJson(await supabase(['migration', 'list', `--remote=${refProjeto}`], raiz)).migrations.map((m) => m.remote).filter(Boolean),
+    lerJson(await supabase(['migration', 'list', `--remote=${refProjeto}`, '--output-format', 'json'], raiz)).migrations.map((m) => m.remote).filter(Boolean),
   );
   const arquivos = listarLocal('supabase/migrations').filter((n) => n.endsWith('.sql')).sort();
   const versoes = new Map(arquivos.map((a) => [a.split('_')[0], a]));
