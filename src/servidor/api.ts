@@ -135,14 +135,18 @@ export function garantirSessao(): Promise<string> {
 }
 
 /** Grava time e apelido no servidor (o filtro de palavras roda lá). */
-export async function salvarTorcedor(timeId: string, apelido?: string): Promise<void> {
+export async function salvarTorcedor(timeId: string, apelido?: string): Promise<{ apelidoRecusado: boolean }> {
   await garantirSessao();
   const sb = await supabase();
-  const { error } = await comTempoLimite(sb.rpc('salvar_torcedor', { p_time: timeId, p_apelido: apelido ?? null }));
+  const { data, error } = await comTempoLimite(sb.rpc('salvar_torcedor', { p_time: timeId, p_apelido: apelido ?? null }));
   if (error) {
     const codigo = ['apelido_bloqueado', 'apelido_longo', 'time_invalido'].find((c) => error.message.includes(c));
     throw new ErroServidor(codigo ?? 'falha');
   }
+  // Código 'apelido_idade': o servidor grava o time e descarta o apelido de quem não é 16+ (a linha volta sem ele).
+  // O servidor antigo devolve a linha com o apelido: aí nunca é recusado.
+  const linha = (Array.isArray(data) ? data[0] : data) as { apelido?: string | null } | null | undefined;
+  return { apelidoRecusado: !!apelido && !!linha && !linha.apelido };
 }
 
 /** Grava a faixa da triagem. False quando o torcedor ainda não existe (falta escolher o time). */

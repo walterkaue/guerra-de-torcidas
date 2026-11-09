@@ -37,7 +37,7 @@
 | Seu time | Mandar seus pontos para a torcida certa | Sim |
 | Sua cidade, e cada troca com a data | Somar no ranking de cidades e estados, nunca com seu apelido | Não |
 | Suas partidas, respostas e palpites | Contar os pontos e conferir se não houve trapaça | Sim, ao jogar |
-| Sua faixa de idade (menos de 16, 16 ou 17, 18 ou mais) | Desligar, para menores de 18, os avisos, o apoio ao jogo e o link de sócio | Sim, uma vez |
+| Sua faixa de idade (menos de 16, 16 ou 17, 18 ou mais) | Desligar, para menores de 18, os avisos, o apoio ao jogo e o link de sócio; e o apelido, para menores de 16 | Sim, uma vez |
 | Apelido | Aparecer só para quem você manda um desafio | Não |
 | As escolhas do seu boneco (corpo, tom de pele, cabelo, número e peças). Não é foto | Mostrar o seu avatar nos seus aparelhos e em campo. Quem recebe um desafio seu vê o seu boneco, se ele estiver ligado em campo. Dá para desligar no Perfil. Some com "Apagar meus dados" | Não: o jogo sorteia um, e você muda se quiser |
 | Endereço de aviso do navegador | Mandar 1 aviso por semana, se você pedir (só para 18 ou mais) | Não |

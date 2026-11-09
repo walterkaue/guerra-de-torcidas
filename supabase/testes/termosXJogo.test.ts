@@ -154,7 +154,9 @@ describe('apagar apelido no #admin', () => {
     const { rows: registro } = await db.query<Record<string, unknown>>('select * from public.apelidos_apagados');
     expect(registro).toHaveLength(1);
     expect(registro[0].torcedores).toBe(2);
-    expect(Object.keys(registro[0]).sort()).toEqual(['apagado_em', 'id', 'torcedores']);
+    // O motivo (20261109200000_apelido_16.sql) separa o #admin da limpeza por idade; nunca o apelido.
+    expect(registro[0].motivo).toBe('admin');
+    expect(Object.keys(registro[0]).sort()).toEqual(['apagado_em', 'id', 'motivo', 'torcedores']);
   }, TEMPO);
 
   it('apelido que ninguém usa não registra nada', async () => {

@@ -1,6 +1,6 @@
 // Faixa etária (docs/jogo.md, seção 13). Puro: sem DOM nem relógio. Copiado para as funções do
-// servidor por `npm run compartilhar`. A faixa só decide o que é para 18+: nunca aparece na tela, no
-// card nem nas métricas por pessoa. Única exceção: o "Ver meus dados" da própria pessoa (jogo/meusDados.ts).
+// servidor por `npm run compartilhar`. A faixa só decide o que é para 18+ e quem pode ter apelido (16+): nunca
+// aparece na tela, no card nem nas métricas por pessoa. Única exceção: o "Ver meus dados" da própria pessoa (jogo/meusDados.ts).
 
 export const FAIXAS = ['menos_16', '16_17', '18_mais'] as const;
 
@@ -13,6 +13,11 @@ export function ehFaixa(v: unknown): v is FaixaEtaria {
 /** Regra única do que é só para 18+. Sem resposta conta como não: quem não respondeu não vê. */
 export function soPara18Mais(faixa: FaixaEtaria | string | null | undefined): boolean {
   return faixa === '18_mais';
+}
+
+/** Apelido só existe para quem marcou 16 ou mais. Sem resposta conta como não. */
+export function podeTerApelido(faixa: FaixaEtaria | string | null | undefined): boolean {
+  return faixa === '16_17' || faixa === '18_mais';
 }
 
 /** Oferta de push e sininho. */

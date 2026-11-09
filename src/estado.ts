@@ -4,7 +4,7 @@
 import { apelidoParaCard } from './jogo/apelidoConferido';
 import type { EstadoDoAquecimento } from './jogo/aquecimento';
 import type { EstadoDasDicas } from './jogo/dicas';
-import { ehFaixa, type FaixaEtaria } from './jogo/faixaEtaria';
+import { ehFaixa, podeTerApelido, type FaixaEtaria } from './jogo/faixaEtaria';
 
 const CHAVE = 'gdt:prefs';
 
@@ -68,7 +68,7 @@ function gravar(p: Prefs): void {
 }
 
 /** O apelido que o card pode mostrar: só o que o servidor já aceitou (J26). */
-export const apelidoDoCard = (): string | undefined => apelidoParaCard(ler());
+export const apelidoDoCard = (): string | undefined => (podeTerApelido(faixaDoAparelho()) ? apelidoParaCard(ler()) : undefined);
 
 export const prefs = {
   get: ler,
@@ -87,7 +87,8 @@ export function faixaDoAparelho(): FaixaEtaria | undefined {
 
 export function guardarFaixa(faixa: FaixaEtaria): void {
   faixaDaAba = faixa;
-  prefs.set({ faixa });
+  // Menos de 16 não tem apelido (jogo.md, seção 4): o que houver no aparelho sai junto.
+  prefs.set(faixa === 'menos_16' ? { faixa, apelido: undefined, apelidoConferido: undefined } : { faixa });
 }
 
 /**

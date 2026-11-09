@@ -16,7 +16,8 @@ const uuid = () => `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`;
 async function torcedor(db: PGlite, time: string): Promise<string> {
   const id = uuid();
   await db.query('insert into auth.users (id) values ($1)', [id]);
-  await db.query(`insert into public.torcedores (id, time_id, apelido) values ($1, $2, 'Zé')`, [id, time]);
+  // 16+: só quem marcou 16 ou mais leva o apelido para o desafio (20261109200000_apelido_16.sql).
+  await db.query(`insert into public.torcedores (id, time_id, apelido, faixa_etaria) values ($1, $2, 'Zé', '18_mais')`, [id, time]);
   return id;
 }
 

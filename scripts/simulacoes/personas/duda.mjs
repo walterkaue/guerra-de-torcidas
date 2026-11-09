@@ -110,17 +110,17 @@ export default {
       if (await p.locator('#cc-frase').isVisible().catch(() => false)) s.achado({ regra: 'frase-nao-aceita', gravidade: 'atrapalha', tipo: 'erro', oQue: 'A frase limpa não fechou a folha.', talvezSimulador: true });
     });
 
-    // Apelido barrado: o filtro do apelido é do servidor.
-    await s.passo('apelido ofensivo (filtro do servidor)', async () => {
+    // Apelido só 16+ (docs/jogo.md, seção 4): para a Duda o quadradinho "Meu apelido" fica apagado e não abre a folha.
+    await s.passo('apelido fechado para menos de 16', async () => {
       const apelido = p.locator('dialog[open] [data-chave="apelido"]');
-      if (await apelido.count()) await s.tocar(apelido, { semMudancaOk: true });
-      const campo = p.locator('#cc-apelido');
-      if (await campo.isVisible().catch(() => false)) {
-        await campo.fill(palavrao ?? 'xxxxxx');
-        await s.tocar(p.locator('[data-salvar-apelido]'), { semMudancaOk: true });
-        await esperar(1500);
+      if (!(await apelido.count())) return;
+      if (!(await apelido.isDisabled().catch(() => false))) {
+        s.achado({ regra: 'apelido-menor-de-16', gravidade: 'bloqueia', tipo: 'regra do jogo.md', oQue: 'Com "menos de 16" na triagem, o quadradinho "Meu apelido" do card está ligável (jogo.md, seção 4: apelido só 16+).' });
+        await s.tocar(apelido, { semMudancaOk: true });
       }
-      s.naoSimulavel('apelido barrado', 'o filtro do apelido roda no servidor (apelido_bloqueado); no simulador o salvar cai na guarda de rede e mostra "Sem conexão agora"');
+      if (await p.locator('#cc-apelido').isVisible().catch(() => false)) {
+        s.achado({ regra: 'apelido-menor-de-16', gravidade: 'bloqueia', tipo: 'regra do jogo.md', oQue: 'Com "menos de 16" na triagem, o card abriu a folha "Escolha seu apelido".' });
+      }
     });
     await s.passo('fecha a folha e o card', async () => {
       if (await p.locator('#cc-apelido').isVisible().catch(() => false)) await s.tocar(p.locator('[data-agora-nao]'), { semMudancaOk: true });
@@ -135,6 +135,9 @@ export default {
       await s.abrir('/?homeFalsa&lancesFalsos', { esperarPor: '[data-aba="perfil"]', limiteMs: 15000 });
       await s.tocar(p.locator('[data-aba="perfil"]'));
       await p.locator('[data-vestiario]').waitFor({ state: 'visible', timeout: 10000 });
+      if (await p.locator('[data-acao="apelido"]').count()) {
+        s.achado({ regra: 'apelido-menor-de-16', gravidade: 'bloqueia', tipo: 'regra do jogo.md', oQue: 'Com "menos de 16" na triagem, o Perfil oferece "Dar um apelido" (jogo.md, seção 4: apelido só 16+).' });
+      }
     }, { paginaInteira: true });
     await s.passo('vestiário', async () => {
       await s.tocar(p.locator('[data-acao="vestiario"]'));

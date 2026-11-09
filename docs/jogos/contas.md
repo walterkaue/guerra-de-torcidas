@@ -9,14 +9,14 @@
 - A triagem de faixa etária é autodeclarada. Vem depois de escolher o time e antes do 1º jogo: Pênaltis/Lances, Prova, Time do Dia e Palpite da Rodada, inclusive vindo de link de desafio. Quem já tinha time responde ao abrir o jogo.
 - Só 18+ (`18_mais`) vê ou recebe: aviso de domingo (push), apoio ao projeto, "oferecido por" (ainda sem uso) e o bloco "Seja sócio" da Casa. Outra faixa é desinscrita do push (na triagem e no envio). Quem se inscreveu antes da triagem e ainda não respondeu fica sem receber, mas não é desinscrito: se responder 18+, volta a receber sem ligar de novo.
 - Barreira do apoio: a `#apoie` só mostra o texto, o Pix e o link depois de "Confirmar" em "Sou maior de 18 ou responsável". Vale 30 dias por aparelho; sem armazenamento, pergunta de novo a cada visita.
-- A tela não oferece trocar a faixa. Vale pelo aparelho: limpar os dados do site ou "Apagar meus dados" faz a triagem voltar.
+- A tela não oferece trocar a faixa. Vale pelo aparelho: limpar os dados do site ou "Apagar meus dados" faz a triagem voltar. No servidor, a faixa gravada só muda para uma mais protetora, como na junção: quem marcou menos de 16 não sobe por chamada direta.
 - A faixa só aparece na tela "Ver meus dados" (a da própria pessoa). Nas métricas (`npm run metricas`), só a contagem por faixa.
 - Aviso de saída: um só, pega o toque em qualquer link para outro site. Ficam de fora (`data-sem-aviso`): compartilhar no WhatsApp (é o compartilhar do próprio jogador, como o Stories, e fica no caminho do desafio), as fontes do painel `#admin` e o "Seja sócio", que já tem folha própria.
 
 ### Termos (`#termos`)
 - Página com "Versão em revisão" e a data no topo. Link no rodapé da Home e na triagem. O texto não pode ter os trechos para o advogado (um teste recusa "Para o advogado revisar" e "a definir").
 - O texto diz: quem é o controlador e que não há encarregado (DPO); quem lê o quê (administrador: "Achei um erro" e suspeitas); os serviços que recebem o IP; o prazo de 6 meses das contas paradas; o que fica depois de apagar; a exceção do botão de compartilhar; o link de sócio como informativo; o ranking de cidades e estados. Em "Seus direitos", "as suas mensagens do Achei um erro" (o jogo não tem chat).
-- Aviso de mudança: mudar `DATA_DA_VERSAO` (hoje 08/11/2026) mostra a faixa "Os Termos mudaram · Ler" no topo da Home de quem já tinha visto outra versão, até a pessoa abrir `#termos`. Aparelho novo guarda a versão de agora sem aviso.
+- Aviso de mudança: mudar `DATA_DA_VERSAO` (hoje "09/11/2026 (2ª)") mostra a faixa "Os Termos mudaram · Ler" no topo da Home de quem já tinha visto outra versão, até a pessoa abrir `#termos`. Aparelho novo guarda a versão de agora sem aviso.
 - Qualquer troca no texto entra na lista do advogado em `docs/termos-x-jogo.md`.
 
 ### Ver meus dados
@@ -61,8 +61,9 @@
 ## Como está no código
 
 ### Menores, Termos e dados
-- **Triagem:** tela `src/telas/triagem.ts`, disparada em `irPara` (`src/app.ts`). Coluna `torcedores.faixa_etaria` (null = não respondeu), gravada por `salvar_faixa_etaria`; no aparelho, em `gdt:prefs`. Só existe torcedor depois de escolher o time, então a faixa sobe na sincronização seguinte (`src/servidor/torcedor.ts`).
+- **Triagem:** tela `src/telas/triagem.ts`, disparada em `irPara` (`src/app.ts`). Coluna `torcedores.faixa_etaria` (null = não respondeu), gravada por `salvar_faixa_etaria` (pedido de faixa menos protetora fica com a gravada, sem erro); no aparelho, em `gdt:prefs`. Só existe torcedor depois de escolher o time, então a faixa sobe na sincronização seguinte (`src/servidor/torcedor.ts`).
 - **Regra 18+:** uma só, `soPara18Mais` em `src/jogo/faixaEtaria.ts`, com `podeVerPush`, `podeVerApoio`, `podeVerOferecidoPor` (já pronta para o selo) e `podeVerSocio` (o bloco da Casa, por `socioParaMostrar` em `src/telas/casa/socio.ts`). No servidor, `salvar_inscricao_push` recusa quem não é `18_mais`.
+- **Apelido só 16+:** a regra é `podeTerApelido` (`src/jogo/faixaEtaria.ts`; sem resposta conta como não). No aparelho, `apelidoDoCard` só devolve o apelido de quem é 16+, e guardar a faixa menos_16 (triagem, servidor ou código do torcedor) apaga o apelido local. No servidor, `salvar_torcedor` grava o time e descarta o apelido de quem não é 16+ (a linha volta com apelido vazio, que o app lê como `apelido_idade`); um gatilho em `torcedores` apaga o apelido e o dos desafios quando a faixa vira menos_16, e os desafios novos só levam apelido de quem é 16+. A limpeza única (migração `20261109200000_apelido_16.sql`) tira o apelido de quem tem menos de 16 e dos desafios deles, e o dos desafios de quem não respondeu a triagem (o do perfil fica: só a pessoa vê); guarda só quando e quantos em `apelidos_apagados`.
 - **Aviso de saída:** `src/telas/saida.ts`. **Apoio:** `src/jogo/apoio.ts` (confirmação em `gdt:apoio-confirmado`). **Termos:** `src/telas/termos.ts` (só baixa quando abre; a tabela da Política vira fichas, para caber em 390×844 sem rolar para o lado); texto em `src/dados/termos.md`; versão `DATA_DA_VERSAO` e `avisoDosTermos` em `src/jogo/termos.ts`; o aparelho guarda a versão vista em `gdt:prefs` (`termosVistos`).
 - **Ver meus dados:** `ver_meus_dados` (função no banco, só leitura, sempre de `auth.uid()`), texto em `src/jogo/meusDados.ts`. É função, e não leitura direta das tabelas, porque a inscrição do aviso e as mensagens não têm leitura pelo celular, e abrir essas tabelas daria mais do que o necessário.
 - **Apagar meus dados:** `apagar_meus_dados` (função no banco, numa transação).

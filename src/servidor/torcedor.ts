@@ -3,7 +3,7 @@
 // mudou aqui sobe; o que outro aparelho mudou desce, uma vez por carregamento.
 
 import { esquecerTorcedor, faixaDoAparelho, guardarFaixa, prefs } from '../estado';
-import { FAIXAS, type FaixaEtaria } from '../jogo/faixaEtaria';
+import { FAIXAS, podeTerApelido, type FaixaEtaria } from '../jogo/faixaEtaria';
 import { entrarNaConta, ErroServidor, meuTorcedor, pedirEntrada, salvarFaixaEtaria, salvarTorcedor, type TorcedorNoServidor } from './api';
 
 export const marcaDe = (time: string, apelido: string | null | undefined) => `${time}|${apelido ?? ''}`;
@@ -72,17 +72,38 @@ export async function sincronizarTorcedor(forcar = false): Promise<boolean> {
   if (!forcar) await puxarTorcedor();
   const mudou = mudancaPorAvisar;
   mudancaPorAvisar = false;
-  const p = prefs.get();
+  // Menos de 16 não tem apelido (jogo.md, seção 4): o que sobrou no aparelho sai antes de calcular a marca.
+  if (faixaDoAparelho() === 'menos_16' && prefs.get().apelido) prefs.set({ apelido: undefined, apelidoConferido: undefined });
+  let p = prefs.get();
   if (!p.time) throw new ErroServidor('sem_time');
   const marca = marcaDe(p.time, p.apelido);
+  let recusado = false;
+  // A faixa deste aparelho já estava no servidor quando o apelido foi recusado: outro aparelho a mudou (a próxima
+  // carga adota a de lá). Tentar de novo agora só repetiria a recusa.
+  let faixaJaEstava = false;
   if (forcar || p.sincronizado !== marca) {
-    await salvarTorcedor(p.time, p.apelido);
-    // O servidor aceitou (o filtro de apelidos roda lá): agora o card pode mostrar o apelido.
-    prefs.set({ sincronizado: marca, apelidoConferido: undefined, faixaSincronizada: forcar ? undefined : p.faixaSincronizada });
+    // Torcedor que já existe: a faixa 16+ chega antes do apelido (o servidor descarta o apelido de quem não tem faixa 16+).
+    if (p.sincronizado) await sincronizarFaixa();
+    p = prefs.get();
+    faixaJaEstava = !!p.faixaSincronizada && p.faixaSincronizada === faixaDoAparelho();
+    ({ apelidoRecusado: recusado } = await salvarTorcedor(p.time!, p.apelido));
+    if (recusado) {
+      // Código 'apelido_idade': o servidor só guardou o time. O apelido fica pendente (sobe quando a faixa 16+ chegar) e o card sai sem ele.
+      prefs.set({ sincronizado: marcaDe(p.time!, undefined), apelidoConferido: false, faixaSincronizada: forcar ? undefined : p.faixaSincronizada });
+    } else {
+      // O servidor aceitou (o filtro de apelidos roda lá): agora o card pode mostrar o apelido.
+      prefs.set({ sincronizado: marca, apelidoConferido: undefined, faixaSincronizada: forcar ? undefined : p.faixaSincronizada });
+    }
   } else if (p.apelidoConferido === false && p.sincronizado === marca) {
     prefs.set({ apelidoConferido: undefined });
   }
   await sincronizarFaixa();
+  // Jogador novo que já tinha respondido a triagem: a faixa só subiu agora, então tenta o apelido mais uma vez.
+  const q = prefs.get();
+  if (recusado && !faixaJaEstava && q.time && q.apelido && podeTerApelido(faixaDoAparelho()) && q.faixaSincronizada === faixaDoAparelho()) {
+    const r = await salvarTorcedor(q.time, q.apelido);
+    if (!r.apelidoRecusado) prefs.set({ sincronizado: marcaDe(q.time, q.apelido), apelidoConferido: undefined });
+  }
   return mudou;
 }
 
