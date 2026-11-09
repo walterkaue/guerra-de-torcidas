@@ -22,7 +22,7 @@ import {
   proximoJogo,
   rotuloDoLanceDoDia,
   textoDoConviteLances,
-  TITULO_CONVITE_LANCES,
+  tituloDoConviteLances,
   tituloDaCasa,
   tonsDosChutes,
   type JogoDaHome,
@@ -359,7 +359,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   let respostas = time ? 3 : 0;
   const elMotivo = root.querySelector<HTMLElement>('[data-motivo]')!;
   const atualizarBotao = () => {
-    if (desafioAberto || desafioLancesAberto) elMotivo.textContent = 'Aceitar o X1 que te mandaram';
+    if (desafioAberto || desafioLancesAberto) elMotivo.textContent = 'Encarar o desafio que te mandaram';
     else if (respostas === 0) elMotivo.textContent = motivoDoJogo(proximoJogo(situacao), situacao);
   };
   const respondeu = () => {
@@ -468,7 +468,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     // A caixa já nasce na tela, para o convite não empurrar o resto quando a resposta chega
     // e para ninguém tocar em "Jogar agora" sem saber que foi chamado.
     caixa.innerHTML = `
-      <p class="rotulo">Te chamaram no X1</p>
+      <p class="rotulo">Te desafiaram</p>
       <p>Buscando o desafio…</p>`;
     caixa.hidden = false;
     verDesafioDoLink(codigoDesafio)
@@ -489,12 +489,12 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         const t = timePorId(d.time_id);
         const quem = d.apelido ? esc(d.apelido) : 'Alguém';
         caixa.innerHTML = `
-          <p class="rotulo">Te chamaram no X1</p>
-          <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''} te chamou no X1:
+          <p class="rotulo">${d.apelido ? `${quem} te desafiou` : 'Te desafiaram'}</p>
+          <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''} te desafiou:
           <strong>${d.pontos} pontos</strong>, ${d.gols_jogador} x ${d.gols_maquina} contra a máquina.</p>
           ${ficha}
-          <p class="convite-como">Você defende as cobranças de quem te chamou e bate as suas. Quem fizer mais pontos ganha.</p>
-          <button class="botao-linha" type="button" data-acao="desafio">Aceitar o X1</button>`;
+          <p class="convite-como">Você defende as cobranças de quem te desafiou e bate as suas. Quem fizer mais pontos ganha.</p>
+          <button class="botao-linha" type="button" data-acao="desafio">Encarar o desafio</button>`;
         desafioAberto = d.id;
         bustoDoConvite(caixa, d.boneco, t?.cores);
         atualizarBotao();
@@ -550,9 +550,9 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           titulo,
         });
         caixa.innerHTML = `
-          <p class="rotulo">${esc(TITULO_CONVITE_LANCES)}</p>
+          <p class="rotulo">${esc(tituloDoConviteLances(d.apelido))}</p>
           <p>${esc(texto)}</p>
-          <button class="botao-linha" type="button" data-acao="desafio-lances">Aceitar o X1</button>`;
+          <button class="botao-linha" type="button" data-acao="desafio-lances">Encarar o desafio</button>`;
         caixa.hidden = false;
         desafioLancesAberto = d.id;
         bustoDoConvite(caixa, d.boneco, t?.cores);
@@ -573,11 +573,11 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         const t = timePorId(d.time_id);
         const quem = d.apelido ? esc(d.apelido) : 'Alguém';
         caixa.innerHTML = `
-          <p class="rotulo">Te chamaram no X1 na Prova de Boleiro</p>
+          <p class="rotulo">${d.apelido ? `${quem} te desafiou` : 'Te desafiaram'} na Prova de Boleiro</p>
           <p><strong>${quem}</strong>${t && t.id !== ID_OUTRO ? ` (${esc(t.nome)})` : ''}: ${esc(d.resumo)},
           <strong>${d.pontos} pontos</strong>. Mesmas 8 perguntas, faz mais?</p>
           <p class="escada-emoji">${esc(d.escada)}</p>
-          <button class="botao-linha" type="button" data-acao="desafio-prova">Aceitar o X1</button>`;
+          <button class="botao-linha" type="button" data-acao="desafio-prova">Encarar o desafio</button>`;
         caixa.hidden = false;
         caixa.querySelector('[data-acao="desafio-prova"]')!.addEventListener('click', () => jogarProva(d.id));
       })

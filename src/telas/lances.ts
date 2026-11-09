@@ -41,6 +41,7 @@ import {
   itensDaTelaUnica,
   itensDoFiltro,
   placarDoX1,
+  textoShareLances,
   rotuloDaTentativa,
   textoDaTentativa,
   tipoDaAba,
@@ -460,7 +461,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     root.innerHTML = `
       <main class="tela lances" style="${estilo(time.cores)}">
         ${cabecalhoTela({ titulo: 'Lances do Jogo', voltar: true })}
-        ${estado('carregando', 'Buscando o X1…')}
+        ${estado('carregando', 'Buscando o desafio…')}
       </main>`;
     root.querySelector('[data-voltar]')!.addEventListener('click', () => {
       sairDaEtapa();
@@ -520,7 +521,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     // Funil do X1: terminou a partida de um X1 recebido (resultado() roda uma vez por partida).
     if (x1Recebido) contarFunil({ ev: 'terminou', tipo: 'x1_lances', x1: x1Recebido });
     const desfechos = resultados.map((r) => r.desfecho);
-    const textoShare = [conviteLances(pontos, paraTime, !!codigoX1), emojisDaPartida(desfechos), ...(medalhas[0] ? [medalhas[0]] : []), link].join('\n');
+    const textoShare = textoShareLances(conviteLances(pontos, paraTime, !!codigoX1), emojisDaPartida(desfechos), medalhas[0] ?? null, link);
     // Telão e lista: as 3 tentativas do mesmo lance, o título do lance uma vez só.
     const tituloDoLance = lances[0].titulo;
     const cmp = fim?.comparacao ?? null;
@@ -528,7 +529,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     // ou pro link dali: na derrota, a frase neutra, que leva a jogar de novo para ter o próprio link.
     const doNarrador =
       cmp?.venceu
-        ? escolherFrase('desafio_vitoria', { ...contextoDoTime(time, apelido), desafiante: cmp.desafiante ?? 'quem te chamou' }, Math.random)?.texto
+        ? escolherFrase('desafio_vitoria', { ...contextoDoTime(time, apelido), desafiante: cmp.desafiante ?? 'o rival do dia' }, Math.random)?.texto
         : undefined;
     const fraseX1 = cmp ? (doNarrador ?? fraseNeutraDoX1(cmp.venceu)) : null;
     const duelo = cmp
@@ -541,7 +542,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
               <div><span data-nome-duelo="outro">${esc(p.nomeDoOutro)}</span><strong>${p.outro}</strong></div>
               <p class="adesivo">${esc(fraseX1 ?? '')}</p>
             </div>`,
-            { titulo: 'X1', filete: true },
+            { titulo: 'Desafio', filete: true },
           );
         })()
       : '';

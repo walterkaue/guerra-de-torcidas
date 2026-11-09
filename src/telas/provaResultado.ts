@@ -9,7 +9,7 @@ import { tipoDoJogo, type DadosDoCard } from '../jogo/cardPersonalizado';
 import { linhaDoTorcedor } from '../jogo/cardTextos';
 import { linhaDoCard } from '../jogo/cardProva';
 import { contextoDoTime } from '../narrador/sessao';
-import { conviteX1Prova } from '../jogo/convites';
+import { conviteX1Prova, textoShareProva } from '../jogo/convites';
 import { sorteadorDeFrase } from './cardPersonalizado';
 import { mostrarCarreiraNoResultado, nivelParaCard } from './carreira';
 import { textoForaDasMelhores } from '../jogo/lancesTextos';
@@ -34,13 +34,7 @@ export function telaProvaResultado(root: HTMLElement, rota: Rota): void {
   const link = codigo ? `${SITE}/?p=${codigo}` : `${SITE}/?time=${time.id}`;
   const novoRecorde = !!fim.desempenho?.novoRecorde;
   const linha = linhaDoCard(fim.resumo, total, paraTime, novoRecorde);
-  const textoShare = codigo
-    ? `${conviteX1Prova(total, true)}
-${fim.escada}
-${link}`
-    : `${linha}
-${fim.escada}
-${conviteX1Prova(total, false)} ${link}`;
+  const textoShare = textoShareProva({ codigo: !!codigo, convite: conviteX1Prova(total, !!codigo), linha, escada: fim.escada, link });
 
   // Quando a prova não entrou no ranking, a explicação vem no lugar do selo.
   const situacao = fim.sobSuspeita
@@ -55,9 +49,9 @@ ${conviteX1Prova(total, false)} ${link}`;
         `<div class="duelo-desafio">
           <div><span>Você</span><strong>${total}</strong><small>${esc(fim.escada)}</small></div>
           <em>x</em>
-          <div><span>${esc(cmp.desafiante ?? 'Quem te chamou')}</span><strong>${cmp.pontosDesafiante}</strong><small>${esc(cmp.escadaDesafiante)}</small></div>
+          <div><span>${esc(cmp.desafiante ?? 'Rival do dia')}</span><strong>${cmp.pontosDesafiante}</strong><small>${esc(cmp.escadaDesafiante)}</small></div>
         </div>`,
-        { titulo: `X1 · ${cmp.venceu ? 'você venceu!' : 'ficou com quem te chamou'}`, filete: true },
+        { titulo: `Desafio · ${cmp.venceu ? 'vencido!' : 'deu o outro lado'}`, filete: true },
       )
     : '';
 

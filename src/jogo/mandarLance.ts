@@ -18,7 +18,7 @@ export interface LanceParaMandar {
 export const linkDoItem = (itemId: string): string => `${LINK_DO_JOGO}/${caminhoDoItem(itemId)}`;
 
 export const textoDoLanceParaMandar = (l: LanceParaMandar): string =>
-  `⚽ Lance do Guerra de Torcidas: ${l.titulo} (${l.clube} x ${l.adversario}, ${l.data.slice(0, 4)}). Consegue recriar?`;
+  `⚽ Lance do Guerra de Torcidas: ${l.titulo} (${l.clube} x ${l.adversario}, ${l.data.slice(0, 4)}). Consegue carimbar?`;
 
 export const textoDaDisputaParaMandar = (titulo: string): string =>
   `⚽ Disputa de pênaltis no Guerra de Torcidas: ${titulo}. Bate comigo?`;

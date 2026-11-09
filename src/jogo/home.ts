@@ -33,15 +33,16 @@ export function rotuloDoLanceDoDia(titulo: string, clube: string): string {
   return `Lance do Dia · ${titulo} · ${clube}`;
 }
 
-/** O que o convite do X1 dos Lances (link ?l=) diz; `titulo` null quando o lance não está no catálogo. */
+/** O que o convite do desafio dos Lances (link ?l=) diz; `titulo` null quando o lance não está no catálogo. */
 export function textoDoConviteLances(d: { quem?: string | null; time?: string | null; pontos: number; titulo: string | null }): string {
   const quem = d.quem || 'Alguém';
   const noLance = d.titulo ? `no lance ${d.titulo}` : 'num lance';
   return `${quem}${d.time ? ` (${d.time})` : ''}: ${d.pontos} pontos ${noLance}. Mesmo lance, 3 tentativas. Faz mais?`;
 }
 
-/** Título do convite do X1 dos Lances. */
-export const TITULO_CONVITE_LANCES = 'Te chamaram no X1 nos Lances do Jogo';
+/** Título do convite do desafio dos Lances: "Camisa10 te desafiou nos Lances do Jogo"; sem apelido, "Te desafiaram nos Lances do Jogo". */
+export const tituloDoConviteLances = (apelido?: string | null): string =>
+  `${apelido?.trim() ? `${apelido.trim()} te desafiou` : 'Te desafiaram'} nos Lances do Jogo`;
 
 // ---------- luz da arquibancada ----------
 
