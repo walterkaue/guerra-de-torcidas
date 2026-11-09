@@ -28,7 +28,7 @@
 ## 2. Ordem sugerida para depois dos testes
 
 0. **Agora, durante os testes:** A10 e H01a. O C01 (com o I03) está pronto e falta publicar.
-1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); B02 + C02 desenhados juntos no Chat (resultado em duas camadas, com o "Chamar no X1" como ação própria); C06 (link do X1 com menos toques); B03 (um aviso por vez na Home); C10 (prazo dos X1).
+1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); B02 + C02 desenhados juntos no Chat (resultado em duas camadas, com o "Chamar no X1" como ação própria); C06 (link do X1 com menos toques); B03 (um aviso por vez na Home).
 2. **Semana de 16/11:** C03 + C08 (ver o gol de quem chamou, redesenhado no aparelho de quem abre); E01 (1ª visita); E04 (roteiro de iPhone); D07 (Crava na entressafra).
 3. **Depois:** C04 (com a prova de conceito antes), C05, H01b e H02, B01, F01, A08 e H03 (com o que os amigos disserem).
 4. **Antes da divulgação pública:** A01 a A05.
@@ -77,7 +77,7 @@
 | C07 | Placar acumulado do X1 entre duas pessoas (J42) | P | "Zé 2 x 1 Camisa10" na série de revanches, sem apelido público. Primeiro passo do ranking entre amigos. | P2 | M | Chat → Claude |
 | C08 | Link de replay que roda no celular de quem abre | C | Em vez de vídeo, o link leva só o gesto e a cena, e o jogo redesenha o gol no aparelho de quem abre. Leve e bom para o WhatsApp. O vídeo (C04) fica para o Stories. Nos pênaltis, as cobranças gravadas de quem chamou só aparecem depois que o X1 termina (ver C03); nos Lances, quem aceita joga com sementes novas, então dá para mostrar antes. | P2 | M | Claude |
 | C09 | Prévia bonita do link (Open Graph) por tipo | C | Quem recebe o link no WhatsApp vê hoje a mesma prévia para tudo. Uma imagem por tipo (X1, lance, medalha) aumenta o clique. Como o site é estático, uma por tipo, não por partida. | P2 | P | Claude |
-| C10 | Prazo de validade dos X1: 7 dias, apagados com 30 | C | Decidido em 07/11. Vem depois do C01: antes de apagar, chamar `funil_contar_gerados()` (os gerados ficam contados para sempre; `jogos/contas.md`, "Contagem de uso"). | P1 | M | Claude |
+| C10 | ~~Prazo de validade dos desafios~~ **feito em 09/11/2026** | C | Link vale 7 dias, desafio apagado com 30, chamando `funil_contar_gerados()` antes (`jogos/penaltis.md`, "Desafio por link"; `jogos/contas.md`). Falta publicar. | P1 | M | Claude |
 
 ### D. Jogo e conteúdo
 

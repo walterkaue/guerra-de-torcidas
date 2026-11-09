@@ -32,7 +32,7 @@
 - **Onde desiste:** escolha do time, triagem, aquecimento e partida (pênaltis, Lances, Prova). Conta quem troca de tela, fecha a página ou manda o jogo pro fundo no meio da etapa; quem volta à mesma etapa manda "voltou", e o relatório mostra desistiu − voltou (quem vai ao WhatsApp e volta dá zero). Pular o aquecimento segue adiante, não é desistência. O Time do Dia não conta: dá para voltar e continuar.
 - **Nada de pessoa:** nenhuma tabela guarda torcedor, apelido, IP ou o código do X1. Para ligar compartilhou → abriu → aceitou, guarda a impressão do código (HMAC com o segredo das funções) numa linha por X1 e evento, só de X1 que existe, que **some em 30 dias**. Código inventado não vira linha (o evento de X1 cai; a desistência conta sem X1), então a tabela não cresce além dos X1 de verdade. Para sempre fica só a contagem por dia, evento, tipo, meio, jogo e se era fluxo de X1.
 - **Sem fila no aparelho:** os eventos saem em lote, em segundo plano, sem atrasar tela. Sem rede, o evento se perde.
-- Relatório: "Funil do X1" e "Onde desiste" no `npm run metricas`. Os gerados de cada dia ficam contados para sempre, e o D8 (prazo de 7 dias dos X1) chama a contagem antes de apagar X1 antigos.
+- Relatório: "Funil do X1" e "Onde desiste" no `npm run metricas`. Os gerados de cada dia ficam contados para sempre, e a rotina que apaga os desafios com mais de 30 dias chama a contagem antes de apagar.
 
 ### Contas paradas
 - Conta anônima sem jogar há mais de **6 meses** é apagada no dia 1º de cada mês, às 4h. "Jogar" = partida (Pênaltis e Lances), Time do Dia, resposta da Prova ou palpite; abrir o site não conta. 6 meses, e não 3, para não apagar quem só joga durante o Brasileirão.

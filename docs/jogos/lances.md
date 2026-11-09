@@ -80,8 +80,9 @@ Um jogo só para faltas, cara a cara e disputas de pênaltis históricas: mesma 
 - Toda partida normal gera um código com o resumo público da faixa usada. Compartilhar: o link `?l=código`, com "Te chamei no X1 dos Lances: fiz N pro [time]. Faz mais?".
 - **Quem aceita** joga o mesmo lance, **na mesma faixa**, com sementes novas; mais pontos vence, e o empate fica com quem desafiou. O X1 recebido não gera outro código e conta no limite do dia.
 - **Convite na Home:** "<quem> (<time>): N pontos no lance <título>. Mesmo lance, 3 tentativas. Faz mais?". "Aceitar o X1" (ou "Jogar agora") vai direto à partida, com "X1: <apelido> fez N" no topo; o `?l=` sai do endereço.
+- **Prazo:** o desafio vale 7 dias desde a criação e é apagado com 30 (`jogos/penaltis.md`, "Desafio por link").
 - **Expira** (410 `desafio_expirado`) se o lance desceu de faixa depois do X1 (`desafioNaFaixa`), para um código antigo não guardar a faixa que pagava mais. Também expira o X1 cuja partida foi criada antes do corte.
-- **Erros** (404, 409, 410) viram partida normal do mesmo lance, com uma linha do narrador ("Esse X1 expirou. Vai uma partida normal!"). O resultado mostra o placar dos dois; frase do narrador que fala em link cai na neutra.
+- **Erros** (404, 409, 410) viram partida normal do mesmo lance, com uma linha do narrador (no 410, "Apitou o fim: esse desafio valia 7 dias. Bora outro!"). O resultado mostra o placar dos dois; frase do narrador que fala em link cai na neutra.
 - Boneco de quem chamou: `jogos/penaltis.md` (Desafio por link) e `jogos/boneco-montavel.md`.
 
 ### Anti-trapaça

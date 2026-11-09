@@ -457,10 +457,12 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       try {
         p = await pedir(codigoDesafio);
       } catch (e) {
-        if (!(e instanceof ErroServidor) || !codigoDesafio || !['proprio_desafio', 'desafio_nao_encontrado', 'desafio_sem_perguntas', 'desafio_ja_jogado'].includes(e.codigo)) throw e;
-        // Link do próprio desafio ou quebrado: vira prova normal.
+        if (!(e instanceof ErroServidor) || !codigoDesafio || !['proprio_desafio', 'desafio_nao_encontrado', 'desafio_sem_perguntas', 'desafio_ja_jogado', 'desafio_expirado'].includes(e.codigo)) throw e;
+        // Link do próprio desafio, quebrado ou expirado: vira prova normal.
         const aviso =
-          e.codigo === 'desafio_ja_jogado' ? 'Esse X1 você já jogou. Vai uma prova nova!' : 'X1 indisponível. Vai uma prova nova!';
+          e.codigo === 'desafio_ja_jogado' ? 'Esse X1 você já jogou. Vai uma prova nova!'
+          : e.codigo === 'desafio_expirado' ? 'Apitou o fim: esse desafio valia 7 dias. Bora outro!'
+          : 'X1 indisponível. Vai uma prova nova!';
         codigoDesafio = undefined;
         p = await pedir();
         window.setTimeout(() => !saiu && gritar(aviso), 50);
@@ -499,7 +501,8 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
   if (codigoDesafio) {
     verDesafioProva(codigoDesafio)
       .then((d) => {
-        if (!d || saiu) return;
+        // Vencido: sem convite; ao começar, o servidor responde 410 e vai uma prova normal com o aviso.
+        if (!d || d.vencido || saiu) return;
         mostrarConvite({ apelido: d.apelido, timeId: d.time_id, pontos: d.pontos, escada: d.escada, resumo: d.resumo });
         btnComecar.textContent = 'Aceitar o X1';
       })

@@ -96,7 +96,7 @@ export const alvoDoX1 = (apelido: string | null | undefined, pontos: number): st
 const AVISOS_DO_X1: Record<string, string> = {
   desafio_nao_encontrado: 'Esse X1 não existe mais. Vai uma partida normal!',
   proprio_desafio: 'Esse X1 é seu. Vai uma partida normal!',
-  desafio_expirado: 'Esse X1 expirou. Vai uma partida normal!',
+  desafio_expirado: 'Apitou o fim: esse desafio valia 7 dias. Bora outro!',
 };
 
 /** O aviso de um erro de X1 que vira partida normal, ou null se o erro é outro (aí a partida segue o caminho dos erros). */

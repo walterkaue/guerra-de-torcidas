@@ -19,7 +19,7 @@ Inspirada no formato de escada e "parar ou seguir" dos programas de perguntas da
   - **Tira duas:** some com duas alternativas erradas.
   - **Arquibancada:** mostra como quem já respondeu aquela pergunta escolheu; com menos de 30 respostas, vira "tira uma".
   - **Troca:** troca a pergunta por outra do mesmo degrau.
-- **Desafio por link:** quem aceita recebe as mesmas 8 perguntas, na mesma ordem (alternativas embaralhadas de novo). Vence quem fizer mais pontos; empate fica com quem desafiou.
+- **Desafio por link:** quem aceita recebe as mesmas 8 perguntas, na mesma ordem (alternativas embaralhadas de novo). Vence quem fizer mais pontos; empate fica com quem desafiou. O desafio vale 7 dias e vencido vira prova normal, com o aviso (`jogos/penaltis.md`, "Desafio por link").
 
 | Degrau | Perguntas | Pontos cada |
 |---|---|---|

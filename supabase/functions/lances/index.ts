@@ -169,6 +169,8 @@ async function nova(sb: SupabaseClient, uid: string, corpo: Record<string, unkno
   if (error) {
     if (error.message?.includes('limite_do_dia')) throw new ErroHttp(429, 'limite_do_dia');
     if (error.message?.includes('muitas_partidas')) throw new ErroHttp(429, 'muitas_partidas');
+    // Desafio vencido (7 dias, conferido dentro da trava) ou apagado entre a leitura e o começo.
+    if (error.message?.includes('desafio_expirado')) throw new ErroHttp(410, 'desafio_expirado');
     throw error;
   }
   const comecou = (data as { partida_id: string; feitas: number; limite: number }[] | null)?.[0];

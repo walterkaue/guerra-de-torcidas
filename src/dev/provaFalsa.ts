@@ -1,5 +1,6 @@
 // Só em desenvolvimento (npm run dev, com ?provaFalsa na URL): imita a função "prova" do servidor
 // no próprio navegador, com perguntas de mentira, para conferir a tela sem banco nem login.
+// ?d=abcdefgh&x1Expirado: o X1 responde 410 desafio_expirado (prova normal, com o aviso na abertura).
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import {
@@ -20,10 +21,11 @@ import {
   type Desfecho,
   type Passo,
 } from '../jogo/prova';
-import type { AjudaProva, FimProva, PerguntaProva, RespostaProva } from '../servidor/api';
+import { ErroServidor, type AjudaProva, type FimProva, type PerguntaProva, type RespostaProva } from '../servidor/api';
 
 const CLUBES = ['flamengo', 'geral', 'remo', 'geral', 'bahia', 'geral', 'geral', 'palmeiras'];
 const espera = () => new Promise((ok) => setTimeout(ok, 250));
+const x1Expirado = new URLSearchParams(location.search).has('x1Expirado');
 
 let estado: {
   atual: number;
@@ -73,8 +75,9 @@ function fim(): FimProva {
   };
 }
 
-export async function novaProva() {
+export async function novaProva(codigo?: string) {
   await espera();
+  if (codigo && x1Expirado) throw new ErroServidor('desafio_expirado');
   estado = { atual: 0, alternativas: [], passos: [], ajudas: new Set(), ajudaNaAtual: false, removidas: [], trocas: 0 };
   return { partidaId: 'falsa', total: PERGUNTAS, desafio: null, pergunta: pergunta() };
 }

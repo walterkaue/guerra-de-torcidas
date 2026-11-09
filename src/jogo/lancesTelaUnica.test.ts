@@ -81,7 +81,7 @@ describe('textos da tela única', () => {
   it('erros do X1 viram partida normal; os outros, não', () => {
     expect(avisoDoErroDoX1('desafio_nao_encontrado')).toBe('Esse X1 não existe mais. Vai uma partida normal!');
     expect(avisoDoErroDoX1('proprio_desafio')).toBe('Esse X1 é seu. Vai uma partida normal!');
-    expect(avisoDoErroDoX1('desafio_expirado')).toBe('Esse X1 expirou. Vai uma partida normal!');
+    expect(avisoDoErroDoX1('desafio_expirado')).toBe('Apitou o fim: esse desafio valia 7 dias. Bora outro!');
     expect(avisoDoErroDoX1('limite_do_dia')).toBeNull();
   });
 
