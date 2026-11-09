@@ -179,7 +179,7 @@ O dia de cada jogador vale as **3 melhores partidas de Lances** (pênaltis, falt
 - **Sessão de usuário apagado:** se o login salvo não existir mais no servidor, o aparelho que tinha torcedor esquece time, apelido e faixa e volta à escolha do time, com aviso.
 - **Contas e aparelhos:** uma carreira em vários aparelhos pelo código do torcedor, sem login (`jogos/contas.md`).
 - **Cidades:** municípios do IBGE num arquivo estático, carregado só na tela de escolha.
-- Testes: `npm test` para a lógica pura e o banco (PGlite); rodar antes de cada commit.
+- Testes: `npm run test:rapido` (lógica pura) e `npm run test:banco` (SQL no PGlite); `npm test` roda os dois, antes de cada commit. Depois do merge de PR com função ou migração, `npm run publicar:conferir` compara o que está no ar com a `main`.
 
 ## 10. Monetização
 

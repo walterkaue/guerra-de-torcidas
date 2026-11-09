@@ -106,8 +106,8 @@
 |---|---|---|---|---|---|---|
 | F01 | **Registro de erros na produção** | C | Uma função que recebe exceções do navegador: mensagem, tela, versão do bundle e código do motivo, sem dado pessoal, com limite por minuto. Uma aba no `#admin`. Entra nos Termos. | P1 | M | Claude + Kauê (Termos) |
 | F02 | ~~Documentação mais leve~~ **feito em 08/11/2026** | C | `jogo.md` curto (23 KB, era 230), um doc por módulo em `docs/jogos/`, `docs/decisoes.md` com as datas e o `proximos-passos.md` só com a fila; teto de tamanho e links conferidos por `scripts/docs/tamanho.test.ts`. | — | — | — |
-| F03 | Testes mais rápidos e um teste instável | C | O `npm test` leva de 3 a 8 min, e o `supabase/testes/temporada.test.ts` estourou o tempo uma vez. Separar `test:rapido` (lógica pura) de `test:banco` (PGlite). | P2 | P | Claude |
-| F04 | Ordem de publicação dentro do PR | C | Cada PR com função já traz a ordem, mas ela some no histórico. Um script `npm run publicar:conferir` que compara as funções no ar com a `main` (como foi feito à mão para a `lances` v8). | P2 | P | Claude |
+| F03 | ~~Testes mais rápidos e um teste instável~~ **feito em 08/11/2026** | C | `test:rapido` (lógica pura, ~20 s) e `test:banco` (PGlite, ~2 min); `npm test` roda os dois. O estouro do `temporada.test.ts` vinha de reaplicar as 49 migrações a cada banco novo (10 vezes no arquivo, com CPU disputada); agora o banco é montado uma vez por arquivo e copiado (arquivo de 50 s para 9 s). | — | — | — |
+| F04 | ~~Ordem de publicação dentro do PR~~ **feito em 08/11/2026** | C | `npm run publicar:conferir` (só leitura): baixa cada função publicada e compara com a `main`; lista igual, diferente (com a data do último commit) ou não publicada; faz o mesmo com as migrações. | — | — | — |
 | F05 | Limpezas pequenas | P | `.admin-tabela` e `.conq-falta` sem uso, limite por IP no Código do torcedor, cidade na junção de contas. | P3 | P | Claude |
 
 ### G. Comunidade (fase 2, só depois do balanço)
