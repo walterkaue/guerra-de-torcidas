@@ -55,11 +55,11 @@ Nada disso tem lembrete automático.
 ## Só o Kauê faz
 
 - **Supabase Pro** antes de divulgar (o Free pausa depois de 1 semana sem uso; hoje um agendamento evita).
-- **Advogado:** pontos 4 (triagem autodeclarada × art. 9º do ECA Digital) e 5 (DPO × alto risco) dos Termos, a frase do código do torcedor, a da cidade e a do boneco em campo (`docs/termos-x-jogo.md`). O parecer de 02/11 veio sem OAB.
+- **Advogado:** pontos 4 (triagem autodeclarada × art. 9º do ECA Digital) e 5 (DPO × alto risco) dos Termos, a frase do código do torcedor, a da cidade, a do boneco em campo e a da contagem de uso (`docs/termos-x-jogo.md`). O parecer de 02/11 veio sem OAB.
 - **Data do zerar da pré-temporada:** até 06/12, para estrear em dezembro; o balanço (`npm run balanco`) roda antes.
 - **Perguntas:** importar as 2 de `dados/perguntas/lote-02.csv` e dizer se tema de guerra entra na lista de proibidos (`dados/perguntas/piloto-lote-02.md`).
 - **`#admin`:** apagar o apelido já gravado que bate com a lista de jogadores famosos (1 em 06/11).
-- **Funil do desafio:** decidir as propostas de `docs/propostas/funil-do-desafio.md` (viraram os itens C01 e C06 do backlog).
+- **Funil do desafio:** decidir as propostas que sobraram de `docs/propostas/funil-do-desafio.md` (item C06 do backlog; o C01 já conta o funil).
 
 ## Em andamento
 
@@ -77,5 +77,5 @@ A ordem está no `docs/backlog.md`, seção 2: o que falta para divulgar, o funi
 - [ ] Plano do Supabase decidido
 - [ ] Termos e jogo batendo, com revisão do advogado
 - [ ] Prova calibrada (com as partidas de 20 s)
-- [ ] Funil do desafio medido (backlog C01)
+- [x] Funil do desafio medido (backlog C01; conta desde a publicação da função `funil`)
 - [ ] Balanço rodado e pré-temporada zerada

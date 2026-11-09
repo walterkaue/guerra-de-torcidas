@@ -27,7 +27,7 @@
 ## 2. Ordem sugerida para depois dos testes
 
 1. **A01 a A05:** o que falta para divulgar (Supabase Pro, advogado, balanço e zerar, Prova calibrada, funil medido).
-2. **C01 + C02:** medir o funil do X1 e dar a ele um botão próprio. É barato e responde à pergunta mais importante dos testes.
+2. **C02:** dar ao X1 um botão próprio (o funil, C01, já conta: dá para comparar antes e depois).
 3. **B01 + B02:** central de avisos e resultado em duas camadas (ponto 1).
 4. **C04:** replay do gol compartilhável (ponto 3). É o de maior "uau" por esforço, porque o replay já existe.
 5. **C05:** card animado (ponto 2). Reaproveita o motor do C04.
@@ -43,10 +43,10 @@
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
 | A01 | Plano do Supabase decidido (Pro) | P | Limites do plano grátis, pausa por inatividade e backups. Está na lista "Antes de divulgar". | P0 | P | Kauê |
-| A02 | Termos com o advogado (pontos 4 e 5, código do torcedor, cidade, boneco em campo) | P | O parecer veio sem OAB, e a página tem valor legal (ECA Digital). | P0 | M | Kauê |
+| A02 | Termos com o advogado (pontos 4 e 5, código do torcedor, cidade, boneco em campo, contagem de uso) | P | O parecer veio sem OAB, e a página tem valor legal (ECA Digital). | P0 | M | Kauê |
 | A03 | Balanço rodado e pré-temporada zerada (até 06/12) | P | O balanço tem de rodar antes de zerar. A semana de 02/11 já soma as duas regras. | P0 | P | Kauê + Claude |
 | A04 | Prova calibrada com as partidas de 20 s | P | A mediana e os 4 erros usam só partidas desde 06/11, 16h47. | P0 | P | Claude + Kauê decide |
-| A05 | Funil do desafio medido (ver C01) | P | Sem isso, nenhuma taxa de convite é confiável. | P0 | M | Claude |
+| A05 | Funil do desafio medido (ver C01) | P | Feito no C01: falta só publicar e esperar dias de teste com o link indo para gente de fora. | P0 | P | Kauê |
 | A06 | Conferências marcadas: bloco 8 (09/11, 12h), fechamento do mês (07/12) | P | Só leitura, sem lembrete automático. | P0 | P | Kauê + Claude |
 | A07 | Testes no celular que ficaram para trás (aquecimento, troféus, G3 com TalkBack, boneco em campo, limpeza dos Lances) | P | Lista no `proximos-passos.md`, item 11 e trilhos. Dá para fazer junto com os amigos. | P0 | P | Kauê |
 | A08 | Perguntas até 800 (hoje ~280) | P | Perguntas nascidas de páginas reais; os robôs do Gemini seguem na decisão de domingo. | P1 | G | Claude + Gemini |
@@ -68,7 +68,7 @@
 
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
-| C01 | **Contar o funil do X1** | P | Uma tabela de eventos mínimos, sem identificar ninguém: toque em compartilhar, abertura do link, aceite, partida jogada, revanche. Relatório no `npm run metricas`. | P0 | M | Claude |
+| C01 | ~~Contar o funil do X1~~ **feito em 08/11/2026** | P | Compartilhou (por tipo e meio), abriu, aceitou, 1º chute, terminou e revanche, sem identificar ninguém; "Funil do X1" no `npm run metricas`. Regra em `jogos/contas.md`, "Contagem de uso". Conta desde a publicação da função `funil`. | — | — | — |
 | C02 | **Botão "Chamar no X1"** no resultado (Lances e pênaltis) | K/C | O X1 sai de dentro do compartilhar e vira ação própria, com texto pronto. Respeitar um amarelo por tela: talvez substitua o "Mandar no grupo". | P1 | M | Chat → Claude |
 | C03 | **Ver as tentativas de quem chamou** antes de jogar o X1 dos Lances | K | Hoje quem aceita vê só "Camisa10 fez 96". Mostrar os 3 desfechos (e, com C04, o replay dos gols). Precisa do `ver_desafio_lances` devolver os desfechos. Não abre brecha: quem aceita joga com sorteio novo. | P1 | M | Chat → Claude (servidor) |
 | C04 | **Replay do gol compartilhável** | K | Detalhe na seção 4.3. No resultado: "Compartilhar o replay do gol N". Vídeo curto: a cobrança de trás do batedor e o replay. | P1 | G | Chat → Claude |
@@ -122,7 +122,7 @@
 |---|---|---|---|---|---|---|
 | I01 | **Momento do jogo escolhido sozinho** | K | O jogo escolhe o melhor lance da partida para o replay compartilhável (C04), sem a pessoa pedir: golaço no ângulo, cavadinha, defesa da última cobrança, vitória no par ou ímpar. Uma pontuação simples, sem IA: o jogo já guarda gesto e semente de cada lance. | P1 | P | Claude (junto do C04) |
 | I02 | Vídeo vertical 9:16 com câmera lenta e a frase do narrador | K | Entra na especificação do C04 e do C05: corte vertical, câmera lenta no gol e a frase que o narrador falou como legenda. | P1 | — | (dentro do C04) |
-| I03 | Onde a pessoa desiste | K | Medir em que tela e em que passo a pessoa abandona: a partida no meio, o link do X1 antes do 1º chute, a triagem. Entra no C01 (funil) e no F01 (erros), sem dado pessoal. | P1 | — | (dentro do C01) |
+| I03 | ~~Onde a pessoa desiste~~ **feito em 08/11/2026, com o C01** | K | Escolha do time, triagem, aquecimento e partida (por jogo, com e sem X1), saiu − voltou; "Onde desiste" no `npm run metricas`. Os erros ficam com o F01. | — | — | — |
 | I04 | Som com variação e "combo" | K | Cada som toca com o tom ±10% e o volume variando um pouco. Gols seguidos sobem o tom. A torcida abaixa meio segundo quando o narrador ou o apito entram. Entra no H01. | P2 | — | (dentro do H01) |
 | I05 | **Passada de "sensação de jogo"** | C | O que fazia os jogos Flash grudarem: do fim da partida ao próximo chute em 1 toque e menos de 2 s; uma pequena pausa e tremida no gol (com movimento reduzido, sem tremida); recorde sempre à vista. Medir o tempo do "Mais uma" até o 1º chute, nos pênaltis e nos Lances. | P2 | M | Claude |
 | I06 | Estudar jogos curtos de navegador (sem copiar) | K | Olhar o que dava certo nos jogos de navegador de futebol e de habilidade: reinício instantâneo, uma mecânica só, desafio a um amigo, placar de recordes. Anotar as lições, nunca reproduzir um jogo específico (nome, arte, fases). | P3 | P | Chat |
