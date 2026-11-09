@@ -214,7 +214,7 @@ function maisPerto(itens: readonly MedalhaDoItem[], medalha: Medalha): string | 
   const [gols, outro] = melhor.f;
   const partes: string[] = [];
   if (gols > 0) partes.push(plural(gols, 'gol', 'gols'));
-  if (outro > 0) partes.push(melhor.m.tipo === 'disputa' ? plural(outro, 'vitória', 'vitórias') : `${milhar(outro)} recriando`);
+  if (outro > 0) partes.push(melhor.m.tipo === 'disputa' ? plural(outro, 'vitória', 'vitórias') : `${milhar(outro)} carimbando`);
   const onde = melhor.m.tipo === 'disputa' ? 'na disputa mais perto' : 'no lance mais perto';
   return `${gols + outro === 1 ? 'Falta' : 'Faltam'} ${partes.join(' e ')} ${onde}.`;
 }
@@ -223,7 +223,7 @@ function regraDaMedalha(medalha: Medalha, so: 'tudo' | 'disputa'): string {
   const d = MEDALHAS_PENALTIS[ORDEM[medalha]];
   const l = MEDALHAS[ORDEM[medalha]];
   const disputa = `${d.gols} gols${d.vitorias ? ` e ${d.vitorias} vitórias` : ''} numa mesma disputa de pênaltis`;
-  const lance = `${l.acertos} gols${l.recriados ? ` e ${l.recriados} recriando` : ''} num mesmo lance`;
+  const lance = `${l.acertos} gols${l.recriados ? ` e ${l.recriados} carimbando` : ''} num mesmo lance`;
   const nome = NOME_DA_MEDALHA[medalha];
   return so === 'disputa' ? `O ${nome} sai com ${disputa}.` : `${medalha === 'prata' ? 'A' : 'O'} ${nome} sai com ${lance} ou ${disputa}.`;
 }

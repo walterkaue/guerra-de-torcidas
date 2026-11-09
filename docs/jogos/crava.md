@@ -1,4 +1,4 @@
-# Crava a Rodada (palpites)
+# Palpite da Rodada (palpites)
 
 > Regra em vigor em 08/11/2026. Quando discordar do `docs/jogo.md`, vale o `jogo.md`. Datas e histórico: `docs/decisoes.md`.
 
@@ -10,7 +10,7 @@ Inspirado na rotina de rodada do Cartola e no prode argentino, **sem jogador rea
 - A cada rodada do Brasileirão Série A, a pessoa crava o placar dos jogos que quiser (pode pular jogos). De 0 a 9 gols para cada lado; edita até o início do jogo.
 - Grátis, sem dinheiro e sem prêmio em dinheiro: o que se ganha é ponto para a torcida, posição no ranking e zoeira. Só clubes e placares, nada de escalar jogador real.
 - Todo mundo palpita, em qualquer jogo da rodada, inclusive de time que não é o seu. Quem é de "Outro time" soma no ranking pessoal (e na cidade). Palpitar contra o próprio time vale, e o narrador zoa.
-- Cada palpite fecha no início do jogo (hora do servidor) e fica escondido até lá. Depois, todo mundo vê como a torcida cravou.
+- Cada palpite fecha no início do jogo (hora do servidor) e fica escondido até lá. Depois, todo mundo vê como a torcida palpitou.
 - **Jogo da certeza:** 1 por rodada, marcado e trocado até o início do primeiro jogo da rodada; depois trava.
 - **Jogo adiado:** o palpite fica guardado e reabre até o novo horário. Jogo não disputado até o fim da 38ª rodada é anulado, sem pontos (se era o da certeza, o dobro se perde).
 - **Porcentagem da torcida** ("71% cravou vitória do mandante"): só depois do início do jogo e com pelo menos 20 palpites nele; abaixo disso, "pouca gente cravou esse". Nunca aparece como "cotação".

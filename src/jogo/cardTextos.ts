@@ -34,13 +34,13 @@ export function degrausDaEscada(escada: string): Degrau[] {
 export const degrausCertos = (degraus: readonly Degrau[]) => degraus.filter((d) => d === 'acertou' || d === 'ajuda').length;
 
 const NOMES_ACERTO: Record<Acerto, [string, string]> = {
-  exato: ['EXATO', 'EXATOS'],
+  exato: ['NA MOSCA', 'NA MOSCA'],
   saldo: ['NO SALDO', 'NO SALDO'],
   vencedor: ['VENCEDOR', 'VENCEDORES'],
   errou: ['ERRO', 'ERROS'],
 };
 
-/** "2 EXATOS · 3 NO SALDO · 4 ERROS": só o que aconteceu na rodada. */
+/** "2 NA MOSCA · 3 NO SALDO · 4 ERROS": só o que aconteceu na rodada. */
 export function resumoDosAcertos(acertos: readonly Acerto[]): string {
   return (Object.keys(NOMES_ACERTO) as Acerto[])
     .map((a) => [a, acertos.filter((x) => x === a).length] as const)

@@ -74,7 +74,7 @@ O avatar do Perfil, da Home e do vestiário (`docs/jogo.md`, seção 14.5). Desd
 
 Decidido pelo Kauê em 06/11/2026 (C5, Rota B, "você no lance"). Regra completa em `docs/jogo.md`, seção 14.5, "Boneco em campo".
 
-- **Quem:** o batedor da pessoa (pênaltis com a morte súbita, Lances, treino e aquecimento) e, no X1 de pênaltis, o batedor de quem chamou. Goleiros e a máquina continuam sorteados.
+- **Quem:** o batedor da pessoa (pênaltis com a morte súbita, Lances, treino e aquecimento) e, no desafio de pênaltis, o batedor de quem chamou. Goleiros e a máquina continuam sorteados.
 - **Roupa da cena, nunca a do vestiário:** camisa, calção e meião pela seção 2 (uniforme 1 ou 2 e a troca contra o adversário; cores da Seleção; cores do clube do lance; roupa de goleiro no Gol 100). O campo `camisa` da vestimenta não vale em campo.
 - **Peças que entram:** corpo, pele, cabelo e cor, testeira, munhequeira (e a bronze), braçadeira e chuteira (cores do time do coração ou dourada). Testeira, munhequeira e chuteira do time ficam nas cores do time do coração, mesmo numa cena de outro clube. **Nunca entram:** colete, faixa, apito, pose, fundo e moldura.
 - **De costas:** em campo o batedor aparece de costas, com o cabelo de costas (coque, tranças, rabo e crespo pelo `cabelo(estilo, deFrente)`), a testeira como faixa sobre o cabelo e o número nas costas, em Anton, na cor de texto da camisa da cena. A braçadeira fica no braço esquerdo do boneco também de costas. No replay, de frente comemorando, com o número na frente.

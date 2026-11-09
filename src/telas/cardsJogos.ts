@@ -119,7 +119,7 @@ export function htmlDosCards(oQueELances: string, linhaLances: string, aposLance
     card('dia', 'Time do Dia', 'O clube secreto em 6 chutes', arteGrade([]), 'metade', ''),
     card(
       'crava',
-      'Crava a Rodada',
+      'Palpite da Rodada',
       'Palpita o placar do Brasileirão',
       '<span class="tarja-placar faixa-tv" data-placar>? x ?</span>',
       'largo',

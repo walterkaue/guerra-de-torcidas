@@ -22,7 +22,7 @@ export const DICAS = {
   lan_cavadinha_sem_sair: 'Cavadinha só encobre goleiro que saiu.',
   // Regra nova (seção 14.7, desde 08/11/2026): o limite soma pênaltis, faltas e cara a cara.
   lan_dez_valendo: 'Hoje as 10 valendo já foram. Treine à vontade.',
-  lan_recriar_oito: 'Acerte a área marcada e recrie o lance: +8.',
+  lan_recriar_oito: 'Acerte a área marcada e carimbe o lance: +8.',
   // Prova de Boleiro
   prova_parar_ou_seguir: 'Parar leva tudo o que juntou. Seguir arrisca.',
   prova_primeiro_erro: 'Errou, mas a prova segue. Restam 2 vidas.',
@@ -42,7 +42,7 @@ export const DICAS = {
   crava_estrela: 'A estrela dobra os pontos de 1 jogo.',
   crava_certeza_travada: 'A certeza travou: a rodada já começou.',
   crava_ved: 'Posição, pontos e os últimos 5 jogos.',
-  crava_rolando: 'Bola rolando: veja como a torcida cravou.',
+  crava_rolando: 'Bola rolando: veja como a torcida palpitou.',
   crava_rodada_fechada: 'Rodada fechada! Mande o resultado no grupo.',
 } as const;
 

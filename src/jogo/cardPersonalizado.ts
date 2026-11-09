@@ -21,7 +21,7 @@ export type EstiloCard = 'telao' | 'placar' | 'poster';
 /** Na ordem do deslizar; o primeiro é o padrão. O Pôster só existe com o boneco carregado (`estilosDisponiveis`). */
 export const ESTILOS: readonly { id: EstiloCard; nome: string }[] = [
   { id: 'telao', nome: 'Telão' },
-  { id: 'placar', nome: 'Placar seco' },
+  { id: 'placar', nome: 'Só o placar' },
   { id: 'poster', nome: 'Pôster' },
 ];
 
@@ -92,7 +92,7 @@ const APELIDO: Quadradinho<'apelido'> = { chave: 'apelido', nome: 'Meu\napelido'
 const NIVEL: Quadradinho<'nivel'> = { chave: 'nivel', nome: 'Nível na\nCarreira', icone: 'estrela' };
 
 export const TIPOS_DE_CARD: Record<TipoDeCard, readonly Quadradinho<Chave>[]> = {
-  'jogo-x1': [FRASE, APELIDO, NIVEL, { chave: 'placar', nome: 'Placar em\nemoji', icone: 'sorriso' }, { chave: 'link', nome: 'Link do\nX1', icone: 'corrente' }],
+  'jogo-x1': [FRASE, APELIDO, NIVEL, { chave: 'placar', nome: 'Placar em\nemoji', icone: 'sorriso' }, { chave: 'link', nome: 'Link do\ndesafio', icone: 'corrente' }],
   jogo: [FRASE, APELIDO, NIVEL, { chave: 'placar', nome: 'Placar em\nemoji', icone: 'sorriso' }, { chave: 'link', nome: 'Link do\njogo', icone: 'corrente' }],
   medalha: [FRASE, APELIDO, NIVEL, { chave: 'placar', nome: 'Medalha\nem emoji', icone: 'trofeu' }, { chave: 'link', nome: 'Link do\nlance', icone: 'corrente' }],
   trofeu: [FRASE, APELIDO, NIVEL, { chave: 'placar', nome: 'Números da\nsemana', icone: 'grafico' }, { chave: 'link', nome: 'Link do\njogo', icone: 'corrente' }],
@@ -269,7 +269,7 @@ export interface DadosDoCard {
   /** Frase do narrador escolhida para este resultado (pode ser vazia). */
   frase: string;
   novoRecorde: boolean;
-  /** Link sem "https://": o do X1 ou o do jogo/lance. */
+  /** Link sem "https://": o do desafio ou o do jogo/lance. */
   link: string;
   /** Linha fixa do rodapé (o aviso do Crava): sai sempre, nunca desliga. */
   avisoFixo?: string;

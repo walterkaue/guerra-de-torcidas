@@ -105,7 +105,7 @@ export function quemNaMedalha(apelido: string | undefined, paraTime: string | nu
 /** O adesivo do card: uma provocação curta, sem nome de ninguém. */
 export const ADESIVO_DA_MEDALHA: Record<Medalha, string> = {
   bronze: 'A primeira de muitas. Vem buscar a sua.',
-  prata: 'Agora é rumo ao ouro. Duvido você chegar antes.',
+  prata: 'Agora é rumo ao ouro. Quem do grupo chega antes?',
   ouro: 'Ouro no peito. Quem do grupo chega lá?',
 };
 

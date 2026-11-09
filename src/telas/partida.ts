@@ -9,7 +9,7 @@ import { prefs } from '../estado';
 import { sementeNova } from '../jogo/aleatorio';
 import { DISPUTAS } from '../dados/disputas';
 import { ID_SELECAO, chamadaDaDisputa, type Disputa } from '../jogo/disputas';
-import { etiquetasDaCobranca, etiquetasDaDefesa, eventoDaCobranca, eventoDaDefesa, eventosDoFim } from '../narrador/lance';
+import { etiquetasDaCobranca, etiquetasDaDefesa, etiquetasDoFim, eventoDaCobranca, eventoDaDefesa, eventosDoFim } from '../narrador/lance';
 import { criarNarrador } from '../narrador/sessao';
 import {
   COBRANCAS,
@@ -150,9 +150,9 @@ const DUR_ANTES_DO_REPLAY = 1000;
 export const AVISO_SEM_PONTOS = 'Sem conexão: essa partida não vale pontos.';
 export const AVISO_CAIU = 'Caiu a conexão: essa não vale mais pontos. Joga de novo quando a rede voltar.';
 /** Cada X1 dos pênaltis vale uma vez por pessoa (jogo.md, seção 6): na segunda, vira partida normal. */
-export const X1_JA_JOGADO = 'Esse X1 você já jogou. Vai uma partida nova!';
+export const X1_JA_JOGADO = 'Esse desafio você já encarou. Bora outro!';
 /** X1 de partida criada antes de 08/11/2026 (ou de lance que mudou de faixa) não pode ser aceito depois (jogo.md, 14.7). */
-export const X1_EXPIROU = 'Esse X1 expirou. Vai uma partida nova!';
+export const X1_EXPIROU = 'Apitou o fim: esse desafio acabou. Bora outro!';
 
 export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   const time: Time = timePorId(prefs.get().time) ?? TIMES[TIMES.length - 1];
@@ -772,7 +772,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         if (!disputa && desafio.disputaId) disputa = DISPUTAS.find((d) => d.id === desafio!.disputaId);
         if (disputa) vestirDisputa(disputa);
         else {
-          root.querySelector('.placar-jogo .lado:last-child .sigla')!.textContent = desafio.apelido ?? 'X1';
+          root.querySelector('.placar-jogo .lado:last-child .sigla')!.textContent = desafio.apelido ?? 'Desafio';
           const t = timePorId(desafio.timeId);
           if (t) vestir(t.cores);
         }
@@ -862,6 +862,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
               placar: `${resultado.golsJogador} x ${resultado.golsMaquina}`,
               pontos: resultado.pontos.total,
               numero: parOuImpar?.numeroNarrador,
+              etiquetas: etiquetasDoFim(resultado),
             }),
           )
           .filter((f): f is string => !!f),

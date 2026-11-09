@@ -13,6 +13,7 @@ import {
   proximoJogo,
   rotuloDoLanceDoDia,
   textoDoConviteLances,
+  tituloDoConviteLances,
   tituloDaCasa,
   tonsDosChutes,
   type LinhaDoGiro,
@@ -88,7 +89,7 @@ describe('Jogar agora', () => {
   });
 
   it('diz o motivo em tom informativo', () => {
-    expect(motivoDoJogo('crava', { ...tudo, cravaFechaEm: 5 * 3600_000 })).toBe('Crava a Rodada: fecha em 5h, sem palpite seu');
+    expect(motivoDoJogo('crava', { ...tudo, cravaFechaEm: 5 * 3600_000 })).toBe('Palpite da Rodada: fecha em 5h, sem palpite seu');
     expect(motivoDoJogo('dia', tudo)).toBe('Time do Dia: ainda não jogou hoje');
     expect(motivoDoJogo('dia', { ...tudo, chutesDoDia: 2 })).toBe('Time do Dia: 2 de 6 chutes hoje');
     expect(motivoDoJogo('penaltis', tudo)).toBe('Lances do Jogo: faltam 3 partidas valendo hoje');
@@ -103,6 +104,11 @@ describe('Jogar agora', () => {
 describe('Lance do Dia e convite do X1 dos Lances', () => {
   it('o botão traz título e clube, sem prometer bônus', () => {
     expect(rotuloDoLanceDoDia('Gol do título', 'Flamengo')).toBe('Lance do Dia · Gol do título · Flamengo');
+  });
+  it('o título do convite chama pelo apelido, ou fica sem ele', () => {
+    expect(tituloDoConviteLances('Zé')).toBe('Zé te desafiou nos Lances do Jogo');
+    expect(tituloDoConviteLances(null)).toBe('Te desafiaram nos Lances do Jogo');
+    expect(tituloDoConviteLances('  ')).toBe('Te desafiaram nos Lances do Jogo');
   });
   it('o convite é curto e neutro de gênero', () => {
     expect(textoDoConviteLances({ quem: 'Zé', time: 'Flamengo', pontos: 96, titulo: 'Gol do título' })).toBe(

@@ -25,7 +25,7 @@ export const TEXTO_DA_ESTACAO: Record<Estacao, TextoDaEstacao> = {
   defesa: { nome: 'Defesa', frase: 'Olhe o pé de apoio, marcado em amarelo, e toque onde pular.' },
   falta: { nome: 'Falta com barreira', frase: 'Passe por cima ou ao lado da barreira.' },
   prova: { nome: 'Prova', frase: 'Toque na resposta antes do tempo.' },
-  crava: { nome: 'Crava', frase: 'Use − e + e toque em Cravar.' },
+  crava: { nome: 'Palpite', frase: 'Use − e + e toque em Salvar palpite.' },
 };
 
 /** As estações desta vez: sem jogo do time aberto na rodada, o Crava some. */
@@ -92,14 +92,14 @@ export const GRITO_ACERTOU: Record<Estacao, readonly string[]> = {
   defesa: ['PEGOU! Leu o pé e foi buscar.', 'Defesa! O gol tá trancado hoje.'],
   falta: ['Por cima da barreira! Que cobrança.', 'Passou da barreira e foi pra rede!'],
   prova: ['Na mosca! Começou bem a prova.', 'Certinha! Tem cabeça de boleiro.'],
-  crava: ['Cravado! Esse vale de verdade.', 'Palpite feito! Agora é torcer.'],
+  crava: ['Palpite salvo! Esse vale de verdade.', 'Palpite feito! Agora é torcer.'],
 };
 
 export const GRITO_ERROU: Record<Estacao, readonly string[]> = {
   penalti: ['Quase! No jogo valendo você acerta.', 'Passou perto! Aquecimento é pra isso.'],
   defesa: ['Quase! No jogo valendo você pega.', 'Foi no outro canto! Agora você já sabe.'],
   falta: ['Quase! No jogo valendo você acerta.', 'A barreira ganhou essa. A próxima é sua.'],
-  prova: ['Quase! Na Prova de verdade você acerta.', 'Essa escapou! A próxima você crava.'],
+  prova: ['Quase! Na Prova de verdade você acerta.', 'Essa escapou! A próxima é sua.'],
   crava: ['Palpite feito! Agora é torcer.'],
 };
 

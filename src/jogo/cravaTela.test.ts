@@ -65,7 +65,7 @@ describe('aba Palpites', () => {
 
   it('textos do cartão e da rodada', () => {
     expect(placarTexto({ m: 2, v: 1 })).toBe('2 x 1');
-    expect(NOME_DO_ACERTO.exato).toBe('Placar exato');
+    expect(NOME_DO_ACERTO.exato).toBe('Na mosca');
     expect(rotuloDePontos(1, null)).toBe('ponto');
     expect(rotuloDePontos(40, 'pro Flamengo')).toBe('pontos pro Flamengo');
     expect(acertosDaRodada([{ acerto: 'exato' }, { acerto: 'errou' }, { acerto: null }, { acerto: 'vencedor' }])).toEqual({ acertos: 2, jogos: 3 });

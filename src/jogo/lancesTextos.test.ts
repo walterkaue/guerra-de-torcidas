@@ -41,12 +41,12 @@ describe('texto do resultado', () => {
       tipo: 'melhor_do_dia',
       texto: 'Sua melhor de hoje continua a de 40 pontos.',
     });
-    expect(situacaoDoResultado({ ...base, contaNoRanking: false, melhorDoDia: null }).texto).toMatch(/ranking não muda/);
+    expect(situacaoDoResultado({ ...base, contaNoRanking: false, melhorDoDia: null }).texto).toMatch(/tabela não muda/);
   });
 
   it('suspeita usa o texto dos pênaltis, mesmo que conte', () => {
     expect(situacaoDoResultado({ ...base, sobSuspeita: true, contaNoRanking: false }).texto).toBe(
-      'Essa ficou fora do ranking até a gente conferir.',
+      'Essa ficou fora da tabela até a gente conferir.',
     );
   });
 
@@ -76,11 +76,11 @@ describe('progresso das medalhas', () => {
     expect(progressoDaMedalha(20, 3).medalha).toBe('prata');
   });
 
-  it('ouro pede 50 gols e 10 recriando', () => {
-    expect(progressoDaMedalha(30, 4).texto).toBe('Faltam 20 gols, 6 deles recriando o lance, pro ouro.');
+  it('ouro pede 50 gols e 10 carimbando', () => {
+    expect(progressoDaMedalha(30, 4).texto).toBe('Faltam 20 gols, 6 deles carimbando o lance, pro ouro.');
     // Gols de sobra, mas poucos recriados: os gols que faltam são, no mínimo, os recriados.
     expect(progressoDaMedalha(50, 6)).toMatchObject({ medalha: 'prata', proxima: { medalha: 'ouro', faltamGols: 4, faltamRecriados: 4 } });
-    expect(progressoDaMedalha(50, 6).texto).toBe('Faltam 4 gols recriando o lance pro ouro.');
+    expect(progressoDaMedalha(50, 6).texto).toBe('Faltam 4 gols carimbando o lance pro ouro.');
     expect(progressoDaMedalha(50, 10)).toMatchObject({ medalha: 'ouro', proxima: null });
   });
 });
@@ -136,7 +136,7 @@ describe('trilha de 3 medalhas (seção 14.3)', () => {
     expect(t.marcos[2].parcial).toBeCloseTo(0.1);
     expect(t.enche).toBeCloseTo(2 / 3 + 0.1 / 3);
     expect(t.rotulo).toBe('23 gols · faltam 27');
-    expect(t.faltaProOuro).toBe('Faltam 27 gols, 6 recriando, pro ouro.');
+    expect(t.faltaProOuro).toBe('Faltam 27 gols, 6 carimbando, pro ouro.');
     expect(t.recriadosDoOuro).toEqual({ feitos: 4, pede: 10 });
     expect(t.ouroCompleto).toBe(false);
   });
@@ -146,15 +146,15 @@ describe('trilha de 3 medalhas (seção 14.3)', () => {
     expect(t.enche).toBe(0);
     expect(t.proxima).toBe('bronze');
     expect(t.rotulo).toBe('0 gols · faltam 5');
-    expect(t.faltaProOuro).toBe('Faltam 50 gols, 10 recriando, pro ouro.');
+    expect(t.faltaProOuro).toBe('Faltam 50 gols, 10 carimbando, pro ouro.');
   });
 
   it('gols de sobra, faltando recriados: a bolinha do ouro enche pelos recriados', () => {
     const t = trilhaDoLance(52, 6);
     expect(t.medalha).toBe('prata');
     expect(t.marcos[2].parcial).toBeCloseTo(0.6);
-    expect(t.rotulo).toBe('52 gols · faltam 4 recriando');
-    expect(t.faltaProOuro).toBe('Faltam 4 gols, 4 recriando, pro ouro.');
+    expect(t.rotulo).toBe('52 gols · faltam 4 carimbando');
+    expect(t.faltaProOuro).toBe('Faltam 4 gols, 4 carimbando, pro ouro.');
   });
 
   it('ouro completo ganha brilho e a linha toda cheia', () => {
@@ -170,7 +170,7 @@ describe('trilha de 3 medalhas (seção 14.3)', () => {
     expect(linhaRumo({ gols: 3, recriados: 0 }, { gols: 3, recriados: 0 }).texto).toBe('Rumo ao bronze · 3/5');
     expect(linhaRumo({ gols: 18, recriados: 0 }, { gols: 20, recriados: 1 })).toEqual({ texto: '+2 rumo ao ouro · 20/50', subiu: 'prata' });
     expect(linhaRumo({ gols: 4, recriados: 0 }, { gols: 5, recriados: 0 })).toEqual({ texto: '+1 rumo à prata · 5/20', subiu: 'bronze' });
-    expect(linhaRumo({ gols: 55, recriados: 6 }, { gols: 56, recriados: 7 }).texto).toBe('+1 rumo ao ouro · 7/10 recriando');
+    expect(linhaRumo({ gols: 55, recriados: 6 }, { gols: 56, recriados: 7 }).texto).toBe('+1 rumo ao ouro · 7/10 carimbando');
     expect(linhaRumo({ gols: 52, recriados: 9 }, { gols: 53, recriados: 10 })).toEqual({ texto: '+1 · ouro completo · 53 gols', subiu: 'ouro' });
   });
 

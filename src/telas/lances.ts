@@ -41,6 +41,7 @@ import {
   itensDaTelaUnica,
   itensDoFiltro,
   placarDoX1,
+  textoShareLances,
   rotuloDaTentativa,
   textoDaTentativa,
   tipoDaAba,
@@ -175,7 +176,7 @@ export function situacaoDoLance(l: Lance): string {
 }
 
 function legenda(r: ResultadoLance): string {
-  if (r.desfecho === 'gol') return r.recriou ? `Recriou o lance! · +${r.pontos}` : `Gol · +${r.pontos}`;
+  if (r.desfecho === 'gol') return r.recriou ? `Carimbou o lance! · +${r.pontos}` : `Gol · +${r.pontos}`;
   if (r.desfecho === 'barreira') return 'Na barreira';
   if (r.desfecho === 'defesa') return 'O goleiro pegou';
   return r.desfecho === 'trave' ? 'Na trave' : 'Pra fora';
@@ -460,7 +461,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     root.innerHTML = `
       <main class="tela lances" style="${estilo(time.cores)}">
         ${cabecalhoTela({ titulo: 'Lances do Jogo', voltar: true })}
-        ${estado('carregando', 'Buscando o X1…')}
+        ${estado('carregando', 'Buscando o desafio…')}
       </main>`;
     root.querySelector('[data-voltar]')!.addEventListener('click', () => {
       sairDaEtapa();
@@ -520,7 +521,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     // Funil do X1: terminou a partida de um X1 recebido (resultado() roda uma vez por partida).
     if (x1Recebido) contarFunil({ ev: 'terminou', tipo: 'x1_lances', x1: x1Recebido });
     const desfechos = resultados.map((r) => r.desfecho);
-    const textoShare = [conviteLances(pontos, paraTime, !!codigoX1), emojisDaPartida(desfechos), ...(medalhas[0] ? [medalhas[0]] : []), link].join('\n');
+    const textoShare = textoShareLances(conviteLances(pontos, paraTime, !!codigoX1), emojisDaPartida(desfechos), medalhas[0] ?? null, link);
     // Telão e lista: as 3 tentativas do mesmo lance, o título do lance uma vez só.
     const tituloDoLance = lances[0].titulo;
     const cmp = fim?.comparacao ?? null;
@@ -528,7 +529,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     // ou pro link dali: na derrota, a frase neutra, que leva a jogar de novo para ter o próprio link.
     const doNarrador =
       cmp?.venceu
-        ? escolherFrase('desafio_vitoria', { ...contextoDoTime(time, apelido), desafiante: cmp.desafiante ?? 'quem te chamou' }, Math.random)?.texto
+        ? escolherFrase('desafio_vitoria', { ...contextoDoTime(time, apelido), desafiante: cmp.desafiante ?? 'quem te desafiou' }, Math.random)?.texto
         : undefined;
     const fraseX1 = cmp ? (doNarrador ?? fraseNeutraDoX1(cmp.venceu)) : null;
     const duelo = cmp
@@ -541,7 +542,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
               <div><span data-nome-duelo="outro">${esc(p.nomeDoOutro)}</span><strong>${p.outro}</strong></div>
               <p class="adesivo">${esc(fraseX1 ?? '')}</p>
             </div>`,
-            { titulo: 'X1', filete: true },
+            { titulo: 'Desafio', filete: true },
           );
         })()
       : '';
@@ -583,7 +584,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
             })
             .join('')}
         </ul>
-        ${recriou ? `<div class="numeros dois">${numero(String(recriou), recriou === 1 ? 'Lance recriado' : 'Lances recriados', 'destaque')}</div>` : ''}
+        ${recriou ? `<div class="numeros dois">${numero(String(recriou), recriou === 1 ? 'Lance carimbado' : 'Lances carimbados', 'destaque')}</div>` : ''}
         ${linhaMelhores ? `<p class="melhores-linha">${esc(linhaMelhores)}</p>` : ''}
         <button type="button" class="botao-linha" data-acao="album">Ver os lances</button>`,
         { titulo: tituloDoLance, filete: true },
@@ -593,11 +594,11 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       selos:
         htmlSelosDaPosicao(desempenho, 'lances') +
         medalhas.map((t) => selo(`${icone('estrela')} ${esc(t)}`, 'ouro')).join('') +
-        (esperaRanking ? selo('No ranking em 1 min', undefined, 'data-selo-ranking') : '') +
-        (valendo && situacao.tipo === 'ranking' && outro ? selo('Contou pro ranking') : ''),
+        (esperaRanking ? selo('Subindo pro placar…', undefined, 'data-selo-ranking') : '') +
+        (valendo && situacao.tipo === 'ranking' && outro ? selo('Tá no placar') : ''),
       zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
       mandarCard: true,
-      maisUma: 'Jogar de novo',
+      maisUma: 'Mais uma',
     });
     if (cmp) void import('./bustosDoDuelo').then((m) => m.bustosDoDuelo(root, quemChamouX1?.boneco, quemChamouX1?.timeId));
     contar(root.querySelector<HTMLElement>('[data-contador]'), pontos);

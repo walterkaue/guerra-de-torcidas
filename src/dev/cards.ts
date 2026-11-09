@@ -65,7 +65,7 @@ const base = (t: Time, luz: Luz, frase: string, novoRecorde = false) => ({
 
 const AMOSTRAS: Amostra[] = [
   { nome: 'penaltis-vitoria', desenhar: (t, l) => desenharCard({ ...base(t, l, 'Fechou a conta! Pode mandar no grupo.', true), golsJogador: 4, golsMaquina: 3, pontos: 85 }) },
-  { nome: 'penaltis-derrota', desenhar: (t, l) => desenharCard({ ...base(t, l, 'A máquina levou essa, mas revanche tá logo ali.'), golsJogador: 2, golsMaquina: 4, pontos: 30 }) },
+  { nome: 'penaltis-derrota', desenhar: (t, l) => desenharCard({ ...base(t, l, 'A máquina levou essa, mas o jogo de volta tá logo ali.'), golsJogador: 2, golsMaquina: 4, pontos: 30 }) },
   { nome: 'faltas-vitoria', desenhar: (t, l) => desenharCard({ ...base(t, l, 'Na gaveta! A barreira só olhou passar.'), jogo: 'Faltas', golsJogador: 2, golsMaquina: 1, pontos: 62 }) },
   { nome: 'faltas-derrota', desenhar: (t, l) => desenharCard({ ...base(t, l, 'Parou na barreira. Os pontos contam igual.'), jogo: 'Faltas', golsJogador: 0, golsMaquina: 3, pontos: 0 }) },
   { nome: 'cara-a-cara-vitoria', desenhar: (t, l) => desenharCard({ ...base(t, l, 'Ficou de frente e não perdoou!'), jogo: 'Cara a cara', golsJogador: 3, golsMaquina: 0, pontos: 96 }) },
@@ -82,7 +82,7 @@ const AMOSTRAS: Amostra[] = [
     desenhar: (t, l) =>
       desenharCardCrava({
         tipo: 'resultado',
-        ...base(t, l, 'Cravou! Tem gente abrindo a calculadora.', true),
+        ...base(t, l, 'Na mosca! Tem gente abrindo a calculadora.', true),
         rodada: 34,
         pontos: 124,
         resultados: [
@@ -166,13 +166,13 @@ function dadosPersonalizados(t: Time, luz: Luz): Record<string, DadosDoCard> {
       tipo: 'jogo',
       conteudo: { jogo: 'dia', numero: 34, placar: '4/6', pistas: [linha(L, L, P, L, L, C), linha(P, P, L, C, P, C), linha(C, P, P, C, P, C), linha(C, C, C, C, C, C)] },
     }),
-    'crava-meus': comum('Crava a Rodada · 34ª rodada', '10 CRAVADOS', 'Meus palpites pro time', '34ª rodada: meus palpites', '', '', {
+    'crava-meus': comum('Palpite da Rodada · 34ª rodada', '10 PALPITES', 'Meus palpites pro time', '34ª rodada: meus palpites', '', '', {
       tipo: 'jogo',
       novoRecorde: false,
       avisoFixo: 'Palpite de resenha: não vale nada além da zoeira.',
       conteudo: { jogo: 'crava-meus', rodada: 34, linhas: PALPITES },
     }),
-    'crava-resultado': comum('Crava a Rodada · 34ª rodada', '+124', 'Fiz 124 pontos pro time', '34ª rodada: 3 exatos, 2 no saldo', '🎯🎯🎯✅✅❌❌', 'Cravou! Tem gente abrindo a calculadora.', {
+    'crava-resultado': comum('Palpite da Rodada · 34ª rodada', '+124', 'Fiz 124 pontos pro time', '34ª rodada: 3 na mosca, 2 no saldo', '🎯🎯🎯✅✅❌❌', 'Na mosca! Tem gente abrindo a calculadora.', {
       tipo: 'jogo',
       avisoFixo: 'Palpite de resenha: não vale nada além da zoeira.',
       conteudo: { jogo: 'crava-resultado', rodada: 34, resultados: resultados.map((acerto, i) => ({ acerto, certeza: i === 0 })) },

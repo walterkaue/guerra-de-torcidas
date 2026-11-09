@@ -8,7 +8,7 @@ import { ID_OUTRO, proTime, timePorId, TIMES } from '../dados/times';
 import { apelidoDoCard } from '../estado';
 import { tipoDoJogo, type DadosDoCard } from '../jogo/cardPersonalizado';
 import { linhaDoTorcedor } from '../jogo/cardTextos';
-import { conviteX1Penaltis } from '../jogo/convites';
+import { conviteX1Penaltis, textoSharePenaltis } from '../jogo/convites';
 import { ID_SELECAO, lembrancaDaDisputa } from '../jogo/disputas';
 import { placarEmoji } from '../jogo/emoji';
 import { escolherFrase } from '../narrador/escolher';
@@ -44,14 +44,14 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
   const p = r.pontos;
   const paraTime = proTime(time);
   // Na disputa histórica (inclusive no X1 recebido) o adversário é o de verdade; o duelo do X1 mostra quem chamou.
-  const nomeAdversario = d.disputa?.adversario ?? (d.desafio ? (d.desafio.apelido ?? 'Quem te chamou') : 'Máquina');
+  const nomeAdversario = d.disputa?.adversario ?? (d.desafio ? (d.desafio.apelido ?? 'Rival do dia') : 'Máquina');
   // Na disputa da Seleção o placar é da Seleção; os pontos continuam indo para o time.
   const nomeDoLado = d.disputa?.clube === ID_SELECAO ? SELECAO.nome : outro ? 'Você' : time.nome;
 
   const codigo = d.servidor?.desafio?.codigo;
   const link = codigo ? `${SITE}/?d=${codigo}` : `${SITE}/?time=${time.id}`;
   const convite = conviteX1Penaltis(p.total, paraTime, !!codigo);
-  const textoShare = `${convite} ${link}`;
+  const textoShare = textoSharePenaltis(convite, link);
   const emoji = placarEmoji({
     resultado: r,
     nomeJogador: outro && !d.disputa ? 'Eu' : nomeDoLado,
@@ -82,7 +82,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
   const situacao = !d.valendo
     ? (d.aviso ?? 'Partida sem valer pontos.')
     : d.servidor?.sobSuspeita
-      ? 'Essa ficou fora do ranking até a gente conferir.'
+      ? 'Essa ficou fora da tabela até a gente conferir.'
       : !d.servidor?.contaNoRanking
         ? textoForaDasMelhores(d.servidor?.melhoresDoDia)
         : null;
@@ -95,7 +95,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     cmp &&
     escolherFrase(
       cmp.venceu ? 'desafio_vitoria' : 'desafio_derrota',
-      { ...contextoDoTime(time, apelido), desafiante: d.desafio?.apelido ?? 'quem te chamou' },
+      { ...contextoDoTime(time, apelido), desafiante: d.desafio?.apelido ?? 'quem te desafiou' },
       Math.random,
     )?.texto;
   const blocoDesafio = cmp
@@ -103,10 +103,10 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
         `<div class="duelo-desafio">
           <div><span data-nome-duelo="voce">Você</span><strong>${p.total}</strong><small>${r.golsJogador} x ${r.golsMaquina}</small></div>
           <em>x</em>
-          <div><span data-nome-duelo="outro">${esc(cmp.desafiante ?? 'Quem te chamou')}</span><strong>${cmp.pontosDesafiante}</strong><small>${cmp.golsJogadorDesafiante} x ${cmp.golsMaquinaDesafiante}</small></div>
+          <div><span data-nome-duelo="outro">${esc(cmp.desafiante ?? 'Rival do dia')}</span><strong>${cmp.pontosDesafiante}</strong><small>${cmp.golsJogadorDesafiante} x ${cmp.golsMaquinaDesafiante}</small></div>
         </div>
         ${fraseDesafio ? `<p class="adesivo">${esc(fraseDesafio)}</p>` : ''}`,
-        { titulo: 'X1', filete: true },
+        { titulo: 'Desafio', filete: true },
       )
     : '';
 
@@ -140,10 +140,10 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     aviso: situacao ? { texto: situacao, forte: !d.valendo } : null,
     selos:
       htmlSelosDaPosicao(d.servidor?.desempenho ?? null, 'lances') +
-      (esperaRanking ? selo('No ranking em 1 min', undefined, 'data-selo-ranking') : '') +
-      (!situacao && !esperaRanking ? selo('Contou pro ranking') : ''),
+      (esperaRanking ? selo('Subindo pro placar…', undefined, 'data-selo-ranking') : '') +
+      (!situacao && !esperaRanking ? selo('Tá no placar') : ''),
     zap: `https://wa.me/?text=${encodeURIComponent(textoShare)}`,
-    maisUma: r.venceu ? 'Mais uma' : 'Revanche',
+    maisUma: r.venceu ? 'Mais uma' : 'Jogo de volta',
   });
   // X1: o busto de cada um ao lado do apelido (sem boneco ou com o interruptor desligado, nada muda).
   if (cmp) void import('./bustosDoDuelo').then((m) => m.bustosDoDuelo(root, d.desafio?.boneco, d.desafio?.timeId));
@@ -218,7 +218,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
   const dados = (async (): Promise<DadosDoCard> => ({
     tipo: tipoDoJogo(!!codigo),
     time,
-    jogo: 'Bate Contra Mim',
+    jogo: 'Disputa de pênaltis',
     destaque: `+${p.total}`,
     quem: { comApelido: linhaDoTorcedor(apelido, p.total, paraTime), semApelido: linhaDoTorcedor(undefined, p.total, paraTime) },
     lance: `${r.golsJogador} x ${r.golsMaquina}`,

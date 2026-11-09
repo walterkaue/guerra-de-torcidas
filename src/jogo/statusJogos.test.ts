@@ -23,7 +23,7 @@ describe('linha dos Lances na regra nova', () => {
   it('conta as partidas valendo de hoje', () => {
     expect(linhaLancesUnificados(6, 3)).toBe('faltam 6 partidas valendo hoje');
     expect(linhaLancesUnificados(1, 3)).toBe('falta 1 partida valendo hoje');
-    expect(linhaLancesUnificados(0, 3)).toBe('hoje já deu: o treino segue liberado');
+    expect(linhaLancesUnificados(0, 3)).toBe('Já jogou as 10 valendo de hoje. Agora é treino, pra calibrar o pé.');
     expect(linhaLancesUnificados(null, 3)).toBe('As 3 melhores do dia contam');
   });
 });
@@ -51,7 +51,7 @@ describe('status do Crava', () => {
 
   it('cravado só com todos os jogos abertos palpitados', () => {
     expect(statusCrava(jogos, new Set(['a']), agora)?.cravado).toBe(false);
-    expect(statusCrava(jogos, new Set(['a', 'b']), agora)).toEqual({ rodada: 32, linha: 'Cravado ✓', cravado: true });
+    expect(statusCrava(jogos, new Set(['a', 'b']), agora)).toEqual({ rodada: 32, linha: 'Palpite salvo ✓', cravado: true });
   });
 
   it('depois do 1º jogo, conta até o próximo', () => {
@@ -62,7 +62,7 @@ describe('status do Crava', () => {
   it('jogo já começado não conta; sem jogo aberto, bola rolando', () => {
     const rolando = [jogo('a', 32, -1), jogo('b', 32, -2)];
     expect(statusCrava(rolando, new Set(), agora)?.linha).toBe('32ª rodada · bola rolando');
-    expect(statusCrava([jogo('a', 32, -1), jogo('b', 32, 5)], new Set(['b']), agora)?.linha).toBe('Cravado ✓');
+    expect(statusCrava([jogo('a', 32, -1), jogo('b', 32, 5)], new Set(['b']), agora)?.linha).toBe('Palpite salvo ✓');
   });
 
   it('sem jogos', () => {

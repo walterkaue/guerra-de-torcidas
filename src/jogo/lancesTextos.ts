@@ -11,7 +11,7 @@ import {
   type Lance,
   type Medalha,
 } from './lances.ts';
-import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MEDALHAS_PENALTIS, medalhaDaDisputa, MELHORES_DO_DIA } from './regraLances.ts';
+import { MEDALHAS_PENALTIS, medalhaDaDisputa, MELHORES_DO_DIA, TEXTO_DO_LIMITE } from './regraLances.ts';
 
 export const NOME_DA_MEDALHA: Record<Medalha, string> = { bronze: 'Bronze', prata: 'Prata', ouro: 'Ouro' };
 
@@ -57,14 +57,14 @@ export function situacaoDoResultado(d: {
   melhoresDoDia?: readonly number[] | null;
 }): SituacaoDoResultado {
   if (!d.fechou) return { tipo: 'sem_pontos', texto: d.aviso ?? 'Partida sem valer pontos.' };
-  if (d.sobSuspeita) return { tipo: 'suspeita', texto: 'Essa ficou fora do ranking até a gente conferir.' };
+  if (d.sobSuspeita) return { tipo: 'suspeita', texto: 'Essa ficou fora da tabela até a gente conferir.' };
   if (!d.contaNoRanking && d.melhoresDoDia !== undefined) return { tipo: 'melhor_do_dia', texto: textoForaDasMelhores(d.melhoresDoDia) };
   if (!d.contaNoRanking) {
     return {
       tipo: 'melhor_do_dia',
       texto:
         d.melhorDoDia === null
-          ? 'Não superou sua melhor de hoje: o ranking não muda.'
+          ? 'Não superou sua melhor de hoje: a tabela não muda.'
           : `Sua melhor de hoje continua a de ${d.melhorDoDia} ${d.melhorDoDia === 1 ? 'ponto' : 'pontos'}.`,
     };
   }
@@ -75,7 +75,7 @@ export function situacaoDoResultado(d: {
  * Aviso de quando o servidor diz `limite_do_dia` (seção 14.7): o limite soma pênaltis, faltas e cara a cara, e a
  * partida segue como treino, sem ponto nem medalha.
  */
-export const AVISO_LIMITE_DO_DIA = `Hoje já deu: ${LANCES_PARTIDAS_POR_DIA_UNIFICADO} partidas valendo. Essa vai de treino: sem ponto nem medalha.`;
+export const AVISO_LIMITE_DO_DIA = `${TEXTO_DO_LIMITE}: sem ponto nem medalha.`;
 
 const listaDePontos = (melhores: readonly number[]) => melhores.join(' · ');
 
@@ -93,7 +93,7 @@ export function linhaMelhoresDoDia(melhores: readonly number[] | null | undefine
 /** A partida não entrou nas 3 melhores de hoje (Lances ou Prova, regra nova). Com a lista, mostra quais contam. */
 export function textoForaDasMelhores(melhores?: readonly number[] | null): string {
   const top = (melhores ?? []).slice(0, MELHORES_DO_DIA);
-  if (!top.length) return `Não superou suas ${MELHORES_DO_DIA} melhores de hoje: o ranking não muda.`;
+  if (!top.length) return `Não superou suas ${MELHORES_DO_DIA} melhores de hoje: a tabela não muda.`;
   return `Não entrou nas suas ${MELHORES_DO_DIA} melhores de hoje: ${listaDePontos(top)}.`;
 }
 
@@ -135,8 +135,8 @@ export function progressoDaMedalha(gols: number, recriados: number): Progresso {
   const nome = NOME_DA_MEDALHA[alvo.medalha].toLowerCase();
   const gol = (n: number) => `${n} ${n === 1 ? 'gol' : 'gols'}`;
   let quanto = gol(faltamGols);
-  if (faltamRecriados === faltamGols) quanto += ' recriando o lance';
-  else if (faltamRecriados) quanto += `, ${faltamRecriados} deles recriando o lance,`;
+  if (faltamRecriados === faltamGols) quanto += ' carimbando o lance';
+  else if (faltamRecriados) quanto += `, ${faltamRecriados} deles carimbando o lance,`;
   return {
     medalha,
     proxima: { medalha: alvo.medalha, faltamGols, faltamRecriados },
@@ -176,7 +176,7 @@ export interface Trilha {
   /** Barra própria de recriados: o ouro pede 10. Nas disputas de pênaltis, as vitórias (o mesmo que `extraDoOuro`). */
   recriadosDoOuro: { feitos: number; pede: number };
   /** A barra própria do ouro com o rótulo: "Recriados" nos lances, "Vitórias" nas disputas de pênaltis. */
-  extraDoOuro: { rotulo: 'Recriados' | 'Vitórias'; feitos: number; pede: number };
+  extraDoOuro: { rotulo: 'Carimbados' | 'Vitórias'; feitos: number; pede: number };
   /** "Faltam 27 gols, 6 recriando, pro ouro." */
   faltaProOuro: string;
 }
@@ -201,7 +201,7 @@ export function trilhaDoLance(golsBrutos: number, recriadosBrutos: number): Tril
   if (p.proxima) {
     const alvo = MEDALHAS.find((m) => m.medalha === p.proxima!.medalha)!;
     // Gols de sobra, mas faltando recriados: o que falta é recriar.
-    rotulo += gols >= alvo.acertos ? ` · faltam ${p.proxima.faltamRecriados} recriando` : ` · faltam ${p.proxima.faltamGols}`;
+    rotulo += gols >= alvo.acertos ? ` · faltam ${p.proxima.faltamRecriados} carimbando` : ` · faltam ${p.proxima.faltamGols}`;
   } else rotulo += ' · ouro completo';
   const faltaRec = Math.max(0, OURO.recriados - recriados);
   const faltaGols = Math.max(OURO.acertos - gols, faltaRec, 0);
@@ -215,10 +215,10 @@ export function trilhaDoLance(golsBrutos: number, recriadosBrutos: number): Tril
     ouroCompleto: !p.proxima,
     rotulo,
     recriadosDoOuro: { feitos: Math.min(recriados, OURO.recriados), pede: OURO.recriados },
-    extraDoOuro: { rotulo: 'Recriados', feitos: Math.min(recriados, OURO.recriados), pede: OURO.recriados },
+    extraDoOuro: { rotulo: 'Carimbados', feitos: Math.min(recriados, OURO.recriados), pede: OURO.recriados },
     faltaProOuro: !p.proxima
       ? 'Ouro completo!'
-      : `Faltam ${plural(faltaGols, 'gol', 'gols')}${faltaRec ? `, ${faltaRec} recriando,` : ''} pro ouro.`,
+      : `Faltam ${plural(faltaGols, 'gol', 'gols')}${faltaRec ? `, ${faltaRec} carimbando,` : ''} pro ouro.`,
   };
 }
 
@@ -241,7 +241,7 @@ export function linhaRumo(antes: { gols: number; recriados: number }, depois: { 
   if (!p.proxima) return { texto: `${ganhou ? `+${ganhou} · ` : ''}ouro completo · ${plural(depois.gols, 'gol', 'gols')}`, subiu };
   const alvo = MEDALHAS.find((m) => m.medalha === p.proxima!.medalha)!;
   const nome = `${alvo.medalha === 'prata' ? 'à' : 'ao'} ${NOME_DA_MEDALHA[alvo.medalha].toLowerCase()}`;
-  const conta = depois.gols >= alvo.acertos ? `${depois.recriados}/${alvo.recriados} recriando` : `${depois.gols}/${alvo.acertos}`;
+  const conta = depois.gols >= alvo.acertos ? `${depois.recriados}/${alvo.recriados} carimbando` : `${depois.gols}/${alvo.acertos}`;
   return { texto: `${ganhou ? `+${ganhou} rumo` : 'Rumo'} ${nome} · ${conta}`, subiu };
 }
 

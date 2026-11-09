@@ -7,7 +7,7 @@ import { corDeTexto, ID_OUTRO, proTime, timePorId, TIMES, type Time } from '../d
 import { apelidoDoCard, prefs } from '../estado';
 import type { DadosDoCard } from '../jogo/cardPersonalizado';
 import { linhaDoTorcedor } from '../jogo/cardTextos';
-import { conviteDia } from '../jogo/convites';
+import { conviteDia, textoShareDia } from '../jogo/convites';
 import {
   AMOSTRA_COR,
   NOMES_PISTAS,
@@ -380,7 +380,7 @@ export function telaTimeDoDia(root: HTMLElement, _rota: Rota): () => void {
     const link = `${SITE}/?dia`;
     const novoRecorde = !!e.desempenho?.novoRecorde;
     const linha = linhaDoCard(e.numero, placar, novoRecorde);
-    const textoShare = `${linha}\n${grade}\n${conviteDia(n, e.acertou)} ${link}`;
+    const textoShare = textoShareDia(linha, grade, conviteDia(n, e.acertou), link);
     const paraTime = proTime(time);
     // Casa do [time]: só depois que o dia termina (antes daria pista) e só para clube da Série A.
     const timeCasa = timePorId(e.secreto?.id);
