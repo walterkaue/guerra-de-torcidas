@@ -57,11 +57,19 @@ export type Rota =
       lance?: string;
       apelido?: boolean;
       primeira?: boolean;
+      /** Aberta pelo convite do desafio ("Outro time" ou "Escolher meu time"): "Bora pro jogo" conta o "aceitou". */
+      convite?: boolean;
     }
   /** `disputa`: disputa histórica escolhida na aba Pênaltis (só cenário; sem ela, a Disputa livre até 07/11; desde 08/11 é obrigatória). */
   | { tela: 'partida'; desafio?: string; disputa?: Disputa }
   | { tela: 'resultado'; dados: DadosResultado }
-  | { tela: 'prova'; desafio?: string }
+  /** `contagem`: a Prova vinda do convite do desafio começa sozinha, com 3, 2, 1 no lugar do "Encarar o desafio". */
+  | { tela: 'prova'; desafio?: string; contagem?: boolean }
+  /**
+   * Convite do desafio por link (C06, jogo/conviteDesafio.ts): a tela própria que ?d=, ?l= e ?p= abrem, sem a Home
+   * atrás. Quem é novo escolhe a torcida numa faixa e isso aceita o desafio; quem já joga encara com 1 toque.
+   */
+  | { tela: 'convite'; tipo: 'penaltis' | 'lances' | 'prova'; codigo: string }
   | { tela: 'provaResultado'; dados: DadosResultadoProva }
   | { tela: 'timeDoDia' }
   /** Aquecimento (docs/jogo.md, 14.4): 5 estações de um toque; ao terminar ou pular, segue para `depois` (sem ela, a Home). */
