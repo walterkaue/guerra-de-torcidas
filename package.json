@@ -29,7 +29,8 @@
     "gerar-municipios": "node scripts/cidade/gerar-municipios.mjs",
     "gemini": "node scripts/ia/gemini.mjs",
     "simular": "node scripts/simulacoes/simular.mjs",
-    "simular:consolidar": "node scripts/simulacoes/consolidar.mjs"
+    "simular:consolidar": "node scripts/simulacoes/consolidar.mjs",
+    "simular:entradas": "node scripts/simulacoes/medir-entradas.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
