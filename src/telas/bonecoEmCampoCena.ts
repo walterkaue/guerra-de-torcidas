@@ -11,7 +11,7 @@ import { bonecoGuardado } from './bonecoDoAparelho';
 import { emCampoLigado } from './bonecoEmCampoGuardado';
 import { batedorEmCampo } from './bonecoEmCampo';
 import { camadasDeCampo, criarSpriteDoNumero } from './bonecoMontavel';
-import { conferirFormato, type Vestimenta } from '../jogo/vestiario';
+import { comFormato, type Vestimenta } from '../jogo/vestiario';
 import { criarBoneco, type Boneco, type Uniforme } from './bonecos';
 
 /** De onde vem a cópia e o interruptor. Em dev, os jogos falsos trocam isto (src/dev/bonecoDeCampoFalso.ts). */
@@ -70,5 +70,5 @@ export function bonecoDeQuemChamouEmCampo(vestimenta: Vestimenta | null, roupaDa
 /** A vestimenta da pessoa para o busto do placar do X1 (cópia do aparelho, interruptor ligado), ou null (sem busto). */
 export function meuBonecoParaBusto(): Vestimenta | null {
   const { vestimenta, ligado } = fonte();
-  return ligado && conferirFormato(vestimenta) ? vestimenta : null;
+  return ligado ? comFormato(vestimenta) : null;
 }

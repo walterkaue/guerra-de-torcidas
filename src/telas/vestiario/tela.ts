@@ -9,6 +9,7 @@ import { prefs } from '../../estado';
 import {
   ABAS,
   CABELOS,
+  BARRAS,
   CORPOS,
   PELES,
   CORES_DE_CABELO,
@@ -21,6 +22,7 @@ import {
 import {
   AJUDA_DO_NUMERO,
   NOMES_DOS_CABELOS,
+  NOMES_DAS_BARRAS,
   NOMES_DOS_CORPOS,
   aoVoltar,
   gruposDaAba,
@@ -408,6 +410,13 @@ function montar(
 
   function abaDaCamisa(): void {
     grupos('camisa');
+    conteudo.append(titulo('Por fora ou por dentro'));
+    const barras = e('div', 'vest-grade vest-grade-2');
+    for (const id of BARRAS) {
+      const canvas = miniatura(76, 112, (c) => desenharBoneco(c, parado({ ...atual, barra: id }), cores, 'corpo', 76, 112));
+      barras.append(itemDaGrade(NOMES_DAS_BARRAS[id], NOMES_DAS_BARRAS[id], canvas, () => atual.barra === id, () => mudar({ ...atual, barra: id })));
+    }
+    conteudo.append(barras);
     conteudo.append(titulo('Número'));
     const quadros = e('div', 'vest-numero');
     quadros.setAttribute('role', 'img');

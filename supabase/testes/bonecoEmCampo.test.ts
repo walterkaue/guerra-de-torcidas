@@ -1,15 +1,16 @@
-// Boneco em campo e no X1 (20261107000000, docs/jogo.md seções 6 e 14.5): o interruptor "Meu boneco em campo", as
+// Boneco em campo e no X1 (20261107000000 e a barra em 20261109100000, docs/jogos/boneco-montavel.md): o interruptor "Meu boneco em campo", as
 // peças que saem para quem recebe o desafio (conferidas contra o catálogo de src/jogo/vestiario.ts) e o que nunca
 // sai. Roda contra o SQL de verdade (PGlite), com o fluxo da função `boneco`.
 
 import type { PGlite } from '@electric-sql/pglite';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { bancoDeTeste, cortarLancesNoFuturo } from './banco';
 import { ErroBoneco, ligarEmCampo, meuBoneco, salvarBoneco, type Servicos } from '../functions/boneco/fluxo';
 import {
+  BARRAS,
   BRACOS,
   CABECAS,
   CABELOS,
@@ -58,6 +59,7 @@ const CAMPO = {
   pele: PELES,
   cabelo: CABELOS,
   corCabelo: CORES_DE_CABELO,
+  barra: BARRAS,
   cabeca: CABECAS,
   punho: PUNHOS,
   braco: BRACOS,
@@ -156,8 +158,18 @@ describe('as peças de campo batem com o catálogo', () => {
   });
 
   it('as listas do SQL são exatamente as do catálogo (nos dois sentidos)', () => {
-    const sql = readFileSync(join(import.meta.dirname, '..', 'migrations', '20261107000000_boneco_em_campo.sql'), 'utf8');
-    const corpo = sql.slice(sql.indexOf('create or replace function public.boneco_para_campo'), sql.indexOf('create or replace function public.boneco_do_desafiante'));
+    // A definição que vale é a da última migração que recria boneco_para_campo.
+    const pasta = join(import.meta.dirname, '..', 'migrations');
+    const inicio = 'create or replace function public.boneco_para_campo';
+    const ultima = readdirSync(pasta)
+      .filter((f) => f.endsWith('.sql') && readFileSync(join(pasta, f), 'utf8').includes(inicio))
+      .sort()
+      .at(-1)!;
+    expect(ultima).toBe('20261109100000_boneco_barra.sql');
+    const sql = readFileSync(join(pasta, ultima), 'utf8');
+    const de = sql.indexOf(inicio);
+    const abre = sql.indexOf('$$', de);
+    const corpo = sql.slice(de, sql.indexOf('$$', abre + 2));
     for (const [campo, valores] of Object.entries(CAMPO)) {
       const m = new RegExp(`'${campo}', case[\\s\\S]*?p ->> '${campo}' in \\(([^)]*)\\)`).exec(corpo);
       expect(m, campo).not.toBeNull();
@@ -182,6 +194,10 @@ describe('as peças de campo batem com o catálogo', () => {
       ['numero', '٧', null],
       ['cabeca', null, 'nenhum'],
       ['braco', { a: 1 }, 'nenhum'],
+      ['barra', 'Dentro', 'fora'],
+      ['barra', true, 'fora'],
+      ['barra', null, 'fora'],
+      ['barra', ['dentro'], 'fora'],
     ];
     for (const [campo, valor, esperado] of casos) {
       const r = await paraCampo({ ...PADRAO, [campo]: valor });
@@ -189,7 +205,7 @@ describe('as peças de campo batem com o catálogo', () => {
     }
   });
 
-  it('só as 9 peças de campo saem: camisa, colete, faixa, apito, pose, fundo e moldura nunca', async () => {
+  it('só as 10 peças de campo saem: camisa, colete, faixa, apito, pose, fundo e moldura nunca', async () => {
     const tudo: Vestimenta = {
       ...PADRAO,
       camisa: 'goleiro',
@@ -215,10 +231,14 @@ describe('as peças de campo batem com o catálogo', () => {
       punho: 'munhequeira_prata',
       braco: true,
       chuteira: { cor: 'time' },
+      barra: 'avesso',
     });
     expect(r).toEqual(padraoDeCampo());
     expect(await paraCampo({ cabelo: 'coque' })).toEqual({ ...padraoDeCampo(), cabelo: 'coque' });
     expect(await paraCampo({ numero: 7 })).toEqual(padraoDeCampo()); // número da camisa é texto
+    // Vestimenta gravada antes da barra (sem a chave): por fora.
+    expect(await paraCampo({ cabelo: 'coque' })).toHaveProperty('barra', 'fora');
+    expect(await paraCampo({ barra: 'dentro' })).toEqual({ ...padraoDeCampo(), barra: 'dentro' });
     expect(await paraCampo([])).toBeNull();
     expect(await paraCampo('coque')).toBeNull();
   });
@@ -227,9 +247,9 @@ describe('as peças de campo batem com o catálogo', () => {
 describe('o boneco de quem chamou no resumo do desafio', () => {
   it('interruptor ligado: as peças de campo de quem chamou, nos dois X1', async () => {
     const quem = await torcedor();
-    await salvar(quem, { ...PADRAO, cabelo: 'trancas', pele: 4, numero: '10', camisa: 'uni2' });
+    await salvar(quem, { ...PADRAO, cabelo: 'trancas', pele: 4, numero: '10', camisa: 'uni2', barra: 'dentro' });
     const d = await desafios(quem);
-    const esperado = { ...padraoDeCampo(), cabelo: 'trancas', pele: 4, numero: '10' };
+    const esperado = { ...padraoDeCampo(), cabelo: 'trancas', pele: 4, numero: '10', barra: 'dentro' };
     expect((await verPenaltis(d.penaltis)).boneco).toEqual(esperado);
     expect((await verLances(d.lances)).boneco).toEqual(esperado);
     // Outra conta logada também vê; o retorno nunca traz o id de quem chamou.

@@ -189,6 +189,78 @@ describe('formato', () => {
   });
 });
 
+describe('camisa por fora ou por dentro (H03b)', () => {
+  const semBarra = (v: Record<string, unknown>) => Object.fromEntries(Object.entries(v).filter(([k]) => k !== 'barra'));
+
+  it('conta nova começa com a camisa por fora', async () => {
+    for (let i = 0; i < 8; i++) {
+      const eu = await torcedor();
+      expect((await ler(eu)).vestimenta.barra).toBe('fora');
+    }
+  });
+
+  it('grava as duas, sem troca e sem conta de peça', async () => {
+    const eu = await torcedor();
+    const dentro = await salvar(eu, vestindo('barra', 'dentro'));
+    expect(dentro.trocou).toBe(false);
+    expect(dentro.vestimenta.barra).toBe('dentro');
+    expect((await guardada(eu)).barra).toBe('dentro');
+    expect((await ler(eu)).vestimenta.barra).toBe('dentro');
+    expect(dentro.liberadas).not.toContain('dentro');
+    const fora = await salvar(eu, vestindo('barra', 'fora'));
+    expect(fora.trocou).toBe(false);
+    expect((await guardada(eu)).barra).toBe('fora');
+  });
+
+  it('recusa barra fora da lista ou de outro tipo, sem gravar', async () => {
+    const eu = await torcedor();
+    const antes = (await ler(eu)).vestimenta;
+    for (const barra of ['Dentro', 'meio', '', null, true, 1, ['dentro'], { lado: 'dentro' }]) {
+      expect(await erroDe(salvar(eu, vestindo('barra', barra))), JSON.stringify(barra)).toBe('formato');
+    }
+    expect(await guardada(eu)).toEqual(antes);
+  });
+
+  it('site antigo salva sem barra: fica a barra já gravada, sem dizer que trocou peça', async () => {
+    const eu = await torcedor();
+    await salvar(eu, vestindo('barra', 'dentro'));
+    const r = await salvar(eu, semBarra({ ...PADRAO, numero: '8' }));
+    expect(r.trocou).toBe(false);
+    expect(r.vestimenta).toEqual({ ...PADRAO, numero: '8', barra: 'dentro' });
+    expect(await guardada(eu)).toEqual(r.vestimenta);
+  });
+
+  it('site antigo sem boneco gravado: por fora', async () => {
+    const eu = await torcedor();
+    const r = await salvar(eu, semBarra({ ...PADRAO, numero: '3' }));
+    expect(r.trocou).toBe(false);
+    expect(r.vestimenta).toEqual({ ...PADRAO, numero: '3', barra: 'fora' });
+  });
+
+  it('site antigo sem barra e com peça trancada: troca a peça e diz que trocou', async () => {
+    const eu = await torcedor();
+    await salvar(eu, vestindo('barra', 'dentro'));
+    const r = await salvar(eu, semBarra({ ...PADRAO, moldura: 'dourada' }));
+    expect(r.trocou).toBe(true);
+    expect(r.vestimenta).toEqual({ ...PADRAO, barra: 'dentro' });
+  });
+
+  it('vestimenta gravada antes da barra é lida com a camisa por fora', async () => {
+    const eu = await torcedor();
+    await ler(eu);
+    await db.query(`update public.torcedor_boneco set vestimenta = $2 where torcedor_id = $1`, [eu, JSON.stringify(semBarra({ ...PADRAO, cabelo: 'coque' }))]);
+    const r = await ler(eu);
+    expect(r.vestimenta).toEqual({ ...PADRAO, cabelo: 'coque', barra: 'fora' });
+  });
+
+  it('barra torta gravada por fora da função sai por fora na leitura', async () => {
+    const eu = await torcedor();
+    await ler(eu);
+    await db.query(`update public.torcedor_boneco set vestimenta = $2 where torcedor_id = $1`, [eu, JSON.stringify({ ...PADRAO, barra: 'avesso' })]);
+    expect((await ler(eu)).vestimenta.barra).toBe('fora');
+  });
+});
+
 describe('peça trancada', () => {
   it('volta à padrão, sem erro, e grava o resto do pedido', async () => {
     const eu = await torcedor();

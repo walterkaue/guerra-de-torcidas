@@ -26,7 +26,7 @@ describe('boneco em campo: quando cai no sorteio', () => {
 describe('boneco em campo: o que entra e o que fica de fora', () => {
   it('corpo, pele, cabelo e cor de cabelo vêm da vestimenta', () => {
     const b = em(vest({ corpo: 'm', pele: 4, cabelo: 'coque', corCabelo: 3 }))!;
-    expect(b.aparencia).toEqual({ pele: TONS_DE_PELE[4], cabelo: 'coque', corCabelo: CORES_DE_CABELO[3], mulher: true });
+    expect(b.aparencia).toEqual({ pele: TONS_DE_PELE[4], cabelo: 'coque', corCabelo: CORES_DE_CABELO[3], mulher: true, barra: 'fora' });
     expect(em(vest({ corpo: 'h' }))!.aparencia.mulher).toBe(false);
   });
 
@@ -184,7 +184,7 @@ describe('boneco de quem chamou o X1: do servidor para a Vestimenta', () => {
     expect(vestimentaDeCampo([])).toBeNull();
   });
 
-  it('monta a Vestimenta completa: as 9 chaves entram, o resto é o PADRAO', () => {
+  it('monta a Vestimenta completa: as 10 chaves entram, o resto é o PADRAO', () => {
     const v = vestimentaDeCampo(doServidor)!;
     expect(v).toEqual({ ...PADRAO, ...doServidor });
     expect(v.camisa).toBe(PADRAO.camisa);
@@ -208,6 +208,19 @@ describe('boneco de quem chamou o X1: do servidor para a Vestimenta', () => {
     expect(vestimentaDeCampo({})).toBeNull(); // sem nenhuma peça de campo não é boneco
     expect(vestimentaDeCampo({ fundo: 'estadio_noite', torcedor_id: 'x' })).toBeNull();
     expect(vestimentaDeCampo({ cabelo: 'coque' })).toEqual({ ...PADRAO, cabelo: 'coque' });
+  });
+
+  it('a barra vem do servidor; servidor antigo, sem barra, vale por fora; só a barra não é boneco', () => {
+    expect(vestimentaDeCampo({ ...doServidor, barra: 'dentro' })!.barra).toBe('dentro');
+    expect(vestimentaDeCampo(doServidor)!.barra).toBe('fora');
+    expect(vestimentaDeCampo({ ...doServidor, barra: 'solta' })!.barra).toBe('fora');
+    expect(vestimentaDeCampo({ barra: 'dentro' })).toBeNull();
+  });
+
+  it('a barra chega ao boneco do batedor; cópia antiga sem barra desenha por fora', () => {
+    expect(em({ ...PADRAO, barra: 'dentro' })!.aparencia.barra).toBe('dentro');
+    const { barra: _b, ...antiga } = PADRAO;
+    expect(em(antiga)!.aparencia.barra).toBe('fora');
   });
 
   it('o resultado passa no batedorEmCampo (forma da Vestimenta completa)', () => {

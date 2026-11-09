@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BARRAS,
   BRACOS,
   CABECAS,
   CAMISAS,
   CHUTEIRAS,
+  comFormato,
   conferirFormato,
   FUNDOS,
   MOLDURAS,
@@ -413,5 +415,59 @@ describe('conferirFormato (o que o servidor recusa)', () => {
   });
   it('a maior vestimenta possível cabe no teto', () => {
     expect(JSON.stringify(cheia).length).toBeLessThan(TAMANHO_MAXIMO);
+  });
+});
+
+describe('camisa por fora ou por dentro (barra, H03b)', () => {
+  const { barra: _b, ...semBarra } = PADRAO;
+  const tudo = PECAS.map((p) => p.id);
+
+  it('não é peça: fica fora das 26 e vale para todo mundo, sem nada liberado', () => {
+    expect(BARRAS).toEqual(['fora', 'dentro']);
+    expect(PADRAO.barra).toBe('fora');
+    expect(TOTAL_DE_PECAS).toBe(26);
+    expect(PECAS.some((p) => (p.campo as string) === 'barra')).toBe(false);
+    for (const barra of BARRAS) expect(validar({ ...PADRAO, barra }, []).barra).toBe(barra);
+  });
+
+  it('validar: inválida ou ausente vira fora', () => {
+    for (const barra of ['Dentro', 'meio', '', null, true, 1, ['dentro'], undefined]) expect(validar({ ...PADRAO, barra }, tudo).barra).toBe('fora');
+    expect(validar(semBarra, tudo)).toEqual(PADRAO);
+  });
+
+  it('conferirFormato aceita com ou sem barra (o formato de antes), nunca barra torta', () => {
+    expect(conferirFormato(semBarra)).toBe(true);
+    expect(conferirFormato({ ...PADRAO, barra: 'dentro' })).toBe(true);
+    for (const barra of ['Dentro', 'meio', null, undefined, true]) expect(conferirFormato({ ...PADRAO, barra })).toBe(false);
+    // Sem barra continua exigindo todas as outras chaves.
+    const { moldura: _m, ...semMolduraNemBarra } = semBarra;
+    expect(conferirFormato(semMolduraNemBarra)).toBe(false);
+  });
+
+  it('comFormato completa a barra que falta e recusa o que o conferirFormato recusa', () => {
+    expect(comFormato(semBarra)).toEqual(PADRAO);
+    const dentro = { ...PADRAO, barra: 'dentro' as const };
+    expect(comFormato(dentro)).toEqual(dentro);
+    expect(comFormato({ ...PADRAO, barra: 'meio' })).toBeNull();
+    expect(comFormato(null)).toBeNull();
+  });
+
+  it('o Sortear sorteia as duas; a conta nova começa sempre por fora', () => {
+    const vistas = new Set<string>();
+    for (let n = 1; n <= 200; n++) {
+      vistas.add(sortearComPecas(tudo, semente(n)).barra);
+      expect(sortearDoComeco(semente(n)).barra).toBe('fora');
+    }
+    expect(vistas).toEqual(new Set(BARRAS));
+  });
+
+  it('a barra é sorteada por último: o resto sai igual com a mesma sequência', () => {
+    for (let n = 1; n <= 50; n++) {
+      const { barra: _x, ...a } = sortearComPecas(tudo, semente(n));
+      const { barra: _y, ...b } = sortearDoComeco(semente(n));
+      const { barra: _z, ...c } = sortearComPecas([], semente(n));
+      expect(b).toEqual(c);
+      expect(Object.keys(a).sort()).toEqual(Object.keys(semBarra).sort());
+    }
   });
 });

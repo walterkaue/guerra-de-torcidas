@@ -56,6 +56,8 @@ describe('cache pequeno', () => {
     expect(k()).toBe(k());
     expect(k()).not.toBe(k({ ...PADRAO, peito: 'colete' }));
     expect(k()).not.toBe(k({ ...PADRAO, moldura: 'dourada' }));
+    expect(k()).not.toBe(k({ ...PADRAO, barra: 'dentro' }));
+    expect(k(PADRAO, 'corpo')).not.toBe(k({ ...PADRAO, barra: 'dentro' }, 'corpo'));
     expect(k(PADRAO, 'corpo')).toBe(k({ ...PADRAO, moldura: 'dourada' }, 'corpo'));
   });
 });

@@ -10,7 +10,7 @@
 // O desenho é o do vestiário (bonecoMontavel.ts); aqui não há canvas.
 
 import { corDeTexto } from '../dados/times';
-import { PADRAO, PECAS, conferirFormato, validar, type Vestimenta } from '../jogo/vestiario';
+import { PADRAO, PECAS, comFormato, validar, type Vestimenta } from '../jogo/vestiario';
 import type { CoresDoTime } from './bonecoFundos';
 import { aparenciaDe, comChuteiraDe, corDaTesteira, corDoPunho, type PecasDeCampo } from './bonecoMontavel';
 import { corDoCabeloVisivel, type Aparencia, type Uniforme } from './bonecos';
@@ -27,8 +27,8 @@ export interface BatedorEmCampo {
  * quem chama sorteia o batedor como antes).
  */
 export function batedorEmCampo(vestimenta: unknown, ligado: boolean, roupaDaCena: Uniforme, coresDoCoracao: CoresDoTime): BatedorEmCampo | null {
-  if (!ligado || !conferirFormato(vestimenta)) return null;
-  const v = vestimenta;
+  const v = ligado ? comFormato(vestimenta) : null;
+  if (!v) return null;
   const aparencia = aparenciaDe(v);
   // Sem número, a camisa fica lisa. Colete e faixa não existem em campo, então nada cobre o número.
   const numero = v.numero;
@@ -48,13 +48,15 @@ export function batedorEmCampo(vestimenta: unknown, ligado: boolean, roupaDaCena
 }
 
 /** O que o servidor manda do boneco de quem chamou o X1 (`ver_desafio` e `ver_desafio_lances`): só o que vai a campo. */
-export type VestimentaDeCampo = Pick<Vestimenta, 'corpo' | 'pele' | 'cabelo' | 'corCabelo' | 'numero' | 'cabeca' | 'punho' | 'braco' | 'chuteira'>;
+export type VestimentaDeCampo = Pick<Vestimenta, 'corpo' | 'pele' | 'cabelo' | 'corCabelo' | 'numero' | 'cabeca' | 'punho' | 'braco' | 'chuteira' | 'barra'>;
 
-const CHAVES_DE_CAMPO = ['corpo', 'pele', 'cabelo', 'corCabelo', 'numero', 'cabeca', 'punho', 'braco', 'chuteira'] as const;
+const PECAS_DE_CAMPO = ['corpo', 'pele', 'cabelo', 'corCabelo', 'numero', 'cabeca', 'punho', 'braco', 'chuteira'] as const;
+/** As 9 peças de campo mais a barra (camisa por fora ou por dentro), que vale para todo mundo. */
+const CHAVES_DE_CAMPO = [...PECAS_DE_CAMPO, 'barra'] as const;
 const TODAS_AS_PECAS = PECAS.map((p) => p.id);
 
 /**
- * O boneco de quem chamou, como Vestimenta completa e segura: o PADRAO com só as 9 chaves de campo por cima (chave a
+ * O boneco de quem chamou, como Vestimenta completa e segura: o PADRAO com só as 10 chaves de campo por cima (chave a
  * mais é ignorada), cada valor conferido contra o catálogo (valor torto cai no padrão). Todas as peças valem, porque o
  * servidor já conferiu o que estava liberado. null (sem boneco, interruptor desligado, servidor antigo) ou algo que
  * não é objeto: null, e quem chama sorteia o batedor / não mostra busto.
@@ -62,8 +64,8 @@ const TODAS_AS_PECAS = PECAS.map((p) => p.id);
 export function vestimentaDeCampo(x: unknown): Vestimenta | null {
   if (typeof x !== 'object' || x === null || Array.isArray(x)) return null;
   const bruto = x as Record<string, unknown>;
-  // Objeto sem nenhuma peça de campo não é boneco: sorteia, em vez de desenhar o padrão.
-  if (!CHAVES_DE_CAMPO.some((k) => k in bruto)) return null;
+  // Objeto sem nenhuma peça de campo (só a barra não conta) não é boneco: sorteia, em vez de desenhar o padrão.
+  if (!PECAS_DE_CAMPO.some((k) => k in bruto)) return null;
   const base: Record<string, unknown> = { ...PADRAO };
   for (const k of CHAVES_DE_CAMPO) if (k in bruto) base[k] = bruto[k];
   return validar(base, TODAS_AS_PECAS);

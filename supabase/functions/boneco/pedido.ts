@@ -2,7 +2,7 @@
 
 import { ErroBoneco } from './fluxo.ts';
 
-/** Pedido maior que isto é recusado: a maior vestimenta tem cerca de 230 caracteres. */
+/** Pedido maior que isto é recusado: a maior vestimenta tem cerca de 250 caracteres. */
 export const TAMANHO_DO_PEDIDO = 2048;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
