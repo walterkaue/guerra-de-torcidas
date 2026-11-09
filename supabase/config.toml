@@ -455,6 +455,11 @@ verify_jwt = true
 [functions.boneco]
 verify_jwt = true
 
+# Funil do X1 e onde a pessoa desiste (docs/jogos/contas.md, "Contagem de uso"). Sem verify_jwt: o celular manda
+# por sendBeacon, que não leva cabeçalho; o token vem no corpo e a própria função confere.
+[functions.funil]
+verify_jwt = false
+
 [functions.gerar-conteudo]
 enabled = true
 verify_jwt = false
