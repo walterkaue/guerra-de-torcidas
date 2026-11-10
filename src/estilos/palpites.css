@@ -602,3 +602,50 @@ span.certeza {
     display: none;
   }
 }
+
+/* ---------- jogo especial (rodada de um jogo só) e encerramento do Brasileirão ---------- */
+.seletor-rodada strong {
+  min-width: 0;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.aviso-especial {
+  margin: 0;
+}
+
+/* Time de fora: só o nome, numa faixa neutra (cinza escuro, texto claro), sem cor de clube nem escudo. */
+.linha-time .cor.fora {
+  background: #2b2f36;
+}
+
+.linha-time .nome-time.faixa-fora {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 1px 8px;
+  border-radius: 3px;
+  background: #2b2f36;
+  color: #f2f3f5;
+}
+
+.encerramento {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.encerramento p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.encerra-pos {
+  font-family: var(--fonte-rotulo);
+  font-size: 22px;
+  letter-spacing: 0.03em;
+}
+
+.encerra-proximo {
+  color: var(--texto-suave);
+  font-size: 14px;
+}

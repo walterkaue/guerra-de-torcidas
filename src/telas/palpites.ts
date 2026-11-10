@@ -13,7 +13,6 @@ import {
   EMOJI_ACERTO,
   linhaEmoji,
   ordinalRodada,
-  palpiteContra,
   pontosDaRodada,
   type Placar,
   type PontosDoJogo,
@@ -24,14 +23,26 @@ import {
   acertosDaRodada,
   adiado,
   faseDoJogo,
+  ehEspecial,
   horaDoJogo,
+  ladoDoJogo,
+  linhaAcertosDoBrasileirao,
+  linhaPosicaoFinal,
+  nomeDaRodada,
+  palpiteContraNoJogo,
   placarTexto,
+  resumoDoBrasileirao,
   rodadaEmFoco,
+  rodadasNoTempo,
   rotuloDePontos,
   tempoAte,
   textoMeusPalpites,
+  textoResultadoBrasileirao,
   textoResultadoRodada,
+  tituloDaRodadaEspecial,
+  torcidaQueMaisPontuou,
 } from '../jogo/cravaTela';
+import { brasileiraoEncerrado, linhaDoProximoEspecial } from '../jogo/statusJogos';
 import { linhaRecorde, recordeCrava } from '../jogo/posicao';
 import { ZONA_REBAIXAMENTO, classificacao, dicasDoJogo, type Letra, type LinhaTabela, type Resultado } from '../jogo/tabela';
 import { escolherFrase, type ContextoNarrador, type Etiqueta } from '../narrador/escolher';
@@ -112,11 +123,13 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       ${abas('visao', [{ id: 'palpites', texto: 'Palpites' }, { id: 'tabela', texto: 'Tabela' }], 'palpites', 1)}
       <section class="tabela-campeonato" data-tabela hidden></section>
       <div class="visao-palpites" data-visao-palpites>
+        <section class="placa filete encerramento" data-encerramento aria-label="Brasileirão encerrado" hidden></section>
         <nav class="seletor-rodada placa aperta" aria-label="Rodada" hidden>
           <button type="button" class="voltar" data-acao="rodada-ant" aria-label="Rodada anterior">‹</button>
           <strong data-rodada></strong>
           <button type="button" class="voltar" data-acao="rodada-prox" aria-label="Próxima rodada">›</button>
         </nav>
+        <p class="nota aviso-especial" data-aviso-especial role="note" hidden>Vale o placar dos 90 minutos. Prorrogação e pênaltis não contam.</p>
         <section class="placa filete sua-rodada" data-sua-rodada aria-label="Sua rodada" hidden></section>
         <p class="adesivo" data-adesivo hidden></p>
         <p class="faixa-dica" data-dica hidden aria-live="polite"></p>
@@ -151,6 +164,8 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   const elLembrete = $('[data-lembrete]');
   const elDica = $('[data-dica]');
   const elSua = $('[data-sua-rodada]');
+  const elEncerra = $('[data-encerramento]');
+  const elAvisoEspecial = $('[data-aviso-especial]');
   const elRankPlaca = $('[data-ranking-placa]');
   const elShare = $('.crava-compartilhar');
   if (time && !outro) {
@@ -183,7 +198,10 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     const t = travaDaRodada();
     return !t || Date.now() >= Date.parse(t);
   };
-  const certezaDaRodada = () => (rodada === null ? null : (meus.certezas.get(rodada) ?? null));
+  /** Título do jogo especial da rodada aberta (null nas rodadas do Brasileirão). */
+  const tituloEspecial = (r: number | null = rodada): string | null => (r === null ? null : tituloDaRodadaEspecial(jogos, r));
+  /** Jogo especial não tem jogo da certeza. */
+  const certezaDaRodada = () => (rodada === null || tituloEspecial() !== null ? null : (meus.certezas.get(rodada) ?? null));
 
   function resultadosDaRodada(): PontosDoJogo[] {
     const lista = daRodada().map((j) => ({
@@ -196,20 +214,28 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   }
 
   // ---------- cartão de um jogo ----------
-  function linhaTime(id: string, lado: 'm' | 'v', valor: number | null, editavel: boolean): string {
-    const t = timePorId(id);
+  function linhaTime(j: Jogo, lado: 'm' | 'v', valor: number | null, editavel: boolean): string {
+    const l = ladoDoJogo(j, lado, nomeDo);
+    const t = timePorId(l.id);
     const ajuste = editavel
       ? `<div class="ajuste">
-          <button type="button" data-acao="menos" data-lado="${lado}" aria-label="Menos um gol ${esc(nomeDo(id))}" ${valor === 0 ? 'disabled' : ''}>−</button>
+          <button type="button" data-acao="menos" data-lado="${lado}" aria-label="Menos um gol ${esc(l.nome)}" ${valor === 0 ? 'disabled' : ''}>−</button>
           <output aria-live="polite">${valor}</output>
-          <button type="button" data-acao="mais" data-lado="${lado}" aria-label="Mais um gol ${esc(nomeDo(id))}" ${valor === GOLS_MAX ? 'disabled' : ''}>+</button>
+          <button type="button" data-acao="mais" data-lado="${lado}" aria-label="Mais um gol ${esc(l.nome)}" ${valor === GOLS_MAX ? 'disabled' : ''}>+</button>
         </div>`
       : `<span class="gols-final">${valor ?? ''}</span>`;
-    const l = editavel ? tabela.get(id) : undefined;
-    const indicador = l && l.jogos ? `<span class="indicador">${l.posicao}º · ${l.pontos} pts ${formaHtml(l.forma)}</span>` : '';
-    return `<div class="linha-time${indicador ? ' com-indicador' : ''}">
-      <span class="cor" style="--c1:${t?.cores[0] ?? '#666'};--c2:${t?.cores[1] ?? '#999'}"></span>
-      <span class="nome"><span class="nome-time">${esc(nomeDo(id))}${time && id === time.id ? '<small> seu time</small>' : ''}</span>${indicador}</span>
+    const ind = editavel && l.id ? tabela.get(l.id) : undefined;
+    const indicador = ind && ind.jogos ? `<span class="indicador">${ind.posicao}º · ${ind.pontos} pts ${formaHtml(ind.forma)}</span>` : '';
+    // Time de fora: só o nome, numa faixa neutra (sem cor de clube nem escudo).
+    const cor = l.fora
+      ? '<span class="cor fora" aria-hidden="true"></span>'
+      : `<span class="cor" style="--c1:${t?.cores[0] ?? '#666'};--c2:${t?.cores[1] ?? '#999'}"></span>`;
+    const nome = l.fora
+      ? `<span class="nome-time faixa-fora">${esc(l.nome)}</span>`
+      : `<span class="nome-time">${esc(l.nome)}${time && l.id === time.id ? '<small> seu time</small>' : ''}</span>`;
+    return `<div class="linha-time${indicador ? ' com-indicador' : ''}${l.fora ? ' de-fora' : ''}">
+      ${cor}
+      <span class="nome">${nome}${indicador}</span>
       ${ajuste}
     </div>`;
   }
@@ -230,9 +256,9 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       `<div class="como-linha"><span>${esc(rotulo)}</span><span class="como-barra" style="--p:${pct ?? 0}"></span><strong>${pct ?? 0}%</strong></div>`;
     return `<div class="como">
       <p class="rotulo">Como a torcida palpitou · ${c.total} palpites</p>
-      ${linha(`${nomeDo(j.mandante_id)} vence`, c.pct_mandante)}
+      ${linha(`${ladoDoJogo(j, 'm', nomeDo).nome} vence`, c.pct_mandante)}
       ${linha('Empate', c.pct_empate)}
-      ${linha(`${nomeDo(j.visitante_id)} vence`, c.pct_visitante)}
+      ${linha(`${ladoDoJogo(j, 'v', nomeDo).nome} vence`, c.pct_visitante)}
     </div>`;
   }
 
@@ -248,7 +274,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     const topo = `<header class="jogo-topo">
       <span class="rotulo">${esc(horaDoJogo(j.inicio))}${adiado(j) ? ' <em class="tag-adiado">adiado</em>' : ''}</span>
       ${
-        fase === 'aberto' && !certezaTravada()
+        fase === 'aberto' && !ehEspecial(j) && !certezaTravada()
           ? `<button type="button" class="certeza${destacarEstrela && !certeza ? ' dica-estrela' : ''}" data-acao="certeza" aria-pressed="${certeza}">${certeza ? '★' : '☆'} Certeza ×2</button>`
           : certeza
             ? '<span class="certeza ligada">★ Certeza ×2</span>'
@@ -261,8 +287,8 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       const pronto = iguais(atual, salvo);
       return `${abre(` aberto${certeza ? ' com-certeza' : ''}`)}
         ${topo}
-        ${linhaTime(j.mandante_id, 'm', atual.m, true)}
-        ${linhaTime(j.visitante_id, 'v', atual.v, true)}
+        ${linhaTime(j, 'm', atual.m, true)}
+        ${linhaTime(j, 'v', atual.v, true)}
         ${dicasHtml(j)}
         <div class="jogo-rodape">
           <span class="situacao">${salvo ? `Palpite: <strong>${placarTexto(salvo)}</strong>` : 'Sem palpite ainda'}</span>
@@ -276,12 +302,12 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       : 'Sem palpite seu nesse.';
     if (fase === 'anulado') {
       return `${abre(' fechado')}${topo}
-        ${linhaTime(j.mandante_id, 'm', null, false)}${linhaTime(j.visitante_id, 'v', null, false)}
+        ${linhaTime(j, 'm', null, false)}${linhaTime(j, 'v', null, false)}
         <p class="situacao">${meuTexto}</p><p class="nota">Jogo anulado: sem pontos.</p></article>`;
     }
     if (fase === 'rolando') {
       return `${abre(' fechado')}${topo}
-        ${linhaTime(j.mandante_id, 'm', null, false)}${linhaTime(j.visitante_id, 'v', null, false)}
+        ${linhaTime(j, 'm', null, false)}${linhaTime(j, 'v', null, false)}
         <p class="situacao"><span class="rolando">Bola rolando</span> · ${meuTexto}</p>
         ${blocoComo(j)}</article>`;
     }
@@ -296,7 +322,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       : `<p class="situacao">${meuTexto}</p>`;
     const frase = salvo && r ? fraseDoResultado(j, salvo, r) : null;
     return `${abre(' fechado confirmado')}${topo}
-      ${linhaTime(j.mandante_id, 'm', j.gols_mandante, false)}${linhaTime(j.visitante_id, 'v', j.gols_visitante, false)}
+      ${linhaTime(j, 'm', j.gols_mandante, false)}${linhaTime(j, 'v', j.gols_visitante, false)}
       ${ganho}
       ${frase ? `<p class="frase-jogo">${esc(frase)}</p>` : ''}
       ${blocoComo(j)}</article>`;
@@ -308,7 +334,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     if (!r.acerto) return null;
     const etiquetas = new Set<Etiqueta>();
     if (j.gols_mandante === j.gols_visitante) etiquetas.add('empate');
-    if (palpiteContra(palpite, j.mandante_id, j.visitante_id, time?.id)) etiquetas.add('contra');
+    if (palpiteContraNoJogo(palpite, j, time?.id)) etiquetas.add('contra');
     const evento: EventoNarrador = r.certeza
       ? r.acerto === 'errou'
         ? 'crava_certeza_errou'
@@ -328,9 +354,11 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   }
 
   function desenhar(): void {
-    const nums = [...new Set(jogos.map((j) => j.rodada))].sort((a, b) => a - b);
+    const nums = rodadasNoTempo(jogos);
     const seletor = $('.seletor-rodada');
+    desenharEncerramento();
     if (rodada === null || !nums.length) {
+      elAvisoEspecial.hidden = true;
       seletor.hidden = true;
       mostrar(elLista, estado('vazio', 'Os jogos da rodada ainda não chegaram.', { detalhe: 'Volta daqui a pouco!' }));
       elSua.hidden = true;
@@ -339,13 +367,16 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       return;
     }
     seletor.hidden = false;
-    $('[data-rodada]').textContent = `${ordinalRodada(rodada)} rodada`;
+    const especial = tituloEspecial() !== null;
+    elAvisoEspecial.hidden = !especial;
+    $('[data-rodada]').textContent = nomeDaRodada(jogos, rodada);
     if (rodada !== rodadaDaPosicao) {
       posRodada = undefined;
       rodadaDaPosicao = rodada;
     }
-    $<HTMLButtonElement>('[data-acao="rodada-ant"]').disabled = rodada <= nums[0];
-    $<HTMLButtonElement>('[data-acao="rodada-prox"]').disabled = rodada >= nums[nums.length - 1];
+    const posicaoNaLista = nums.indexOf(rodada);
+    $<HTMLButtonElement>('[data-acao="rodada-ant"]').disabled = posicaoNaLista <= 0;
+    $<HTMLButtonElement>('[data-acao="rodada-prox"]').disabled = posicaoNaLista >= nums.length - 1;
 
     const lista = daRodada();
     const resultados = resultadosDaRodada();
@@ -366,8 +397,9 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     } else if (todosFechados) {
       const pontos = resultados.reduce((s, r) => s + r.torcida, 0);
       gritar(
+        // Jogo especial: sem {rodada} (as frases com o número da rodada são puladas).
         falar('crava_rodada_fim', {
-          rodada: ordinalRodada(rodada),
+          rodada: especial ? undefined : ordinalRodada(rodada),
           acertos: resultados.filter((r) => r.acerto && r.acerto !== 'errou').length,
           jogos: palpitados.length,
           pontos,
@@ -376,15 +408,16 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     } else if (situacao === 'rolando') {
       gritar(falar('crava_fechou'));
     } else {
-      gritar(falar('crava_abertura', { rodada: ordinalRodada(rodada) }));
+      gritar(falar('crava_abertura', { rodada: especial ? undefined : ordinalRodada(rodada) }));
     }
     topoVisto = chave;
-    dicaDaRodada(lista, todosFechados, agora);
+    dicaDaRodada(lista, todosFechados, agora, especial);
 
     const trava = travaDaRodada();
     const falta = trava ? Date.parse(trava) - agora.getTime() : 0;
     // Lembrete só nas últimas 24 h antes do 1º jogo ("Rodada começando…" não serve 4 dias antes).
-    const lembrar = falta > 0 && falta <= 24 * 3600_000;
+    // O lembrete do narrador fala do jogo da certeza: no jogo especial, quem avisa é a linha "fecha em" da Home.
+    const lembrar = !especial && falta > 0 && falta <= 24 * 3600_000;
     const chaveLembrete = lembrar ? `${rodada}:${tempoAte(falta)}` : '';
     if (chaveLembrete !== lembreteVisto) {
       const lembrete = lembrar ? falar('crava_lembrete', { horas: tempoAte(falta) }) : null;
@@ -400,16 +433,16 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   }
 
   /** Uma dica por vez na faixa: rodada fechada, bola rolando, certeza travada ou a estrela (antes do 1º jogo). */
-  function dicaDaRodada(lista: Jogo[], todosFechados: boolean, agora: Date): void {
+  function dicaDaRodada(lista: Jogo[], todosFechados: boolean, agora: Date, especial: boolean): void {
     const fases = lista.map((j) => faseDoJogo(j, agora));
     const aberto = fases.includes('aberto');
-    const travada = certezaTravada() && !!travaDaRodada();
+    const travada = !especial && certezaTravada() && !!travaDaRodada();
     dicas.novoLance();
     const texto = primeiraDica(dicas, [
       [todosFechados && !vistas.fechada, 'crava_rodada_fechada'],
       [fases.includes('rolando') && !vistas.rolando, 'crava_rolando'],
       [travada && aberto && !vistas.travada, 'crava_certeza_travada'],
-      [!certezaTravada() && aberto && certezaDaRodada() === null && !vistas.estrela, 'crava_estrela'],
+      [!especial && !certezaTravada() && aberto && certezaDaRodada() === null && !vistas.estrela, 'crava_estrela'],
     ]);
     if (!mostrarDica(elDica, texto)) return;
     if (texto === DICAS.crava_rodada_fechada) vistas.fechada = true;
@@ -446,15 +479,17 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       return;
     }
     const pontos = resultados.reduce((s, x) => s + x.torcida, 0);
+    // Recorde por rodada é do Brasileirão: o jogo especial não entra nele.
+    const especial = tituloEspecial() !== null;
     const rec = recordeCrava(pontosPorRodada(), rodada);
-    const textoRec = linhaRecorde(rec.recorde);
-    const selos = rec.novo
+    const textoRec = especial ? '' : linhaRecorde(rec.recorde);
+    const selos = especial ? '' : rec.novo
       ? selo(`${icone('estrela')} Novo recorde!`, 'ouro') + (textoRec ? selo(`${esc(textoRec)} numa rodada`) : '')
       : textoRec
         ? selo(`${esc(textoRec)} numa rodada`)
         : '';
     elSua.hidden = false;
-    elSua.innerHTML = `${faixa(`Sua ${ordinalRodada(rodada)} rodada`)}
+    elSua.innerHTML = `${faixa(especial ? (tituloEspecial() ?? '') : `Sua ${ordinalRodada(rodada)} rodada`)}
       <div class="numeros tres">
         ${numero(`${pontos}`, rotuloDePontos(pontos, paraTime), 'destaque')}
         ${numero(`${acertos}<small>de ${comResultado}</small>`, 'Acertos')}
@@ -481,6 +516,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   function pontosPorRodada(): Map<number, number> {
     const porRodada = new Map<number, number>();
     for (const j of jogos) {
+      if (ehEspecial(j)) continue;
       const p = meus.pontos.get(j.id);
       if (p !== undefined) porRodada.set(j.rodada, (porRodada.get(j.rodada) ?? 0) + p);
     }
@@ -599,7 +635,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       await api.cravar(j.id, placar);
       meus.palpites.set(j.id, placar);
       rascunho.delete(j.id);
-      const contra = palpiteContra(placar, j.mandante_id, j.visitante_id, time.id);
+      const contra = palpiteContraNoJogo(placar, j, time.id);
       gritar(falar(contra ? 'crava_contra_time' : 'crava_salvo'));
       dicas.novoLance();
       if (!vistas.mudar) vistas.mudar = mostrarDica(elDica, dicas.pedir('crava_mudar'));
@@ -660,7 +696,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   root.querySelector('[data-acao="rodada-ant"]')!.addEventListener('click', () => trocarRodada(-1));
   root.querySelector('[data-acao="rodada-prox"]')!.addEventListener('click', () => trocarRodada(1));
   function trocarRodada(passo: number): void {
-    const nums = [...new Set(jogos.map((j) => j.rodada))].sort((a, b) => a - b);
+    const nums = rodadasNoTempo(jogos);
     const i = nums.indexOf(rodada ?? nums[0]) + passo;
     if (i < 0 || i >= nums.length) return;
     rodada = nums[i];
@@ -684,10 +720,17 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   $('[data-acao="card-meus"]').addEventListener('click', () => {
     if (rodada === null) return;
     const rodadaDoCard = rodada;
+    const titulo = tituloEspecial(rodadaDoCard);
+    const nomeDaRodadaNoCard = titulo ?? `${ordinalRodada(rodadaDoCard)} rodada`;
     const certeza = certezaDaRodada();
     const linhas = daRodada()
       .filter((j) => meus.palpites.has(j.id))
-      .map((j) => ({ mandante: nomeDo(j.mandante_id), visitante: nomeDo(j.visitante_id), placar: meus.palpites.get(j.id)!, certeza: j.id === certeza }));
+      .map((j) => ({
+        mandante: ladoDoJogo(j, 'm', nomeDo).nome,
+        visitante: ladoDoJogo(j, 'v', nomeDo).nome,
+        placar: meus.palpites.get(j.id)!,
+        certeza: j.id === certeza,
+      }));
     if (!linhas.length) return;
     const meusPalpites = (apelido?: string) => `${apelido ? `${apelido} · meus palpites` : 'Meus palpites'}${paraTime ? ` ${paraTime}` : ''}`;
     abrirCardPersonalizado({
@@ -695,10 +738,10 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
       dados: (async (): Promise<DadosDoCard> => ({
         tipo: 'jogo',
         time: timeDoCard(),
-        jogo: `Palpite da Rodada · ${ordinalRodada(rodadaDoCard)}`,
+        jogo: `Palpite da Rodada · ${titulo ?? ordinalRodada(rodadaDoCard)}`,
         destaque: `${linhas.length} ${linhas.length === 1 ? 'PALPITE' : 'PALPITES'}`,
         quem: { comApelido: meusPalpites(apelidoDoCard()), semApelido: meusPalpites() },
-        lance: `${ordinalRodada(rodadaDoCard)} rodada`,
+        lance: nomeDaRodadaNoCard,
         placarEmoji: '',
         frase: '',
         novoRecorde: false,
@@ -707,7 +750,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
         nivel: await nivelParaCard(),
         conteudo: { jogo: 'crava-meus', rodada: rodadaDoCard, linhas },
       }))(),
-      texto: textoMeusPalpites(rodadaDoCard, linhas, link()),
+      texto: textoMeusPalpites(titulo ?? rodadaDoCard, linhas, link()),
       link: link(),
       quemComApelido: meusPalpites,
     });
@@ -716,20 +759,21 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
   $('[data-acao="card-resultado"]').addEventListener('click', () => {
     if (rodada === null) return;
     const rodadaDoCard = rodada;
+    const titulo = tituloEspecial(rodadaDoCard);
     const ordem = new Map(daRodada().map((j, i) => [j.id, i]));
     const resultados = resultadosDaRodada().sort((a, b) => ordem.get(a.jogoId)! - ordem.get(b.jogoId)!);
     const pontos = resultados.reduce((s, r) => s + r.torcida, 0);
-    const novoRecorde = recordeCrava(pontosPorRodada(), rodadaDoCard).novo;
+    const novoRecorde = titulo === null && recordeCrava(pontosPorRodada(), rodadaDoCard).novo;
     const apelido = apelidoDoCard();
     abrirCardPersonalizado({
       raiz: root,
       dados: (async (): Promise<DadosDoCard> => ({
         tipo: 'jogo',
         time: timeDoCard(),
-        jogo: `Palpite da Rodada · ${ordinalRodada(rodadaDoCard)}`,
+        jogo: `Palpite da Rodada · ${titulo ?? ordinalRodada(rodadaDoCard)}`,
         destaque: `+${pontos}`,
         quem: { comApelido: linhaDoTorcedor(apelido, pontos, paraTime), semApelido: linhaDoTorcedor(undefined, pontos, paraTime) },
-        lance: `${ordinalRodada(rodadaDoCard)} rodada`,
+        lance: titulo ?? `${ordinalRodada(rodadaDoCard)} rodada`,
         placarEmoji: linhaEmoji(resultados),
         frase: elAdesivo.hidden ? '' : (elAdesivo.textContent ?? ''),
         novoRecorde,
@@ -738,17 +782,81 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
         nivel: await nivelParaCard(),
         conteudo: { jogo: 'crava-resultado', rodada: rodadaDoCard, resultados },
       }))(),
-      texto: textoResultadoRodada(rodadaDoCard, pontos, paraTime, resultados, link()),
+      texto: textoResultadoRodada(titulo ?? rodadaDoCard, pontos, paraTime, resultados, link()),
       link: link(),
       // O mesmo evento do narrador que a tela usa para o grito do fim da rodada.
       sortearFrase: () =>
         falar('crava_rodada_fim', {
-          rodada: ordinalRodada(rodadaDoCard),
+          rodada: titulo === null ? ordinalRodada(rodadaDoCard) : undefined,
           acertos: resultados.filter((r) => r.acerto && r.acerto !== 'errou').length,
           jogos: resultados.length,
           pontos,
         }),
       quemComApelido: (a) => linhaDoTorcedor(a, pontos, paraTime),
+    });
+  });
+
+  // ---------- encerramento do Brasileirão ----------
+  // Posição e ranking só são lidos quando o encerramento vale (a aba não pesa no resto do ano).
+  let fim: { pos: MinhaPosicao | null; lider: string | null } | undefined;
+  let fimPedido = false;
+  let fimDesenhado = '';
+
+  async function carregarEncerramento(): Promise<void> {
+    const [pos, ranking] = await Promise.all([api.minhaPosicaoCrava(null).catch(() => null), api.rankingCrava(null).catch(() => [])]);
+    if (saiu) return;
+    const lider = torcidaQueMaisPontuou(ranking);
+    fim = { pos, lider: lider ? nomeDo(lider) : null };
+    desenharEncerramento();
+  }
+
+  function desenharEncerramento(): void {
+    const agora = new Date();
+    if (!brasileiraoEncerrado(jogos, agora)) {
+      elEncerra.hidden = true;
+      return;
+    }
+    if (!fimPedido) {
+      fimPedido = true;
+      void carregarEncerramento();
+    }
+    const html = `${faixa('Brasileirão encerrado')}
+      ${fim?.pos ? `<p class="encerra-pos">${esc(linhaPosicaoFinal(fim.pos))}</p>` : ''}
+      ${fim?.lider ? `<p>Torcida que mais pontuou: <strong>${esc(fim.lider)}</strong></p>` : ''}
+      <p class="encerra-proximo">${esc(linhaDoProximoEspecial(jogos, agora))}</p>
+      ${fim?.pos ? '<button class="botao-linha" type="button" data-acao="card-brasileirao">Ver meu card</button>' : ''}`;
+    elEncerra.hidden = false;
+    if (html !== fimDesenhado) {
+      elEncerra.innerHTML = html;
+      fimDesenhado = html;
+    }
+  }
+
+  elEncerra.addEventListener('click', (ev) => {
+    if (!(ev.target as HTMLElement).closest('[data-acao="card-brasileirao"]')) return;
+    const resumo = resumoDoBrasileirao(jogos, meus.palpites, meus.certezas, fim?.pos ?? null);
+    if (!resumo) return;
+    const apelido = apelidoDoCard();
+    abrirCardPersonalizado({
+      raiz: root,
+      dados: (async (): Promise<DadosDoCard> => ({
+        tipo: 'jogo',
+        time: timeDoCard(),
+        jogo: 'Palpite da Rodada · Brasileirão',
+        destaque: `+${resumo.pontos}`,
+        quem: { comApelido: linhaDoTorcedor(apelido, resumo.pontos, paraTime), semApelido: linhaDoTorcedor(undefined, resumo.pontos, paraTime) },
+        lance: 'Brasileirão encerrado',
+        placarEmoji: linhaAcertosDoBrasileirao(resumo),
+        frase: '',
+        novoRecorde: false,
+        link: semHttps(link()),
+        avisoFixo: AVISO_RESENHA,
+        nivel: await nivelParaCard(),
+        conteudo: { jogo: 'crava-brasileirao', resumo },
+      }))(),
+      texto: textoResultadoBrasileirao(resumo, paraTime, link()),
+      link: link(),
+      quemComApelido: (a) => linhaDoTorcedor(a, resumo.pontos, paraTime),
     });
   });
 
@@ -800,6 +908,7 @@ export function telaPalpites(root: HTMLElement, _rota: Rota): () => void {
     const agora = new Date();
     const fases = daRodada().map((j) => faseDoJogo(j, agora)).join();
     if (fasesVistas && fases !== fasesVistas) desenhar();
+    else if (jogos.length) desenharEncerramento();
     fasesVistas = fases;
   }, 15_000);
 

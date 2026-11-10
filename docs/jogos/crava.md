@@ -41,7 +41,7 @@ O Brasileirão 2026 acaba na 38ª (quarta 02/12) e a Série A 2027 começa em 27
 
 ### Encerramento do Brasileirão
 - Vale quando a 38ª está toda confirmada ou anulada e a rodada em foco (abaixo) não tem jogo aberto nem rolando.
-- Card da Home e topo da aba Palpites: "Brasileirão encerrado", a posição da pessoa no Palpiteiro do Brasileirão ("Você foi o 37º de 412") e a torcida que mais pontuou (a 1ª do ranking das torcidas no Brasileirão). Embaixo, o próximo jogo especial ("Próximo: Final da Copa do Brasil · dom 06/12 · 16h") ou, sem nenhum, "Sem jogo para cravar agora. Volta em janeiro." O histórico das rodadas segue navegável.
+- Card da Home e topo da aba Palpites: "Brasileirão encerrado", a posição da pessoa no Palpiteiro do Brasileirão ("Você foi o 37º de 412") e a torcida que mais pontuou (a 1ª do ranking das torcidas no Brasileirão). Embaixo, o próximo jogo especial ("Próximo: Final da Copa do Brasil · dom 06/12 · 16h") ou, sem nenhum, "Sem jogo para palpitar agora. Volta em janeiro." O histórico das rodadas segue navegável.
 - **Card "Resultado do Brasileirão"** (mesma família do "Resultado da rodada", pela tela SEU CARD): pontos {pro_time} no Brasileirão, rodadas palpitadas, a contagem de 🎯 ✅ 👍 e a posição; aviso fixo; texto de WhatsApp em 1ª pessoa, até 2 linhas antes do link. Apelido como nos outros cards.
 - Quem nunca palpitou no Brasileirão vê só o encerramento e o próximo jogo, sem posição nem card.
 

@@ -139,7 +139,10 @@ export function telaAquecimento(root: HTMLElement, rota: Rota): () => void {
     try {
       const api = await servidor();
       const espera = new Promise<never>((_, no) => window.setTimeout(() => no(new Error('tempo')), TEMPO_DA_BUSCA_MS));
-      const todos = await Promise.race([api.jogosDoCrava(), espera]);
+      // Só jogo do Brasileirão: jogo especial não entra no aquecimento (e não tem jogo da certeza).
+      const todos = (await Promise.race([api.jogosDoCrava(), espera])).filter(
+        (j): j is Jogo & { mandante_id: string; visitante_id: string } => j.competicao === null && !!j.mandante_id && !!j.visitante_id,
+      );
       const agora = new Date();
       const rodada = rodadaEmFoco(todos, agora);
       jogo = rodada === null ? null : jogoDoTimeParaCravar(todos.filter((j) => j.rodada === rodada), time.id, agora);

@@ -1,6 +1,8 @@
 // Só em desenvolvimento (npm run dev, com ?homeFalsa na URL): imita o servidor da Home e do Perfil no próprio
 // navegador, para conferir as telas sem banco nem login. Nunca entra no build de produção (import atrás de
 // import.meta.env.DEV).
+// ?crava= (fim do Brasileirão e jogos especiais, os mesmos cenários da aba Palpites em src/dev/cravaFalsa.ts) troca os jogos do
+// card do Palpite da Rodada: confirmada, entressafra, entressafra-especial, especial, especial-rolando; &semPosicao.
 // ?cenario= escolhe o "Jogar agora": crava (rodada fecha em 5 h sem palpite), dia (ainda não jogou, é o padrão),
 // chutes (2 chutes usados), lances (Time do Dia feito), prova (nada mais conta hoje) ou cravado (tudo feito).
 // meusLancesHoje falso (4 de 10; prova e cravado esgotam as 10; ?semMelhores zera o dia) e ?l=codigo (X1 dos Lances).
@@ -17,7 +19,7 @@ import { NOMES_PISTAS, type Pistas, type Tentativa, type Tom } from '../jogo/tim
 import type { Carreira } from '../jogo/carreira';
 import type { PosicaoSemana } from '../jogo/posicao';
 import { ErroServidor, type LancesHoje, type LinhaRanking, type MinigameDoRecorde, type RespostaDoDia, type ResumoDesafioLances } from '../servidor/api';
-import type { Jogo, MeusDados, MinhaPosicao } from '../servidor/crava';
+import type { Jogo, LinhaRankingCrava, MeusDados, MinhaPosicao } from '../servidor/crava';
 import { estadoFalso } from '../telas/vestiario/fonteFalsa';
 
 const params = new URLSearchParams(location.search);
@@ -79,6 +81,10 @@ const jogo = (id: string, rodada: number, horas: number): Jogo => ({
   rodada,
   mandante_id: 'flamengo',
   visitante_id: 'palmeiras',
+  mandante_fora: null,
+  visitante_fora: null,
+  competicao: null,
+  fase: null,
   inicio: new Date(Date.now() + horas * 3600_000).toISOString(),
   status_api: 'TIMED',
   gols_api_mandante: null,
@@ -90,10 +96,19 @@ const jogo = (id: string, rodada: number, horas: number): Jogo => ({
   anulado: false,
 });
 
-export const jogosDoCrava = () => espera([jogo('a', 33, cenario === 'crava' ? 5 : 30), jogo('b', 33, 32), jogo('c', 33, 34)]);
+// ?crava=confirmada, entressafra, entressafra-especial, especial ou especial-rolando (&semPosicao): os cenários do
+// fim do Brasileirão e dos jogos especiais, vindos de src/dev/cravaFalsa.ts (a mesma aba Palpites usa os mesmos).
+const cenarioDeCrava = params.has('crava');
+
+export const jogosDoCrava = (): Promise<Jogo[]> =>
+  cenarioDeCrava
+    ? import('./cravaFalsa').then((m) => m.jogosDoCrava())
+    : espera([jogo('a', 33, cenario === 'crava' ? 5 : 30), jogo('b', 33, 32), jogo('c', 33, 34)]);
 
 export const meusDadosDoCrava = (): Promise<MeusDados> =>
-  espera({
+  cenarioDeCrava
+    ? import('./cravaFalsa').then((m) => m.meusDadosDoCrava())
+    : espera({
     palpites: new Map(cenario === 'cravado' ? [['a', { m: 2, v: 1 }], ['b', { m: 0, v: 0 }], ['c', { m: 1, v: 1 }]] : []),
     certezas: new Map(),
     pontos: new Map(),
@@ -109,7 +124,10 @@ export const minhaCarreira = (): Promise<Carreira> =>
 export const minhaPosicaoMinigame = (minigame: 'penaltis' | 'prova' | 'dia' | 'lances'): Promise<PosicaoSemana | null> =>
   espera({ penaltis: { posicao: 2, total: 9, pontos: 85 }, prova: { posicao: null, total: 6, pontos: 0 }, dia: { posicao: 1, total: 5, pontos: 70 }, lances: { posicao: 4, total: 9, pontos: 62 } }[minigame]);
 
-export const minhaPosicaoCrava = (): Promise<MinhaPosicao | null> => espera({ posicao: 37, total: 412, pontos: 44 });
+export const minhaPosicaoCrava = (rodada: number | null = null): Promise<MinhaPosicao | null> =>
+  cenarioDeCrava ? import('./cravaFalsa').then((m) => m.minhaPosicaoCrava(rodada)) : espera({ posicao: 37, total: 412, pontos: 44 });
+
+export const rankingCrava = (rodada: number | null): Promise<LinhaRankingCrava[]> => import('./cravaFalsa').then((m) => m.rankingCrava(rodada));
 
 // As partidas valendo de hoje dos Lances. ?cenario=prova ou cravado esgota as 10.
 // ?semMelhores mostra o dia sem nenhuma partida ainda.

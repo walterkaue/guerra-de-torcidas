@@ -1346,3 +1346,12 @@ button.barra-time:active {
   height: 1px;
   background: var(--linha, rgba(245, 245, 240, 0.18));
 }
+
+/* Palpite da Rodada com o Brasileirão encerrado: o texto ocupa o card inteiro, sem a tarja do placar. */
+.card-jogo.largo.encerrado {
+  padding-right: 12px;
+}
+
+.card-jogo.encerrado .tarja-placar {
+  display: none;
+}

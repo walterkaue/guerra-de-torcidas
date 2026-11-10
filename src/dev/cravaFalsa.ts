@@ -5,6 +5,13 @@
 //   ?crava=encerrada   rodada com resultados confirmados, um jogo rolando e os palpites já pontuados
 //   ?crava=vazia       sem jogos ("ainda não chegaram")
 //   ?crava=erro        sem conexão (mostra "Tentar de novo")
+// Fim do Brasileirão e jogos especiais (valem na Home e na aba Palpites, sempre com ?homeFalsa):
+//   ?crava=confirmada            rodada toda confirmada, ainda na janela de 36 h: "33ª rodada · encerrada" (nunca "bola rolando")
+//   ?crava=entressafra           38ª confirmada e nenhum especial marcado: bloco "Brasileirão encerrado" e "Volta em janeiro"
+//   ?crava=entressafra-especial  igual, com a final da Copa do Brasil daqui a 9 dias (fora dos 7 dias): linha "Próximo: …"
+//   ?crava=especial              final da Copa do Brasil aberta, daqui a ~50 h, com time de fora (a tela abre nela)
+//   ?crava=especial-rolando      a mesma, com a bola rolando
+//   &semPosicao                  (nos de entressafra) quem nunca palpitou no Brasileirão: sem posição e sem botão de card
 
 import type { Placar } from '../jogo/crava';
 import { ID_OUTRO, TIMES } from '../dados/times';
@@ -25,8 +32,11 @@ const PARES: [string, string][] = [
   ['fluminense', 'botafogo'],
 ];
 
+const jogoBase = { mandante_fora: null, visitante_fora: null, competicao: null, fase: null };
+
 function jogo(i: number, horas: number, gols: [number, number] | null, extra: Partial<Jogo> = {}): Jogo {
   return {
+    ...jogoBase,
     id: `j${i}`,
     rodada: 33,
     mandante_id: PARES[i][0],
@@ -44,9 +54,53 @@ function jogo(i: number, horas: number, gols: [number, number] | null, extra: Pa
   };
 }
 
+/** 38ª rodada toda confirmada há 4 dias, mais a 37ª (para ter mais de uma rodada palpitada). */
+function fimDoBrasileirao(): Jogo[] {
+  const rodada = (n: number, dias: number, gols: [number, number][]) =>
+    gols.map((g, i) => jogo(i, -24 * dias, g, { id: `r${n}-${i}`, rodada: n }));
+  return [
+    ...rodada(37, 11, [[1, 0], [2, 2], [0, 1]]),
+    ...rodada(38, 4, [[2, 1], [0, 0], [1, 3], [2, 2], [3, 1]]),
+  ];
+}
+
+/** O jogo especial: final da Copa do Brasil, o Flamengo contra um time de fora. */
+const especial = (horas: number): Jogo => ({
+  ...jogoBase,
+  id: 'esp',
+  rodada: 1001,
+  mandante_id: 'flamengo',
+  visitante_id: null,
+  visitante_fora: 'Estrela do Norte',
+  competicao: 'Copa do Brasil',
+  fase: 'Final',
+  inicio: h(horas),
+  status_api: 'TIMED',
+  gols_api_mandante: null,
+  gols_api_visitante: null,
+  gols_mandante: null,
+  gols_visitante: null,
+  confirmado_em: null,
+  corrigido_em: null,
+  anulado: false,
+});
+
+const noFim = ['entressafra', 'entressafra-especial', 'especial', 'especial-rolando'].includes(cenario);
+
 export async function jogosDoCrava(): Promise<Jogo[]> {
   if (cenario === 'erro') return falha();
   if (cenario === 'vazia') return espera([]);
+  if (cenario === 'confirmada') {
+    return espera([
+      ...[0, 1, 2, 3].map((i) => jogo(i, -20 + i, [i, 1])),
+      jogo(4, -18, [2, 0]),
+      jogo(0, 24 * 6, null, { id: 'p0', rodada: 34 }),
+    ]);
+  }
+  if (cenario === 'entressafra') return espera(fimDoBrasileirao());
+  if (cenario === 'entressafra-especial') return espera([...fimDoBrasileirao(), especial(24 * 9)]);
+  if (cenario === 'especial') return espera([...fimDoBrasileirao(), especial(50)]);
+  if (cenario === 'especial-rolando') return espera([...fimDoBrasileirao(), especial(-1)]);
   if (cenario === 'encerrada') {
     return espera([
       jogo(0, -75, [2, 1]),
@@ -59,9 +113,36 @@ export async function jogosDoCrava(): Promise<Jogo[]> {
   return espera([jogo(0, 30, null), jogo(1, 31, null), jogo(2, 32, null), jogo(3, 54, null), jogo(4, 55, null)]);
 }
 
-export const rodadasDoCrava = (): Promise<Rodada[]> => espera([{ numero: 33, trava_certeza: h(cenario === 'encerrada' ? -76 : 29) }]);
+export const rodadasDoCrava = (): Promise<Rodada[]> =>
+  espera(
+    noFim
+      ? [
+          { numero: 37, trava_certeza: h(-24 * 11), especial: false },
+          { numero: 38, trava_certeza: h(-24 * 4), especial: false },
+          ...(cenario === 'entressafra' ? [] : [{ numero: 1001, trava_certeza: null, especial: true }]),
+        ]
+      : [
+          { numero: 33, trava_certeza: h(cenario === 'encerrada' ? -76 : 29), especial: false },
+          ...(cenario === 'confirmada' ? [{ numero: 34, trava_certeza: h(24 * 6), especial: false }] : []),
+        ],
+  );
 
 export function meusDadosDoCrava(): Promise<MeusDados> {
+  if (noFim) {
+    const palpites = new Map<string, Placar>([
+      ['r37-0', { m: 1, v: 0 }],
+      ['r37-1', { m: 1, v: 1 }],
+      ['r38-0', { m: 2, v: 1 }],
+      ['r38-1', { m: 1, v: 0 }],
+      ['r38-2', { m: 0, v: 2 }],
+      ['r38-3', { m: 2, v: 2 }],
+    ]);
+    const pontos = new Map([['r37-0', 20], ['r37-1', 14], ['r38-0', 40], ['r38-2', 14], ['r38-3', 20]]);
+    return espera({ palpites, certezas: new Map([[38, 'r38-0']]), pontos });
+  }
+  if (cenario === 'confirmada') {
+    return espera({ palpites: new Map([['j0', { m: 0, v: 1 }]]), certezas: new Map(), pontos: new Map([['j0', 10]]) });
+  }
   if (cenario === 'encerrada') {
     const palpites = new Map<string, Placar>([
       ['j0', { m: 2, v: 1 }],
@@ -88,6 +169,7 @@ export const comoCravaram = (_rodada: number): Promise<ComoCravaram[]> =>
     { jogo_id: 'j2', total: null, pct_mandante: null, pct_empate: null, pct_visitante: null },
     { jogo_id: 'j3', total: 117, pct_mandante: 38, pct_empate: 23, pct_visitante: 39 },
     { jogo_id: 'j4', total: 128, pct_mandante: 34, pct_empate: 24, pct_visitante: 42 },
+    { jogo_id: 'esp', total: 61, pct_mandante: 58, pct_empate: 17, pct_visitante: 25 },
   ]);
 
 export function rankingCrava(rodada: number | null): Promise<LinhaRankingCrava[]> {
@@ -99,7 +181,7 @@ export function rankingCrava(rodada: number | null): Promise<LinhaRankingCrava[]
 }
 
 export const minhaPosicaoCrava = (rodada: number | null): Promise<MinhaPosicao | null> =>
-  espera(cenario === 'aberta' ? null : rodada === null ? { posicao: 12, total: 412, pontos: 74 } : { posicao: 37, total: 412, pontos: 74 });
+  espera(cenario === 'aberta' || params.has('semPosicao') ? null : rodada === null ? { posicao: 12, total: 412, pontos: 74 } : { posicao: 37, total: 412, pontos: 74 });
 
 const OFICIAIS_DA_TABELA = TIMES.filter((t) => t.id !== ID_OUTRO).map((t) => t.id);
 
