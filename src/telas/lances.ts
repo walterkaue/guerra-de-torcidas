@@ -84,7 +84,7 @@ import {
   type ResultadoLance,
 } from '../jogo/lances';
 import { normalizarCobranca, type GestoCobranca } from '../jogo/penaltis';
-import { destravarSom, latenciaDoSom, somApito, somChute, somLargada, somTorcida } from '../jogo/som';
+import { destravarSom, latenciaDoSom, somApito, somChute, somLargada, somRede, somTorcida } from '../jogo/som';
 import { vibrar } from './toque';
 import { etiquetasDoLance, eventoDoLance } from '../narrador/lance';
 import { criarNarrador } from '../narrador/sessao';
@@ -1049,6 +1049,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         const q = cena.projetar(em(1));
         cena.comemorar(q.x, q.y, r.pontos);
       } else if (r.desfecho === 'trave') cena.baterNaTrave();
+      if (r.desfecho === 'gol') somRede();
       somTorcida(r.desfecho === 'gol' ? 'festa' : 'uuuh');
       resultados.push(r);
       dicaDoResultado(r, atual());
