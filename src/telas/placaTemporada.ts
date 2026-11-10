@@ -1,6 +1,6 @@
 // Placa de fim do mês da Home (docs/jogo.md, seção 5, "Telas do resto das divisões", Rota 1 "tabela final no telão").
-// Mora na mesma <section data-placa-trofeu> da placa "Troféu novo" (abaixo do "Jogar agora", por causa do J08) e as
-// duas nunca aparecem na mesma abertura: `mostrarPlacaDaHome` tenta a do mês e, sem ela, chama a do troféu.
+// Mora na vaga do momento da Home (abaixo do "Jogar agora", por causa do J08), que mostra um aviso só por abertura:
+// a Home pergunta `haPlacaDoMes` e, só se for a escolhida pela ordem da vaga, chama `mostrarPlacaDoMes`.
 // Uma vez por mês por aparelho (prefs.temporadaVista); fica visível no resto da abertura e some ao tocar num botão.
 // Papel picado e vibração só na primeira vez e só nos destinos de festa. Sem urgência (seção 13).
 
@@ -32,7 +32,6 @@ import { diaBrasilia } from '../servidor/tempo';
 import { lerTemporadas, servidorDaTemporada, temporadaFalsaLigada } from './blocoDivisoes';
 import { mandarTemporadaNoGrupo } from './mandarTemporada';
 import { papelPicadoNaTela } from './papelPicado';
-import { mostrarPlacaTrofeu } from './placaTrofeu';
 import { vibrar } from './toque';
 
 interface PlacaDoMes {
@@ -150,13 +149,12 @@ async function lerPlaca(time: Time): Promise<PlacaDoMes | null> {
   return { temporada, linhas, linha, destino, frase, temTrofeu: trofeus.length > 0 };
 }
 
-/**
- * Chamada pela Home depois de desenhar. `el` é a <section data-placa-trofeu hidden>; `timeId` o time do coração.
- * Uma placa só por abertura: a do mês tem a vez; sem ela (ou sem rede), a do "Troféu novo".
- */
-export async function mostrarPlacaDaHome(el: HTMLElement, timeId: string | undefined, saiu: () => boolean): Promise<void> {
-  const time = timeId && timeId !== ID_OUTRO ? timePorId(timeId) : undefined;
-  if (!time) return;
+function timeDaPlaca(timeId: string | undefined): Time | undefined {
+  return timeId && timeId !== ID_OUTRO ? timePorId(timeId) : undefined;
+}
+
+/** Uma leitura por abertura: a do time atual, em andamento ou pronta. */
+function leituraDoMes(time: Time): Promise<PlacaDoMes | null> {
   if (leitura?.time !== time.id) {
     const placa = lerPlaca(time);
     leitura = { time: time.id, placa };
@@ -166,15 +164,34 @@ export async function mostrarPlacaDaHome(el: HTMLElement, timeId: string | undef
       if (leitura?.placa === placa) leitura = null; // sem internet: a próxima Home tenta de novo
     });
   }
+  return leitura.placa;
+}
+
+/** Há placa de fim do mês para este time? Falha de rede conta como não. Lê (e grava o mês como visto) só se houver. */
+export async function haPlacaDoMes(timeId: string | undefined): Promise<boolean> {
+  const time = timeDaPlaca(timeId);
+  if (!time) return false;
+  try {
+    return (await leituraDoMes(time)) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Desenha a placa do mês em `el` (a <section data-placa-trofeu>); a Home chama depois de `haPlacaDoMes` dar sim e de a
+ * vaga do momento escolher este aviso. Quem tocou num botão não a vê de novo nesta abertura.
+ */
+export async function mostrarPlacaDoMes(el: HTMLElement, timeId: string | undefined, saiu: () => boolean): Promise<void> {
+  const time = timeDaPlaca(timeId);
+  if (!time) return;
   let placa: PlacaDoMes | null;
   try {
-    placa = await leitura.placa;
+    placa = await leituraDoMes(time);
   } catch {
     placa = null;
   }
-  if (saiu()) return;
-  if (!placa) return mostrarPlacaTrofeu(el, time.id, saiu);
-  if (dispensada) return;
+  if (saiu() || !placa || dispensada) return;
   const primeira = !comemorou;
   comemorou = true;
   desenhar(el, placa, time, primeira, saiu);
