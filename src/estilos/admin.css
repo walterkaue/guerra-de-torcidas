@@ -179,6 +179,26 @@
   font-size: 14px;
 }
 
+/* Especiais: Editar e Apagar na mesma grade dos outros botões; alvos de 44 px. */
+.admin-acoes .botao-linha {
+  min-height: 44px;
+}
+
+.admin-especial {
+  padding: var(--e3);
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+}
+
+.admin [data-esp-form] {
+  margin-top: var(--e3);
+}
+
+.admin [data-esp-form] > .botao-linha {
+  width: 100%;
+  min-height: 44px;
+}
+
 /* ---------- feedback ---------- */
 .admin-feedback.lido {
   background: transparent;

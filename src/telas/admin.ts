@@ -6,7 +6,7 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { esc } from '../app';
-import { timePorId } from '../dados/times';
+import { TIMES, timePorId } from '../dados/times';
 import { ordinalRodada } from '../jogo/crava';
 import { horaDoJogo, rodadaEmFoco } from '../jogo/cravaTela';
 import type { Jogo } from '../servidor/crava';
@@ -15,6 +15,18 @@ import '../estilos/admin.css';
 import { montarApelido } from './adminApelido';
 import { montarRevisao } from './adminRevisao';
 import { montarSuspeitas } from './adminSuspeitas';
+import {
+  corpoEspecial,
+  DICA_ESPECIAL,
+  formDoJogo,
+  FORA,
+  MAX_NOME,
+  MAX_TITULO,
+  textoDoErro,
+  tituloEspecial,
+  validarForm,
+  type FormEspecial,
+} from './adminEspeciais';
 import { aoTocarNoEstado, cabecalhoTela, estado, numero, placa, selo } from './blocos';
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -24,7 +36,21 @@ const CHAVE_PUBLICA = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | 
 // entra direto como administrador, com jogos, feedbacks, fila e cobertura de mentira. Não entra no build de produção.
 const FALSO = import.meta.env.DEV && new URLSearchParams(location.search).has('adminFalso');
 
-const nome = (id: string) => timePorId(id)?.nome ?? id;
+const nome = (id: string | null, fora: string | null = null) => (id ? (timePorId(id)?.nome ?? id) : (fora ?? '?'));
+
+/** O motivo que a função devolve no corpo do erro HTTP (ou a mensagem, se não vier). */
+async function motivoDoErro(error: unknown): Promise<string> {
+  const ctx = (error as { context?: Response } | null)?.context;
+  if (ctx && typeof ctx.json === 'function') {
+    try {
+      const corpo = (await ctx.json()) as { erro?: string };
+      if (corpo?.erro) return textoDoErro(corpo.erro);
+    } catch {
+      /* corpo ilegível: cai na mensagem */
+    }
+  }
+  return `Não deu certo: ${(error as { message?: string } | null)?.message ?? 'erro'}`;
+}
 
 interface Feedback {
   id: number;
@@ -72,6 +98,8 @@ export function telaAdmin(root: HTMLElement): () => void {
   let limparSuspeitas: (() => void) | undefined;
   let limparApelido: (() => void) | undefined;
   let rodada: number | null = null;
+  /** Formulário dos especiais: fechado (undefined), novo (null) ou editando o jogo de tal id. */
+  let editando: string | null | undefined;
 
   const casca = (miolo: string) => {
     root.innerHTML = `<main class="tela admin">
@@ -157,6 +185,12 @@ export function telaAdmin(root: HTMLElement): () => void {
       o servidor grava só a diferença. Placar confirmado depois de segunda 12h entra na semana atual.</p>`,
           { titulo: 'Placares da rodada' },
         ) +
+        placa(
+          `<section class="lista-jogos" data-especiais></section>
+      <div data-esp-form></div>
+      <p class="nota">${esc(DICA_ESPECIAL)}</p>`,
+          { titulo: 'Jogos especiais' },
+        ) +
         placa('<div data-revisao></div>', { titulo: 'Revisão de perguntas' }) +
         placa('<div data-suspeitas></div>', { titulo: 'Partidas sob suspeita' }) +
         placa('<div data-apelido></div>', { titulo: 'Apagar apelido' }) +
@@ -169,6 +203,8 @@ export function telaAdmin(root: HTMLElement): () => void {
     root.querySelector('[data-acao="ant"]')!.addEventListener('click', () => mudarRodada(-1));
     root.querySelector('[data-acao="prox"]')!.addEventListener('click', () => mudarRodada(1));
     root.querySelector('[data-jogos]')!.addEventListener('click', acaoNoJogo);
+    root.querySelector('[data-especiais]')!.addEventListener('click', acaoNoJogo);
+    root.querySelector('[data-especiais]')!.addEventListener('click', acaoNoEspecial);
     limparRevisao?.();
     limparRevisao = montarRevisao(root.querySelector<HTMLElement>('[data-revisao]')!, sb, () => void carregar());
     limparSuspeitas?.();
@@ -182,7 +218,7 @@ export function telaAdmin(root: HTMLElement): () => void {
     const [j, s, c, f, cob] = await Promise.all([
       sb
         .from('jogos')
-        .select('id, rodada, mandante_id, visitante_id, inicio, status_api, gols_api_mandante, gols_api_visitante, gols_mandante, gols_visitante, confirmado_em, corrigido_em, anulado')
+        .select('id, rodada, mandante_id, visitante_id, mandante_fora, visitante_fora, competicao, fase, inicio, status_api, gols_api_mandante, gols_api_visitante, gols_mandante, gols_visitante, confirmado_em, corrigido_em, anulado')
         .order('inicio'),
       sb.from('sincronizacoes').select('quando, origem, ok, jogos, sem_par, mensagem').order('quando', { ascending: false }).limit(1),
       sb.from('config_crava').select('valor').eq('chave', 'valendo_desde_rodada').maybeSingle(),
@@ -191,7 +227,8 @@ export function telaAdmin(root: HTMLElement): () => void {
     ]);
     if (saiu) return;
     jogos = (j.data ?? []) as Jogo[];
-    if (rodada === null || !jogos.some((x) => x.rodada === rodada)) rodada = rodadaEmFoco(jogos, new Date());
+    const doBrasileirao = jogos.filter((x) => x.competicao === null);
+    if (rodada === null || !doBrasileirao.some((x) => x.rodada === rodada)) rodada = rodadaEmFoco(doBrasileirao, new Date());
 
     const ultima = ((s.data ?? []) as Sincronizacao[])[0];
     const elSinc = root.querySelector<HTMLElement>('[data-sinc]')!;
@@ -285,11 +322,51 @@ export function telaAdmin(root: HTMLElement): () => void {
   }
 
   function mudarRodada(passo: number): void {
-    const nums = [...new Set(jogos.map((j) => j.rodada))].sort((a, b) => a - b);
+    const nums = [...new Set(jogos.filter((j) => j.competicao === null).map((j) => j.rodada))].sort((a, b) => a - b);
     const i = nums.indexOf(rodada ?? nums[0]) + passo;
     if (i < 0 || i >= nums.length) return;
     rodada = nums[i];
     desenhar();
+  }
+
+  /** Cartão de um jogo com os controles de placar; o mesmo para a rodada e para os especiais. */
+  function cartao(j: Jogo, agora: number): string {
+    const especial = j.competicao !== null;
+    const comecou = Date.parse(j.inicio) <= agora;
+    const m = j.gols_mandante ?? j.gols_api_mandante ?? '';
+    const v = j.gols_visitante ?? j.gols_api_visitante ?? '';
+    const api = j.gols_api_mandante === null ? 'sem placar' : `${j.gols_api_mandante} x ${j.gols_api_visitante}`;
+    const nm = nome(j.mandante_id, j.mandante_fora);
+    const nv = nome(j.visitante_id, j.visitante_fora);
+    const situacao = j.anulado
+      ? selo('ANULADO', 'caiu')
+      : j.confirmado_em
+        ? selo(esc(`Confirmado ${j.gols_mandante} x ${j.gols_visitante}${j.corrigido_em ? ' (corrigido)' : ''}`), 'subiu')
+        : selo(especial ? (comecou ? 'Rolando' : 'Aberto') : 'Não confirmado');
+    const rotulo = especial
+      ? `${esc(tituloEspecial(j))} · ${esc(horaDoJogo(j.inicio))}`
+      : `${esc(horaDoJogo(j.inicio))} · API: ${esc(j.status_api)} · ${esc(api)}`;
+    return `<article class="admin-jogo${j.confirmado_em && !j.anulado ? ' ok' : ''}" data-jogo="${esc(j.id)}">
+          <p class="rotulo">${rotulo}</p>
+          <div class="admin-placar">
+            <span class="nome">${esc(nm)}</span>
+            <input type="number" inputmode="numeric" min="0" max="30" value="${m}" data-gols="m" aria-label="Gols ${esc(nm)}" />
+            <span class="nome">${esc(nv)}</span>
+            <input type="number" inputmode="numeric" min="0" max="30" value="${v}" data-gols="v" aria-label="Gols ${esc(nv)}" />
+          </div>
+          <div class="selos">${situacao}</div>
+          <div class="admin-acoes">
+            <button class="botao" type="button" data-acao="confirmar" ${comecou && !j.confirmado_em ? '' : 'disabled'}>Confirmar</button>
+            <button class="botao-linha" type="button" data-acao="corrigir" ${j.confirmado_em ? '' : 'disabled'}>Corrigir o placar</button>
+            <button class="botao-linha" type="button" data-acao="anular" ${j.anulado ? 'disabled' : ''}>Anular</button>
+            ${
+              especial
+                ? `<button class="botao-linha" type="button" data-acao="editar">Editar</button>
+            <button class="botao-linha" type="button" data-acao="apagar">Apagar</button>`
+                : ''
+            }
+          </div>
+        </article>`;
   }
 
   function desenhar(): void {
@@ -298,35 +375,135 @@ export function telaAdmin(root: HTMLElement): () => void {
     if (!elRodada || !elJogos) return;
     elRodada.textContent = rodada === null ? 'Sem jogos' : `${ordinalRodada(rodada)} rodada`;
     const agora = Date.now();
-    elJogos.innerHTML = jogos
-      .filter((j) => j.rodada === rodada)
-      .map((j) => {
-        const comecou = Date.parse(j.inicio) <= agora;
-        const m = j.gols_mandante ?? j.gols_api_mandante ?? '';
-        const v = j.gols_visitante ?? j.gols_api_visitante ?? '';
-        const api = j.gols_api_mandante === null ? 'sem placar' : `${j.gols_api_mandante} x ${j.gols_api_visitante}`;
-        const situacao = j.anulado
-          ? selo('ANULADO', 'caiu')
-          : j.confirmado_em
-            ? selo(esc(`Confirmado ${j.gols_mandante} x ${j.gols_visitante}${j.corrigido_em ? ' (corrigido)' : ''}`), 'subiu')
-            : selo('Não confirmado');
-        return `<article class="admin-jogo${j.confirmado_em && !j.anulado ? ' ok' : ''}" data-jogo="${j.id}">
-          <p class="rotulo">${esc(horaDoJogo(j.inicio))} · API: ${esc(j.status_api)} · ${esc(api)}</p>
-          <div class="admin-placar">
-            <span class="nome">${esc(nome(j.mandante_id))}</span>
-            <input type="number" inputmode="numeric" min="0" max="30" value="${m}" data-gols="m" aria-label="Gols ${esc(nome(j.mandante_id))}" />
-            <span class="nome">${esc(nome(j.visitante_id))}</span>
-            <input type="number" inputmode="numeric" min="0" max="30" value="${v}" data-gols="v" aria-label="Gols ${esc(nome(j.visitante_id))}" />
-          </div>
-          <div class="selos">${situacao}</div>
-          <div class="admin-acoes">
-            <button class="botao" type="button" data-acao="confirmar" ${comecou && !j.confirmado_em ? '' : 'disabled'}>Confirmar</button>
-            <button class="botao-linha" type="button" data-acao="corrigir" ${j.confirmado_em ? '' : 'disabled'}>Corrigir o placar</button>
-            <button class="botao-linha" type="button" data-acao="anular" ${j.anulado ? 'disabled' : ''}>Anular</button>
-          </div>
-        </article>`;
-      })
-      .join('') || estado('vazio', 'Nenhum jogo nesta rodada.');
+    elJogos.innerHTML =
+      jogos
+        .filter((j) => j.competicao === null && j.rodada === rodada)
+        .map((j) => cartao(j, agora))
+        .join('') || estado('vazio', 'Nenhum jogo nesta rodada.');
+    desenharEspeciais(agora);
+  }
+
+  function desenharEspeciais(agora = Date.now()): void {
+    const el = root.querySelector<HTMLElement>('[data-especiais]');
+    if (!el) return;
+    const lista = jogos.filter((j) => j.competicao !== null).sort((a, b) => Date.parse(a.inicio) - Date.parse(b.inicio));
+    el.innerHTML = lista.map((j) => cartao(j, agora)).join('') || estado('vazio', 'Nenhum jogo especial cadastrado.');
+    desenharFormEspecial();
+  }
+
+  function opcoesTime(escolhido: string): string {
+    return (
+      `<option value=""${escolhido ? '' : ' selected'}>Escolher…</option>` +
+      TIMES.filter((t) => t.id !== 'outro')
+        .map((t) => `<option value="${esc(t.id)}"${t.id === escolhido ? ' selected' : ''}>${esc(t.nome)}</option>`)
+        .join('') +
+      `<option value="${FORA}"${escolhido === FORA ? ' selected' : ''}>Time de fora</option>`
+    );
+  }
+
+  function desenharFormEspecial(): void {
+    const el = root.querySelector<HTMLElement>('[data-esp-form]');
+    if (!el) return;
+    if (editando === undefined) {
+      el.innerHTML = '<button class="botao-linha" type="button" data-acao="novo-especial">Novo jogo</button>';
+      el.querySelector('[data-acao="novo-especial"]')!.addEventListener('click', () => {
+        editando = null;
+        desenharFormEspecial();
+      });
+      return;
+    }
+    const jogo = editando === null ? undefined : jogos.find((j) => j.id === editando);
+    const f: FormEspecial = jogo
+      ? formDoJogo(jogo)
+      : { competicao: '', fase: '', mandante: '', mandanteFora: '', visitante: '', visitanteFora: '', dia: '', hora: '' };
+    const lado = (k: 'mandante' | 'visitante', rotulo: string) => `
+      <label class="campo"><span>${rotulo}</span><select name="${k}" required>${opcoesTime(f[k])}</select></label>
+      <label class="campo" data-fora="${k}" ${f[k] === FORA ? '' : 'hidden'}><span>Nome do time de fora</span>
+        <input type="text" name="${k}Fora" maxlength="${MAX_NOME}" value="${esc(k === 'mandante' ? f.mandanteFora : f.visitanteFora)}" autocomplete="off" /></label>`;
+    el.innerHTML = `<form class="admin-especial" novalidate>
+      <label class="campo"><span>Competição</span><input type="text" name="competicao" maxlength="${MAX_TITULO}" value="${esc(f.competicao)}" autocomplete="off" required /></label>
+      <label class="campo"><span>Fase (opcional)</span><input type="text" name="fase" maxlength="${MAX_TITULO}" value="${esc(f.fase)}" autocomplete="off" /></label>
+      ${lado('mandante', 'Mandante')}
+      ${lado('visitante', 'Visitante')}
+      <label class="campo"><span>Dia (Brasília)</span><input type="date" name="dia" value="${esc(f.dia)}" required /></label>
+      <label class="campo"><span>Hora (Brasília)</span><input type="time" name="hora" value="${esc(f.hora)}" required /></label>
+      <p class="erro-campo" role="alert" hidden></p>
+      <div class="dupla">
+        <button class="botao" type="submit">${jogo ? 'Salvar' : 'Criar jogo'}</button>
+        <button class="botao-linha" type="button" data-acao="cancelar-especial">Cancelar</button>
+      </div>
+    </form>`;
+    const form = el.querySelector<HTMLFormElement>('form')!;
+    const erro = form.querySelector<HTMLElement>('.erro-campo')!;
+    const mostrarErro = (t: string) => {
+      erro.textContent = t;
+      erro.hidden = !t;
+    };
+    form.querySelectorAll<HTMLSelectElement>('select').forEach((sel) =>
+      sel.addEventListener('change', () => {
+        form.querySelector<HTMLElement>(`[data-fora="${sel.name}"]`)!.hidden = sel.value !== FORA;
+      }),
+    );
+    form.querySelector('[data-acao="cancelar-especial"]')!.addEventListener('click', () => {
+      editando = undefined;
+      desenharFormEspecial();
+    });
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const d = new FormData(form);
+      const c = (k: string) => String(d.get(k) ?? '');
+      const dados: FormEspecial = {
+        competicao: c('competicao'),
+        fase: c('fase'),
+        mandante: c('mandante'),
+        mandanteFora: c('mandanteFora'),
+        visitante: c('visitante'),
+        visitanteFora: c('visitanteFora'),
+        dia: c('dia'),
+        hora: c('hora'),
+      };
+      const invalido = validarForm(dados);
+      if (invalido) return mostrarErro(invalido);
+      mostrarErro('');
+      const botao = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+      botao.disabled = true;
+      const { error } = await sb.functions.invoke('jogos-especiais', {
+        body: jogo ? corpoEspecial('editar', dados, jogo.id) : corpoEspecial('criar', dados),
+      });
+      if (saiu) return;
+      if (error) {
+        botao.disabled = false;
+        mostrarErro(await motivoDoErro(error));
+        return;
+      }
+      editando = undefined;
+      await carregar();
+    });
+    form.querySelector<HTMLElement>('input, select')?.focus();
+  }
+
+  async function acaoNoEspecial(ev: Event): Promise<void> {
+    const botao = (ev.target as HTMLElement).closest<HTMLButtonElement>('button[data-acao]');
+    const card = botao?.closest<HTMLElement>('[data-jogo]');
+    if (!botao || !card || botao.disabled) return;
+    const acao = botao.dataset.acao;
+    if (acao !== 'editar' && acao !== 'apagar') return;
+    const jogo = jogos.find((j) => j.id === card.dataset.jogo);
+    if (!jogo) return;
+    if (acao === 'editar') {
+      editando = jogo.id;
+      desenharFormEspecial();
+      root.querySelector('[data-esp-form]')?.scrollIntoView({ block: 'nearest' });
+      return;
+    }
+    const confronto = `${nome(jogo.mandante_id, jogo.mandante_fora)} x ${nome(jogo.visitante_id, jogo.visitante_fora)}`;
+    if (!confirm(`Apagar ${tituloEspecial(jogo)} (${confronto})? Não dá para desfazer.`)) return;
+    card.querySelectorAll('button').forEach((b) => (b.disabled = true));
+    const { error } = await sb.functions.invoke('jogos-especiais', { body: { acao: 'apagar', jogoId: jogo.id } });
+    if (saiu) return;
+    if (error) alert(await motivoDoErro(error));
+    if (editando === jogo.id) editando = undefined;
+    await carregar();
   }
 
   async function acaoNoJogo(ev: Event): Promise<void> {
@@ -334,19 +511,22 @@ export function telaAdmin(root: HTMLElement): () => void {
     const card = botao?.closest<HTMLElement>('[data-jogo]');
     if (!botao || !card || botao.disabled) return;
     const acao = botao.dataset.acao;
+    if (acao !== 'confirmar' && acao !== 'corrigir' && acao !== 'anular') return;
     const jogo = jogos.find((j) => j.id === card.dataset.jogo);
     if (!jogo) return;
+    const nm = nome(jogo.mandante_id, jogo.mandante_fora);
+    const nv = nome(jogo.visitante_id, jogo.visitante_fora);
     const ler = (lado: string) => Number(card.querySelector<HTMLInputElement>(`[data-gols="${lado}"]`)!.value);
     const m = ler('m');
     const v = ler('v');
-    const confronto = `${nome(jogo.mandante_id)} ${m} x ${v} ${nome(jogo.visitante_id)}`;
+    const confronto = `${nm} ${m} x ${v} ${nv}`;
     if (acao !== 'anular' && (!Number.isInteger(m) || !Number.isInteger(v) || m < 0 || v < 0 || m > 30 || v > 30)) {
       alert('Placar inválido.');
       return;
     }
     const pergunta =
       acao === 'anular'
-        ? `Anular ${nome(jogo.mandante_id)} x ${nome(jogo.visitante_id)}? Ninguém ganha ponto nesse jogo.`
+        ? `Anular ${nm} x ${nv}? Ninguém ganha ponto nesse jogo.`
         : `${acao === 'corrigir' ? 'Corrigir para' : 'Confirmar'} ${confronto}?`;
     if (!confirm(pergunta)) return;
     card.querySelectorAll('button').forEach((b) => (b.disabled = true));
