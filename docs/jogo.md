@@ -105,7 +105,7 @@ O dia de cada jogador vale as **3 melhores partidas de Lances** (pênaltis, falt
 | **Lances do Jogo** | Tela única com disputas históricas de pênaltis, faltas e cara a cara de lances que celebram os clubes. Um toque em Jogar; faltas e cara a cara são 3 tentativas do mesmo lance. Até 10 partidas valendo por dia (depois vira treino). Teto 150. Troféus por lance. Desafio por link. | `jogos/lances.md`, `jogos/penaltis.md` |
 | **Prova de Boleiro** | 8 perguntas, 4 alternativas, 20 s cada, escada de 4 degraus, 3 ajudas, três erros e fora. Máximo 150. | `jogos/conhecimento.md` |
 | **Time do Dia** | Um clube secreto por dia, igual para todos, 6 tentativas com pistas. 100 a 0 pontos, uma partida por dia. | `jogos/conhecimento.md` |
-| **Palpite da Rodada** | Palpite de placar da rodada do Brasileirão. Pontos ×2 na torcida, teto de 300 por rodada. | `jogos/crava.md` |
+| **Palpite da Rodada** | Palpite de placar da rodada do Brasileirão e, entre uma temporada e outra, dos jogos especiais com time brasileiro (final da Copa do Brasil, Intercontinental, Supercopa Rei), um por vez. Pontos ×2 na torcida, teto de 300 por rodada. | `jogos/crava.md` |
 | **Casa do [time]** | Vitrine da história do clube: estádio, troféus, recordes e manto. Não dá pontos. | `docs/casa.md` |
 
 **Regras que valem para todos os jogos de partida:** o resultado é sempre recalculado no servidor a partir dos gestos ou respostas e da semente; o celular nunca grava pontos. Caiu a conexão: a partida segue no aparelho e não vale pontos, com o código do motivo no aviso. A dificuldade é igual para todos no mesmo dia.

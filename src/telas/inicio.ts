@@ -6,7 +6,7 @@ import { LANCES_POR_CLUBE } from '../dados/lancesResumo';
 import { ID_OUTRO, TIMES, corDeTexto, corDoRivalNoDuelo, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
 import { fecharAbandonado, limparPendente } from '../jogo/aquecimento';
-import { AVISO_RESENHA } from '../jogo/cravaTela';
+import { AVISO_RESENHA, ehEspecial, linhaPosicaoFinal, torcidaQueMaisPontuou } from '../jogo/cravaTela';
 import { arrumar, avisosDaCaixa, idDoTermos, lerEstado, numeroDoSininho, rotuloDoSininho, type EntradaDaCaixa } from '../jogo/avisosCaixa';
 import { avisoDosTermos, DATA_DA_VERSAO } from '../jogo/termos';
 import { barraDoTime, TEXTO_SEM_REDE, type BarraDoTime, type LinhaDaSemana } from '../jogo/barraDoTime';
@@ -32,7 +32,7 @@ import { linhaPosicaoSemana, linhaRecorde, setaDaPosicao } from '../jogo/posicao
 import { linhaMelhoresDoDia } from '../jogo/lancesTextos';
 import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MELHORES_DO_DIA, itemPenaltis, lanceDoDia } from '../jogo/regraLances';
 import { idsDoLanceDoDia } from '../jogo/lancesTelaUnica';
-import { faltamDosLances, linhaLancesUnificados, statusCrava } from '../jogo/statusJogos';
+import { faltamDosLances, linhaDoProximoEspecial, linhaLancesUnificados, statusCrava } from '../jogo/statusJogos';
 import { escolherFrase } from '../narrador/escolher';
 import { rivalDaSemana, situacaoDoDuelo } from '../narrador/rival';
 import { contextoDoTime } from '../narrador/sessao';
@@ -47,7 +47,7 @@ import {
   registrarAquecimento,
   type LinhaRanking,
 } from '../servidor/api';
-import { jogosDoCrava, meusDadosDoCrava, type Jogo } from '../servidor/crava';
+import { jogosDoCrava, meusDadosDoCrava, minhaPosicaoCrava, rankingCrava, type Jogo } from '../servidor/crava';
 import { diaBrasilia, horaBrasilia, msAteZerarSemana, semanaBrasilia } from '../servidor/tempo';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
@@ -66,7 +66,18 @@ import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { icone } from './icones';
 import { qualidade } from './qualidade';
 
-const SERVIDOR = { rankingDaSemana, minhaPosicaoSemana, partidasFechadasHoje, estadoDoDia, jogosDoCrava, meusDadosDoCrava, meusRecordes, meusLancesHoje };
+const SERVIDOR = {
+  rankingDaSemana,
+  minhaPosicaoSemana,
+  partidasFechadasHoje,
+  estadoDoDia,
+  jogosDoCrava,
+  meusDadosDoCrava,
+  minhaPosicaoCrava,
+  rankingCrava,
+  meusRecordes,
+  meusLancesHoje,
+};
 // Em desenvolvimento, ?homeFalsa troca o servidor por um de mentira (src/dev/homeFalsa.ts) e ?diaFalso
 // usa o Time do Dia de mentira também no card (src/dev/diaFalso.ts).
 const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
@@ -375,6 +386,29 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
   let dia: { chutes: number; fim: boolean; acertou: boolean; volta: number } | null = null;
   let crava: { jogos: Jogo[]; palpites: ReadonlyMap<string, { m: number; v: number }> | null } | null = null;
+  // Encerramento do Brasileirão: posição e ranking só são lidos quando ele vale (uma vez).
+  let fim: { posicao: string | null; torcida: string | null } | null = null;
+  let fimPedido = false;
+  const elSubtituloCrava = elCard('crava').querySelector<HTMLElement>('.o-que-e')!;
+  const subtituloCrava = elSubtituloCrava.textContent ?? '';
+
+  function carregarFim(): void {
+    fimPedido = true;
+    servidor()
+      .then(async (api) => {
+        const [pos, ranking] = await Promise.all([
+          time ? api.minhaPosicaoCrava(null).catch(() => null) : Promise.resolve(null),
+          api.rankingCrava(null).catch(() => []),
+        ]);
+        const lider = torcidaQueMaisPontuou(ranking);
+        if (saiu) return;
+        fim = { posicao: pos ? linhaPosicaoFinal(pos) : null, torcida: lider ? (timePorId(lider)?.nome ?? null) : null };
+        atualizarRelogios();
+      })
+      .catch(() => {
+        // sem internet: fica só "Brasileirão encerrado" e o próximo jogo
+      });
+  }
 
   function atualizarRelogios(): void {
     if (dia) status('dia', linhaDoDia(dia, dia.volta - Date.now()), dia.fim);
@@ -382,7 +416,23 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       const agora = new Date();
       const palpites = crava.palpites && new Set(crava.palpites.keys());
       const s = statusCrava(crava.jogos, palpites, agora);
-      if (s) status('crava', s.linha, s.cravado);
+      elCard('crava').classList.toggle('encerrado', !!s?.encerrado);
+      if (s?.encerrado) {
+        if (!fimPedido) carregarFim();
+        elSubtituloCrava.textContent = [
+          'Brasileirão encerrado',
+          fim?.posicao,
+          fim?.torcida ? `Torcida que mais pontuou: ${fim.torcida}` : null,
+        ]
+          .filter(Boolean)
+          .join('\n');
+        status('crava', linhaDoProximoEspecial(crava.jogos, agora), false);
+      } else {
+        // Jogo especial em foco: o título já vai na linha de status; o subtítulo deixa de falar do Brasileirão.
+        const especial = !!s && crava.jogos.some((j) => j.rodada === s.rodada && ehEspecial(j));
+        elSubtituloCrava.textContent = especial ? 'Palpita o placar do jogo especial' : subtituloCrava;
+        if (s) status('crava', s.linha, s.cravado);
+      }
       situacao.cravaFechaEm = fechaSemPalpite(crava.jogos, palpites, agora);
       const placar = placarCravado(crava.jogos, crava.palpites, agora);
       if (placar) root.querySelector<HTMLElement>('[data-placar]')!.textContent = `${placar.m} x ${placar.v}`;

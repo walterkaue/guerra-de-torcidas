@@ -8,8 +8,15 @@ import { comTempoLimite, ErroServidor, garantirSessao, supabase } from './api';
 export interface Jogo {
   id: string;
   rodada: number;
-  mandante_id: string;
-  visitante_id: string;
+  /** Um dos 20 times. Null só em jogo especial com time de fora (o nome vem em `mandante_fora`). */
+  mandante_id: string | null;
+  visitante_id: string | null;
+  /** Time de fora (jogo especial): só o nome, sem cor nem escudo. Null nos 20. */
+  mandante_fora: string | null;
+  visitante_fora: string | null;
+  /** Jogo especial (rodada de um jogo só): competição e fase, sem patrocinador. Null nas rodadas do Brasileirão. */
+  competicao: string | null;
+  fase: string | null;
   inicio: string;
   status_api: string;
   gols_api_mandante: number | null;
@@ -24,6 +31,8 @@ export interface Jogo {
 export interface Rodada {
   numero: number;
   trava_certeza: string | null;
+  /** Jogo especial (a partir de 1001): sem jogo da certeza, fora do Palpiteiro do Brasileirão. */
+  especial: boolean;
 }
 
 export interface ComoCravaram {
@@ -49,7 +58,7 @@ export interface MinhaPosicao {
 }
 
 const CAMPOS_JOGO =
-  'id, rodada, mandante_id, visitante_id, inicio, status_api, gols_api_mandante, gols_api_visitante, gols_mandante, gols_visitante, confirmado_em, corrigido_em, anulado';
+  'id, rodada, mandante_id, visitante_id, mandante_fora, visitante_fora, competicao, fase, inicio, status_api, gols_api_mandante, gols_api_visitante, gols_mandante, gols_visitante, confirmado_em, corrigido_em, anulado';
 
 function falhou(error: { code?: string; message?: string } | null): never {
   // 42501 = RLS recusou (o jogo começou ou a certeza travou). 23514 = placar fora de 0 a 9.
@@ -66,7 +75,7 @@ export async function jogosDoCrava(): Promise<Jogo[]> {
 
 export async function rodadasDoCrava(): Promise<Rodada[]> {
   const sb = await supabase();
-  const { data, error } = await comTempoLimite(sb.from('rodadas').select('numero, trava_certeza').order('numero'));
+  const { data, error } = await comTempoLimite(sb.from('rodadas').select('numero, trava_certeza, especial').order('numero'));
   if (error) falhou(error);
   return (data ?? []) as Rodada[];
 }

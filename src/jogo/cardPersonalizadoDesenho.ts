@@ -21,7 +21,7 @@ import {
   TELAO_X,
   type Caixa,
 } from './card';
-import { conteudoAcertos, conteudoPalpites, telaoMaiorDoCrava } from './cardCrava';
+import { conteudoAcertos, conteudoBrasileirao, conteudoPalpites, telaoMaiorDoCrava } from './cardCrava';
 import { conteudoDia } from './cardDia';
 import { conteudoLances } from './cardLances';
 import { TELAO_MAIOR_DA_MEDALHA, conteudoMedalha } from './cardMedalha';
@@ -46,6 +46,8 @@ function conteudoDoTelao(d: DadosDoCard): { maior: number; desenhar: (c: CanvasR
       return { maior: telaoMaiorDoCrava(k.linhas.length), desenhar: (c, caixa) => conteudoPalpites(c, caixa, k.linhas) };
     case 'crava-resultado':
       return { maior: 0, desenhar: (c, caixa) => conteudoAcertos(c, caixa, k.resultados) };
+    case 'crava-brasileirao':
+      return { maior: 0, desenhar: (c, caixa) => conteudoBrasileirao(c, caixa, k.resumo) };
     case 'medalha':
       return { maior: TELAO_MAIOR_DA_MEDALHA, desenhar: (c, caixa) => conteudoMedalha(c, caixa, k.medalha, d.time.cores, k.item) };
     case 'temporada':

@@ -8,7 +8,7 @@ import type { Medalha } from './lances';
 import type { DesfechoLance } from './lances';
 import type { Luz } from './home';
 import type { Pistas } from './timeDoDia';
-import type { LinhaMeuPalpite } from './cravaTela';
+import type { LinhaMeuPalpite, ResumoDoBrasileirao } from './cravaTela';
 import type { PontosDoJogo } from './crava';
 import type { ItemDaMedalha } from './medalhaTextos';
 import type { Vestimenta } from './vestiario';
@@ -217,6 +217,7 @@ export type ConteudoDoTelao =
   | { jogo: 'dia'; numero: number; placar: string; pistas: readonly Pistas[] }
   | { jogo: 'crava-meus'; rodada: number; linhas: readonly LinhaMeuPalpite[] }
   | { jogo: 'crava-resultado'; rodada: number; resultados: readonly Pick<PontosDoJogo, 'acerto' | 'certeza'>[] }
+  | { jogo: 'crava-brasileirao'; resumo: ResumoDoBrasileirao }
   | { jogo: 'medalha'; medalha: Medalha; item: ItemDaMedalha }
   | {
       jogo: 'trofeu';

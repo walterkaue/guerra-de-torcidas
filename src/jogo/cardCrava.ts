@@ -4,7 +4,7 @@
 import { AMARELO, FONTE, PLACAR, ROTULO, desenharModelo, modeloDePontos, type Caixa, type DadosBase, type ModeloCard } from './card';
 import { resumoDosAcertos } from './cardTextos';
 import { ordinalRodada, type Acerto, type PontosDoJogo } from './crava';
-import { AVISO_RESENHA, type LinhaMeuPalpite } from './cravaTela';
+import { AVISO_RESENHA, type LinhaMeuPalpite, type ResumoDoBrasileirao } from './cravaTela';
 
 export type DadosCardCrava =
   | (Omit<DadosBase, 'frase' | 'novoRecorde'> & { tipo: 'meus'; rodada: number; linhas: readonly LinhaMeuPalpite[] })
@@ -104,6 +104,30 @@ export function conteudoAcertos(c: CanvasRenderingContext2D, { x, y, l, a }: Cai
   c.font = `700 36px ${ROTULO}`;
   c.fillStyle = 'rgba(255,255,255,0.85)';
   c.fillText(resumoDosAcertos(validos.map((r) => r.acerto!)), x + l / 2, y + a - 6, l);
+}
+
+/** Resultado do Brasileirão: a posição final, as rodadas palpitadas e quantos 🎯 ✅ 👍 (❌ não entra). */
+export function conteudoBrasileirao(c: CanvasRenderingContext2D, { x, y, l, a }: Caixa, r: ResumoDoBrasileirao): void {
+  const meio = x + l / 2;
+  c.textBaseline = 'alphabetic';
+  c.textAlign = 'center';
+  c.fillStyle = '#ffffff';
+  c.font = `400 130px ${PLACAR}`;
+  c.fillText(`${r.posicao}º de ${r.total}`, meio, y + a * 0.3, l - 20);
+  c.font = `700 36px ${ROTULO}`;
+  c.fillStyle = 'rgba(255,255,255,0.85)';
+  c.fillText(`${r.rodadas} ${r.rodadas === 1 ? 'rodada palpitada' : 'rodadas palpitadas'}`, meio, y + a * 0.3 + 52, l);
+  const colunas: [string, number][] = [['🎯', r.exatos], ['✅', r.saldos], ['👍', r.vencedores]];
+  const yEmoji = y + a * 0.66;
+  colunas.forEach(([emoji, n], i) => {
+    const cx = x + (l * (i + 0.5)) / 3;
+    c.font = `400 64px ${FONTE}`;
+    c.fillStyle = '#ffffff';
+    c.fillText(emoji, cx, yEmoji);
+    c.font = `400 100px ${PLACAR}`;
+    c.fillStyle = AMARELO;
+    c.fillText(String(n), cx, yEmoji + 100, l / 3 - 12);
+  });
 }
 
 export function desenharCardCrava(d: DadosCardCrava): HTMLCanvasElement {

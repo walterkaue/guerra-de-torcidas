@@ -29,7 +29,7 @@
 
 0. **Agora, durante os testes:** A10 e H01a. O C01 (com o I03) está no ar desde 09/11.
 1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); a central de avisos (B01) e o HOME2 (nova ordem da Home, que levou o B03) já estão feitos.
-2. **Semana de 16/11:** ~~C03 + C08~~ (feito em 10/11); E04 (roteiro de iPhone); D07 (Palpite da Rodada na entressafra).
+2. **Semana de 16/11:** ~~C03 + C08~~ (feito em 10/11); E04 (roteiro de iPhone); ~~D07~~ (feito em 10/11).
 3. **Depois:** C04 (com a prova de conceito antes), C05, H01b e H02, F01 e A08 (e a personalização do Perfil, com o que os amigos disserem).
 4. **Antes da divulgação pública:** A01 a A05.
 
@@ -90,7 +90,8 @@
 | D04 | Ligas do Palpite da Rodada com amigos e cidade (J47) | P | Fase 2 (comunidade). | P3 | G | Chat |
 | D05 | Embaixadinha e os jogos da fase 4 | P | Roadmap; só depois do balanço. | P3 | G | Chat |
 | D06 | Lance do Dia com algo a mais que o destaque | C | Hoje ele não dá bônus (decidido). Sem mexer em pontos, pode ganhar card próprio ("Fiz o Lance do Dia") ou um selo na Galeria. | P3 | P | Chat |
-| D07 | **Palpite da Rodada na entressafra** | C | O Brasileirão acaba em 02/12. Decidir o que o card do Palpite da Rodada e o "Jogar agora" mostram de dezembro a janeiro (ver V09 do backlog de pesquisa do Chat: Prova e Time do Dia seguram o ritmo). | P1 | P | Chat |
+| D07 | ~~Palpite da Rodada na entressafra~~ | C | **Feito em 10/11:** encerramento do Brasileirão e jogos especiais com time brasileiro, cadastrados no `#admin` (`jogos/crava.md`). | P1 | P | Chat |
+| D08 | **Palpite nos Estaduais** | C | Revisão marcada para 01/12/2026: fonte de dados dos 27 estaduais, quais jogos entram, os 20 times de 2027, custo e prazo. Se aprovado, no ar até 10/01/2027, quando os estaduais começam. | P1 | M | Chat |
 
 ### E. Acessibilidade e desempenho
 
