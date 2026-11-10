@@ -9,6 +9,7 @@
 //   &chamouTime=<id>  o time de quem chamou (define as faixas do convite: ele e o rival dele; &chamouTime=outro: sem faixas)
 //   &x1Vencido        o resumo vem com vencido (a placa vira o aviso de 7 dias)
 //   &x1NaoExiste      o resumo vem null (o código não existe)
+//   &x1SemGols, &x1SemTentativas   as tentativas de quem chamou (src/dev/tentativasFalsas.ts)
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { LANCES } from '../dados/lances';
@@ -38,6 +39,7 @@ import {
 } from '../servidor/api';
 import { semanaBrasilia } from '../servidor/tempo';
 import { DISPUTAS_FALSAS } from './disputasFalsas';
+import { comTentativasFalsas } from './tentativasFalsas';
 
 const parametros = new URLSearchParams(location.search);
 const latencia = Number(parametros.get('latencia')) || 180;
@@ -86,6 +88,7 @@ const catalogoDeDisputas = [...(parametros.has('disputasFalsas') ? DISPUTAS_FALS
 
 /** O lance do X1 falso: o primeiro do álbum (um do Flamengo). */
 const lanceDoX1 = () => ordemDoAlbum[0];
+let pontosDoX1 = 96;
 
 let estado: { cenas: Lance[]; gestos: GestosLances; chamadas: number; desafio: boolean } | null = null;
 
@@ -94,7 +97,8 @@ export async function verDesafioLances(id: string): Promise<ResumoDesafioLances 
   await espera();
   if (!id || x1 === 'nao' || new URLSearchParams(location.search).has('x1NaoExiste')) return null;
   const l = lanceDoX1();
-  return { id, time_id: timeFalsoDeQuemChamou('palmeiras'), apelido: 'Camisa10', lance_id: l.id, pontos: 96, gols: 3, recriados: 1, faixa: faixaNaTela(l).faixa, boneco: bonecoFalsoDeQuemChamou(), vencido: new URLSearchParams(location.search).has('x1Vencido') };
+  const resumo = { id, time_id: timeFalsoDeQuemChamou('palmeiras'), apelido: 'Camisa10', lance_id: l.id, pontos: 96, gols: 3, recriados: 1, faixa: faixaNaTela(l).faixa, boneco: bonecoFalsoDeQuemChamou(), vencido: parametros.has('x1Vencido') };
+  return comTentativasFalsas(resumo, l, parametros);
 }
 
 export async function novaPartidaLances(p: PedidoLances): Promise<RespostaNovaLances> {
@@ -105,8 +109,10 @@ export async function novaPartidaLances(p: PedidoLances): Promise<RespostaNovaLa
     if (x1 === 'nao') throw new ErroServidor('desafio_nao_encontrado');
     if (x1 === 'proprio') throw new ErroServidor('proprio_desafio');
     if (x1 === 'expirado') throw new ErroServidor('desafio_expirado');
-    desafio = { codigo: p.desafio, timeId: timeFalsoDeQuemChamou('palmeiras'), apelido: 'Camisa10', pontos: 96 };
     const l = lanceDoX1();
+    // Os pontos a bater são os das tentativas falsas de quem chamou (o resumo e a partida batem).
+    pontosDoX1 = (await verDesafioLances(p.desafio))?.pontos ?? 96;
+    desafio = { codigo: p.desafio, timeId: timeFalsoDeQuemChamou('palmeiras'), apelido: 'Camisa10', pontos: pontosDoX1 };
     cenas = [l, l, l];
   } else {
     const l = LANCES.find((o) => o.id === p.lance);
@@ -170,7 +176,7 @@ export async function lanceDoJogo(_id: string, i: number, gesto: GestoCobranca):
       restantesHoje: limiteDoDia() - feitas,
       melhoresDoDia: melhoresDoDia(),
       desafio: e.desafio ? null : { codigo: CODIGO_FALSO },
-      comparacao: e.desafio ? { desafiante: 'Camisa10', pontosDesafiante: 96, venceu: resultado.pontos > 96 } : null,
+      comparacao: e.desafio ? { desafiante: 'Camisa10', pontosDesafiante: pontosDoX1, venceu: resultado.pontos > pontosDoX1 } : null,
     };
   }
   return { lance: j.lance, goleiroProximo: j.goleiroProximo, fim };

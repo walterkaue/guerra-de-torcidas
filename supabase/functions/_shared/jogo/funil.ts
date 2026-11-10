@@ -19,8 +19,9 @@ export const JOGOS = ['penaltis', 'lances', 'prova', 'time_do_dia'] as const;
 /**
  * Eventos do celular. `desistiu`: saiu da etapa sem concluir (trocou de tela, fechou ou foi pro fundo); `voltou`:
  * voltou do fundo para a mesma etapa. "Onde desiste" é desistiu − voltou: quem manda no WhatsApp e volta dá zero.
+ * `viu_gols`: o 1º gol de quem chamou passou no telão do convite (só nos Lances).
  */
-export const EVENTOS = ['compartilhou', 'abriu', 'aceitou', 'primeiro_chute', 'terminou', 'revanche', 'desistiu', 'voltou'] as const;
+export const EVENTOS = ['compartilhou', 'abriu', 'viu_gols', 'aceitou', 'primeiro_chute', 'terminou', 'revanche', 'desistiu', 'voltou'] as const;
 
 export type TipoX1 = (typeof TIPOS_X1)[number];
 export type Etapa = (typeof ETAPAS)[number];
@@ -33,6 +34,7 @@ export type EventoFunil =
   | { ev: 'compartilhou'; tipo: 'resultado'; meio: Meio; jogo: JogoFunil }
   | { ev: 'abriu'; tipo: TipoX1; x1: string }
   | { ev: 'abriu'; tipo: 'lance' | 'disputa' }
+  | { ev: 'viu_gols'; tipo: 'x1_lances'; x1: string }
   | { ev: 'aceitou' | 'primeiro_chute' | 'terminou' | 'revanche'; tipo: TipoX1; x1: string }
   | { ev: 'desistiu' | 'voltou'; tipo: Exclude<Etapa, 'partida'>; x1?: string }
   | { ev: 'desistiu' | 'voltou'; tipo: 'partida'; jogo: JogoFunil; x1?: string };
@@ -78,6 +80,9 @@ export function conferirEvento(bruto: unknown): EventoConferido | null {
       break;
     case 'abriu':
       certo = em(TIPOS_ABRIU, tipo) && meio === undefined && jogo === undefined && ehX1 === (x1 !== undefined);
+      break;
+    case 'viu_gols':
+      certo = tipo === 'x1_lances' && x1 !== undefined && meio === undefined && jogo === undefined;
       break;
     case 'aceitou':
     case 'primeiro_chute':

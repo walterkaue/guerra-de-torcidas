@@ -413,4 +413,30 @@ describe('funil do X1: npm run metricas', () => {
     expect(d.find((r) => r.fluxo === 'X1')).toMatchObject({ etapa: 'triagem', saiu: 1, voltou: 1, desistiu: 0 });
     expect(d.find((r) => r.fluxo === '')).toMatchObject({ etapa: 'triagem', saiu: 1, voltou: 0, desistiu: 1 });
   });
+
+  it("os gols de quem chamou: 'viu_gols' só nos Lances, e quem aceitou depois de ver", async () => {
+    const { secoesDoFunil } = await import('../../scripts/metricas.mjs');
+    const x1 = 'lanc2345';
+    const n = await processar(
+      servicos(),
+      lote([
+        { ev: 'compartilhou', tipo: 'x1_lances', meio: 'grupo', x1 },
+        { ev: 'abriu', tipo: 'x1_lances', x1 },
+        { ev: 'viu_gols', tipo: 'x1_lances', x1 },
+        { ev: 'aceitou', tipo: 'x1_lances', x1 },
+        // Fora da lista: nos pênaltis e na Prova não há telão, e sem código não liga a nada.
+        { ev: 'viu_gols', tipo: 'x1_penaltis', x1: 'abcd2345' },
+        { ev: 'viu_gols', tipo: 'x1_lances' },
+        { ev: 'viu_gols', tipo: 'x1_lances', meio: 'link', x1 },
+      ], TOKEN_BOM),
+      null,
+    );
+    expect(n).toBe(4);
+    expect((await contagem())['viu_gols/x1_lances/x1']).toBe(1);
+    const [porTipo, , ligado] = secoesDoFunil() as [string, string][];
+    const lan = (await db.query<Record<string, unknown>>(porTipo[1])).rows.find((r) => r.tipo === 'x1_lances')!;
+    expect(Number(lan.viu_os_gols)).toBe(1);
+    const lig = (await db.query<Record<string, unknown>>(ligado[1])).rows.find((r) => r.tipo === 'x1_lances')!;
+    expect([Number(lig.viu_os_gols), Number(lig.aceitos), Number(lig.aceitou_depois_de_ver_os_gols)]).toEqual([1, 1, 1]);
+  });
 });
