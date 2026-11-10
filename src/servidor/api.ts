@@ -15,6 +15,7 @@ import type { Tentativa } from '../jogo/timeDoDia.ts';
 import type { VestimentaDeCampo } from '../telas/bonecoEmCampo';
 import type { RespostaLanceDoJogo, RespostaNovaLances } from '../jogo/lancesPartida.ts';
 import type { Medalha } from '../jogo/lances.ts';
+import { tentativasDoResumo, type TentativaDoDesafio } from '../jogo/tentativasDoDesafio.ts';
 import type { Carreira } from '../jogo/carreira.ts';
 import type { FaixaEtaria } from '../jogo/faixaEtaria.ts';
 import type { MeusDados } from '../jogo/meusDados.ts';
@@ -480,11 +481,17 @@ export interface ResumoDesafioLances {
   boneco?: VestimentaDeCampo | null;
   /** Passou dos 7 dias (desde 20261109000000): a Home não mostra o convite, e aceitar responde 410. Ausente: servidor antigo. */
   vencido?: boolean;
+  /**
+   * As 3 tentativas de quem chamou (desde 20261110000000), já conferidas por `tentativasDoResumo`: null sem a partida,
+   * com servidor antigo ou com qualquer coisa fora do formato (o convite fica sem a fita e o telão).
+   */
+  tentativas?: TentativaDoDesafio[] | null;
 }
 
-/** Resumo do X1 dos Lances para quem abre o link (?l=): quem chamou, o lance e os pontos a bater. */
-export function verDesafioLances(id: string): Promise<ResumoDesafioLances | null> {
-  return lerResumo<ResumoDesafioLances>('ver_desafio_lances', id);
+/** Resumo do X1 dos Lances para quem abre o link (?l=): quem chamou, o lance, os pontos a bater e os gols dele. */
+export async function verDesafioLances(id: string): Promise<ResumoDesafioLances | null> {
+  const r = await lerResumo<ResumoDesafioLances>('ver_desafio_lances', id);
+  return r && { ...r, tentativas: tentativasDoResumo(r.tentativas) };
 }
 
 /** Um lance: o celular manda só o gesto; o servidor resolve com a semente que só ele conhece. */

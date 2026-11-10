@@ -178,6 +178,7 @@ export function secoesDoFunil() {
   const colunas = `
     coalesce(sum(n) filter (where evento = 'compartilhou'), 0) as compartilhados,
     coalesce(sum(n) filter (where evento = 'abriu'), 0) as abertos,
+    coalesce(sum(n) filter (where evento = 'viu_gols'), 0) as viu_os_gols,
     coalesce(sum(n) filter (where evento = 'aceitou'), 0) as aceitos,
     coalesce(sum(n) filter (where evento = 'primeiro_chute'), 0) as primeiro_chute,
     coalesce(sum(n) filter (where evento = 'terminou'), 0) as terminados,
@@ -207,13 +208,20 @@ export function secoesDoFunil() {
        group by k.dia, k.tipo order by k.dia desc, k.tipo`,
     ],
     [
-      'Funil do X1 ligado pelo código (X1 distintos compartilhados nos últimos 30 dias)',
+      // "Aceitou depois de ver os gols" é por desafio, não por pessoa: num link mandado no grupo, vale o 1º "viu os
+      // gols" e o 1º "aceitou" de quem abriu (uma linha por desafio e evento).
+      'Funil do X1 ligado pelo código (X1 distintos compartilhados nos últimos 30 dias; aceitou depois de ver os gols: por desafio, não por pessoa)',
       `with compartilhados as (
          select impressao, min(tipo) as tipo from public.funil_eventos where evento = 'compartilhou' group by impressao
        )
        select c.tipo, count(*) as compartilhados,
          count(*) filter (where exists (select 1 from public.funil_eventos e where e.impressao = c.impressao and e.evento = 'abriu')) as abertos,
+         count(*) filter (where exists (select 1 from public.funil_eventos e where e.impressao = c.impressao and e.evento = 'viu_gols')) as viu_os_gols,
          count(*) filter (where exists (select 1 from public.funil_eventos e where e.impressao = c.impressao and e.evento = 'aceitou')) as aceitos,
+         count(*) filter (where exists (
+           select 1 from public.funil_eventos v join public.funil_eventos a on a.impressao = v.impressao and a.evento = 'aceitou'
+           where v.impressao = c.impressao and v.evento = 'viu_gols' and a.criado_em >= v.criado_em
+         )) as aceitou_depois_de_ver_os_gols,
          count(*) filter (where exists (select 1 from public.funil_eventos e where e.impressao = c.impressao and e.evento = 'primeiro_chute')) as primeiro_chute,
          count(*) filter (where exists (select 1 from public.funil_eventos e where e.impressao = c.impressao and e.evento = 'terminou')) as terminados,
          count(*) filter (where exists (select 1 from public.funil_eventos e where e.impressao = c.impressao and e.evento = 'revanche')) as revanche

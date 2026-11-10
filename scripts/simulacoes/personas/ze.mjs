@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 import { chutar, jogarPartida, esperar, tocarSemCobertura } from './comum/jogar.mjs';
 import { conferirDobraDaHome } from './comum/home.mjs';
+import { conferirFaixasComTelao } from './comum/golsDoConvite.mjs';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const LINK_X1 = '/?homeFalsa&penaltiFalso&d=abcdefgh&chamouTime=flamengo';
@@ -141,6 +142,8 @@ export default {
       await s.offline(false);
     });
 
+    // 8. O link de Lances com os gols de quem chamou: as faixas e o "Outro time" continuam na tela (360×740, 130%).
+    await s.passo('link de Lances com o telão dos gols (faixas na tela)', () => conferirFaixasComTelao(s));
     // ---- Central de avisos (B01) em 360×740: 7 avisos, a lista rola por dentro, o Fechar fica à vista ----
     const FLAGS_CENTRAL = 'homeFalsa&temporadaFalsa&galeriaFalsa=cheia&lancesFalsos&penaltiFalso';
     await s.passo('Home com 7 avisos (sininho)', async () => {

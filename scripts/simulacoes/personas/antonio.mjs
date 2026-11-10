@@ -3,6 +3,7 @@
 import { semearAvisos, medirFolha } from './comum/central.mjs';
 import { chutar, tocarZona, jogarPartida, esperar, tocarSemCobertura, entrarNaProva } from './comum/jogar.mjs';
 import { textosCortados, seEncostam } from './comum/home.mjs';
+import { conferirTelaoParado } from './comum/golsDoConvite.mjs';
 
 const FLAGS = 'homeFalsa&aquecimentoFalso&provaFalsa&penaltiFalso&lancesFalsos';
 const DICA_FRACO = /fraquinho/i;
@@ -213,6 +214,8 @@ export default {
       await esperar(2500);
     }, { paginaInteira: true, fichaFactual: true });
 
+    // 8. O link de Lances com os gols de quem chamou, com movimento reduzido: nada anda, "Próximo gol" troca o quadro.
+    await s.passo('link de Lances: telão parado e "Próximo gol"', () => conferirTelaoParado(s));
     // ---- Central de avisos (B01) a 150% e com movimento reduzido: sem animação, alvos de 44 px, sem rolar para o lado ----
     await s.passo('Home com avisos (150%)', async () => {
       await home();

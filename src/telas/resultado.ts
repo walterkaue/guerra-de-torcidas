@@ -25,6 +25,16 @@ import { convidarParaAvisos } from './convitePush';
 import { golsDaDisputa, linhaMelhoresDoDia, NOME_DA_MEDALHA, textoForaDasMelhores } from '../jogo/lancesTextos';
 import { itemPenaltis } from '../jogo/regraLances';
 import { numero, placa, selo } from './blocos';
+import { icone } from './icones';
+import {
+  ariaDoOndeBateu,
+  contarMarcas,
+  fraseDaDobra,
+  marcasDasGravadas,
+  montarZonas,
+  rotuloOndeBateu,
+  type MarcaDeCobranca,
+} from '../jogo/ondeBateu';
 import { ligarEfeitoNoRanking } from './efeitoRanking';
 import {
   contar,
@@ -48,6 +58,31 @@ const SITE = 'https://torcida.kauewalter.com.br';
 const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
 // Em desenvolvimento, ?penaltiFalso lê as medalhas de mentira (src/dev/penaltiFalso.ts).
 const PENALTI_FALSO = import.meta.env.DEV && new URLSearchParams(location.search).has('penaltiFalso');
+
+/** Dobra: uma bolinha por cobrança gravada (mão = pegou, bola = entrou, xis = pra fora) e a frase ao lado. */
+function htmlDobraOndeBateu(marcas: readonly MarcaDeCobranca[]): string {
+  const { n, m } = contarMarcas(marcas);
+  const bolinha = (x: MarcaDeCobranca) =>
+    `<i class="ob-bola ${x.desfecho === 'defesa' ? 'pegou' : x.desfecho === 'gol' ? 'entrou' : 'fora'}">${icone(x.desfecho === 'defesa' ? 'mao' : x.desfecho === 'gol' ? 'bola' : 'xis')}</i>`;
+  return `<p class="res-onde-dobra"><span class="so-leitor">${esc(fraseDaDobra(n, m))}.</span><span class="ob-bolas" aria-hidden="true">${marcas.map(bolinha).join('')}</span><span class="ob-frase" aria-hidden="true">${esc(fraseDaDobra(n, m))}</span></p>`;
+}
+
+/** Detalhes: o gol visto de trás de quem bate, 6 zonas em 3 × 2 com as marcas numeradas, e as de fora embaixo. */
+function htmlOndeBateu(apelido: string | null | undefined, marcas: readonly MarcaDeCobranca[]): string {
+  const { zonas, fora } = montarZonas(marcas);
+  const marca = (x: MarcaDeCobranca) => `<b class="ob-marca ${x.desfecho === 'defesa' ? 'pegou' : x.desfecho === 'gol' ? 'entrou' : 'fora'}">${x.n}</b>`;
+  // Linha de cima do gol primeiro (zonas 3, 4, 5), depois a de baixo (0, 1, 2).
+  const celulas = [3, 4, 5, 0, 1, 2].map((z) => `<div class="ob-zona">${zonas[z].map(marca).join('')}</div>`).join('');
+  const temGol = marcas.some((x) => x.desfecho === 'gol');
+  const temDefesa = marcas.some((x) => x.desfecho === 'defesa');
+  return `<div class="res-onde" role="img" aria-label="${esc(ariaDoOndeBateu(apelido, marcas))}">
+      <p class="rotulo" aria-hidden="true">${esc(rotuloOndeBateu(apelido))}</p>
+      <div class="ob-gol" aria-hidden="true">${celulas}</div>
+      ${fora.length ? `<div class="ob-fora" aria-hidden="true">${fora.map(marca).join('')}</div>` : ''}
+      <p class="ob-legenda" aria-hidden="true">${temDefesa ? '<span><b class="ob-marca pegou"></b>Você pegou</span>' : ''}${temGol ? '<span><b class="ob-marca entrou"></b>Entrou</span>' : ''}${fora.length ? '<span><b class="ob-marca fora"></b>Pra fora</span>' : ''}</p>
+    </div>`;
+}
+
 export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | void {
   if (rota.tela !== 'resultado') return;
   const d: DadosResultado = rota.dados;
@@ -112,6 +147,9 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
       { ...contextoDoTime(time, apelido), desafiante: d.desafio?.apelido ?? 'quem te desafiou' },
       Math.random,
     )?.texto;
+  // Desafio de pênaltis recebido: onde quem chamou bateu (as defesas contra cobrança gravada). Sem gravada, nada aparece.
+  const marcasDeQuemChamou = cmp ? marcasDasGravadas(r.defesas) : [];
+  const apelidoDeQuemChamou = cmp?.desafiante ?? d.desafio?.apelido ?? null;
   const blocoDesafio = cmp
     ? placa(
         `<div class="duelo-desafio">
@@ -119,7 +157,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
           <em>x</em>
           <div><span data-nome-duelo="outro">${esc(cmp.desafiante ?? 'Rival do dia')}</span><strong>${cmp.pontosDesafiante}</strong><small>${cmp.golsJogadorDesafiante} x ${cmp.golsMaquinaDesafiante}</small></div>
         </div>
-        ${fraseDesafio ? `<p class="adesivo">${esc(fraseDesafio)}</p>` : ''}`,
+        ${fraseDesafio ? `<p class="adesivo">${esc(fraseDesafio)}</p>` : ''}${marcasDeQuemChamou.length ? htmlOndeBateu(apelidoDeQuemChamou, marcasDeQuemChamou) : ''}`,
         { titulo: 'Desafio', filete: true },
       )
     : '';
@@ -155,7 +193,7 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
     aviso: situacao ? { texto: situacao, forte: !d.valendo } : null,
     // Destaque da dobra: o desafio recebido, o recorde novo ou as 3 melhores do dia (a medalha e a peça chegam depois).
     destaques: [
-      cmp ? destaqueDoDuelo({ voce: p.total, outro: cmp.pontosDesafiante, nomeDoOutro: cmp.desafiante, venceu: cmp.venceu }) : null,
+      cmp ? destaqueDoDuelo({ voce: p.total, outro: cmp.pontosDesafiante, nomeDoOutro: cmp.desafiante, venceu: cmp.venceu, abaixo: marcasDeQuemChamou.length ? htmlDobraOndeBateu(marcasDeQuemChamou) : undefined }) : null,
       destaqueDoRecorde(d.servidor?.desempenho ?? null, 'lances'),
       destaqueDoTop3(melhoresDoDia),
     ],

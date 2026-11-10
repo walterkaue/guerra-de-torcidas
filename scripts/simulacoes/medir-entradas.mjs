@@ -36,14 +36,26 @@ const ATRASO_RESUMO_MS = 2000;
 /** Os resumos que o servidor de mentira responde (mesmos campos das RPCs de verdade, docs/jogos/penaltis.md). */
 const RESUMOS = {
   ver_desafio: { id: 'abcdefgh', time_id: 'palmeiras', apelido: null, gols_jogador: 3, gols_maquina: 2, pontos: 96, disputa_id: 'athletico-pr-2018-bahia', boneco: null, vencido: false },
-  ver_desafio_lances: { id: 'abcdefgh', time_id: 'palmeiras', apelido: null, lance_id: 'flamengo-1981-toquio', pontos: 96, gols: 3, recriados: 1, faixa: 'dificil', boneco: null, vencido: false },
+  // Com as 3 tentativas de quem chamou (20261110000000), calculadas pelo motor (src/dev/tentativasFalsas.ts): o convite
+  // pinta a fita e o telão, e o desenho chega por import() depois que o convite fica tocável.
+  ver_desafio_lances: {
+    id: 'abcdefgh', time_id: 'palmeiras', apelido: null, lance_id: 'flamengo-1981-toquio', pontos: 80, gols: 2, recriados: 1, faixa: 'dificil', boneco: null, vencido: false,
+    tentativas: [
+      { desfecho: 'gol', pontos: 44, recriou: true, cavadinha: false, x: -0.969, y: 0.287, goleiroX: 0.016, tFim: 1, gesto: { dir: -90, forca: 45, efeito: 25 } },
+      { desfecho: 'defesa', pontos: 0, recriou: false, cavadinha: false, x: -0.459, y: 0.712, goleiroX: 0.03, tFim: 0.696, gesto: { dir: -45, forca: 72, efeito: 0 } },
+      { desfecho: 'gol', pontos: 36, recriou: false, cavadinha: false, x: -0.977, y: 0.688, goleiroX: -0.038, tFim: 1, gesto: { dir: -90, forca: 72, efeito: 0 } },
+    ],
+  },
   ver_prova_desafio: { id: 'abcdefgh', time_id: 'palmeiras', apelido: null, pontos: 96, escada: '🟩🟩🟩🟩🟩🟩🟥⬜', resumo: '6 de 8 certas', vencido: false },
 };
 
-/** As portas de entrada. `pinta`: o 1º botão da tela; `pronta`: o que a pessoa veio tocar. */
+/**
+ * As portas de entrada. `pinta`: o 1º botão da tela; `pronta`: o que a pessoa veio tocar; `depois` (opcional): o que chega
+ * por trás, depois da tela pronta (no ?l=, o desenho do telão com os gols de quem chamou), medido à parte.
+ */
 const ENTRADAS = [
   { id: 'x1-penaltis', nome: 'Link do desafio de pênaltis (?d=)', caminho: '/?d=abcdefgh', pinta: 'button', pronta: '[data-faixa-time], [data-acao="escolher-time"]' },
-  { id: 'x1-lances', nome: 'Link do desafio de Lances (?l=)', caminho: '/?l=abcdefgh', pinta: 'button', pronta: '[data-faixa-time], [data-acao="escolher-time"]' },
+  { id: 'x1-lances', nome: 'Link do desafio de Lances (?l=)', caminho: '/?l=abcdefgh', pinta: 'button', pronta: '[data-faixa-time], [data-acao="escolher-time"]', depois: '.telao-canvas' },
   { id: 'x1-prova', nome: 'Link do desafio da Prova (?p=)', caminho: '/?p=abcdefgh', pinta: 'button', pronta: '[data-faixa-time], [data-acao="escolher-time"]' },
   { id: 'time', nome: 'Link de time (?time=)', caminho: '/?time=flamengo', pinta: 'button', pronta: 'text=/qual [ée] a sua torcida/i' },
   { id: 'home', nome: 'Home de quem já joga', caminho: '/', pinta: 'button', pronta: 'text=/jogar agora/i', semear: QUEM_JA_JOGA },
@@ -109,7 +121,11 @@ async function medirUma(entrada, { modo, origem, pasta }) {
     }
   };
   await s.page.goto(s.endereco(entrada.caminho), { waitUntil: 'commit', timeout: 60000 });
-  const [pinta, pronta] = await Promise.all([quando(entrada.pinta), modo === 'producao' && entrada.id.startsWith('x1') ? null : quando(entrada.pronta)]);
+  const [pinta, pronta, depois] = await Promise.all([
+    quando(entrada.pinta),
+    modo === 'producao' && entrada.id.startsWith('x1') ? null : quando(entrada.pronta),
+    entrada.depois && modo !== 'producao' ? quando(entrada.depois) : null,
+  ]);
   const ate = (ms) => chegou.filter((c) => ms !== null && c.ms <= ms);
   const jsAte = ate(pronta ?? pinta).filter((c) => c.tipo === 'script');
   await s.esperar(8000);
@@ -120,6 +136,7 @@ async function medirUma(entrada, { modo, origem, pasta }) {
   return {
     pinta,
     pronta,
+    depois,
     jsAte: soma(jsAte),
     arquivosAte: jsAte.map((c) => `${c.url.split('/').pop()} ${kb(c.bytes)}`),
     totalAte: soma(ate(pronta ?? pinta)),
@@ -147,7 +164,7 @@ async function main() {
       for (let i = 0; i < vezes; i++) {
         const r = await medirUma(e, { modo, origem, pasta: join(pasta, `${modo}-${e.id}-${i}`) });
         rodadas.push(r);
-        console.log(`  ${e.id} #${i + 1}: pinta ${seg(r.pinta)}, pronta ${seg(r.pronta)}, JS até a 1ª tela ${kb(r.jsAte)} kB, em 8 s ${kb(r.jsEm8s)} kB`);
+        console.log(`  ${e.id} #${i + 1}: pinta ${seg(r.pinta)}, pronta ${seg(r.pronta)}${e.depois ? `, depois ${seg(r.depois)}` : ''}, JS até a 1ª tela ${kb(r.jsAte)} kB, em 8 s ${kb(r.jsEm8s)} kB`);
       }
       const med = (k) => mediana(rodadas.map((r) => r[k]).filter((x) => x !== null));
       const abriram = rodadas.filter((r) => r.pronta !== null).length;
@@ -158,6 +175,7 @@ async function main() {
         prontaMs: abriram === rodadas.length ? med('pronta') : null,
         abriram: `${abriram}/${rodadas.length}`,
         prontaTodas: rodadas.map((r) => r.pronta),
+        depoisMs: e.depois ? med('depois') : undefined,
         jsAteKB: kb(med('jsAte')),
         totalAteKB: kb(med('totalAte')),
         jsEm8sKB: kb(med('jsEm8s')),
@@ -172,6 +190,7 @@ async function main() {
   console.log(`\n| Entrada | Pinta (1º botão) | 1ª tela tocável | JS até ela | Tudo até ela | JS em 8 s |\n|---|---|---|---|---|---|`);
   for (const l of linhas)
     console.log(`| ${l.entrada} | ${seg(l.pintaMs)} | ${l.prontaMs === null ? `${l.abriram} abriram` : seg(l.prontaMs)} | ${l.jsAteKB} kB | ${l.totalAteKB} kB | ${l.jsEm8sKB} kB |`);
+  for (const l of linhas) if (l.depoisMs !== undefined) console.log(`${l.entrada}: o que vem depois da tela chegou em ${seg(l.depoisMs)}.`);
   console.log(`\nDetalhe em ${arquivo}`);
 }
 

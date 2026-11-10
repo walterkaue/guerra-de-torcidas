@@ -4,6 +4,7 @@ import { jogarLance, palavrasDoFiltro, esperar } from './comum/jogar.mjs';
 import { semearAvisos, medirFolha } from './comum/central.mjs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
+import { conferirTelaoSemApelido } from './comum/golsDoConvite.mjs';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const LANCE = 'corinthians-2012-gol-da-america'; // cara a cara do catálogo (src/dados/lances.ts)
@@ -181,6 +182,8 @@ export default {
       await semApelido('lista do "Outro time"');
     });
 
+    // O desafio de quem não tem apelido: "de quem te chamou", sem nome nem artigo.
+    await s.passo('link de Lances sem apelido: "de quem te chamou"', () => conferirTelaoSemApelido(s));
     // ---- Central de avisos (B01): menor de 16 com avisos na caixa; nada de "Aviso de domingo" (push é 18+) ----
     const FLAGS_CENTRAL = 'homeFalsa&lancesFalsos&temporadaFalsa&galeriaFalsa=cheia';
     await s.passo('Home de menor com avisos: número no sininho', async () => {
