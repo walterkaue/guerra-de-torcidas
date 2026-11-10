@@ -84,7 +84,8 @@ import {
   type ResultadoLance,
 } from '../jogo/lances';
 import { normalizarCobranca, type GestoCobranca } from '../jogo/penaltis';
-import { destravarSom, somApito, somChute, somTorcida } from '../jogo/som';
+import { destravarSom, latenciaDoSom, somApito, somChute, somLargada, somTorcida } from '../jogo/som';
+import { vibrar } from './toque';
 import { etiquetasDoLance, eventoDoLance } from '../narrador/lance';
 import { criarNarrador } from '../narrador/sessao';
 import { SELECAO, TORCIDA_SELECAO, coresDoAdversario, roupaDoBatedorGoleiro } from '../dados/coresDosLances';
@@ -934,6 +935,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       } else {
         elJogada.hidden = true;
         fase = { tipo: 'mirar', inicio: relogio() };
+        if (indice > 0) somLargada(); // o 1º chute da partida já tem o apito de começo
         dicaDoComeco(l);
       }
       atualizarHud();
@@ -1050,6 +1052,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         acabou = true;
         etapa(null);
         somApito(true);
+        setTimeout(() => vibrar('apitoFinal'), latenciaDoSom() * 1000);
         const pontos = resultados.reduce((s, r) => s + r.pontos, 0);
         resultado(lances, resultados, narrador.falar('lance_fim', { pontos }), servidorOk ? fechamento : null, aviso, codigoX1);
       }
@@ -1111,6 +1114,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
             cena.desenharBola3d({ x: o.x + (l.bola.x - o.x) * e, y: Math.sin(e * Math.PI) * o.alto, z: o.z + (l.bola.z - o.z) * e }, t * 12);
             if (agora - fase.inicio >= DUR_CHEGADA + 700) {
               fase = { tipo: 'mirar', inicio: agora };
+              if (indice > 0) somLargada();
               elJogada.hidden = true;
               dicaDoComeco(l);
             }
