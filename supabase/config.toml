@@ -434,6 +434,10 @@ verify_jwt = false
 [functions.confirmar-placar]
 verify_jwt = true
 
+# Jogos especiais do Palpite (criar, editar, apagar): só administradores, como a confirmar-placar.
+[functions.jogos-especiais]
+verify_jwt = true
+
 # Prova de Boleiro (quiz): uma função com ações (nova, proxima, responder, ajuda).
 [functions.prova]
 verify_jwt = true
