@@ -727,8 +727,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           return;
         }
         // Quem joga por "Outro time" e não tem cidade: o convite mora na barra do time (sempre), não aqui.
+        // Sem sessão válida (encerrada em outro aparelho) também: esta conta não tem cidade, e a barra não fica vazia.
         if (time.id === ID_OUTRO) {
-          if (!(await api.sessaoValida()) || saiu) return;
           cidadeDaBarra = null;
           falhouCidade = false;
           pintarBarra();
