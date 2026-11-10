@@ -28,7 +28,7 @@ import { ENQUADRAMENTOS } from './camera';
 import { criarCena3d } from './cena3d';
 import { duracaoDoVoo, elencoDoLance, posicaoDoGoleiro } from './elencoDoLance';
 import { qualidade } from './qualidade';
-import { criarReplay, type Replay } from './replay';
+import { FALTA_NO_GOL, criarReplay, type Replay } from './replay';
 
 export interface OpcoesDoTelao {
   /** A figura `.telao` que `htmlDoTelao` pintou (o canvas, a legenda e o botão entram nela). */
@@ -77,8 +77,11 @@ export function iniciarTelao(o: OpcoesDoTelao): TelaoNoar {
   botao.type = 'button';
   botao.className = 'telao-botao';
   botao.hidden = true;
-  fig.prepend(canvas);
-  fig.append(legenda, botao);
+  const quadroEl = fig.querySelector<HTMLElement>('[data-quadro]') ?? fig;
+  const pe = fig.querySelector<HTMLElement>('[data-pe]') ?? fig;
+  quadroEl.prepend(canvas);
+  pe.prepend(legenda);
+  pe.append(botao);
 
   const tempo = criarRelogioPausavel(() => performance.now());
   const time = timePorId(o.quem.timeId) ?? timePorId(ID_OUTRO)!;
@@ -165,11 +168,11 @@ export function iniciarTelao(o: OpcoesDoTelao): TelaoNoar {
       marcarGol(k);
       const r = prepararGol(k, 0);
       const total = pintar(r, 0);
-      if (momento === 'fim') pintar(r, total);
+      if (momento === 'fim') pintar(r, total - FALTA_NO_GOL);
       redesenhar = () => {
         const r2 = prepararGol(k, 0);
         const t2 = pintar(r2, 0);
-        if (momento === 'fim') pintar(r2, t2);
+        if (momento === 'fim') pintar(r2, t2 - FALTA_NO_GOL);
       };
       botao.textContent = botaoDoQuadroParado(quadros, pos);
       botao.hidden = false;
@@ -198,9 +201,8 @@ export function iniciarTelao(o: OpcoesDoTelao): TelaoNoar {
     };
 
     const terminar = (): void => {
-      // Pulou no meio do último gol: o canvas fica no quadro final dele, não num quadro de voo.
-      const f = fase;
-      if (f.tipo === 'gol') pintar(f.replay, f.inicio + f.total);
+      // O canvas fica no instante em que a bola cruza a linha (com o goleiro ainda de pé), não num quadro de voo nem no
+      // fim do replay, com a bola no chão da rede.
       const ultimo = sequencia.length - 1;
       fase = { tipo: 'fim' };
       botao.textContent = 'Ver de novo';
@@ -209,8 +211,9 @@ export function iniciarTelao(o: OpcoesDoTelao): TelaoNoar {
       redesenhar = () => {
         const r = prepararGol(ultimo, 0);
         const total = pintar(r, 0);
-        pintar(r, total);
+        pintar(r, total - FALTA_NO_GOL);
       };
+      redesenhar();
       cancelAnimationFrame(raf);
     };
 

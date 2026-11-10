@@ -35,10 +35,14 @@ export function htmlDaFita(tentativas: readonly TentativaVista[], rotulo?: strin
  * dados ligada, nada baixa sozinho: o botão "Ver os gols" busca o desenho.
  */
 export function htmlDoTelao(gols: readonly { indice: number }[], modo: ModoDoTelao): string {
+  // Três faixas, nenhuma por cima do desenho: o topo (tarja e pontinhos), o quadro (gramado e canvas) e o pé (legenda e botão).
   return `<figure class="telao" data-telao data-modo="${modo}">
-      <span class="telao-tarja" aria-hidden="true"><span class="replay-selo" data-tarja>${tarjaDoReplay(gols[0].indice)}</span></span>
-      <span class="telao-pontos" aria-hidden="true">${gols.map((_, k) => `<i${k === 0 ? ' class="atual"' : ''}></i>`).join('')}</span>
-      ${modo === 'sob_demanda' ? `<button type="button" class="telao-botao" data-telao-botao>${BOTAO_VER_OS_GOLS}</button>` : ''}
+      <div class="telao-topo" aria-hidden="true">
+        <span class="telao-tarja"><span class="replay-selo" data-tarja>${tarjaDoReplay(gols[0].indice)}</span></span>
+        <span class="telao-pontos">${gols.map((_, k) => `<i${k === 0 ? ' class="atual"' : ''}></i>`).join('')}</span>
+      </div>
+      <div class="telao-quadro" data-quadro></div>
+      <div class="telao-pe" data-pe>${modo === 'sob_demanda' ? `<button type="button" class="telao-botao" data-telao-botao>${BOTAO_VER_OS_GOLS}</button>` : ''}</div>
     </figure>`;
 }
 

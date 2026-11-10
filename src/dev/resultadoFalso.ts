@@ -187,8 +187,9 @@ const tentativa = (desfecho: ResultadoLance['desfecho'], pontos: number, recriou
 function lances(cenario: string): void {
   const recebido = cenario === 'lances-recebido';
   const lance = LANCES.find((l) => l.id === 'palmeiras-2022-falta-da-recopa') ?? LANCES[0];
-  const resultados = [tentativa('gol', 42, true), tentativa('barreira', 0), tentativa('gol', 42)];
-  const pontos = 84;
+  // Carimbar vale o gol + 8 (42 do gol, 50 do carimbo).
+  const resultados = [tentativa('gol', 50, true), tentativa('barreira', 0), tentativa('gol', 42)];
+  const pontos = 92;
   // Quem chamou: as 3 tentativas falsas, calculadas pelo motor, e os pontos delas.
   const dele = comTentativasFalsas<{ pontos: number; gols: number; recriados: number; faixa: string; tentativas?: TentativaDoDesafio[] | null }>(
     { pontos: 62, gols: 0, recriados: 0, faixa: 'dificil' },
