@@ -27,7 +27,7 @@ export default {
 
     // ---- 1. Aparelho novo: escolhe "Outro time" ----
     await s.passo('primeira tela: escolha da torcida', async () => {
-      await s.abrir(`/?${BASE}&cidadeFalsa=sem&cidadesFalsas=sem`, { esperarPor: '[data-id]', limiteMs: 20000, rotulo: 'primeira tela até a escolha do time' });
+      await s.abrir(`/?${BASE}&cidadeFalsa=sem&cidadesFalsas=sem`, { esperarPor: '[data-id]', limiteMs: 15000, rotulo: 'primeira tela até a escolha do time' });
     }, { paginaInteira: true });
     await s.passo('escolhe "Outro time"', async () => {
       await tocarSemCobertura(s, p.locator(fichaDe('outro')), 'cartão Outro time', { semMudancaOk: true });
@@ -118,7 +118,7 @@ export default {
 
     // ---- 3b. A barra do "Outro time" com e sem cidade, e para onde o toque leva ----
     await s.passo('Home: barra com a cidade (cidadesFalsas=com)', async () => {
-      await s.abrir(`/?${BASE}&cidadeFalsa=com&cidadesFalsas=com`, { esperarPor: '[data-barra] .barra-time', limiteMs: 20000, rotulo: 'Home até a barra do time' });
+      await s.abrir(`/?${BASE}&cidadeFalsa=com&cidadesFalsas=com`, { esperarPor: '[data-barra] .barra-time', limiteMs: 15000, rotulo: 'Home até a barra do time' });
       await esperar(1200);
       const m = await medidasDaHome(p);
       if (!m.barra || /Escolha sua cidade/.test(m.textoDaBarra) || m.textoDaBarra.length < 8)
@@ -133,7 +133,7 @@ export default {
       if (!cids) s.achado({ regra: 'barra-nao-abre-cidades', gravidade: 'atrapalha', tipo: 'layout', oQue: 'O toque na barra com cidade não abriu Tabela > Cidades (sem as sub-abas das cidades).' });
     }, { paginaInteira: true });
     await s.passo('Home: barra sem cidade (cidadesFalsas=sem)', async () => {
-      await s.abrir(`/?${BASE}&cidadeFalsa=sem&cidadesFalsas=sem`, { esperarPor: '[data-barra] .barra-time', limiteMs: 20000, rotulo: 'Home até a barra do time' });
+      await s.abrir(`/?${BASE}&cidadeFalsa=sem&cidadesFalsas=sem`, { esperarPor: '[data-barra] .barra-time', limiteMs: 15000, rotulo: 'Home até a barra do time' });
       await esperar(1200);
       const m = await medidasDaHome(p);
       if (!/Escolha sua cidade: é ela que joga por você/.test(m.textoDaBarra))

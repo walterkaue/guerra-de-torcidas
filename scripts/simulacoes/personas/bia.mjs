@@ -56,7 +56,7 @@ export default {
     // ---- Home sem conexão com o placar: a barra avisa, sem toque, e o Jogar agora não anda ----
     await s.passo('Home sem conexão com o placar (barra avisa e o Jogar agora fica parado)', async () => {
       // ?rankingErro faz o placar falhar 120 ms depois de abrir; mede o botão antes e depois do aviso.
-      await s.abrir(`/?${BASE}&rankingErro`, { esperarPor: '[data-acao="jogar-agora"]', limiteMs: 20000, rotulo: 'Home sem rede até o Jogar agora' });
+      await s.abrir(`/?${BASE}&rankingErro`, { esperarPor: '[data-acao="jogar-agora"]', limiteMs: 15000, rotulo: 'Home sem rede até o Jogar agora' });
       const antes = await medidasDaHome(p);
       await p.locator('[data-barra] .barra-time').first().waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
       await p.waitForFunction(() => /sem conex/i.test(document.querySelector('[data-barra]')?.textContent ?? ''), null, { timeout: 8000 }).catch(() => {});

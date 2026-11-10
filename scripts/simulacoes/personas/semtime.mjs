@@ -18,7 +18,7 @@ export default {
     await s.semear({ 'gdt:prefs': { faixa: '18_mais', termosVistos: '05/11/2026', aquecimento: { visto: true, aquecido: true } } });
 
     await s.passo('abre a Casa dos clubes (a Home sozinha mandaria para a escolha do time)', async () => {
-      await s.abrir('/?homeFalsa#casa', { esperarPor: '.voltar', limiteMs: 20000, rotulo: 'Casa dos clubes até o voltar' });
+      await s.abrir('/?homeFalsa#casa', { esperarPor: '.voltar', limiteMs: 15000, rotulo: 'Casa dos clubes até o voltar' });
     });
     await s.passo('toca em voltar: Home sem time', async () => {
       await s.tocar(p.locator('.voltar'));
