@@ -98,14 +98,21 @@ export const destaqueDoRecorde = (d: Desempenho | null, minigame: Minigame): Des
  * O candidato "resultado do desafio recebido": uma linha só, você × quem desafiou (sem apelido, "Rival do dia"), com o
  * número de quem venceu em amarelo. A placa inteira do duelo (bustos, gols, frase) fica nos detalhes.
  */
-export function destaqueDoDuelo(o: { voce: number; outro: number; nomeDoOutro: string | null; venceu: boolean }): Destaque {
+export function destaqueDoDuelo(o: {
+  voce: number;
+  outro: number;
+  nomeDoOutro: string | null;
+  venceu: boolean;
+  /** HTML opcional logo abaixo da linha (pênaltis: a fileira de onde quem chamou bateu). */
+  abaixo?: string;
+}): Destaque {
   const nome = o.nomeDoOutro?.trim() || 'Rival do dia';
   return {
     tipo: 'desafio',
     soNaDobra: true,
     html: `<p class="res-duelo-curto ${o.venceu ? 'venceu' : 'perdeu'}"><span class="so-leitor">${esc(`Desafio: você ${o.voce}, ${nome} ${o.outro}.`)}</span><span class="res-duelo-linha" aria-hidden="true">
         <span class="lado">Você</span><strong class="voce">${o.voce}</strong><em>x</em><strong class="outro">${o.outro}</strong><span class="lado">${esc(nome)}</span>
-      </span></p>`,
+      </span></p>${o.abaixo ?? ''}`,
   };
 }
 

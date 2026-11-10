@@ -3,7 +3,9 @@
 // (B02 + C02) e tirar os prints. Junte com &penaltiFalso para o rumo às medalhas e &pecaNova para a peça nova.
 //   pen-vitoria     vitória nos pênaltis, desafio gerado
 //   pen-derrota     derrota na disputa contra o Junior Barranquilla (nome longo, B05), desafio gerado
-//   pen-recebido    desafio recebido e vencido (sem apelido: "Rival do dia"), desafio gerado
+//   pen-recebido    desafio recebido e vencido por "Camisa10", desafio gerado; as defesas vêm contra 5 cobranças gravadas
+//                   (pegou alto esq., entrou meio baixo, entrou alto dir., pra fora, pegou baixo dir.) e uma 6ª da máquina,
+//                   que não entra em "onde quem chamou bateu"
 //   pen-sem-rede    partida sem rede: não vale, sem código (volta o "Mandar no grupo")
 //   pen-recorde     vitória com recorde novo
 //   prova-desafio   Prova com desafio gerado
@@ -43,13 +45,20 @@ const defesa = (desfecho: ResultadoDefesa['desfecho']): ResultadoDefesa => ({
   pontos: desfecho === 'defesa' ? 10 : 0,
 });
 
-function partida(venceu: boolean): ResultadoPartida {
+/** Pênaltis recebido: defesas contra as cobranças gravadas de quem chamou (alvo e desfecho variados) + uma da máquina. */
+const defesasDoRecebido = (): ResultadoDefesa[] => {
+  const g = (alvo: number, desfecho: ResultadoDefesa['desfecho']): ResultadoDefesa => ({ ...defesa(desfecho), alvo, contraGravada: true });
+  return [g(3, 'defesa'), g(1, 'gol'), g(5, 'gol'), g(0, 'fora'), g(2, 'defesa'), { ...defesa('gol'), alvo: 4 }];
+};
+
+function partida(venceu: boolean, recebido = false): ResultadoPartida {
   const cobrancas = venceu
     ? [cobranca('gol', { angulo: true }), cobranca('gol'), cobranca('defesa'), cobranca('gol', { cavadinha: true }), cobranca('gol')]
     : [cobranca('gol'), cobranca('defesa'), cobranca('gol'), cobranca('fora'), cobranca('gol')];
   const defesas = venceu
     ? [defesa('gol'), defesa('defesa'), defesa('gol'), defesa('gol'), defesa('defesa')]
     : [defesa('gol'), defesa('gol'), defesa('defesa'), defesa('gol'), defesa('gol')];
+  if (recebido) defesas.splice(0, defesas.length, ...defesasDoRecebido());
   const golsJogador = cobrancas.filter((c) => c.desfecho === 'gol').length;
   const golsMaquina = defesas.filter((d) => d.desfecho === 'gol').length;
   const pontos = venceu
@@ -61,7 +70,7 @@ function partida(venceu: boolean): ResultadoPartida {
 function penaltis(cenario: string): DadosResultado {
   const timeId = prefs.get().time ?? 'athletico-pr';
   const venceu = cenario !== 'pen-derrota';
-  const r = partida(venceu);
+  const r = partida(venceu, cenario === 'pen-recebido');
   const disputa = cenario === 'pen-derrota' ? DISPUTAS.find((d) => d.id === 'athletico-pr-2018-sul-americana') : undefined;
   const semRede = cenario === 'pen-sem-rede';
   const recebido = cenario === 'pen-recebido';
@@ -84,11 +93,11 @@ function penaltis(cenario: string): DadosResultado {
           ranking: { antes: null, depois: null },
           desempenho: { posicao: 4, total: 31, recorde: cenario === 'pen-recorde' ? r.pontos.total : 120, novoRecorde: cenario === 'pen-recorde' },
           desafio: { codigo: 'falso123' },
-          comparacao: recebido ? { desafiante: null, pontosDesafiante: 62, golsJogadorDesafiante: 3, golsMaquinaDesafiante: 2, venceu: true } : null,
+          comparacao: recebido ? { desafiante: 'Camisa10', pontosDesafiante: 62, golsJogadorDesafiante: 3, golsMaquinaDesafiante: 2, venceu: true } : null,
           melhoresDoDia: [r.pontos.total, 72, 54],
           restantesHoje: 6,
         },
-    desafio: recebido ? { id: 'abcdefgh', timeId: 'palmeiras', apelido: null, golsJogador: 3, golsMaquina: 2, pontos: 62 } : undefined,
+    desafio: recebido ? { id: 'abcdefgh', timeId: 'palmeiras', apelido: 'Camisa10', golsJogador: 3, golsMaquina: 2, pontos: 62 } : undefined,
     disputa,
     frasesFinais: venceu ? ['É CAVADINHAAAA! Que categoria, que deboche!', 'Pegou! O goleiro da máquina tava com o almoço pago!'] : ['Dessa vez não deu. Bola pro centro e jogo de volta!'],
   } as DadosResultado;
@@ -107,7 +116,7 @@ function prova(cenario: string) {
     semana: '2026-11-09',
     desempenho: { posicao: 2, total: 18, recorde: 96, novoRecorde: false },
     desafio: { codigo: 'teste123' },
-    comparacao: recebido ? { desafiante: null, pontosDesafiante: 74, escadaDesafiante: '🟩🟩🟩🟩🟥🟩🟩🟥', resumoDesafiante: '6 de 8 certas', venceu: false } : null,
+    comparacao: recebido ? { desafiante: 'Camisa10', pontosDesafiante: 74, escadaDesafiante: '🟩🟩🟩🟩🟥🟩🟩🟥', resumoDesafiante: '6 de 8 certas', venceu: false } : null,
   };
   return { timeId: prefs.get().time ?? 'gremio', fim, desafio: recebido ? ({ id: 'abcdefgh' } as never) : null, frases: ['Sabe muito! A escada tá subindo!'] };
 }
@@ -190,7 +199,7 @@ function lances(cenario: string): void {
     restantesHoje: 7,
     melhoresDoDia: [pontos, 72, 54],
     desafio: recebido ? null : { codigo: 'abcd2345' },
-    comparacao: recebido ? { desafiante: null, pontosDesafiante: 62, venceu: true } : null,
+    comparacao: recebido ? { desafiante: 'Camisa10', pontosDesafiante: 62, venceu: true } : null,
   } satisfies FechamentoLances;
   irPara({ tela: 'lances' });
   const chamar = (tentativas: number) => {
