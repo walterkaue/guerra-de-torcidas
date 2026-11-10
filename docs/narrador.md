@@ -32,7 +32,7 @@
 Valem para todo texto do jogo, não só o narrador (o `docs/visual.md` aponta para cá).
 
 1. **Um nome por coisa:** o mesmo nome no botão, na Home, no aviso, no card e no narrador. O nome interno pode ser outro (o desafio é `x1` no código; o Palpite da Rodada é `crava`).
-2. **Botão:** infinitivo, de 1 a 3 palavras, até ~20 caracteres (cabe a 360 px com fonte 130%), sem ponto de interrogação.
+2. **Botão:** infinitivo, de 1 a 3 palavras, até ~20 caracteres (cabe a 360 px com fonte 130%), sem ponto de interrogação. Os da tela do convite do desafio (09/11/2026): "Encarar o desafio", "Escolher meu time", "Ir pro início", "Tentar de novo" e "Bora pro jogo" (o da lista dos times); "Outro time" é o nome da opção que abre a lista, como o time "Outro time" dela.
 3. **Frase e texto do WhatsApp:** imperativo de conversa, como se fala no grupo.
 4. **Texto que vai com o link:** primeira pessoa de quem manda ("Te desafio", "Fiz"), com o jogo, o número e a regra; no máximo 2 linhas antes do link.
 5. **Vocabulário boleiro sem viajar:** jargão que o torcedor médio entende sem explicação. Gíria de nicho só no narrador, e só se o sentido sair do contexto.
@@ -401,6 +401,19 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 ## 6. Desafio (por link)
 
 O texto que vai com o link é fixo, sem sorteio (`src/jogo/convites.ts`): "Te desafio nos pênaltis: fiz {pontos} {pro_time}. Faz mais?", e o mesmo formato nos Lances e na Prova. Por isso não existe a situação `desafio_convite`.
+
+### Tela do convite (texto fixo, sem sorteio; `src/jogo/conviteDesafio.ts`)
+
+A tela que o link abre antes do primeiro chute. Mesmo tom de resenha, neutra de gênero ("de {apelido}", nunca "do/da"), sem aposta.
+
+- **Placa (rótulo):** "{apelido} te desafiou" / "Te desafiaram" (nos Lances: "… nos Lances do Jogo"). Enquanto busca: "Buscando o desafio…".
+- **Pênaltis:** "{apelido} ({time}) fez {pontos} pontos, {gols} x {gols} contra a máquina." e "Você defende as cobranças de quem te desafiou e bate as suas. Quem fizer mais pontos ganha."
+- **Prova:** "{apelido} ({time}): {resumo}, {pontos} pontos. Mesmas 8 perguntas, faz mais?" e "8 perguntas, 20 s cada, três erros e fora."
+- **Escolha (quem é novo):** título "Por qual torcida você entra em campo?", faixas com "Encarar o desafio ›", botão "Outro time", dica "Os pontos vão pra torcida que você tocar. Dá pra trocar depois no Perfil." e o link "Já jogo em outro aparelho".
+- **Quem já joga:** "Você joga pelo {time}" / "pela {time}" e o botão "Encarar o desafio".
+- **Avisos no lugar da placa:** "Apitou o fim: esse desafio valia 7 dias. Bora outro!", "Esse desafio não existe mais. Bora outro!" e "Sem rede: o desafio não carregou." (com "Tentar de novo").
+- **Triagem vinda do convite:** "Desafio de {apelido} nos pênaltis / nos Lances / na Prova" e "Você entra pelo {time}. {pontos} pontos pra bater."
+- **Escolha do time sem convite:** "Sem cadastro: escolha o time e já entra jogando." (o apelido é só do Perfil).
 
 ### `desafio_vitoria` — você venceu quem te desafiou
 - Venceu o desafio! Agora o placar fala por você.

@@ -5,6 +5,10 @@
 //   &x1=ok|proprio|expirado|nao   como o X1 por link (?l=CODIGO) responde (padrão ok): aceita, 409, 410 ou 404
 //   ?caiNoLance=2          o 2º lance de cada partida falha (confere o aviso de conexão caída)
 //   ?latencia=800          demora da resposta (padrão 180 ms)
+// Tela do convite (?d=, ?l= e ?p=, telas/convite.ts): o resumo do X1 dos Lances (?l=) aceita,
+//   &chamouTime=<id>  o time de quem chamou (define as faixas do convite: ele e o rival dele; &chamouTime=outro: sem faixas)
+//   &x1Vencido        o resumo vem com vencido (a placa vira o aviso de 7 dias)
+//   &x1NaoExiste      o resumo vem null (o código não existe)
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { LANCES } from '../dados/lances';
@@ -88,9 +92,9 @@ let estado: { cenas: Lance[]; gestos: GestosLances; chamadas: number; desafio: b
 /** O X1 falso, como `ver_desafio_lances` o devolve (null: link quebrado). */
 export async function verDesafioLances(id: string): Promise<ResumoDesafioLances | null> {
   await espera();
-  if (!id || x1 === 'nao') return null;
+  if (!id || x1 === 'nao' || new URLSearchParams(location.search).has('x1NaoExiste')) return null;
   const l = lanceDoX1();
-  return { id, time_id: timeFalsoDeQuemChamou('palmeiras'), apelido: 'Camisa10', lance_id: l.id, pontos: 96, gols: 3, recriados: 1, faixa: faixaNaTela(l).faixa, boneco: bonecoFalsoDeQuemChamou() };
+  return { id, time_id: timeFalsoDeQuemChamou('palmeiras'), apelido: 'Camisa10', lance_id: l.id, pontos: 96, gols: 3, recriados: 1, faixa: faixaNaTela(l).faixa, boneco: bonecoFalsoDeQuemChamou(), vencido: new URLSearchParams(location.search).has('x1Vencido') };
 }
 
 export async function novaPartidaLances(p: PedidoLances): Promise<RespostaNovaLances> {

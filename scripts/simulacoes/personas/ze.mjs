@@ -2,7 +2,7 @@
 // entrada com 4G ruim. Chuta forte demais (a dica "Forte demais vai por cima" tem de aparecer).
 import { chutar, jogarPartida, esperar, tocarSemCobertura } from './comum/jogar.mjs';
 
-const LINK_X1 = '/?homeFalsa&penaltiFalso&d=abcdefgh';
+const LINK_X1 = '/?homeFalsa&penaltiFalso&d=abcdefgh&chamouTime=flamengo';
 const DICA_FORTE = /forte demais/i;
 
 export default {
@@ -18,24 +18,22 @@ export default {
   async jornada(s) {
     const p = s.page;
 
-    // 1. O link do grupo: a Home com o convite.
-    await s.passo('abre o link do X1', async () => {
-      const ms = await s.abrir(LINK_X1, { esperarPor: 'text=Encarar o desafio', limiteMs: 20000, rotulo: 'link do X1 até o convite na Home' });
-      s.medir('tempo até a Home aparecer', ms, 4000);
+    // 1. O link do grupo: a tela do convite, com as faixas do time de quem chamou e do rival.
+    await s.passo('abre o link do X1 (convite)', async () => {
+      const ms = await s.abrir(LINK_X1, { esperarPor: '[data-faixa-time]', limiteMs: 20000, rotulo: 'link do X1 até as faixas do convite' });
+      s.medir('tempo até as faixas do convite', ms, 4000);
     });
 
-    // 2. Aceitar: o time é pedido agora.
-    await s.passo('aceita o X1 e cai na escolha do time', async () => {
-      await s.tocar(p.locator('[data-acao="desafio"]'));
-      await p.locator('[data-id]').first().waitFor({ state: 'visible', timeout: 15000 });
-    });
-    await s.passo('escolhe o Flamengo', async () => {
-      await s.tocar(p.locator('[data-id="flamengo"]'), { semMudancaOk: true });
-      await s.tocar(p.locator('[data-acao="confirmar"]'));
+    // 2. Um toque na faixa do time (o falso chama pelo Flamengo): vai para a triagem de idade.
+    await s.passo('toca na faixa do Flamengo', async () => {
+      await s.tocar(p.locator('button[data-faixa-time="flamengo"]'));
+      await p.getByRole('button', { name: '18 ou mais' }).waitFor({ state: 'visible', timeout: 15000 });
     });
 
-    // 3. Triagem de idade.
-    await s.passo('triagem: 18 ou mais', async () => {
+    // 3. Triagem de idade (com a placa do desafio).
+    await s.passo('triagem: 18 ou mais (placa do desafio)', async () => {
+      if (!(await p.locator('[data-placa-triagem]').isVisible().catch(() => false)))
+        s.achado({ regra: 'sem-placa-na-triagem', gravidade: 'detalhe', tipo: 'regra do jogo.md', oQue: 'A triagem do convite não mostrou a placa [data-placa-triagem].', talvezSimulador: true });
       await s.tocar(p.getByRole('button', { name: '18 ou mais' }));
     });
 
@@ -43,6 +41,7 @@ export default {
     await s.passo('começa o X1 (mira)', async () => {
       await p.locator('canvas.campo-jogo').waitFor({ state: 'visible', timeout: 30000 });
       await p.waitForFunction(() => window.__partida?.fase?.() === 'mirar', null, { timeout: 40000 });
+      s.medir('toques até o 1º chute (faixa + triagem)', 2, 2);
     });
     let jogo = null;
     await s.passo('joga o X1 inteiro', async () => {

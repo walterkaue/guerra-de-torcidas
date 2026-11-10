@@ -28,7 +28,7 @@
 ## 2. Ordem sugerida para depois dos testes
 
 0. **Agora, durante os testes:** A10 e H01a. O C01 (com o I03) está no ar desde 09/11.
-1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); C06 (link do desafio com menos toques); B03 (um aviso por vez na Home).
+1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); B03 (um aviso por vez na Home).
 2. **Semana de 16/11:** C03 + C08 (ver o gol de quem chamou, redesenhado no aparelho de quem abre); E04 (roteiro de iPhone); D07 (Palpite da Rodada na entressafra).
 3. **Depois:** C04 (com a prova de conceito antes), C05, H01b e H02, B01, F01 e A08 (e a personalização do Perfil, com o que os amigos disserem).
 4. **Antes da divulgação pública:** A01 a A05.
@@ -73,7 +73,7 @@
 | C03 | **Ver as tentativas de quem chamou** antes de jogar o desafio dos Lances | K | Hoje quem aceita vê só "Camisa10 fez 96". Mostrar os 3 desfechos (e, com C04, o replay dos gols). Precisa do `ver_desafio_lances` devolver os desfechos. **Lances:** quem aceita joga com sementes novas, então dá para mostrar antes. **Pênaltis:** as cobranças gravadas de quem chamou são o alvo das defesas de quem aceita; só podem aparecer depois que o desafio termina. | P1 | M | Chat → Claude (servidor) |
 | C04 | **Replay do gol compartilhável** | K | Detalhe na seção 4.3. No resultado: "Compartilhar o replay do gol N". Vídeo curto: a cobrança de trás do batedor e o replay. **Antes do G, uma prova de conceito P:** gravar 3 s do replay e mandar pelo WhatsApp no Android e no iPhone, conferindo se o formato é aceito. | P1 | G | Chat → Claude |
 | C05 | **Card animado** (vídeo curto para Stories e WhatsApp) | K | Detalhe na seção 4.2. O card de hoje com confete, o número contando, o boneco comemorando e o fundo do vestiário mexendo. | P2 | G | Chat → Claude |
-| C06 | Link do desafio com menos toques (J41) | P | Hoje são 4 toques e uma lista de 20 times até o 1º chute. A idade vem antes (ECA) e o time sai sugerido do link de quem chamou. Decisão de fluxo do Kauê (proposta de 31/10, itens 2 e 3). O campo de apelido sai da escolha do time e fica só no Perfil (apelido só 16+, 09/11/2026). | P1 | M | Kauê decide → Claude |
+| C06 | ~~Link do desafio com menos toques (J41)~~ **feito em 09/11/2026** | P | O link abre a tela do convite com as torcidas (a de quem chamou e o rival): 2 toques até o 1º chute para quem é novo, 1 para quem já joga. O apelido ficou só no Perfil. Regra em `jogos/contas.md` ("Primeiro acesso"). | P1 | M | Claude |
 | C11 | Prévia do link do desafio no WhatsApp | C | Hoje o link chega com a prévia genérica do site (título "Guerra de Torcidas", sem imagem); estudar uma prévia por desafio, com o placar a bater. | P2 | M | Claude |
 | C07 | Placar acumulado do desafio entre duas pessoas (J42) | P | "Zé 2 x 1 Camisa10" na série de jogos de volta, sem apelido público. Primeiro passo do ranking entre amigos. | P2 | M | Chat → Claude |
 | C08 | Link de replay que roda no celular de quem abre | C | Em vez de vídeo, o link leva só o gesto e a cena, e o jogo redesenha o gol no aparelho de quem abre. Leve e bom para o WhatsApp. O vídeo (C04) fica para o Stories. Nos pênaltis, as cobranças gravadas de quem chamou só aparecem depois que o desafio termina (ver C03); nos Lances, quem aceita joga com sementes novas, então dá para mostrar antes. | P2 | M | Claude |

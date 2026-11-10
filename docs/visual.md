@@ -72,7 +72,7 @@ Home nova, decidida em 31/10/2026. De cima para baixo:
 
 **Fora, de propósito:** banner de evento, pop-up, selo "AO VIVO", qualquer coisa piscando, sequência de dias.
 
-- Convite de desafio com borda neutra fina, não amarela. É a única exceção ao botão principal único: só aparece para quem chegou por um link de desafio.
+- **Tela do convite do desafio (09/11/2026):** rota própria, sem a Home atrás. Placa quase preta com filete na cor do time de quem chamou, busto dele e o rótulo "{apelido} te desafiou" ou "Te desafiaram"; abre em "Buscando o desafio…" com altura reservada. Quem é novo vê duas faixas de time lado a lado (a de quem chamou e a do rival), de mesmo peso e nenhuma marcada: cada uma é o card do time (seção 4 do `jogo.md`), ~92 px, com "Encarar o desafio ›". Embaixo, "Outro time" contornado e a dica. Sem amarelo: as faixas são a ação. Quem já joga vê o amarelo "Encarar o desafio" (um só) e o contornado "Ir pro início". Detalhe em `jogos/contas.md`, "Primeiro acesso".
 - Barra de navegação: Jogar, Palpites, Tabela, Perfil.
 - Textos e botões seguem as "Regras de estilo dos textos" do `docs/narrador.md`.
 

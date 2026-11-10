@@ -42,9 +42,9 @@ const RESUMOS = {
 
 /** As portas de entrada. `pinta`: o 1º botão da tela; `pronta`: o que a pessoa veio tocar. */
 const ENTRADAS = [
-  { id: 'x1-penaltis', nome: 'Link do desafio de pênaltis (?d=)', caminho: '/?d=abcdefgh', pinta: 'button', pronta: '[data-acao="desafio"]' },
-  { id: 'x1-lances', nome: 'Link do desafio de Lances (?l=)', caminho: '/?l=abcdefgh', pinta: 'button', pronta: '[data-acao="desafio-lances"]' },
-  { id: 'x1-prova', nome: 'Link do desafio da Prova (?p=)', caminho: '/?p=abcdefgh', pinta: 'button', pronta: '[data-acao="desafio-prova"]' },
+  { id: 'x1-penaltis', nome: 'Link do desafio de pênaltis (?d=)', caminho: '/?d=abcdefgh', pinta: 'button', pronta: '[data-faixa-time], [data-acao="escolher-time"]' },
+  { id: 'x1-lances', nome: 'Link do desafio de Lances (?l=)', caminho: '/?l=abcdefgh', pinta: 'button', pronta: '[data-faixa-time], [data-acao="escolher-time"]' },
+  { id: 'x1-prova', nome: 'Link do desafio da Prova (?p=)', caminho: '/?p=abcdefgh', pinta: 'button', pronta: '[data-faixa-time], [data-acao="escolher-time"]' },
   { id: 'time', nome: 'Link de time (?time=)', caminho: '/?time=flamengo', pinta: 'button', pronta: 'text=/qual [ée] a sua torcida/i' },
   { id: 'home', nome: 'Home de quem já joga', caminho: '/', pinta: 'button', pronta: 'text=/jogar agora/i', semear: QUEM_JA_JOGA },
 ];

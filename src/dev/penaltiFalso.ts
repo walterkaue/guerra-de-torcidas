@@ -3,9 +3,11 @@
 // ?caiNoLance=3 faz o 3º lance falhar (confere o aviso de conexão caída).
 // &limite: o servidor responde 429 limite_do_dia (a partida vira treino).
 // &x1Expirado (com ?d=): o X1 responde 410 desafio_expirado (partida normal, com o aviso na abertura).
-// &x1Vencido (com ?d=): o resumo do X1 vem com vencido (a Home não mostra o convite).
+// &x1Vencido (com ?d=): o resumo do X1 vem com vencido (a tela do convite mostra o aviso).
+// &x1NaoExiste (com ?d=): o resumo do X1 vem null (o convite avisa que o desafio não existe).
+// &chamouTime=<id> (com ?d=): o time de quem chamou (define as faixas do convite; padrão palmeiras).
 // ?d=abcdefgh&disputa=<id da disputa> mostra o X1 recebido com a disputa de quem chamou (sem &disputa, a primeira do
-// catálogo; &x1Livre imita o X1 sem disputa, de antes de 08/11). Dá para entrar pelo convite da Home (?penaltiFalso&d=...).
+// catálogo; &x1Livre imita o X1 sem disputa, de antes de 08/11). Dá para entrar pelo convite (?penaltiFalso&d=...).
 // A disputa que a partida joga ganha medalhas de mentira: 8 gols e 2 vitórias, perto do bronze (10 gols); minhasMedalhas()
 // devolve o que a partida somou, então a linha "+N rumo ao bronze" e o selo aparecem de verdade no resultado.
 // O fechamento traz melhoresDoDia e restantesHoje, e a tabela é a de 08/11/2026.
@@ -28,6 +30,7 @@ const caiNoLance = Number(new URLSearchParams(location.search).get('caiNoLance')
 const x1JaJogado = new URLSearchParams(location.search).has('x1JaJogado');
 const x1Expirado = new URLSearchParams(location.search).has('x1Expirado');
 const x1Vencido = new URLSearchParams(location.search).has('x1Vencido');
+const x1NaoExiste = new URLSearchParams(location.search).has('x1NaoExiste');
 const limite = new URLSearchParams(location.search).has('limite');
 const x1Livre = new URLSearchParams(location.search).has('x1Livre');
 /** A disputa do X1 falso: a do ?disputa=, senão a primeira do catálogo (null no X1 livre). */
@@ -40,6 +43,7 @@ const medalhas = new Map<string, { gols: number; vitorias: number }>();
 /** O convite do X1 como `ver_desafio` o devolve, com a disputa de quem chamou. */
 export async function verDesafio(id: string): Promise<ResumoDesafio | null> {
   await espera();
+  if (x1NaoExiste) return null;
   return { id, time_id: timeFalsoDeQuemChamou('palmeiras'), apelido: 'Camisa10', gols_jogador: 3, gols_maquina: 2, pontos: 96, disputa_id: disputaDoX1(), boneco: bonecoFalsoDeQuemChamou(), vencido: x1Vencido };
 }
 

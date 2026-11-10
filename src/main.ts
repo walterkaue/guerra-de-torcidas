@@ -12,10 +12,12 @@ import { faixaDoAparelho, prefs } from './estado';
 import { timePorId } from './dados/times';
 import { ROTA_ENTRAR, codigoDoEndereco } from './jogo/codigoTorcedor';
 import { itemDoEndereco } from './jogo/enderecoDoLance';
+import { conviteDoLink, entradaDoConvite } from './jogo/conviteDesafio';
 import { comecaPelaEscolha } from './jogo/primeiroAcesso';
 import { quandoSairDaConta } from './servidor/api';
 import { contar } from './servidor/funil';
 import { apoioLiberado, telaApoio } from './telas/apoio';
+import { telaConvite } from './telas/convite';
 import { telaInicio } from './telas/inicio';
 import { ligarAvisoDeSaida } from './telas/saida';
 import { telaTriagem } from './telas/triagem';
@@ -78,6 +80,8 @@ const TELAS_DE_JOGO = {
 };
 
 registrarTela('inicio', telaInicio);
+// O convite do desafio por link (C06) abre no caminho inicial, sem baixar telas de jogo nem catálogos.
+registrarTela('convite', telaConvite);
 registrarTela('times', telaTimes);
 registrarTela('ranking', telaRanking);
 registrarTela('feedback', telaFeedback);
@@ -106,7 +110,8 @@ registrarTela('vestiario', sobDemanda('Abrindo o vestiário…', () => import('.
 
 /**
  * Baixa as telas de jogo por trás, com o navegador ocioso, para o toque em "Jogar" abrir na hora.
- * Quem ligou a economia de dados só baixa o que abrir. Quem chegou por link de desafio vê o convite antes.
+ * Quem ligou a economia de dados só baixa o que abrir. Quem chegou por link de desafio vê o convite antes
+ * (a tela do convite libera o resto quando a placa resolve; telas/primeiraTela.ts).
  */
 function preaquecer(): void {
   const conexao = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
@@ -163,9 +168,10 @@ function rotaDoHash(): Rota | undefined {
 
 // Quem já jogava antes da triagem responde nesta visita; quem chegou agora, antes da 1ª partida (app.ts).
 const jaJoga = !!prefs.get().time;
-// Link compartilhado com ?time=flamengo já sugere o time de quem mandou.
+// Link compartilhado com ?time=flamengo já sugere o time de quem mandou. Com desafio no link, não: o convite é quem
+// oferece as faixas de time (telas/convite.ts), e um time gravado aqui faria o novato parecer quem já joga.
 const timeDoLink = new URLSearchParams(location.search).get('time');
-if (!prefs.get().time && timePorId(timeDoLink)) prefs.set({ time: timeDoLink! });
+if (!prefs.get().time && timePorId(timeDoLink) && !conviteDoLink({ d: desafioDoLink(), l: desafioLancesDoLink(), p: desafioProvaDoLink() })) prefs.set({ time: timeDoLink! });
 
 const app = document.querySelector<HTMLDivElement>('#app');
 if (import.meta.env.DEV && app && new URLSearchParams(location.search).has('vitrineBoneco')) {
@@ -188,20 +194,24 @@ if (import.meta.env.DEV && app && new URLSearchParams(location.search).has('vitr
   }
   // ?dia (link do card do Time do Dia) abre direto no jogo; sem time escolhido, passa antes pela escolha.
   const dia = linkDoTimeDoDia() || (import.meta.env.DEV && new URLSearchParams(location.search).has('diaFalso'));
+  // Link de desafio (?d=, ?l=, ?p=): a tela do convite, sem a Home atrás (C06, jogo/conviteDesafio.ts).
+  const convite = conviteDoLink({ d: desafioDoLink(), l: desafioLancesDoLink(), p: desafioProvaDoLink() });
   const entrada: Rota =
     rotaDoHash() ??
-    (dia
+    (convite
+      ? { tela: 'convite', tipo: convite.tipo, codigo: convite.codigo }
+      : dia
       ? prefs.get().time
         ? { tela: 'timeDoDia' }
         : { tela: 'times', depois: 'timeDoDia' }
       : { tela: 'inicio' });
   const semTriagem = entrada.tela === 'admin' || entrada.tela === 'termos' || entrada.tela === 'entrar';
   // Primeiro acesso (docs/jogo.md 14.8): quem é novo começa pela escolha do time; a triagem e o aquecimento vêm
-  // logo depois dela (times.ts), e só então a Home. Link de desafio segue direto para o convite na Home.
-  const comDesafio = !!(desafioDoLink() || desafioProvaDoLink() || desafioLancesDoLink());
-  // No 4G ruim, o convite vem antes do resto da Home e das telas de jogo (telas/primeiraTela.ts).
-  // Só quando a entrada é a Home, onde o convite mora (#termos, #perfil e companhia não seguram nada).
-  if (comDesafio && entrada.tela === 'inicio') segurarParaOConvite();
+  // logo depois dela (times.ts), e só então a Home. Link de desafio vai à tela do convite, que oferece as faixas.
+  const comDesafio = !!convite;
+  // No 4G ruim, o convite vem antes do resto da Home e das telas de jogo (telas/primeiraTela.ts). Só quando a
+  // entrada é o convite (#termos, #perfil e companhia não seguram nada); a tela libera quando a placa resolve.
+  if (comDesafio && entrada.tela === 'convite') segurarParaOConvite();
   // Só em desenvolvimento: ?vestiarioFalso liga a fonte falsa e abre o vestiário (src/dev/vestiarioFalso.ts).
   if (import.meta.env.DEV && new URLSearchParams(location.search).has('vestiarioFalso'))
     void import('./dev/vestiarioFalso').then((m) => {
@@ -212,6 +222,7 @@ if (import.meta.env.DEV && app && new URLSearchParams(location.search).has('vitr
   else if (import.meta.env.DEV && new URLSearchParams(location.search).has('resultadoFalso'))
     void import('./dev/resultadoFalso').then((m) => m.abrirResultadoFalso(new URLSearchParams(location.search).get('resultadoFalso')));
   else if (comecaPelaEscolha({ jaTinhaTime: jaJoga, tela: entrada.tela, comDesafio })) irPara({ tela: 'times', depois: 'inicio', primeira: true });
+  else if (entrada.tela === 'convite') irPara(entradaDoConvite(convite!, jaJoga, !!faixaDoAparelho()));
   else irPara(jaJoga && !faixaDoAparelho() && !semTriagem ? { tela: 'triagem', depois: entrada } : entrada);
   // Só em desenvolvimento: ?cardFalso abre a tela "Seu card" com dados de mentira (src/dev/cardFalso.ts).
   if (import.meta.env.DEV && new URLSearchParams(location.search).has('cardFalso')) void import('./dev/cardFalso').then((m) => m.abrirCardFalso(document.body));

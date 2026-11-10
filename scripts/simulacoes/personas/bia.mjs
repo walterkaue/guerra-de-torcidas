@@ -1,6 +1,7 @@
 // Bia, 20, universitária, Bahia, 18+. Redmi no modo escuro e com economia de dados. Gira o celular no meio da partida
 // de pênaltis, deixa a rede cair no 2º chute dos Lances, dá toque duplo nervoso em Jogar, Compartilhar e Salvar e sai
 // do vestiário sem salvar.
+import { SUPABASE_FALSO } from '../nucleo/servidor.mjs';
 import { jogarPartida, jogarLance, esperar, tocarSemCobertura, conferirCampo } from './comum/jogar.mjs';
 
 const BASE = 'homeFalsa&lancesFalsos&penaltiFalso&provaFalsa&codigoFalso&galeriaFalsa=cheia&cenario=lances';
@@ -222,6 +223,34 @@ export default {
       const noVestiario = await p.locator('[data-aba="cabelo"]').count();
       s.medir(`voltar do celular com peça trocada: ${pergunta ? 'perguntou' : noVestiario ? 'ficou no vestiário' : 'saiu sem perguntar'}`, pergunta);
       if (!pergunta && !noVestiario) s.achado({ regra: 'voltar-perdeu-a-troca', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: 'O voltar do celular saiu do vestiário com a peça trocada, sem perguntar.', sugestao: 'O voltar do Android deveria abrir "Sair sem salvar?".' });
+    });
+
+    // ---- Convite sem rede (C06): sem o falso do resumo o pedido é abortado e a placa vira "sem_rede" ----
+    await s.passo('link de desafio sem rede para o resumo', async () => {
+      await s.abrir('/?d=abcdefgh', { esperarPor: '[data-situacao="sem_rede"]', limiteMs: 20000, rotulo: 'convite até a placa sem rede' });
+      const texto = await p.locator('[data-placa]').innerText();
+      if (!/Sem rede: o desafio não carregou\./.test(texto)) s.achado({ regra: 'texto-sem-rede', gravidade: 'atrapalha', tipo: 'erro', oQue: `A placa sem rede disse: "${texto.trim()}"` });
+      for (const a of ['tentar', 'ir-inicio']) if (!(await p.locator(`[data-acao="${a}"]`).count())) s.achado({ regra: 'botao-sem-rede', gravidade: 'atrapalha', tipo: 'erro', oQue: `Faltou [data-acao="${a}"] no convite sem rede.` });
+    }, { paginaInteira: true });
+    await s.passo('"Tentar de novo" mostra buscando (e, sem rede de verdade, volta à placa sem rede)', async () => {
+      // A guarda do simulador não deixa nenhuma resposta de fora, então o pedido só demora um pouco e depois cai de novo
+      // (não dá para mostrar o desafio abrindo aqui; isso está na jornada do Zé, que usa o falso do resumo).
+      await p.route(`${SUPABASE_FALSO}/rest/v1/rpc/ver_desafio*`, async (route) => {
+        await new Promise((ok) => setTimeout(ok, 1500));
+        await route.fallback().catch(() => {});
+      });
+      await s.tocar(p.locator('[data-acao="tentar"]'), { semMudancaOk: true });
+      await p.locator('[data-placa][data-situacao="buscando"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => s.achado({ regra: 'tentar-sem-buscando', gravidade: 'atrapalha', tipo: 'erro', oQue: '"Tentar de novo" não mostrou a placa em "buscando".' }));
+      await p.locator('[data-placa][data-situacao="sem_rede"]').waitFor({ state: 'visible', timeout: 10000 }).catch(() => s.achado({ regra: 'tentar-nao-voltou', gravidade: 'atrapalha', tipo: 'erro', oQue: 'Sem rede, depois do "buscando" a placa não voltou a "sem_rede".' }));
+    });
+    await s.passo('sem rede de novo e "Ir pro início" limpa o endereço', async () => {
+      await p.unroute(`${SUPABASE_FALSO}/rest/v1/rpc/ver_desafio*`).catch(() => {});
+      await s.abrir('/?d=abcdefgh', { esperarPor: '[data-situacao="sem_rede"]', limiteMs: 20000 });
+      await s.tocar(p.locator('[data-acao="ir-inicio"]'));
+      await p.locator('[data-acao="jogar-agora"]').waitFor({ state: 'visible', timeout: 10000 });
+      const url = p.url();
+      s.medir(`endereço depois do Ir pro início: ${url}`, 0);
+      if (/[?&]d=/.test(url)) s.achado({ regra: 'endereco-com-d', gravidade: 'atrapalha', tipo: 'erro', oQue: `O ?d= continuou no endereço depois de "Ir pro início": ${url}` });
     });
   },
 };

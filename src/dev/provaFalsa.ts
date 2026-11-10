@@ -1,6 +1,11 @@
 // Só em desenvolvimento (npm run dev, com ?provaFalsa na URL): imita a função "prova" do servidor
 // no próprio navegador, com perguntas de mentira, para conferir a tela sem banco nem login.
 // ?p=abcdefgh&x1Expirado: o X1 responde 410 desafio_expirado (prova normal, com o aviso na abertura).
+// Tela do convite (?d=, ?l= e ?p=, telas/convite.ts): o resumo do desafio da Prova (?p=, tela do convite) aceita,
+//   &chamouTime=<id>  o time de quem chamou (define as faixas do convite: ele e o rival dele; &chamouTime=outro: sem faixas)
+//   &x1Vencido        o resumo vem com vencido (a placa vira o aviso de 7 dias)
+//   &x1NaoExiste      o resumo vem null (o código não existe)
+//   (padrão do time de quem chamou: flamengo; o resumo é de 6 de 8 certas, 96 pontos)
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import {
@@ -21,7 +26,8 @@ import {
   type Desfecho,
   type Passo,
 } from '../jogo/prova';
-import { ErroServidor, type AjudaProva, type FimProva, type PerguntaProva, type RespostaProva } from '../servidor/api';
+import { ErroServidor, type AjudaProva, type FimProva, type PerguntaProva, type RespostaProva, type ResumoDesafioProva } from '../servidor/api';
+import { timeFalsoDeQuemChamou } from './bonecoDeCampoFalso';
 
 const CLUBES = ['flamengo', 'geral', 'remo', 'geral', 'bahia', 'geral', 'geral', 'palmeiras'];
 const espera = () => new Promise((ok) => setTimeout(ok, 250));
@@ -73,6 +79,14 @@ function fim(): FimProva {
     desafio: { codigo: 'teste123' },
     comparacao: null,
   };
+}
+
+/** O resumo do desafio como `ver_prova_desafio` o devolve (null: código que não existe). */
+export async function verDesafioProva(id: string): Promise<ResumoDesafioProva | null> {
+  await espera();
+  const busca = new URLSearchParams(location.search);
+  if (busca.has('x1NaoExiste')) return null;
+  return { id, time_id: timeFalsoDeQuemChamou('flamengo'), apelido: 'Camisa10', pontos: 96, escada: '🟩🟩🟩🟩🟩🟩🟥🟩', resumo: '6 de 8 certas', vencido: busca.has('x1Vencido') };
 }
 
 export async function novaProva(codigo?: string) {

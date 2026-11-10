@@ -1,0 +1,160 @@
+/* Convite do desafio por link (C06, telas/convite.ts) e a placa curta da triagem (telas/triagem.ts).
+   Placa quase preta com filete na cor do time de quem chamou; sem amarelo fora do botão principal. */
+
+.convite {
+  gap: 16px;
+  justify-content: flex-start;
+}
+
+.convite .marca-pequena {
+  text-align: center;
+}
+
+/* A altura é reservada para a placa não empurrar nada quando o resumo chega (medida em 360 px de largura). */
+.placa-convite {
+  gap: 10px;
+  min-height: 160px;
+  line-height: 1.35;
+}
+
+.convite[data-tipo='penaltis'] .placa-convite {
+  min-height: 240px;
+}
+
+.convite[data-tipo='prova'] .placa-convite {
+  min-height: 188px;
+}
+
+.placa-convite p {
+  margin: 0;
+}
+
+.placa-convite .rotulo {
+  color: var(--texto-suave);
+}
+
+.placa-convite .convite-texto {
+  font-size: 17px;
+}
+
+.placa-convite .convite-como {
+  font-size: 15px;
+  color: var(--texto-suave);
+}
+
+.placa-convite .convite-aviso {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+/* O busto de quem chamou (telas/bustoDoConvite.ts): 40 px, e o texto o contorna. */
+.placa-convite .com-busto,
+.placa-triagem .com-busto {
+  display: flow-root;
+}
+
+.placa-convite .convite-busto,
+.placa-triagem .convite-busto {
+  float: left;
+  width: 40px;
+  height: 40px;
+  margin: 0 10px 4px 0;
+}
+
+.convite-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.convite-joga {
+  text-align: center;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.convite-escolha {
+  text-align: center;
+  font-family: var(--fonte-placar);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+/* As faixas lado a lado, do mesmo peso e nenhuma marcada; uma só ocupa a largura toda. */
+.convite-faixas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.convite-faixas[data-n='1'] {
+  grid-template-columns: 1fr;
+}
+
+/* O card do time (.cartao-time, style.css) em ~92 px: o nome em cima, a linha do toque na faixa da cor 2. */
+.faixa-do-convite {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 92px;
+  min-height: 92px;
+  padding: 0 10px 22px;
+  border-width: 0;
+  cursor: pointer;
+}
+
+.faixa-do-convite .nome-time {
+  font-size: 22px;
+}
+
+.faixa-do-convite .faixa-linha {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 0;
+  height: calc(24% - 3px);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  color: var(--txt2);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.convite-dica {
+  text-align: center;
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.convite .link-feedback {
+  align-self: center;
+}
+
+/* ---------- placa curta da triagem, quando a pessoa vem do convite ---------- */
+.placa-triagem {
+  width: 100%;
+  gap: 0;
+}
+
+.placa-triagem p {
+  margin: 0;
+  line-height: 1.3;
+}
+
+.placa-triagem strong {
+  display: block;
+  font-family: var(--fonte-rotulo);
+  font-size: 17px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.placa-triagem span {
+  font-size: 15px;
+  color: var(--texto-suave);
+}

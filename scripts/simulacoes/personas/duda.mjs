@@ -143,5 +143,41 @@ export default {
       await s.tocar(p.locator('[data-acao="vestiario"]'));
       await esperar(2000);
     });
+
+    // ---- Link de Lances (?l=) sem time: faixa > "Menos de 16" > canvas, sem campo de apelido em lugar nenhum (C06) ----
+    const semApelido = async (onde) => {
+      if (await p.locator('label.campo input').count())
+        s.achado({ regra: 'apelido-no-caminho-do-convite', gravidade: 'bloqueia', tipo: 'regra do jogo.md', oQue: `Apareceu o campo de apelido (label.campo input) em "${onde}" para quem marcou "menos de 16".` });
+    };
+    await s.passo('link de Lances com aparelho novo (convite)', async () => {
+      if (!(await p.evaluate(() => true).catch(() => false))) {
+        p = await s.novaAba();
+        s.usarAba(p);
+      }
+      await p.goto(s.endereco('/?homeFalsa&lancesFalsos'), { waitUntil: 'domcontentloaded' });
+      await p.evaluate(() => localStorage.clear()).catch(() => {});
+      await s.abrir('/?homeFalsa&lancesFalsos&l=abcdefgh', { esperarPor: '[data-faixa-time]', limiteMs: 20000, rotulo: 'link de Lances até as faixas' });
+      if (!(await p.locator('main.tela.convite[data-tipo="lances"]').count())) s.achado({ regra: 'convite-ausente', gravidade: 'atrapalha', tipo: 'erro', oQue: 'O link ?l= não abriu main.tela.convite[data-tipo="lances"].' });
+      await semApelido('convite de Lances');
+    });
+    await s.passo('toca na faixa e cai na triagem', async () => {
+      await s.tocar(p.locator('button[data-faixa-time]').first());
+      await p.getByRole('button', { name: 'Menos de 16' }).waitFor({ state: 'visible', timeout: 15000 });
+      await semApelido('triagem do convite');
+    });
+    await s.passo('triagem: menos de 16 e chega ao canvas dos Lances', async () => {
+      await s.tocar(p.getByRole('button', { name: 'Menos de 16' }));
+      await p.locator('canvas.campo-jogo').waitFor({ state: 'visible', timeout: 30000 });
+      await p.waitForFunction(() => window.__lances?.fase?.() === 'mirar', null, { timeout: 40000 }).catch(() => s.achado({ regra: 'lances-nao-chegou-em-mirar', gravidade: 'atrapalha', tipo: 'erro', oQue: 'Depois da triagem do convite de Lances o canvas não chegou em "mirar".', talvezSimulador: true }));
+      s.medir('toques até o 1º chute no link de Lances (faixa + triagem)', 2, 2);
+      await semApelido('partida dos Lances');
+    });
+    await s.passo('"Outro time" do convite (lista sem campo de apelido)', async () => {
+      await p.evaluate(() => localStorage.clear()).catch(() => {});
+      await s.abrir('/?homeFalsa&lancesFalsos&l=abcdefgh', { esperarPor: '[data-acao="outro-time"]', limiteMs: 20000 });
+      await s.tocar(p.locator('[data-acao="outro-time"]'));
+      await p.locator('.cartao-time[data-id]').first().waitFor({ state: 'visible', timeout: 15000 });
+      await semApelido('lista do "Outro time"');
+    });
   },
 };

@@ -4,6 +4,10 @@
 // ?cenario= escolhe o "Jogar agora": crava (rodada fecha em 5 h sem palpite), dia (ainda não jogou, é o padrão),
 // chutes (2 chutes usados), lances (Time do Dia feito), prova (nada mais conta hoje) ou cravado (tudo feito).
 // meusLancesHoje falso (4 de 10; prova e cravado esgotam as 10; ?semMelhores zera o dia) e ?l=codigo (X1 dos Lances).
+// Tela do convite (?d=, ?l= e ?p=, telas/convite.ts): os três falsos de resumo aceitam os mesmos parâmetros,
+//   &chamouTime=<id>  o time de quem chamou (define as faixas do convite: ele e o rival dele; &chamouTime=outro: sem faixas)
+//   &x1Vencido        o resumo vem com vencido (a placa vira o aviso de 7 dias)
+//   &x1NaoExiste      o resumo vem null (o código não existe)
 
 import { ID_OUTRO, TIMES } from '../dados/times';
 import { bonecoFalsoDeQuemChamou, timeFalsoDeQuemChamou } from './bonecoDeCampoFalso'; // o boneco falso em campo (&boneco=, &semBoneco, &emCampo=0, &chamouBoneco=, &chamouSemBoneco)
@@ -115,9 +119,9 @@ export const meusLancesHoje = (): Promise<LancesHoje | null> => {
 
 // ?l=qualquercodigo: o X1 dos Lances de mentira (o lance é o primeiro do catálogo). ?l=naoexiste não acha nada.
 export async function verDesafioLances(id: string): Promise<ResumoDesafioLances | null> {
-  if (id === 'naoexiste') return espera(null);
+  if (id === 'naoexiste' || params.has('x1NaoExiste')) return espera(null);
   const { LANCES } = await import('../dados/lances');
-  return espera({ id, time_id: timeFalsoDeQuemChamou('flamengo'), apelido: 'Zé da Geral', lance_id: LANCES[0].id, pontos: 96, gols: 3, recriados: 1, faixa: 'dificil', boneco: bonecoFalsoDeQuemChamou() });
+  return espera({ id, time_id: timeFalsoDeQuemChamou('flamengo'), apelido: 'Zé da Geral', lance_id: LANCES[0].id, pontos: 96, gols: 3, recriados: 1, faixa: 'dificil', boneco: bonecoFalsoDeQuemChamou(), vencido: params.has('x1Vencido') });
 }
 
 /** "Meu boneco em campo" do Perfil. &emCampoFalha faz o servidor recusar (confere a volta do interruptor e o aviso). */
