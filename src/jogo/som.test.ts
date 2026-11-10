@@ -2,7 +2,19 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../estado', () => ({ prefs: { get: () => ({ mudo: true }) } }));
 
-import { APITO, FINAL, latenciaDoSom, somApito, somChute, somLargada, variar } from './som';
+import {
+  APITO,
+  FINAL,
+  latenciaDoSom,
+  preencherRespiro,
+  preencherRuidoRosa,
+  somApito,
+  somChute,
+  somLargada,
+  somTorcida,
+  tamanhoRespiro,
+  variar,
+} from './som';
 import { PADROES } from '../telas/toque';
 
 const DOIS_SEMITONS = 2 ** (-2 / 12);
@@ -27,6 +39,8 @@ describe('mudo', () => {
       somApito(true);
       somLargada();
       somChute();
+      somTorcida('festa');
+      somTorcida('uuuh');
     }).not.toThrow();
   });
   it('sem contexto de áudio a latência é 0', () => {
@@ -50,6 +64,38 @@ describe('apito', () => {
   });
   it('a largada é mais baixa que o apito', () => {
     expect(APITO.volLargada).toBeLessThan(APITO.vol);
+  });
+});
+
+describe('torcida', () => {
+  it('o ruído rosa sai com RMS 0,3 e sem NaN', () => {
+    const d = new Float32Array(48000);
+    preencherRuidoRosa(d);
+    const rms = Math.sqrt(d.reduce((s, x) => s + x * x, 0) / d.length);
+    expect(Math.abs(rms - 0.3)).toBeLessThan(0.01);
+    expect(d.some((x) => Number.isNaN(x))).toBe(false);
+  });
+  it('o respiro fica entre 0,8 e 1 e vale o sorteado em cada x inteiro', () => {
+    const sr = 1000;
+    const sorteios: number[] = [];
+    const sorteio = () => {
+      const r = (sorteios.length * 0.37) % 1;
+      sorteios.push(r);
+      return r;
+    };
+    const d = new Float32Array(tamanhoRespiro(sr));
+    preencherRespiro(d, sr, sorteio);
+    for (const x of d) {
+      expect(x).toBeGreaterThanOrEqual(0.8 - 1e-6);
+      expect(x).toBeLessThanOrEqual(1 + 1e-6);
+    }
+    for (const k of [0, 1, 2, 5]) expect(d[k * 250]).toBeCloseTo(0.8 + 0.2 * sorteios[k], 5);
+  });
+  it('o respiro com sorteio real fica entre 0,8 e 1', () => {
+    const d = new Float32Array(tamanhoRespiro(8000));
+    preencherRespiro(d, 8000);
+    expect(Math.min(...d)).toBeGreaterThanOrEqual(0.8 - 1e-6);
+    expect(Math.max(...d)).toBeLessThanOrEqual(1 + 1e-6);
   });
 });
 

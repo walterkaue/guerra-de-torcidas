@@ -88,23 +88,141 @@ export function somTrave(): void {
   }
 }
 
-/** Barulho de torcida: forte para gol/defesa, curto para "uuuh". */
+/** Ruído rosa (método de Paul Kellet) normalizado para RMS 0,3. `sorteio` devolve 0 a 1 (injetável nos testes). */
+export function preencherRuidoRosa(d: Float32Array, sorteio: () => number = Math.random): void {
+  let b0 = 0;
+  let b1 = 0;
+  let b2 = 0;
+  let b3 = 0;
+  let b4 = 0;
+  let b5 = 0;
+  let b6 = 0;
+  let soma = 0;
+  for (let i = 0; i < d.length; i++) {
+    const w = sorteio() * 2 - 1;
+    b0 = 0.99886 * b0 + w * 0.0555179;
+    b1 = 0.99332 * b1 + w * 0.0750759;
+    b2 = 0.969 * b2 + w * 0.153852;
+    b3 = 0.8665 * b3 + w * 0.3104856;
+    b4 = 0.55 * b4 + w * 0.5329522;
+    b5 = -0.7616 * b5 - w * 0.016898;
+    const v = b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362;
+    b6 = w * 0.115926;
+    d[i] = v;
+    soma += v * v;
+  }
+  const rms = Math.sqrt(soma / d.length);
+  if (rms > 0) for (let i = 0; i < d.length; i++) d[i] = (d[i] * 0.3) / rms;
+}
+
+/** Duração do "ôôô" da torcida, em segundos. */
+export const DUR_UUUH = 1.95;
+
+/** Quantas amostras tem o sinal lento do "ôôô" (o respiro). */
+export function tamanhoRespiro(sampleRate: number): number {
+  return Math.ceil(DUR_UUUH * sampleRate) + 1;
+}
+
+/** Sinal lento: 4 valores sorteados por segundo entre 0,8 e 1, ligados por cosseno. */
+export function preencherRespiro(d: Float32Array, sampleRate: number, sorteio: () => number = Math.random): void {
+  const valores: number[] = [];
+  for (let n = 0; n < Math.ceil(DUR_UUUH * 4) + 2; n++) valores.push(0.8 + 0.2 * sorteio());
+  for (let i = 0; i < d.length; i++) {
+    const x = (i / sampleRate) * 4;
+    const k = Math.floor(x);
+    const f = x - k;
+    const s = (1 - Math.cos(f * Math.PI)) / 2;
+    d[i] = valores[k] * (1 - s) + valores[k + 1] * s;
+  }
+}
+
+const rosas = new WeakMap<AudioContext, AudioBuffer>();
+
+function bufferRosa(a: AudioContext): AudioBuffer {
+  const feito = rosas.get(a);
+  if (feito) return feito;
+  const buf = a.createBuffer(1, Math.floor(a.sampleRate * 4), a.sampleRate);
+  preencherRuidoRosa(buf.getChannelData(0));
+  rosas.set(a, buf);
+  return buf;
+}
+
+/**
+ * Torcida: "festa" (gol, defesa, acerto) é o ruído filtrado em 900 Hz; "uuuh" (erro, gol sofrido) é um
+ * "ôôô" de arquibancada em estéreo que desce de 500 para 340 Hz e respira. Os dois passam pela sala do apito.
+ */
+export function tocarTorcidaEm(a: AudioContext, intensidade: 'festa' | 'uuuh'): void {
+  const t = a.currentTime;
+  const sala = saidaComAmbiente(a);
+  if (intensidade === 'festa') {
+    const src = ruido(a, 1.8);
+    const filtro = a.createBiquadFilter();
+    filtro.type = 'bandpass';
+    filtro.frequency.value = 900;
+    filtro.Q.value = 0.6;
+    const g = a.createGain();
+    g.gain.setValueAtTime(0.001, t);
+    g.gain.exponentialRampToValueAtTime(0.59, t + 0.15);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 1.8);
+    src.connect(filtro).connect(g).connect(sala);
+    src.start(t);
+    return;
+  }
+  // Fonte estéreo: duas fontes de ruído rosa, cada uma também no lado oposto com ganho 0,4.
+  const merger = a.createChannelMerger(2);
+  const rosa = bufferRosa(a);
+  for (const lado of [0, 1]) {
+    const src = a.createBufferSource();
+    src.buffer = rosa;
+    src.loop = true;
+    const cruzado = a.createGain();
+    cruzado.gain.value = 0.4;
+    src.connect(merger, 0, lado);
+    src.connect(cruzado).connect(merger, 0, 1 - lado);
+    src.start(t, Math.random() * 0.9 * rosa.duration);
+    src.stop(t + DUR_UUUH);
+  }
+  // Vogal: três faixas somadas.
+  const resp = a.createGain();
+  const vogais: Array<[number, number, number, number | null, number]> = [
+    [500, 3, 340, 1.3, 1],
+    [950, 4, 720, 1.3, 0.45],
+    [1500, 0.5, 1500, null, 0.12],
+  ];
+  for (const [f0, q, f1, ate, vol] of vogais) {
+    const filtro = a.createBiquadFilter();
+    filtro.type = 'bandpass';
+    filtro.Q.value = q;
+    filtro.frequency.setValueAtTime(f0, t);
+    if (ate !== null) filtro.frequency.exponentialRampToValueAtTime(f1, t + ate);
+    const gv = a.createGain();
+    gv.gain.value = vol;
+    merger.connect(filtro).connect(gv).connect(resp);
+  }
+  // Respiro: o volume sobe e desce sozinho entre 0,8 e 1.
+  resp.gain.value = 0;
+  const lento = a.createBuffer(1, tamanhoRespiro(a.sampleRate), a.sampleRate);
+  preencherRespiro(lento.getChannelData(0), a.sampleRate);
+  const fonteLenta = a.createBufferSource();
+  fonteLenta.buffer = lento;
+  fonteLenta.connect(resp.gain);
+  fonteLenta.start(t);
+  // Envelope e volume.
+  const env = a.createGain();
+  env.gain.setValueAtTime(0.0001, t);
+  env.gain.exponentialRampToValueAtTime(0.7, t + 0.12);
+  env.gain.exponentialRampToValueAtTime(1, t + 0.28);
+  env.gain.exponentialRampToValueAtTime(0.8, t + 0.6);
+  env.gain.exponentialRampToValueAtTime(0.0001, t + 1.9);
+  const volume = a.createGain();
+  volume.gain.value = 0.59;
+  resp.connect(env).connect(volume).connect(sala);
+}
+
+/** Barulho de torcida: a festa (gol, defesa, acerto) ou o "ôôô" que desce (erro, gol sofrido). */
 export function somTorcida(intensidade: 'festa' | 'uuuh'): void {
   const a = audio();
-  if (!a) return;
-  const t = a.currentTime;
-  const dur = intensidade === 'festa' ? 1.8 : 0.9;
-  const src = ruido(a, dur);
-  const filtro = a.createBiquadFilter();
-  filtro.type = 'bandpass';
-  filtro.frequency.value = intensidade === 'festa' ? 900 : 500;
-  filtro.Q.value = 0.6;
-  const g = a.createGain();
-  g.gain.setValueAtTime(0.001, t);
-  g.gain.exponentialRampToValueAtTime(intensidade === 'festa' ? 0.5 : 0.25, t + 0.15);
-  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  src.connect(filtro).connect(g).connect(a.destination);
-  src.start(t);
+  if (a) tocarTorcidaEm(a, intensidade);
 }
 
 /**
