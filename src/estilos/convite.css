@@ -158,3 +158,230 @@
   font-size: 15px;
   color: var(--texto-suave);
 }
+
+/* ---------- fita e telão do desafio dos Lances (telas/fitaDoDesafio.ts, telas/telaoDoDesafio.ts) ---------- */
+/* Também aparecem no resultado do desafio recebido (telas/lances.ts), por isso não dependem da placa do convite. */
+
+/* A fita: 3 casas lado a lado, na ordem das tentativas. Gol em âmbar; o resto, cinza escuro. */
+.fita-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fita-rotulo {
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  overflow-wrap: anywhere;
+}
+
+.fita {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fita > li {
+  display: flex;
+  min-width: 0;
+}
+
+/* Em cima a palavra; embaixo o ícone e os pontos lado a lado (a casa fica baixa: o convite tem de caber na tela). */
+.fita-casa {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-areas:
+    'palavra palavra'
+    'ico pontos';
+  grid-template-columns: auto auto;
+  justify-content: center;
+  align-items: center;
+  column-gap: 6px;
+  row-gap: 1px;
+  padding: 7px 4px 5px;
+  border-radius: var(--raio-p);
+  background: var(--placa-alta);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+.fita-casa.gol {
+  background: rgba(233, 199, 90, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(233, 199, 90, 0.3);
+  color: var(--amarelo);
+}
+
+/* A casa do gol que está passando no telão. */
+.fita-casa.passando {
+  box-shadow: inset 0 0 0 2px var(--amarelo);
+}
+
+.fita-ico {
+  grid-area: ico;
+}
+
+.fita-ico .ico {
+  display: block;
+  font-size: 22px;
+}
+
+.fita-palavra {
+  grid-area: palavra;
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.fita-pontos {
+  grid-area: pontos;
+  font: 400 24px/1.1 var(--fonte-placar);
+}
+
+.convite-nenhum-gol {
+  font-size: 15px;
+  color: var(--texto-suave);
+}
+
+/* O telão: 4:3, gramado listrado pintado em CSS (nada pula quando o desenho chega). O canvas é quadrado e fica
+   alinhado embaixo: corta a arquibancada e deixa o gol inteiro. */
+.telao {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, #04130a, #0d2b18) top / 100% 26% no-repeat,
+    repeating-linear-gradient(180deg, var(--gramado-claro) 0 12%, var(--gramado) 12% 24%);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.telao[data-modo='movimento'] {
+  cursor: pointer;
+}
+
+.telao-canvas {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  aspect-ratio: 10 / 13;
+  display: block;
+}
+
+/* No alto à esquerda: a tarja inclinada (.replay-selo, style.css) com o filete na cor do time; cinza quando nada roda sozinho. */
+.telao-tarja {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  max-width: calc(100% - 66px);
+  pointer-events: none;
+}
+
+.telao-tarja .replay-selo {
+  display: block;
+  padding: 3px 10px;
+  font-size: 15px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.telao[data-modo='parado'] .replay-selo::before,
+.telao[data-modo='sob_demanda'] .replay-selo::before {
+  background: #9aa09b;
+  border-left-color: #5d625f;
+}
+
+/* No alto à direita: um pontinho por gol; o atual em amarelo. */
+.telao-pontos {
+  position: absolute;
+  top: 16px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.telao-pontos i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(245, 245, 240, 0.4);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+}
+
+.telao-pontos i.atual {
+  background: var(--amarelo);
+}
+
+/* Embaixo à esquerda: a legenda em amarelo sobre placa quase preta. */
+.telao-legenda {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 2;
+  max-width: calc(100% - 20px);
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: rgba(10, 19, 14, 0.92);
+  color: var(--amarelo);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.2;
+  pointer-events: none;
+}
+
+.telao[data-botao] .telao-legenda {
+  max-width: calc(100% - 144px);
+}
+
+/* Embaixo à direita: pílula quase preta, 44 px ("Ver de novo", "Próximo gol", "Ver os gols"). */
+.telao-botao {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 3;
+  min-height: 44px;
+  max-width: 130px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 22px;
+  background: #0a0a0a;
+  box-shadow: 0 0 0 1px rgba(245, 245, 240, 0.28);
+  color: var(--cal);
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+
+.telao-botao:active {
+  transform: scale(0.95);
+}
+
+
+/* Celular baixo (360 × 740 e parecidos): o telão baixa para 16:10, sempre com o gol alinhado embaixo, para as duas
+   faixas de time e o "Outro time" caberem sem rolar. */
+@media (max-height: 780px) {
+  .telao {
+    aspect-ratio: 16 / 10;
+  }
+}

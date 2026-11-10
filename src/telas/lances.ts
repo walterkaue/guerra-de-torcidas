@@ -87,12 +87,12 @@ import { normalizarCobranca, type GestoCobranca } from '../jogo/penaltis';
 import { destravarSom, somApito, somChute, somTorcida } from '../jogo/som';
 import { etiquetasDoLance, eventoDoLance } from '../narrador/lance';
 import { criarNarrador } from '../narrador/sessao';
-import { SELECAO, TORCIDA_SELECAO, coresDoAdversario, roupaDoBatedorGoleiro } from '../dados/coresDosLances';
+import { TORCIDA_SELECAO } from '../dados/coresDosLances';
 import { contraAdversario } from '../dados/adversarios';
 import { DISPUTAS } from '../dados/disputas';
 import { chamadaDaDisputa, type Disputa } from '../jogo/disputas';
-import { bonecoDaPessoaEmCampo } from './bonecoEmCampoCena';
-import { criarBoneco, novaPose, type Boneco, poseChute, poseComemora, poseLamenta, poseParado, sortearAparencia, uniformesDaPartida } from './bonecos';
+import { clubeDoLance, distanciaDoLance, duracaoDoVoo, elencoDoLance, posicaoDoGoleiro as posicaoDoGoleiroDoLance } from './elencoDoLance';
+import { novaPose, poseChute, poseComemora, poseLamenta, poseParado } from './bonecos';
 import { ENQUADRAMENTOS } from './camera';
 import { facil, limitar01 } from './cena';
 import { criarCena3d } from './cena3d';
@@ -115,6 +115,10 @@ import { dicasDoAparelho, mostrarDica, tirarDica } from './dicas';
 import { abrirRegras } from './regras';
 import { cardDoAlbum, criarMedalhasDoAlbum, favoritosDoAparelho, htmlFiltrosDoAlbum, marcarFavorito } from './albumLances';
 import { abrirFicha, type NumerosDoLance } from './fichaLance';
+import { htmlDaFita, htmlDoTelao, modoNesteAparelho } from './fitaDoDesafio';
+import { folhaNoHistorico } from './folhaNoHistorico';
+import { botaoVerOsGols, quemChamou, rotuloDaFitaDele, sequenciaDeGols } from '../jogo/golsDoDesafio';
+import type { TentativaDoDesafio } from '../jogo/tentativasDoDesafio';
 import { mostrarRumoDasMedalhas } from './rumoMedalhas';
 import type { FiltroAlbum } from '../jogo/lancesTextos';
 import { linkDoItem, textoDaDisputaParaMandar, textoDoLanceParaMandar } from '../jogo/mandarLance';
@@ -141,42 +145,19 @@ function tirarCodigoDoEndereco(): void {
   }
 }
 
+export { clubeDoLance };
+
 export type AbaLances = 'penaltis' | 'falta' | 'finalizacao';
 
 const ROTULO_FAIXA: Record<Faixa, string> = { facil: 'Fácil', media: 'Média', dificil: 'Difícil', craque: 'Craque' };
 
 const DUR_BATIDA = 190;
-/** Velocidade do desenho da bola: metros por milissegundo (o voo de uma falta de 25 m leva ~1 s). */
-const METROS_POR_MS = 0.026;
 const DUR_PULO = 420;
 const DUR_PAUSA = 1800;
 /** Depois de um gol, o replay de TV entra antes (a frase do narrador continua por cima). */
 const DUR_ANTES_DO_REPLAY = 1100;
 /** "A jogada" no cara a cara: a bola chega até o pé antes do chute. */
 const DUR_CHEGADA = 1300;
-
-/** Nome e cores do clube de um lance (id de times.ts ou "selecao"). */
-export function clubeDoLance(clube: string): { nome: string; cores: readonly [string, string] } {
-  if (clube === 'selecao') return SELECAO;
-  return timePorId(clube) ?? SELECAO;
-}
-
-const distanciaDoLance = (l: Lance) => Math.hypot(l.bola.x, l.bola.z);
-
-/**
- * Batedor nas cores do clube do lance, barreira e goleiro nas do adversário de verdade. Com "Meu boneco em campo"
- * ligado, o batedor é o boneco da pessoa (na roupa do lance: a do clube, ou a de goleiro no Gol 100); goleiro e barreira
- * continuam sorteados. Só visual.
- */
-function elencoDoLance(l: Lance): { batedor: Boneco; goleiro: Boneco; barreira: Boneco[] } {
-  const u = uniformesDaPartida(clubeDoLance(l.clube).cores, coresDoAdversario(l.adversario), 0);
-  const roupaDoBatedor = roupaDoBatedorGoleiro(l.id) ?? u.jogador;
-  return {
-    batedor: bonecoDaPessoaEmCampo(roupaDoBatedor) ?? criarBoneco(sortearAparencia(), roupaDoBatedor, false),
-    goleiro: criarBoneco(sortearAparencia(), u.goleiroAdversario, true),
-    barreira: Array.from({ length: 6 }, () => criarBoneco(sortearAparencia(), u.adversario, true)),
-  };
-}
 
 /** Uma linha do que o lance pede: tipo, distância, lado e barreira ou goleiro. */
 export function situacaoDoLance(l: Lance): string {
@@ -208,7 +189,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
   let fichaDaRotaAberta = false;
   let telaViva = true;
   /** Quem chamou o X1 recebido (o `boneco` e o time do resumo), para o busto no placar do resultado. */
-  let quemChamouX1: { boneco: unknown; timeId: string } | null = null;
+  let quemChamouX1: { boneco: unknown; timeId: string; apelido: string | null; tentativas: TentativaDoDesafio[] | null } | null = null;
   let limparJogo: (() => void) | null = null;
   let filtroAlbum: FiltroAlbum = 'todos';
   const medalhasDoAlbum = criarMedalhasDoAlbum(() => servidor().then((s) => s.minhasMedalhas()));
@@ -492,8 +473,61 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       hubUnico();
       return;
     }
-    quemChamouX1 = { boneco: resumo.boneco ?? null, timeId: resumo.time_id };
+    quemChamouX1 = { boneco: resumo.boneco ?? null, timeId: resumo.time_id, apelido: resumo.apelido, tentativas: resumo.tentativas ?? null };
     jogo([lance, lance, lance], { x1: codigo, alvoX1: { apelido: resumo.apelido, pontos: resumo.pontos } });
+  }
+
+  /**
+   * Os gols de quem chamou, numa folha de baixo (resultado do desafio recebido): o mesmo telão e a mesma fita do convite.
+   * Entra no histórico do navegador (o voltar fecha a folha) e, ao fechar, o telão para.
+   */
+  function abrirOsGolsDele(lance: Lance, tentativas: TentativaDoDesafio[], nome: string | null, codigo: string): void {
+    const sequencia = sequenciaDeGols(tentativas);
+    if (!sequencia.length) return;
+    const dele = timePorId(quemChamouX1?.timeId);
+    const d = document.createElement('dialog');
+    d.className = 'ficha-lance';
+    d.setAttribute('style', estilo((dele ?? time).cores));
+    d.setAttribute('aria-labelledby', 'gols-dele-titulo');
+    d.innerHTML = `<div class="ficha-corpo">
+        <div class="ficha-topo">
+          <span class="ficha-meta">${esc(lance.titulo)}</span>
+          <button type="button" class="ficha-fechar" data-fechar aria-label="Fechar">✕</button>
+        </div>
+        <h2 id="gols-dele-titulo" class="ficha-titulo">Os gols de ${esc(quemChamou(nome))}</h2>
+        ${htmlDoTelao(sequencia, modoNesteAparelho(false))}
+        ${htmlDaFita(tentativas)}
+      </div>`;
+    root.append(d);
+    let parar: (() => void) | null = null;
+    const folha = folhaNoHistorico(() => {
+      parar?.();
+      if (d.open) d.close();
+      d.remove();
+    });
+    d.addEventListener('close', () => folha.fechar());
+    d.addEventListener('click', (e) => {
+      if (e.target === d) folha.fechar();
+    });
+    d.querySelector('[data-fechar]')!.addEventListener('click', () => folha.fechar());
+    d.showModal();
+    void import('./telaoDoDesafio')
+      .then((m) => {
+        const figura = d.querySelector<HTMLElement>('[data-telao]');
+        if (!figura || !d.isConnected) return;
+        parar = m.iniciarTelao({
+          figura,
+          lance,
+          tentativas,
+          codigo,
+          quem: { apelido: nome, boneco: quemChamouX1?.boneco ?? null, timeId: quemChamouX1?.timeId },
+          fita: d.querySelector('[data-fita]'),
+          modo: modoNesteAparelho(false),
+        }).parar;
+      })
+      .catch(() => {
+        // Sem o desenho (rede caiu): o telão fica só com o gramado e a fita conta o que houve.
+      });
   }
 
   // ---------- resultado ----------
@@ -504,6 +538,8 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     fim: FechamentoLances | null,
     aviso: string | null,
     x1Recebido: string | null = null,
+    // As 3 tentativas de quem chamou, do resumo que comecarX1 leu (em desenvolvimento, __lancesResultado aceita este 7º parâmetro).
+    tentativasDele: TentativaDoDesafio[] | null = quemChamouX1?.tentativas ?? null,
   ): void {
     limparJogo?.();
     limparJogo = null;
@@ -543,6 +579,17 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
         ? escolherFrase('desafio_vitoria', { ...contextoDoTime(time, apelido), desafiante: cmp.desafiante ?? 'quem te desafiou' }, Math.random)?.texto
         : undefined;
     const fraseX1 = cmp ? (doNarrador ?? fraseNeutraDoX1(cmp.venceu)) : null;
+    // Quem chamou: as duas fitas (a sua e a dele) e o botão que abre os gols dele, só com as tentativas dele (servidor novo).
+    const nomeDele = cmp?.desafiante ?? quemChamouX1?.apelido ?? null;
+    const golsDele = sequenciaDeGols(tentativasDele);
+    const fitas =
+      cmp && tentativasDele
+        ? `<div class="duelo-fitas">
+            ${htmlDaFita(resultados, 'Você')}
+            ${htmlDaFita(tentativasDele, rotuloDaFitaDele(nomeDele))}
+            ${golsDele.length ? `<button type="button" class="botao-linha" data-acao="gols-dele">${esc(botaoVerOsGols(nomeDele))}</button>` : ''}
+          </div>`
+        : '';
     const duelo = cmp
       ? (() => {
           const p = placarDoX1(pontos, cmp);
@@ -552,7 +599,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
               <em>x</em>
               <div><span data-nome-duelo="outro">${esc(p.nomeDoOutro)}</span><strong>${p.outro}</strong></div>
               <p class="adesivo">${esc(fraseX1 ?? '')}</p>
-            </div>`,
+            </div>${fitas}`,
             { titulo: 'Desafio', filete: true },
           );
         })()
@@ -628,6 +675,9 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     if (cmp) void import('./bustosDoDuelo').then((m) => m.bustosDoDuelo(root, quemChamouX1?.boneco, quemChamouX1?.timeId));
     contar(root.querySelector<HTMLElement>('[data-contador]'), pontos);
     root.querySelector('[data-acao="album"]')!.addEventListener('click', hubUnico);
+    root.querySelector('[data-acao="gols-dele"]')?.addEventListener('click', () => {
+      if (tentativasDele) abrirOsGolsDele(lances[0], tentativasDele, nomeDele, x1Recebido ?? 'desafio');
+    });
 
     // XP da carreira e posição: só quando o servidor fechou a partida (o XP sai de lá).
     const carreira = fim
@@ -884,14 +934,8 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     }
 
     const atual = () => lances[indice];
-    /** Goleiro antes do chute: no lado sorteado (falta) ou adiantado na reta da bola (cara a cara). */
-    function posicaoDoGoleiro(x0: number): { x: number; z: number } {
-      const l = atual();
-      const d = distanciaDoLance(l);
-      const saida = l.goleiroSaida ?? 0.3;
-      const gx = x0 * 3.66;
-      return { x: gx + (l.bola.x - gx) * (saida / d), z: l.bola.z * (saida / d) };
-    }
+    /** Goleiro antes do chute (a conta é a de telas/elencoDoLance.ts, a mesma do telão do desafio). */
+    const posicaoDoGoleiro = (x0: number): { x: number; z: number } => posicaoDoGoleiroDoLance(atual(), x0);
 
     function narrar(texto: string | null, sub = ''): void {
       if (!texto && !sub) return;
@@ -958,8 +1002,7 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     function comecarChute(r: ResultadoLance, gq: GestoCobranca, l: Lance, esperaMs: number): void {
       const em = caminhoDoLance(l, gq, r);
       // Duração pelo tamanho do caminho (cavadinha e bola fraca, mais devagar).
-      const dist = Math.hypot(em(r.tFim).x - l.bola.x, em(r.tFim).z - l.bola.z);
-      const dur = Math.max(450, (dist / METROS_POR_MS) * (r.cavadinha || gq.forca < 32 ? 1.8 : 1));
+      const dur = duracaoDoVoo(l.bola, em(r.tFim), r.cavadinha, gq.forca);
       fase = { tipo: 'chute', inicio: relogio() - Math.min(esperaMs, DUR_BATIDA), r, em, dur };
       instruir('');
       elJogada.hidden = true;

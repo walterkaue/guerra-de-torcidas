@@ -4,6 +4,9 @@
 // 1 toque. As regras e os textos são puros (jogo/conviteDesafio.ts); aqui só tem DOM, pedido ao servidor e funil.
 // Em desenvolvimento, usa as mesmas fontes falsas da Home de antes (?penaltiFalso ou ?homeFalsa para ?d=, ?homeFalsa
 // ou ?lancesFalsos para ?l=, ?provaFalsa para ?p=; veja o comentário do topo de cada uma em src/dev).
+// Nos Lances, a placa ganha a fita (3 casas) e o telão com os gols de quem chamou (docs/jogos/lances.md): o HTML e o
+// gramado em CSS entram junto com a placa (telas/fitaDoDesafio.ts) e o desenho vem por import() depois do primeiro
+// quadro do convite, para o caminho do link não pesar (E01). Em desenvolvimento, &semMovimento força o modo parado.
 
 import '../estilos/convite.css';
 import { esc, irPara, x1DoLink, type Rota } from '../app';
@@ -31,7 +34,10 @@ import {
   type TipoConvite,
 } from '../jogo/conviteDesafio';
 import { chamadaDaDisputa, type Disputa } from '../jogo/disputas';
+import { linhaDosGolsContinuam, linhaNenhumGol, sequenciaDeGols, type ModoDoTelao } from '../jogo/golsDoDesafio';
 import { textoDoConviteLances, tituloDoConviteLances } from '../jogo/home';
+import type { Faixa, Lance } from '../jogo/lances';
+import type { TentativaDoDesafio } from '../jogo/tentativasDoDesafio';
 import {
   verDesafio,
   verDesafioLances,
@@ -44,6 +50,7 @@ import { contar, etapa } from '../servidor/funil';
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { bustoDoConvite } from './bustoDoConvite';
 import { guardarDesafioAberto } from './desafioAberto';
+import { htmlDaFita, htmlDoTelao, modoNesteAparelho } from './fitaDoDesafio';
 import { ajustarNomesDeTime } from './nomesDeTime';
 import { conviteResolvido } from './primeiraTela';
 
@@ -79,6 +86,18 @@ function limparEndereco(): void {
 
 const pelasCores = (t: Time | undefined): string => (t ? `--c1:${t.cores[0]};--c2:${t.cores[1]}` : '');
 
+/** O telão não baixa de uma fração da largura: abaixo disso o travessão sai do quadro. */
+const ALTURA_MINIMA_DO_TELAO = 0.36;
+
+/** Depois do primeiro quadro pintado e com o navegador ocioso (teto de ~300 ms; sem requestIdleCallback, um pequeno atraso). */
+function quandoOcioso(fn: () => void): void {
+  requestAnimationFrame(() => {
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(fn, { timeout: 300 });
+    else setTimeout(fn, 150);
+  });
+}
+
+
 /** A faixa de time: o card do time (cor 1, faixa da cor 2 embaixo, filete da 3ª) com a linha que diz o que o toque faz. */
 function faixaDoTime(t: Time): string {
   const estilo = `--c1:${t.cores[0]};--c2:${t.cores[1]};--c3:${t.cor3 ?? t.cores[1]};--txt:${corDeTexto(t.cores[0])};--txt2:${corDeTexto(t.cores[1])}`;
@@ -92,6 +111,10 @@ function faixaDoTime(t: Time): string {
 /** O desafio já aberto: o que a placa mostra e o que as faixas e a triagem vão precisar. */
 interface Aberto {
   html: string;
+  /** O que a placa mostra depois do aviso quando o desafio está vencido (Lances com os gols de quem chamou). */
+  htmlVencido?: string;
+  /** O telão dos gols de quem chamou (Lances, com pelo menos 1 gol e o lance no catálogo). */
+  telao?: { lance: Lance; tentativas: TentativaDoDesafio[]; quem: { apelido: string | null; boneco: unknown; timeId: string }; modo: ModoDoTelao };
   timeDeQuemChamou: Time | undefined;
   faixas: Time[];
   boneco: unknown;
@@ -107,6 +130,7 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
   let situacao: SituacaoDoConvite = 'buscando';
   let aberto: Aberto | null = null;
   let saiu = false;
+  let telao: { parar(): void } | null = null;
   // Os catálogos continuam fora do bundle inicial: começam a baixar junto com o resumo.
   const catalogoDisputas = tipo === 'penaltis' ? import('../dados/disputas').catch(() => null) : null;
   const catalogoLances = tipo === 'lances' ? import('../dados/lances').catch(() => null) : null;
@@ -129,6 +153,9 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
     let extra = '';
     let como = '';
     let disputa: Disputa | undefined;
+    let gols = '';
+    let aVerOsGols: Aberto['telao'];
+    let temGol = false;
     if (tipo === 'penaltis') {
       const p = d as ResumoDesafio;
       texto = textoDoConvitePenaltis({ apelido: p.apelido, time_id: p.time_id, pontos: p.pontos, gols_jogador: p.gols_jogador, gols_maquina: p.gols_maquina });
@@ -138,9 +165,27 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
       como = COMO_PENALTIS;
     } else if (tipo === 'lances') {
       const l = d as ResumoDesafioLances;
-      const titulo = (await catalogoLances)?.LANCES.find((x) => x.id === l.lance_id)?.titulo ?? null;
+      const lance = (await catalogoLances)?.LANCES.find((x) => x.id === l.lance_id);
+      const titulo = lance?.titulo ?? null;
       rotulo = tituloDoConviteLances(l.apelido);
       texto = textoDoConviteLances({ quem: l.apelido, time: nomeDoTime, pontos: l.pontos, titulo });
+      // Os gols de quem chamou (servidor novo, partida com as 3 tentativas): telão (se houver gol) e fita; sem gol, a linha da faixa.
+      const tentativas = l.tentativas ?? null;
+      if (tentativas) {
+        const sequencia = sequenciaDeGols(tentativas);
+        temGol = sequencia.length > 0;
+        const modo = modoNesteAparelho(true);
+        if (lance && temGol) {
+          gols += htmlDoTelao(sequencia, modo);
+          aVerOsGols = { lance, tentativas, quem: { apelido: l.apelido, boneco: l.boneco ?? null, timeId: l.time_id }, modo };
+        }
+        gols += htmlDaFita(tentativas);
+        if (!temGol) {
+          // Os pontos do gol na faixa vêm da tabela do motor, que só se baixa neste caso (sem gol).
+          const pontosDoGol = await import('../jogo/lances').then((m) => m.TABELA_LANCES_UNIFICADA.faixa[l.faixa as Faixa]).catch(() => null);
+          gols += `<p class="convite-nenhum-gol">${esc(linhaNenhumGol(l.faixa, pontosDoGol))}</p>`;
+        }
+      }
     } else {
       const p = d as ResumoDesafioProva;
       texto = textoDoConviteProva({ apelido: p.apelido, time_id: p.time_id, pontos: p.pontos, resumo: p.resumo });
@@ -151,7 +196,10 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
       html: `<p class="rotulo">${esc(rotulo)}</p>
         <p class="convite-texto">${esc(texto)}</p>
         ${extra}
-        ${como ? `<p class="convite-como">${esc(como)}</p>` : ''}`,
+        ${como ? `<p class="convite-como">${esc(como)}</p>` : ''}
+        ${gols}`,
+      htmlVencido: gols ? `${temGol ? `<p class="convite-texto">${esc(linhaDosGolsContinuam(d.apelido))}</p>` : ''}${gols}` : undefined,
+      telao: aVerOsGols,
       timeDeQuemChamou: t,
       faixas: faixasDoConvite(d.time_id),
       boneco: 'boneco' in d ? d.boneco : undefined,
@@ -161,14 +209,15 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
 
   function pintarPlaca(): void {
     elPlaca.dataset.situacao = situacao;
-    elPlaca.setAttribute('style', situacao === 'aberto' ? pelasCores(aberto?.timeDeQuemChamou) : '');
+    const comAsCores = situacao === 'aberto' || (situacao === 'vencido' && !!aberto?.htmlVencido);
+    elPlaca.setAttribute('style', comAsCores ? pelasCores(aberto?.timeDeQuemChamou) : '');
     if (situacao === 'buscando') {
       elPlaca.innerHTML = '<p class="rotulo">Te desafiaram</p><p class="convite-texto">Buscando o desafio…</p>';
     } else if (situacao === 'aberto' && aberto) {
       elPlaca.innerHTML = aberto.html;
       bustoDoConvite(elPlaca.querySelector<HTMLElement>('.convite-texto'), aberto.boneco, aberto.timeDeQuemChamou?.cores);
     } else {
-      elPlaca.innerHTML = `<p class="convite-aviso">${esc(avisoDoConvite(situacao) ?? '')}</p>`;
+      elPlaca.innerHTML = `<p class="convite-aviso">${esc(avisoDoConvite(situacao) ?? '')}</p>${situacao === 'vencido' ? (aberto?.htmlVencido ?? '') : ''}`;
     }
   }
 
@@ -197,12 +246,71 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
     if (novo && (a.faixas || a.escolher)) etapa({ tipo: 'escolha_time', x1: x1DoLink() });
   }
 
+  /**
+   * O telão nunca empurra as faixas de time nem o "Outro time" para fora da tela: se faltar espaço (celular baixo, fonte do
+   * sistema grande), ele baixa, até um mínimo em que o gol continua inteiro (o canvas fica alinhado embaixo).
+   */
+  function caberNaTela(): void {
+    const figura = elPlaca.querySelector<HTMLElement>('[data-telao]');
+    if (!figura) return;
+    figura.style.removeProperty('height');
+    figura.style.removeProperty('aspect-ratio');
+    const ultimo = [...elAcoes.querySelectorAll<HTMLElement>('[data-acao="outro-time"], [data-acao="escolher-time"], [data-acao="encarar"], [data-acao="ir-inicio"]')].pop();
+    if (!ultimo) return;
+    const falta = ultimo.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+    if (falta <= 0) return;
+    const { width, height } = figura.getBoundingClientRect();
+    const nova = Math.max(Math.round(width * ALTURA_MINIMA_DO_TELAO), Math.floor(height - falta));
+    if (nova < height) {
+      figura.style.aspectRatio = 'auto';
+      figura.style.height = `${nova}px`;
+    }
+  }
+  window.addEventListener('resize', caberNaTela);
+  void document.fonts?.ready.then(caberNaTela);
+
   function pintar(): void {
     pintarPlaca();
     pintarAcoes();
+    caberNaTela();
+  }
+
+  /** O desenho do telão vem depois do convite pintado e resolvido (E01); com economia de dados, só no toque. */
+  function agendarTelao(): void {
+    const t = aberto?.telao;
+    const figura = elPlaca.querySelector<HTMLElement>('[data-telao]');
+    if (!t || !figura || saiu || (situacao !== 'aberto' && situacao !== 'vencido')) return;
+    let carregando = false;
+    const iniciar = (): void => {
+      if (carregando || saiu || !figura.isConnected) return;
+      carregando = true;
+      void import('./telaoDoDesafio')
+        .then((m) => {
+          if (saiu || !figura.isConnected) return;
+          telao = m.iniciarTelao({
+            figura,
+            lance: t.lance,
+            tentativas: t.tentativas,
+            codigo,
+            quem: t.quem,
+            fita: elPlaca.querySelector('[data-fita]'),
+            modo: t.modo,
+            aoVerOPrimeiroGol: () => contar({ ev: 'viu_gols', tipo: 'x1_lances', x1: codigo }),
+          });
+        })
+        .catch(() => {
+          // Sem o desenho (rede caiu): com o telão que ia rodar sozinho, some; sob demanda, o botão deixa tentar de novo.
+          carregando = false;
+          if (t.modo !== 'sob_demanda') figura.hidden = true;
+        });
+    };
+    if (t.modo === 'sob_demanda') figura.querySelector('[data-telao-botao]')?.addEventListener('click', iniciar);
+    else quandoOcioso(iniciar);
   }
 
   function buscar(): void {
+    telao?.parar();
+    telao = null;
     situacao = 'buscando';
     aberto = null;
     pintar();
@@ -215,6 +323,11 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
           if (saiu) return;
           aberto = a;
           guardarDesafioAberto({ tipo, codigo, apelido: r.apelido, pontos: r.pontos, timeId: r.time_id, boneco: a.boneco });
+        } else if (s === 'vencido' && r && tipo === 'lances' && (r as ResumoDesafioLances).tentativas) {
+          // Vencido: o aviso fica e os gols continuam aqui. Não guarda o desafio como aberto nem oferece as faixas.
+          const a = await montar(r);
+          if (saiu) return;
+          aberto = a;
         }
         situacao = s;
         pintar();
@@ -224,7 +337,10 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
         situacao = 'sem_rede';
         pintar();
       })
-      .finally(conviteResolvido);
+      .finally(() => {
+        conviteResolvido();
+        agendarTelao();
+      });
   }
 
   // Um aceite só: o 2º toque rápido (a troca de tela é adiada pela transição) não conta de novo nem troca de tela outra vez.
@@ -279,6 +395,9 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
 
   return () => {
     saiu = true;
+    telao?.parar();
+    telao = null;
+    window.removeEventListener('resize', caberNaTela);
     // Saiu antes de o resumo chegar (rede pendurada): o resto da Home não precisa mais esperar o convite.
     conviteResolvido();
   };

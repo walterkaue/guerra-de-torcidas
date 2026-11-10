@@ -11,7 +11,8 @@
 //   prova-desafio   Prova com desafio gerado
 //   prova-recebido  Prova de um desafio recebido e perdido (Jogo de volta)
 //   lances-vitoria  Lances com 2 gols, prata nova e desafio gerado (junte &lancesFalsos)
-//   lances-recebido desafio recebido e vencido nos Lances: sem código, volta o "Mandar no grupo" com o card
+//   lances-recebido desafio recebido e vencido nos Lances: sem código, volta o "Mandar no grupo" com o card; na placa
+//                   "Desafio", as duas fitas e "Ver os gols" (tentativas de src/dev/tentativasFalsas.ts; &x1SemGols, &x1SemTentativas)
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { irPara, type DadosResultado } from '../app';
@@ -22,6 +23,8 @@ import type { ResultadoLance } from '../jogo/lances';
 import type { FechamentoLances } from '../jogo/lancesPartida';
 import type { ResultadoCobranca, ResultadoDefesa, ResultadoPartida } from '../jogo/penaltis';
 import type { FimProva } from '../servidor/api';
+import { comTentativasFalsas } from './tentativasFalsas';
+import type { TentativaDoDesafio } from '../jogo/tentativasDoDesafio';
 
 const cobranca = (desfecho: ResultadoCobranca['desfecho'], extra: Partial<ResultadoCobranca> = {}): ResultadoCobranca => ({
   desfecho,
@@ -186,6 +189,11 @@ function lances(cenario: string): void {
   const lance = LANCES.find((l) => l.id === 'palmeiras-2022-falta-da-recopa') ?? LANCES[0];
   const resultados = [tentativa('gol', 42, true), tentativa('barreira', 0), tentativa('gol', 42)];
   const pontos = 84;
+  // Quem chamou: as 3 tentativas falsas, calculadas pelo motor, e os pontos delas.
+  const dele = comTentativasFalsas<{ pontos: number; gols: number; recriados: number; faixa: string; tentativas?: TentativaDoDesafio[] | null }>(
+    { pontos: 62, gols: 0, recriados: 0, faixa: 'dificil' },
+    lance,
+    new URLSearchParams(location.search));
   const fim = {
     resultado: { lances: [], gols: 2, recriados: 1, pontos },
     semana: '2026-11-09',
@@ -199,12 +207,12 @@ function lances(cenario: string): void {
     restantesHoje: 7,
     melhoresDoDia: [pontos, 72, 54],
     desafio: recebido ? null : { codigo: 'abcd2345' },
-    comparacao: recebido ? { desafiante: 'Camisa10', pontosDesafiante: 62, venceu: true } : null,
+    comparacao: recebido ? { desafiante: 'Camisa10', pontosDesafiante: dele.pontos, venceu: pontos > dele.pontos } : null,
   } satisfies FechamentoLances;
   irPara({ tela: 'lances' });
   const chamar = (tentativas: number) => {
     const r = (window as unknown as { __lancesResultado?: (...a: unknown[]) => void }).__lancesResultado;
-    if (r) r([lance, lance, lance], resultados, 'Na gaveta! Que falta, que categoria!', fim, null, recebido ? 'abcdefgh' : null);
+    if (r) r([lance, lance, lance], resultados, 'Na gaveta! Que falta, que categoria!', fim, null, recebido ? 'abcdefgh' : null, recebido ? dele.tentativas : null);
     else if (tentativas > 0) setTimeout(() => chamar(tentativas - 1), 100);
   };
   chamar(50);

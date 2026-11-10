@@ -286,3 +286,24 @@
   text-transform: uppercase;
   color: var(--texto-suave);
 }
+
+/* ---------- resultado do desafio recebido: as duas fitas e o botão que abre os gols de quem chamou ---------- */
+/* As fitas e o telão são os do convite (estilos/convite.css, telas/fitaDoDesafio.ts). */
+.duelo-fitas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-top: var(--e3);
+}
+
+.duelo-fitas .botao-linha {
+  padding: 8px 14px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+/* A folha dos gols de quem chamou (a ficha de baixo, com o telão e a fita). */
+.ficha-lance .ficha-topo .ficha-meta {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
