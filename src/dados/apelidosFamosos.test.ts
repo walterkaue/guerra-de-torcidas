@@ -1,6 +1,7 @@
-// Filtro de apelido contra nomes de jogadores famosos (docs/jogo.md, seção 3, "Apelido").
-// A lista mora na migração; aqui conferimos o formato e que ela não bloqueia palavra comum, nome de cidade
-// nem nome próprio comum. A função do banco (apelido_bloqueado) é reproduzida abaixo, igual à da migração base.
+// Filtro de apelido contra nomes de jogadores famosos (docs/jogo.md, seção 4, "Apelido").
+// A lista mora nas migrações (20261106100000 acrescenta, 20261110100000 marca cada entrada como palavra ou nome); aqui
+// conferimos o formato, a marcação e que ela não bloqueia palavra comum, nome de cidade nem nome próprio comum.
+// A função do banco (apelido_bloqueado) é reproduzida abaixo, igual à da migração do sobrenome.
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -23,8 +24,26 @@ function palavrasDoInsert(sql: string): string[] {
   return [...bloco.slice(0, fim).matchAll(/\('([^']*)'\)/g)].map((m) => m[1]);
 }
 
+const SOBRENOME = lerMigracao('20261110100000_apelido_sobrenome.sql');
+
+type Famoso = 'palavra' | 'nome';
+
+/** Lê os "update ... set famoso = 'x' where palavra in (...)" da migração do sobrenome, ignorando comentários. */
+function famosoDosUpdates(sql: string): [string, Famoso][] {
+  const semComentario = sql
+    .split('\n')
+    .map((l) => l.replace(/--.*$/, ''))
+    .join('\n');
+  const blocos = [
+    ...semComentario.matchAll(/update public\.palavras_bloqueadas set famoso = '(palavra|nome)' where palavra in \(([^)]*)\);/g),
+  ];
+  return blocos.flatMap((b) => [...b[2].matchAll(/'([^']*)'/g)].map((m): [string, Famoso] => [m[1], b[1] as Famoso]));
+}
+
 const NOVAS = palavrasDoInsert(NOVA);
 const ANTIGAS = palavrasDoInsert(BASE);
+const MARCADAS = famosoDosUpdates(SOBRENOME);
+const FAMOSO = new Map(MARCADAS);
 
 // normalizar_apelido: minúsculas, sem acento, números comuns viram letras, o resto vira espaço.
 const MAPA_NUMEROS: Record<string, string> = { '0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't', '@': 'a', $: 's' };
@@ -32,12 +51,20 @@ function normalizar(p: string): string {
   const sem = p.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   return [...sem].map((c) => MAPA_NUMEROS[c] ?? c).join('').replace(/[^a-z ]/g, ' ');
 }
-// apelido_bloqueado: até 4 letras só como palavra inteira; mais longa em qualquer lugar, ignorando espaços.
+// apelido_bloqueado (20261110100000_apelido_sobrenome.sql). Ofensa: até 4 letras só como palavra inteira; mais longa
+// em qualquer lugar, ignorando espaços. Jogador 'nome': em qualquer lugar, ignorando espaços. Jogador 'palavra': só
+// quando o apelido inteiro, sem espaços (com ou sem os números), é a palavra.
 function bloqueado(apelido: string, lista: readonly string[]): boolean {
   const texto = normalizar(apelido);
   const comEspacos = ' ' + texto.replace(/ +/g, ' ') + ' ';
-  const semEspacos = texto.replace(/ /g, '');
-  return lista.some((b) => (b.length <= 4 ? comEspacos.includes(' ' + b + ' ') : semEspacos.includes(b)));
+  const junto = texto.replace(/ /g, '');
+  const juntoSemNumero = normalizar(apelido.replace(/[0-9]/g, '')).replace(/ /g, '');
+  return lista.some((b) => {
+    const f = FAMOSO.get(b);
+    if (f === 'palavra') return b === junto || b === juntoSemNumero;
+    if (f === 'nome') return junto.includes(b);
+    return b.length <= 4 ? comEspacos.includes(' ' + b + ' ') : junto.includes(b);
+  });
 }
 
 const TUDO = [...ANTIGAS, ...NOVAS];
@@ -70,29 +97,67 @@ describe('lista de apelidos de jogadores famosos', () => {
     expect(NOVA).toMatch(/on conflict \(palavra\) do nothing/);
   });
 
-  it('bloqueia apelidos de jogadores famosos, com ou sem espaço, acento ou número no meio', () => {
+  it('toda entrada de jogador tem famoso marcado, uma vez só, e nenhuma ofensa foi marcada', () => {
+    const marcadas = MARCADAS.map(([p]) => p);
+    expect(MARCADAS.length).toBeGreaterThan(200);
+    expect(NOVAS.filter((p) => !FAMOSO.has(p))).toEqual([]);
+    expect(marcadas.filter((p, i) => marcadas.indexOf(p) !== i)).toEqual([]);
+    expect(marcadas.filter((p) => !NOVAS.includes(p))).toEqual([]);
+    expect(ANTIGAS.filter((p) => FAMOSO.has(p))).toEqual([]);
+  });
+
+  it('a coluna famoso só aceita palavra ou nome (null é ofensa)', () => {
+    expect(SOBRENOME).toMatch(/add column famoso text null check \(famoso in \('palavra', 'nome'\)\)/);
+  });
+
+  it('bloqueia o apelido que é só o nome do jogador, com ou sem espaço, acento ou número', () => {
     const deveBloquear = [
       'Neymar',
-      'NEYMAR JR',
       'n3ymar',
       'Pelé',
       'Gabigol',
-      'Gabriel Barbosa',
-      'gabriel  barbosa',
       'g a b i g o l',
-      'Ronaldo Fenômeno',
-      'Cris Garrincha',
       'Zico',
-      'Vini Jr',
-      'Vinícius Júnior',
-      'Rodrygo Goes',
       'Raphinha 10',
       'Arrascaeta',
+      'Ceni',
+      'CENI',
+      'ceni 01',
+      'C3ni',
+      'ceni!!',
+      'Ceni10',
+    ];
+    for (const a of deveBloquear) expect(bloqueado(a, TUDO), a).toBe(true);
+  });
+
+  it('bloqueia o apelido que traz o nome completo do jogador, em qualquer lugar', () => {
+    const deveBloquear = [
+      'NEYMAR JR',
+      'Gabriel Barbosa',
+      'gabriel  barbosa',
+      'Ronaldo Fenômeno',
+      'Vini Jr',
+      'Vinícius Júnior',
       'Lucas Paquetá',
       'Roberto Carlos',
       'Rogério Ceni',
+      'rogerio ceni 10',
+      'RogérioCeni',
+      'rogerioceni10',
+      'Zé Rogério Ceni',
     ];
     for (const a of deveBloquear) expect(bloqueado(a, TUDO), a).toBe(true);
+  });
+
+  it('deixa passar sobrenome ou apelido de jogador junto com outro nome', () => {
+    const passa = ['Kauê Ceni', 'Ceni do Kauê', 'Zé Gabigol', 'Pedro Calleri', 'Ana Zico', 'Cris Garrincha', 'KauêCeni', 'Neymar da Vila'];
+    for (const a of passa) expect(bloqueado(a, TUDO), a).toBe(false);
+  });
+
+  it('palavra ofensa continua barrada colada em outro nome', () => {
+    const ofensas = ANTIGAS.filter((p) => p.length > 4);
+    for (const p of ofensas) expect(bloqueado(`Kaue${p}`, TUDO), p).toBe(true);
+    for (const p of ANTIGAS) expect(bloqueado(`Kauê ${p}`, TUDO), p).toBe(true);
   });
 
   it('deixa passar nome comum de gente comum, sozinho', () => {
@@ -147,9 +212,7 @@ describe('lista de apelidos de jogadores famosos', () => {
       'Mestre Jedi', 'Marcelo', 'Felipe', 'Rodrigo', 'Eduardo', 'Gustavo', 'Henrique', 'Leonardo', 'Murilo',
       'Messias', 'Kendrick Lamar', 'Maria', 'Ana Clara', 'Beatriz', 'Julia', 'Larissa', 'Camila', 'Fernanda',
     ];
-    const barrados = comuns.filter((a) => bloqueado(a, NOVAS));
-    // "Kendrick Lamar" é o único que a lista pode pegar de propósito (o apelido de um jogador famoso termina assim).
-    expect(barrados.filter((a) => a !== 'Kendrick Lamar')).toEqual([]);
+    expect(comuns.filter((a) => bloqueado(a, NOVAS))).toEqual([]);
   });
 
   it('não bloqueia nenhum dos 5.570 municípios', () => {
