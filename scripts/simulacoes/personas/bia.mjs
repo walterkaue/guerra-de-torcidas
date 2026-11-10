@@ -3,6 +3,7 @@
 // do vestiário sem salvar.
 import { SUPABASE_FALSO } from '../nucleo/servidor.mjs';
 import { jogarPartida, jogarLance, esperar, tocarSemCobertura, conferirCampo } from './comum/jogar.mjs';
+import { medidasDaHome } from './comum/home.mjs';
 
 const BASE = 'homeFalsa&lancesFalsos&penaltiFalso&provaFalsa&codigoFalso&galeriaFalsa=cheia&cenario=lances';
 
@@ -50,6 +51,28 @@ export default {
     // ---- Home ----
     await s.passo('Home no Redmi (escuro, economia de dados)', async () => {
       await home();
+    }, { paginaInteira: true });
+
+    // ---- Home sem conexão com o placar: a barra avisa, sem toque, e o Jogar agora não anda ----
+    await s.passo('Home sem conexão com o placar (barra avisa e o Jogar agora fica parado)', async () => {
+      // ?rankingErro faz o placar falhar 120 ms depois de abrir; mede o botão antes e depois do aviso.
+      await s.abrir(`/?${BASE}&rankingErro`, { esperarPor: '[data-acao="jogar-agora"]', limiteMs: 15000, rotulo: 'Home sem rede até o Jogar agora' });
+      const antes = await medidasDaHome(p);
+      await p.locator('[data-barra] .barra-time').first().waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+      await p.waitForFunction(() => /sem conex/i.test(document.querySelector('[data-barra]')?.textContent ?? ''), null, { timeout: 8000 }).catch(() => {});
+      await esperar(1200);
+      const depois = await medidasDaHome(p);
+      const aviso = 'Sem conexão com o placar agora. Dá pra jogar mesmo assim.';
+      const texto = depois.textoDaBarra.replace(/\s+/g, ' ');
+      if (!texto.includes(aviso))
+        s.achado({ regra: 'barra-sem-aviso-de-rede', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: `Com o placar falhando, a barra do time devia dizer "${aviso}" e disse: "${texto}".`, sugestao: 'Ver se o ?rankingErro basta para o aviso (docs/visual.md, Início).', talvezSimulador: true });
+      const tocavel = await p.evaluate(() => { const b = document.querySelector('[data-barra] .barra-time'); return !!b && (b.tagName === 'BUTTON' || b.hasAttribute('data-destino')); });
+      if (tocavel) s.achado({ regra: 'barra-sem-rede-tocavel', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: 'A barra do aviso de rede é um botão; devia ser só um aviso, sem toque.' });
+      const topoAntes = antes.botao?.topo ?? null;
+      const topoDepois = depois.botao?.topo ?? null;
+      if (topoAntes !== null && topoDepois !== null && Math.abs(topoAntes - topoDepois) > 1)
+        s.achado({ regra: 'jogar-agora-andou', gravidade: 'atrapalha', tipo: 'layout', oQue: `O "Jogar agora" andou quando o aviso de rede chegou: topo em y=${topoAntes} antes e y=${topoDepois} depois.`, sugestao: 'A altura da barra é reservada desde a abertura (docs/visual.md, Início).' });
+      s.medir(`topo do Jogar agora: ${topoAntes} antes do aviso, ${topoDepois} depois (barra: "${texto.slice(0, 70)}", tocável: ${tocavel})`, topoDepois ?? 0);
     }, { paginaInteira: true });
 
     // ---- Pênalti, girando o celular no meio da partida ----

@@ -40,6 +40,7 @@ Nada disso tem lembrete automático.
 - **Acessibilidade (G3):** fonte do sistema no máximo na Tabela, Lances, Palpite da Rodada e Time do Dia (nada sai da tela); TalkBack numa linha da Tabela (posição, time e pontos antes do "abrir a Casa").
 - **Cards:** Salvar imagem no Android e no iPhone; o Pôster no Stories e no Quadrado; o card do troféu pela ficha e pela placa da Galeria.
 - **Link do desafio no 4G fraco (E01):** num aparelho limpo, abrir um link de cada tipo (pênaltis, Lances e Prova) pelo WhatsApp: o convite aparece antes do placar e dos palpites, e o "abriu" conta no `npm run metricas`.
+- **Home nova (HOME2):** em 360×740 com a fonte grande, o "Jogar agora" e o 1º card sem rolar; a barra do time no pé da arquibancada (a posição certa e o toque abrindo a aba certa da Tabela), sem encostar na tarja do time nem no "trocar"; em modo avião, o aviso na barra sem nada pular; um aviso só logo abaixo do "Jogar agora".
 - **Primeiro acesso:** num aparelho limpo, a escolha do time como 1ª tela, o "Pular" do aquecimento indo à Home e um link de desafio entrando direto.
 - **Aquecimento:** de ponta a ponta num aparelho limpo; o palpite da estação 5 em Palpites e os +20 XP; não testadas à mão: as dicas de morte súbita, cavadinha pega no meio, altura errada e 3 cobranças sem efeito.
 - **Cidade:** escolher pelo convite do resultado e pelo Perfil; tocar duas vezes no lembrete da Home; a aba Cidades.

@@ -9,6 +9,9 @@ import { fecharAbandonado, limparPendente } from '../jogo/aquecimento';
 import { AVISO_RESENHA } from '../jogo/cravaTela';
 import { podeVerPush } from '../jogo/faixaEtaria';
 import { avisoDosTermos, DATA_DA_VERSAO } from '../jogo/termos';
+import { barraDoTime, TEXTO_SEM_REDE, type BarraDoTime, type LinhaDaSemana } from '../jogo/barraDoTime';
+import { avisoDaVaga, ORDEM_DA_VAGA, type AvisoDaVaga, type AvisosDaAbertura } from '../jogo/vagaDoMomento';
+import type { BlocoDasDivisoes } from '../jogo/temporada';
 import {
   degrausDoRecorde,
   fechaSemPalpite,
@@ -49,10 +52,10 @@ import { diaBrasilia, horaBrasilia, msAteZerarSemana, semanaBrasilia } from '../
 import { sincronizarTorcedor } from '../servidor/torcedor';
 import { htmlBotaoApoio, ligarBotaoApoio } from './apoio';
 import { ligarArquibancada } from './arquibancada';
-import { anotarCarreira } from './carreira';
+import { anotarCarreira, xpGuardado } from './carreira';
 import { depoisDoConvite } from './primeiraTela';
 import * as realCidade from '../servidor/rankingCidades';
-import { acimaNaUltimaVisita, deveLembrarDaCidade, guardarCidadeVista, linhaDaCidadeNaHome, type CidadeVista } from '../jogo/rankingCidades';
+import { acimaNaUltimaVisita, deveLembrarDaCidade, guardarCidadeVista, linhaDaCidadeNaHome, type CidadeVista, type MinhaCidade } from '../jogo/rankingCidades';
 import { fraseDaCidade } from '../narrador/cidade';
 import { seloPre, faixa, numero as numeroBloco, posicaoHtml } from './blocos';
 import { arteEscada, arteGrade, htmlDaCasa, htmlDoLanceDoDia, htmlDosCards } from './cardsJogos';
@@ -78,6 +81,8 @@ const servidorJa = async (): Promise<typeof SERVIDOR> => {
   if (FALSA) return import('../dev/homeFalsa');
   return FALSA_DIA ? { ...SERVIDOR, estadoDoDia: (await import('../dev/diaFalso')).estadoDoDia } : SERVIDOR;
 };
+/** Altura da arquibancada (px de desenho e de tela): com time escolhido ela cresce para abrigar a barra do time. */
+const ALTURA_COM_BARRA = 196;
 /** Em desenvolvimento, ?hora=20 escolhe a luz da arquibancada. */
 const horaDaLuz = () => (import.meta.env.DEV && Number(new URLSearchParams(location.search).get('hora'))) || horaBrasilia();
 
@@ -112,6 +117,22 @@ export function formatarContagem(ms: number): string {
 const numero = (n: number) => Math.round(n).toLocaleString('pt-BR');
 const pelo = (t: Time) => (t.artigo === 'a' ? 'pela' : 'pelo');
 
+/** O "º" fora da Anton (ela o desenha como um zero elevado). */
+const posicaoGrande = (posicao: string): string => (posicao.endsWith('º') ? `${esc(posicao.slice(0, -1))}<i>º</i>` : esc(posicao));
+
+const ROTULO_DA_BARRA = 'Tabela ›';
+const ROTULO_DA_CIDADE = 'Escolher ›';
+
+/** A barra do time por dentro: filete nas duas cores, posição grande, duas linhas e o rótulo à direita. */
+function htmlDaBarra(b: BarraDoTime): string {
+  const filete = '<i class="barra-filete" aria-hidden="true"></i>';
+  const grande = b.grande ? `<strong class="barra-grande" aria-hidden="true">${posicaoGrande(b.grande)}</strong>` : '';
+  const texto = `<span class="barra-texto"><b>${esc(b.linha1)}</b>${b.linha2 ? `<span>${esc(b.linha2)}</span>` : ''}</span>`;
+  if (!b.destino) return `<div class="barra-time" role="status">${filete}${grande}${texto}</div>`;
+  const rotulo = b.destino === 'escolher-cidade' ? ROTULO_DA_CIDADE : ROTULO_DA_BARRA;
+  return `<button class="barra-time" type="button" data-destino="${b.destino}" aria-label="${esc(b.leitor)}">${filete}${grande}${texto}<span class="barra-rotulo" aria-hidden="true">${rotulo}</span></button>`;
+}
+
 /** Tarja da arquibancada: o time de quem joga, ou a pergunta de quem ainda não escolheu. */
 function tarjaDoTime(time: Time | undefined): string {
   if (!time) {
@@ -127,6 +148,43 @@ function tarjaDoTime(time: Time | undefined): string {
         <h2>${esc(time.id === ID_OUTRO ? 'Seu time' : time.nome)}</h2>
       </div>
       <button class="link-trocar" type="button" data-acao="trocar">trocar</button>`;
+}
+
+/**
+ * Seção "Como tá a guerra" (fim da Home): o placar do clássico, as divisões, a cidade, o giro e o Aquecimento, nessa ordem.
+ * Se nenhum bloco aparecer, o rótulo some junto (a regra está no CSS, com :has).
+ */
+function secaoDaGuerra(time: Time | undefined, estiloTime: (t: Time) => string): string {
+  const comTime = time && time.id !== ID_OUTRO ? time : undefined;
+  return `<div class="secao-guerra">
+      <h2 class="secao-rotulo">Como tá a guerra</h2>
+
+      <section class="cabo placa" aria-label="Placar do clássico" hidden>
+        <div class="cabo-duelo" data-duelo hidden>
+          ${faixa('Placar do clássico')}
+          <div class="cabo-nomes">
+            <p><strong data-cabo-v-eu></strong><span data-cabo-eu></span></p>
+            <p><strong data-cabo-v-rival></strong><span data-cabo-rival></span></p>
+          </div>
+          <div class="cabo-corda">
+            <div class="cabo-barra"><span data-cabo-lado="eu"></span><span data-cabo-lado="rival"></span></div>
+            <span class="cabo-no" aria-hidden="true"></span>
+          </div>
+          <p class="adesivo" data-frase-rival hidden></p>
+        </div>
+        <p class="cabo-voce" data-posicao-semana aria-live="polite" hidden></p>
+      </section>
+
+      ${comTime ? `<section class="bloco-divisoes placa" data-divisoes aria-label="Tabela do mês" style="--c1:${comTime.cores[0]};--c2:${comTime.cores[1]}"></section>` : ''}
+
+      <section class="bloco-cidade" data-cidade aria-live="polite" hidden></section>
+
+      <button class="giro faixa-tv" type="button" data-acao="ranking" hidden>
+        <span class="giro-selo rotulo">Giro</span><span class="giro-frase" data-giro></span><span class="so-leitor">. Ver a tabela da semana</span>
+      </button>
+
+      ${prefs.get().aquecimento?.cardNaHome && !prefs.get().aquecimento?.visto ? `<button class="card-aquecimento" type="button" data-acao="aquecimento"${comTime ? ` style="${estiloTime(comTime)}"` : ''}><span class="rotulo">Aquecimento</span><strong>Conheça os outros jogos</strong><small>1 min</small></button>` : ''}
+    </div>`;
 }
 
 export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
@@ -164,52 +222,26 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         <div class="contagem rotulo">${seloPre()}<span>Semana fecha em <strong data-contagem>${formatarContagem(msAteZerarSemana())}</strong></span></div>
       </header>
 
-      ${termos === 'mostrar' ? '<button class="faixa-termos" type="button" data-acao="termos">Os Termos mudaram <span>Ler</span></button>' : ''}
-
       <div data-painel-push></div>
 
-      <section class="arquibancada" style="${estiloTime(dono)}" aria-label="Sua torcida">
+      <section class="arquibancada${time ? ' com-barra' : ''}" style="${estiloTime(dono)}" aria-label="Sua torcida">
         <canvas class="arquibancada-tela" aria-hidden="true"></canvas>
         ${tarjaDoTime(time)}
+        ${time ? '<div class="barra-slot" data-barra></div>' : ''}
       </section>
-
-      <section class="cabo placa" aria-label="Placar do clássico"${time?.id === ID_OUTRO ? '' : ' hidden'}>
-        <div class="cabo-duelo" data-duelo hidden>
-          ${faixa('Placar do clássico')}
-          <div class="cabo-nomes">
-            <p><strong data-cabo-v-eu></strong><span data-cabo-eu></span></p>
-            <p><strong data-cabo-v-rival></strong><span data-cabo-rival></span></p>
-          </div>
-          <div class="cabo-corda">
-            <div class="cabo-barra"><span data-cabo-lado="eu"></span><span data-cabo-lado="rival"></span></div>
-            <span class="cabo-no" aria-hidden="true"></span>
-          </div>
-          <p class="adesivo" data-frase-rival hidden></p>
-        </div>
-        ${time?.id === ID_OUTRO ? '<div class="cabo-nota" data-nota-cidade hidden><p>Escolha sua cidade: é ela que joga por você na tabela.</p><button class="botao botao-sec" type="button" data-acao="escolher-cidade">Escolher minha cidade</button></div>' : ''}
-        <p class="cabo-voce" data-posicao-semana aria-live="polite" hidden></p>
-      </section>
-
-      ${time && time.id !== ID_OUTRO ? `<section class="bloco-divisoes placa" data-divisoes aria-label="Tabela do mês" style="--c1:${time.cores[0]};--c2:${time.cores[1]}"></section>` : ''}
-
-      <section class="bloco-cidade" data-cidade aria-live="polite" hidden></section>
 
       <button class="botao botao-jogar" type="button" data-acao="jogar-agora">Jogar agora<small data-motivo>&nbsp;</small></button>
 
-      <!-- Depois do "Jogar agora": a placa chega tarde e não pode empurrar o botão (J08). -->
-      <section class="bloco-placa-trofeu" data-placa-trofeu hidden></section>
-
-      ${prefs.get().aquecimento?.cardNaHome && !prefs.get().aquecimento?.visto ? `<button class="card-aquecimento" type="button" data-acao="aquecimento"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}><span class="rotulo">Aquecimento</span><strong>Conheça os outros jogos</strong><small>1 min</small></button>` : ''}
+      <!-- A vaga do momento: um aviso por abertura (jogo/vagaDoMomento.ts). Vazia, não ocupa espaço. -->
+      <div class="vaga" data-vaga></div>
 
       <section class="grade-jogos" aria-label="Jogos"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>
         ${htmlDosCards(esc(linhaDosLances(time, LANCES_POR_CLUBE)), linhaLancesUnificados(null, MELHORES_DO_DIA), htmlDoLanceDoDia())}
       </section>
 
-      <button class="giro faixa-tv" type="button" data-acao="ranking" hidden>
-        <span class="giro-selo rotulo">Giro</span><span class="giro-frase" data-giro></span><span class="so-leitor">. Ver a tabela da semana</span>
-      </button>
-
       <div class="casa-secao"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>${htmlDaCasa(esc(tituloDaCasa(time)))}</div>
+
+      ${secaoDaGuerra(time, estiloTime)}
 
       <button class="link-feedback" type="button" data-acao="feedback">${icone('balao')} Pediu VAR? Conta o que aconteceu</button>
       ${htmlBotaoApoio()}
@@ -235,7 +267,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       .catch(() => {});
   }
 
-  const pararArquibancada = ligarArquibancada(root.querySelector('canvas')!, dono.cores, luzDoHorario(horaDaLuz()));
+  const pararArquibancada = ligarArquibancada(root.querySelector('canvas')!, dono.cores, luzDoHorario(horaDaLuz()), time ? ALTURA_COM_BARRA : undefined);
 
   const abrir: Record<JogoDaHome, () => void> = {
     // O card dos Lances abre o hub (Pênaltis, Faltas e Cara a cara).
@@ -275,6 +307,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   );
   root.querySelector('[data-acao="feedback"]')?.addEventListener('click', () => irPara({ tela: 'feedback', de: 'inicio' }));
   root.querySelectorAll('[data-acao="termos"]').forEach((b) => b.addEventListener('click', () => irPara({ tela: 'termos' })));
+  // A faixa dos Termos nasce depois, dentro da vaga do momento: um clique no pai pega a dela também.
+  root.querySelector('[data-vaga]')!.addEventListener('click', (e) => {
+    if ((e.target as Element).closest('.faixa-termos')) irPara({ tela: 'termos' });
+  });
   ligarBotaoApoio(root);
   ligarBarraNavegacao(root);
 
@@ -421,8 +457,6 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       .catch(() => {
         // sem internet: a escada fica apagada
       });
-    // O resultado da próxima partida conta o "+10 XP" a partir daqui.
-    if (!FALSA) void naHome().then(anotarCarreira, () => {});
   }
 
   // ---------- Lance do Dia (14.7) ----------
@@ -454,13 +488,80 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       });
   }
 
+  // ---------- barra do time (no pé da arquibancada) ----------
+  // A altura é reservada desde a abertura: a barra fica vazia até as respostas chegarem e se redesenha a cada uma
+  // (barraDoTime decide; sem contagem regressiva e sem piscar: só troca quando o conteúdo muda).
+  const slotBarra = root.querySelector<HTMLElement>('[data-barra]');
+  let jogou: boolean | undefined = !FALSA && (xpGuardado() ?? 0) > 0 ? true : undefined;
+  let mes: BlocoDasDivisoes | null | undefined;
+  /** A tabela do mês pode levar até 15 s por pedido: com a semana na mão e o mês 2 s atrasado, a barra mostra a semana. */
+  let mesAtrasado = false;
+  let esperaDoMes = 0;
+  let semanaDaBarra: readonly LinhaDaSemana[] | null | undefined;
+  let cidadeDaBarra: MinhaCidade | null | undefined;
+  let falhouRanking = false;
+  let falhouCarreira = false;
+  let falhouCidade = false;
+  let barraPintada = '';
+  function pintarBarra(): void {
+    if (!slotBarra || !time || saiu) return;
+    const b = barraDoTime({
+      time: { id: time.id, nome: time.nome, artigo: time.artigo },
+      semRede: falhouRanking || falhouCarreira || (time.id === ID_OUTRO && falhouCidade),
+      jogou,
+      mes: time.id === ID_OUTRO ? null : mes === undefined && mesAtrasado ? null : mes,
+      semana: semanaDaBarra,
+      cidade: cidadeDaBarra,
+      timePorId: (id) => timePorId(id),
+    });
+    const chave = JSON.stringify(b);
+    if (chave === barraPintada) return;
+    barraPintada = chave;
+    slotBarra.innerHTML = b ? htmlDaBarra(b) : '';
+  }
+  slotBarra?.addEventListener('click', (e) => {
+    const destino = (e.target as Element).closest<HTMLElement>('[data-destino]')?.dataset.destino;
+    if (destino === 'semana') irPara({ tela: 'ranking' });
+    else if (destino === 'temporada') irPara({ tela: 'ranking', aba: 'temporada' });
+    else if (destino === 'cidades') irPara({ tela: 'ranking', aba: 'cidades' });
+    else if (destino === 'escolher-cidade') irPara({ tela: 'cidade', depois: { tela: 'inicio' } });
+  });
+  if (time) {
+    // Já jogou? O XP guardado no aparelho responde na hora; senão, a leitura da carreira (a mesma que anota o XP
+    // para o "+10 XP" do resultado, sem 2º pedido). Falha conta como sem rede.
+    const carreira = FALSA ? import('../dev/homeFalsa').then((m) => m.minhaCarreira()) : naHome().then(anotarCarreira);
+    void carreira
+      .then((c) => {
+        if (saiu) return;
+        if (!c) falhouCarreira = true;
+        else jogou = jogou === true || c.xp > 0;
+      })
+      .catch(() => {
+        falhouCarreira = true;
+      })
+      .finally(pintarBarra);
+    // O mês aberto (só os 20 times): sem mês ou sem tabela, a barra cai para a semana.
+    if (time.id !== ID_OUTRO) {
+      void naHome()
+        .then(() => import('./blocoDivisoes'))
+        .then((m) => m.blocoDoMes(time))
+        .then((b) => {
+          mes = b;
+        })
+        .catch(() => {
+          mes = null;
+        })
+        .finally(pintarBarra);
+    }
+  }
+
   // ---------- ranking ao vivo ----------
   const elCabo = root.querySelector<HTMLElement>('.cabo')!;
   const elDuelo = root.querySelector<HTMLElement>('[data-duelo]')!;
   const elMinha = root.querySelector<HTMLElement>('[data-posicao-semana]')!;
   /** O bloco aparece com o duelo, com a sua posição ou com as duas coisas. */
   const mostrarCabo = () => {
-    if (time?.id !== ID_OUTRO) elCabo.hidden = elDuelo.hidden && elMinha.hidden;
+    elCabo.hidden = elDuelo.hidden && elMinha.hidden;
   };
 
   // ---------- giro da semana ----------
@@ -519,6 +620,14 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   /** `vazia`: o ranking veio vazio e `linhas` é a ordem da tabela, inventada; o bloco das divisões não projeta com ela. */
   function desenhar(linhas: LinhaRanking[], vazia = false): void {
     semanaAoVivo = vazia ? [] : linhas;
+    falhouRanking = false;
+    semanaDaBarra = vazia ? null : linhas;
+    if (mes === undefined && !esperaDoMes)
+      esperaDoMes = window.setTimeout(() => {
+        mesAtrasado = true;
+        pintarBarra();
+      }, 2000);
+    pintarBarra();
     // Um erro no bloco não pode parar o duelo, o giro e a frase (revisão de 07/11/2026).
     if (atualizarDivisoes) {
       try {
@@ -604,10 +713,6 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   // ---------- sua cidade (um bloco só: posição, "Faltam N" ou o lembrete de escolher) ----------
   const elCidade = root.querySelector<HTMLElement>('[data-cidade]')!;
   let lembreteMostrado = false;
-  const notaCidade = root.querySelector<HTMLElement>('[data-nota-cidade]');
-  notaCidade?.querySelector('button')?.addEventListener('click', () => {
-    irPara({ tela: 'cidade', depois: { tela: 'inicio' } });
-  });
   const carregarCidade = () => {
     // Sem time ainda, não cria login só para isso.
     if (!time || lembreteMostrado) return;
@@ -617,6 +722,9 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       .then(async ({ api, minha }) => {
         if (saiu) return;
         if (minha) {
+          cidadeDaBarra = minha;
+          falhouCidade = false;
+          pintarBarra();
           // O rival guardado só vale na mesma semana: de outra semana, não há "SUBIU!".
           const guardado = memoria<CidadeVista>(CHAVE_CIDADE_VISTA);
           const antes = acimaNaUltimaVisita(guardado, semana, minha.codigo);
@@ -626,10 +734,12 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
           elCidade.hidden = false;
           return;
         }
-        // Quem joga por "Outro time" e não tem cidade: o convite fica no lugar da antiga nota (J14), sempre.
-        if (notaCidade) {
-          if (!(await api.sessaoValida()) || saiu) return;
-          notaCidade.hidden = false;
+        // Quem joga por "Outro time" e não tem cidade: o convite mora na barra do time (sempre), não aqui.
+        // Sem sessão válida (encerrada em outro aparelho) também: esta conta não tem cidade, e a barra não fica vazia.
+        if (time.id === ID_OUTRO) {
+          cidadeDaBarra = null;
+          falhouCidade = false;
+          pintarBarra();
           return;
         }
         // Sem cidade: lembrete depois da 1ª partida, no máximo 1 vez por semana.
@@ -644,7 +754,9 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         elCidade.hidden = false;
       })
       .catch(() => {
-        // sem internet: fica sem o bloco
+        // sem internet: fica sem o bloco (e, para "Outro time", a barra diz que está sem conexão)
+        falhouCidade = true;
+        pintarBarra();
       });
   };
   elCidade.addEventListener('click', (e) => {
@@ -665,22 +777,64 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       })), l.length === 0))
       .catch(() => {
         if (saiu) return;
-        elMinha.textContent = 'Sem conexão com o placar agora. Dá pra jogar mesmo assim.';
+        falhouRanking = true;
+        pintarBarra();
+        // Com barra, é ela quem avisa; sem time, o aviso fica no cabo.
+        if (time) return;
+        elMinha.textContent = TEXTO_SEM_REDE;
         elMinha.hidden = false;
         mostrarCabo();
       });
   };
   void carregar();
-  // Uma placa só por abertura: a de fim do mês tem a vez e, sem ela, entra a de "Troféu novo" (telas/placaTemporada.ts).
-  const elPlaca = root.querySelector<HTMLElement>('[data-placa-trofeu]')!;
-  void depoisDoConvite()
-    .then(() => {
+  // ---------- vaga do momento (logo abaixo do "Jogar agora") ----------
+  // Um aviso por abertura, na ordem de ORDEM_DA_VAGA. Cada aviso responde se tem algo para mostrar (falha de rede conta
+  // como não) e só o escolhido é desenhado; os outros esperam a próxima abertura. Quando a central de avisos entrar,
+  // o que sobrar vai para ela em oQueSobrou.
+  const elVaga = root.querySelector<HTMLElement>('[data-vaga]')!;
+  const comPlaca = !!time && time.id !== ID_OUTRO;
+  const novaPlaca = (): HTMLElement => {
+    const el = document.createElement('section');
+    el.className = 'bloco-placa-trofeu';
+    el.dataset.placaTrofeu = '';
+    el.hidden = true;
+    elVaga.append(el);
+    return el;
+  };
+  const AVISOS: Record<AvisoDaVaga, { tem: () => Promise<boolean>; mostrar: () => Promise<void> | void }> = {
+    'fim-do-mes': {
+      tem: () => (comPlaca ? import('./placaTemporada').then((m) => m.haPlacaDoMes(time!.id)) : Promise.resolve(false)),
+      mostrar: () => import('./placaTemporada').then((m) => m.mostrarPlacaDoMes(novaPlaca(), time?.id, () => saiu)),
+    },
+    trofeu: {
+      tem: () => (comPlaca ? import('./placaTrofeu').then((m) => m.haPlacaDoTrofeu(time!.id)) : Promise.resolve(false)),
+      mostrar: () => import('./placaTrofeu').then((m) => m.mostrarPlacaTrofeu(novaPlaca(), time?.id, () => saiu)),
+    },
+    termos: {
+      tem: () => Promise.resolve(termos === 'mostrar'),
+      mostrar: () => {
+        elVaga.insertAdjacentHTML('beforeend', '<button class="faixa-termos" type="button">Os Termos mudaram <span>Ler</span></button>');
+      },
+    },
+  };
+  /** O que não coube na vaga nesta abertura. Hoje espera a próxima; com a central de avisos, vai para ela. */
+  const oQueSobrou = (_avisos: AvisoDaVaga[]): void => {};
+  const preencherVaga = async (): Promise<void> => {
+    await depoisDoConvite();
+    const respostas: AvisosDaAbertura = {};
+    for (const aviso of ORDEM_DA_VAGA) {
+      respostas[aviso] = await AVISOS[aviso].tem().catch(() => false);
       if (saiu) return;
-      return import('./placaTemporada')
-        .then((m) => m.mostrarPlacaDaHome(elPlaca, time?.id, () => saiu))
-        .catch(() => import('./placaTrofeu').then((m) => m.mostrarPlacaTrofeu(elPlaca, time?.id, () => saiu)));
-    })
-    .catch(() => {});
+      const escolhido = avisoDaVaga(respostas);
+      if (escolhido === undefined) continue;
+      if (escolhido) {
+        oQueSobrou(ORDEM_DA_VAGA.filter((x) => x !== escolhido));
+        await AVISOS[escolhido].mostrar();
+      }
+      return;
+    }
+  };
+  void preencherVaga().catch(() => {});
   if (!FALSA) {
     naHome()
       .then(() => ouvirRanking(semana, () => void carregar()))
@@ -694,6 +848,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     saiu = true;
     pararAvatar();
     clearInterval(relogio);
+    clearTimeout(esperaDoMes);
     pararArquibancada();
     pararRanking?.();
   };

@@ -11,6 +11,7 @@ import { esc, irPara } from '../app';
 import type { Time } from '../dados/times';
 import {
   blocoDasDivisoes,
+  type BlocoDasDivisoes,
   linhaDaProjecao,
   nomeDaSerie,
   projetarSemana,
@@ -74,6 +75,21 @@ function lerTabela(timeId: string): Promise<TabelaDoMes | null> {
   return leituraDaTabela.tabela;
 }
 
+/** O bloco do time no mês aberto (a mesma conta e a mesma leitura em cache do bloco); nulo sem mês aberto ou com o time fora da tabela. */
+function calcularBloco(tabela: TabelaDoMes, time: Time) {
+  const { temporada, linhas, fechadas } = tabela;
+  const linha = linhas.find((l) => l.time_id === time.id);
+  if (!linha) return null;
+  const daSerie = linhas.filter((l) => l.serie === linha.serie);
+  return { linha, daSerie, bloco: blocoDasDivisoes({ linha, daSerie, mes: temporada.mes, fechadas, agora: new Date() }) };
+}
+
+/** Para a barra do time da Home: a posição e a situação do time no mês aberto. A falha da leitura sobe como erro. */
+export async function blocoDoMes(time: Time): Promise<BlocoDasDivisoes | null> {
+  const tabela = await lerTabela(time.id);
+  return (tabela && calcularBloco(tabela, time)?.bloco) ?? null;
+}
+
 /** A frase do narrador, sorteada uma vez por abertura do app para cada situação. */
 const frases = new Map<string, string | null>();
 function fraseDoMes(chave: string, sortear: () => string | null): string | null {
@@ -110,14 +126,13 @@ export async function ligarBlocoDivisoes(
 
   function desenhar(): FraseDoMes | null {
     if (!tabela || saiu()) return null;
-    const { temporada, linhas, fechadas } = tabela;
-    const linha = linhas.find((l) => l.time_id === time.id);
-    if (!linha) {
+    const { temporada } = tabela;
+    const calculo = calcularBloco(tabela, time);
+    if (!calculo) {
       el.hidden = true;
       return null;
     }
-    const daSerie = linhas.filter((l) => l.serie === linha.serie);
-    const bloco = blocoDasDivisoes({ linha, daSerie, mes: temporada.mes, fechadas, agora: new Date() });
+    const { linha, daSerie, bloco } = calculo;
     const serie = nomeDaSerie(linha.serie);
     // A projeção só vale quando a segunda desta semana é do mês aberto.
     const projecao = ranking && `${semana.slice(0, 7)}-01` === temporada.mes ? projetarSemana(daSerie, ranking, time.id) : null;

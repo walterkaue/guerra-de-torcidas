@@ -34,9 +34,20 @@ function buscar(): Promise<Carreira | null> {
   return ultima;
 }
 
-/** A Home só anota o XP de agora: é dele que o resultado conta o "+10 XP" da próxima partida. */
-export function anotarCarreira(): void {
-  void buscar().then((c) => c && xpVisto(c.xp));
+/** O XP guardado neste aparelho (a última leitura do servidor); nulo se nunca leu. A Home usa para saber, na hora, se já jogou. */
+export function xpGuardado(): number | null {
+  return xpVisto();
+}
+
+/**
+ * A Home anota o XP de agora: é dele que o resultado conta o "+10 XP" da próxima partida. Devolve a leitura (nula se
+ * falhou), para a barra do time saber se já jogou sem um 2º pedido.
+ */
+export function anotarCarreira(): Promise<Carreira | null> {
+  return buscar().then((c) => {
+    if (c) xpVisto(c.xp);
+    return c;
+  });
 }
 
 /** Bloco do Perfil: nível, barra até o próximo, quanto vale a próxima partida e bônus. */

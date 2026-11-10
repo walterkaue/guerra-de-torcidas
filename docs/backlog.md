@@ -28,9 +28,9 @@
 ## 2. Ordem sugerida para depois dos testes
 
 0. **Agora, durante os testes:** A10 e H01a. O C01 (com o I03) está no ar desde 09/11.
-1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); B03 (um aviso por vez na Home).
+1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); a central de avisos (B01), logo depois do HOME2 (nova ordem da Home, que já levou o B03).
 2. **Semana de 16/11:** C03 + C08 (ver o gol de quem chamou, redesenhado no aparelho de quem abre); E04 (roteiro de iPhone); D07 (Palpite da Rodada na entressafra).
-3. **Depois:** C04 (com a prova de conceito antes), C05, H01b e H02, B01, F01 e A08 (e a personalização do Perfil, com o que os amigos disserem).
+3. **Depois:** C04 (com a prova de conceito antes), C05, H01b e H02, F01 e A08 (e a personalização do Perfil, com o que os amigos disserem).
 4. **Antes da divulgação pública:** A01 a A05.
 
 ---
@@ -58,7 +58,7 @@
 |---|---|---|---|---|---|---|
 | B01 | **Central de avisos** (o sininho vira caixa de entrada) | K | Detalhe na seção 4.1. Tira da tela os avisos que não são do momento: Termos mudaram, lembrete da cidade, convite de push, aquecimento, peça nova esperando, troféu da semana. | P1 | G | Chat → Claude |
 | B02 | ~~Resultado em duas camadas~~ **feito em 09/11/2026** | C | Primeira dobra: placar, pontos, um destaque, a prévia da mensagem e "Desafiar a galera". O resto em "Ver detalhes da partida", na mesma tela. `docs/visual.md`, 4.6. | — | — | — |
-| B03 | Regra de "um aviso por vez" na Home | C | Fila de prioridade: o desafio recebido ganha de tudo, depois a placa do troféu e o card das divisões; o resto vai para a central (B01). | P1 | M | Chat → Claude |
+| B03 | ~~Regra de "um aviso por vez" na Home~~ **feito em 09/11/2026, dentro do HOME2** | C | A vaga do momento, logo abaixo do "Jogar agora": fim do mês, depois Troféu novo, depois Termos (`jogo/vagaDoMomento.ts`); o resto espera a próxima abertura até a central (B01). | — | — | — |
 | B04 | "O que mudou" para quem já jogava | C | Uma placa, uma vez, depois de mudança de regra (ex.: 3 tentativas do mesmo lance, 3 melhores). Também vai para a central. | P2 | P | Claude |
 | B05 | ~~Nome longo no placar grande do resultado~~ **feito em 09/11/2026** | P | Quebra em duas linhas, sem reticências ("JUNIOR BARRANQUILLA" a 360 px com fonte 130%). | — | — | — |
 | B06 | Barra de navegação opaca, como a do resultado | C | Hoje é 96% opaca, e dá para ver um pouco do que rola atrás. | P3 | P | Claude |

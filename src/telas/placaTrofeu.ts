@@ -30,6 +30,8 @@ import { svgDoTrofeu } from './trofeusDesenho';
  */
 let leitura: { time: string; anuncio: Promise<Anuncio | null> } | null = null;
 let comemorou = false;
+/** As chaves do troféu vão para o aparelho uma vez por abertura, quando a placa é desenhada. */
+let gravouNestaAbertura = false;
 
 const semMovimento = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
@@ -67,32 +69,56 @@ function desenhar(el: HTMLElement, a: Anuncio, time: Time, comemorar: boolean, s
   if (comemorar) vibrar('acerto');
 }
 
-/** Lê a Galeria do time e decide o anúncio (grava as chaves no aparelho, fora do modo falso). */
+/** Lê a Galeria do time e decide o anúncio. Só lê: as chaves vão para o aparelho quando a placa é desenhada. */
 async function lerAnuncio(time: Time): Promise<Anuncio | null> {
   const trofeus = await (await servidorDaGaleria()).trofeusDoTime(time.id);
-  const falsa = galeriaFalsaLigada();
   const antes = prefs.get().trofeusAnunciados ?? [];
-  const a = trofeuParaAnunciar(trofeus, { meuTime: time.id, anunciados: falsa ? [] : antes, hoje: diaBrasilia() });
-  if (a && !falsa) prefs.set({ trofeusAnunciados: guardarAnunciados(antes, a.chaves) });
-  return a;
+  return trofeuParaAnunciar(trofeus, { meuTime: time.id, anunciados: galeriaFalsaLigada() ? [] : antes, hoje: diaBrasilia() });
 }
 
-/** Chamada pela Home depois de desenhar. `el` é a <section data-placa-trofeu hidden>; `timeId` o time do coração. */
-export async function mostrarPlacaTrofeu(el: HTMLElement, timeId: string | undefined, saiu: () => boolean): Promise<void> {
-  const time = timeId && timeId !== ID_OUTRO ? timePorId(timeId) : undefined;
-  if (!time) return;
+function timeDaPlaca(timeId: string | undefined): Time | undefined {
+  return timeId && timeId !== ID_OUTRO ? timePorId(timeId) : undefined;
+}
+
+/** A leitura da abertura, em andamento ou pronta. */
+function leituraDoTrofeu(time: Time): Promise<Anuncio | null> {
   if (leitura?.time !== time.id) {
     const anuncio = lerAnuncio(time);
     leitura = { time: time.id, anuncio };
     comemorou = false;
+    gravouNestaAbertura = false;
     anuncio.catch(() => {
       if (leitura?.anuncio === anuncio) leitura = null; // sem internet: nada aparece, e a próxima Home tenta de novo
     });
   }
+  return leitura.anuncio;
+}
+
+/** Há troféu novo para anunciar? Falha de rede conta como não. Não grava nada: o aviso que perder a vaga volta na próxima abertura. */
+export async function haPlacaDoTrofeu(timeId: string | undefined): Promise<boolean> {
+  const time = timeDaPlaca(timeId);
+  if (!time) return false;
   try {
-    const a = await leitura.anuncio;
+    return (await leituraDoTrofeu(time)) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Desenha a placa em `el` (a <section data-placa-trofeu>); a Home chama depois de `haPlacaDoTrofeu` dar sim e de a vaga
+ * do momento escolher este aviso. Grava o troféu como anunciado ao desenhar (fora do modo falso).
+ */
+export async function mostrarPlacaTrofeu(el: HTMLElement, timeId: string | undefined, saiu: () => boolean): Promise<void> {
+  const time = timeDaPlaca(timeId);
+  if (!time) return;
+  try {
+    const a = await leituraDoTrofeu(time);
     if (!a || saiu()) return;
-    // Gravado como anunciado assim que foi lido: se a pessoa saiu antes de ver, a placa ainda aparece nesta abertura.
+    if (!galeriaFalsaLigada() && !gravouNestaAbertura) {
+      gravouNestaAbertura = true;
+      prefs.set({ trofeusAnunciados: guardarAnunciados(prefs.get().trofeusAnunciados ?? [], a.chaves) });
+    }
     const primeira = !comemorou;
     comemorou = true;
     desenhar(el, a, time, primeira, saiu);
@@ -105,4 +131,5 @@ export async function mostrarPlacaTrofeu(el: HTMLElement, timeId: string | undef
 export function esquecerLeitura(): void {
   leitura = null;
   comemorou = false;
+  gravouNestaAbertura = false;
 }

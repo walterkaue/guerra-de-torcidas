@@ -1,6 +1,7 @@
 // Seu Antônio, 68, aposentado, Vasco, 18+. Entra direto no site pelo Samsung Internet, com fonte 150% e movimento
 // reduzido. Lê devagar, toca impreciso e arrasta curto e lento (a dica "Fraquinho, o goleiro pega" tem de aparecer).
 import { chutar, tocarZona, jogarPartida, esperar, tocarSemCobertura, entrarNaProva } from './comum/jogar.mjs';
+import { textosCortados, seEncostam } from './comum/home.mjs';
 
 const FLAGS = 'homeFalsa&aquecimentoFalso&provaFalsa&penaltiFalso&lancesFalsos';
 const DICA_FRACO = /fraquinho/i;
@@ -110,6 +111,33 @@ export default {
       await s.tocar(p.locator('[data-acao="inicio"]'));
       await p.locator('[data-acao="jogar-agora"]').waitFor({ state: 'visible', timeout: 15000 });
     });
+
+    // Rota B (HOME2), fonte a 150%: a tarja do time, o "trocar" e a barra do time não se encostam, nada é cortado.
+    await s.passo('Home a 150%: tarja, trocar e barra sem se encostar, sem texto cortado', async () => {
+      await p.locator('[data-barra] .barra-time').waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+      await esperar(1500);
+      const g = await p.evaluate(() => {
+        const c = (sel) => {
+          const el = document.querySelector(sel);
+          if (!el || el.getClientRects().length === 0) return null;
+          const r = el.getBoundingClientRect();
+          return { topo: Math.round(r.top), base: Math.round(r.bottom), esq: Math.round(r.left), dir: Math.round(r.right), larg: Math.round(r.width), alt: Math.round(r.height) };
+        };
+        return { tarja: c('.arquibancada .bloco-time-faixa'), trocar: c('.arquibancada .link-trocar'), barra: c('[data-barra] .barra-time'), texto: (document.querySelector('[data-barra] .barra-time')?.textContent ?? '').replace(/\s+/g, ' ').trim() };
+      });
+      for (const [a, b, nome] of [['tarja', 'trocar', 'a tarja e o "trocar"'], ['tarja', 'barra', 'a tarja e a barra'], ['trocar', 'barra', 'o "trocar" e a barra']])
+        if (!g[a] || !g[b]) s.achado({ regra: 'home-peca-ausente', gravidade: 'atrapalha', tipo: 'layout', oQue: `Na Home a 150% não achei ${!g[a] ? a : b} para conferir ${nome}.`, talvezSimulador: true });
+        else if (seEncostam(g[a], g[b]))
+          s.achado({ regra: 'home-pecas-se-encostam', gravidade: 'atrapalha', tipo: 'layout', oQue: `Na Home a 150%, ${nome} se sobrepõem: ${a} y=${g[a].topo}..${g[a].base} x=${g[a].esq}..${g[a].dir}; ${b} y=${g[b].topo}..${g[b].base} x=${g[b].esq}..${g[b].dir}.`, chave: 'encosta:' + a + b });
+      if (g.tarja && g.barra) s.medir(`folga entre a base da tarja (y=${g.tarja.base}) e o topo da barra (y=${g.barra.topo})`, g.barra.topo - g.tarja.base);
+      if (g.trocar && g.barra) s.medir(`folga entre a base do "trocar" (y=${g.trocar.base}) e o topo da barra (y=${g.barra.topo})`, g.barra.topo - g.trocar.base);
+      if (g.trocar && (g.trocar.larg < 44 || g.trocar.alt < 44))
+        s.achado({ regra: 'trocar-menor-que-44', gravidade: 'atrapalha', tipo: 'layout', oQue: `O "trocar" mede ${g.trocar.larg}×${g.trocar.alt} px a 150%; o alvo é de 44 px.` });
+      s.medir(`"trocar" a 150%: ${g.trocar?.larg}×${g.trocar?.alt}; barra com ${g.barra?.alt} px de altura, texto "${g.texto.slice(0, 60)}"`, g.trocar?.alt ?? 0);
+      const cortados = await textosCortados(p, ['.bloco-time-faixa', '.bloco-time-faixa *', '.link-trocar', '.barra-time', '.barra-time *']);
+      for (const c of cortados)
+        s.achado({ regra: 'home-texto-cortado', gravidade: 'atrapalha', tipo: 'layout', oQue: `Texto cortado na Home a 150%: ${c.sel} "${c.texto}" (sobra ${c.dx} px na largura, ${c.dy} px na altura).`, chave: 'corta:' + c.sel + c.texto });
+    }, { paginaInteira: true });
 
     // 4. Crava a rodada, com a certeza.
     await s.passo('abre o Palpite da Rodada', async () => {
