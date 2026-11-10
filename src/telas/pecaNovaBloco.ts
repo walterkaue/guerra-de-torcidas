@@ -16,10 +16,12 @@ import {
   type LinhaDeMedalha,
   type PartidaParaPeca,
 } from '../jogo/pecaNova';
+import { idDaPeca } from '../jogo/avisosCaixa';
 import { nivelDe } from '../jogo/carreira';
 import type { Peca, Vestimenta } from '../jogo/vestiario';
 import { placa } from './blocos';
 import { marcarVistas, pecasVistas, pintarBoneco } from './bonecoDoAparelho';
+import { registrarAviso } from './avisosDoAparelho';
 import type { ParDeXp } from './carreira';
 import { abrirVestiario } from './vestiario/abrir';
 
@@ -85,7 +87,10 @@ export async function mostrarPecaNova(alvo: HTMLElement | null, o: PedidoDoBloco
   alvo.innerHTML = htmlDoBloco(novas, !!guardada);
   alvo.hidden = false;
   // Só agora o bloco está na tela: tela que saiu antes (ou chunk que não baixou) não gasta o anúncio.
-  if (!o.ignorarVistas) marcarVistas(novas.map((p) => p.id));
+  if (!o.ignorarVistas) {
+    marcarVistas(novas.map((p) => p.id));
+    registrarAviso(novas.map((p) => idDaPeca(p.id)));
+  }
   alvo.querySelector('[data-acao="vestir-agora"]')!.addEventListener('click', () => abrirVestiario(pecaParaVestir(novas)?.id));
 
   const box = alvo.querySelector<HTMLElement>('[data-peca-boneco]');

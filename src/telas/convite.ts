@@ -9,6 +9,7 @@ import '../estilos/convite.css';
 import { esc, irPara, x1DoLink, type Rota } from '../app';
 import { corDeTexto, ID_OUTRO, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
+import { idDoDesafio } from '../jogo/avisosCaixa';
 import {
   acoesDoConvite,
   avisoDoConvite,
@@ -42,6 +43,7 @@ import {
 } from '../servidor/api';
 import { contar, etapa } from '../servidor/funil';
 import { sincronizarTorcedor } from '../servidor/torcedor';
+import { registrarAviso, resolverAviso } from './avisosDoAparelho';
 import { bustoDoConvite } from './bustoDoConvite';
 import { guardarDesafioAberto } from './desafioAberto';
 import { ajustarNomesDeTime } from './nomesDeTime';
@@ -217,6 +219,9 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
           guardarDesafioAberto({ tipo, codigo, apelido: r.apelido, pontos: r.pontos, timeId: r.time_id, boneco: a.boneco });
         }
         situacao = s;
+        // Central de avisos: o desafio aberto e não jogado fica na caixa; vencido ou inexistente, sai dela.
+        if (s === 'aberto') registrarAviso([idDoDesafio(tipo, codigo)]);
+        else resolverAviso([idDoDesafio(tipo, codigo)]);
         pintar();
       })
       .catch(() => {
@@ -232,6 +237,7 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
   const encarar = () => {
     if (aceitou) return;
     aceitou = true;
+    resolverAviso([idDoDesafio(tipo, codigo)]);
     contar({ ev: 'aceitou', tipo: TIPO_DO_FUNIL[tipo], x1: codigo });
     const destino = destinoDoDesafio(tipo, codigo);
     irPara(destino.tela === 'partida' && aberto?.disputa ? { ...destino, disputa: aberto.disputa } : destino);

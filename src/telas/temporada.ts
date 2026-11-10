@@ -7,6 +7,7 @@ import { abas, baixarPedaco, estado, marcarAba } from './blocos';
 import { ID_OUTRO, timePorId } from '../dados/times';
 import { prefs } from '../estado';
 import * as real from '../servidor/api';
+import { resolverAviso } from './avisosDoAparelho';
 import { mandarTemporadaNoGrupo } from './mandarTemporada';
 import {
   LEGENDA_SERIE,
@@ -223,6 +224,8 @@ export function desenharTemporada(el: HTMLElement, inicial: 'mes' | '52semanas' 
     const minha = ++vez;
     marcarAba(el, 'tsub', id);
     corpo.innerHTML = '';
+    // Central de avisos: abrir a tabela do mês resolve o aviso de fim de mês.
+    if (id === 'mes') resolverAviso(['mes:']);
     if (id === 'mes') parar = desenharMes(corpo);
     else
       baixarPedaco(corpo, () => import('./semanas52'), (m) => (parar = m.desenharSemanas52(corpo)), () => minha === vez);

@@ -8,6 +8,7 @@ import '../estilos/placaTrofeu.css';
 import { esc, irPara } from '../app';
 import { ID_OUTRO, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
+import { idDoTrofeu } from '../jogo/avisosCaixa';
 import {
   guardarAnunciados,
   NOME_DO_TROFEU,
@@ -18,6 +19,7 @@ import {
 } from '../jogo/galeria';
 import { galeriaFalsaLigada, servidorDaGaleria } from '../servidor/galeria';
 import { diaBrasilia } from '../servidor/tempo';
+import { registrarAviso } from './avisosDoAparelho';
 import { mandarTrofeuNoGrupo } from './mandarTrofeu';
 import { papelPicadoNaTela } from './papelPicado';
 import { vibrar } from './toque';
@@ -118,6 +120,7 @@ export async function mostrarPlacaTrofeu(el: HTMLElement, timeId: string | undef
     if (!galeriaFalsaLigada() && !gravouNestaAbertura) {
       gravouNestaAbertura = true;
       prefs.set({ trofeusAnunciados: guardarAnunciados(prefs.get().trofeusAnunciados ?? [], a.chaves) });
+      registrarAviso(a.chaves.map(idDoTrofeu));
     }
     const primeira = !comemorou;
     comemorou = true;
