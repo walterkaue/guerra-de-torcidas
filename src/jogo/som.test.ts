@@ -6,15 +6,20 @@ vi.mock('./sons/rede.wav?url', () => ({ default: '/assets/rede-teste.wav' }));
 
 import {
   APITO,
+  BARREIRA,
   carregarRede,
   CHUTE,
+  DEFESA,
   FINAL,
+  jeitoDaDefesa,
   latenciaDoSom,
   preencherRespiro,
   preencherRuidoRosa,
   SALA,
   somApito,
+  somBarreira,
   somChute,
+  somDefesa,
   somLargada,
   somRede,
   somTorcida,
@@ -48,6 +53,9 @@ describe('mudo', () => {
       somLargada();
       somChute();
       somTrave();
+      somDefesa('encaixou');
+      somDefesa('espalmou');
+      somBarreira();
       somRede();
       somTorcida('festa');
       somTorcida('uuuh');
@@ -131,6 +139,24 @@ describe('sala, chute e trave', () => {
   it('o chute acaba em 0,15 s', () => {
     expect(CHUTE.grave.para).toBeLessThanOrEqual(0.15);
     expect(CHUTE.dobro.f0).toBe(CHUTE.grave.f0 * 2);
+  });
+});
+
+describe('defesa e barreira', () => {
+  it('jeitoDaDefesa: pênaltis pela zona, lances pelo x', () => {
+    for (const z of [1, 4, -1]) expect(jeitoDaDefesa({ zona: z })).toBe('encaixou');
+    for (const z of [0, 2, 3, 5]) expect(jeitoDaDefesa({ zona: z })).toBe('espalmou');
+    for (const x of [0, 0.33, -0.33]) expect(jeitoDaDefesa({ x })).toBe('encaixou');
+    for (const x of [0.34, -0.9]) expect(jeitoDaDefesa({ x })).toBe('espalmou');
+  });
+  it('os volumes são 1,26, 1,64 e 1,143', () => {
+    expect(DEFESA.encaixou.volume).toBe(1.26);
+    expect(DEFESA.espalmou.volume).toBe(1.64);
+    expect(BARREIRA.volume).toBe(1.143);
+  });
+  it('o Encaixou não tem clique e o Espalmou tem', () => {
+    expect('clique' in DEFESA.encaixou.bola).toBe(false);
+    expect('clique' in DEFESA.espalmou.bola).toBe(true);
   });
 });
 

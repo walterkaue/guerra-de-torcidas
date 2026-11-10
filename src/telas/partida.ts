@@ -52,7 +52,7 @@ import { ENQUADRAMENTOS } from './camera';
 import { inicioDoVoo, latenciaInicial, novaLatencia, tempoDaBatida } from './tempoDoChute';
 import { ANTES_DO_CORTE, criarReplay, montarTarjaDoReplay, type Replay } from './replay';
 import { caminhoDoChute } from '../jogo/lances';
-import { destravarSom, latenciaDoSom, somApito, somChute, somLargada, somRede, somTorcida } from '../jogo/som';
+import { destravarSom, jeitoDaDefesa, latenciaDoSom, somApito, somChute, somDefesa, somLargada, somRede, somTorcida } from '../jogo/som';
 import { vibrar } from './toque';
 import {
   DUR_AJEITAR,
@@ -526,6 +526,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     if (r.desfecho === 'gol') comemorar(telaX(r.x), telaY(r.y), r.pontos, true);
     else if (r.desfecho === 'trave') cena.baterNaTrave(telaX(r.x), telaY(r.y));
     if (r.desfecho === 'gol') somRede();
+    if (r.desfecho === 'defesa') somDefesa(jeitoDaDefesa({ zona: r.zonaGoleiro }));
     somTorcida(r.desfecho === 'gol' ? 'festa' : 'uuuh');
     // Em dev, ?replayFalso dispara o replay em qualquer gol (para conferir o batedor de frente nos prints).
     const golaco = r.desfecho === 'gol' && (r.angulo || r.cavadinha || r.raspouTrave || (import.meta.env.DEV && parametros.has('replayFalso')));
@@ -614,6 +615,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       efeitos.rede = { inicio: relogio(), x: telaX(z.x), y: telaY(z.y) };
     }
     if (r.desfecho === 'gol') somRede();
+    if (r.desfecho === 'defesa') somDefesa(jeitoDaDefesa({ zona: r.zonaGoleiro }));
     somTorcida(r.desfecho === 'defesa' ? 'festa' : 'uuuh');
     dicaDaDefesa(r);
     rodada++;

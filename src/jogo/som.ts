@@ -138,14 +138,16 @@ function bolaDeCouro(
   a: AudioContext,
   saida: AudioNode,
   t: number,
-  c: Pick<typeof CHUTE, 'clique' | 'pof' | 'grave' | 'dobro'>,
+  c: Pick<typeof CHUTE, 'pof' | 'grave' | 'dobro'> & { clique?: typeof CHUTE.clique },
   tom: number,
   vol: number,
 ): void {
-  golpeDeRuido(a, saida, t, c.clique.dur, [filtro(a, 'highpass', c.clique.alto, 0.7), filtro(a, 'bandpass', c.clique.centro, c.clique.q)], [
-    [0, c.clique.pico * vol],
-    [c.clique.fim, 0.0001],
-  ]);
+  if (c.clique) {
+    golpeDeRuido(a, saida, t, c.clique.dur, [filtro(a, 'highpass', c.clique.alto, 0.7), filtro(a, 'bandpass', c.clique.centro, c.clique.q)], [
+      [0, c.clique.pico * vol],
+      [c.clique.fim, 0.0001],
+    ]);
+  }
   golpeDeRuido(a, saida, t, c.pof.dur, [filtro(a, 'bandpass', c.pof.centro * tom, c.pof.q), filtro(a, 'lowpass', c.pof.corte, 0.7)], [
     [0, 0.0001],
     [c.pof.ataque, c.pof.pico * vol],
@@ -244,6 +246,107 @@ export function tocarTraveEm(a: AudioContext): void {
 export function somTrave(): void {
   const a = audio();
   if (a) tocarTraveEm(a);
+}
+
+export type JeitoDefesa = 'encaixou' | 'espalmou';
+
+/**
+ * Qual defesa toca. Pênaltis: pela zona do goleiro (0 a 5 = linha × 3 + coluna; -1 = não pulou); coluna do meio
+ * ou sem pular = encaixou, colunas dos lados = espalmou. Lances: pelo x da bola na linha do gol (-1 a 1);
+ * |x| ≤ 1/3 = encaixou.
+ */
+export function jeitoDaDefesa(origem: { zona: number } | { x: number }): JeitoDefesa {
+  if ('zona' in origem) return origem.zona < 0 || origem.zona % 3 === 1 ? 'encaixou' : 'espalmou';
+  return Math.abs(origem.x) <= 1 / 3 ? 'encaixou' : 'espalmou';
+}
+
+/** Números da defesa do goleiro: Encaixou ("tump" abafado na luva e no peito) e Espalmou (o "PÁ" da luva). */
+export const DEFESA = {
+  encaixou: {
+    volume: 1.26,
+    tapa: { dur: 0.04, centro: 1200, q: 1.2, pico: 0.35, fim: 0.03 },
+    bola: {
+      pof: { dur: 0.1, centro: 420, q: 0.9, corte: 2200, pico: 0.7, ataque: 0.0015, fim: 0.09 },
+      grave: { f0: 200, f1: 110, desce: 0.077, pico: 0.35, ataque: 0.002, fim: 0.11, para: 0.13 },
+      dobro: { f0: 400, f1: 220, desce: 0.077, pico: 0.28, ataque: 0.002, fim: 0.066, para: 0.086 },
+    } as Pick<typeof CHUTE, 'pof' | 'grave' | 'dobro'> & { clique?: typeof CHUTE.clique },
+  },
+  espalmou: {
+    volume: 1.64,
+    tapa: { dur: 0.045, centro: 1900, q: 1, pico: 0.7, fim: 0.035 },
+    bola: {
+      clique: { dur: 0.018, alto: 1500, centro: 3000, q: 0.8, pico: 0.3, fim: 0.008 },
+      pof: { dur: 0.07, centro: 700, q: 1, corte: 2200, pico: 0.6, ataque: 0.0015, fim: 0.06 },
+      grave: { f0: 240, f1: 130, desce: 0.049, pico: 0.25, ataque: 0.002, fim: 0.07, para: 0.09 },
+      dobro: { f0: 480, f1: 260, desce: 0.049, pico: 0.2, ataque: 0.002, fim: 0.042, para: 0.062 },
+    } as Pick<typeof CHUTE, 'pof' | 'grave' | 'dobro'> & { clique?: typeof CHUTE.clique },
+  },
+  /** Segundo toque da bola, no peito, só no Encaixou. */
+  peito: { atraso: 0.055, tom: 0.92, vol: 0.45 },
+};
+
+/** Defesa: tapa do látex da luva e a bola na luva (no Encaixou, a bola bate de novo no peito). */
+export function tocarDefesaEm(a: AudioContext, jeito: JeitoDefesa): void {
+  const t = a.currentTime;
+  const tom = variar(1, 0.05);
+  const vol = variar(1, 0.08);
+  const c = DEFESA[jeito];
+  const saida = a.createGain();
+  saida.gain.value = c.volume;
+  saida.connect(saidaComAmbiente(a));
+  golpeDeRuido(a, saida, t, c.tapa.dur, [filtro(a, 'bandpass', c.tapa.centro * tom, c.tapa.q), filtro(a, 'highpass', 500, 0.7)], [
+    [0, c.tapa.pico * vol],
+    [c.tapa.fim, 0.0001],
+  ]);
+  bolaDeCouro(a, saida, t, c.bola, tom, vol);
+  if (jeito === 'encaixou') bolaDeCouro(a, saida, t + DEFESA.peito.atraso, c.bola, tom * DEFESA.peito.tom, vol * DEFESA.peito.vol);
+}
+
+export function somDefesa(jeito: JeitoDefesa): void {
+  const a = audio();
+  if (a) tocarDefesaEm(a, jeito);
+}
+
+/** Números da bola na barreira: a bola no peito e o pano da camisa. */
+export const BARREIRA = {
+  volume: 1.143,
+  bola: {
+    clique: { dur: 0.018, alto: 1500, centro: 2200, q: 0.8, pico: 0.15, fim: 0.008 },
+    pof: { dur: 0.09, centro: 560, q: 1, corte: 2200, pico: 0.85, ataque: 0.0015, fim: 0.08 },
+    grave: { f0: 210, f1: 110, desce: 0.07, pico: 0.35, ataque: 0.002, fim: 0.1, para: 0.12 },
+    dobro: { f0: 420, f1: 220, desce: 0.07, pico: 0.2975, ataque: 0.002, fim: 0.06, para: 0.08 },
+  },
+  pano: { dur: 0.09, centro: 1500, q: 0.7, pico: 0.22, ataque: 0.004, fim: 0.08 },
+};
+
+/** Bola na barreira: a bola no peito e o pano da camisa (ruído rosa). */
+export function tocarBarreiraEm(a: AudioContext): void {
+  const t = a.currentTime;
+  const tom = variar(1, 0.07);
+  const vol = variar(1, 0.1);
+  const c = BARREIRA;
+  const saida = a.createGain();
+  saida.gain.value = c.volume;
+  saida.connect(saidaComAmbiente(a));
+  bolaDeCouro(a, saida, t, c.bola, tom, vol);
+  const rosa = bufferRosa(a);
+  const src = a.createBufferSource();
+  src.buffer = rosa;
+  src.loop = true;
+  const g = a.createGain();
+  envelope(g.gain, t, [
+    [0, 0.0001],
+    [c.pano.ataque, c.pano.pico * vol],
+    [c.pano.fim, 0.0001],
+  ]);
+  src.connect(filtro(a, 'bandpass', c.pano.centro, c.pano.q)).connect(g).connect(saida);
+  src.start(t, Math.random() * 0.9 * rosa.duration);
+  src.stop(t + c.pano.dur);
+}
+
+export function somBarreira(): void {
+  const a = audio();
+  if (a) tocarBarreiraEm(a);
 }
 
 /** Ruído rosa (método de Paul Kellet) normalizado para RMS 0,3. `sorteio` devolve 0 a 1 (injetável nos testes). */
