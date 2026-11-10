@@ -1,6 +1,7 @@
 // Rafa, 23, gamer, Grêmio, 18+. Só mouse e teclado (Tab, Enter, Esc, setas), nunca toque. Joga os pênaltis arrastando
 // o mouse, passa pelos Lances e pelas abas do Ranking, troca o estilo do card com as setas, confere o sininho (no
 // notebook com Opera GX) e abre o jogo em duas abas ao mesmo tempo.
+import { semearAvisos, medirFolha } from './comum/central.mjs';
 import { jogarPartida, jogarLance, esperar, tocarSemCobertura } from './comum/jogar.mjs';
 
 const FLAGS = 'homeFalsa&lancesFalsos&penaltiFalso&provaFalsa&codigoFalso&galeriaFalsa=cheia&temporadaFalsa&cidadesFalsas=com&cenario=lances';
@@ -175,26 +176,47 @@ export default {
         s.achado({ regra: 'esc-nao-fecha', gravidade: 'atrapalha', tipo: 'acessibilidade', oQue: 'Esc não fechou o Seu card.', sugestao: 'O card é um dialog; Esc deveria fechar.' });
     });
 
-    // ---- Sininho (notebook com Opera GX) ----
-    if (aparelho === 'notebook-opera') {
-      await s.passo('sininho na Home (Opera GX)', async () => {
-        await home();
-        await p.locator('[data-acao="sininho"]').focus();
-        await p.keyboard.press('Enter');
-        await esperar(1200);
-      });
-      await s.passo('Esc no painel do sininho', async () => {
-        const abriu = await p.locator('.convite-push').count();
-        const texto = abriu ? (await p.locator('.convite-push').first().innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160) : '';
-        if (!abriu) s.achado({ regra: 'sininho-sem-painel', gravidade: 'atrapalha', tipo: 'erro', oQue: 'Enter no sininho não abriu o painel do aviso.', talvezSimulador: true });
-        else if (/Opera/.test(texto)) s.medir('painel do sininho avisa do Opera', 1);
-        s.naoSimulavel('Sininho: ligar o aviso de domingo', 'precisa de Service Worker (bloqueado), permissão de notificação e o servidor de push');
-        await p.keyboard.press('Escape');
-        await esperar(500);
-        if (abriu && (await p.locator('.convite-push').count()))
-          s.achado({ regra: 'esc-nao-fecha', gravidade: 'detalhe', tipo: 'acessibilidade', oQue: `Esc não fecha o painel do sininho (texto: "${texto}").`, sugestao: 'Painel que abre por botão deve fechar com Esc.' });
-      });
-    }
+    // ---- Central de avisos (sininho), só com o teclado; no notebook com Opera GX confere o caso do Opera ----
+    await s.passo('Home com avisos na caixa (sininho com número)', async () => {
+      await home();
+      await semearAvisos(s, { ids: ['peca:apito', 'trofeu:campeao_semana|2026-W45||gremio', 'desafio:lances:abc12345'], aquecimento: true });
+      await home();
+      await esperar(1000);
+      const rotulo = await p.locator('button[data-acao="sininho"]').getAttribute('aria-label');
+      if (!/Avisos, 4 novos/.test(rotulo ?? '')) s.achado({ regra: 'sininho-sem-numero', gravidade: 'atrapalha', tipo: 'erro', oQue: `Com 4 avisos semeados o aria-label do sininho é "${rotulo}" (esperado "Avisos, 4 novos").`, talvezSimulador: true });
+    });
+    await s.passo('folha com avisos (Enter no sininho)', async () => {
+      await p.locator('button[data-acao="sininho"]').focus();
+      await p.keyboard.press('Enter');
+      await p.locator('[data-central-avisos]').waitFor({ state: 'visible', timeout: 10000 });
+      await esperar(1200);
+      const m = await medirFolha(p);
+      if (m && m.avisos < 4) s.achado({ regra: 'avisos-faltando', gravidade: 'atrapalha', tipo: 'erro', oQue: `A folha mostrou ${m.avisos} avisos (semeei 4).`, talvezSimulador: true });
+      const foco = await p.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? '');
+      if (foco !== 'Fechar') s.achado({ regra: 'foco-inicial-da-folha', gravidade: 'detalhe', tipo: 'acessibilidade', oQue: `Ao abrir a folha o foco foi para "${foco}" (esperado o botão Fechar).` });
+    }, { tela: 'folha com avisos', paginaInteira: true });
+    await s.passo('fim da folha: Aviso de domingo', async () => {
+      const bloco = p.locator('[data-central-avisos] .avisos-push');
+      await bloco.waitFor({ state: 'attached', timeout: 8000 }).catch(() => {});
+      await bloco.scrollIntoViewIfNeeded().catch(() => {});
+      await esperar(800);
+      const visivel = await bloco.isVisible().catch(() => false);
+      const texto = visivel ? (await bloco.innerText().catch(() => '')).replace(/\s+/g, ' ') : '';
+      if (!visivel || !/Aviso de domingo/i.test(texto)) s.achado({ regra: 'push-ausente-18', gravidade: 'atrapalha', tipo: 'erro', oQue: `Para 18+ a folha devia terminar com "Aviso de domingo" e o painel; texto do bloco: "${texto.slice(0, 160)}".`, talvezSimulador: true });
+      else if (aparelho === 'notebook-opera') {
+        if (/n[aã]o est[aá] configurado/i.test(texto)) s.naoSimulavel('Folha: nota do Opera no painel do aviso de domingo', 'o servidor falso responde "não está configurado", então o painel não mostra a nota do Opera');
+        else if (/Opera/.test(texto)) s.medir('painel do aviso de domingo avisa do Opera', 1);
+        else s.achado({ regra: 'opera-sem-nota', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: `No Opera GX o painel do aviso de domingo não tem o texto do caso do Opera: "${texto.slice(0, 200)}".` });
+      }
+      s.naoSimulavel('Folha: ligar o aviso de domingo', 'precisa de Service Worker (bloqueado), permissão de notificação e o servidor de push');
+    }, { tela: 'folha: aviso de domingo', paginaInteira: true });
+    await s.passo('Esc fecha a folha e o foco volta ao sininho', async () => {
+      await p.keyboard.press('Escape');
+      await esperar(600);
+      if (await p.locator('[data-central-avisos]').count()) s.achado({ regra: 'esc-nao-fecha', gravidade: 'atrapalha', tipo: 'acessibilidade', oQue: 'Esc não fecha a central de avisos.' });
+      const foco = await p.evaluate(() => document.activeElement?.getAttribute('data-acao') ?? '');
+      if (foco !== 'sininho') s.achado({ regra: 'foco-nao-volta-ao-sininho', gravidade: 'atrapalha', tipo: 'acessibilidade', oQue: `Depois do Esc o foco foi para "${foco}" em vez do sininho.` });
+    });
 
     // ---- Voltar do navegador ----
     await s.passo('voltar do navegador depois de abrir uma ficha', async () => {

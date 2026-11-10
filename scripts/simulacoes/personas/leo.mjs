@@ -2,6 +2,7 @@
 // 1ª partida, aceita o convite da cidade e escolhe Campinas, vê quantos torcedores faltam, passa pelas Cidades do
 // Ranking, pelos Lances (abrindo na Seleção) e pela Galeria escolhendo uma torcida. No dobrado, desdobra no meio da partida.
 import { jogarPartida, esperar, tocarSemCobertura } from './comum/jogar.mjs';
+import { semearAvisos, medirFolha } from './comum/central.mjs';
 import { medidasDaHome } from './comum/home.mjs';
 
 const BASE = 'homeFalsa&lancesFalsos&penaltiFalso&provaFalsa&codigoFalso&galeriaFalsa=cheia&temporadaFalsa&cenario=lances';
@@ -151,6 +152,38 @@ export default {
       if (!/falt/i.test(t)) s.achado({ regra: 'faltam-ausente', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: `A Home não mostrou o "Faltam N" da cidade (texto do bloco: "${t.slice(0, 120)}").`, talvezSimulador: true });
       else s.medir(`bloco da cidade: ${t.slice(0, 90)}`, 0);
     }, { paginaInteira: true });
+
+    // ---- 4b. O lembrete da cidade e o aquecimento saíram da Home: moram na central de avisos (B01) ----
+    await s.passo('Home sem cidade: sem lembrete no bloco, convite só na barra', async () => {
+      await s.abrir(`/?${BASE}&cidadeFalsa=sem&cidadesFalsas=sem`, { esperarPor: '[data-barra] .barra-time', limiteMs: 20000, rotulo: 'Home até a barra do time' });
+      await esperar(1500);
+      const corpo = (await p.locator('main').first().innerText().catch(() => '')).replace(/\s+/g, ' ');
+      if (/Defende sua cidade também\?|Conheça os outros jogos/.test(corpo))
+        s.achado({ regra: 'lembrete-voltou-na-home', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: 'A Home mostrou o lembrete "Defende sua cidade também?" ou o card "Conheça os outros jogos", que agora moram na central de avisos.' });
+      const bloco = await p.locator('[data-cidade]').isVisible().catch(() => false);
+      if (bloco) s.achado({ regra: 'bloco-da-cidade-sem-cidade', gravidade: 'detalhe', tipo: 'regra do jogo.md', oQue: 'Sem cidade, o bloco [data-cidade] da Home aparece (o lembrete saiu dele).', talvezSimulador: true });
+    }, { paginaInteira: true });
+    await s.passo('central de avisos: aquecimento e cidade como avisos', async () => {
+      await semearAvisos(s, { ids: [], aquecimento: true });
+      await s.abrir(`/?${BASE}&cidadeFalsa=sem&cidadesFalsas=sem`, { esperarPor: '[data-acao="sininho"]', limiteMs: 20000 });
+      await esperar(1200);
+      await s.tocar(p.locator('button[data-acao="sininho"]'));
+      await p.locator('[data-central-avisos]').waitFor({ state: 'visible', timeout: 10000 });
+      await esperar(700);
+      const m = await medirFolha(p);
+      if (!m || !/Conheça os outros jogos/.test(m.textoTodo))
+        s.achado({ regra: 'aquecimento-fora-da-central', gravidade: 'atrapalha', tipo: 'erro', oQue: `O aquecimento (cardNaHome) devia ser aviso na central e não apareceu: "${(m?.textoTodo ?? '').slice(0, 160)}".`, talvezSimulador: true });
+      // Quem joga por "Outro time" tem o convite na barra do time, não na central.
+      if (m && /Defende sua cidade/.test(m.textoTodo)) s.achado({ regra: 'cidade-na-central-do-outro-time', gravidade: 'detalhe', tipo: 'regra do jogo.md', oQue: 'Quem joga por "Outro time" recebeu o aviso "Defende sua cidade também?" na central (o convite dela é a barra do time).' });
+    }, { tela: 'central: aquecimento' });
+    await s.passo('Abrir (aquecimento) leva ao aquecimento', async () => {
+      await s.tocar(p.locator('[data-central-avisos] .aviso', { hasText: 'Conheça os outros jogos' }).locator('[data-agir]'));
+      await esperar(1500);
+      if (await p.locator('[data-central-avisos]').count()) s.achado({ regra: 'acao-nao-fechou-a-folha', gravidade: 'atrapalha', tipo: 'erro', oQue: 'Tocar em "Abrir" não fechou a folha.' });
+      // O aquecimento tirou a persona da Home: volta limpa (sem o aquecimento na caixa) para as telas seguintes.
+      await p.evaluate(() => { const x = JSON.parse(localStorage.getItem('gdt:prefs') || '{}'); x.aquecimento = { visto: true, aquecido: true }; delete x.avisos; localStorage.setItem('gdt:prefs', JSON.stringify(x)); });
+      await s.abrir(`/?${BASE}&cidadeFalsa=com&cidadesFalsas=faltam`, { esperarPor: '[data-acao="jogar-agora"]', limiteMs: 20000, rotulo: 'Home depois da central' });
+    });
 
     // ---- 5. Ranking > Cidades ----
     await s.passo('Ranking: aba Cidades', async () => {
