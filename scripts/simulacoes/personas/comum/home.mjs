@@ -37,16 +37,18 @@ export async function conferirDobraDaHome(s, nome) {
   return m;
 }
 
-/** Texto cortado: algum elemento da lista tem conteúdo maior do que a caixa (scroll* > client*). */
+/** Texto cortado: o elemento corta o que passa da caixa (overflow diferente de visible) e o conteúdo é maior que ela (scroll* > client*). */
 export function textosCortados(p, seletores) {
   return p.evaluate((sels) => {
     const cortados = [];
     for (const sel of sels)
       for (const el of document.querySelectorAll(sel)) {
         if (el.getClientRects().length === 0) continue;
+        const cs = getComputedStyle(el);
+        const corta = (e) => e !== "visible";
         const dx = el.scrollWidth - el.clientWidth;
         const dy = el.scrollHeight - el.clientHeight;
-        if (dx > 1 || dy > 1) cortados.push({ sel, texto: (el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 60), dx, dy });
+        if ((corta(cs.overflowX) && dx > 1) || (corta(cs.overflowY) && dy > 1)) cortados.push({ sel, texto: (el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 60), dx, dy });
       }
     return cortados;
   }, seletores);

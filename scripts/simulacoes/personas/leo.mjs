@@ -116,15 +116,7 @@ export default {
       await p.locator('[data-acao="jogar-agora"]').waitFor({ state: 'visible', timeout: 15000 });
     });
 
-    // ---- 4. "Faltam N" ----
-    await s.passo('Home: quantos faltam para a cidade valer', async () => {
-      await s.abrir(`/?${BASE}&cidadeFalsa=com&cidadesFalsas=faltam`, { esperarPor: '[data-cidade]:not([hidden])', limiteMs: 20000, rotulo: 'Home até o bloco da cidade' });
-      const t = (await p.locator('[data-cidade]').innerText().catch(() => '')).replace(/\s+/g, ' ');
-      if (!/falt/i.test(t)) s.achado({ regra: 'faltam-ausente', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: `A Home não mostrou o "Faltam N" da cidade (texto do bloco: "${t.slice(0, 120)}").`, talvezSimulador: true });
-      else s.medir(`bloco da cidade: ${t.slice(0, 90)}`, 0);
-    }, { paginaInteira: true });
-
-    // ---- 4b. A barra do "Outro time" com e sem cidade, e para onde o toque leva ----
+    // ---- 3b. A barra do "Outro time" com e sem cidade, e para onde o toque leva ----
     await s.passo('Home: barra com a cidade (cidadesFalsas=com)', async () => {
       await s.abrir(`/?${BASE}&cidadeFalsa=com&cidadesFalsas=com`, { esperarPor: '[data-barra] .barra-time', limiteMs: 20000, rotulo: 'Home até a barra do time' });
       await esperar(1200);
@@ -151,6 +143,14 @@ export default {
       await s.tocar(p.locator('[data-barra] .barra-time'));
       await p.locator('input[type="search"]').waitFor({ state: 'visible', timeout: 10000 });
     });
+
+    // ---- 4. "Faltam N" ----
+    await s.passo('Home: quantos faltam para a cidade valer', async () => {
+      await s.abrir(`/?${BASE}&cidadeFalsa=com&cidadesFalsas=faltam`, { esperarPor: '[data-cidade]:not([hidden])', limiteMs: 20000, rotulo: 'Home até o bloco da cidade' });
+      const t = (await p.locator('[data-cidade]').innerText().catch(() => '')).replace(/\s+/g, ' ');
+      if (!/falt/i.test(t)) s.achado({ regra: 'faltam-ausente', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: `A Home não mostrou o "Faltam N" da cidade (texto do bloco: "${t.slice(0, 120)}").`, talvezSimulador: true });
+      else s.medir(`bloco da cidade: ${t.slice(0, 90)}`, 0);
+    }, { paginaInteira: true });
 
     // ---- 5. Ranking > Cidades ----
     await s.passo('Ranking: aba Cidades', async () => {
