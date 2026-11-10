@@ -50,10 +50,10 @@ Nada disso tem lembrete automático.
 
 - **Supabase Pro** quando o banco passar de 250 MB, ou ~150 pessoas jogarem por dia, ou antes da divulgação pública (o que vier primeiro); os testes com amigos seguem no Free. O Free pausa depois de 1 semana sem uso; hoje um agendamento evita.
 - **Robôs do Gemini:** ficam os 5 crons, sem cobrança (decidido em 07/11). Ajuste de cron só se os 429 crescerem: de 06 a 09/11 a auditoria teve 33 erros 429 e 5 erros 503 (a geração, 3 erros 503); as falhas por dia caíram de 28 (06/11) para 1 (09/11).
-- **Advogado:** pontos 4 (triagem autodeclarada × art. 9º do ECA Digital) e 5 (DPO × alto risco) dos Termos, a frase do código do torcedor, a da cidade, a do boneco em campo e a da contagem de uso (`docs/termos-x-jogo.md`). O parecer de 02/11 veio sem OAB.
+- **Advogado:** pontos 4 (triagem autodeclarada × art. 9º do ECA Digital) e 5 (DPO × alto risco) dos Termos, a frase do código do torcedor, a da cidade, a do boneco em campo, a da contagem de uso (`docs/termos-x-jogo.md`) e o sobrenome de jogador no apelido (regra de 10/11). O parecer de 02/11 veio sem OAB.
 - **Data do zerar da pré-temporada:** até 06/12, para estrear em dezembro; o balanço (`npm run balanco`) roda antes.
 - **Perguntas:** importar as 2 de `dados/perguntas/lote-02.csv` e dizer se tema de guerra entra na lista de proibidos (`dados/perguntas/piloto-lote-02.md`).
-- **`#admin`:** apagar o apelido já gravado que bate com a lista de jogadores famosos (1 em 06/11).
+- **`#admin`:** apagar o apelido já gravado que bate com a lista de jogadores famosos (1 em 06/11). Depois da migração do sobrenome (10/11), a lista do `#admin` só mostra o que ainda é barrado (só o nome do jogador ou o nome completo).
 - **Funil do desafio:** decidir as propostas que sobraram de `docs/propostas/funil-do-desafio.md` (o C01 conta o funil e o C06 já encurtou o caminho).
 - **Link do desafio com menos toques (C06):** num aparelho limpo, abrir um link de cada tipo pelo WhatsApp: o convite com as duas faixas aparece, um toque no time leva à triagem e ao jogo; conferir também o link vencido, o de quem chamou com "Outro time" e quem já joga.
 - **Os gols de quem chamou (C03 + C08), depois de publicar:** no celular, jogar uma partida de Lances com gol e abrir o link `?l=` em outro aparelho: o telão passa os gols, a fita mostra as 3 tentativas e as faixas continuam na tela; aceitar e, no resultado, "Ver os gols". Nos pênaltis, aceitar um desafio e ver "Onde … bateu" no resultado. No `npm run metricas`, "viu os gols" começa a contar.
