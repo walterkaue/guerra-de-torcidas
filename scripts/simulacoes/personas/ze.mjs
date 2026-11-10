@@ -1,6 +1,7 @@
 // Zé, 41, motoboy, Flamengo, 18+. Abre o link do X1 de pênaltis que caiu no grupo do WhatsApp, num Android de
 // entrada com 4G ruim. Chuta forte demais (a dica "Forte demais vai por cima" tem de aparecer).
 import { chutar, jogarPartida, esperar, tocarSemCobertura } from './comum/jogar.mjs';
+import { conferirDobraDaHome } from './comum/home.mjs';
 
 const LINK_X1 = '/?homeFalsa&penaltiFalso&d=abcdefgh&chamouTime=flamengo';
 const DICA_FORTE = /forte demais/i;
@@ -88,6 +89,12 @@ export default {
     await s.passo('volta à Home', async () => {
       await s.abrir('/?homeFalsa&penaltiFalso&lancesFalsos&cenario=lances', { esperarPor: '[data-acao="jogar-agora"]', limiteMs: 20000, rotulo: 'Home até o Jogar agora' });
     });
+    // Rota B (HOME2): em 360×740 com fonte a 130%, o "Jogar agora" e o topo do 1º card ficam acima da barra de navegação.
+    await s.passo('Home: Jogar agora e 1º card à vista sem rolar (360×740, fonte 130%)', async () => {
+      await esperar(1500);
+      await conferirDobraDaHome(s, 'Home do Zé');
+      await s.conferirCabeNaTela('[data-acao="jogar-agora"]', 'o botão Jogar agora');
+    }, { principalNaDobra: true, paginaInteira: true });
     await s.passo('toca em Jogar agora', async () => {
       const t0 = Date.now();
       await tocarSemCobertura(s, p.locator('[data-acao="jogar-agora"]'), 'Jogar agora na Home');

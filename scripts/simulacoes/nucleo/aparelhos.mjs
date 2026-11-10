@@ -88,6 +88,11 @@ export const APARELHOS = {
     nome: 'iPad 1080×810 deitado · WebKit',
     navegador: 'webkit', largura: 1080, altura: 810, escala: 2, toque: true, ua: UA.safariIpad,
   },
+  // O menor celular da regra da Rota B (docs/visual.md, Início): 360×740, fonte do sistema normal.
+  'android-360': {
+    nome: 'Android 360×740 · Chromium',
+    navegador: 'chromium', largura: 360, altura: 740, escala: 3, movel: true, toque: true, ua: UA.chromeAndroid,
+  },
   // Referência do CLAUDE.md ("teste sempre em 390×844"), usada para a Carreira inteira no Perfil.
   'referencia-390': {
     nome: 'Referência 390×844 · Chromium',

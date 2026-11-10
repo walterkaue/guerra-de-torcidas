@@ -2,6 +2,7 @@
 // 1ª partida, aceita o convite da cidade e escolhe Campinas, vê quantos torcedores faltam, passa pelas Cidades do
 // Ranking, pelos Lances (abrindo na Seleção) e pela Galeria escolhendo uma torcida. No dobrado, desdobra no meio da partida.
 import { jogarPartida, esperar, tocarSemCobertura } from './comum/jogar.mjs';
+import { medidasDaHome } from './comum/home.mjs';
 
 const BASE = 'homeFalsa&lancesFalsos&penaltiFalso&provaFalsa&codigoFalso&galeriaFalsa=cheia&temporadaFalsa&cenario=lances';
 
@@ -36,6 +37,16 @@ export default {
     await s.passo('Home de quem escolheu Outro time', async () => {
       await p.locator('[data-acao="jogar-agora"]').waitFor({ state: 'visible', timeout: 15000 });
     }, { paginaInteira: true });
+
+    // A barra do "Outro time" sem cidade escolhida: o convite da cidade, sem número nenhum.
+    await s.passo('Home: barra do Outro time sem cidade', async () => {
+      await p.waitForFunction(() => (document.querySelector('[data-barra]')?.textContent ?? '').trim().length > 0, null, { timeout: 8000 }).catch(() => {});
+      const m = await medidasDaHome(p);
+      if (!m.barra) s.achado({ regra: 'barra-ausente-outro-time', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: 'Quem joga por "Outro time" devia ver a barra do time na arquibancada e ela não está lá.' });
+      else if (!/Escolha sua cidade: é ela que joga por você/.test(m.textoDaBarra))
+        s.achado({ regra: 'barra-outro-time-sem-convite', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: `Sem cidade, a barra devia dizer "Escolha sua cidade: é ela que joga por você" e disse: "${m.textoDaBarra.slice(0, 120)}".`, sugestao: 'docs/visual.md, Início: "Outro time" sem cidade abre a escolha da cidade.' });
+      s.medir(`barra sem cidade: "${m.textoDaBarra.slice(0, 80)}"`, m.barra?.alt ?? 0);
+    });
 
     // ---- 2. 1ª partida ----
     await s.passo('Jogar agora (Outro time)', async () => {
@@ -112,6 +123,34 @@ export default {
       if (!/falt/i.test(t)) s.achado({ regra: 'faltam-ausente', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: `A Home não mostrou o "Faltam N" da cidade (texto do bloco: "${t.slice(0, 120)}").`, talvezSimulador: true });
       else s.medir(`bloco da cidade: ${t.slice(0, 90)}`, 0);
     }, { paginaInteira: true });
+
+    // ---- 4b. A barra do "Outro time" com e sem cidade, e para onde o toque leva ----
+    await s.passo('Home: barra com a cidade (cidadesFalsas=com)', async () => {
+      await s.abrir(`/?${BASE}&cidadeFalsa=com&cidadesFalsas=com`, { esperarPor: '[data-barra] .barra-time', limiteMs: 20000, rotulo: 'Home até a barra do time' });
+      await esperar(1200);
+      const m = await medidasDaHome(p);
+      if (!m.barra || /Escolha sua cidade/.test(m.textoDaBarra) || m.textoDaBarra.length < 8)
+        s.achado({ regra: 'barra-com-cidade-sem-cidade', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: `Com a cidade escolhida e o ranking de cidades no ar, a barra devia mostrar a cidade e mostrou: "${m.textoDaBarra.slice(0, 120)}".`, talvezSimulador: true });
+      s.medir(`barra com cidade: "${m.textoDaBarra.slice(0, 90)}"`, m.barra?.alt ?? 0);
+    }, { paginaInteira: true });
+    await s.passo('toca na barra com cidade: vai à Tabela > Cidades', async () => {
+      await s.tocar(p.locator('[data-barra] .barra-time'));
+      await p.locator('[data-cidsub], [data-ranking="cidades"]').first().waitFor({ state: 'visible', timeout: 10000 });
+      await esperar(1200);
+      const cids = await p.evaluate(() => !!document.querySelector('[data-cidsub]'));
+      if (!cids) s.achado({ regra: 'barra-nao-abre-cidades', gravidade: 'atrapalha', tipo: 'layout', oQue: 'O toque na barra com cidade não abriu Tabela > Cidades (sem as sub-abas das cidades).' });
+    }, { paginaInteira: true });
+    await s.passo('Home: barra sem cidade (cidadesFalsas=sem)', async () => {
+      await s.abrir(`/?${BASE}&cidadeFalsa=sem&cidadesFalsas=sem`, { esperarPor: '[data-barra] .barra-time', limiteMs: 20000, rotulo: 'Home até a barra do time' });
+      await esperar(1200);
+      const m = await medidasDaHome(p);
+      if (!/Escolha sua cidade: é ela que joga por você/.test(m.textoDaBarra))
+        s.achado({ regra: 'barra-outro-time-sem-convite', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: `Sem cidade, a barra devia dizer "Escolha sua cidade: é ela que joga por você" e disse: "${m.textoDaBarra.slice(0, 120)}".` });
+    }, { paginaInteira: true });
+    await s.passo('toca na barra sem cidade: vai à escolha da cidade', async () => {
+      await s.tocar(p.locator('[data-barra] .barra-time'));
+      await p.locator('input[type="search"]').waitFor({ state: 'visible', timeout: 10000 });
+    });
 
     // ---- 5. Ranking > Cidades ----
     await s.passo('Ranking: aba Cidades', async () => {
