@@ -101,7 +101,7 @@ export function abrirCentral(o: OpcoesDaCentral): () => void {
         ${
           mostrarPush
             ? `<section class="avisos-push" aria-labelledby="avisos-push-titulo">
-          <h3 class="avisos-rotulo" id="avisos-push-titulo">Aviso de domingo</h3>
+          <h3 class="so-leitor" id="avisos-push-titulo">Aviso de domingo</h3>
           <div data-painel-push></div>
         </section>`
             : ''
