@@ -56,6 +56,7 @@ Nada disso tem lembrete automático.
 - **`#admin`:** apagar o apelido já gravado que bate com a lista de jogadores famosos (1 em 06/11).
 - **Funil do desafio:** decidir as propostas que sobraram de `docs/propostas/funil-do-desafio.md` (o C01 conta o funil e o C06 já encurtou o caminho).
 - **Link do desafio com menos toques (C06):** num aparelho limpo, abrir um link de cada tipo pelo WhatsApp: o convite com as duas faixas aparece, um toque no time leva à triagem e ao jogo; conferir também o link vencido, o de quem chamou com "Outro time" e quem já joga.
+- **Os gols de quem chamou (C03 + C08), depois de publicar:** no celular, jogar uma partida de Lances com gol e abrir o link `?l=` em outro aparelho: o telão passa os gols, a fita mostra as 3 tentativas e as faixas continuam na tela; aceitar e, no resultado, "Ver os gols". Nos pênaltis, aceitar um desafio e ver "Onde … bateu" no resultado. No `npm run metricas`, "viu os gols" começa a contar.
 
 ## Em andamento
 
