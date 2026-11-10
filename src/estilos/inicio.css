@@ -117,6 +117,11 @@
   overflow: hidden;
 }
 
+/* Com time escolhido a faixa cresce (150 → 196 px): a barra do time ocupa os 44 px do pé. Sem time, fica nos 150 px. */
+.arquibancada.com-barra {
+  height: 196px;
+}
+
 .arquibancada-tela {
   position: absolute;
   inset: 0;
@@ -131,7 +136,7 @@
   --fundo-faixa: var(--c1);
   position: absolute;
   left: 22px;
-  bottom: 18px;
+  bottom: 62px; /* acima da barra do time (44 px) e do filete da tarja (5 px), com folga */
   max-width: calc(100% - 118px);
   padding: 6px 22px 8px 16px;
   color: var(--txt);
@@ -227,7 +232,7 @@
 .link-trocar {
   position: absolute;
   right: 16px;
-  bottom: 12px;
+  bottom: 58px; /* acima da barra do time */
   min-height: 44px;
   padding: 0 12px;
   border: 0;
@@ -238,6 +243,114 @@
   font-size: 14px;
   text-decoration: underline;
   touch-action: manipulation;
+}
+
+/* ---------- barra do time (tarja de TV no pé da arquibancada) ---------- */
+/* A altura é reservada desde a abertura: o slot tem 44 px com ou sem conteúdo, então nada pula quando os dados chegam.
+   Fundo quase preto (a --placa a 92%): o texto passa de 4,5:1 sobre a torcida em qualquer luz. Sem animação. */
+.barra-slot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 44px;
+  background: color-mix(in srgb, var(--placa) 92%, transparent);
+}
+
+.barra-time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 44px;
+  padding: 0 12px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--cal);
+  font: inherit;
+  text-align: left;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+button.barra-time:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Filete de 8 px nas duas cores do time. */
+.barra-filete {
+  flex: none;
+  align-self: stretch;
+  width: 8px;
+  background: linear-gradient(90deg, var(--c1) 50%, var(--c2) 50%);
+}
+
+.barra-grande {
+  flex: none;
+  display: inline-flex;
+  font-family: var(--fonte-placar);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--amarelo);
+  font-variant-numeric: tabular-nums;
+}
+
+/* O "º" da Anton parece um zero elevado: vai na Barlow Condensed, no alto. */
+.barra-grande i {
+  align-self: flex-start;
+  margin-left: 1px;
+  font-family: var(--fonte-rotulo);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.55em;
+}
+
+.barra-texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-family: var(--fonte-rotulo);
+  font-size: 15px;
+  line-height: 1.12;
+}
+
+.barra-texto b,
+.barra-texto span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  overflow: hidden;
+}
+
+.barra-texto b {
+  font-weight: 700;
+}
+
+.barra-texto span {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+/* Sem a segunda linha, a primeira pode quebrar em duas (o recorte só entra em último caso). */
+.barra-texto b:only-child {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.barra-rotulo {
+  flex: none;
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
 }
 
 /* ---------- cabo de guerra ---------- */
@@ -328,20 +441,6 @@
   box-shadow: 0 0 0 2px var(--tinta);
   transform: skewX(var(--inclinacao));
   transition: left 700ms var(--mola-firme);
-}
-
-.cabo-nota {
-  font-size: 14px;
-  color: var(--texto-suave);
-}
-.cabo-nota[data-nota-cidade]:not([hidden]) {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-}
-.cabo-nota p {
-  margin: 0;
 }
 
 /* Sua posição entre todos os torcedores na semana (só a própria, nunca a lista). */
@@ -1211,4 +1310,42 @@
   font-family: var(--fonte-rotulo);
   font-weight: 700;
   color: var(--texto-suave);
+}
+
+/* ---------- vaga do momento (logo abaixo do "Jogar agora") ---------- */
+/* Um aviso por abertura. Vazia (ou só com a seção ainda escondida), não ocupa espaço nem o vão do gap. */
+.vaga:not(:has(> :not([hidden]))) {
+  display: none;
+}
+
+/* ---------- Como tá a guerra (fim da Home) ---------- */
+.secao-guerra {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Sem nenhum bloco visível, o rótulo some junto. */
+.secao-guerra:not(:has(> :not(.secao-rotulo):not([hidden]))) {
+  display: none;
+}
+
+.secao-rotulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-family: var(--fonte-rotulo);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.secao-rotulo::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--linha, rgba(245, 245, 240, 0.18));
 }
