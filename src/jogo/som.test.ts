@@ -4,15 +4,19 @@ vi.mock('../estado', () => ({ prefs: { get: () => ({ mudo: true }) } }));
 
 import {
   APITO,
+  CHUTE,
   FINAL,
   latenciaDoSom,
   preencherRespiro,
   preencherRuidoRosa,
+  SALA,
   somApito,
   somChute,
   somLargada,
   somTorcida,
+  somTrave,
   tamanhoRespiro,
+  TRAVE,
   variar,
 } from './som';
 import { PADROES } from '../telas/toque';
@@ -39,6 +43,7 @@ describe('mudo', () => {
       somApito(true);
       somLargada();
       somChute();
+      somTrave();
       somTorcida('festa');
       somTorcida('uuuh');
     }).not.toThrow();
@@ -64,6 +69,27 @@ describe('apito', () => {
   });
   it('a largada é mais baixa que o apito', () => {
     expect(APITO.volLargada).toBeLessThan(APITO.vol);
+  });
+});
+
+describe('sala, chute e trave', () => {
+  it('a sala tem 2 ecos de arquibancada, um de cada lado, e o estádio é curto', () => {
+    expect(SALA.ecos).toHaveLength(2);
+    for (const e of SALA.ecos) {
+      expect(e.t).toBeGreaterThanOrEqual(0.15);
+      expect(e.t).toBeLessThanOrEqual(0.25);
+      expect(e.vol).toBeLessThan(0.2);
+    }
+    expect(Math.sign(SALA.ecos[0].lado)).toBe(-Math.sign(SALA.ecos[1].lado));
+    expect(SALA.estadio.seg).toBeLessThan(3);
+  });
+  it('o anel da trave some antes de 0,3 s e o volume final é 1,297', () => {
+    for (const m of TRAVE.anel) expect(TRAVE.poste + m.dur + 0.02).toBeLessThan(0.3);
+    expect(TRAVE.volume).toBe(1.297);
+  });
+  it('o chute acaba em 0,15 s', () => {
+    expect(CHUTE.grave.para).toBeLessThanOrEqual(0.15);
+    expect(CHUTE.dobro.f0).toBe(CHUTE.grave.f0 * 2);
   });
 });
 
