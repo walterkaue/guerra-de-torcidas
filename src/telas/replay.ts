@@ -32,6 +32,8 @@ const LENTO = 2;
 const DUR_BATIDA = 190 * LENTO;
 const DUR_PULO = 420 * LENTO;
 const DEPOIS = 1100;
+/** Quanto falta para o replay acabar no instante em que a bola cruza a linha (antes de o goleiro cair): o quadro parado do telão. */
+export const FALTA_NO_GOL = DEPOIS;
 const ZOOM_FINAL = 1.1;
 
 /**

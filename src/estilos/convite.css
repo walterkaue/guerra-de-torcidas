@@ -255,22 +255,32 @@
   color: var(--texto-suave);
 }
 
-/* O telão: 4:3, gramado listrado pintado em CSS (nada pula quando o desenho chega). O canvas é quadrado e fica
-   alinhado embaixo: corta a arquibancada e deixa o gol inteiro. */
+/* O telão tem três faixas e nada fica por cima do desenho: o topo (tarja e pontinhos), o quadro (gramado listrado
+   pintado em CSS, para nada pular quando o desenho chega; o canvas fica alinhado embaixo e o CSS corta a arquibancada)
+   e o pé (legenda e botão). */
 .telao {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  margin: 0;
+  flex: none;
   border-radius: 10px;
   overflow: hidden;
-  background:
-    linear-gradient(180deg, #04130a, #0d2b18) top / 100% 26% no-repeat,
-    repeating-linear-gradient(180deg, var(--gramado-claro) 0 12%, var(--gramado) 12% 24%);
+  background: #0a130e;
   -webkit-tap-highlight-color: transparent;
 }
 
 .telao[data-modo='movimento'] {
   cursor: pointer;
+}
+
+.telao-quadro {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 5 / 4;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, #04130a, #0d2b18) top / 100% 26% no-repeat,
+    repeating-linear-gradient(180deg, var(--gramado-claro) 0 12%, var(--gramado) 12% 24%);
 }
 
 .telao-canvas {
@@ -280,16 +290,22 @@
   width: 100%;
   aspect-ratio: 10 / 13;
   display: block;
+  /* Desce um pouco: corta o chão embaixo do gol (sem nada importante no instante em que a bola passa) e dá ao batedor e à barreira o espaço do alto. */
+  transform: translateY(6%);
 }
 
-/* No alto à esquerda: a tarja inclinada (.replay-selo, style.css) com o filete na cor do time; cinza quando nada roda sozinho. */
-.telao-tarja {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 2;
-  max-width: calc(100% - 66px);
+/* Em cima: a tarja inclinada (.replay-selo, style.css) com o filete na cor do time (cinza quando nada roda sozinho) e, à direita, um pontinho por gol. */
+.telao-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px 6px 10px;
   pointer-events: none;
+}
+
+.telao-tarja {
+  min-width: 0;
 }
 
 .telao-tarja .replay-selo {
@@ -306,15 +322,10 @@
   border-left-color: #5d625f;
 }
 
-/* No alto à direita: um pontinho por gol; o atual em amarelo. */
 .telao-pontos {
-  position: absolute;
-  top: 16px;
-  right: 12px;
-  z-index: 2;
   display: flex;
+  flex: none;
   gap: 6px;
-  pointer-events: none;
 }
 
 .telao-pontos i {
@@ -329,33 +340,34 @@
   background: var(--amarelo);
 }
 
-/* Embaixo à esquerda: a legenda em amarelo sobre placa quase preta. */
+/* Embaixo: a legenda em amarelo à esquerda (numa linha só) e o botão à direita, na faixa que sempre ocupa o mesmo lugar. */
+.telao-pe {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 52px;
+  padding: 4px 10px;
+}
+
 .telao-legenda {
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
-  z-index: 2;
-  max-width: calc(100% - 20px);
-  padding: 5px 10px;
-  border-radius: 6px;
-  background: rgba(10, 19, 14, 0.92);
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
   color: var(--amarelo);
   font-weight: 700;
   font-size: 15px;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   pointer-events: none;
 }
 
-.telao[data-botao] .telao-legenda {
-  max-width: calc(100% - 144px);
-}
-
-/* Embaixo à direita: pílula quase preta, 44 px ("Ver de novo", "Próximo gol", "Ver os gols"). */
+/* Pílula quase preta, 44 px ("Ver de novo", "Próximo gol", "Ver os gols"). */
 .telao-botao {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  z-index: 3;
+  flex: none;
+  margin-left: auto;
   min-height: 44px;
   max-width: 130px;
   padding: 0 14px;
@@ -378,10 +390,10 @@
 }
 
 
-/* Celular baixo (360 × 740 e parecidos): o telão baixa para 16:10, sempre com o gol alinhado embaixo, para as duas
+/* Celular baixo (360 × 740 e parecidos): o quadro baixa para 4:3, sempre com o gol alinhado embaixo, para as duas
    faixas de time e o "Outro time" caberem sem rolar. */
 @media (max-height: 780px) {
-  .telao {
-    aspect-ratio: 16 / 10;
+  .telao-quadro {
+    aspect-ratio: 4 / 3;
   }
 }
