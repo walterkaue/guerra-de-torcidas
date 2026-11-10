@@ -1177,8 +1177,10 @@ button.barra-time:active {
   }
 }
 
-/* Sininho do aviso de domingo (push), no canto do cabeçalho da Home. */
+/* Sininho da central de avisos, no canto do cabeçalho da Home. O número dos avisos novos fica em amarelo no canto,
+   parado: sem piscar, sem animação e sem transição. */
 .sininho {
+  position: relative;
   grid-column: 3;
   justify-self: end;
   width: 44px;
@@ -1193,9 +1195,24 @@ button.barra-time:active {
   line-height: 1;
   touch-action: manipulation;
 }
-.sininho.ligado {
-  color: var(--amarelo);
-  box-shadow: inset 0 0 0 2px var(--amarelo);
+.sininho-num {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--amarelo);
+  color: var(--tinta);
+  font-family: var(--fonte-rotulo);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+.sininho-num[hidden] {
+  display: none;
 }
 
 /* Convite para o aviso de domingo, depois de um bom momento. */
@@ -1212,26 +1229,6 @@ button.barra-time:active {
   color: var(--amarelo);
   font-size: 18px;
 }
-
-/* Card "Conheça os outros jogos" (Aquecimento, docs/jogo.md 14.4): some quando a pessoa abre o aquecimento. */
-.card-aquecimento {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 52px;
-  padding: 8px 14px;
-  border: 1px solid var(--linha);
-  border-left: 5px solid var(--c1, var(--linha));
-  border-radius: var(--raio);
-  background: var(--placa);
-  box-shadow: var(--sombra-placa);
-  color: var(--cal);
-  font: inherit;
-  text-align: left;
-}
-.card-aquecimento .rotulo { color: var(--texto-suave); }
-.card-aquecimento strong { flex: 1; font-size: 16px; }
-.card-aquecimento small { color: var(--texto-suave); }
 
 /* Lance do Dia (regra de 08/11/2026): botão compacto logo abaixo do card dos Lances, na largura da grade. */
 .lance-do-dia {

@@ -4,10 +4,10 @@
 import { esc, irPara, type Rota } from '../app';
 import { LANCES_POR_CLUBE } from '../dados/lancesResumo';
 import { ID_OUTRO, TIMES, corDeTexto, corDoRivalNoDuelo, timePorId, type Time } from '../dados/times';
-import { faixaDoAparelho, prefs } from '../estado';
+import { prefs } from '../estado';
 import { fecharAbandonado, limparPendente } from '../jogo/aquecimento';
 import { AVISO_RESENHA } from '../jogo/cravaTela';
-import { podeVerPush } from '../jogo/faixaEtaria';
+import { arrumar, avisosDaCaixa, idDoTermos, lerEstado, numeroDoSininho, rotuloDoSininho, type EntradaDaCaixa } from '../jogo/avisosCaixa';
 import { avisoDosTermos, DATA_DA_VERSAO } from '../jogo/termos';
 import { barraDoTime, TEXTO_SEM_REDE, type BarraDoTime, type LinhaDaSemana } from '../jogo/barraDoTime';
 import { avisoDaVaga, ORDEM_DA_VAGA, type AvisoDaVaga, type AvisosDaAbertura } from '../jogo/vagaDoMomento';
@@ -55,11 +55,11 @@ import { ligarArquibancada } from './arquibancada';
 import { anotarCarreira, xpGuardado } from './carreira';
 import { depoisDoConvite } from './primeiraTela';
 import * as realCidade from '../servidor/rankingCidades';
-import { acimaNaUltimaVisita, deveLembrarDaCidade, guardarCidadeVista, linhaDaCidadeNaHome, type CidadeVista, type MinhaCidade } from '../jogo/rankingCidades';
+import { acimaNaUltimaVisita, guardarCidadeVista, linhaDaCidadeNaHome, type CidadeVista, type MinhaCidade } from '../jogo/rankingCidades';
 import { fraseDaCidade } from '../narrador/cidade';
 import { seloPre, faixa, numero as numeroBloco, posicaoHtml } from './blocos';
 import { arteEscada, arteGrade, htmlDaCasa, htmlDoLanceDoDia, htmlDosCards } from './cardsJogos';
-import { estadoDoAviso, painelDoAviso } from './convitePush';
+import { registrarAviso } from './avisosDoAparelho';
 import { pintarAvatar } from './bonecoDoAparelho';
 import type { FraseDoMes } from './blocoDivisoes';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
@@ -151,10 +151,10 @@ function tarjaDoTime(time: Time | undefined): string {
 }
 
 /**
- * Seção "Como tá a guerra" (fim da Home): o placar do clássico, as divisões, a cidade, o giro e o Aquecimento, nessa ordem.
+ * Seção "Como tá a guerra" (fim da Home): o placar do clássico, as divisões, a cidade, e o giro, nessa ordem.
  * Se nenhum bloco aparecer, o rótulo some junto (a regra está no CSS, com :has).
  */
-function secaoDaGuerra(time: Time | undefined, estiloTime: (t: Time) => string): string {
+function secaoDaGuerra(time: Time | undefined): string {
   const comTime = time && time.id !== ID_OUTRO ? time : undefined;
   return `<div class="secao-guerra">
       <h2 class="secao-rotulo">Como tá a guerra</h2>
@@ -183,7 +183,6 @@ function secaoDaGuerra(time: Time | undefined, estiloTime: (t: Time) => string):
         <span class="giro-selo rotulo">Giro</span><span class="giro-frase" data-giro></span><span class="so-leitor">. Ver a tabela da semana</span>
       </button>
 
-      ${prefs.get().aquecimento?.cardNaHome && !prefs.get().aquecimento?.visto ? `<button class="card-aquecimento" type="button" data-acao="aquecimento"${comTime ? ` style="${estiloTime(comTime)}"` : ''}><span class="rotulo">Aquecimento</span><strong>Conheça os outros jogos</strong><small>1 min</small></button>` : ''}
     </div>`;
 }
 
@@ -211,18 +210,12 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         <div class="cabecalho-linha">
           <button class="avatar" type="button" data-acao="perfil" aria-label="Abrir meu perfil" style="${estiloTime(dono)}">${icone('pessoa')}</button>
           <h1 class="marca-pequena">Guerra <span>de Torcidas</span></h1>
-          ${
-            podeVerPush(faixaDoAparelho())
-              ? `<button class="sininho" type="button" data-acao="sininho" aria-label="Aviso de domingo" aria-expanded="false">
-            ${icone('sino')}
-          </button>`
-              : ''
-          }
+          <button class="sininho" type="button" data-acao="sininho" aria-label="Avisos" aria-haspopup="dialog">
+            ${icone('sino')}<span class="sininho-num" data-sininho-num aria-hidden="true" hidden></span>
+          </button>
         </div>
         <div class="contagem rotulo">${seloPre()}<span>Semana fecha em <strong data-contagem>${formatarContagem(msAteZerarSemana())}</strong></span></div>
       </header>
-
-      <div data-painel-push></div>
 
       <section class="arquibancada${time ? ' com-barra' : ''}" style="${estiloTime(dono)}" aria-label="Sua torcida">
         <canvas class="arquibancada-tela" aria-hidden="true"></canvas>
@@ -241,7 +234,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
       <div class="casa-secao"${time && time.id !== ID_OUTRO ? ` style="${estiloTime(time)}"` : ''}>${htmlDaCasa(esc(tituloDaCasa(time)))}</div>
 
-      ${secaoDaGuerra(time, estiloTime)}
+      ${secaoDaGuerra(time)}
 
       <button class="link-feedback" type="button" data-acao="feedback">${icone('balao')} Pediu VAR? Conta o que aconteceu</button>
       ${htmlBotaoApoio()}
@@ -286,7 +279,6 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     if (proximo === 'penaltis') irPara(time ? { tela: 'lances', aba: 'penaltis' } : { tela: 'times', depois: 'lances' });
     else abrir[proximo]();
   });
-  root.querySelector('[data-acao="aquecimento"]')?.addEventListener('click', () => irPara({ tela: 'aquecimento', depois: { tela: 'inicio' } }));
   const botaoPerfil = root.querySelector<HTMLElement>('[data-acao="perfil"]');
   botaoPerfil?.addEventListener('click', () => irPara({ tela: 'perfil' }));
   // Busto do boneco (52 px) no lugar do ícone; sem time não há boneco, e o ícone fica.
@@ -314,31 +306,46 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   ligarBotaoApoio(root);
   ligarBarraNavegacao(root);
 
-  // Sininho: liga, desliga ou explica o aviso de domingo (push). Aceso quando o aviso está ligado.
-  const sininho = root.querySelector<HTMLButtonElement>('[data-acao="sininho"]');
-  if (sininho) {
-    const painelPush = root.querySelector<HTMLElement>('[data-painel-push]')!;
-    const acender = (ligado: boolean) => {
-      sininho.classList.toggle('ligado', ligado);
-      sininho.setAttribute('aria-label', ligado ? 'Aviso de domingo ligado' : 'Aviso de domingo');
-    };
-    void estadoDoAviso().then((e) => !saiu && acender(e === 'ligado'));
-    const fecharPainel = () => {
-      painelPush.innerHTML = '';
-      sininho.setAttribute('aria-expanded', 'false');
-    };
-    sininho.addEventListener('click', () => {
-      if (painelPush.innerHTML.trim()) return fecharPainel();
-      sininho.setAttribute('aria-expanded', 'true');
-      void painelDoAviso(painelPush, acender);
-    });
-    // Esc fecha o painel (como as outras folhas) e devolve o foco ao sininho.
-    root.addEventListener('keydown', (e) => {
-      if (e.key !== 'Escape' || !painelPush.innerHTML.trim()) return;
-      fecharPainel();
-      sininho.focus();
-    });
-  }
+  // Sininho: a caixa de avisos do jogo (jogo/avisosCaixa.ts), para todo mundo. O número é o de avisos novos; a folha
+  // (telas/centralAvisos.ts) baixa só no toque.
+  const sininho = root.querySelector<HTMLButtonElement>('[data-acao="sininho"]')!;
+  const elNumeroSininho = root.querySelector<HTMLElement>('[data-sininho-num]')!;
+  /** Já jogou, não tem cidade e a sessão vale (lido em carregarCidade). `undefined`: ainda não sabe (rede). */
+  let semCidade: boolean | undefined;
+  const entradaDaCaixa = (): EntradaDaCaixa => ({
+    hoje: diaBrasilia(),
+    termos: { atual: DATA_DA_VERSAO, vista: prefs.get().termosVistos },
+    aquecimento: prefs.get().aquecimento,
+    semCidade,
+  });
+  /** Refaz o número e o rótulo do sininho (sem animar) e arruma o que venceu no aparelho. */
+  const atualizarSininho = (): void => {
+    const entrada = entradaDaCaixa();
+    let estado = lerEstado(prefs.get().avisos);
+    const arrumado = arrumar(estado, entrada);
+    if (arrumado !== estado) {
+      prefs.set({ avisos: arrumado });
+      estado = arrumado;
+    }
+    const novos = avisosDaCaixa(estado, entrada).novos.length;
+    const texto = numeroDoSininho(novos);
+    elNumeroSininho.textContent = texto ?? '';
+    elNumeroSininho.hidden = texto === null;
+    sininho.setAttribute('aria-label', rotuloDoSininho(novos));
+  };
+  atualizarSininho();
+  let fecharCentral: (() => void) | null = null;
+  let abrindoCentral = false;
+  sininho.addEventListener('click', () => {
+    if (abrindoCentral || document.querySelector('[data-central-avisos]')) return;
+    abrindoCentral = true;
+    void import('./centralAvisos')
+      .then((m) => {
+        if (!saiu) fecharCentral = m.abrirCentral({ gatilho: sininho, entrada: entradaDaCaixa, aoMudar: atualizarSininho });
+      })
+      .catch(() => {})
+      .finally(() => (abrindoCentral = false));
+  });
 
   // ---------- status vivo dos cards e "Jogar agora" ----------
   const elCard = (jogo: JogoDaHome) => root.querySelector<HTMLElement>(`[data-jogo="${jogo}"]`)!;
@@ -712,10 +719,10 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
 
   // ---------- sua cidade (um bloco só: posição, "Faltam N" ou o lembrete de escolher) ----------
   const elCidade = root.querySelector<HTMLElement>('[data-cidade]')!;
-  let lembreteMostrado = false;
+  let semCidadeLido = false;
   const carregarCidade = () => {
     // Sem time ainda, não cria login só para isso.
-    if (!time || lembreteMostrado) return;
+    if (!time || semCidadeLido) return;
     naHome()
       .then(servidorCidade)
       .then(async (api) => ({ api, minha: await api.minhaCidadeSemana(semana) }))
@@ -723,6 +730,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         if (saiu) return;
         if (minha) {
           cidadeDaBarra = minha;
+          semCidade = false;
+          atualizarSininho();
           falhouCidade = false;
           pintarBarra();
           // O rival guardado só vale na mesma semana: de outra semana, não há "SUBIU!".
@@ -737,21 +746,22 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
         // Quem joga por "Outro time" e não tem cidade: o convite mora na barra do time (sempre), não aqui.
         // Sem sessão válida (encerrada em outro aparelho) também: esta conta não tem cidade, e a barra não fica vazia.
         if (time.id === ID_OUTRO) {
+          semCidade = false;
+          atualizarSininho();
           cidadeDaBarra = null;
           falhouCidade = false;
           pintarBarra();
           return;
         }
-        // Sem cidade: lembrete depois da 1ª partida, no máximo 1 vez por semana.
-        const hoje = diaBrasilia();
+        // Sem cidade: o convite mora na central de avisos (volta no máximo uma vez por semana, depois da 1ª partida).
         const jogou = FALSA_CIDADE || (((await (await import('../servidor/api')).minhaCarreira().catch(() => null))?.xp ?? 0) > 0);
-        if (saiu || !deveLembrarDaCidade({ temCidade: false, jogouAlguma: jogou, ultimo: prefs.get().cidadeLembrete, hoje })) return;
-        // Sessão encerrada em outro aparelho também volta "sem cidade": sem sessão válida, não lembra.
-        if (!(await api.sessaoValida()) || saiu) return;
-        prefs.set({ cidadeLembrete: hoje });
-        lembreteMostrado = true;
-        elCidade.innerHTML = '<a class="bloco-cidade-link" href="#cidade" data-acao="escolher-cidade"><strong>Defende sua cidade também?</strong><span class="adesivo">Escolher minha cidade</span></a>';
-        elCidade.hidden = false;
+        if (saiu) return;
+        // Sessão encerrada em outro aparelho também volta "sem cidade": sem sessão válida, não convida.
+        const valeASessao = jogou && (await api.sessaoValida());
+        if (saiu) return;
+        semCidade = !!valeASessao;
+        semCidadeLido = semCidade;
+        atualizarSininho();
       })
       .catch(() => {
         // sem internet: fica sem o bloco (e, para "Outro time", a barra diz que está sem conexão)
@@ -789,8 +799,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   void carregar();
   // ---------- vaga do momento (logo abaixo do "Jogar agora") ----------
   // Um aviso por abertura, na ordem de ORDEM_DA_VAGA. Cada aviso responde se tem algo para mostrar (falha de rede conta
-  // como não) e só o escolhido é desenhado; os outros esperam a próxima abertura. Quando a central de avisos entrar,
-  // o que sobrar vai para ela em oQueSobrou.
+  // como não) e só o escolhido é desenhado; os outros esperam a próxima abertura. O que já foi mostrado mora na central
+  // de avisos (o sininho), que o aviso registra ao ser desenhado.
   const elVaga = root.querySelector<HTMLElement>('[data-vaga]')!;
   const comPlaca = !!time && time.id !== ID_OUTRO;
   const novaPlaca = (): HTMLElement => {
@@ -814,10 +824,11 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       tem: () => Promise.resolve(termos === 'mostrar'),
       mostrar: () => {
         elVaga.insertAdjacentHTML('beforeend', '<button class="faixa-termos" type="button">Os Termos mudaram <span>Ler</span></button>');
+        registrarAviso([idDoTermos(DATA_DA_VERSAO)]);
       },
     },
   };
-  /** O que não coube na vaga nesta abertura. Hoje espera a próxima; com a central de avisos, vai para ela. */
+  /** O que não coube na vaga nesta abertura espera a próxima; o que já foi mostrado mora na central de avisos. */
   const oQueSobrou = (_avisos: AvisoDaVaga[]): void => {};
   const preencherVaga = async (): Promise<void> => {
     await depoisDoConvite();
@@ -830,6 +841,8 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       if (escolhido) {
         oQueSobrou(ORDEM_DA_VAGA.filter((x) => x !== escolhido));
         await AVISOS[escolhido].mostrar();
+        // A placa ou a faixa pode ter posto um aviso na caixa.
+        if (!saiu) atualizarSininho();
       }
       return;
     }
@@ -850,6 +863,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     clearInterval(relogio);
     clearTimeout(esperaDoMes);
     pararArquibancada();
+    fecharCentral?.();
     pararRanking?.();
   };
 }

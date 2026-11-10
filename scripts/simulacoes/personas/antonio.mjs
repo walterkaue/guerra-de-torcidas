@@ -1,5 +1,6 @@
 // Seu Antônio, 68, aposentado, Vasco, 18+. Entra direto no site pelo Samsung Internet, com fonte 150% e movimento
 // reduzido. Lê devagar, toca impreciso e arrasta curto e lento (a dica "Fraquinho, o goleiro pega" tem de aparecer).
+import { semearAvisos, medirFolha } from './comum/central.mjs';
 import { chutar, tocarZona, jogarPartida, esperar, tocarSemCobertura, entrarNaProva } from './comum/jogar.mjs';
 import { textosCortados, seEncostam } from './comum/home.mjs';
 
@@ -211,5 +212,35 @@ export default {
       await s.tocar(p.locator('[data-acao="casa"]').first());
       await esperar(2500);
     }, { paginaInteira: true, fichaFactual: true });
+
+    // ---- Central de avisos (B01) a 150% e com movimento reduzido: sem animação, alvos de 44 px, sem rolar para o lado ----
+    await s.passo('Home com avisos (150%)', async () => {
+      await home();
+      await semearAvisos(s, { ids: ['peca:apito', 'trofeu:campeao_semana|2026-W45||vasco', 'desafio:lances:abc12345'], aquecimento: true });
+      await home();
+      await esperar(1200);
+    });
+    await s.passo('folha de avisos a 150%', async () => {
+      await s.tocar(p.locator('button[data-acao="sininho"]'));
+      await p.locator('[data-central-avisos]').waitFor({ state: 'visible', timeout: 10000 });
+      await esperar(900);
+      await s.conferirParado('a folha de avisos (movimento reduzido)');
+      const m = await medirFolha(p);
+      if (!m) return s.achado({ regra: 'folha-ausente', gravidade: 'bloqueia', tipo: 'erro', oQue: 'A folha de avisos não abriu.' });
+      s.medir(`botões da folha a 150%: ${m.botoes.map((b) => `${b.nome.slice(0, 18)}=${b.larg}x${b.alt}`).join('; ')}`, m.botoes.length);
+      for (const b of m.botoes) {
+        if (b.alt < 44 || b.larg < 44)
+          s.achado({ regra: 'alvo-da-folha-menor-que-44', gravidade: 'atrapalha', tipo: 'layout', oQue: `Na folha de avisos a 150% o botão "${b.nome}" mede ${b.larg}x${b.alt} px (o alvo é de 44 px).`, chave: 'alvo:' + b.nome });
+      }
+      if (m.paginaRolaLado || m.folhaRolaLado) s.achado({ regra: 'folha-rola-pro-lado', gravidade: 'atrapalha', tipo: 'layout', oQue: 'A folha de avisos a 150% rola para o lado.' });
+      if (m.avisos < 4) s.achado({ regra: 'avisos-faltando', gravidade: 'atrapalha', tipo: 'erro', oQue: `A folha mostrou ${m.avisos} avisos (semeei 4).`, talvezSimulador: true });
+    }, { tela: 'folha de avisos a 150%' });
+    await s.passo('rola a folha até o fim e fecha', async () => {
+      await p.locator('[data-central-avisos] .avisos-rolagem').evaluate((el) => (el.scrollTop = el.scrollHeight)).catch(() => {});
+      await esperar(500);
+      await s.conferirParado('a folha de avisos rolada (movimento reduzido)');
+      await s.tocar(p.locator('[data-central-avisos] [data-fechar]'));
+      await p.locator('[data-central-avisos]').waitFor({ state: 'detached', timeout: 5000 }).catch(() => s.achado({ regra: 'fechar-nao-fecha', gravidade: 'bloqueia', tipo: 'erro', oQue: 'O botão Fechar não fechou a central.' }));
+    });
   },
 };

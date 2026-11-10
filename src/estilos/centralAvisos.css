@@ -1,0 +1,214 @@
+/* Central de avisos (telas/centralAvisos.ts): a folha que sobe do rodapé quando se toca no sininho da Home.
+   Reaproveita .folha/.folha-caixa (protecao.css). O cabeçalho com o fechar fica sempre visível; a lista rola por dentro. */
+.caixa-avisos {
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  max-height: 86vh;
+  max-height: 86dvh;
+}
+
+.avisos-cab {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 8px 4px 16px;
+}
+
+.avisos-titulo {
+  font-family: var(--fonte-placar);
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.avisos-fechar {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--cal);
+  font-size: 26px;
+  line-height: 1;
+  touch-action: manipulation;
+}
+
+.avisos-rolagem {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding: 4px 16px calc(20px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.avisos-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.avisos-rotulo {
+  font-family: var(--fonte-rotulo);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.aviso {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: var(--raio);
+  background: var(--placa);
+  box-shadow: var(--sombra-placa);
+}
+
+.aviso.visto {
+  border-color: var(--linha);
+  background: transparent;
+  box-shadow: none;
+}
+
+.aviso-ico {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--cal);
+  font-size: 22px;
+}
+
+.aviso.visto .aviso-ico {
+  color: var(--texto-suave);
+}
+
+.aviso-titulo {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.aviso-linha {
+  margin-top: 2px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--texto-suave);
+}
+
+.aviso-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: 8px;
+}
+
+.aviso-acao {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--amarelo);
+  color: var(--tinta);
+  font-family: var(--fonte-rotulo);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+
+.aviso-dispensar {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--texto-suave);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  touch-action: manipulation;
+}
+
+.avisos-vazio {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 20px 8px 8px;
+  text-align: center;
+}
+
+.avisos-vazio .aviso-ico {
+  margin-bottom: 4px;
+}
+
+.avisos-vazio strong {
+  font-family: var(--fonte-placar);
+  font-size: 22px;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.avisos-vazio p {
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.avisos-push {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.avisos-push[hidden] {
+  display: none;
+}
+
+.avisos-fechar:focus-visible,
+.aviso-acao:focus-visible,
+.aviso-dispensar:focus-visible {
+  outline: 2px solid var(--amarelo);
+  outline-offset: 2px;
+}
+
+/* A folha sobe do rodapé; com movimento reduzido ela só aparece. */
+@media (prefers-reduced-motion: no-preference) {
+  .caixa-avisos {
+    animation: avisos-sobe var(--medio) var(--mola-firme);
+  }
+}
+
+@keyframes avisos-sobe {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+
+.avisos-lista + .avisos-rotulo {
+  margin: 14px 0 8px;
+}

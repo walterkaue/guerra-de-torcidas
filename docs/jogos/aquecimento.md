@@ -15,7 +15,7 @@
 - Só a estação 2 (Defesa) espera o 1º toque: a mão repete o gesto (a cada ~2,5 s) até a pessoa tocar, e só então o chute sai, sem prazo. Com movimento reduzido, a seta parada fica até o toque. A Prova tem relógio; o ✓ e a comemoração de toda estação ficam como estão (quem não toca na Prova passa do mesmo jeito).
 - Toda estação comemora, acertando ou não: papel picado nas cores do time, vibração e um grito curto do narrador ('Quase! No jogo valendo você acerta'; na Prova, 'Quase! Na Prova de verdade você acerta.'). Respeita movimento reduzido (a mão vira seta parada) e o botão Vibração. Gritos em `docs/narrador.md`, seção 14.
 - Fim: 'Aquecido! Agora vale ponto pro [time]', as 5 estações marcadas, o palpite feito, selo 'Aquecido' no Perfil e +20 XP de Carreira uma vez só (não mexe no ranking), botão 'Jogar agora' (abre os Lances do Jogo no filtro Pênaltis).
-- Quem chega por link de desafio vai direto ao desafio; o aquecimento aparece depois, como card na Home ('Conheça os outros jogos · 1 min'). Uma vez por aparelho; 'Rever aquecimento' no Perfil. Nada conta ponto, exceto o palpite do Palpite da Rodada. Roda no aparelho, como o treino.
+- Quem chega por link de desafio vai direto ao desafio; o aquecimento aparece depois, como aviso na central de avisos ('Conheça os outros jogos', botão 'Abrir'). Uma vez por aparelho; 'Rever aquecimento' no Perfil. Nada conta ponto, exceto o palpite do Palpite da Rodada. Roda no aparelho, como o treino.
 - Métrica no `npm run metricas`: quantos completam, pulam e em qual estação param (só contagem).
 
 ### Tutoriais no gesto
