@@ -11,8 +11,10 @@ import { admin, ErroHttp, lerCorpo, servir, usuario } from '../_shared/comum.ts'
 const MOTIVOS = new Set([
   'sem_titulo', 'titulo_longo', 'nome_longo', 'lado_invalido', 'sem_time_dos_20', 'mesmo_time', 'time_invalido',
   'fora_e_dos_20', 'texto_proibido', 'texto_invalido', 'inicio_no_passado', 'especial_nao_encontrado', 'jogo_fechado',
-  'ja_comecou', 'tem_palpite',
+  'ja_comecou', 'tem_palpite', 'ja_existe', 'inicio_longe',
 ]);
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const texto = (v: unknown): string | null => (typeof v === 'string' ? v : null);
 
@@ -35,6 +37,7 @@ servir(async (req) => {
 
   const corpo = await lerCorpo(req);
   const jogoId = texto(corpo.jogoId);
+  if (jogoId !== null && !UUID.test(jogoId)) throw new ErroHttp(400, 'sem_jogo');
   let chamada: PromiseLike<{ data: unknown; error: { message?: string } | null }>;
   if (corpo.acao === 'apagar') {
     if (!jogoId) throw new ErroHttp(400, 'sem_jogo');

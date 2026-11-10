@@ -235,7 +235,8 @@ $$;
 --    Cada lado: p_*_id (um dos 20) ou p_*_fora (nome do time de fora), nunca os dois.
 -- ---------------------------------------------------------------------------
 
--- Espaços nas pontas e repetidos saem; vazio vira nulo. Caractere de controle é recusado.
+-- Espaços nas pontas e repetidos saem; vazio vira nulo. Caractere de controle ou invisível (largura zero, direção
+-- do texto), que esconderia uma palavra proibida do filtro, é recusado.
 create or replace function public.especial_limpar(p text)
 returns text
 language plpgsql
@@ -243,7 +244,9 @@ immutable
 set search_path = ''
 as $$
 begin
-  if p ~ '[[:cntrl:]]' then raise exception 'texto_invalido'; end if;
+  if p ~ '[[:cntrl:]]' or p ~ '[\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF\u00AD]' then
+    raise exception 'texto_invalido';
+  end if;
   return nullif(btrim(regexp_replace(coalesce(p, ''), '\s+', ' ', 'g')), '');
 end;
 $$;
@@ -287,6 +290,39 @@ begin
 end;
 $$;
 
+-- Horário de um especial: no futuro e até 400 dias à frente (um ano digitado errado não deixa o palpite aberto por anos).
+create or replace function public.especial_conferir_inicio(p_inicio timestamptz)
+returns void
+language plpgsql
+stable
+set search_path = ''
+as $$
+begin
+  if p_inicio is null or p_inicio <= now() then raise exception 'inicio_no_passado'; end if;
+  if p_inicio > now() + interval '400 days' then raise exception 'inicio_longe'; end if;
+end;
+$$;
+
+-- O mesmo jogo cadastrado duas vezes seria duas rodadas, cada uma com o seu ×2: mesmos times, ainda não confirmado
+-- nem anulado e com início a menos de 12 h de diferença é o mesmo jogo.
+create or replace function public.especial_repetido(
+  p_jogo uuid, p_mandante_id text, p_mandante_fora text, p_visitante_id text, p_visitante_fora text, p_inicio timestamptz
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.jogos j join public.rodadas r on r.numero = j.rodada
+    where r.especial and j.id is distinct from p_jogo and j.confirmado_em is null and not j.anulado
+      and j.mandante_id is not distinct from p_mandante_id and lower(j.mandante_fora) is not distinct from lower(p_mandante_fora)
+      and j.visitante_id is not distinct from p_visitante_id and lower(j.visitante_fora) is not distinct from lower(p_visitante_fora)
+      and abs(extract(epoch from j.inicio - p_inicio)) < 12 * 3600
+  );
+$$;
+
 -- Abre na hora em que é criado; fecha no início (hora do servidor), como qualquer jogo.
 create or replace function public.especial_criar(
   p_competicao text, p_fase text,
@@ -308,7 +344,12 @@ declare
 begin
   perform public.especial_conferir(v_competicao, v_fase, nullif(p_mandante_id, ''), v_mandante_fora,
     nullif(p_visitante_id, ''), v_visitante_fora);
-  if p_inicio is null or p_inicio <= now() then raise exception 'inicio_no_passado'; end if;
+  perform public.especial_conferir_inicio(p_inicio);
+  -- Um cadastro por vez: dois cliques em "Criar jogo" não viram duas rodadas.
+  perform pg_advisory_xact_lock(hashtext('especial_criar'));
+  if public.especial_repetido(null, nullif(p_mandante_id, ''), v_mandante_fora, nullif(p_visitante_id, ''), v_visitante_fora, p_inicio) then
+    raise exception 'ja_existe';
+  end if;
 
   v_rodada := nextval('public.rodadas_especiais');
   insert into public.rodadas (numero, especial) values (v_rodada, true);
@@ -322,7 +363,8 @@ $$;
 
 -- Antes do início: muda tudo; os times só sem nenhum palpite (o palpite é do mandante × visitante cadastrado).
 -- Depois do início e antes da confirmação: só o horário, para o futuro (jogo adiado: o palpite reabre).
--- Confirmado ou anulado: não muda (corrigir o placar é na confirmar-placar).
+-- Anulado e nunca confirmado: salvar com horário novo desfaz a anulação (anulou e a data saiu depois).
+-- Confirmado: não muda (corrigir o placar é na confirmar-placar).
 create or replace function public.especial_editar(
   p_jogo uuid, p_competicao text, p_fase text,
   p_mandante_id text, p_mandante_fora text, p_visitante_id text, p_visitante_fora text,
@@ -345,27 +387,30 @@ begin
   where jg.id = p_jogo and r.especial
   for update of jg;
   if not found then raise exception 'especial_nao_encontrado'; end if;
-  if j.confirmado_em is not null or j.anulado then raise exception 'jogo_fechado'; end if;
-  if p_inicio is null or p_inicio <= now() then raise exception 'inicio_no_passado'; end if;
+  if j.confirmado_em is not null then raise exception 'jogo_fechado'; end if;
+  perform public.especial_conferir_inicio(p_inicio);
 
   perform public.especial_conferir(v_competicao, v_fase, nullif(p_mandante_id, ''), v_mandante_fora,
     nullif(p_visitante_id, ''), v_visitante_fora);
   v_times_mudam := (j.mandante_id, j.mandante_fora, j.visitante_id, j.visitante_fora)
     is distinct from (nullif(p_mandante_id, ''), v_mandante_fora, nullif(p_visitante_id, ''), v_visitante_fora);
 
-  if now() >= j.inicio then
+  if now() >= j.inicio or j.anulado then
     if v_times_mudam or (j.competicao, j.fase) is distinct from (v_competicao, v_fase) then
       raise exception 'ja_comecou';
     end if;
   elsif v_times_mudam and exists (select 1 from public.palpites pa where pa.jogo_id = j.id) then
     raise exception 'tem_palpite';
   end if;
+  if public.especial_repetido(j.id, nullif(p_mandante_id, ''), v_mandante_fora, nullif(p_visitante_id, ''), v_visitante_fora, p_inicio) then
+    raise exception 'ja_existe';
+  end if;
 
   update public.jogos set
     competicao = v_competicao, fase = v_fase,
     mandante_id = nullif(p_mandante_id, ''), mandante_fora = v_mandante_fora,
     visitante_id = nullif(p_visitante_id, ''), visitante_fora = v_visitante_fora,
-    inicio = p_inicio, atualizado_em = now()
+    inicio = p_inicio, anulado = false, atualizado_em = now()
   where id = j.id;
 end;
 $$;
@@ -400,6 +445,7 @@ revoke all on sequence public.rodadas_especiais from public, anon, authenticated
 grant usage on sequence public.rodadas_especiais to service_role;
 
 revoke execute on function public.texto_sem_aposta(text), public.jogo_conferir_formato(), public.especial_limpar(text),
+  public.especial_conferir_inicio(timestamptz), public.especial_repetido(uuid, text, text, text, text, timestamptz),
   public.especial_conferir(text, text, text, text, text, text),
   public.especial_criar(text, text, text, text, text, text, timestamptz),
   public.especial_editar(uuid, text, text, text, text, text, text, timestamptz),

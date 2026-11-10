@@ -41,6 +41,8 @@ async function torcedor(time: string): Promise<string> {
 
 const daquiA = (horas: number) => new Date(Date.now() + horas * 3600_000).toISOString();
 
+let cadastros = 0;
+
 interface Lado {
   id?: string;
   fora?: string;
@@ -55,7 +57,7 @@ async function criar(o: { competicao?: string; fase?: string | null; m?: Lado; v
     m.fora ?? null,
     v.id ?? null,
     v.fora ?? null,
-    o.inicio ?? daquiA(48),
+    o.inicio ?? daquiA(48 + 13 * ++cadastros),
   ]);
   return r.id;
 }
@@ -163,6 +165,18 @@ describe('formato', () => {
     expect(await motivo(criar({ fase: 'Final valendo' }))).toBe('texto_proibido');
     expect(await motivo(criar({ v: { fora: 'BET Clube' } }))).toBe('texto_proibido');
     expect(await motivo(criar({ competicao: 'Supercopa Rei', fase: 'Final' }))).toBe('passou');
+    // Caractere invisível no meio esconderia a palavra do filtro.
+    expect(await motivo(criar({ competicao: 'Copa ap\u200bosta' }))).toBe('texto_invalido');
+  });
+
+  it('o mesmo jogo não entra duas vezes, e o horário vai até 400 dias à frente', async () => {
+    const inicio = daquiA(24 * 30);
+    const m = { id: 'cruzeiro' };
+    const v = { fora: 'Toluca' };
+    expect(await motivo(criar({ m, v, inicio }))).toBe('passou');
+    expect(await motivo(criar({ m, v: { fora: 'TOLUCA' }, inicio: daquiA(24 * 30 + 3) }))).toBe('ja_existe');
+    expect(await motivo(criar({ m, v, inicio: daquiA(24 * 30 + 13) }))).toBe('passou');
+    expect(await motivo(criar({ inicio: daquiA(24 * 401) }))).toBe('inicio_longe');
   });
 
   it('a trava do banco segura a sincronização e o Brasileirão', async () => {
@@ -177,6 +191,29 @@ describe('formato', () => {
     expect(
       await motivo(db.query(`insert into public.jogos (rodada, mandante_id, mandante_fora, visitante_id, inicio) values (38, null, 'Toluca', 'remo', now())`)),
     ).toBe('brasileirao_so_com_os_20');
+    // A trava vale também fora do especial_criar.
+    await db.query('insert into public.rodadas (numero, especial) values (1999, true)');
+    expect(
+      await motivo(db.query(`insert into public.jogos (rodada, mandante_id, visitante_id, inicio, competicao) values (1999, 'santos', 'remo', now(), 'Bet Cup')`)),
+    ).toBe('texto_proibido');
+    expect(
+      await motivo(db.query(`insert into public.jogos (rodada, mandante_id, visitante_id, inicio) values (1999, 'santos', 'remo', now())`)),
+    ).toBe('especial_sem_titulo');
+  });
+
+  it('o upsert da sincronização segue funcionando nos jogos do Brasileirão', async () => {
+    const upsert = (hora: number) =>
+      db.query(
+        `insert into public.jogos (api_id, rodada, mandante_id, visitante_id, inicio, status_api)
+         values (777, 36, 'bahia', 'vitoria', now() + make_interval(hours => $1), 'SCHEDULED')
+         on conflict (api_id) do update set inicio = excluded.inicio, status_api = excluded.status_api`,
+        [hora],
+      );
+    expect(await motivo(upsert(30))).toBe('passou');
+    expect(await motivo(upsert(54))).toBe('passou');
+    await servidor('select public.atualizar_travas()');
+    const { rows } = await db.query<{ t: Date | null }>('select trava_certeza as t from public.rodadas where numero = 36');
+    expect(rows[0].t).not.toBeNull();
   });
 });
 
@@ -218,13 +255,13 @@ describe('quem escreve', () => {
 describe('editar e apagar', () => {
   it('antes do início muda tudo; com palpite, os times não mudam; depois do início, só o horário (adiado)', async () => {
     const a = await torcedor('gremio');
-    const j = await criar();
+    const j = await criar({ v: { id: 'remo' } });
     const editar = (o: { competicao?: string; m?: string; inicio?: string }) =>
       servidor('select public.especial_editar($1, $2, null, $3, null, $4, null, $5)', [
         j,
         o.competicao ?? 'Final da Copa do Brasil',
         o.m ?? 'gremio',
-        'palmeiras',
+        'remo',
         o.inicio ?? daquiA(72),
       ]);
     expect(await motivo(editar({ m: 'internacional' }))).toBe('passou');
@@ -237,7 +274,7 @@ describe('editar e apagar', () => {
     expect(await motivo(editar({ competicao: 'Copa do Brasil · Final' }))).toBe('ja_comecou');
     expect(await motivo(editar({ competicao: 'Copa do Brasil', inicio: daquiA(-0.5) }))).toBe('inicio_no_passado');
     // Adiado: o palpite reabre até o novo início.
-    expect(await motivo(palpitar(a, j, 3, 3).then(() => 0))).toMatch(/duplicate|row-level security/);
+    expect(await motivo(palpitar(a, j, 3, 3))).toMatch(/row-level security/);
     expect(await motivo(editar({ competicao: 'Copa do Brasil', inicio: daquiA(24) }))).toBe('passou');
     expect((await db.query<{ a: boolean }>('select public.jogo_aberto($1) as a', [j])).rows[0].a).toBe(true);
     await celular(a, 'update public.palpites set gols_mandante = 0 where jogo_id = $1', [j]);
@@ -245,6 +282,20 @@ describe('editar e apagar', () => {
 
     await db.query('update public.jogos set gols_mandante = 1, gols_visitante = 0, confirmado_em = now() where id = $1', [j]);
     expect(await motivo(editar({ competicao: 'Copa do Brasil' }))).toBe('jogo_fechado');
+  });
+
+  it('anulado e remarcado: salvar o horário novo desfaz a anulação e reabre o palpite', async () => {
+    const a = await torcedor('vasco');
+    const j = await criar({ m: { id: 'vasco' }, v: { fora: 'Boca' } });
+    await palpitar(a, j, 1, 0);
+    await db.query('update public.jogos set anulado = true where id = $1', [j]);
+    expect((await db.query<{ a: boolean }>('select public.jogo_aberto($1) as a', [j])).rows[0].a).toBe(false);
+    const remarcar = (competicao: string, m: string) =>
+      servidor('select public.especial_editar($1, $2, null, $3, null, null, $4, $5)', [j, competicao, m, 'Boca', daquiA(200)]);
+    expect(await motivo(remarcar('Final da Copa do Brasil', 'gremio'))).toBe('ja_comecou');
+    expect(await motivo(remarcar('Final da Copa do Brasil', 'vasco'))).toBe('passou');
+    const [l] = (await db.query<{ anulado: boolean; a: boolean }>('select anulado, public.jogo_aberto(id) as a from public.jogos where id = $1', [j])).rows;
+    expect(l).toEqual({ anulado: false, a: true });
   });
 
   it('apaga só sem palpite, e leva a rodada junto', async () => {
@@ -327,7 +378,7 @@ describe('palpite, pontos e rankings', () => {
     await confirmar(jogo, 2, 1);
   });
 
-  it('soma na semana do jogo, por fora do teto, e respeita o modo ensaio', async () => {
+  it('soma na semana do jogo e respeita o modo ensaio', async () => {
     const semana = semanaDosPontos(new Date(Date.now() - 3600_000), new Date());
     const crava = async () =>
       (

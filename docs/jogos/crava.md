@@ -61,7 +61,7 @@ O Brasileirão 2026 acaba na 38ª (quarta 02/12) e a Série A 2027 começa em 27
 
 ### No `#admin` (seção "Jogos especiais")
 - Criar: competição (até 40 caracteres), fase (opcional, até 40), mandante e visitante (um dos 20 ou "time de fora" com o nome, até 30), dia e hora de Brasília. Pelo menos um lado é um dos 20; o time de fora não pode ser um dos 20 escrito à mão.
-- Editar até o início (os times, só sem palpite); depois do início, só o horário (jogo adiado). Apagar só sem palpite; com palpite, anular. Confirmar e corrigir o placar como nas rodadas, com o mesmo cálculo e as mesmas garantias contra pontos em dobro.
+- Editar até o início (os times, só sem palpite); depois do início, só o horário (jogo adiado). Anulado e depois remarcado: salvar o horário novo desfaz a anulação. Apagar só sem palpite; com palpite, anular. O mesmo jogo (mesmos times, início a menos de 12 h) não entra duas vezes; horário até 400 dias à frente. Confirmar e corrigir o placar como nas rodadas, com o mesmo cálculo e as mesmas garantias contra pontos em dobro.
 - O texto livre recusa as palavras proibidas (seção 3 do `jogo.md`, mais "valendo", "prêmio" e "lucro") e sai sempre escapado na tela e no card.
 
 ### Linha vermelha: nada que pareça aposta
