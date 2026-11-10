@@ -3,6 +3,7 @@
 
 import { apelidoParaCard } from './jogo/apelidoConferido';
 import type { EstadoDoAquecimento } from './jogo/aquecimento';
+import type { EstadoDosAvisos } from './jogo/avisosCaixa';
 import type { EstadoDasDicas } from './jogo/dicas';
 import { ehFaixa, podeTerApelido, type FaixaEtaria } from './jogo/faixaEtaria';
 
@@ -49,6 +50,8 @@ interface Prefs {
   trofeusAnunciados?: string[];
   /** Último mês fechado cuja placa de fim do mês a Home já mostrou neste aparelho ("AAAA-MM-01"; telas/placaTemporada.ts). */
   temporadaVista?: string;
+  /** Central de avisos (jogo/avisosCaixa.ts): só ids e dias, nunca texto. Ler com `lerEstado`. */
+  avisos?: EstadoDosAvisos;
 }
 
 function ler(): Prefs {
