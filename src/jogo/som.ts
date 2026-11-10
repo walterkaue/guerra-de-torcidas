@@ -34,32 +34,109 @@ export function variar(base: number, pct = 0.1, r: number = Math.random()): numb
   return base * (1 + (r * 2 - 1) * pct);
 }
 
-/** Chute: estalo médio (500 Hz a 4 kHz), que o alto-falante do celular reproduz. */
+/** Envelope: (s; v) → (s; v) → …  O primeiro ponto é setValueAtTime, os outros são rampas exponenciais. */
+function envelope(p: AudioParam, t: number, pontos: ReadonlyArray<readonly [number, number]>): void {
+  pontos.forEach(([s, v], i) => {
+    if (i === 0) p.setValueAtTime(v, t + s);
+    else p.exponentialRampToValueAtTime(v, t + s);
+  });
+}
+
+function filtro(a: AudioContext, type: BiquadFilterType, freq: number, q: number): BiquadFilterNode {
+  const f = a.createBiquadFilter();
+  f.type = type;
+  f.frequency.value = freq;
+  f.Q.value = q;
+  return f;
+}
+
+/** Ruído por uma cadeia de filtros e um ganho com envelope, ligado em `saida`. */
+function golpeDeRuido(
+  a: AudioContext,
+  saida: AudioNode,
+  t: number,
+  dur: number,
+  filtros: BiquadFilterNode[],
+  env: ReadonlyArray<readonly [number, number]>,
+): void {
+  const src = ruido(a, dur);
+  const g = a.createGain();
+  envelope(g.gain, t, env);
+  let no: AudioNode = src;
+  for (const f of filtros) {
+    no.connect(f);
+    no = f;
+  }
+  no.connect(g);
+  g.connect(saida);
+  src.start(t);
+}
+
+/** Senoide (opcionalmente descendo de f0 para f1 em `desce` s) com envelope, ligada em `saida`. */
+function senoide(
+  a: AudioContext,
+  saida: AudioNode,
+  t: number,
+  f0: number,
+  f1: number | null,
+  desce: number,
+  env: ReadonlyArray<readonly [number, number]>,
+  para: number,
+): void {
+  const o = a.createOscillator();
+  const g = a.createGain();
+  o.frequency.setValueAtTime(f0, t);
+  if (f1 !== null) o.frequency.exponentialRampToValueAtTime(f1, t + desce);
+  envelope(g.gain, t, env);
+  o.connect(g);
+  g.connect(saida);
+  o.start(t);
+  o.stop(t + para);
+}
+
+/** Números do chute de couro (decididos ouvindo as versões na página de laboratório de som, H01b). */
+export const CHUTE = {
+  clique: { dur: 0.022, alto: 1500, centro: 3200, q: 0.8, pico: 0.3, fim: 0.012 },
+  pof: { dur: 0.095, centro: 650, q: 1.1, corte: 2200, pico: 0.95, ataque: 0.0015, fim: 0.085 },
+  grave: { f0: 230, f1: 105, desce: 0.091, pico: 0.42, ataque: 0.002, fim: 0.13, para: 0.15 },
+  dobro: { f0: 460, f1: 210, desce: 0.091, pico: 0.357, ataque: 0.002, fim: 0.078, para: 0.098 },
+};
+
+/** Camadas comuns do chute e da trave: clique, pof e pancada (grave e dobro). */
+function bolaDeCouro(
+  a: AudioContext,
+  saida: AudioNode,
+  t: number,
+  c: Pick<typeof CHUTE, 'clique' | 'pof' | 'grave' | 'dobro'>,
+  tom: number,
+  vol: number,
+): void {
+  golpeDeRuido(a, saida, t, c.clique.dur, [filtro(a, 'highpass', c.clique.alto, 0.7), filtro(a, 'bandpass', c.clique.centro, c.clique.q)], [
+    [0, c.clique.pico * vol],
+    [c.clique.fim, 0.0001],
+  ]);
+  golpeDeRuido(a, saida, t, c.pof.dur, [filtro(a, 'bandpass', c.pof.centro * tom, c.pof.q), filtro(a, 'lowpass', c.pof.corte, 0.7)], [
+    [0, 0.0001],
+    [c.pof.ataque, c.pof.pico * vol],
+    [c.pof.fim, 0.0001],
+  ]);
+  for (const o of [c.grave, c.dobro]) {
+    senoide(a, saida, t, o.f0 * tom, o.f1 * tom, o.desce, [
+      [0, 0.0001],
+      [o.ataque, o.pico * vol],
+      [o.fim, 0.0001],
+    ], o.para);
+  }
+}
+
+/** Chute: bola de couro (clique, pof e pancada); o grave puro quase não sai no celular, por isso o dobro. */
 export function tocarChuteEm(a: AudioContext): void {
   const t = a.currentTime;
-  const tom = variar(1, 0.1);
-  const vol = variar(1, 0.15);
-  // Estalo: ruído filtrado na faixa média.
-  const src = ruido(a, 0.1);
-  const filtro = a.createBiquadFilter();
-  filtro.type = 'bandpass';
-  filtro.frequency.value = 1500 * tom;
-  filtro.Q.value = 0.7;
-  const g = a.createGain();
-  g.gain.setValueAtTime(0.9 * vol, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
-  src.connect(filtro).connect(g).connect(a.destination);
-  src.start(t);
-  // Corpo: tom curto que desce, sem sair da faixa.
-  const o = a.createOscillator();
-  const go = a.createGain();
-  o.frequency.setValueAtTime(900 * tom, t);
-  o.frequency.exponentialRampToValueAtTime(550 * tom, t + 0.06);
-  go.gain.setValueAtTime(0.5 * vol, t);
-  go.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-  o.connect(go).connect(a.destination);
-  o.start(t);
-  o.stop(t + 0.09);
+  const tom = variar(1, 0.06);
+  const vol = variar(1, 0.1);
+  const saida = a.createGain();
+  saida.connect(saidaComAmbiente(a));
+  bolaDeCouro(a, saida, t, CHUTE, tom, vol);
 }
 
 export function somChute(): void {
@@ -67,25 +144,58 @@ export function somChute(): void {
   if (a) tocarChuteEm(a);
 }
 
-/** Bola na trave: "plém" metálico curto (dois tons agudos que somem rápido). */
+/** Números da trave: a bola estalando no metal e o anel do poste de alumínio. */
+export const TRAVE = {
+  volume: 1.297,
+  poste: 0.004,
+  clique: { dur: 0.02, alto: 1500, centro: 2400, q: 0.8, pico: 0.25, fim: 0.01 },
+  pof: { dur: 0.07, centro: 820, q: 0.8, corte: 2200, pico: 0.8, ataque: 0.0015, fim: 0.06 },
+  grave: { f0: 250, f1: 125, desce: 0.056, pico: 0.28, ataque: 0.002, fim: 0.08, para: 0.1 },
+  dobro: { f0: 500, f1: 250, desce: 0.056, pico: 0.224, ataque: 0.002, fim: 0.048, para: 0.068 },
+  contato: { dur: 0.03, centro: 2600, q: 1.2, pico: 0.16, fim: 0.008 },
+  /** Modos do poste; `eixo` é a razão do segundo eixo (poste elíptico), 0 = um oscilador só. */
+  anel: [
+    { freq: 430, vol: 0.2, dur: 0.26, eixo: 1.004 },
+    { freq: 1050, vol: 0.1, dur: 0.12, eixo: 1.003 },
+    { freq: 1850, vol: 0.05, dur: 0.06, eixo: 0 },
+  ],
+};
+
+/** Bola na trave: a bola estala no metal e o poste dá um anel curto (antes eram dois tons de sino). */
+export function tocarTraveEm(a: AudioContext): void {
+  const t = a.currentTime;
+  const tom = variar(1, 0.05);
+  const afina = variar(1, 0.015);
+  const c = TRAVE;
+  const saida = a.createGain();
+  saida.gain.value = c.volume;
+  saida.connect(saidaComAmbiente(a));
+  bolaDeCouro(a, saida, t, c, tom, 1);
+  const t2 = t + c.poste;
+  golpeDeRuido(a, saida, t2, c.contato.dur, [filtro(a, 'bandpass', c.contato.centro, c.contato.q)], [
+    [0, c.contato.pico],
+    [c.contato.fim, 0.0001],
+  ]);
+  for (const m of c.anel) {
+    const eixos = m.eixo
+      ? [
+          [1, 0.5],
+          [m.eixo, 0.5],
+        ]
+      : [[1, 1]];
+    for (const [razao, parte] of eixos) {
+      senoide(a, saida, t2, m.freq * razao * afina, null, 0, [
+        [0, 0.0001],
+        [0.0015, m.vol * parte],
+        [m.dur, 0.0001],
+      ], m.dur + 0.02);
+    }
+  }
+}
+
 export function somTrave(): void {
   const a = audio();
-  if (!a) return;
-  const t = a.currentTime;
-  for (const [freq, vol] of [
-    [1320, 0.35],
-    [2170, 0.2],
-  ] as const) {
-    const o = a.createOscillator();
-    const g = a.createGain();
-    o.type = 'triangle';
-    o.frequency.setValueAtTime(freq, t);
-    g.gain.setValueAtTime(vol, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-    o.connect(g).connect(a.destination);
-    o.start(t);
-    o.stop(t + 0.36);
-  }
+  if (a) tocarTraveEm(a);
 }
 
 /** Ruído rosa (método de Paul Kellet) normalizado para RMS 0,3. `sorteio` devolve 0 a 1 (injetável nos testes). */
@@ -257,42 +367,73 @@ export function latenciaDoSom(): number {
 
 const salas = new WeakMap<AudioContext, AudioNode>();
 
+/** A sala "Arquibancada leve": som seco, dois ecos (um de cada lado) e um estádio de 2,4 s. */
+export const SALA = {
+  seco: 0.95,
+  volta: 0.2,
+  ecos: [
+    { t: 0.17, corte: 2800, vol: 0.18, lado: -0.55 },
+    { t: 0.235, corte: 2400, vol: 0.15, lado: 0.55 },
+  ],
+  estadio: { seg: 2.4, queda: 3, corte: 4000, vol: 0.12 },
+};
+
 /**
- * "Sala" da identidade sonora: o som seco mais um eco curto e um estádio leve. Uma por AudioContext,
- * criada na primeira vez e reaproveitada. Quem quiser a mesma sala liga na entrada que ela devolve.
+ * "Sala" da identidade sonora: um leve eco de arquibancada (duas arquibancadas, uma de cada lado, um pouco
+ * abafadas) e um estádio leve. Uma por AudioContext, criada na primeira vez e reaproveitada. Quem quiser a
+ * mesma sala liga na entrada que ela devolve.
  */
 export function saidaComAmbiente(a: AudioContext): AudioNode {
   const feita = salas.get(a);
   if (feita) return feita;
   const entrada = a.createGain();
   const seco = a.createGain();
-  seco.gain.value = 0.973;
-  entrada.connect(seco).connect(a.destination);
-  // Eco com realimentação.
-  const atraso = a.createDelay(1);
-  atraso.delayTime.value = 0.185;
-  const retorno = a.createGain();
-  retorno.gain.value = 0.039;
-  const eco = a.createGain();
-  eco.gain.value = 0.048;
-  entrada.connect(atraso);
-  atraso.connect(retorno).connect(atraso);
-  atraso.connect(eco).connect(a.destination);
-  // Estádio: resposta de ruído que some; 18 ms de silêncio no começo.
+  seco.gain.value = SALA.seco;
+  entrada.connect(seco);
+  seco.connect(a.destination);
+  // Estádio: resposta de ruído estéreo que some; 18 ms de silêncio no começo.
   const conv = a.createConvolver();
-  const comp = Math.floor(a.sampleRate * 2.8);
+  const comp = Math.floor(a.sampleRate * SALA.estadio.seg);
   const resposta = a.createBuffer(2, comp, a.sampleRate);
   const mudos = Math.floor(a.sampleRate * 0.018);
   for (let c = 0; c < 2; c++) {
     const d = resposta.getChannelData(c);
-    for (let i = mudos; i < comp; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / comp, 2.5);
+    for (let i = mudos; i < comp; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / comp, SALA.estadio.queda);
   }
   conv.buffer = resposta;
   const estadio = a.createGain();
-  estadio.gain.value = 0.066;
+  estadio.gain.value = SALA.estadio.vol;
+  const abafaEstadio = filtro(a, 'lowpass', SALA.estadio.corte, 0.7);
   entrada.connect(conv);
-  eco.connect(conv);
-  conv.connect(estadio).connect(a.destination);
+  conv.connect(abafaEstadio);
+  abafaEstadio.connect(estadio);
+  estadio.connect(a.destination);
+  // Ecos: cada um com realimentação mais abafada, de um lado, e também alimentando o estádio.
+  for (const e of SALA.ecos) {
+    const atraso = a.createDelay(1);
+    atraso.delayTime.value = e.t;
+    const abafa = filtro(a, 'lowpass', e.corte, 0.7);
+    const volta = a.createGain();
+    volta.gain.value = SALA.volta;
+    const eco = a.createGain();
+    eco.gain.value = e.vol;
+    entrada.connect(atraso);
+    atraso.connect(abafa);
+    abafa.connect(volta);
+    volta.connect(atraso);
+    abafa.connect(eco);
+    let lado: AudioNode;
+    if (typeof a.createStereoPanner === 'function') {
+      const p = a.createStereoPanner();
+      p.pan.value = e.lado;
+      lado = p;
+    } else {
+      lado = a.createGain();
+    }
+    eco.connect(lado);
+    lado.connect(a.destination);
+    eco.connect(conv);
+  }
   salas.set(a, entrada);
   return entrada;
 }

@@ -1,7 +1,7 @@
-// Apito, chute e torcida, antes e depois, lado a lado (só dev: /dev/sons.html). Abra no celular e ouça no alto-falante.
+// Apito, chute, trave, eco e torcida, antes e depois, lado a lado (só dev: /dev/sons.html). Abra no celular e ouça no alto-falante.
 // "Antes" são cópias dos sons antigos; "depois" são os de src/jogo/som.ts (com variação de tom e volume).
 
-import { tocarApitoEm, tocarChuteEm, tocarLargadaEm, tocarTorcidaEm, variar } from '../jogo/som';
+import { tocarApitoEm, tocarChuteEm, tocarLargadaEm, tocarTorcidaEm, tocarTraveEm, variar } from '../jogo/som';
 
 let ctx: AudioContext | null = null;
 function audio(): AudioContext {
@@ -56,6 +56,78 @@ function chuteAntes(a: AudioContext): void {
   o.stop(t + 0.16);
 }
 
+function traveAntes(a: AudioContext): void {
+  const t = a.currentTime;
+  for (const [freq, vol] of [
+    [1320, 0.35],
+    [2170, 0.2],
+  ] as const) {
+    const o = a.createOscillator();
+    const g = a.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    o.connect(g).connect(a.destination);
+    o.start(t);
+    o.stop(t + 0.36);
+  }
+}
+
+/** A sala de antes do eco de arquibancada (eco único de 185 ms e estádio de 2,8 s). */
+function salaAntiga(a: AudioContext): AudioNode {
+  const entrada = a.createGain();
+  const seco = a.createGain();
+  seco.gain.value = 0.973;
+  entrada.connect(seco).connect(a.destination);
+  const atraso = a.createDelay(1);
+  atraso.delayTime.value = 0.185;
+  const retorno = a.createGain();
+  retorno.gain.value = 0.039;
+  const eco = a.createGain();
+  eco.gain.value = 0.048;
+  entrada.connect(atraso);
+  atraso.connect(retorno).connect(atraso);
+  atraso.connect(eco).connect(a.destination);
+  const conv = a.createConvolver();
+  const comp = Math.floor(a.sampleRate * 2.8);
+  const resposta = a.createBuffer(2, comp, a.sampleRate);
+  const mudos = Math.floor(a.sampleRate * 0.018);
+  for (let c = 0; c < 2; c++) {
+    const d = resposta.getChannelData(c);
+    for (let i = mudos; i < comp; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / comp, 2.5);
+  }
+  conv.buffer = resposta;
+  const estadio = a.createGain();
+  estadio.gain.value = 0.066;
+  entrada.connect(conv);
+  eco.connect(conv);
+  conv.connect(estadio).connect(a.destination);
+  return entrada;
+}
+
+/** Apito final pela sala antiga, para comparar com o de agora. */
+function apitoFinalSalaAntiga(a: AudioContext): void {
+  const t = a.currentTime;
+  const saida = salaAntiga(a);
+  for (const [ini, dur] of [
+    [0, 0.18],
+    [0.3, 0.18],
+    [0.6, 0.9],
+  ] as const) {
+    const o = a.createOscillator();
+    o.frequency.value = 2583.6;
+    const g = a.createGain();
+    g.gain.setValueAtTime(0.0001, t + ini);
+    g.gain.exponentialRampToValueAtTime(0.11, t + ini + 0.0337);
+    g.gain.setValueAtTime(0.11, t + ini + dur - 0.0561);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + ini + dur);
+    o.connect(g).connect(saida);
+    o.start(t + ini);
+    o.stop(t + ini + dur);
+  }
+}
+
 /** A torcida que estava no jogo antes do H01b (ruído filtrado direto na saída, sem sala). */
 function torcidaAntes(a: AudioContext, intensidade: 'festa' | 'uuuh'): void {
   const t = a.currentTime;
@@ -82,6 +154,8 @@ const LINHAS: Array<[string, string, ((a: AudioContext) => void) | null, (a: Aud
   ['Apito de fim (três sopros)', 'Apito', (a) => apitoAntes(a, true), (a) => tocarApitoEm(a, true)],
   ['Largada (antes de cada chute)', 'Apito', null, tocarLargadaEm],
   ['Chute', 'Chute', chuteAntes, tocarChuteEm],
+  ['Trave', 'Trave', traveAntes, tocarTraveEm],
+  ['Eco: apito final (sala antiga e Arquibancada leve)', 'Eco', apitoFinalSalaAntiga, (a) => tocarApitoEm(a, true)],
   ['Torcida: festa', 'Torcida', (a) => torcidaAntes(a, 'festa'), (a) => tocarTorcidaEm(a, 'festa')],
   ['Torcida: uuuh', 'Torcida', (a) => torcidaAntes(a, 'uuuh'), (a) => tocarTorcidaEm(a, 'uuuh')],
 ];
@@ -89,7 +163,7 @@ const LINHAS: Array<[string, string, ((a: AudioContext) => void) | null, (a: Aud
 document.body.style.cssText =
   'margin:0;padding:16px;background:#0b3d1f;color:#f5f5f0;font-family:Barlow,system-ui,sans-serif';
 document.body.innerHTML = `<h1 style="font-size:20px;margin:0 0 4px">Sons: antes e depois</h1>
-<p style="margin:0 0 16px;opacity:.8">Apito de começo e de fim tocam sempre iguais; a largada varia ±3% no tom; o chute varia como antes; a torcida passa pela sala do apito (a festa sobe um pouco e o uuuh vira um “ôôô” em estéreo que desce).</p>`;
+<p style="margin:0 0 16px;opacity:.8">Apito de começo e de fim tocam sempre iguais; a largada varia ±3% no tom; o chute é de bola de couro e a trave estala no metal com um anel curto; os dois passam pela sala, que agora tem eco de arquibancada (de fone, um eco em cada lado); a torcida passa pela sala do apito (a festa sobe um pouco e o uuuh vira um “ôôô” em estéreo que desce).</p>`;
 
 for (const [titulo, , antes, depois] of LINHAS) {
   const bloco = document.createElement('section');
