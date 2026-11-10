@@ -273,9 +273,11 @@ begin
      or (p_visitante_id is not null and not exists (select 1 from public.times t where t.id = p_visitante_id and t.oficial)) then
     raise exception 'time_invalido';
   end if;
-  -- O time de fora não pode ser um dos 20 escrito à mão (sairia sem as cores dele).
+  -- O time de fora não pode ser um dos 20 escrito à mão (sairia sem as cores dele): "São Paulo" vira "sao-paulo".
   if exists (select 1 from public.times t
-             where t.oficial and lower(t.nome) in (lower(coalesce(p_mandante_fora, '')), lower(coalesce(p_visitante_fora, '')))) then
+             where t.oficial and t.id in (
+               regexp_replace(translate(lower(coalesce(p_mandante_fora, '')), 'áàâãäéèêëíìîïóòôõöúùûüç', 'aaaaaeeeeiiiiooooouuuuc'), '\s+', '-', 'g'),
+               regexp_replace(translate(lower(coalesce(p_visitante_fora, '')), 'áàâãäéèêëíìîïóòôõöúùûüç', 'aaaaaeeeeiiiiooooouuuuc'), '\s+', '-', 'g'))) then
     raise exception 'fora_e_dos_20';
   end if;
   if not (public.texto_sem_aposta(p_competicao) and public.texto_sem_aposta(p_fase)
