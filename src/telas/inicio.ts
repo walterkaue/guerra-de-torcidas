@@ -494,6 +494,9 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
   const slotBarra = root.querySelector<HTMLElement>('[data-barra]');
   let jogou: boolean | undefined = !FALSA && (xpGuardado() ?? 0) > 0 ? true : undefined;
   let mes: BlocoDasDivisoes | null | undefined;
+  /** A tabela do mês pode levar até 15 s por pedido: com a semana na mão e o mês 2 s atrasado, a barra mostra a semana. */
+  let mesAtrasado = false;
+  let esperaDoMes = 0;
   let semanaDaBarra: readonly LinhaDaSemana[] | null | undefined;
   let cidadeDaBarra: MinhaCidade | null | undefined;
   let falhouRanking = false;
@@ -506,7 +509,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
       time: { id: time.id, nome: time.nome, artigo: time.artigo },
       semRede: falhouRanking || falhouCarreira || (time.id === ID_OUTRO && falhouCidade),
       jogou,
-      mes: time.id === ID_OUTRO ? null : mes,
+      mes: time.id === ID_OUTRO ? null : mes === undefined && mesAtrasado ? null : mes,
       semana: semanaDaBarra,
       cidade: cidadeDaBarra,
       timePorId: (id) => timePorId(id),
@@ -619,6 +622,11 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     semanaAoVivo = vazia ? [] : linhas;
     falhouRanking = false;
     semanaDaBarra = vazia ? null : linhas;
+    if (mes === undefined && !esperaDoMes)
+      esperaDoMes = window.setTimeout(() => {
+        mesAtrasado = true;
+        pintarBarra();
+      }, 2000);
     pintarBarra();
     // Um erro no bloco não pode parar o duelo, o giro e a frase (revisão de 07/11/2026).
     if (atualizarDivisoes) {
@@ -840,6 +848,7 @@ export function telaInicio(root: HTMLElement, _rota: Rota): () => void {
     saiu = true;
     pararAvatar();
     clearInterval(relogio);
+    clearTimeout(esperaDoMes);
     pararArquibancada();
     pararRanking?.();
   };
