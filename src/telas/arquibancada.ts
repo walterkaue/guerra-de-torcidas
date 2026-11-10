@@ -15,7 +15,8 @@ export interface MedidasArquibancada {
 }
 
 /** Largura máxima da tela do jogo: em telas menores o CSS corta as pontas (object-fit: cover). */
-const FAIXA: MedidasArquibancada = { W: 480, H: 150, topo: 34, postes: [72, 408] };
+const ALTURA_PADRAO = 150;
+const faixa = (H: number): MedidasArquibancada => ({ W: 480, H, topo: 34, postes: [72, 408] });
 /** Bem devagar: a torcida balança, não treme (nada passa de 3 trocas por segundo). */
 const QUADRO_MS = 340;
 
@@ -71,34 +72,35 @@ export function desenharArquibancada(o: CanvasRenderingContext2D, { W, H, topo, 
   postes.forEach((x) => refletor(o, x, topo, luz));
 }
 
-function novoQuadro(dpr: number, q: number, cores: [string, string], luz: Luz): HTMLCanvasElement {
+function novoQuadro(dpr: number, q: number, cores: [string, string], luz: Luz, altura: number): HTMLCanvasElement {
+  const medidas = faixa(altura);
   const tela = document.createElement('canvas');
-  tela.width = Math.round(FAIXA.W * dpr);
-  tela.height = Math.round(FAIXA.H * dpr);
+  tela.width = Math.round(medidas.W * dpr);
+  tela.height = Math.round(medidas.H * dpr);
   const o = tela.getContext('2d')!;
   o.scale(dpr, dpr);
-  desenharArquibancada(o, FAIXA, q, cores, luz);
+  desenharArquibancada(o, medidas, q, cores, luz);
   return tela;
 }
 
 let guardado: { chave: string; quadros: HTMLCanvasElement[] } | null = null;
 
-function quadrosDa(cores: [string, string], luz: Luz, dpr: number, vivo: boolean): HTMLCanvasElement[] {
-  const chave = `${cores.join()}|${luz}|${dpr}|${vivo}`;
+function quadrosDa(cores: [string, string], luz: Luz, dpr: number, vivo: boolean, altura: number): HTMLCanvasElement[] {
+  const chave = `${cores.join()}|${luz}|${dpr}|${vivo}|${altura}`;
   if (guardado?.chave !== chave) {
     const n = vivo ? QUADROS_TORCIDA : 1;
-    guardado = { chave, quadros: Array.from({ length: n }, (_, q) => novoQuadro(dpr, q, cores, luz)) };
+    guardado = { chave, quadros: Array.from({ length: n }, (_, q) => novoQuadro(dpr, q, cores, luz, altura)) };
   }
   return guardado.quadros;
 }
 
-/** Desenha no canvas da faixa; devolve a função que para o balanço. */
-export function ligarArquibancada(tela: HTMLCanvasElement, cores: [string, string], luz: Luz): () => void {
+/** Desenha no canvas da faixa (`altura` em px de desenho: 150 padrão, 196 na Home com a barra do time); devolve a função que para o balanço. */
+export function ligarArquibancada(tela: HTMLCanvasElement, cores: [string, string], luz: Luz, altura = ALTURA_PADRAO): () => void {
   const n = qualidade();
   const parada = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const vivo = n.torcidaViva && !parada;
   const dpr = Math.min(window.devicePixelRatio || 1, n.dprMax);
-  const quadros = quadrosDa(cores, luz, dpr, vivo);
+  const quadros = quadrosDa(cores, luz, dpr, vivo, altura);
   tela.width = quadros[0].width;
   tela.height = quadros[0].height;
   const o = tela.getContext('2d')!;
