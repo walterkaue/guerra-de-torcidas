@@ -273,6 +273,8 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
     pintarPlaca();
     pintarAcoes();
     caberNaTela();
+    // De novo no quadro seguinte: o tamanho da letra (fonte do sistema, Barlow chegando) pode mudar depois da pintura.
+    requestAnimationFrame(caberNaTela);
   }
 
   /** O desenho do telão vem depois do convite pintado e resolvido (E01); com economia de dados, só no toque. */
