@@ -28,6 +28,7 @@ import {
 import { fraseDaGaleria } from '../narrador/galeria';
 import { servidorDaGaleria } from '../servidor/galeria';
 import { aoTocarNoEstado, estado, numero, placa } from './blocos';
+import { resolverAviso } from './avisosDoAparelho';
 import { mandarTrofeuNoGrupo } from './mandarTrofeu';
 import { svgDoTrofeu, svgFlamula, svgMegafone, svgTaca } from './trofeusDesenho';
 
@@ -45,6 +46,8 @@ const estiloDoTime = (c: readonly string[]) => `--c1:${c[0]};--c2:${c[1]};--txt:
 export function desenharGaleria(el: HTMLElement, o: OpcoesDaGaleria = {}): () => void {
   let saiu = false;
   let geracao = 0;
+  // Central de avisos: abrir a Galeria resolve o aviso de troféu.
+  resolverAviso(['trofeu:']);
   const meu = prefs.get().time;
   // Quem é de "Outro time" (ou não escolheu) começa sem torcida e escolhe uma; vale só na tela, nada é gravado.
   let visto: string | null = meu && meu !== ID_OUTRO && timePorId(meu) ? meu : null;

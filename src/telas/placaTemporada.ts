@@ -9,6 +9,7 @@ import '../estilos/placaTemporada.css';
 import { esc, irPara } from '../app';
 import { ID_OUTRO, rivalDe, timePorId, type Time } from '../dados/times';
 import { prefs } from '../estado';
+import { idDoMes } from '../jogo/avisosCaixa';
 import { chaveDoTrofeu, guardarAnunciados } from '../jogo/galeria';
 import {
   caiuNoMes,
@@ -29,6 +30,7 @@ import {
 } from '../jogo/temporada';
 import { eventoDoFim, fraseDaTemporada } from '../narrador/temporada';
 import { diaBrasilia } from '../servidor/tempo';
+import { registrarAviso } from './avisosDoAparelho';
 import { lerTemporadas, servidorDaTemporada, temporadaFalsaLigada } from './blocoDivisoes';
 import { mandarTemporadaNoGrupo } from './mandarTemporada';
 import { papelPicadoNaTela } from './papelPicado';
@@ -192,6 +194,7 @@ export async function mostrarPlacaDoMes(el: HTMLElement, timeId: string | undefi
     placa = null;
   }
   if (saiu() || !placa || dispensada) return;
+  if (!temporadaFalsaLigada()) registrarAviso([idDoMes(placa.temporada.mes)]);
   const primeira = !comemorou;
   comemorou = true;
   desenhar(el, placa, time, primeira, saiu);

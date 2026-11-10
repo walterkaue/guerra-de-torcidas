@@ -28,7 +28,7 @@
 ## 2. Ordem sugerida para depois dos testes
 
 0. **Agora, durante os testes:** A10 e H01a. O C01 (com o I03) está no ar desde 09/11.
-1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); a central de avisos (B01), logo depois do HOME2 (nova ordem da Home, que já levou o B03).
+1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); a central de avisos (B01) e o HOME2 (nova ordem da Home, que levou o B03) já estão feitos.
 2. **Semana de 16/11:** ~~C03 + C08~~ (feito em 10/11); E04 (roteiro de iPhone); D07 (Palpite da Rodada na entressafra).
 3. **Depois:** C04 (com a prova de conceito antes), C05, H01b e H02, F01 e A08 (e a personalização do Perfil, com o que os amigos disserem).
 4. **Antes da divulgação pública:** A01 a A05.
@@ -56,7 +56,7 @@
 
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
-| B01 | **Central de avisos** (o sininho vira caixa de entrada) | K | Detalhe na seção 4.1. Tira da tela os avisos que não são do momento: Termos mudaram, lembrete da cidade, convite de push, aquecimento, peça nova esperando, troféu da semana. | P1 | G | Chat → Claude |
+| B01 | ~~Central de avisos (o sininho vira caixa de entrada)~~ **feito em 09/11/2026** | K | O sininho é a caixa de avisos para todo mundo: Termos, cidade, aquecimento, peça nova, troféu e placa do mês, desafio aberto; o push (18+) vira um bloco no fim. `docs/visual.md`, "Central de avisos". | — | — | — |
 | B02 | ~~Resultado em duas camadas~~ **feito em 09/11/2026** | C | Primeira dobra: placar, pontos, um destaque, a prévia da mensagem e "Desafiar a galera". O resto em "Ver detalhes da partida", na mesma tela. `docs/visual.md`, 4.6. | — | — | — |
 | B03 | ~~Regra de "um aviso por vez" na Home~~ **feito em 09/11/2026, dentro do HOME2** | C | A vaga do momento, logo abaixo do "Jogar agora": fim do mês, depois Troféu novo, depois Termos (`jogo/vagaDoMomento.ts`); o resto espera a próxima abertura até a central (B01). | — | — | — |
 | B04 | "O que mudou" para quem já jogava | C | Uma placa, uma vez, depois de mudança de regra (ex.: 3 tentativas do mesmo lance, 3 melhores). Também vai para a central. | P2 | P | Claude |
@@ -145,32 +145,7 @@
 
 ### 4.1 Central de avisos (B01)
 
-**Ideia:** o sininho da Home (que hoje só cuida do push, e só para 18+) vira **a caixa de avisos do jogo, para todo mundo**. O que não é do momento sai da tela e vai para lá, com um número no sininho.
-
-**O que entra na caixa:**
-- Termos mudaram (com "Ler");
-- lembrete da cidade e convite para escolher a cidade;
-- convite de push (só 18+, como hoje);
-- aquecimento que ficou para depois;
-- peça nova no vestiário esperando para vestir;
-- troféu ou placa da semana já vistos (a placa grande aparece uma vez na Home, e depois fica na caixa);
-- "o que mudou" (B04);
-- desafio recebido que a pessoa não abriu na hora.
-
-**O que continua na tela:**
-- o que é do momento e muda a ação: o desafio recebido ao abrir o link, o aviso de conexão caída na partida, o limite do dia;
-- o primeiro acesso (escolha do time, triagem de idade): não pode ir para a caixa (`docs/jogo.md` seção 7).
-
-**Regras:**
-- Sem urgência e sem contagem regressiva (`docs/jogo.md` seção 7 e `docs/narrador.md` 13).
-- O número no sininho mostra quantos avisos há, nunca "Corre!".
-- Sem push para menor.
-- Guardado no aparelho (como os avisos de hoje). Os avisos que vêm do servidor (troféu, desafio recebido) são lidos na hora de abrir.
-- Cada aviso some quando é resolvido ou quando a pessoa toca em "Dispensar".
-
-**Desenho no Chat:** a lista, os ícones e o que acontece com o sininho de quem é menor (vira só a caixa, sem a parte de push).
-
-**Risco:** virar um lugar que ninguém abre. Por isso o desafio recebido e a placa do troféu ainda aparecem uma vez na tela.
+**Feito em 09/11/2026.** A regra está em `docs/visual.md` ("Central de avisos") e `docs/jogo.md` (seção 7). O "O que mudou" (B04) entra depois como mais um tipo da caixa (`src/jogo/avisosCaixa.ts`).
 
 ### 4.2 Card animado (C05)
 

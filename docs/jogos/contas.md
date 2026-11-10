@@ -55,7 +55,7 @@
 ### Primeiro acesso
 - **A escolha do time é a primeira tela de quem é novo** (sem time no aparelho antes da visita). Tem a dica "Sem cadastro: escolha o time e já entra jogando.", não tem o voltar e o botão é "Bora pro jogo". O campo de apelido só aparece vindo do Perfil. "Já jogo em outro aparelho" continua ali.
 - Depois dela: a triagem de idade e o aquecimento (`jogos/aquecimento.md`, com o "Pular" de sempre). Só então a Home.
-- **Quem chega por link entra direto:** desafio (`?d=`, `?p=`, `?l=`) abre a tela do convite, sem a Home atrás (detalhe abaixo; o aquecimento vira card na Home). O Time do Dia (`?dia`) e o lance (`#lance/…`) já pedem o time e seguem para o jogo, sem aquecimento (vira card na Home); o item do lance atravessa a escolha e a triagem e a ficha abre no fim. Termos, código e `#admin` abrem como sempre.
+- **Quem chega por link entra direto:** desafio (`?d=`, `?p=`, `?l=`) abre a tela do convite, sem a Home atrás (detalhe abaixo; o aquecimento vira aviso na central de avisos). O Time do Dia (`?dia`) e o lance (`#lance/…`) já pedem o time e seguem para o jogo, sem aquecimento (vira aviso na central de avisos); o item do lance atravessa a escolha e a triagem e a ficha abre no fim. Termos, código e `#admin` abrem como sempre.
 - **Quem já joga** abre a Home direto. O `?time=` de um link só deixa o time marcado na escolha; quem fechou sem confirmar entra na próxima visita com esse time.
 - **Home sem time:** a faixa "Qual é a sua torcida?" inteira é o botão, com "Escolher meu time ›" em pílula clara, e tocar na arquibancada também leva à escolha.
 - **Convite do desafio:** a tela abre na hora, com a placa do desafio em "Buscando o desafio…". Quem já joga e não tem faixa guardada passa antes pela triagem.

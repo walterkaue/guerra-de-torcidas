@@ -1,6 +1,7 @@
 // Duda, 15, estudante, Corinthians, "menos de 16". Abre no Instagram o link de um lance (#lance/<id>) que viu nos
 // Stories, joga e manda o card no Stories. Testa a frase própria (barrada e aceita) e o apelido.
 import { jogarLance, palavrasDoFiltro, esperar } from './comum/jogar.mjs';
+import { semearAvisos, medirFolha } from './comum/central.mjs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 import { conferirTelaoSemApelido } from './comum/golsDoConvite.mjs';
@@ -183,5 +184,52 @@ export default {
 
     // O desafio de quem não tem apelido: "de quem te chamou", sem nome nem artigo.
     await s.passo('link de Lances sem apelido: "de quem te chamou"', () => conferirTelaoSemApelido(s));
+    // ---- Central de avisos (B01): menor de 16 com avisos na caixa; nada de "Aviso de domingo" (push é 18+) ----
+    const FLAGS_CENTRAL = 'homeFalsa&lancesFalsos&temporadaFalsa&galeriaFalsa=cheia';
+    await s.passo('Home de menor com avisos: número no sininho', async () => {
+      if (!(await p.evaluate(() => true).catch(() => false))) {
+        p = await s.novaAba();
+        s.usarAba(p);
+      }
+      await p.goto(s.endereco(`/?${FLAGS_CENTRAL}`), { waitUntil: 'domcontentloaded' });
+      await p.evaluate(() => { const x = JSON.parse(localStorage.getItem('gdt:prefs') || '{}'); if (!x.time) { x.time = 'corinthians'; } if (x.faixa !== 'menos_16') x.faixa = 'menos_16'; localStorage.setItem('gdt:prefs', JSON.stringify(x)); });
+      await semearAvisos(s, { ids: ['peca:apito', 'trofeu:campeao_semana|2026-W45||corinthians', 'desafio:lances:abc12345'], aquecimento: true });
+      await s.abrir(`/?${FLAGS_CENTRAL}`, { esperarPor: '[data-acao="sininho"]', limiteMs: 20000, rotulo: 'Home até o sininho' });
+      await esperar(1200);
+      const num = (await p.locator('[data-sininho-num]').innerText().catch(() => '')).trim();
+      const rotulo = await p.locator('button[data-acao="sininho"]').getAttribute('aria-label');
+      if (num !== '4' || !/Avisos, 4 novos/.test(rotulo ?? ''))
+        s.achado({ regra: 'sininho-sem-numero', gravidade: 'atrapalha', tipo: 'erro', oQue: `Com 4 avisos semeados o sininho mostra "${num}" e aria-label "${rotulo}" (esperado 4 / "Avisos, 4 novos").`, talvezSimulador: true });
+      else s.medir('avisos novos no sininho (menor)', Number(num));
+    });
+    await s.passo('folha de menor com avisos', async () => {
+      await s.tocar(p.locator('button[data-acao="sininho"]'));
+      await p.locator('[data-central-avisos]').waitFor({ state: 'visible', timeout: 10000 });
+      await esperar(700);
+      const m = await medirFolha(p);
+      if (m?.textoTodo && /aviso de domingo|ligar o aviso|notifica/i.test(m.textoTodo))
+        s.achado({ regra: 'push-na-folha-de-menor', gravidade: 'bloqueia', tipo: 'regra do jogo.md', oQue: `A folha de quem marcou "menos de 16" mostra oferta de push: "${m.textoTodo.slice(0, 160)}".` });
+      if (m && m.avisos < 4) s.achado({ regra: 'avisos-faltando', gravidade: 'atrapalha', tipo: 'erro', oQue: `A folha mostrou ${m.avisos} avisos (semeei 4: desafio, troféu, peça, aquecimento).`, talvezSimulador: true });
+      if (await p.locator('.avisos-push, [data-painel-push]').count())
+        s.achado({ regra: 'push-na-folha-de-menor', gravidade: 'bloqueia', tipo: 'regra do jogo.md', oQue: 'A folha de menor tem o bloco "Aviso de domingo" (.avisos-push) no DOM.' });
+    }, { tela: 'folha de menor com avisos', paginaInteira: true });
+    await s.passo('folha vazia (Tudo em dia)', async () => {
+      for (let i = 0; i < 12 && (await p.locator('[data-central-avisos] [data-dispensar]').count()); i++) {
+        await s.tocar(p.locator('[data-central-avisos] [data-dispensar]').first(), { semMudancaOk: true });
+        await esperar(250);
+      }
+      await p.locator('[data-central-avisos] .avisos-vazio').waitFor({ state: 'visible', timeout: 5000 }).catch(() => s.achado({ regra: 'sem-tudo-em-dia', gravidade: 'atrapalha', tipo: 'erro', oQue: 'Depois de dispensar todos os avisos a folha não mostrou "Tudo em dia".' }));
+      const t = await p.locator('[data-central-avisos]').innerText().catch(() => '');
+      if (!/Tudo em dia/i.test(t)) s.achado({ regra: 'sem-tudo-em-dia', gravidade: 'atrapalha', tipo: 'erro', oQue: `Folha vazia sem o texto "Tudo em dia": "${t.replace(/\s+/g, ' ').slice(0, 120)}".` });
+    }, { tela: 'folha vazia', paginaInteira: true });
+    await s.passo('Esc fecha e o foco volta ao sininho', async () => {
+      await p.keyboard.press('Escape');
+      await esperar(600);
+      if (await p.locator('[data-central-avisos]').count()) s.achado({ regra: 'esc-nao-fecha-central', gravidade: 'atrapalha', tipo: 'acessibilidade', oQue: 'Esc não fechou a central de avisos.' });
+      const foco = await p.evaluate(() => document.activeElement?.getAttribute('data-acao') ?? document.activeElement?.tagName ?? '');
+      if (foco !== 'sininho') s.achado({ regra: 'foco-nao-volta-ao-sininho', gravidade: 'atrapalha', tipo: 'acessibilidade', oQue: `Depois do Esc o foco foi para "${foco}" em vez do sininho.` });
+      const num = await p.locator('[data-sininho-num]').isVisible().catch(() => false);
+      if (num) s.achado({ regra: 'sininho-numero-sobrou', gravidade: 'detalhe', tipo: 'erro', oQue: 'Com a caixa vazia o número ainda aparece no sininho.' });
+    });
   },
 };

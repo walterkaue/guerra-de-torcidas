@@ -887,3 +887,19 @@ Variáveis: `{o_time}`, `{do_time}`, `{pro_time}`, `{serie}` ("Série A", "Séri
 #### `temporada_rival_caiu` (meu time ficou na série e o rival, o clássico da tabela, caiu)
 - {o_rival} caiu pra Série B. A torcida {do_time} agradece.
 - {o_rival} desceu um andar. Print obrigatório.
+
+## 17. Central de avisos
+
+Textos da caixa do sininho (`docs/visual.md`, "Central de avisos"). Texto fixo em `src/jogo/avisosCaixa.ts`, sem sorteio e fora deste banco: o `npm run frases` não lê esta seção. Passam pelo checklist da seção 1, com o cuidado do push: **nada de urgência, prazo, contagem ou "não perca"**, e nada que cobre quem não abriu a caixa. Botão no infinitivo, de 1 a 3 palavras.
+
+| Aviso | Título | Linha | Botão |
+|---|---|---|---|
+| Desafio | Desafio | Você abriu um desafio e ainda não jogou. | Encarar |
+| Fim do mês | O mês fechou | Veja como sua torcida terminou o mês. | Ver |
+| Troféu | Troféu da semana | Tem troféu novo da sua torcida na Galeria. | Ver |
+| Peça nova | Peça nova no vestiário | Seu boneco ganhou peça nova pra vestir. | Vestir |
+| Termos | Os Termos mudaram | Tem versão nova dos Termos e da privacidade. | Ler |
+| Cidade | Defende sua cidade também? | Seus pontos somam também pra sua cidade. | Escolher |
+| Aquecimento | Conheça os outros jogos | Um aquecimento de 1 minuto pelos jogos. | Abrir |
+
+Fixos: título "Avisos"; grupo "Já vistos"; "Dispensar"; caixa vazia "Tudo em dia" e "Quando o jogo tiver novidade pra você, ela aparece aqui."; rótulo do sininho "Avisos" ou "Avisos, N novos".

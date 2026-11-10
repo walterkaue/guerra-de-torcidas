@@ -43,7 +43,7 @@ Nada disso tem lembrete automático.
 - **Home nova (HOME2):** em 360×740 com a fonte grande, o "Jogar agora" e o 1º card sem rolar; a barra do time no pé da arquibancada (a posição certa e o toque abrindo a aba certa da Tabela), sem encostar na tarja do time nem no "trocar"; em modo avião, o aviso na barra sem nada pular; um aviso só logo abaixo do "Jogar agora".
 - **Primeiro acesso:** num aparelho limpo, a escolha do time como 1ª tela, o "Pular" do aquecimento indo à Home e um link de desafio entrando direto.
 - **Aquecimento:** de ponta a ponta num aparelho limpo; o palpite da estação 5 em Palpites e os +20 XP; não testadas à mão: as dicas de morte súbita, cavadinha pega no meio, altura errada e 3 cobranças sem efeito.
-- **Cidade:** escolher pelo convite do resultado e pelo Perfil; tocar duas vezes no lembrete da Home; a aba Cidades.
+- **Cidade:** escolher pelo convite do resultado e pelo Perfil; tocar duas vezes no lembrete da central de avisos; a aba Cidades.
 - **Troféus:** papel picado e vibração ao subir de medalha; a ⭐ continua depois de fechar o site.
 
 ## Só o Kauê faz
@@ -64,7 +64,7 @@ Nada disso tem lembrete automático.
 
 ## Próximo ciclo
 
-A ordem está no `docs/backlog.md`, seção 2: o que falta para divulgar, o link do desafio com menos toques, a central de avisos, o replay do gol compartilhável, o card animado e o som novo. Ela será refeita com o que os testes com amigos mostrarem.
+A ordem está no `docs/backlog.md`, seção 2: o que falta para divulgar, o link do desafio com menos toques, o replay do gol compartilhável, o card animado e o som novo. Ela será refeita com o que os testes com amigos mostrarem.
 
 ## Antes de divulgar
 

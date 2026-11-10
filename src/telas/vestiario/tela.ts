@@ -45,6 +45,7 @@ import { telaCarregando } from '../esqueleto';
 import { icone, type NomeIcone } from '../icones';
 import { abrirFolhaTrancada } from './folhaTrancada';
 import { guardarBoneco, marcarVestiarioAberto } from '../bonecoDoAparelho';
+import { resolverAviso } from '../avisosDoAparelho';
 import { pecaPedida } from './abrir';
 import { fonteDoVestiario } from './fonte';
 import { criarVoltar } from './voltar';
@@ -104,6 +105,8 @@ export function telaVestiario(root: HTMLElement, _rota: Rota): () => void {
   const fonte = fonteDoVestiario();
   // A peça pedida por quem abriu (Peça nova, "Vestir agora"): lida uma vez, mesmo que a abertura tente de novo.
   const pedida = pecaPedida();
+  // Central de avisos: abrir o vestiário resolve o aviso de peça nova.
+  resolverAviso(['peca:']);
   let fim = false;
   let limpezaDaTela: () => void = () => {};
   const limpar = () => {
