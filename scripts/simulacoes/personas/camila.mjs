@@ -195,5 +195,35 @@ export default {
       await p.locator('[data-caixa]').waitFor({ state: 'visible', timeout: 10000 });
       await esperar(1500);
     }, { paginaInteira: true });
+
+    // ---- Link de desafio para quem já joga (C06): 1 toque em "Encarar o desafio" até a partida ----
+    await s.passo('link de desafio de pênaltis: convite de quem já joga', async () => {
+      await abrirVivo('/?homeFalsa&penaltiFalso&d=abcdefgh', { esperarPor: '[data-acao="encarar"]', limiteMs: 20000, rotulo: 'link até o Encarar o desafio' });
+      if (await p.locator('[data-faixa-time]').count()) s.achado({ regra: 'faixas-para-quem-joga', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: 'Quem já tem time viu as faixas de time no convite.' });
+    });
+    await s.passo('encara com 1 toque e chega ao canvas', async () => {
+      await s.tocar(p.locator('[data-acao="encarar"]'));
+      await p.locator('canvas.campo-jogo').waitFor({ state: 'visible', timeout: 30000 });
+      await p.waitForFunction(() => window.__partida?.fase?.() === 'mirar', null, { timeout: 40000 });
+      s.medir('toques do link de pênaltis até a partida (já joga)', 1, 1);
+    });
+    await s.passo('link da Prova: encara e vem a contagem 3, 2, 1', async () => {
+      await abrirVivo('/?homeFalsa&provaFalsa&p=abcdefgh', { esperarPor: '[data-acao="encarar"]', limiteMs: 20000 });
+      await s.tocar(p.locator('[data-acao="encarar"]'));
+      const vistas = new Set();
+      let comecarViu = false;
+      const t0 = Date.now();
+      while (Date.now() - t0 < 8000 && !(await p.locator('[data-alt]').first().isVisible().catch(() => false))) {
+        const n = (await p.locator('[data-contagem]').innerText().catch(() => '')).trim();
+        if (n) vistas.add(n);
+        if (/come[cç]ar a prova/i.test(await p.locator('[data-comecar]:visible').innerText().catch(() => ''))) comecarViu = true;
+        await esperar(150);
+      }
+      s.medir(`contagem da Prova vista: ${[...vistas].join(' ') || '(nada)'}`, Date.now() - t0);
+      if (comecarViu) s.achado({ regra: 'comecar-visivel-na-contagem', gravidade: 'atrapalha', tipo: 'erro', oQue: 'Na Prova vinda do convite o botão "Começar a prova" ficou visível durante a contagem/início (a Prova deveria começar sozinha).' });
+      if (!vistas.size) s.achado({ regra: 'sem-contagem', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: 'A Prova vinda do convite não mostrou a contagem [data-contagem].' });
+      await p.locator('[data-alt]').first().waitFor({ state: 'visible', timeout: 10000 });
+      if (/come[cç]ar a prova/i.test(await p.locator('[data-comecar]:visible').innerText().catch(() => ''))) s.achado({ regra: 'comecar-visivel-na-prova', gravidade: 'atrapalha', tipo: 'erro', oQue: 'Com a Prova vinda do convite, "Começar a prova" continuou visível junto das alternativas.' });
+    });
   },
 };
