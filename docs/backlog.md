@@ -42,7 +42,7 @@
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
 | A01 | Plano do Supabase decidido (Pro) | P | Pro quando o banco passar de 250 MB, ou ~150 pessoas jogarem por dia, ou antes da divulgação pública (o que vier primeiro); os testes com amigos seguem no Free. Limites do plano grátis, pausa por inatividade e backups. | P0 | P | Kauê |
-| A02 | Termos com o advogado (pontos 4 e 5, código do torcedor, cidade, boneco em campo, contagem de uso) | P | O parecer veio sem OAB, e a página tem valor legal (ECA Digital). | P0 | M | Kauê |
+| A02 | Termos com o advogado (pontos 4 e 5, código do torcedor, cidade, boneco em campo, contagem de uso, sobrenome de jogador no apelido (regra de 10/11)) | P | O parecer veio sem OAB, e a página tem valor legal (ECA Digital). | P0 | M | Kauê |
 | A03 | Balanço rodado e pré-temporada zerada (até 06/12) | P | O balanço tem de rodar antes de zerar. A semana de 02/11 já soma as duas regras. | P0 | P | Kauê + Claude |
 | A04 | Prova calibrada com as partidas de 20 s | P | A mediana e os 4 erros usam só partidas desde 06/11, 16h47. | P0 | P | Claude + Kauê decide |
 | A05 | Funil do desafio medido (ver C01) | P | Feito no C01 e no ar desde 09/11: falta esperar dias de teste com o link indo para gente de fora. | P0 | P | Kauê |
