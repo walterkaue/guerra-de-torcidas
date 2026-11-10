@@ -1,6 +1,7 @@
-// Sons sintetizados com Web Audio: nenhum arquivo para baixar.
+// Sons sintetizados com Web Audio. A rede é o único som gravado (src/jogo/sons/rede.wav); o resto é feito por código.
 
 import { prefs } from '../estado';
+import urlRede from './sons/rede.wav?url';
 
 let ctx: AudioContext | null = null;
 
@@ -18,6 +19,36 @@ function audio(): AudioContext | null {
 /** Chamar num toque do usuário para destravar o áudio no iPhone. */
 export function destravarSom(): void {
   audio();
+  void carregarRede();
+}
+
+let redePronta: Promise<AudioBuffer | null> | null = null;
+let bufferRede: AudioBuffer | null = null;
+
+/**
+ * Baixa e decodifica o som da rede uma vez só (16 KB, também com economia de dados). Só começa no primeiro
+ * toque que libera o som. Se falhar, o jogo segue sem esse som e tenta de novo no próximo destravarSom().
+ */
+export function carregarRede(): Promise<AudioBuffer | null> {
+  if (redePronta) return redePronta;
+  const a = audio();
+  if (!a) return Promise.resolve(null);
+  redePronta = fetch(urlRede)
+    .then((r) => {
+      if (!r.ok) throw new Error(`rede.wav: ${r.status}`);
+      return r.arrayBuffer();
+    })
+    .then((dados) => a.decodeAudioData(dados))
+    .then((buf) => {
+      bufferRede = buf;
+      return buf;
+    })
+    .catch((e) => {
+      console.debug('som da rede indisponível', e);
+      redePronta = null;
+      return null;
+    });
+  return redePronta;
 }
 
 function ruido(a: AudioContext, duracao: number): AudioBufferSourceNode {
@@ -142,6 +173,23 @@ export function tocarChuteEm(a: AudioContext): void {
 export function somChute(): void {
   const a = audio();
   if (a) tocarChuteEm(a);
+}
+
+/** Bola na rede: a gravação, pela sala, com ±3% no tom. Sem o arquivo carregado, não toca. */
+export function tocarRedeEm(a: AudioContext): void {
+  if (!bufferRede) return;
+  const src = a.createBufferSource();
+  src.buffer = bufferRede;
+  src.playbackRate.value = variar(1, 0.03);
+  src.connect(saidaComAmbiente(a));
+  src.start();
+}
+
+export function somRede(): void {
+  const a = audio();
+  if (!a) return;
+  if (bufferRede) tocarRedeEm(a);
+  else void carregarRede();
 }
 
 /** Números da trave: a bola estalando no metal e o anel do poste de alumínio. */

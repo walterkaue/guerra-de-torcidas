@@ -1,9 +1,12 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../estado', () => ({ prefs: { get: () => ({ mudo: true }) } }));
+const estado = vi.hoisted(() => ({ mudo: true, decode: (() => Promise.resolve(null)) as (d: ArrayBuffer) => Promise<unknown> }));
+vi.mock('../estado', () => ({ prefs: { get: () => ({ mudo: estado.mudo }) } }));
+vi.mock('./sons/rede.wav?url', () => ({ default: '/assets/rede-teste.wav' }));
 
 import {
   APITO,
+  carregarRede,
   CHUTE,
   FINAL,
   latenciaDoSom,
@@ -13,6 +16,7 @@ import {
   somApito,
   somChute,
   somLargada,
+  somRede,
   somTorcida,
   somTrave,
   tamanhoRespiro,
@@ -44,12 +48,49 @@ describe('mudo', () => {
       somLargada();
       somChute();
       somTrave();
+      somRede();
       somTorcida('festa');
       somTorcida('uuuh');
     }).not.toThrow();
   });
   it('sem contexto de áudio a latência é 0', () => {
     expect(latenciaDoSom()).toBe(0);
+  });
+});
+
+describe('rede (arquivo gravado)', () => {
+  class Falso {
+    state = 'running';
+    createBufferSource = vi.fn();
+    decodeAudioData = (d: ArrayBuffer) => estado.decode(d);
+  }
+  afterEach(() => {
+    estado.mudo = true;
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+  it('sem o arquivo carregado, somRede não lança erro e não toca', () => {
+    estado.mudo = false;
+    vi.stubGlobal('AudioContext', Falso);
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('sem rede'))));
+    vi.spyOn(console, 'debug').mockImplementation(() => {});
+    expect(() => somRede()).not.toThrow();
+  });
+  it('carregarRede chamado duas vezes faz um fetch e uma decodificação só', async () => {
+    estado.mudo = false;
+    const buffer = { duration: 0.338 };
+    const decode = vi.fn(() => Promise.resolve(buffer));
+    estado.decode = decode;
+    vi.stubGlobal('AudioContext', Falso);
+    const fetchFalso = vi.fn(() => Promise.resolve({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) }));
+    vi.stubGlobal('fetch', fetchFalso);
+    await new Promise((r) => setTimeout(r, 0));
+    const [a, b] = await Promise.all([carregarRede(), carregarRede()]);
+    expect(a).toBe(buffer);
+    expect(b).toBe(buffer);
+    expect(fetchFalso).toHaveBeenCalledTimes(1);
+    expect(fetchFalso).toHaveBeenCalledWith('/assets/rede-teste.wav');
+    expect(decode).toHaveBeenCalledTimes(1);
   });
 });
 

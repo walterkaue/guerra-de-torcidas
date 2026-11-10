@@ -1,7 +1,7 @@
 // Apito, chute, trave, eco e torcida, antes e depois, lado a lado (só dev: /dev/sons.html). Abra no celular e ouça no alto-falante.
 // "Antes" são cópias dos sons antigos; "depois" são os de src/jogo/som.ts (com variação de tom e volume).
 
-import { tocarApitoEm, tocarChuteEm, tocarLargadaEm, tocarTorcidaEm, tocarTraveEm, variar } from '../jogo/som';
+import { tocarApitoEm, tocarChuteEm, carregarRede, tocarLargadaEm, tocarRedeEm, tocarTorcidaEm, tocarTraveEm, variar } from '../jogo/som';
 
 let ctx: AudioContext | null = null;
 function audio(): AudioContext {
@@ -155,6 +155,7 @@ const LINHAS: Array<[string, string, ((a: AudioContext) => void) | null, (a: Aud
   ['Largada (antes de cada chute)', 'Apito', null, tocarLargadaEm],
   ['Chute', 'Chute', chuteAntes, tocarChuteEm],
   ['Trave', 'Trave', traveAntes, tocarTraveEm],
+  ['Rede (gravação; só Depois)', 'Rede', null, tocarRedeEm],
   ['Eco: apito final (sala antiga e Arquibancada leve)', 'Eco', apitoFinalSalaAntiga, (a) => tocarApitoEm(a, true)],
   ['Torcida: festa', 'Torcida', (a) => torcidaAntes(a, 'festa'), (a) => tocarTorcidaEm(a, 'festa')],
   ['Torcida: uuuh', 'Torcida', (a) => torcidaAntes(a, 'uuuh'), (a) => tocarTorcidaEm(a, 'uuuh')],
@@ -164,6 +165,10 @@ document.body.style.cssText =
   'margin:0;padding:16px;background:#0b3d1f;color:#f5f5f0;font-family:Barlow,system-ui,sans-serif';
 document.body.innerHTML = `<h1 style="font-size:20px;margin:0 0 4px">Sons: antes e depois</h1>
 <p style="margin:0 0 16px;opacity:.8">Apito de começo e de fim tocam sempre iguais; a largada varia ±3% no tom; o chute é de bola de couro e a trave estala no metal com um anel curto; os dois passam pela sala, que agora tem eco de arquibancada (de fone, um eco em cada lado); a torcida passa pela sala do apito (a festa sobe um pouco e o uuuh vira um “ôôô” em estéreo que desce).</p>`;
+
+const aviso = document.createElement('p');
+aviso.style.cssText = 'margin:0 0 12px;color:#ffd24a';
+document.body.append(aviso);
 
 for (const [titulo, , antes, depois] of LINHAS) {
   const bloco = document.createElement('section');
@@ -183,7 +188,11 @@ for (const [titulo, , antes, depois] of LINHAS) {
     b.textContent = rotulo;
     b.style.cssText =
       'min-height:64px;font:700 18px inherit;border:0;border-radius:12px;background:#f5f5f0;color:#0b3d1f;touch-action:manipulation';
-    b.addEventListener('click', () => fn(audio()));
+    b.addEventListener('click', () => {
+      const a = audio();
+      if (fn === tocarRedeEm) void carregarRede().then((buf) => (buf ? fn(a) : (aviso.textContent = 'O arquivo da rede ainda não carregou. Toque de novo.')));
+      else fn(a);
+    });
     grade.append(b);
   }
   document.body.append(bloco);
