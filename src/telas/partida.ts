@@ -52,7 +52,8 @@ import { ENQUADRAMENTOS } from './camera';
 import { inicioDoVoo, latenciaInicial, novaLatencia, tempoDaBatida } from './tempoDoChute';
 import { ANTES_DO_CORTE, criarReplay, montarTarjaDoReplay, type Replay } from './replay';
 import { caminhoDoChute } from '../jogo/lances';
-import { destravarSom, somApito, somChute, somTorcida } from '../jogo/som';
+import { destravarSom, latenciaDoSom, somApito, somChute, somLargada, somTorcida } from '../jogo/som';
+import { vibrar } from './toque';
 import {
   DUR_AJEITAR,
   apontarPeDeApoio,
@@ -401,6 +402,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   function comecarCobranca(): void {
     trocarBonecoSeChegou();
     fase = { tipo: 'mirar', inicio: relogio() };
+    if (rodada > 0) somLargada(); // o 1º chute da partida já tem o apito de começo
     rastro = [];
     dicas.novoLance();
     const extra = rodada - COBRANCAS + 1;
@@ -438,6 +440,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         : planejarDefesa(semente, rodada, dificuldade, desafio?.cobrancas?.[rodada]).dica;
     dicaDoServidor = null;
     fase = { tipo: 'corrida', inicio: relogio(), dica, zona: null, pulouEm: null };
+    somLargada();
     instruir('Sua vez de defender! Olhe o pé de apoio, marcado em amarelo, e toque onde pular.');
     if (defesaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['defesa']) }));
   }
@@ -842,6 +845,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       }
     }
     somApito(true);
+    setTimeout(() => vibrar('apitoFinal'), latenciaDoSom() * 1000);
     irPara({
       tela: 'resultado',
       dados: {

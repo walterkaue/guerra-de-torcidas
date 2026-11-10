@@ -1,18 +1,20 @@
 // Resposta ao toque (docs/visual.md, "Movimento e toque"): vibração curta no Android.
 // O iPhone não tem navigator.vibrate, então a resposta principal é sempre a visual (botão que afunda
-// e volta com mola); a vibração é um bônus. Padrões curtos: nada passa de 200 ms.
+// e volta com mola); a vibração é um bônus. Padrões curtos: o tempo vibrando somado não passa de 200 ms.
 
 import { prefs } from '../estado';
 
-export type Toque = 'leve' | 'acerto' | 'erro' | 'gol' | 'trave';
+export type Toque = 'leve' | 'acerto' | 'erro' | 'gol' | 'trave' | 'apitoFinal';
 
-const PADROES: Record<Toque, number | number[]> = {
+export const PADROES: Record<Toque, number | number[]> = {
   leve: 8,
   acerto: 22,
   erro: [30, 50, 30],
   gol: [60, 40, 90],
   /** Dois toques secos: a bola bateu e voltou. */
   trave: [25, 35, 25],
+  /** Um toque em cada sopro do apito final (0, 0,3 e 0,6 s): 110 ms vibrando em 0,66 s. */
+  apitoFinal: [25, 275, 25, 275, 60],
 };
 
 const reduzido = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;

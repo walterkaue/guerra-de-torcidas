@@ -122,7 +122,7 @@
 
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
-| H01a | **Apito mais curto e mais grave e chute com estalo médio** | K | Detalhe na seção 4.4. O apito de hoje é um tom de 2.900 Hz com trinado: agudo e cansativo, toca em toda partida. O chute desce a 45 Hz, grave que o alto-falante do celular nem reproduz. Ajuste direto, já. | P1 | P | Claude |
+| H01a | **Apito mais curto e mais grave e chute com estalo médio** | K | **Feito em 10/11.** Detalhe na seção 4.4. | P1 | P | Claude |
 | H01b | **Assinatura sonora e sons que faltam** | K | Detalhe na seção 4.4. Uma assinatura sonora curta e própria, com variação (I04). Desenho no Chat com página de teste. | P1 | M | Chat (desenho) → Claude |
 | H02 | Sons que faltam (MVP de áudio) | C | Hoje só existem 4 sons: chute, trave, torcida e apito. Faltam toque de botão, defesa do goleiro, rede balançando, barreira, recorde, medalha e vitória. Lista na seção 4.4. | P2 | M | Claude |
 | H03 | ~~Revitalização dos bonecos~~ | K | **Entregue em 09/11/2026:** estilo "Silhueta premium Plus" (`docs/bonecos.md`). A cintura e o calção foram refeitos; a personalização no Perfil segue com o feedback dos amigos. | — | — | — |
@@ -135,7 +135,7 @@
 | I01 | **Momento do jogo escolhido sozinho** | K | O jogo escolhe o melhor lance da partida para o replay compartilhável (C04), sem a pessoa pedir: golaço no ângulo, cavadinha, defesa da última cobrança, vitória no par ou ímpar. Uma pontuação simples, sem IA: o jogo já guarda gesto e semente de cada lance. | P1 | P | Claude (junto do C04) |
 | I02 | Vídeo vertical 9:16 com câmera lenta e a frase do narrador | K | Entra na especificação do C04 e do C05: corte vertical, câmera lenta no gol e a frase que o narrador falou como legenda. | P1 | — | (dentro do C04) |
 | I03 | ~~Onde a pessoa desiste~~ **feito em 08/11/2026, com o C01** | K | Escolha do time, triagem, aquecimento e partida (por jogo, com e sem desafio), saiu − voltou; "Onde desiste" no `npm run metricas`. Os erros ficam com o F01. | — | — | — |
-| I04 | Som com variação e "combo" | K | Cada som toca com o tom ±10% e o volume variando um pouco. Gols seguidos sobem o tom. A torcida abaixa meio segundo quando o narrador ou o apito entram. Entra no H01. | P2 | — | (dentro do H01) |
+| I04 | Som com variação e "combo" | K | Cada som toca com o tom ±10% e o volume variando um pouco (menos o apito de começo e de fim, que não varia; a largada varia ±3%). Gols seguidos sobem o tom. A torcida abaixa meio segundo quando o narrador ou o apito entram. Entra no H01. | P2 | — | (dentro do H01) |
 | I05 | **Passada de "sensação de jogo"** | C | O que fazia os jogos Flash grudarem: do fim da partida ao próximo chute em 1 toque e menos de 2 s; uma pequena pausa e tremida no gol (com movimento reduzido, sem tremida); recorde sempre à vista. Medir o tempo do "Mais uma" até o 1º chute, nos pênaltis e nos Lances. | P2 | M | Claude |
 | I06 | Estudar jogos curtos de navegador (sem copiar) | K | Olhar o que dava certo nos jogos de navegador de futebol e de habilidade: reinício instantâneo, uma mecânica só, desafio a um amigo, placar de recordes. Anotar as lições, nunca reproduzir um jogo específico (nome, arte, fases). | P3 | P | Chat |
 
@@ -193,16 +193,16 @@ No fim, uma tela com o título do lance, o placar, "Guerra de Torcidas" e o link
 ### 4.4 Som e marca sonora (H01, H02, I04)
 
 **Como está hoje** (`src/jogo/som.ts`, tudo sintetizado com Web Audio, nenhum arquivo):
-- **Apito:** tom de 2.900 Hz com trinado de 28 Hz. É agudo e fino, toca no começo e no fim de toda partida e cansa rápido.
+- **Apito:** desde 10/11 (H01a), senoide de 2,58 kHz com trinado de 25 Hz; um sopro no começo, três no fim e uma largada curta antes de cada chute a partir do 2º.
 - **Chute:** desce de 140 Hz para 45 Hz. No alto-falante do celular quase não se ouve: o celular não reproduz abaixo de ~100 Hz.
 - **Torcida:** ruído filtrado ("festa" e "uuuh").
 - **Trave:** tom metálico.
 
 **Proposta:**
 1. **Assinatura sonora** de 1 a 2 s, tocada na abertura e na vitória. Algo que fique na cabeça e seja nosso, como um bumbo de arquibancada, duas palmas e um "ôô" curto de torcida. Nunca hino, cântico de clube real ou som de narrador famoso.
-2. **Apito novo:** duas notas curtas, mais graves (por volta de 1,5 a 2 kHz) e com os agudos cortados. Só no começo e no fim; o meio da partida fica sem apito.
+2. **Apito novo (feito em 10/11, H01a):** o antigo 2 semitons mais grave (2,58 kHz, com trinado), com eco e estádio leves, 4 dB mais baixo que o de antes para não ficar acima da torcida. Começo com um sopro, fim com três (curto, curto, longo), sempre iguais. Largada curta e mais baixa antes de cada chute a partir do 2º (Pênaltis e Lances). Vibração só no apito final.
 3. **Faixa certa para o celular:** os sons ficam entre 500 Hz e 4 kHz. Para o chute ter "peso", um estalo médio no lugar do grave que some.
-4. **Variação:** o tom ±10% a cada toque, gols seguidos subindo o tom e a torcida abaixando quando o narrador fala (I04).
+4. **Variação:** o tom ±10% a cada toque (o apito de começo e de fim não varia; a largada varia ±3%), gols seguidos subindo o tom e a torcida abaixando quando o narrador fala (I04).
 5. **Sons que faltam (H02):** toque de botão, defesa, rede, barreira, recorde, medalha e vitória. Curtos (0,05 a 0,4 s), sem silêncio no começo e sem eco longo.
 
 **De onde tirar:**
