@@ -123,7 +123,7 @@
 | ID | Item | Origem | Por quê / o que fazer | Prioridade | Tamanho | Quem |
 |---|---|---|---|---|---|---|
 | H01a | **Apito mais curto e mais grave e chute com estalo médio** | K | **Feito em 10/11.** Detalhe na seção 4.4. | P1 | P | Claude |
-| H01b | **Assinatura sonora e sons que faltam** | K | Detalhe na seção 4.4. Uma assinatura sonora curta e própria, com variação (I04). Desenho no Chat com página de teste. | P1 | M | Chat (desenho) → Claude |
+| H01b | **Assinatura sonora e sons que faltam** | K | **Torcida feita em 10/11.** Detalhe na seção 4.4. Uma assinatura sonora curta e própria, com variação (I04). Desenho no Chat com página de teste. | P1 | M | Chat (desenho) → Claude |
 | H02 | Sons que faltam (MVP de áudio) | C | Hoje só existem 4 sons: chute, trave, torcida e apito. Faltam toque de botão, defesa do goleiro, rede balançando, barreira, recorde, medalha e vitória. Lista na seção 4.4. | P2 | M | Claude |
 | H03 | ~~Revitalização dos bonecos~~ | K | **Entregue em 09/11/2026:** estilo "Silhueta premium Plus" (`docs/bonecos.md`). A cintura e o calção foram refeitos; a personalização no Perfil segue com o feedback dos amigos. | — | — | — |
 | H03b | ~~Camisa por fora ou por dentro no vestiário~~ | K | **Entregue em 09/11/2026:** par "Camisa por fora" / "Camisa por dentro" na aba Camisa, campo `barra` na `Vestimenta` (não é peça), em todo lugar onde o boneco aparece (`jogos/boneco-montavel.md`). | — | — | — |
@@ -194,8 +194,8 @@ No fim, uma tela com o título do lance, o placar, "Guerra de Torcidas" e o link
 
 **Como está hoje** (`src/jogo/som.ts`, tudo sintetizado com Web Audio, nenhum arquivo):
 - **Apito:** desde 10/11 (H01a), senoide de 2,58 kHz com trinado de 25 Hz; um sopro no começo, três no fim e uma largada curta antes de cada chute a partir do 2º.
-- **Chute:** desce de 140 Hz para 45 Hz. No alto-falante do celular quase não se ouve: o celular não reproduz abaixo de ~100 Hz.
-- **Torcida:** ruído filtrado ("festa" e "uuuh").
+- **Chute:** desde o H01a, um estalo médio em 1,5 kHz com um tom curto que desce de 900 para 550 Hz (o celular reproduz bem essa faixa).
+- **Torcida:** desde 10/11 (H01b). Festa: o ruído filtrado de antes, passando pela sala do apito e um pouco mais alto. Uuuh: um "ôôô" em estéreo que desce de 500 para 340 Hz, respira e passa pela sala. Volume combinado: festa -20 e uuuh -25 LUFS, abaixo do apito.
 - **Trave:** tom metálico.
 
 **Proposta:**

@@ -1,7 +1,7 @@
-// Apito e chute, antes e depois, lado a lado (só dev: /dev/sons.html). Abra no celular e ouça no alto-falante.
+// Apito, chute e torcida, antes e depois, lado a lado (só dev: /dev/sons.html). Abra no celular e ouça no alto-falante.
 // "Antes" são cópias dos sons antigos; "depois" são os de src/jogo/som.ts (com variação de tom e volume).
 
-import { tocarApitoEm, tocarChuteEm, tocarLargadaEm, variar } from '../jogo/som';
+import { tocarApitoEm, tocarChuteEm, tocarLargadaEm, tocarTorcidaEm, variar } from '../jogo/som';
 
 let ctx: AudioContext | null = null;
 function audio(): AudioContext {
@@ -56,17 +56,40 @@ function chuteAntes(a: AudioContext): void {
   o.stop(t + 0.16);
 }
 
+/** A torcida que estava no jogo antes do H01b (ruído filtrado direto na saída, sem sala). */
+function torcidaAntes(a: AudioContext, intensidade: 'festa' | 'uuuh'): void {
+  const t = a.currentTime;
+  const dur = intensidade === 'festa' ? 1.8 : 0.9;
+  const buf = a.createBuffer(1, Math.floor(a.sampleRate * dur), a.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const src = a.createBufferSource();
+  src.buffer = buf;
+  const filtro = a.createBiquadFilter();
+  filtro.type = 'bandpass';
+  filtro.frequency.value = intensidade === 'festa' ? 900 : 500;
+  filtro.Q.value = 0.6;
+  const g = a.createGain();
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.exponentialRampToValueAtTime(intensidade === 'festa' ? 0.5 : 0.25, t + 0.15);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  src.connect(filtro).connect(g).connect(a.destination);
+  src.start(t);
+}
+
 const LINHAS: Array<[string, string, ((a: AudioContext) => void) | null, (a: AudioContext) => void]> = [
   ['Apito de começo', 'Apito', (a) => apitoAntes(a, false), (a) => tocarApitoEm(a, false)],
   ['Apito de fim (três sopros)', 'Apito', (a) => apitoAntes(a, true), (a) => tocarApitoEm(a, true)],
   ['Largada (antes de cada chute)', 'Apito', null, tocarLargadaEm],
   ['Chute', 'Chute', chuteAntes, tocarChuteEm],
+  ['Torcida: festa', 'Torcida', (a) => torcidaAntes(a, 'festa'), (a) => tocarTorcidaEm(a, 'festa')],
+  ['Torcida: uuuh', 'Torcida', (a) => torcidaAntes(a, 'uuuh'), (a) => tocarTorcidaEm(a, 'uuuh')],
 ];
 
 document.body.style.cssText =
   'margin:0;padding:16px;background:#0b3d1f;color:#f5f5f0;font-family:Barlow,system-ui,sans-serif';
 document.body.innerHTML = `<h1 style="font-size:20px;margin:0 0 4px">Sons: antes e depois</h1>
-<p style="margin:0 0 16px;opacity:.8">Apito de começo e de fim tocam sempre iguais; a largada varia ±3% no tom; o chute varia como antes.</p>`;
+<p style="margin:0 0 16px;opacity:.8">Apito de começo e de fim tocam sempre iguais; a largada varia ±3% no tom; o chute varia como antes; a torcida passa pela sala do apito (a festa sobe um pouco e o uuuh vira um “ôôô” em estéreo que desce).</p>`;
 
 for (const [titulo, , antes, depois] of LINHAS) {
   const bloco = document.createElement('section');
