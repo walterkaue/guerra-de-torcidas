@@ -440,7 +440,8 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
 
   // ---------- começar ----------
   async function comecar(): Promise<void> {
-    btnComecar.hidden = false;
+    // Vinda da contagem, o "1" fica na tela até a 1ª pergunta: o botão não aparece no meio.
+    btnComecar.hidden = comContagem && !elContagem.hidden;
     btnComecar.disabled = true;
     btnComecar.textContent = 'Preparando…';
     elErro.hidden = true;
@@ -476,11 +477,13 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       desafio = p.desafio;
       etapa({ tipo: 'partida', jogo: 'prova', ...(desafio ? { x1: desafio.id } : {}) });
       elInicio.hidden = true;
+      elContagem.hidden = true;
       degraus.fill('futuro');
       usadas.clear();
       mostrarPergunta(p.pergunta);
     } catch (e) {
       if (saiu) return;
+      elContagem.hidden = true;
       btnComecar.hidden = false;
       btnComecar.disabled = false;
       btnComecar.textContent = codigoDesafio ? 'Encarar o desafio' : 'Começar a prova';
@@ -517,10 +520,7 @@ export function telaProva(root: HTMLElement, rota: Rota): () => void {
       ),
     );
     passosDaContagem.push(
-      window.setTimeout(() => {
-        elContagem.hidden = true;
-        void comecar();
-      }, CONTAGEM.length * CONTAGEM_PASSO_MS),
+      window.setTimeout(() => void comecar(), CONTAGEM.length * CONTAGEM_PASSO_MS),
     );
   }
 
