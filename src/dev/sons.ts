@@ -1,7 +1,18 @@
 // Apito, chute, trave, eco e torcida, antes e depois, lado a lado (só dev: /dev/sons.html). Abra no celular e ouça no alto-falante.
 // "Antes" são cópias dos sons antigos; "depois" são os de src/jogo/som.ts (com variação de tom e volume).
 
-import { tocarApitoEm, tocarChuteEm, carregarRede, tocarLargadaEm, tocarRedeEm, tocarTorcidaEm, tocarTraveEm, variar } from '../jogo/som';
+import {
+  tocarApitoEm,
+  tocarBarreiraEm,
+  tocarChuteEm,
+  tocarDefesaEm,
+  carregarRede,
+  tocarLargadaEm,
+  tocarRedeEm,
+  tocarTorcidaEm,
+  tocarTraveEm,
+  variar,
+} from '../jogo/som';
 
 let ctx: AudioContext | null = null;
 function audio(): AudioContext {
@@ -155,6 +166,9 @@ const LINHAS: Array<[string, string, ((a: AudioContext) => void) | null, (a: Aud
   ['Largada (antes de cada chute)', 'Apito', null, tocarLargadaEm],
   ['Chute', 'Chute', chuteAntes, tocarChuteEm],
   ['Trave', 'Trave', traveAntes, tocarTraveEm],
+  ['Defesa (encaixou)', 'Defesa', null, (a) => tocarDefesaEm(a, 'encaixou')],
+  ['Defesa (espalmou)', 'Defesa', null, (a) => tocarDefesaEm(a, 'espalmou')],
+  ['Barreira', 'Barreira', null, tocarBarreiraEm],
   ['Rede (gravação; só Depois)', 'Rede', null, tocarRedeEm],
   ['Eco: apito final (sala antiga e Arquibancada leve)', 'Eco', apitoFinalSalaAntiga, (a) => tocarApitoEm(a, true)],
   ['Torcida: festa', 'Torcida', (a) => torcidaAntes(a, 'festa'), (a) => tocarTorcidaEm(a, 'festa')],

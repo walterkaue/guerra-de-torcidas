@@ -124,7 +124,7 @@
 |---|---|---|---|---|---|---|
 | H01a | **Apito mais curto e mais grave e chute com estalo médio** | K | **Feito em 10/11.** Detalhe na seção 4.4. | P1 | P | Claude |
 | H01b | **Assinatura sonora e sons que faltam** | K | **Torcida, eco, chute e trave feitos em 10/11.** Faltam os sons do H02 e a assinatura sonora. Detalhe na seção 4.4. Uma assinatura sonora curta e própria, com variação (I04). Desenho no Chat com página de teste. | P1 | M | Chat (desenho) → Claude |
-| H02 | Sons que faltam (MVP de áudio) | C | Hoje só existem 4 sons: chute, trave, torcida e apito. Faltam toque de botão, defesa do goleiro, barreira, recorde, medalha e vitória (a rede foi feita em 10/11). Lista na seção 4.4. | P2 | M | Claude |
+| H02 | Sons que faltam (MVP de áudio) | C | Hoje só existem 4 sons: chute, trave, torcida e apito. Faltam toque de botão, recorde, medalha e vitória (rede, defesa e barreira foram feitas em 10/11). Lista na seção 4.4. | P2 | M | Claude |
 | H03 | ~~Revitalização dos bonecos~~ | K | **Entregue em 09/11/2026:** estilo "Silhueta premium Plus" (`docs/bonecos.md`). A cintura e o calção foram refeitos; a personalização no Perfil segue com o feedback dos amigos. | — | — | — |
 | H03b | ~~Camisa por fora ou por dentro no vestiário~~ | K | **Entregue em 09/11/2026:** par "Camisa por fora" / "Camisa por dentro" na aba Camisa, campo `barra` na `Vestimenta` (não é peça), em todo lugar onde o boneco aparece (`jogos/boneco-montavel.md`). | — | — | — |
 
@@ -198,14 +198,16 @@ No fim, uma tela com o título do lance, o placar, "Guerra de Torcidas" e o link
 - **Torcida:** desde 10/11 (H01b). Festa: o ruído filtrado de antes, passando pela sala do apito e um pouco mais alto. Uuuh: um "ôôô" em estéreo que desce de 500 para 340 Hz, respira e passa pela sala. Volume combinado: festa -20 e uuuh -25 LUFS, abaixo do apito.
 - **Trave:** desde 10/11 (H01b), a bola estalando no metal e um anel curto de poste de alumínio em 430, 1.050 e 1.850 Hz, pela sala, por volta de -23 LUFS.
 - **Rede:** desde 10/11 (H02), gravação recortada do Pixabay (o único som gravado; licença em `src/jogo/sons/LICENCAS.md`), pela sala, -22 LUFS, tocada com a festa ou o uuuh no gol (cobrança e gol sofrido nos Pênaltis, gol nos Lances; só ao vivo).
-- **Sala (Arquibancada leve):** desde 10/11 (H01b), dois ecos de 170 e 235 ms, um de cada lado, abafados, 18 dB abaixo do som, e o estádio de 2,4 s; vale para apito, largada, festa, uuuh, chute e trave.
+- **Defesa:** desde 10/11 (H02), por código, pela sala. Encaixou: um "tump" abafado na luva e no peito, quando o goleiro fica no meio (ou não pula), por volta de -24 LUFS. Espalmou: o "PÁ" da luva, quando ele pula para um lado, por volta de -25 LUFS. Nos Lances, pelo ponto da bola na linha do gol (no terço do meio, Encaixou). Toca junto com a torcida, só ao vivo.
+- **Barreira:** desde 10/11 (H02), por código, pela sala: a bola no peito com o pano da camisa, por volta de -26 LUFS. Toca nos Lances, junto com o uuuh, só ao vivo.
+- **Sala (Arquibancada leve):** desde 10/11 (H01b), dois ecos de 170 e 235 ms, um de cada lado, abafados, 18 dB abaixo do som, e o estádio de 2,4 s; vale para apito, largada, festa, uuuh, chute, trave, defesa e barreira.
 
 **Proposta:**
 1. **Assinatura sonora** de 1 a 2 s, tocada na abertura e na vitória. Algo que fique na cabeça e seja nosso, como um bumbo de arquibancada, duas palmas e um "ôô" curto de torcida. Nunca hino, cântico de clube real ou som de narrador famoso.
 2. **Apito novo (feito em 10/11, H01a):** o antigo 2 semitons mais grave (2,58 kHz, com trinado), com eco e estádio leves, 4 dB mais baixo que o de antes para não ficar acima da torcida. Começo com um sopro, fim com três (curto, curto, longo), sempre iguais. Largada curta e mais baixa antes de cada chute a partir do 2º (Pênaltis e Lances). Vibração só no apito final.
 3. **Faixa certa para o celular:** os sons ficam entre 500 Hz e 4 kHz. Para o chute ter "peso", um estalo médio no lugar do grave que some.
 4. **Variação:** o tom ±10% a cada toque (o apito de começo e de fim não varia; a largada varia ±3%), gols seguidos subindo o tom e a torcida abaixando quando o narrador fala (I04).
-5. **Sons que faltam (H02):** toque de botão, defesa, barreira, recorde, medalha e vitória. Curtos (0,05 a 0,4 s), sem silêncio no começo e sem eco longo.
+5. **Sons que faltam (H02; defesa e barreira feitas em 10/11):** toque de botão, recorde, medalha e vitória (vão junto com a assinatura sonora). Curtos (0,05 a 0,4 s), sem silêncio no começo e sem eco longo.
 
 **De onde tirar:**
 - Seguir sintetizando o que dá (é leve e já funciona).
