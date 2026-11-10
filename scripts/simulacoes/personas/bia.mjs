@@ -63,7 +63,7 @@ export default {
       await esperar(1200);
       const depois = await medidasDaHome(p);
       const aviso = 'Sem conexão com o placar agora. Dá pra jogar mesmo assim.';
-      const texto = depois.textoDaBarra.replace(/s+/g, ' ');
+      const texto = depois.textoDaBarra.replace(/\s+/g, ' ');
       if (!texto.includes(aviso))
         s.achado({ regra: 'barra-sem-aviso-de-rede', gravidade: 'atrapalha', tipo: 'regra do jogo.md', oQue: `Com o placar falhando, a barra do time devia dizer "${aviso}" e disse: "${texto}".`, sugestao: 'Ver se o ?rankingErro basta para o aviso (docs/visual.md, Início).', talvezSimulador: true });
       const tocavel = await p.evaluate(() => { const b = document.querySelector('[data-barra] .barra-time'); return !!b && (b.tagName === 'BUTTON' || b.hasAttribute('data-destino')); });
