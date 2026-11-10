@@ -208,7 +208,9 @@ export function secoesDoFunil() {
        group by k.dia, k.tipo order by k.dia desc, k.tipo`,
     ],
     [
-      'Funil do X1 ligado pelo código (X1 distintos compartilhados nos últimos 30 dias)',
+      // "Aceitou depois de ver os gols" é por desafio, não por pessoa: num link mandado no grupo, vale o 1º "viu os
+      // gols" e o 1º "aceitou" de quem abriu (uma linha por desafio e evento).
+      'Funil do X1 ligado pelo código (X1 distintos compartilhados nos últimos 30 dias; aceitou depois de ver os gols: por desafio, não por pessoa)',
       `with compartilhados as (
          select impressao, min(tipo) as tipo from public.funil_eventos where evento = 'compartilhou' group by impressao
        )

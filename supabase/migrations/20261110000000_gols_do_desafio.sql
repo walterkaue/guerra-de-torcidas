@@ -6,7 +6,7 @@
 --    partidas.resultado->'lances', para o convite mostrar a fita e redesenhar os gols. Lista branca, campo a campo,
 --    montada aqui: desfecho, pontos, recriou, cavadinha, x, y, goleiroX, tFim (números com 3 casas) e o gesto
 --    {dir, forca, efeito} (inteiros). Nunca semente, id de partida, torcedor, faixa do segredo, sob_suspeita ou
---    qualquer coisa de partidas_segredo. Sem a partida, ou sem 'lances', `tentativas` é null.
+--    qualquer coisa de partidas_segredo. Sem a partida, sem 'lances' ou com a partida sob suspeita, `tentativas` é null.
 --    Não é brecha: a partida de quem chamou já fechou (o resultado e o gesto ficam no aparelho dele desde o chute), e
 --    quem aceita joga o mesmo lance com sementes novas, sorteadas e guardadas só no servidor. Ver onde a bola entrou
 --    é o mesmo que ver o replay: não diz nada do tremor nem do goleiro da partida nova.
@@ -22,8 +22,8 @@
 -- 1. As tentativas no resumo do desafio dos Lances
 -- ---------------------------------------------------------------------------
 -- Igual ao de 20261109000000_prazo_desafios.sql (mesmas colunas, na mesma ordem), mais `tentativas` no fim.
--- Cada campo é conferido pelo tipo do JSON: o que vier fora do formato vira null (o celular descarta a lista inteira),
--- em vez de um erro que derrubaria o resumo e o convite.
+-- Cada campo é conferido pelo tipo e pelo tamanho do JSON: o que vier fora do formato vira null (o celular descarta a
+-- lista inteira), em vez de um erro (texto no lugar de número, inteiro fora da faixa) que derrubaria o resumo e o convite.
 drop function if exists public.ver_desafio_lances(text);
 create function public.ver_desafio_lances(p_id text)
 returns table (id text, time_id text, apelido text, lance_id text, pontos integer, gols smallint, recriados smallint, faixa text,
@@ -39,17 +39,25 @@ as $$
       select jsonb_agg(
         jsonb_build_object(
           'desfecho', case when t.l->>'desfecho' in ('gol', 'defesa', 'barreira', 'fora', 'trave') then t.l->>'desfecho' end,
-          'pontos', case when jsonb_typeof(t.l->'pontos') = 'number' then round((t.l->>'pontos')::numeric)::integer end,
+          'pontos', case when jsonb_typeof(t.l->'pontos') = 'number' and abs((t.l->>'pontos')::numeric) < 1000000
+            then round((t.l->>'pontos')::numeric)::integer end,
           'recriou', case when jsonb_typeof(t.l->'recriou') = 'boolean' then (t.l->>'recriou')::boolean end,
           'cavadinha', case when jsonb_typeof(t.l->'cavadinha') = 'boolean' then (t.l->>'cavadinha')::boolean end,
-          'x', case when jsonb_typeof(t.l->'x') = 'number' then round((t.l->>'x')::numeric, 3) end,
-          'y', case when jsonb_typeof(t.l->'y') = 'number' then round((t.l->>'y')::numeric, 3) end,
-          'goleiroX', case when jsonb_typeof(t.l->'goleiroX') = 'number' then round((t.l->>'goleiroX')::numeric, 3) end,
-          'tFim', case when jsonb_typeof(t.l->'tFim') = 'number' then round((t.l->>'tFim')::numeric, 3) end,
+          'x', case when jsonb_typeof(t.l->'x') = 'number' and abs((t.l->>'x')::numeric) < 1000000
+            then round((t.l->>'x')::numeric, 3) end,
+          'y', case when jsonb_typeof(t.l->'y') = 'number' and abs((t.l->>'y')::numeric) < 1000000
+            then round((t.l->>'y')::numeric, 3) end,
+          'goleiroX', case when jsonb_typeof(t.l->'goleiroX') = 'number' and abs((t.l->>'goleiroX')::numeric) < 1000000
+            then round((t.l->>'goleiroX')::numeric, 3) end,
+          'tFim', case when jsonb_typeof(t.l->'tFim') = 'number' and abs((t.l->>'tFim')::numeric) < 1000000
+            then round((t.l->>'tFim')::numeric, 3) end,
           'gesto', jsonb_build_object(
-            'dir', case when jsonb_typeof(t.l->'gesto'->'dir') = 'number' then round((t.l->'gesto'->>'dir')::numeric)::integer end,
-            'forca', case when jsonb_typeof(t.l->'gesto'->'forca') = 'number' then round((t.l->'gesto'->>'forca')::numeric)::integer end,
-            'efeito', case when jsonb_typeof(t.l->'gesto'->'efeito') = 'number' then round((t.l->'gesto'->>'efeito')::numeric)::integer end
+            'dir', case when jsonb_typeof(t.l->'gesto'->'dir') = 'number' and abs((t.l->'gesto'->>'dir')::numeric) < 1000000
+              then round((t.l->'gesto'->>'dir')::numeric)::integer end,
+            'forca', case when jsonb_typeof(t.l->'gesto'->'forca') = 'number' and abs((t.l->'gesto'->>'forca')::numeric) < 1000000
+              then round((t.l->'gesto'->>'forca')::numeric)::integer end,
+            'efeito', case when jsonb_typeof(t.l->'gesto'->'efeito') = 'number' and abs((t.l->'gesto'->>'efeito')::numeric) < 1000000
+              then round((t.l->'gesto'->>'efeito')::numeric)::integer end
           )
         )
         order by t.ordem
@@ -58,7 +66,9 @@ as $$
         with ordinality as t(l, ordem)
     )
   from public.lances_desafios d
-  left join public.partidas p on p.id = d.partida_id and p.minigame = 'lances'
+  -- Partida sob suspeita (gesto de robô, acima da mira perfeita) não mostra os gols: o convite fica como era. Liberada
+  -- pelo #admin, volta a mostrar.
+  left join public.partidas p on p.id = d.partida_id and p.minigame = 'lances' and not p.sob_suspeita
   where d.id = lower(p_id);
 $$;
 revoke execute on function public.ver_desafio_lances(text) from public;

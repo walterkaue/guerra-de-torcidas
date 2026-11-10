@@ -43,11 +43,11 @@ async function torcedor(): Promise<string> {
   return id;
 }
 
-async function desafio(codigo: string, resultado: unknown, criado = new Date().toISOString()): Promise<string> {
+async function desafio(codigo: string, resultado: unknown, criado = new Date().toISOString(), suspeita = false): Promise<string> {
   const { rows } = await db.query<{ id: string }>(
     `insert into public.partidas (torcedor_id, modo, semente, dificuldade, expira_em, minigame, criada_em, fechada_em, pontos, resultado, sob_suspeita)
-     values ($1, 'normal', 77, 0, $2::timestamptz + interval '15 minutes', 'lances', $2, $2, 92, $3::jsonb, true) returning id`,
-    [ana, criado, resultado === undefined ? null : JSON.stringify(resultado)],
+     values ($1, 'normal', 77, 0, $2::timestamptz + interval '15 minutes', 'lances', $2, $2, 92, $3::jsonb, $4) returning id`,
+    [ana, criado, resultado === undefined ? null : JSON.stringify(resultado), suspeita],
   );
   await db.query(
     `insert into public.partidas_segredo (partida_id, numero_narrador, lance_a_lance, gestos)
@@ -74,6 +74,8 @@ describe('os gols de quem chamou no resumo do desafio dos Lances', () => {
     await desafio('semres01', undefined);
     await desafio('velhoab1', { lances: [tentativa('gol', 50)] }, new Date(Date.now() - 8 * DIA).toISOString());
     await desafio('torto001', { lances: [{ desfecho: 'chutou', x: 'longe', pontos: '50', gesto: 3 }] });
+    await desafio('enorme01', { lances: [{ desfecho: 'gol', pontos: 1e10, x: 1e300, gesto: { dir: 1e10, forca: -1e12, efeito: 1 } }] });
+    await desafio('suspeit1', { lances: [tentativa('gol', 50), tentativa('gol', 50), tentativa('gol', 50)] }, undefined, true);
   }, TEMPO);
 
   it('mesmas colunas de antes, na mesma ordem, e `tentativas` no fim', async () => {
@@ -110,6 +112,20 @@ describe('os gols de quem chamou no resumo do desafio dos Lances', () => {
     expect(torto.tentativas).toEqual([
       { desfecho: null, pontos: null, recriou: null, cavadinha: null, x: null, y: null, goleiroX: null, tFim: null, gesto: { dir: null, forca: null, efeito: null } },
     ]);
+  }, TEMPO);
+
+  it('número enorme vira null sem derrubar o resumo', async () => {
+    const [r] = await ver('enorme01');
+    expect(r.pontos).toBe(92);
+    expect(r.tentativas).toEqual([
+      { desfecho: 'gol', pontos: null, recriou: null, cavadinha: null, x: null, y: null, goleiroX: null, tFim: null, gesto: { dir: null, forca: null, efeito: 1 } },
+    ]);
+  }, TEMPO);
+
+  it('partida sob suspeita não mostra os gols; liberada, mostra', async () => {
+    expect((await ver('suspeit1'))[0].tentativas).toBeNull();
+    await db.exec(`update public.partidas p set sob_suspeita = false from public.lances_desafios d where d.id = 'suspeit1' and p.id = d.partida_id`);
+    expect((await ver('suspeit1'))[0].tentativas).toHaveLength(3);
   }, TEMPO);
 
   it('desafio vencido continua devolvendo os gols', async () => {

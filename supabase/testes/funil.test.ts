@@ -438,5 +438,16 @@ describe('funil do X1: npm run metricas', () => {
     expect(Number(lan.viu_os_gols)).toBe(1);
     const lig = (await db.query<Record<string, unknown>>(ligado[1])).rows.find((r) => r.tipo === 'x1_lances')!;
     expect([Number(lig.viu_os_gols), Number(lig.aceitos), Number(lig.aceitou_depois_de_ver_os_gols)]).toEqual([1, 1, 1]);
+
+    // Aceitou antes de ver (outro lote, mais cedo), ou sem ver: não conta como "depois de ver".
+    const ligadoDosLances = async () => (await db.query<Record<string, unknown>>(ligado[1])).rows.find((r) => r.tipo === 'x1_lances')!;
+    await db.exec('truncate public.funil_contagem, public.funil_eventos, public.funil_limite');
+    await processar(servicos(), lote([{ ev: 'compartilhou', tipo: 'x1_lances', meio: 'grupo', x1 }, { ev: 'aceitou', tipo: 'x1_lances', x1 }], TOKEN_BOM), null);
+    let l = await ligadoDosLances();
+    expect([Number(l.viu_os_gols), Number(l.aceitos), Number(l.aceitou_depois_de_ver_os_gols)]).toEqual([0, 1, 0]);
+    await db.exec("update public.funil_eventos set criado_em = now() - interval '1 hour'");
+    await processar(servicos(), lote([{ ev: 'viu_gols', tipo: 'x1_lances', x1 }], TOKEN_BOM), null);
+    l = await ligadoDosLances();
+    expect([Number(l.viu_os_gols), Number(l.aceitos), Number(l.aceitou_depois_de_ver_os_gols)]).toEqual([1, 1, 0]);
   });
 });
