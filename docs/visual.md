@@ -56,12 +56,12 @@ As fontes entram auto-hospedadas e só com os caracteres do português (~60 KB n
 ### Início
 Home nova de 31/10/2026, com a ordem da Rota B (09/11/2026): o "Jogar agora" e o 1º card à vista sem rolar em 360×740. De cima para baixo:
 
-1. **Cabeçalho:** avatar à esquerda (desde 05/11/2026, o busto de 52 px do boneco montável, com fundo e moldura; sem boneco, o círculo na cor 1 do time com o ícone de pessoa), que abre a aba Perfil; título no meio; sininho à direita (só para 18+). Embaixo, a etiqueta reta cinza "Pré-temporada" e a **contagem regressiva** ("Semana fecha em 5d 03h"). Nada novo no canto superior direito, sem selo vermelho, sem piscar.
+1. **Cabeçalho:** avatar à esquerda (desde 05/11/2026, o busto de 52 px do boneco montável, com fundo e moldura; sem boneco, o círculo na cor 1 do time com o ícone de pessoa), que abre a aba Perfil; título no meio; sininho à direita (a central de avisos, para todos; ver "Central de avisos"). Embaixo, a etiqueta reta cinza "Pré-temporada" e a **contagem regressiva** ("Semana fecha em 5d 03h"). Nada novo no canto superior direito, sem selo vermelho, sem piscar.
 2. **Arquibancada do time com a barra do time:** faixa de ponta a ponta com a torcida da partida nas cores do time, pré-desenhada uma vez (`telas/arquibancada.ts`, com os torcedores em `telas/torcida.ts`; a altura é parâmetro). Na Home com time, ~196 px; sem time, 150 px, como a da partida e a do card. Luz pelo horário de Brasília: **dia** das 6h às 17h, **entardecer** até 19h e **noite** com os refletores acesos. A tarja inclinada (−8°) "VOCÊ JOGA PELO / [TIME]" (com o artigo certo) e o "trocar" (alvo de 44 px) ficam acima da barra, sem encostar nela. Qualidade Alta e Média: a torcida balança de leve (troca de quadro a cada 340 ms). Leve e movimento reduzido: parada. Sem escudo, sem camisa, sem pessoa reconhecível. Sem time, não há barra, e a tarja pergunta "Qual é a sua torcida?".
    - **Barra do time** (`jogo/barraDoTime.ts`): tarja de TV de ~44 px no pé da arquibancada, de ponta a ponta, fundo `--placa` a ~92% (contraste de 4,5:1 sobre a torcida em qualquer luz), sem cantos, filete de 8 px nas duas cores do time à esquerda, a posição grande em Anton amarelo, um texto curto de duas linhas e "Tabela ›" à direita. A barra inteira é um botão; o leitor de tela lê "1º na série única, 4 pontos à frente. Ver a tabela". Altura reservada desde a abertura, sem contagem regressiva e sem piscar.
    - **O que mostra, nesta ordem:** quem ainda não jogou: "Seus pontos vão pro placar do {time}", sem número (abre a Tabela da semana); os 20 times com a tabela do mês: a posição e a situação do bloco das divisões (abre Tabela > Temporada); sem tabela do mês ou sem semana travada: a posição na semana e a distância para o de cima, ou para o de baixo se for o líder (abre a Tabela da semana); "Outro time": a cidade (abre Tabela > Cidades) ou "Escolha sua cidade: é ela que joga por você" (abre a escolha da cidade); sem rede: "Sem conexão com o placar agora. Dá pra jogar mesmo assim.", sem toque.
 3. **Botão "Jogar agora"**, logo abaixo da arquibancada (amarelo, o único botão principal da tela). Abre, nesta ordem: **Palpite da Rodada**, se a rodada aberta fecha em menos de 24 h e a pessoa ainda não palpitou nela; **Time do Dia**, se ainda não jogou hoje; **Lances do Jogo**, se ainda faltam partidas que contam hoje; senão **Prova de Boleiro**. "Fecha" é a hora em que o próximo palpite tranca, a mesma do card; um palpite em qualquer jogo da rodada já conta. A linha de baixo diz o motivo em tom informativo, sem pressão ("Time do Dia: ainda não jogou hoje"). Sem time, vale a mesma ordem, com a escolha do time na frente.
-4. **Vaga do momento** (`jogo/vagaDoMomento.ts`): no máximo um aviso por abertura, logo abaixo do "Jogar agora", nesta ordem: placa de fim do mês, placa "Troféu novo", faixa "Os Termos mudaram". Os outros esperam a próxima abertura. Sem aviso, a vaga não ocupa espaço; o aviso chega tarde e nunca empurra o "Jogar agora".
+4. **Vaga do momento** (`jogo/vagaDoMomento.ts`): no máximo um aviso por abertura, logo abaixo do "Jogar agora", nesta ordem: placa de fim do mês, placa "Troféu novo", faixa "Os Termos mudaram". O que não é do momento vai para a central de avisos (sininho). Sem aviso, a vaga não ocupa espaço; o aviso chega tarde e nunca empurra o "Jogar agora".
 5. **Cards dos jogos** com desenho em SVG inline, na paleta do jogo, e estado vivo, em tamanhos diferentes (`telas/cardsJogos.ts`). Toque com a resposta de hoje: encolhe e volta com a mola, vibração leve.
    - **Lances do Jogo:** largo, com um gol com rede e o rastro amarelo de uma bola, a tarja com o total do catálogo ("51 lances") e, na descrição, quantos são do seu time; estado = partidas que contam hoje.
    - **Prova de Boleiro** e **Time do Dia** lado a lado: a escada de 8 degraus (acende até onde o recorde alcança; estado = recorde) e a grade de bolinhas de pista nas cores das células (estado = chutes usados hoje, ou o resultado se já terminou).
@@ -70,9 +70,8 @@ Home nova de 31/10/2026, com a ordem da Rota B (09/11/2026): o "Jogar agora" e o
 7. **"Como tá a guerra":** seção com rótulo em Barlow Condensed caixa alta, cor suave, e um fio até a borda. Nesta ordem:
    - **Placar do clássico (cabo de guerra):** números em Anton dos dois lados, barra nas duas cores (se a cor do rival for parecida com a nossa, ele entra com a 2ª cor ou um neutro: a mesma régua de contraste dos uniformes) e um **nó** amarelo `#e9c75a`, inclinado, na posição da diferença, que anda com `--mola-firme` quando muda. Adesivo do narrador embaixo (`rival_colado` etc.). Última linha do bloco: "Você: 3º de 4 na semana", com seta verde ou vermelha desde a última visita. "Outro time" não tem duelo: fica só a linha da posição.
    - **Bloco das divisões** (06/11/2026, Rota 2 "linha ao vivo"; `docs/jogo.md` seção 5, "Telas do resto das divisões"): placa escura logo abaixo do cabo, só para os 20 times. À esquerda, a posição grande em Anton ("8º", ou "–" sem semana travada); à direita, "Na Série A · dezembro" e "4 pts acima da zona · 2 de 4 semanas"; embaixo, a linha "Se a semana fechasse agora: …" com seta verde `--subiu` (sobe) ou vermelha (desce), e o adesivo pequeno do narrador. Sem contagem regressiva nem piscar. Tocar abre Ranking > Temporada.
-   - **Bloco da cidade:** a posição da cidade, o "Faltam N" ou o lembrete "Defende sua cidade também?".
+   - **Bloco da cidade:** a posição da cidade ou o "Faltam N". O lembrete "Defende sua cidade também?" mora na central de avisos.
    - **Giro da semana:** uma linha estilo tarja de TV com frases de posição das torcidas, a partir do ranking já carregado ("Flamengo subiu pro 2º", "Corinthians a 12 do Palmeiras"), trocando a cada 5 s com esmaecer, sem rolar e sem piscar. Só torcidas, nunca apelido, com o artigo certo do time. Movimento reduzido ou Leve: uma frase fixa. Tocar abre o Ranking, que substitui a mini tabela que ficava aqui.
-   - **Aquecimento:** o card fica no fim da seção, depois do giro, até a central de avisos entrar.
 8. **Rodapé:** aviso único da pré-temporada ("tudo vale ponto, mas zera antes do lançamento") e o rodapé "Aqui é só resenha: sem aposta, sem dinheiro, sem prêmio em dinheiro. Nunca. Jogo 100% grátis." (a frase é a mesma `AVISO_RESENHA` do Palpite da Rodada), além dos links de feedback, de apoio e de Termos.
 9. **Saem da Home e vão para o Perfil:** o bloco "Sua carreira", a caixa "Mostrar meu nível nos cards" e o botão "Gráficos".
 
@@ -81,6 +80,24 @@ Home nova de 31/10/2026, com a ordem da Rota B (09/11/2026): o "Jogar agora" e o
 - **Tela do convite do desafio (09/11/2026):** rota própria, sem a Home atrás. Placa quase preta com filete na cor do time de quem chamou, busto dele e o rótulo "{apelido} te desafiou" ou "Te desafiaram"; abre em "Buscando o desafio…" com altura reservada. Quem é novo vê duas faixas de time lado a lado (a de quem chamou e a do rival), de mesmo peso e nenhuma marcada: cada uma é o card do time (seção 4 do `jogo.md`), ~92 px, com "Encarar o desafio ›". Embaixo, "Outro time" contornado e a dica. Sem amarelo: as faixas são a ação. Quem já joga vê o amarelo "Encarar o desafio" (um só) e o contornado "Ir pro início". Detalhe em `jogos/contas.md`, "Primeiro acesso".
 - Barra de navegação: Jogar, Palpites, Tabela, Perfil.
 - Textos e botões seguem as "Regras de estilo dos textos" do `docs/narrador.md`.
+
+### Central de avisos
+O sininho do topo da Home é a caixa de avisos do jogo, para todo mundo (`jogo/avisosCaixa.ts`, `docs/jogo.md` seção 7). **Informação mora na Home; aviso mora no sininho.** Aviso é o que acontece uma vez e pede uma ação ou um "ok"; informação é o estado do jogo (placar, tabela, cidade), que fica na Home.
+- **Sininho:** com avisos novos, um número pequeno amarelo no canto (Barlow Condensed; acima de 9, "9+"), sem piscar e sem animação. `aria-label` "Avisos" ou "Avisos, N novos".
+- **Folha:** tocar no sininho abre uma folha que sobe do rodapé, com o título "Avisos" em Anton e o fechar de 44 px; Esc fecha e devolve o foco ao sininho. Novos em cima; depois "Já vistos", com fundo transparente e borda fina. Abrir a folha marca tudo como visto.
+- **Cada aviso:** ícone numa caixinha, título, uma linha, o botão da ação (pequeno, amarelo, rótulo em Barlow Condensed) e "Dispensar". Esse botão é exceção ao "amarelo só no botão principal", dentro da folha. O aviso some quando a pessoa resolve ou dispensa.
+- **Vazia:** um sino numa caixinha, "Tudo em dia" e "Quando o jogo tiver novidade pra você, ela aparece aqui."
+- **Os avisos** (ordem dentro de cada grupo):
+  - Desafio, "Encarar": link aberto e ainda não jogado, enquanto o desafio vale; o texto não tem prazo nem contagem.
+  - "O mês fechou", "Ver": a placa do fim do mês, depois que a vaga do momento a mostrou uma vez.
+  - "Troféu da semana", "Ver": idem, depois que a vaga mostrou a placa uma vez.
+  - "Peça nova no vestiário", "Vestir": entra quando o resultado anuncia a peça e some ao abrir o vestiário.
+  - "Os Termos mudaram", "Ler": depois que a vaga do momento mostrou a faixa uma vez, até a pessoa abrir `#termos`.
+  - "Defende sua cidade também?", "Escolher": depois da 1ª partida, sem cidade; se dispensado, volta no máximo 1 vez por semana. Sai do bloco da cidade da Home, que continua mostrando a posição.
+  - "Conheça os outros jogos", "Abrir": o aquecimento de quem chegou por link de desafio; o card sai da Home.
+- **18+:** no fim da folha, o bloco "Aviso de domingo" com o painel do push (iPhone, navegador embutido, Opera). **Menos de 18:** só a caixa, sem push.
+- **Guardado só no aparelho** (`gdt:prefs.avisos`: vistos, dispensados e datas, só ids e dias); "Apagar meus dados" limpa junto. Sem servidor novo.
+- **Tom:** sem urgência, prazo, contagem ou "não perca"; nada pune quem não abre a caixa. O "O que mudou" (B04) entra como mais um tipo.
 
 ### Partida
 - **Perspectiva:** gol maior e mais baixo, linhas da área convergindo, marca do pênalti com a bola grande perto do dedo.
@@ -139,7 +156,7 @@ Card 'Telão do estádio' (decidido em 31/10/2026): arquibancada do clube no alt
 
 ### No MVP (até a fase 1.5 chegar)
 - **Sem divisões ainda:** onde está "Série A", mostrar o ranking geral da semana com os 20 times (Campeão da semana, com a Maior torcida como segunda aba). Sem faixa de rebaixamento.
-- **Cidade na Home:** um bloco só, abaixo do duelo. Com cidade: "Sua cidade está em 3º em SP" (ou o "Faltam N") e a frase `cidade_*` do narrador, levando à aba Cidades. Sem cidade, depois da 1ª partida: lembrete "Defende sua cidade também?" que leva a `#cidade`, no máximo 1 vez por semana (`cidadeLembrete`). O bloco do time em si não mostra cidade.
+- **Cidade na Home:** um bloco só, abaixo do duelo. Com cidade: "Sua cidade está em 3º em SP" (ou o "Faltam N") e a frase `cidade_*` do narrador, levando à aba Cidades. Sem cidade, o bloco não aparece; depois da 1ª partida, o lembrete "Defende sua cidade também?" vive na central de avisos (leva a `#cidade`, no máximo 1 vez por semana se dispensado). O bloco do time em si não mostra cidade.
 - **Tabela** mostra as abas Semana, Temporada (desde 02/11/2026, com as 52 semanas desde 06/11/2026), Cidades (com as Campeãs) e Conquistas (com a Galeria).
 - **Ranking público só de torcidas:** nenhum apelido aparece em ranking; cada pessoa vê só a própria posição.
 
@@ -157,7 +174,7 @@ Decidido em 31/10/2026. A aba "Carreira" da barra (que era "em breve") vira **Pe
 - **Na semana:** posição geral e posição em cada minigame (pênaltis, Prova e Time do Dia pelo que o servidor já calcula; Palpite da Rodada pela rodada em foco).
 - **Recordes:** um por minigame.
 - **Conquistas:** atalho com selo "em breve" até o servidor dos Lances existir.
-- **Ajustes:** Gráficos (toque troca automático → Alta → Média → Leve), Vibração (a preferência `semVibracao`), Mostrar meu nível nos cards, Aviso de domingo (só para quem marcou 18+ na triagem; abre o mesmo painel do sininho), Termos e privacidade e Apagar meus dados.
+- **Ajustes:** Gráficos (toque troca automático → Alta → Média → Leve), Vibração (a preferência `semVibracao`), Mostrar meu nível nos cards, Aviso de domingo (só para quem marcou 18+ na triagem; abre o mesmo painel do fim da central de avisos), Termos e privacidade e Apagar meus dados.
 
 ## 4. Movimento e toque (regras)
 
