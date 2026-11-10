@@ -9,6 +9,7 @@
 //   &x1Vencido        o resumo vem com vencido (a placa vira o aviso de 7 dias)
 //   &x1NaoExiste      o resumo vem null (o código não existe)
 //   &x1SemGols, &x1SemTentativas   as tentativas de quem chamou nos Lances (src/dev/tentativasFalsas.ts)
+//   &chamouSemApelido  quem chamou nos Lances não tem apelido (menos de 16 ou sem apelido): "de quem te chamou"
 
 import { ID_OUTRO, TIMES } from '../dados/times';
 import { bonecoFalsoDeQuemChamou, timeFalsoDeQuemChamou } from './bonecoDeCampoFalso'; // o boneco falso em campo (&boneco=, &semBoneco, &emCampo=0, &chamouBoneco=, &chamouSemBoneco)
@@ -122,7 +123,7 @@ export const meusLancesHoje = (): Promise<LancesHoje | null> => {
 export async function verDesafioLances(id: string): Promise<ResumoDesafioLances | null> {
   if (id === 'naoexiste' || params.has('x1NaoExiste')) return espera(null);
   const [{ LANCES }, { comTentativasFalsas }] = await Promise.all([import('../dados/lances'), import('./tentativasFalsas')]);
-  const resumo = { id, time_id: timeFalsoDeQuemChamou('flamengo'), apelido: 'Zé da Geral', lance_id: LANCES[0].id, pontos: 96, gols: 3, recriados: 1, faixa: 'dificil', boneco: bonecoFalsoDeQuemChamou(), vencido: params.has('x1Vencido') };
+  const resumo = { id, time_id: timeFalsoDeQuemChamou('flamengo'), apelido: params.has('chamouSemApelido') ? null : 'Zé da Geral', lance_id: LANCES[0].id, pontos: 96, gols: 3, recriados: 1, faixa: 'dificil', boneco: bonecoFalsoDeQuemChamou(), vencido: params.has('x1Vencido') };
   return espera(comTentativasFalsas(resumo, LANCES[0], params));
 }
 

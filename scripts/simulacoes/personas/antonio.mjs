@@ -2,6 +2,7 @@
 // reduzido. Lê devagar, toca impreciso e arrasta curto e lento (a dica "Fraquinho, o goleiro pega" tem de aparecer).
 import { chutar, tocarZona, jogarPartida, esperar, tocarSemCobertura, entrarNaProva } from './comum/jogar.mjs';
 import { textosCortados, seEncostam } from './comum/home.mjs';
+import { conferirTelaoParado } from './comum/golsDoConvite.mjs';
 
 const FLAGS = 'homeFalsa&aquecimentoFalso&provaFalsa&penaltiFalso&lancesFalsos';
 const DICA_FRACO = /fraquinho/i;
@@ -211,5 +212,8 @@ export default {
       await s.tocar(p.locator('[data-acao="casa"]').first());
       await esperar(2500);
     }, { paginaInteira: true, fichaFactual: true });
+
+    // 8. O link de Lances com os gols de quem chamou, com movimento reduzido: nada anda, "Próximo gol" troca o quadro.
+    await s.passo('link de Lances: telão parado e "Próximo gol"', () => conferirTelaoParado(s));
   },
 };

@@ -4,6 +4,7 @@
 import { SUPABASE_FALSO } from '../nucleo/servidor.mjs';
 import { jogarPartida, jogarLance, esperar, tocarSemCobertura, conferirCampo } from './comum/jogar.mjs';
 import { medidasDaHome } from './comum/home.mjs';
+import { conferirTelaoSemDados } from './comum/golsDoConvite.mjs';
 
 const BASE = 'homeFalsa&lancesFalsos&penaltiFalso&provaFalsa&codigoFalso&galeriaFalsa=cheia&cenario=lances';
 
@@ -275,5 +276,8 @@ export default {
       s.medir(`endereço depois do Ir pro início: ${url}`, 0);
       if (/[?&]d=/.test(url)) s.achado({ regra: 'endereco-com-d', gravidade: 'atrapalha', tipo: 'erro', oQue: `O ?d= continuou no endereço depois de "Ir pro início": ${url}` });
     });
+
+    // O link de Lances com os gols de quem chamou e economia de dados: nada baixa sozinho, "Ver os gols" traz o quadro.
+    await s.passo('link de Lances: telão sem baixar nada sozinho', () => conferirTelaoSemDados(s));
   },
 };

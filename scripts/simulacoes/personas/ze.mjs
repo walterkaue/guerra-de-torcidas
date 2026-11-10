@@ -2,6 +2,7 @@
 // entrada com 4G ruim. Chuta forte demais (a dica "Forte demais vai por cima" tem de aparecer).
 import { chutar, jogarPartida, esperar, tocarSemCobertura } from './comum/jogar.mjs';
 import { conferirDobraDaHome } from './comum/home.mjs';
+import { conferirFaixasComTelao } from './comum/golsDoConvite.mjs';
 
 const LINK_X1 = '/?homeFalsa&penaltiFalso&d=abcdefgh&chamouTime=flamengo';
 const DICA_FORTE = /forte demais/i;
@@ -136,5 +137,8 @@ export default {
       s.medir('card abre sem rede' + (abriu ? '' : ' (não abriu em 12 s)'), ms, 4000, !abriu);
       await s.offline(false);
     });
+
+    // 8. O link de Lances com os gols de quem chamou: as faixas e o "Outro time" continuam na tela (360×740, 130%).
+    await s.passo('link de Lances com o telão dos gols (faixas na tela)', () => conferirFaixasComTelao(s));
   },
 };

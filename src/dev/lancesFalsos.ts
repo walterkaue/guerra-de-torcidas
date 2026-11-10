@@ -10,6 +10,7 @@
 //   &x1Vencido        o resumo vem com vencido (a placa vira o aviso de 7 dias)
 //   &x1NaoExiste      o resumo vem null (o código não existe)
 //   &x1SemGols, &x1SemTentativas   as tentativas de quem chamou (src/dev/tentativasFalsas.ts)
+//   &chamouSemApelido  quem chamou não tem apelido (menos de 16 ou sem apelido): "de quem te chamou"
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { LANCES } from '../dados/lances';
@@ -97,7 +98,7 @@ export async function verDesafioLances(id: string): Promise<ResumoDesafioLances 
   await espera();
   if (!id || x1 === 'nao' || new URLSearchParams(location.search).has('x1NaoExiste')) return null;
   const l = lanceDoX1();
-  const resumo = { id, time_id: timeFalsoDeQuemChamou('palmeiras'), apelido: 'Camisa10', lance_id: l.id, pontos: 96, gols: 3, recriados: 1, faixa: faixaNaTela(l).faixa, boneco: bonecoFalsoDeQuemChamou(), vencido: parametros.has('x1Vencido') };
+  const resumo = { id, time_id: timeFalsoDeQuemChamou('palmeiras'), apelido: parametros.has('chamouSemApelido') ? null : 'Camisa10', lance_id: l.id, pontos: 96, gols: 3, recriados: 1, faixa: faixaNaTela(l).faixa, boneco: bonecoFalsoDeQuemChamou(), vencido: parametros.has('x1Vencido') };
   return comTentativasFalsas(resumo, l, parametros);
 }
 

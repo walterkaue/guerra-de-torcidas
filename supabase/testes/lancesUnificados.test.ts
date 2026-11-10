@@ -305,7 +305,7 @@ describe('X1 dos Lances', () => {
     });
     expect(codigo).toBe('lancex1a');
     const resumo = await como(db, null, 'anon', 'select * from public.ver_desafio_lances($1)', ['LANCEX1A']);
-    expect(resumo).toEqual([{ id: 'lancex1a', time_id: 'palmeiras', apelido: null, lance_id: 'gol-100', pontos: 66, gols: 2, recriados: 1, faixa: 'media', boneco: null, vencido: false }]);
+    expect(resumo).toEqual([{ id: 'lancex1a', time_id: 'palmeiras', apelido: null, lance_id: 'gol-100', pontos: 66, gols: 2, recriados: 1, faixa: 'media', boneco: null, vencido: false, tentativas: expect.any(Array) }]);
     // Código repetido: tenta o próximo.
     const { codigo: segundo } = await partida(db, eu, 10, {
       minigame: 'lances',
