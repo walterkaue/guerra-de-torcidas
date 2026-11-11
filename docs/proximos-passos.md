@@ -31,7 +31,7 @@ Nada disso tem lembrete automático.
    ```
 3. **Entressafra do Palpite (D07):**
    - **28/11, depois da final da Libertadores:** cadastrar no `#admin` o jogo do campeão na Copa Intercontinental (09/12), se for um dos 20.
-   - **01/12:** revisão do D08 (Palpite nos Estaduais) no Chat.
+   - **01/12:** revisão do D08 (Palpite nos Estaduais) no Chat e reavaliar o Natal da Torcida (J02 do backlog).
    - **Até 04/12:** o Kauê cadastra no `#admin` a final da Copa do Brasil (domingo 06/12, Grêmio x Palmeiras). Depois da 38ª, no celular: o encerramento na Home e na aba Palpites e o card "Resultado do Brasileirão".
 4. **Prova com três erros e fora:** jogar uma partida real errando de propósito (3º erro encerra e leva 75%).
 
