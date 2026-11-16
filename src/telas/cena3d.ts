@@ -4,6 +4,7 @@
 // na cena de TV de sempre (telas/cena.ts).
 
 import type { GestoCobranca } from '../jogo/penaltis';
+import { TRACO_DO_ANEL } from './valendo';
 import { GOLEIRO, desenharBoneco, misturar, novaPose, poseGoleiroEsperando, type Boneco, type Pose } from './bonecos';
 import { cameraAtrasDaBola, cameraDoReplay, type Camera, type Enquadramento, type NaTela, type Ponto3 } from './camera';
 import { desenharBolaEm, desenharPontosEm, desenharRastroEm, facil, limitar01, suave } from './cena';
@@ -521,7 +522,7 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
     const r = Math.max(3, RAIO_BOLA * centro.escala * BOLA_MAIOR) * escala;
     c.save();
     c.strokeStyle = `rgba(255,255,255,${alfa})`;
-    c.lineWidth = 3;
+    c.lineWidth = TRACO_DO_ANEL;
     c.beginPath();
     c.arc(centro.x, centro.y, r, 0, Math.PI * 2);
     c.stroke();

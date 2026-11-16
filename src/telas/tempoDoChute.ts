@@ -21,18 +21,29 @@ export function novaLatencia(anterior: number, medida: number): number {
   return Math.min(LATENCIA_MAXIMA, (anterior + medida) / 2);
 }
 
+/** No chute, a perna fica toda puxada para trás aos 140 ms; o pé encontra a bola aos 190. */
+const PUXADA = 140;
+
 /**
- * A bola sai `batida` ms depois do início do chute. Se o resultado chegou depois do pé encontrar
- * a bola, o início anda para a bola sair agora, do começo do trajeto, e não já no meio dele.
+ * Onde o batedor segura enquanto o servidor não responde: no auge do embalo, com a perna puxada, 50 ms antes do
+ * contato. Esperar ali parece tensão de cobrança; esperar com o pé encostado na bola parecia o jogo travado.
  */
-export function inicioDoVoo(inicio: number, agora: number, batida: number): number {
-  return Math.max(inicio, agora - batida);
+export function pontoDeEspera(batida: number): number {
+  return batida - (DUR_CONTATO - PUXADA);
 }
 
 /**
- * Tempo dos passos e da batida enquanto espera: no ritmo normal quando o servidor costuma responder antes do pé
- * chegar; mais lento, até o teto da latência (700 ms), quando costuma demorar. Passou disso, o pé segura na bola.
+ * Tempo da pose dos passos e do chute enquanto espera: no ritmo normal quando o servidor costuma responder antes;
+ * mais lento, até o teto da latência (700 ms), quando costuma demorar. Chegou ao embalo, segura ali.
  */
 export function tempoDaBatida(ms: number, latencia: number, batida: number): number {
-  return Math.min(batida, (ms * batida) / Math.max(batida, latencia));
+  return Math.min(pontoDeEspera(batida), (ms * batida) / Math.max(batida, latencia));
+}
+
+/**
+ * Novo início do chute quando o resultado chega: a animação segue da pose que está na tela, sem pulo, e a bola sai
+ * `batida` ms depois do início (logo depois, se ele estava segurando no embalo). Usa a mesma latência do desenho.
+ */
+export function inicioDoVoo(inicio: number, agora: number, latencia: number, batida: number): number {
+  return agora - tempoDaBatida(agora - inicio, latencia, batida);
 }

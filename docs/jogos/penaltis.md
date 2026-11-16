@@ -25,7 +25,7 @@ Os pênaltis são uma sessão dos Lances do Jogo (`jogos/lances.md`): o card dos
 - **Tela:** o placar mostra o adversário, a chamada entra embaixo da frase do narrador, o resultado lembra o placar de verdade e "Mais uma" repete a mesma disputa. Sem nenhuma revisada, a aba mostra "Em breve".
 
 ### Gesto e física
-- **Depois do arraste:** o batedor dá 2 passos curtos até a bola (~450 ms até o pé na bola; com movimento reduzido, sem os passos, 190 ms) e a resposta do servidor costuma chegar durante eles. Servidor lento: os passos esticam até 700 ms e o pé segura na bola até a resposta (`src/telas/tempoDoChute.ts`). Só tempo de tela: gesto e resultado não mudam.
+- **Depois do arraste:** o batedor dá 2 passos curtos até a bola (~450 ms até o pé na bola; com movimento reduzido, sem os passos, 190 ms) e a resposta do servidor costuma chegar durante eles. Servidor lento: os passos esticam até 700 ms e o batedor segura no embalo, com a perna puxada para trás, 50 ms antes do contato; quando a resposta chega, a animação segue dali e a bola sai. O pé nunca fica parado encostado na bola (`src/telas/tempoDoChute.ts`). Vale igual nos Lances. Só tempo de tela: gesto e resultado não mudam.
 - **Gesto de cobrança** (inteiros, vai ao servidor): `dir` −100..100, `forca` 0..100, `efeito` −100..100.
   - **Direção:** a linha do arraste prolongada até o gol define o canto.
   - **Força:** da bola ao meio do gol ≈ 70. Abaixo de 32 a bola sai rasteira e fraca (o goleiro pega se acertar o lado). Acima de ~90 vai no travessão ou por cima.
