@@ -367,7 +367,7 @@ export function poseAjeitando(ms: number, out: Pose): Pose {
 export const DUR_AJEITAR = 980;
 
 // ---------- variações do "ajeitar a bola" (só visual; a escolha nunca usa a semente do jogo) ----------
-export type VarianteAjeitar = 'ajeita' | 'pisa' | 'respira' | 'volta';
+export type VarianteAjeitar = 'ajeita' | 'pisa' | 'respira' | 'volta' | 'fixa';
 
 export interface Ajeitar {
   /** Duração (ms); em `dur` a pose já é a de `poseParado`. */
@@ -446,6 +446,32 @@ function poseVolta(ms: number, out: Pose): Pose {
   return out;
 }
 
+/** Pose de concentração: pernas abertas, mãos na cintura, imóvel encarando o gol, peito enchendo e esvaziando. */
+const FIXA = costas({
+  x: PESO_X * 0.4,
+  y: -49,
+  qd: 0,
+  trk: 1,
+  bE: [-38, 1, 50, 0.95, 1],
+  bD: [36, 1, -46, 0.95, 1],
+  pE: [-15, 1, -3, 1, 166, 0.3, -1],
+  pD: [15, 1, 3, 1, 194, 0.3, -1],
+});
+const DUR_FIXA = 1150;
+function poseFixa(ms: number, out: Pose): Pose {
+  if (ms >= DUR_FIXA) return poseParado(ms, out);
+  if (ms < 260) return misturar(B.parado, FIXA, suave(ms / 260), out);
+  if (ms < 820) {
+    out.set(FIXA);
+    const ar = 0.5 - 0.5 * Math.cos(((ms - 260) / 560) * DOIS_PI); // enche e esvazia
+    out[TRK] += 0.05 * ar;
+    out[OMK] += 0.05 * ar;
+    out[CB] -= 4 * GRAU * ar;
+    return out;
+  }
+  return misturar(FIXA, poseParado(ms, rascunho), suave((ms - 820) / (DUR_FIXA - 820)), out);
+}
+
 export const AJEITARES: Record<VarianteAjeitar, Ajeitar> = {
   ajeita: {
     dur: DUR_AJEITAR,
@@ -467,9 +493,14 @@ export const AJEITARES: Record<VarianteAjeitar, Ajeitar> = {
     pose: poseVolta,
     perto: (ms) => 1 - suave(limitar01((ms - 400) / (DUR_VOLTA - 400))),
   },
+  fixa: {
+    dur: DUR_FIXA,
+    pose: poseFixa,
+    perto: () => 0,
+  },
 };
 
-const VARIANTES: readonly VarianteAjeitar[] = ['ajeita', 'pisa', 'respira', 'volta'];
+const VARIANTES: readonly VarianteAjeitar[] = ['ajeita', 'pisa', 'respira', 'volta', 'fixa'];
 
 /** Sorteio do visual (nunca a semente do jogo): não repete a anterior. */
 export function sortearAjeitar(anterior?: VarianteAjeitar, r = Math.random()): VarianteAjeitar {
