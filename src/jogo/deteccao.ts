@@ -1,7 +1,7 @@
 // Detecção de partidas estatisticamente impossíveis (aprovada em 19/10/2026; jogo.md, "Anti-trapaça").
 // Módulo puro, roda no servidor ao fechar cada partida. Partida marcada fica fora do ranking até revisão.
 
-import type { ResultadoCobranca, ResultadoDefesa } from './penaltis.ts';
+import { coluna, type ResultadoCobranca, type ResultadoDefesa } from './penaltis.ts';
 
 export interface ConfigDeteccao {
   /** Últimas N defesas contra o batedor da máquina com chute no gol. */
@@ -14,9 +14,21 @@ export interface ConfigDeteccao {
 
 export const DETECCAO_PADRAO: ConfigDeteccao = { janelaDefesas: 30, minDefesas: 27, janelaCobrancas: 40 };
 
+type CobrancaParaDeteccao = Pick<ResultadoCobranca, 'goleiroLeu' | 'zonaBola' | 'zonaGoleiro' | 'goleiroX'>;
+
 interface PartidaParaDeteccao {
-  cobrancas: readonly Pick<ResultadoCobranca, 'goleiroLeu' | 'zonaBola' | 'zonaGoleiro'>[];
+  cobrancas: readonly CobrancaParaDeteccao[];
   defesas: readonly Pick<ResultadoDefesa, 'desfecho' | 'contraGravada'>[];
+}
+
+/**
+ * A bola foi onde o goleiro que não leu foi? No motor 2 (cobrança com `goleiroX`) vale o LADO do mergulho (a coluna); no
+ * motor 1, a zona. A janela pode misturar os dois. Não troque por "nenhuma ao alcance do goleiro": quem acerta o ângulo
+ * de verdade passa 40 cobranças sem nenhuma ao alcance em 23% das vezes; pelo lado, o honesto cai no lado do goleiro em
+ * 20% a 40% das cobranças, e o falso alarme fica em 0,013% no pior caso (0,8^40).
+ */
+export function noLadoDoGoleiro(c: CobrancaParaDeteccao): boolean {
+  return typeof c.goleiroX === 'number' ? coluna(c.zonaBola) === coluna(c.zonaGoleiro) : c.zonaBola === c.zonaGoleiro;
 }
 
 /**
@@ -37,13 +49,13 @@ export function motivoSuspeita(todas: readonly PartidaParaDeteccao[], cfg: Confi
     if (n >= cfg.minDefesas) return `defesas: ${n} de ${cfg.janelaDefesas}`;
   }
 
-  // 2. Cobranças: quando o goleiro pula por sorteio, por acaso ~1 em 6 vai no canto dele.
-  //    Quem lê a semente nunca chuta lá.
+  // 2. Cobranças: quando o goleiro pula por sorteio, por acaso ~1 em 6 vai na zona dele (motor 1), ou 1 em 5 a 2 em 5
+  //    no lado dele (motor 2). Quem lê a semente nunca chuta lá.
   const cobrancas = partidas
     .flatMap((p) => [...p.cobrancas].reverse())
     .filter((c) => !c.goleiroLeu)
     .slice(0, cfg.janelaCobrancas);
-  if (cobrancas.length === cfg.janelaCobrancas && cobrancas.every((c) => c.zonaBola !== c.zonaGoleiro)) {
+  if (cobrancas.length === cfg.janelaCobrancas && cobrancas.every((c) => !noLadoDoGoleiro(c))) {
     return `cobranças: nenhuma no canto do goleiro em ${cfg.janelaCobrancas}`;
   }
   return null;

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CENA_DA_FALTA, GESTO_DA_FALTA, sementeDaDefesa, sementeDaFalta, sementeDoPenalti, sementeQueServe } from './aquecimentoCena';
 import { criarAleatorio } from './aleatorio';
 import { validarCena, resolverLance } from './lances';
-import { coluna, planejarDefesa, resolverCobranca, resolverDefesa } from './penaltis';
+import { PONTOS_GOLEIRO, PONTOS_UNIFICADOS, coluna, planejarDefesa, resolverCobranca, resolverCobrancaGoleiro, resolverDefesa } from './penaltis';
 
 const sorteios = (base: number) => criarAleatorio(base);
 
@@ -25,8 +25,11 @@ describe('cenas do aquecimento', () => {
   it('as sementes escolhidas servem ao gesto do tutorial', () => {
     for (let k = 1; k <= 20; k++) {
       const rnd = sorteios(k);
-      const sp = sementeDoPenalti(rnd);
+      // As duas regras (motor 1 até 22/11/2026, goleiro com alcance desde 23/11): o teste não depende do relógio.
+      const sp = sementeDoPenalti(rnd, PONTOS_UNIFICADOS);
       for (const dir of [-60, 0, 60]) expect(resolverCobranca(sp, 0, { dir, forca: 70, efeito: 0 }, 0).desfecho).toBe('gol');
+      const s2 = sementeDoPenalti(rnd, PONTOS_GOLEIRO);
+      for (const dir of [-60, -30, 0, 30, 60]) expect(resolverCobrancaGoleiro(s2, 0, { dir, forca: 70, efeito: 0 }, 0).desfecho).toBe('gol');
       const sd = sementeDaDefesa(rnd);
       const plano = planejarDefesa(sd, 0, 0);
       expect(plano.erra).toBe(false);

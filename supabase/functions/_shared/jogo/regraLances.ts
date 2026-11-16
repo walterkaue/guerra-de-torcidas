@@ -7,12 +7,19 @@
 
 import { misturar } from './aleatorio.ts';
 import { FAIXAS, faixaPorChance, TABELA_LANCES_ANTES, TABELA_LANCES_UNIFICADA, type Faixa, type Lance, type TabelaLances } from './lances.ts';
-import { PONTOS, PONTOS_UNIFICADOS, type TabelaPenaltis } from './penaltis.ts';
+import { PONTOS, PONTOS_GOLEIRO, PONTOS_UNIFICADOS, type RegraPenaltis } from './penaltis.ts';
 
 /** Domingo 08/11/2026, 0h de Brasília (UTC−3). Igual a public.lances_unificados_desde() no banco (teste confere). */
 export const LANCES_UNIFICADOS_DESDE = new Date('2026-11-08T03:00:00.000Z');
 /** O mesmo corte como dia de Brasília: partidas com `dia` a partir dele seguem a regra nova no teto e na posição. */
 export const DIA_DO_CORTE = '2026-11-08';
+
+/**
+ * Goleiro com alcance nos pênaltis (motor 2, decidido em 15/11/2026): segunda 23/11/2026, 0h de Brasília. Só a
+ * cobrança muda; teto, limite do dia e defesa seguem iguais, então o banco não precisa saber deste corte. As funções
+ * (nova-partida, lance-penalti, fechar-partida) e o site vão ao ar antes dele.
+ */
+export const GOLEIRO_COM_ALCANCE_DESDE = new Date('2026-11-23T03:00:00.000Z');
 
 /** Partidas de Lances valendo por dia na regra nova, somando pênaltis, faltas e cara a cara (o X1 recebido conta). */
 export const LANCES_PARTIDAS_POR_DIA_UNIFICADO = 10;
@@ -29,7 +36,17 @@ export function ehUnificada(criadaEm: Date | string): boolean {
   return comoData(criadaEm).getTime() >= LANCES_UNIFICADOS_DESDE.getTime();
 }
 
-export const tabelaPenaltisDaPartida = (criadaEm: Date | string): TabelaPenaltis => (ehUnificada(criadaEm) ? PONTOS_UNIFICADOS : PONTOS);
+/** A partida joga contra o goleiro com alcance (motor 2)? Pela hora em que foi criada no servidor. */
+export function temGoleiroComAlcance(criadaEm: Date | string): boolean {
+  return comoData(criadaEm).getTime() >= GOLEIRO_COM_ALCANCE_DESDE.getTime();
+}
+
+/**
+ * Regra dos pênaltis pela hora de criação: a tabela de antes (até 07/11), a dos Lances unificados (motor 1) ou a do
+ * goleiro com alcance (motor 2). Partida criada antes de um corte é refeita exatamente como era.
+ */
+export const tabelaPenaltisDaPartida = (criadaEm: Date | string): RegraPenaltis =>
+  temGoleiroComAlcance(criadaEm) ? PONTOS_GOLEIRO : ehUnificada(criadaEm) ? PONTOS_UNIFICADOS : PONTOS;
 export const tabelaLancesDaPartida = (criadaEm: Date | string): TabelaLances =>
   ehUnificada(criadaEm) ? TABELA_LANCES_UNIFICADA : TABELA_LANCES_ANTES;
 

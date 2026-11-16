@@ -3,7 +3,7 @@
 
 import type { Dicas, IdDica } from './dicas.ts';
 import type { ResultadoLance } from './lances.ts';
-import { coluna, trajetoria, type GestoCobranca, type ResultadoCobranca, type ResultadoDefesa } from './penaltis.ts';
+import { cavadinhasAntes, coluna, trajetoria, type GestoCobranca, type ResultadoCobranca, type ResultadoDefesa } from './penaltis.ts';
 import type { Pistas } from './timeDoDia.ts';
 
 /** Metros que o goleiro adiantado precisa ter saído para a dica "Goleiro saiu do gol" (e para a cavadinha encobrir). */
@@ -34,6 +34,14 @@ export function chuteFracoPego(r: ResultadoCobranca): boolean {
 /** Cavadinha que o goleiro pegou: ele ficou parado no meio. */
 export function cavadinhaPegaNoMeio(r: ResultadoCobranca): boolean {
   return r.cavadinha && r.desfecho === 'defesa' && coluna(r.zonaGoleiro) === 1;
+}
+
+/**
+ * Motor 2: a 2ª cavadinha da partida morreu com o goleiro esperando no meio (ele aprende). `gestos` são as cobranças
+ * da partida até esta, com ela no fim.
+ */
+export function cavadinhaRepetidaEsperada(r: ResultadoCobranca, gestos: readonly GestoCobranca[]): boolean {
+  return r.cavadinha && r.desfecho === 'defesa' && typeof r.goleiroX === 'number' && cavadinhasAntes(gestos, gestos.length - 1) === 1;
 }
 
 const ehCavadinha = (g: GestoCobranca) => trajetoria(g, 0, 0).cavadinha;

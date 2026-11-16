@@ -115,7 +115,8 @@ servir(async (req) => {
       Number(partida.dificuldade),
       segredo.numero_narrador,
       desafio?.cobrancas,
-      // A tabela da hora em que a partida foi criada (Lances unificados, seção 14.7).
+      // A regra da hora em que a partida foi criada: a tabela (Lances unificados, seção 14.7) e o goleiro (motor 2, com
+      // alcance, desde 23/11/2026; antes do corte a partida é refeita exatamente como era).
       tabelaPenaltisDaPartida(partida.criada_em),
     );
   } catch {
@@ -138,7 +139,8 @@ servir(async (req) => {
 
   // Detecção antes de gravar: histórico recente de pênaltis do torcedor, com esta partida na frente
   // (a Prova tem outro formato de resultado e fica de fora). No desafio, a defesa é contra cobrança
-  // gravada e o próprio módulo tira da conta.
+  // gravada e o próprio módulo tira da conta. A janela das cobranças pode misturar o motor 1 (vale a zona do goleiro)
+  // e o motor 2 (vale o lado do mergulho): deteccao.ts decide pela cobrança.
   const cfg = await configDeteccao(sb);
   const { data: recentes, error: eR } = await sb
     .from('partidas')

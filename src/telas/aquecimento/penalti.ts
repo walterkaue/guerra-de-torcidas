@@ -1,11 +1,11 @@
 // Estações 1 (Pênalti) e 2 (Defesa) do Aquecimento: uma cobrança e uma defesa na cena 2D de TV dos pênaltis.
 // Mesmo motor puro (jogo/penaltis.ts) com semente local, como o treino; o desenho é o mínimo da tela da partida.
 
-import { DIFICULDADE_DO_AQUECIMENTO, sementeDaDefesa, sementeDoPenalti } from '../../jogo/aquecimentoCena';
+import { DIFICULDADE_DO_AQUECIMENTO, regraDoAquecimento, sementeDaDefesa, sementeDoPenalti } from '../../jogo/aquecimentoCena';
 import {
   normalizarCobranca,
   planejarDefesa,
-  resolverCobranca,
+  resolverCobrancaDaRegra,
   resolverDefesa,
   type GestoCobranca,
   type ResultadoCobranca,
@@ -32,6 +32,7 @@ import {
 import { bonecoDaPessoaEmCampo } from '../bonecoEmCampoCena';
 import { criarCena, facil, limitar01, suave } from '../cena';
 import { aoMudarQualidade } from '../qualidade';
+import { alvoDoGoleiro, type AlvoDoGoleiro } from '../mergulho';
 import { demonstrar } from './mao';
 import type { Estacao } from './tipos';
 
@@ -51,7 +52,7 @@ const RECUO = 2.4;
 
 type Fase =
   | { tipo: 'mirar'; inicio: number }
-  | { tipo: 'chute'; inicio: number; r: ResultadoCobranca; gesto: GestoCobranca }
+  | { tipo: 'chute'; inicio: number; r: ResultadoCobranca; gesto: GestoCobranca; alvo: AlvoDoGoleiro | null }
   | { tipo: 'corrida'; inicio: number; dica: number; zona: number | null; pulouEm: number | null }
   | { tipo: 'chuteMaquina'; inicio: number; r: ResultadoDefesa; pulouEm: number; dica: number }
   | { tipo: 'pausa'; inicio: number };
@@ -65,6 +66,8 @@ interface Desfecho {
   x: number;
   y: number;
   zonaGoleiro: number;
+  /** Motor 2: o ponto do mergulho (null no motor 1 e na defesa de quem joga). */
+  ponto: { x: number; y: number } | null;
 }
 
 export const estacaoPenalti: Estacao = (ctx) => montar(ctx, 'penalti');
@@ -91,7 +94,9 @@ function montar(ctx: Parameters<Estacao>[0], tipo: 'penalti' | 'defesa'): () => 
   const batedorMaquina: Boneco = criarBoneco(sortearAparencia(), u.adversario, false);
   const goleiroMaquina: Boneco = criarBoneco(sortearAparencia(), u.goleiroAdversario, true);
 
-  const semente = tipo === 'penalti' ? sementeDoPenalti(Math.random) : sementeDaDefesa(Math.random);
+  // A regra de uma partida que começasse agora: desde 23/11/2026, o goleiro com alcance (motor 2).
+  const regra = regraDoAquecimento();
+  const semente = tipo === 'penalti' ? sementeDoPenalti(Math.random, regra) : sementeDaDefesa(Math.random);
   const plano = planejarDefesa(semente, 0, DIFICULDADE_DO_AQUECIMENTO);
   let fase: Fase =
     tipo === 'penalti'
@@ -178,8 +183,8 @@ function montar(ctx: Parameters<Estacao>[0], tipo: 'penalti' | 'defesa'): () => 
     const gq = normalizarCobranca(gesto);
     if (fase.tipo === 'mirar') pertoNoChute = pertoDaBola(relogio() - fase.inicio);
     tiraMao?.();
-    const r = resolverCobranca(semente, 0, gq, DIFICULDADE_DO_AQUECIMENTO);
-    fase = { tipo: 'chute', inicio: relogio(), r, gesto: gq };
+    const r = resolverCobrancaDaRegra(semente, 0, gq, DIFICULDADE_DO_AQUECIMENTO, regra, []);
+    fase = { tipo: 'chute', inicio: relogio(), r, gesto: gq, alvo: alvoDoGoleiro(r) };
     window.setTimeout(() => !acabou && somChute(), DUR_BATIDA);
   }
 
@@ -208,17 +213,20 @@ function montar(ctx: Parameters<Estacao>[0], tipo: 'penalti' | 'defesa'): () => 
         const dur = r.cavadinha ? DUR_CAVADINHA : DUR_CHUTE;
         const t = limitar01((ms - DUR_BATIDA) / dur);
         const tPulo = (t * dur - dur * 0.15) / DUR_PULO;
-        desenharGoleiroNoQuadro(goleiroMaquina, r.zonaGoleiro, tPulo, agora);
+        // Motor 2: o mergulho vai a um ponto do gol; no motor 1, à zona.
+        const zonaDoPulo = fase.alvo ? fase.alvo.zona : r.zonaGoleiro;
+        const ponto = fase.alvo ? fase.alvo.ponto : null;
+        desenharGoleiroNoQuadro(goleiroMaquina, zonaDoPulo, tPulo, agora, -1, false, ponto);
         desenharTraves();
         batedorChutando(ms, r.cavadinha);
         const defendeu = r.desfecho === 'defesa';
-        const luva = goleiroNoQuadro(goleiroMaquina, r.zonaGoleiro, (dur - dur * 0.15) / DUR_PULO, agora);
+        const luva = goleiroNoQuadro(goleiroMaquina, zonaDoPulo, (dur - dur * 0.15) / DUR_PULO, agora, -1, false, ponto);
         const dx = defendeu ? luva.luvaX : telaX(r.x);
         const dy = defendeu ? luva.luvaY : telaY(r.y);
         desenharBolaEmVoo((tt) => trajetoria(dx, dy, gesto.efeito, facil(tt), r.cavadinha), t);
         if (t >= 1) {
           if (r.desfecho === 'gol') efeitos.rede = { inicio: agora, x: dx, y: dy };
-          desfecho = { meu: true, gol: r.desfecho === 'gol', pegou: defendeu, x: dx, y: dy, zonaGoleiro: r.zonaGoleiro };
+          desfecho = { meu: true, gol: r.desfecho === 'gol', pegou: defendeu, x: dx, y: dy, zonaGoleiro: zonaDoPulo, ponto };
           fase = { tipo: 'pausa', inicio: agora };
           ctx.concluir(r.desfecho === 'gol');
         }
@@ -252,7 +260,7 @@ function montar(ctx: Parameters<Estacao>[0], tipo: 'penalti' | 'defesa'): () => 
         desenharBolaEmVoo((tt) => trajetoria(ax, ay, 0, facil(tt), false), t);
         if (t >= 1) {
           if (r.desfecho === 'gol') efeitos.rede = { inicio: agora, x: ax, y: ay };
-          desfecho = { meu: false, gol: r.desfecho === 'gol', pegou: r.desfecho === 'defesa', x: ax, y: ay, zonaGoleiro: r.zonaGoleiro };
+          desfecho = { meu: false, gol: r.desfecho === 'gol', pegou: r.desfecho === 'defesa', x: ax, y: ay, zonaGoleiro: r.zonaGoleiro, ponto: null };
           fase = { tipo: 'pausa', inicio: agora };
           ctx.concluir(r.desfecho === 'defesa');
         }
@@ -265,7 +273,7 @@ function montar(ctx: Parameters<Estacao>[0], tipo: 'penalti' | 'defesa'): () => 
           // Quem bate comemora no gol e lamenta no resto; o goleiro cai onde pulou.
           const batedor = d.meu ? batedorJogador : batedorMaquina;
           const goleiroDeLa = d.meu ? goleiroMaquina : goleiroJogador;
-          desenharGoleiroNoQuadro(goleiroDeLa, d.zonaGoleiro, 1, agora, ms, d.pegou);
+          desenharGoleiroNoQuadro(goleiroDeLa, d.zonaGoleiro, 1, agora, ms, d.pegou, d.ponto);
           desenharTraves();
           desenharBatedorEm(batedor, batedorX(1), batedorY(1), d.gol ? poseComemora(ms, poseBatedor) : poseLamenta(ms, poseBatedor));
           bolaParada(d.x, d.y);

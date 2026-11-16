@@ -31,14 +31,25 @@ export function etiquetasDaDefesa(r: ResultadoDefesa, dica: number): Set<Etiquet
   return e;
 }
 
-/** Prioridade num mesmo lance: cavadinha > trave e gol > ângulo > gol. */
-export function eventoDaCobranca(r: ResultadoCobranca): EventoNarrador {
-  if (r.cavadinha) return r.desfecho === 'gol' ? 'cavadinha' : 'cavadinha_falhou';
+/**
+ * Prioridade num mesmo lance: cavadinha > trave e gol > ângulo > tocou e entrou > contrapé > no cantinho > gol (os três
+ * do meio só no motor 2, que traz `jeito` e `faixa`). `cavadinhasAntes`: cavadinhas anteriores desta partida (a
+ * cavadinha repetida que o goleiro esperou tem frase própria).
+ */
+export function eventoDaCobranca(r: ResultadoCobranca, cavadinhasAntes = 0): EventoNarrador {
+  if (r.cavadinha) {
+    if (r.desfecho === 'gol') return 'cavadinha';
+    return r.jeito === 'encaixou' && cavadinhasAntes > 0 ? 'cavadinha_esperou' : 'cavadinha_falhou';
+  }
   switch (r.desfecho) {
     case 'gol':
-      return r.raspouTrave ? 'trave_gol' : r.angulo ? 'gol_angulo' : 'gol';
+      if (r.raspouTrave) return 'trave_gol';
+      if (r.angulo) return 'gol_angulo';
+      if (r.jeito === 'tocou') return 'gol_tocou';
+      if (r.jeito === 'contrape') return 'gol_contrape';
+      return r.faixa === 'canto' ? 'gol_cantinho' : 'gol';
     case 'defesa':
-      return 'goleiro_pegou';
+      return r.jeito === 'encaixou' ? 'goleiro_encaixou' : r.jeito === 'espalmou' ? 'goleiro_espalmou' : 'goleiro_pegou';
     case 'trave':
       return 'trave';
     case 'fora':

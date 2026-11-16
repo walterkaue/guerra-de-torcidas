@@ -77,7 +77,23 @@ export interface ResultadoCobranca {
   /** O goleiro da máquina "leu" o chute (senão pulou numa zona sorteada). Usado na detecção. */
   goleiroLeu: boolean;
   pontos: number;
+  // Só no motor 2 (goleiro com alcance, partidas criadas desde GOLEIRO_COM_ALCANCE_DESDE). As do motor 1 não têm.
+  /** Ponto do gol para onde o goleiro mergulhou (x de -1 a 1, y de 0 a 1), sem prender dentro do gol. */
+  goleiroX?: number;
+  goleiroY?: number;
+  /** Como a bola passou pelo goleiro; null na trave e pra fora. */
+  jeito?: JeitoCobranca | null;
+  /** Colocação da bola (é ela que dá os pontos do gol); null na trave e pra fora. */
+  faixa?: FaixaDoGol | null;
 }
+
+/**
+ * Motor 2: encaixou (defesa, a bola parou nas mãos), espalmou (defesa, a luva tocou firme), tocou (a luva raspou e a
+ * bola entrou), contrapé (gol com o goleiro mergulhando para o outro lado) ou limpo (gol sem a luva chegar).
+ */
+export type JeitoCobranca = 'encaixou' | 'espalmou' | 'tocou' | 'contrape' | 'limpo';
+/** Motor 2: no meio (|x| < 0,4), colocado (0,4 a 0,75), no canto (0,75 ou mais) e no ângulo. */
+export type FaixaDoGol = 'meio' | 'colocado' | 'canto' | 'angulo';
 
 export interface PlanoDefesa {
   /** Zona para onde a máquina vai bater. */
@@ -167,6 +183,43 @@ export const PONTOS_UNIFICADOS: TabelaPenaltis = {
   cincoDeCinco: 10,
   teto: TETO_PARTIDA_UNIFICADO,
 };
+
+/**
+ * Tabela do motor 2 (goleiro com alcance, decidida em 15/11/2026): o gol vale pela colocação, o ângulo soma ao canto e
+ * a cavadinha que entra vale `cavadinha` sozinha. O maior caminho possível dá 135 (5 cavadinhas, 5 defesas, vitória e
+ * os dois 5 de 5); o teto de 150 é a mesma guarda do fechamento.
+ */
+export interface TabelaGoleiro {
+  motor: 2;
+  meio: number;
+  colocado: number;
+  canto: number;
+  /** Bônus sobre o canto (o ângulo é sempre no canto). */
+  angulo: number;
+  /** O que vale a cavadinha que entra, sem colocação. */
+  cavadinha: number;
+  defesa: number;
+  vitoria: number;
+  cincoDeCinco: number;
+  teto: number;
+}
+
+export const PONTOS_GOLEIRO: TabelaGoleiro = {
+  motor: 2,
+  meio: 4,
+  colocado: 6,
+  canto: 8,
+  angulo: 4,
+  cavadinha: 13,
+  defesa: 7,
+  vitoria: 15,
+  cincoDeCinco: 10,
+  teto: TETO_PARTIDA_UNIFICADO,
+};
+
+/** A regra de uma partida, pela hora de criação (tabelaPenaltisDaPartida): as tabelas do motor 1 ou a do motor 2. */
+export type RegraPenaltis = TabelaPenaltis | TabelaGoleiro;
+export const ehGoleiroComAlcance = (r: RegraPenaltis): r is TabelaGoleiro => (r as Partial<TabelaGoleiro>).motor === 2;
 
 const SAL_COBRANCA = 0xc0b;
 const SAL_DEFESA = 0xdef;
@@ -325,6 +378,205 @@ export function resolverCobranca(
   return { ...base, desfecho: 'gol', angulo, raspouTrave, pontos };
 }
 
+// ---------- Motor 2: goleiro com alcance (docs/jogos/penaltis.md, "Gesto e física") ----------
+// Partidas criadas desde GOLEIRO_COM_ALCANCE_DESDE (regraLances.ts). O resolverCobranca acima é o motor 1: não muda,
+// porque é ele que refaz as partidas antigas. A defesa (6 zonas) é a mesma nos dois.
+
+/** Números do goleiro com alcance. Mudar qualquer um muda a calibragem (scripts/balanco/simular-goleiro.mjs). */
+export const GOLEIRO = {
+  /** Quem leu mergulha no ponto da bola com este desvio (nas unidades do gol). */
+  desvioDaLeitura: 0.12,
+  /** Sem ler, fica no meio com esta chance (o resto se divide entre os dois lados). */
+  meio: 0.2,
+  /** Contra cavadinha, cada cavadinha anterior da partida soma isto à chance de ficar no meio... */
+  aprendeCavadinha: 0.25,
+  /** ...até este máximo. */
+  meioMaximo: 0.95,
+  /** Nos lados, |x| do mergulho vai de `ladoMinimo` a `ladoMinimo + ladoFaixa`; no meio, de -meioFaixa/2 a +meioFaixa/2. */
+  ladoMinimo: 0.35,
+  ladoFaixa: 0.5,
+  meioFaixa: 0.4,
+  /** Altura do mergulho sem ler: de `alturaMinima` a `alturaMinima + alturaFaixa`. */
+  alturaMinima: 0.1,
+  alturaFaixa: 0.75,
+  /** Alcance do goleiro, o mesmo para o lado e para cima. */
+  alcance: 0.3,
+  /** Bola fraca dá mais tempo: o alcance cresce. */
+  fraca: 1.6,
+  /** No canto o goleiro chega esticado: o alcance diminui. */
+  canto: 0.7,
+  /** d² até aqui: encaixou. De `encaixa` a 1: a luva tocou, e entra com chance (d² − encaixa) / toque. */
+  encaixa: 0.3,
+  toque: 0.64,
+  /** Contrapé: o goleiro foi para o outro lado (|x| do mergulho ≥ ladoMinimo) e a bola foi longe do meio. */
+  contrapeBola: 0.3,
+} as const;
+
+const RAIZ_DE_3 = 1.7320508075688772;
+
+/** Os sorteios de uma cobrança do motor 2, sempre todos e sempre nesta ordem, mesmo quando o lance não usa algum. */
+export interface SorteiosDoGoleiro {
+  tremX: number;
+  tremY: number;
+  /** Comparado com a chance de ler. */
+  leitura: number;
+  /** Sem ler: meio, esquerda ou direita. */
+  lado: number;
+  /** Onde, dentro do lado (ou do meio), e a que altura. */
+  posX: number;
+  posY: number;
+  /** Desvio de quem leu, em desvios padrão (soma de 4 sorteios uniformes, desvio 1). */
+  erroX: number;
+  erroY: number;
+  /** Bola que a luva tocou: entra se `toque` ficar abaixo da chance. */
+  toque: number;
+}
+
+/** Sorteia, na ordem da regra: tremX, tremY, leitura, lado, posX, posY, 4 do erro em x, 4 do erro em y, toque. */
+export function sortearGoleiro(rnd: () => number): SorteiosDoGoleiro {
+  const tremX = (rnd() - 0.5) * 0.12;
+  const tremY = (rnd() - 0.5) * 0.12;
+  const leitura = rnd();
+  const lado = rnd();
+  const posX = rnd();
+  const posY = rnd();
+  const erroX = (rnd() + rnd() + rnd() + rnd() - 2) * RAIZ_DE_3;
+  const erroY = (rnd() + rnd() + rnd() + rnd() - 2) * RAIZ_DE_3;
+  const toque = rnd();
+  return { tremX, tremY, leitura, lado, posX, posY, erroX, erroY, toque };
+}
+
+/** O gesto é de cavadinha (força 8 a 24 e |dir| até 30, depois de normalizar), tanto faz se entrou. */
+export function ehGestoDeCavadinha(g: GestoCobranca): boolean {
+  return trajetoria(normalizarCobranca(g), 0, 0).cavadinha;
+}
+
+/** Quantas das cobranças antes da `i` (desta partida, a morte súbita também) tiveram gesto de cavadinha. */
+export function cavadinhasAntes(gestos: readonly GestoCobranca[], i: number): number {
+  let n = 0;
+  for (let j = 0; j < i && j < gestos.length; j++) if (ehGestoDeCavadinha(gestos[j])) n++;
+  return n;
+}
+
+/** Chance de o goleiro que não leu ficar no meio: 20%; contra cavadinha, sobe 25 pontos a cada cavadinha anterior. */
+export function chanceDoMeio(cavadinha: boolean, antes: number): number {
+  if (!cavadinha) return GOLEIRO.meio;
+  return Math.min(GOLEIRO.meioMaximo, GOLEIRO.meio + GOLEIRO.aprendeCavadinha * (antes > 0 ? antes : 0));
+}
+
+/** Colocação da bola no gol (a cavadinha nunca é ângulo). */
+export function faixaDoGol(x: number, y: number, cavadinha: boolean): FaixaDoGol {
+  const ax = Math.abs(x);
+  if (!cavadinha && ax > 0.78 && y > 0.72) return 'angulo';
+  return ax < 0.4 ? 'meio' : ax < 0.75 ? 'colocado' : 'canto';
+}
+
+/** Pontos de um gol no motor 2: a cavadinha vale a dela; o resto, a colocação (o ângulo é canto + bônus). */
+export function pontosDoGol(t: TabelaGoleiro, faixa: FaixaDoGol, cavadinha: boolean): number {
+  if (cavadinha) return t.cavadinha;
+  return faixa === 'angulo' ? t.canto + t.angulo : t[faixa];
+}
+
+/** Bola no canto: |x| > 0,85, ou |x| > 0,7 rente ao travessão ou ao chão. */
+const noCanto = (x: number, y: number) => Math.abs(x) > 0.85 || (Math.abs(x) > 0.7 && (y > 0.8 || y < 0.15));
+
+/**
+ * O desfecho do motor 2 com a bola e os sorteios já dados (o teste e a calibragem chamam direto, com a bola exata).
+ * `antes` = cavadinhas anteriores desta partida (cavadinhasAntes): o goleiro aprende a esperar no meio.
+ */
+export function desfechoDoGoleiro(
+  bola: { x: number; y: number; cavadinha: boolean; fraca: boolean },
+  s: SorteiosDoGoleiro,
+  dificuldade: number,
+  tabela: TabelaGoleiro = PONTOS_GOLEIRO,
+  antes = 0,
+): ResultadoCobranca {
+  const { x, y, cavadinha, fraca } = bola;
+  const zonaBola = zonaDoPonto(limitar(x, -1, 1), limitar(y, 0, 1));
+
+  // Mesma leitura do motor 1.
+  const chanceLer = 0.12 + 0.24 * dificuldade + (fraca ? 0.4 : 0);
+  const goleiroLeu = s.leitura < chanceLer;
+  const ficouNoMeio = !goleiroLeu && Math.abs(s.lado - 0.5) < chanceDoMeio(cavadinha, antes) / 2;
+
+  // O ponto do mergulho NÃO é preso dentro do gol (quem leu um chute rente à trave pode cair para fora dela).
+  let goleiroX: number;
+  let goleiroY: number;
+  if (goleiroLeu) {
+    goleiroX = x + GOLEIRO.desvioDaLeitura * s.erroX;
+    goleiroY = y + GOLEIRO.desvioDaLeitura * s.erroY;
+  } else {
+    goleiroX = ficouNoMeio
+      ? -GOLEIRO.meioFaixa / 2 + GOLEIRO.meioFaixa * s.posX
+      : (s.lado < 0.5 ? -1 : 1) * (GOLEIRO.ladoMinimo + GOLEIRO.ladoFaixa * s.posX);
+    goleiroY = GOLEIRO.alturaMinima + GOLEIRO.alturaFaixa * s.posY;
+  }
+  // Contra a cavadinha, o goleiro que lê fica parado no meio (como no motor 1).
+  const zonaGoleiro = cavadinha && goleiroLeu ? 1 : zonaDoPonto(goleiroX, goleiroY);
+
+  const base = { x, y, zonaBola, zonaGoleiro, cavadinha, fraca, goleiroLeu, goleiroX, goleiroY };
+
+  // Trave e fora como no motor 1, antes de tudo.
+  const naTrave = (Math.abs(x) > 1 && Math.abs(x) <= 1.06 && y <= 1) || (y > 1 && y <= 1.05 && Math.abs(x) <= 1);
+  if (naTrave) return { ...base, desfecho: 'trave', angulo: false, raspouTrave: false, pontos: 0, jeito: null, faixa: null };
+  if (Math.abs(x) > 1 || y > 1) return { ...base, desfecho: 'fora', angulo: false, raspouTrave: false, pontos: 0, jeito: null, faixa: null };
+  const raspouTrave = Math.abs(x) > 0.95 || y > 0.95;
+  const angulo = !cavadinha && Math.abs(x) > 0.78 && y > 0.72;
+  const faixa = faixaDoGol(x, y, cavadinha);
+
+  const contrape = Math.abs(goleiroX) >= GOLEIRO.ladoMinimo && goleiroX * x < 0 && Math.abs(x) > GOLEIRO.contrapeBola;
+  let jeito: JeitoCobranca;
+  if (cavadinha) {
+    // Cavadinha só morre se o goleiro leu ou ficou no meio.
+    jeito = goleiroLeu || ficouNoMeio ? 'encaixou' : contrape ? 'contrape' : 'limpo';
+  } else {
+    let r = GOLEIRO.alcance;
+    if (fraca) r *= GOLEIRO.fraca;
+    if (noCanto(x, y)) r *= GOLEIRO.canto;
+    const d2 = ((x - goleiroX) * (x - goleiroX) + (y - goleiroY) * (y - goleiroY)) / (r * r);
+    if (d2 <= GOLEIRO.encaixa) jeito = 'encaixou';
+    else if (d2 <= 1) jeito = s.toque < (d2 - GOLEIRO.encaixa) / GOLEIRO.toque ? 'tocou' : 'espalmou';
+    else jeito = contrape ? 'contrape' : 'limpo';
+  }
+
+  if (jeito === 'encaixou' || jeito === 'espalmou') {
+    return { ...base, desfecho: 'defesa', angulo, raspouTrave: false, pontos: 0, jeito, faixa };
+  }
+  return { ...base, desfecho: 'gol', angulo, raspouTrave, pontos: pontosDoGol(tabela, faixa, cavadinha), jeito, faixa };
+}
+
+/** Resolve a cobrança i do jogador contra o goleiro com alcance (motor 2). */
+export function resolverCobrancaGoleiro(
+  semente: number,
+  i: number,
+  gestoBruto: GestoCobranca,
+  dificuldade: number,
+  tabela: TabelaGoleiro = PONTOS_GOLEIRO,
+  antes = 0,
+): ResultadoCobranca {
+  const g = normalizarCobranca(gestoBruto);
+  const s = sortearGoleiro(criarAleatorio(misturar(semente, SAL_COBRANCA, i)));
+  return desfechoDoGoleiro(trajetoria(g, s.tremX, s.tremY), s, dificuldade, tabela, antes);
+}
+
+/**
+ * Resolve a cobrança i pela regra da partida: motor 2 com a tabela do goleiro com alcance, senão o motor 1 de sempre.
+ * `gestos` são as cobranças da partida (só as antes da i contam, para o goleiro aprender a cavadinha); no motor 1 não
+ * são usadas.
+ */
+export function resolverCobrancaDaRegra(
+  semente: number,
+  i: number,
+  gesto: GestoCobranca,
+  dificuldade: number,
+  regra: RegraPenaltis,
+  gestos: readonly GestoCobranca[],
+): ResultadoCobranca {
+  return ehGoleiroComAlcance(regra)
+    ? resolverCobrancaGoleiro(semente, i, gesto, dificuldade, regra, cavadinhasAntes(gestos, i))
+    : resolverCobranca(semente, i, gesto, dificuldade, regra);
+}
+
 /** O que a máquina vai fazer na cobrança i (mostrado ao jogador só como "dica"). */
 /**
  * O que o batedor vai fazer na cobrança i (mostrado ao jogador só como "dica").
@@ -362,7 +614,8 @@ export function resolverDefesa(
   zonaBruta: GestoDefesa,
   dificuldade: number,
   gravada?: GestoCobranca,
-  tabela: TabelaPenaltis = PONTOS,
+  // Só a defesa conta (é a mesma nos dois motores): aceita a tabela do motor 1 ou a do 2.
+  tabela: Pick<TabelaPenaltis, 'defesa'> = PONTOS,
 ): ResultadoDefesa {
   const plano = planejarDefesa(semente, i, dificuldade, gravada);
   const contraGravada = !!plano.gravada;
@@ -394,6 +647,21 @@ export function resolverDefesa(
 }
 
 const contarGols = (c: readonly ResultadoCobranca[]) => c.filter((r) => r.desfecho === 'gol').length;
+
+/**
+ * Motor 2: a parte "gols" da pontuação é a colocação dos gols que não foram de cavadinha (o ângulo conta como canto; o
+ * bônus dele fica em `angulos`, e a cavadinha inteira em `cavadinhas`). Sem `faixa` (lance do motor 1 numa partida que
+ * caiu no meio), sai da posição da bola.
+ */
+function pontosDaColocacao(cobrancas: readonly ResultadoCobranca[], t: TabelaGoleiro): number {
+  let soma = 0;
+  for (const c of cobrancas) {
+    if (c.desfecho !== 'gol' || c.cavadinha) continue;
+    const f = c.faixa ?? faixaDoGol(c.x, c.y, false);
+    soma += f === 'angulo' ? t.canto : t[f];
+  }
+  return soma;
+}
 const contarSofridos = (d: readonly ResultadoDefesa[]) => d.filter((r) => r.desfecho === 'gol').length;
 
 /**
@@ -439,8 +707,8 @@ export function simularPartida(
   numeroNarrador?: number,
   /** Desafio por link: cobranças gravadas de quem desafiou. Faltando (morte súbita), bate a máquina. */
   gravadas?: readonly GestoCobranca[],
-  /** Tabela pela data de criação da partida (tabelaPenaltisDaPartida, em regraLances.ts). */
-  tabela: TabelaPenaltis = PONTOS,
+  /** Regra pela data de criação da partida (tabelaPenaltisDaPartida, em regraLances.ts): motor 1 ou motor 2. */
+  tabela: RegraPenaltis = PONTOS,
 ): ResultadoPartida {
   const n = gestos.cobrancas.length;
   if (n !== gestos.defesas.length || n < COBRANCAS || n > RODADAS_MAX) {
@@ -452,7 +720,8 @@ export function simularPartida(
   for (let i = 0; i < n; i++) {
     // Rodada a mais do que a regra permite (ex.: morte súbita depois de desempatar) é recusada.
     if (!precisaDeOutraRodada(cobrancas, defesas)) throw new Error(`Rodada ${i + 1} não deveria existir.`);
-    cobrancas.push(resolverCobranca(sementeDoLance(semente, 'cobranca', i), i, gestos.cobrancas[i], d, tabela));
+    // No motor 2 o goleiro conta as cavadinhas anteriores desta partida (as do gesto, entrando ou não).
+    cobrancas.push(resolverCobrancaDaRegra(sementeDoLance(semente, 'cobranca', i), i, gestos.cobrancas[i], d, tabela, gestos.cobrancas));
     defesas.push(resolverDefesa(sementeDoLance(semente, 'defesa', i), i, gestos.defesas[i], d, gravadas?.[i], tabela));
   }
   if (precisaDeOutraRodada(cobrancas, defesas)) throw new Error('Faltam rodadas de morte súbita.');
@@ -475,7 +744,7 @@ export function totalizar(
   cobrancas: ResultadoCobranca[],
   defesas: ResultadoDefesa[],
   parOuImpar?: ResultadoParOuImpar,
-  tabela: TabelaPenaltis = PONTOS,
+  tabela: RegraPenaltis = PONTOS,
 ): ResultadoPartida {
   const golsJogador = contarGols(cobrancas);
   const golsMaquina = contarSofridos(defesas);
@@ -493,7 +762,7 @@ export function totalizar(
     defesas.slice(0, COBRANCAS).filter((d) => d.desfecho === 'defesa' && d.pontos > 0).length === COBRANCAS;
 
   const pontos: Pontuacao = {
-    gols: golsJogador * tabela.gol,
+    gols: ehGoleiroComAlcance(tabela) ? pontosDaColocacao(cobrancas, tabela) : golsJogador * tabela.gol,
     angulos: cobrancas.filter((c) => c.desfecho === 'gol' && c.angulo).length * tabela.angulo,
     cavadinhas: cobrancas.filter((c) => c.desfecho === 'gol' && c.cavadinha).length * tabela.cavadinha,
     defesas: defesas.reduce((soma, d) => soma + d.pontos, 0),

@@ -8,8 +8,10 @@ function memoria() {
 
 describe('dicas', () => {
   it('curtas; na Prova e no Crava, sem "valendo" (o resto do jogo passa em palavrasProibidas.test.ts)', () => {
+    // A do goleiro que aprende a cavadinha é o texto que o Kauê pediu (15/11/2026); cabe em 2 linhas a 360 px.
+    const LONGAS = new Set(['pen_cavadinha_aprende']);
     for (const [id, texto] of Object.entries(DICAS)) {
-      expect(texto.length).toBeLessThanOrEqual(50);
+      expect(texto.length, id).toBeLessThanOrEqual(LONGAS.has(id) ? 60 : 50);
       if (/^(prova|crava)_/.test(id)) expect(texto.toLowerCase()).not.toMatch(/valendo|prêmio|milhão|lucro/);
     }
   });

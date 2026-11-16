@@ -3,7 +3,8 @@
 // por isso escolhe, entre as sementes, uma em que o gesto do tutorial dá certo.
 
 import { resolverLance, type CenaLance } from './lances';
-import { coluna, planejarDefesa, resolverCobranca, type GestoCobranca } from './penaltis';
+import { coluna, planejarDefesa, resolverCobrancaDaRegra, type GestoCobranca, type RegraPenaltis } from './penaltis';
+import { tabelaPenaltisDaPartida } from './regraLances';
 
 /** Procura uma semente que serve; sem achar em `tentativas`, devolve a primeira sorteada. */
 export function sementeQueServe(sorteio: () => number, serve: (semente: number) => boolean, tentativas = 300): number {
@@ -24,8 +25,11 @@ const CHUTES_DO_PENALTI: GestoCobranca[] = [-60, -30, 0, 30, 60].map((dir) => ({
 export const DIFICULDADE_DO_AQUECIMENTO = 0;
 const DIFICULDADE = DIFICULDADE_DO_AQUECIMENTO;
 
-export const sementeDoPenalti = (sorteio: () => number): number =>
-  sementeQueServe(sorteio, (s) => CHUTES_DO_PENALTI.every((g) => resolverCobranca(s, 0, g, DIFICULDADE).desfecho === 'gol'));
+/** Regra do aquecimento: a de uma partida que começasse agora (desde 23/11/2026, o goleiro com alcance). */
+export const regraDoAquecimento = (agora: Date = new Date()): RegraPenaltis => tabelaPenaltisDaPartida(agora);
+
+export const sementeDoPenalti = (sorteio: () => number, regra: RegraPenaltis = regraDoAquecimento()): number =>
+  sementeQueServe(sorteio, (s) => CHUTES_DO_PENALTI.every((g) => resolverCobrancaDaRegra(s, 0, g, DIFICULDADE, regra, []).desfecho === 'gol'));
 
 // ---------- estação 2: defesa ----------
 /** Batedor honesto (o pé de apoio aponta o canto certo) e que não isola: quem segue o pé amarelo tem chance. */

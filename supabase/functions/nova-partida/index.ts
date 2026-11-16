@@ -14,6 +14,8 @@
 // partida livre, sem erro). No X1 recebido, a partida grava a disputa da partida de quem chamou (a medalha vai para a
 // mesma disputa) e a resposta devolve o id, para o celular montar o cenário dela. A penaltis_comecar confere de novo.
 // Catálogo novo de disputas: publicar a nova-partida ANTES do site, senão a disputa nova é recusada depois do corte.
+// Goleiro com alcance (motor 2, desde 23/11/2026): a resposta traz `criadaEm`, a hora gravada na partida; o celular
+// tira dela a mesma regra do servidor (tabelaPenaltisDaPartida) para o treino que continua se cair a conexão.
 // Corpo: { desafio?: string, disputa?: string }  (código do desafio por link; id da disputa histórica)
 
 import { admin, configDeteccao, ErroHttp, lerCorpo, servir, sortear, usuario } from '../_shared/comum.ts';
@@ -96,6 +98,8 @@ servir(async (req) => {
     proximo: { tipo: 'cobranca', i: 0 },
     dificuldade,
     expiraEm: expiraEm.toISOString(),
+    // A hora gravada em partidas.criada_em (p_criada_em acima): decide a regra da partida, no servidor e no celular.
+    criadaEm: agora.toISOString(),
     // Só na regra nova: partidas de Lances valendo que ainda dá para começar hoje, já contando esta.
     restantesHoje: ehUnificada(agora) ? Math.max(0, comecou.limite - comecou.feitas) : null,
     desafio: desafio && {

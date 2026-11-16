@@ -22,17 +22,21 @@ import {
   precisaDeOutraRodada,
   precisaDeParOuImpar,
   resolverParOuImpar,
-  resolverCobranca,
+  resolverCobrancaDaRegra,
   resolverDefesa,
   totalizar,
-  PONTOS_UNIFICADOS,
+  cavadinhasAntes,
   type EscolhaParOuImpar,
   type GestoCobranca,
   type Paridade,
+  type RegraPenaltis,
   type ResultadoParOuImpar,
   type ResultadoCobranca,
   type ResultadoDefesa,
 } from '../jogo/penaltis';
+import { tabelaPenaltisDaPartida } from '../jogo/regraLances';
+import { legendaDaCobranca } from '../jogo/legendaDaCobranca';
+import { alvoDoGoleiro, bolaDepoisDoLance, type AlvoDoGoleiro } from './mergulho';
 import { pedirNumeroDoNarrador } from '../jogo/numeroNarrador';
 import { AVISO_LIMITE_DO_DIA } from '../jogo/lancesTextos';
 import { AVISO_DISPUTA_OBRIGATORIA } from '../jogo/lancesTelaUnica';
@@ -77,6 +81,7 @@ import {
   chuteFracoPego,
   chutePorCimaPorForca,
   cavadinhaPegaNoMeio,
+  cavadinhaRepetidaEsperada,
   defesaSemToque,
   ladoCertoAlturaErrada,
   primeiraDica,
@@ -93,7 +98,8 @@ type Fase =
   // valendoEm: instante do sinal "VALENDO!" (null enquanto o batedor ajeita a bola: o arraste ainda não vale).
   | { tipo: 'mirar'; inicio: number; valendoEm: number | null }
   // r nulo: esperando o servidor resolver o lance (lance a lance).
-  | { tipo: 'chute'; inicio: number; r: ResultadoCobranca | null; gesto: GestoCobranca }
+  // alvo: motor 2, para onde vão as luvas do goleiro (null no motor 1: pulo para a zona).
+  | { tipo: 'chute'; inicio: number; r: ResultadoCobranca | null; gesto: GestoCobranca; alvo: AlvoDoGoleiro | null }
   // pedido: a zona já foi para o servidor no toque (a resposta só aparece no fim da janela).
   | { tipo: 'corrida'; inicio: number; dica: number; zona: number | null; pulouEm: number | null; pedido: Promise<ResultadoDefesa> | null }
   | { tipo: 'chuteMaquina'; inicio: number; r: ResultadoDefesa | null; zona: number; pulouEm: number; dica: number }
@@ -185,8 +191,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   let lanceALance = false;
   let dicaDoServidor: number | null = null;
   let desafio: DesafioRecebido | null = null;
-  // Tabela de pontos da partida no aparelho (fallback local e total): a de 08/11/2026.
-  const tabela = PONTOS_UNIFICADOS;
+  // Regra da partida no aparelho (fallback local e total): pelo relógio do aparelho até o servidor dizer a hora em que
+  // criou a partida (`criadaEm`); daí, a mesma do servidor. Desde 23/11/2026 é o goleiro com alcance (motor 2).
+  let tabela: RegraPenaltis = tabelaPenaltisDaPartida(new Date());
   /** O servidor disse `limite_do_dia`: a partida segue como treino, e a primeira cobrança lembra disso. */
   let passouDoLimite = false;
   /** Abriu de novo um X1 já jogado (vale uma vez por pessoa): a partida é normal, e a abertura avisa. */
@@ -379,6 +386,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   function dicaDaCobranca(r: ResultadoCobranca): void {
     dicaDepoisDoLance(
       primeiraDica(dicas, [
+        [cavadinhaRepetidaEsperada(r, gestosCobranca), 'pen_cavadinha_aprende'],
         [cavadinhaPegaNoMeio(r), 'pen_cavadinha_meio'],
         [chutePorCimaPorForca(r), 'pen_forte_demais'],
         [chuteFracoPego(r), 'pen_fraco'],
@@ -510,7 +518,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       }
       caiuALigacao();
     }
-    return resolverCobranca(semente, i, gq, dificuldade, tabela);
+    // Sem servidor: a mesma regra, com as cavadinhas desta partida contadas no aparelho.
+    return resolverCobrancaDaRegra(semente, i, gq, dificuldade, tabela, gestosCobranca);
   }
 
   async function resultadoDaDefesa(zona: number, i: number): Promise<ResultadoDefesa> {
@@ -536,7 +545,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     // Funil do X1: só o 1º gesto de um X1 recebido (`desafio` fica null se o servidor recusou o X1).
     if (gestosCobranca.length === 1 && desafio) contar({ ev: 'primeiro_chute', tipo: 'x1_penaltis', x1: desafio.id });
     medicao.marcar('chute');
-    const chute: Fase & { tipo: 'chute' } = { tipo: 'chute', inicio: relogio(), r: null, gesto: gq };
+    const chute: Fase & { tipo: 'chute' } = { tipo: 'chute', inicio: relogio(), r: null, gesto: gq, alvo: null };
     fase = chute;
     instruir('');
     void resultadoDaCobranca(gq, rodada).then((r) => {
@@ -544,30 +553,28 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       const agora = relogio();
       latencia = novaLatencia(latencia, agora - chute.inicio);
       chute.r = r;
+      chute.alvo = alvoDoGoleiro(r);
       // A resposta chega durante os passos; se chegar depois do pé na bola, a bola sai agora. O som sai com ela.
       chute.inicio = inicioDoVoo(chute.inicio, agora, BATIDA);
       window.setTimeout(() => !acabou && somChute(), Math.max(0, chute.inicio + BATIDA - agora));
     });
   }
 
-  function legendaDaCobranca(r: ResultadoCobranca): string {
-    if (r.desfecho === 'gol') {
-      const tipo = r.cavadinha ? 'Cavadinha' : r.angulo ? 'No ângulo' : 'Gol';
-      return `${tipo} · +${r.pontos}`;
-    }
-    return r.desfecho === 'defesa' ? 'O goleiro pegou' : r.desfecho === 'trave' ? 'Na trave' : 'Pra fora';
-  }
+  /** Motor 2: para onde as luvas foram na última cobrança (o quadro parado depois do lance usa o mesmo). */
+  let alvoDaUltima: AlvoDoGoleiro | null = null;
 
   function fimDoChute(r: ResultadoCobranca): void {
     medicao.marcar(r.desfecho === 'gol' ? 'gol' : 'lance');
     cobrancas.push(r);
+    alvoDaUltima = alvoDoGoleiro(r);
     atualizarHud();
-    narrar(narrador.falar(eventoDaCobranca(r), { etiquetas: etiquetasDaCobranca(r) }), legendaDaCobranca(r));
+    const antes = cavadinhasAntes(gestosCobranca, cobrancas.length - 1);
+    narrar(narrador.falar(eventoDaCobranca(r, antes), { etiquetas: etiquetasDaCobranca(r) }), legendaDaCobranca(r));
     dicaDaCobranca(r);
     if (r.desfecho === 'gol') comemorar(telaX(r.x), telaY(r.y), r.pontos, true);
     else if (r.desfecho === 'trave') cena.baterNaTrave(telaX(r.x), telaY(r.y));
     if (r.desfecho === 'gol') somRede();
-    if (r.desfecho === 'defesa') somDefesa(jeitoDaDefesa({ zona: r.zonaGoleiro }));
+    if (r.desfecho === 'defesa') somDefesa(r.jeito === 'encaixou' || r.jeito === 'espalmou' ? r.jeito : jeitoDaDefesa({ zona: r.zonaGoleiro }));
     somTorcida(r.desfecho === 'gol' ? 'festa' : 'uuuh');
     // Em dev, ?replayFalso dispara o replay em qualquer gol (para conferir o batedor de frente nos prints).
     const golaco = r.desfecho === 'gol' && (r.angulo || r.cavadinha || r.raspouTrave || (import.meta.env.DEV && parametros.has('replayFalso')));
@@ -601,7 +608,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     }
     cena3d.medir();
     const bola = { x: 0, z: 11 };
-    const z = centroZona(r.zonaGoleiro);
+    // Motor 2: o goleiro do replay vai ao ponto do mergulho (já dentro do gol); no motor 1, ao centro da zona.
+    const ponto = alvoDoGoleiro(r)?.ponto;
+    const z = ponto ?? centroZona(r.zonaGoleiro);
     const replay = criarReplay(
       cena3d,
       {
@@ -611,7 +620,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         voo: r.cavadinha ? DUR_CAVADINHA : DUR_CHUTE,
         cavadinha: r.cavadinha,
         // No ângulo com o goleiro no canto certo, ele quase chega.
-        goleiro: { x: 0, z: 0.3, alvo: { x: z.x * 3.66, y: z.y * 2.44 }, alcance: r.zonaGoleiro === r.zonaBola ? 0.9 : 0.55 },
+        goleiro: { x: 0, z: 0.3, alvo: { x: z.x * 3.66, y: z.y * 2.44 }, alcance: ponto ? 1 : r.zonaGoleiro === r.zonaBola ? 0.9 : 0.55 },
         batedor: batedor(batedoresJogador, cobrancas.length - 1),
         goleiroBoneco: goleiroMaquina,
       },
@@ -820,6 +829,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       lanceALance = !!p.lanceALance;
       dificuldade = p.dificuldade;
       partidaId = p.partidaId;
+      // A regra é a da hora em que o servidor criou a partida (servidor antigo não manda: fica a do relógio).
+      if (p.criadaEm) tabela = tabelaPenaltisDaPartida(p.criadaEm);
       desafio = p.desafio;
       // O X1 pode ter sido recusado (ou a disputa vir só agora): a etapa leva o código só se ele valeu.
       etapa({ tipo: 'partida', jogo: 'penaltis', ...(desafio ? { x1: desafio.id } : {}) });
@@ -1148,12 +1159,15 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         if (r.cavadinha && !reduzido) lenta = t;
         // O goleiro segue o tempo da bola (fica lento junto na cavadinha).
         const tPulo = (t * dur - dur * 0.15) / DUR_PULO;
-        desenharGoleiroNoQuadro(goleiroMaquina, r.zonaGoleiro, tPulo, agora);
+        // Motor 2: o mergulho vai a um ponto do gol; no motor 1, à zona.
+        const zonaDoPulo = fase.alvo ? fase.alvo.zona : r.zonaGoleiro;
+        const ponto = fase.alvo ? fase.alvo.ponto : null;
+        desenharGoleiroNoQuadro(goleiroMaquina, zonaDoPulo, tPulo, agora, -1, false, ponto);
         desenharTraves();
         desenharBatedorChutando(ms, r.cavadinha);
         // Bola defendida para na luva do goleiro.
         const defendeu = r.desfecho === 'defesa';
-        const luva = goleiroNoQuadro(goleiroMaquina, r.zonaGoleiro, (dur - dur * 0.15) / DUR_PULO, agora);
+        const luva = goleiroNoQuadro(goleiroMaquina, zonaDoPulo, (dur - dur * 0.15) / DUR_PULO, agora, -1, false, ponto);
         const dx = defendeu ? luva.luvaX : telaX(r.x);
         const dy = defendeu ? luva.luvaY : telaY(r.y);
         desenharBolaEmVoo((tt) => trajetoria(dx, dy, gesto.efeito, facil(tt), r.cavadinha), t);
@@ -1220,14 +1234,20 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         } else if (cobrancas.length) {
           const r = cobrancas[cobrancas.length - 1];
           const pegou = r.desfecho === 'defesa';
-          desenharGoleiroNoQuadro(goleiroMaquina, r.zonaGoleiro, 1, agora, ms, pegou);
+          const a = alvoDaUltima;
+          // Motor 2: encaixou fica com a bola nas mãos; espalmou cai sem ela (a bola sai pela linha de fundo ou por cima).
+          const comABola = a ? bolaDepoisDoLance(r) === 'maos' : pegou;
+          desenharGoleiroNoQuadro(goleiroMaquina, a ? a.zona : r.zonaGoleiro, 1, agora, ms, comABola, a ? a.ponto : null);
           const lx = goleiro.luvaX;
           const ly = goleiro.luvaY;
           desenharTraves();
           desenharBatedorDepois(batedor(batedoresJogador, cobrancas.length - 1), ms, r.desfecho === 'gol');
           if (r.desfecho === 'gol') bolaParada(telaX(r.x), telaY(r.y));
           else if (r.desfecho === 'trave') cena.bolaNaTrave(telaX(r.x), telaY(r.y), ms);
-          else if (pegou && linha(r.zonaBola) === 1) cena.bolaEspalmada(lx, ly, ms);
+          else if (a && pegou) {
+            if (bolaDepoisDoLance(r) === 'espalmada') cena.bolaEspalmada(lx, ly, ms);
+            else bolaParada(lx, ly);
+          } else if (pegou && linha(r.zonaBola) === 1) cena.bolaEspalmada(lx, ly, ms);
           else if (pegou) bolaParada(lx, ly);
         }
         break;
@@ -1290,7 +1310,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     // Só abre quando nada corre contra o relógio (na mira ou antes do apito).
     if (fase.tipo === 'mirar' || fase.tipo === 'preparando') {
       rastro = [];
-      abrirRegras(root, 'penaltis');
+      abrirRegras(root, 'penaltis', tabela);
     } else instruir('Dá pra ver as regras na hora da sua cobrança.');
   });
   elMudo.addEventListener('click', () => {

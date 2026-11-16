@@ -334,6 +334,8 @@ export interface PartidaDoServidor {
   proximo?: PassoPenalti;
   dificuldade: number;
   expiraEm: string;
+  /** Hora de criação gravada na partida (servidor de 23/11/2026 em diante): a regra sai dela (tabelaPenaltisDaPartida). */
+  criadaEm?: string;
   desafio: DesafioRecebido | null;
   /** Regra nova (desde 08/11/2026): partidas de Lances valendo que ainda dá para começar hoje, já contando esta. */
   restantesHoje?: number | null;

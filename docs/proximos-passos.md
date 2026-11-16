@@ -34,12 +34,14 @@ Nada disso tem lembrete automático.
    - **01/12:** revisão do D08 (Palpite nos Estaduais) no Chat e reavaliar o Natal da Torcida (J02 do backlog).
    - **Até 04/12:** o Kauê cadastra no `#admin` a final da Copa do Brasil (domingo 06/12, Grêmio x Palmeiras). Depois da 38ª, no celular: o encerramento na Home e na aba Palpites e o card "Resultado do Brasileirão".
 4. **Prova com três erros e fora:** jogar uma partida real errando de propósito (3º erro encerra e leva 75%).
+5. **Goleiro com alcance:** as três funções dos pênaltis e o site no ar **até sexta 20/11** (senão o corte passa para 30/11, em `GOLEIRO_COM_ALCANCE_DESDE`). **Segunda 23/11, depois da 0h:** a 1ª partida de pênaltis do dia tem `goleiroX` nas cobranças, e as de antes seguem iguais (`node scripts/balanco/simular-goleiro.mjs --antigas`).
 
 ## No celular (o Kauê, junto com os testes dos amigos)
 
 - **Lances (tela única):** abrir uma ficha e apertar o voltar do Android (fecha a ficha, não sai da tela); jogar uma falta (3 tentativas) e uma disputa de pênaltis ("rumo ao bronze" no resultado); mandar o desafio de pênaltis para outra conta e aceitar (joga a mesma disputa); "Seus 3 melhores de hoje" e o Lance do Dia na Home; "Mandar esse lance" na ficha.
 - **Resultado:** "3 gols · +21" nos pênaltis e a barra de baixo opaca; com a fonte do sistema grande, "Termos e privacidade" tocável no fim da Home.
 - **Partida:** deitar o celular no meio da defesa dos pênaltis (a partida espera); no computador ou iPad, o campo maior com a mira certa.
+- **Goleiro com alcance (a partir de 23/11):** o mergulho para pontos diferentes do gol (não só 6), o "tocou e entrou", o "espalmou" com a bola saindo, a legenda com a colocação ("No canto · +8") e duas cavadinhas seguidas (a 2ª com "O goleiro aprende…").
 - **Boneco em campo:** 60 fps, replay de golaço, o interruptor "Meu boneco em campo", desafio entre duas contas.
 - **Acessibilidade (G3):** fonte do sistema no máximo na Tabela, Lances, Palpite da Rodada e Time do Dia (nada sai da tela); TalkBack numa linha da Tabela (posição, time e pontos antes do "abrir a Casa").
 - **Cards:** Salvar imagem no Android e no iPhone; o Pôster no Stories e no Quadrado; o card do troféu pela ficha e pela placa da Galeria.

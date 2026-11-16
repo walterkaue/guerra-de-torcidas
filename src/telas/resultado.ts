@@ -114,7 +114,9 @@ export function telaResultado(root: HTMLElement, rota: Rota): (() => void) | voi
 
   // O valor leva o "+" (pontos); o rótulo leva a quantidade ("3 gols"), para não se ler como 21 gols.
   const quantos = (n: number, um: string, varios: string) => n + ' ' + (n === 1 ? um : varios);
-  const nGols = r.cobrancas.filter((c) => c.desfecho === 'gol').length;
+  // Motor 2 (goleiro com alcance): "gols" são os pontos da colocação, e a cavadinha que entra conta só na linha dela.
+  const motor2 = r.cobrancas.some((c) => typeof c.goleiroX === 'number');
+  const nGols = r.cobrancas.filter((c) => c.desfecho === 'gol' && !(motor2 && c.cavadinha)).length;
   const nAngulos = r.cobrancas.filter((c) => c.desfecho === 'gol' && c.angulo).length;
   const nCavadinhas = r.cobrancas.filter((c) => c.desfecho === 'gol' && c.cavadinha).length;
   const nDefesas = r.defesas.filter((x) => x.desfecho === 'defesa' && x.pontos > 0).length;
