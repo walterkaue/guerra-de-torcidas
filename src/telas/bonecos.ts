@@ -366,6 +366,148 @@ export function poseAjeitando(ms: number, out: Pose): Pose {
 /** Quanto dura o "ajeitando a bola" (ms); depois disso o batedor já está no lugar. */
 export const DUR_AJEITAR = 980;
 
+// ---------- variações do "ajeitar a bola" (só visual; a escolha nunca usa a semente do jogo) ----------
+export type VarianteAjeitar = 'ajeita' | 'pisa' | 'respira' | 'volta' | 'fixa';
+
+export interface Ajeitar {
+  /** Duração (ms); em `dur` a pose já é a de `poseParado`. */
+  dur: number;
+  pose(ms: number, out: Pose): Pose;
+  /** De 1 (colado na bola) a 0 (no lugar da cobrança); em `dur` vale 0. */
+  perto(ms: number): number;
+}
+
+const limitar01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
+
+/** Pisando na bola com a sola (o pé direito em cima dela) e rolando um pouco. */
+const PISA_A = costas({
+  y: -47,
+  tr: -3,
+  qd: 2,
+  trk: 0.97,
+  bE: [-38, 1, 50, 0.95, 1],
+  bD: [36, 1, -46, 0.95, 1],
+  pE: PE_DE_APOIO,
+  pD: [6, 0.62, 14, 0.7, 100, 0.6, -1],
+});
+const PISA_B = costas({
+  y: -47,
+  tr: -4,
+  qd: 2,
+  trk: 0.97,
+  bE: [-38, 1, 50, 0.95, 1],
+  bD: [36, 1, -46, 0.95, 1],
+  pE: PE_DE_APOIO,
+  pD: [10, 0.56, 22, 0.66, 96, 0.64, -1],
+});
+
+const DUR_PISA = 1100;
+function posePisa(ms: number, out: Pose): Pose {
+  if (ms >= DUR_PISA) return poseParado(ms, out);
+  if (ms < 240) return misturar(B.parado, PISA_A, suave(ms / 240), out);
+  if (ms < 720) return misturar(PISA_A, PISA_B, 0.5 - 0.5 * Math.cos(((ms - 240) / 480) * Math.PI * 2), out);
+  const f = (ms - 720) / (DUR_PISA - 720);
+  misturar(PISA_A, B.parado, suave(f), out);
+  const passo = Math.sin(f * DOIS_PI) * (1 - suave(f));
+  return misturar(out, passo > 0 ? B.correA : correB, Math.abs(passo) * 0.3, out);
+}
+
+/** Já no lugar: mãos na cintura, respira fundo olhando o gol e balança o corpo. */
+const DUR_RESPIRA = 1200;
+function poseRespira(ms: number, out: Pose): Pose {
+  poseParado(ms, out);
+  if (ms >= DUR_RESPIRA) return out;
+  const e = suave(ms / 220) * suave((DUR_RESPIRA - ms) / 260);
+  const fase = (ms / DUR_RESPIRA) * DOIS_PI;
+  const ar = 0.5 - 0.5 * Math.cos(fase * 1.5); // sobe, desce e sobe de leve
+  out[TRK] += 0.045 * ar * e;
+  out[OMK] += 0.06 * ar * e;
+  out[RY] -= 1.8 * ar * e;
+  out[CB] -= 5 * GRAU * ar * e;
+  out[TR] += 3 * GRAU * Math.sin(fase) * e;
+  out[RX] += 1.6 * Math.sin(fase) * e;
+  return out;
+}
+
+/** Ajeita rapidinho e dá uma pequena volta atrás da bola antes de parar no lugar. */
+const DUR_VOLTA = 1050;
+function poseVolta(ms: number, out: Pose): Pose {
+  if (ms >= DUR_VOLTA) return poseParado(ms, out);
+  if (ms < 180) return misturar(B.parado, B.ajeita, suave(ms / 180), out);
+  if (ms < 400) return misturar(B.ajeita, B.ajeita2, 0.5 - 0.5 * Math.cos(((ms - 180) / 220) * Math.PI * 2), out);
+  const f = (ms - 400) / (DUR_VOLTA - 400);
+  misturar(B.ajeita, B.parado, suave(limitar01(f * 1.6)), out);
+  const solta = 1 - suave(f);
+  const passo = Math.sin(f * DOIS_PI * 1.5) * solta;
+  misturar(out, passo > 0 ? B.correA : correB, Math.abs(passo) * 0.32, out);
+  const arco = Math.sin(f * DOIS_PI) * solta;
+  out[RX] += 9 * arco;
+  out[TR] += 4 * GRAU * arco;
+  return out;
+}
+
+/** Pose de concentração: pernas abertas, mãos na cintura, imóvel encarando o gol, peito enchendo e esvaziando. */
+const FIXA = costas({
+  x: PESO_X * 0.4,
+  y: -49,
+  qd: 0,
+  trk: 1,
+  bE: [-38, 1, 50, 0.95, 1],
+  bD: [36, 1, -46, 0.95, 1],
+  pE: [-15, 1, -3, 1, 166, 0.3, -1],
+  pD: [15, 1, 3, 1, 194, 0.3, -1],
+});
+const DUR_FIXA = 1150;
+function poseFixa(ms: number, out: Pose): Pose {
+  if (ms >= DUR_FIXA) return poseParado(ms, out);
+  if (ms < 260) return misturar(B.parado, FIXA, suave(ms / 260), out);
+  if (ms < 820) {
+    out.set(FIXA);
+    const ar = 0.5 - 0.5 * Math.cos(((ms - 260) / 560) * DOIS_PI); // enche e esvazia
+    out[TRK] += 0.05 * ar;
+    out[OMK] += 0.05 * ar;
+    out[CB] -= 4 * GRAU * ar;
+    return out;
+  }
+  return misturar(FIXA, poseParado(ms, rascunho), suave((ms - 820) / (DUR_FIXA - 820)), out);
+}
+
+export const AJEITARES: Record<VarianteAjeitar, Ajeitar> = {
+  ajeita: {
+    dur: DUR_AJEITAR,
+    pose: poseAjeitando,
+    perto: (ms) => 1 - suave(limitar01((ms - 620) / (DUR_AJEITAR - 620))),
+  },
+  pisa: {
+    dur: DUR_PISA,
+    pose: posePisa,
+    perto: (ms) => 1 - suave(limitar01((ms - 720) / (DUR_PISA - 720))),
+  },
+  respira: {
+    dur: DUR_RESPIRA,
+    pose: poseRespira,
+    perto: () => 0,
+  },
+  volta: {
+    dur: DUR_VOLTA,
+    pose: poseVolta,
+    perto: (ms) => 1 - suave(limitar01((ms - 400) / (DUR_VOLTA - 400))),
+  },
+  fixa: {
+    dur: DUR_FIXA,
+    pose: poseFixa,
+    perto: () => 0,
+  },
+};
+
+const VARIANTES: readonly VarianteAjeitar[] = ['ajeita', 'pisa', 'respira', 'volta', 'fixa'];
+
+/** Sorteio do visual (nunca a semente do jogo): não repete a anterior. */
+export function sortearAjeitar(anterior?: VarianteAjeitar, r = Math.random()): VarianteAjeitar {
+  const opcoes = VARIANTES.filter((v) => v !== anterior);
+  return opcoes[Math.min(opcoes.length - 1, Math.floor(limitar01(r) * opcoes.length))];
+}
+
 /** Corrida de 3 passos até a bola; no fim crava o pé de apoio (pose de espera). */
 export function poseCorrida(ms: number, dur: number, out: Pose): Pose {
   const passo = 230;

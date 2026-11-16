@@ -3,6 +3,7 @@
 
 import { TIMES } from '../dados/times';
 import {
+  AJEITARES,
   GOLEIRO,
   POSES_DO_BATEDOR,
   TONS_DE_PELE,
@@ -14,6 +15,7 @@ import {
   poseCorrida,
   uniformesDaPartida,
   type Aparencia,
+  type VarianteAjeitar,
   type Cabelo,
 } from '../telas/bonecos';
 
@@ -52,7 +54,10 @@ const dpr = window.devicePixelRatio || 1;
 canvas.width = W * dpr;
 canvas.height = H * dpr;
 canvas.style.width = `${W}px`;
-document.body.append(canvas);
+const rolagem = document.createElement('div');
+rolagem.style.cssText = 'overflow-x:auto;max-width:100vw';
+rolagem.append(canvas);
+document.body.append(rolagem);
 const c = canvas.getContext('2d')!;
 c.scale(dpr, dpr);
 c.fillStyle = '#0f4a26';
@@ -88,3 +93,81 @@ linhas.forEach(([nome, pose, deFrente], l) => {
     c.restore();
   });
 });
+
+// ---------- Ajeitar a bola: as variações lado a lado, em loop (boneco de costas atrás da bola) ----------
+(() => {
+  const secao = document.createElement('section');
+  secao.style.cssText = 'padding:12px 16px;color:#fff;font:14px sans-serif;max-width:100vw;box-sizing:border-box';
+  secao.innerHTML = '<h2 style="margin:0 0 4px;font-size:18px">Ajeitar a bola</h2>';
+  const botao = document.createElement('button');
+  botao.textContent = 'Ver de novo';
+  botao.style.cssText = 'margin:6px 0 10px;padding:10px 16px;font-size:15px;border-radius:8px;border:0;background:#ffd23f;color:#111;font-weight:700';
+  secao.append(botao);
+  const grade = document.createElement('div');
+  grade.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px';
+  secao.append(grade);
+  rolagem.before(secao);
+
+  const larg = 170;
+  const alt = 190;
+  const PAUSA = 700;
+  const boneco = criarBoneco(gente[0], uniformes.jogador, false);
+  const pose = novaPose();
+  const fichas = (Object.keys(AJEITARES) as VarianteAjeitar[]).map((nome) => {
+    const caixa = document.createElement('div');
+    caixa.style.cssText = 'background:#0f4a26;border-radius:10px;overflow:hidden';
+    const cv = document.createElement('canvas');
+    cv.width = larg * dpr;
+    cv.height = alt * dpr;
+    cv.style.cssText = `width:100%;aspect-ratio:${larg}/${alt};display:block`;
+    const legenda = document.createElement('div');
+    legenda.style.cssText = 'padding:4px 8px 6px';
+    legenda.textContent = `${nome} · ${AJEITARES[nome].dur} ms`;
+    caixa.append(cv, legenda);
+    grade.append(caixa);
+    return { nome, cv, ctx: cv.getContext('2d')!, legenda };
+  });
+
+  let t0 = performance.now();
+  botao.onclick = () => (t0 = performance.now());
+  const fixo = Number(parametros.get('ajeitarMs'));
+  const quadro = () => {
+    const agora = fixo > 0 ? fixo : performance.now() - t0;
+    for (const f of fichas) {
+      const v = AJEITARES[f.nome];
+      const ms = fixo > 0 ? fixo : agora % (v.dur + PAUSA);
+      v.pose(Math.min(ms, v.dur + 1), pose);
+      const g = f.ctx;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.fillStyle = '#0f4a26';
+      g.fillRect(0, 0, larg, alt);
+      const perto = v.perto(Math.min(ms, v.dur));
+      const x = larg / 2;
+      const chao = alt - 26 + (1 - perto) * 16; // ao se afastar, o batedor vem para a câmera
+      // bola (mais longe, à frente do batedor)
+      g.fillStyle = 'rgba(0,0,0,0.3)';
+      g.beginPath();
+      g.ellipse(x, alt - 52, 10, 3, 0, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = '#fff';
+      g.beginPath();
+      g.arc(x, alt - 62, 8, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = '#222';
+      g.beginPath();
+      g.arc(x, alt - 62, 3, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = 'rgba(0,0,0,0.32)';
+      g.beginPath();
+      g.ellipse(x, chao, 24, 5, 0, 0, Math.PI * 2);
+      g.fill();
+      g.save();
+      g.translate(x, chao);
+      g.scale(1.6, 1.6);
+      desenharBoneco(g, boneco, pose);
+      g.restore();
+    }
+    requestAnimationFrame(quadro);
+  };
+  requestAnimationFrame(quadro);
+})();
