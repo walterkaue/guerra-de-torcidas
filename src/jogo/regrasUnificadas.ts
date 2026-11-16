@@ -1,8 +1,9 @@
 // Textos de pontos do "?" dos Lances do Jogo depois de 08/11/2026 (docs/jogo.md, seção 14.7). Puro: sem DOM nem
-// relógio. Todo número sai das tabelas do código (PONTOS_UNIFICADOS, TABELA_LANCES_UNIFICADA, MEDALHAS_PENALTIS).
+// relógio. Todo número sai das tabelas do código (PONTOS_UNIFICADOS, PONTOS_GOLEIRO, TABELA_LANCES_UNIFICADA,
+// MEDALHAS_PENALTIS).
 
 import { FAIXAS, TABELA_LANCES_UNIFICADA, type Faixa, type TabelaLances } from './lances';
-import { PONTOS_UNIFICADOS, type TabelaPenaltis } from './penaltis';
+import { PONTOS_UNIFICADOS, ehGoleiroComAlcance, type RegraPenaltis } from './penaltis';
 import { LANCES_PARTIDAS_POR_DIA_UNIFICADO, MEDALHAS_PENALTIS, MELHORES_DO_DIA, TEXTO_DO_LIMITE } from './regraLances';
 
 export type LinhaDePontos = readonly [rotulo: string, valor: string];
@@ -10,8 +11,20 @@ export type LinhaDePontos = readonly [rotulo: string, valor: string];
 // "Gol em lance médio" (a faixa se chama Média, mas aqui o adjetivo é do lance).
 const NOME_DA_FAIXA: Record<Faixa, string> = { facil: 'fácil', media: 'médio', dificil: 'difícil', craque: 'craque' };
 
-/** Tabela de pontos dos pênaltis, pela tabela da partida. */
-export function pontosDosPenaltis(t: TabelaPenaltis = PONTOS_UNIFICADOS): LinhaDePontos[] {
+/** Tabela de pontos dos pênaltis, pela regra da partida (no motor 2, o gol vale pela colocação). */
+export function pontosDosPenaltis(t: RegraPenaltis = PONTOS_UNIFICADOS): LinhaDePontos[] {
+  if (ehGoleiroComAlcance(t)) {
+    return [
+      ['Gol no meio', String(t.meio)],
+      ['Gol colocado', String(t.colocado)],
+      ['Gol no canto', String(t.canto)],
+      ['Gol no ângulo', String(t.canto + t.angulo)],
+      ['Cavadinha que entra', String(t.cavadinha)],
+      ['Defesa', String(t.defesa)],
+      ['Vitória na disputa', `+${t.vitoria}`],
+      ['5 de 5 (cobranças ou defesas)', `+${t.cincoDeCinco}`],
+    ];
+  }
   return [
     ['Gol', String(t.gol)],
     ['Gol no ângulo', `+${t.angulo}`],
@@ -43,7 +56,7 @@ export function textoDoDia(teto: number): string {
 }
 
 /** Nota final da folha dos pênaltis. */
-export const notaDosPenaltis = (t: TabelaPenaltis = PONTOS_UNIFICADOS): string =>
+export const notaDosPenaltis = (t: RegraPenaltis = PONTOS_UNIFICADOS): string =>
   `Gols e defesas da morte súbita valem o normal. O bônus de 5 de 5 olha só as 5 primeiras. ${textoDoDia(t.teto ?? 0)} ${textoDasMedalhasDosPenaltis()}`;
 
 /** Nota final da folha das faltas e do cara a cara. */

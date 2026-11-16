@@ -95,6 +95,7 @@ const LIMITADOS: EventoNarrador[] = [
   'morte_subita', 'par_ou_impar_escolha', 'par_ou_impar_ganhou', 'par_ou_impar_perdeu',
   'maquina_fora', 'vitoria', 'derrota', 'cinco_cobrancas', 'cinco_defesas',
   'desafio_vitoria', 'desafio_derrota',
+  'goleiro_encaixou', 'goleiro_espalmou', 'gol_tocou', 'gol_contrape', 'gol_cantinho', 'cavadinha_esperou',
 ];
 
 // Etiquetas que cada situação de lance pode receber (tabela "Etiquetas de lance" do narrador.md).
@@ -105,6 +106,9 @@ const ETIQUETAS_POR_EVENTO: Partial<Record<EventoNarrador, Etiqueta[]>> = {
   gol: DA_COBRANCA, gol_angulo: DA_COBRANCA, cavadinha: DA_COBRANCA, cavadinha_falhou: DA_COBRANCA,
   trave_gol: DA_COBRANCA, trave: DA_COBRANCA, fora_cima: DA_COBRANCA, fora_lado: DA_COBRANCA,
   goleiro_pegou: DA_COBRANCA,
+  // Goleiro com alcance (motor 2).
+  goleiro_encaixou: DA_COBRANCA, goleiro_espalmou: DA_COBRANCA, gol_tocou: DA_COBRANCA, gol_contrape: DA_COBRANCA,
+  gol_cantinho: DA_COBRANCA, cavadinha_esperou: DA_COBRANCA,
   defesa: DA_DEFESA, sofreu_gol: DA_DEFESA, maquina_fora: DA_DEFESA,
   decisiva: ['cobranca', 'defesa'],
   // Crava a Rodada (narrador.md, seção 9).

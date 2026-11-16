@@ -10,16 +10,18 @@
 // catálogo; &x1Livre imita o X1 sem disputa, de antes de 08/11). Dá para entrar pelo convite (?penaltiFalso&d=...).
 // A disputa que a partida joga ganha medalhas de mentira: 8 gols e 2 vitórias, perto do bronze (10 gols); minhasMedalhas()
 // devolve o que a partida somou, então a linha "+N rumo ao bronze" e o selo aparecem de verdade no resultado.
-// O fechamento traz melhoresDoDia e restantesHoje, e a tabela é a de 08/11/2026.
+// O fechamento traz melhoresDoDia e restantesHoje. A regra sai da hora "de criação" que a partida falsa devolve: a de
+// agora, ou, com &motor=2, a do corte do goleiro com alcance (23/11/2026). &jeito=encaixou|espalmou|tocou|contrape|limpo
+// procura, a cada cobrança, uma semente em que o motor dá esse jeito (para os prints da tela).
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { sementeNova } from '../jogo/aleatorio';
 import { bonecoFalsoDeQuemChamou, timeFalsoDeQuemChamou } from './bonecoDeCampoFalso'; // o boneco falso em campo (&boneco=, &semBoneco, &emCampo=0, &chamouBoneco=, &chamouSemBoneco)
-import { PONTOS_UNIFICADOS, simularPartida, sortearSementes, type Gestos, type SementesPorLance } from '../jogo/penaltis';
+import { resolverCobrancaDaRegra, simularPartida, sortearSementes, type Gestos } from '../jogo/penaltis';
 import { jogarLance, type Lance } from '../jogo/penaltisLance';
 import { DISPUTAS } from '../dados/disputas';
 import { golsDaDisputa } from '../jogo/lancesTextos';
-import { itemPenaltis, medalhaDaDisputa } from '../jogo/regraLances';
+import { GOLEIRO_COM_ALCANCE_DESDE, itemPenaltis, medalhaDaDisputa, tabelaPenaltisDaPartida } from '../jogo/regraLances';
 import { ErroServidor, type FechamentoDoServidor, type LanceDoServidor, type MedalhaDoLance, type PartidaDoServidor, type ResumoDesafio } from '../servidor/api';
 
 // ?latencia=800 imita o servidor real, que costuma demorar mais que o pé para chegar na bola.
@@ -35,9 +37,19 @@ const limite = new URLSearchParams(location.search).has('limite');
 const x1Livre = new URLSearchParams(location.search).has('x1Livre');
 /** A disputa do X1 falso: a do ?disputa=, senão a primeira do catálogo (null no X1 livre). */
 const disputaDoX1 = (): string | null => (x1Livre ? null : (new URLSearchParams(location.search).get('disputa') ?? DISPUTAS[0]?.id ?? null));
-const tabela = () => PONTOS_UNIFICADOS;
+const motor2 = new URLSearchParams(location.search).get('motor') === '2';
+const jeitoForcado = new URLSearchParams(location.search).get('jeito');
 
-let estado: { semente: SementesPorLance; dificuldade: number; gestos: Gestos; lances: number; disputa: string | null; x1: boolean } | null = null;
+let estado: {
+  semente: { cobrancas: number[]; defesas: number[] };
+  dificuldade: number;
+  gestos: Gestos;
+  lances: number;
+  disputa: string | null;
+  x1: boolean;
+  criadaEm: string;
+} | null = null;
+const tabela = () => tabelaPenaltisDaPartida(estado?.criadaEm ?? new Date());
 const medalhas = new Map<string, { gols: number; vitorias: number }>();
 
 /** O convite do X1 como `ver_desafio` o devolve, com a disputa de quem chamou. */
@@ -58,7 +70,9 @@ export async function novaPartida(codigo?: string, disputa?: string): Promise<Pa
   if (codigo && x1Expirado) throw new ErroServidor('desafio_expirado');
   if (limite) throw new ErroServidor('limite_do_dia');
   const daPartida = codigo ? disputaDoX1() : (disputa ?? null);
-  estado = { semente: sortearSementes(sementeNova), dificuldade: 0.5, gestos: { cobrancas: [], defesas: [] }, lances: 0, disputa: daPartida, x1: !!codigo };
+  const s = sortearSementes(sementeNova);
+  const criadaEm = (motor2 ? GOLEIRO_COM_ALCANCE_DESDE : new Date()).toISOString();
+  estado = { semente: { cobrancas: [...s.cobrancas], defesas: [...s.defesas] }, dificuldade: 0.5, gestos: { cobrancas: [], defesas: [] }, lances: 0, disputa: daPartida, x1: !!codigo, criadaEm };
   if (daPartida && !medalhas.has(itemPenaltis(daPartida))) medalhas.set(itemPenaltis(daPartida), { gols: 8, vitorias: 2 });
   return {
     partidaId: 'falsa',
@@ -66,6 +80,7 @@ export async function novaPartida(codigo?: string, disputa?: string): Promise<Pa
     proximo: { tipo: 'cobranca', i: 0 },
     dificuldade: 0.5,
     expiraEm: new Date(Date.now() + 15 * 60_000).toISOString(),
+    criadaEm,
     desafio: codigo ? { id: codigo, timeId: timeFalsoDeQuemChamou('palmeiras'), apelido: 'Camisa10', golsJogador: 3, golsMaquina: 2, pontos: 96, disputaId: disputaDoX1() } : null,
     restantesHoje: 7,
   };
@@ -75,6 +90,14 @@ export async function lancePenalti(_id: string, lance: Lance): Promise<LanceDoSe
   await espera();
   const e = estado!;
   if (++e.lances === caiNoLance) throw new ErroServidor('tempo_esgotado');
+  if (jeitoForcado && lance.tipo === 'cobranca') {
+    const i = e.gestos.cobrancas.length;
+    for (let s = 1; s < 50_000; s++) {
+      if (resolverCobrancaDaRegra(s, i, lance.gesto, e.dificuldade, tabela(), e.gestos.cobrancas).jeito !== jeitoForcado) continue;
+      e.semente.cobrancas[i] = s;
+      break;
+    }
+  }
   const j = jogarLance(e.semente, e.gestos, lance, e.dificuldade, undefined, tabela());
   e.gestos = j.gestos;
   return { cobranca: j.cobranca ?? null, defesa: j.defesa ?? null, proximo: j.proximo };

@@ -8,8 +8,8 @@ import { ID_OUTRO, corDeTexto, proTime, timePorId } from '../dados/times';
 import { prefs } from '../estado';
 import { GOLS_MAX, PESO_TORCIDA, PONTOS_ACERTO, TETO_RODADA } from '../jogo/crava';
 import { LANCES_POR_PARTIDA, TABELA_LANCES_UNIFICADA } from '../jogo/lances';
-import { TEXTO_DO_LIMITE } from '../jogo/regraLances';
-import { PONTOS_UNIFICADOS, RODADAS_EXTRAS_MAX } from '../jogo/penaltis';
+import { TEXTO_DO_LIMITE, tabelaPenaltisDaPartida } from '../jogo/regraLances';
+import { RODADAS_EXTRAS_MAX, ehGoleiroComAlcance, type RegraPenaltis } from '../jogo/penaltis';
 import {
   BONUS_PERFEITA,
   DEGRAU_DA_POSICAO,
@@ -44,17 +44,27 @@ const ordinal = (n: number) => `${n}º`;
 const bonus = (n: number) => `+${n}`;
 const NOME_DO_DEGRAU: Record<Degrau, string> = { ...NOME_DEGRAU, 2: 'Nível médio' };
 
-function dosPenaltis(): Regras {
+/** `regra`: a da partida (o "?" no meio dela); fora dela, a de agora. */
+function dosPenaltis(regra: RegraPenaltis = tabelaPenaltisDaPartida(new Date())): Regras {
+  const alcance = ehGoleiroComAlcance(regra);
   return {
     titulo: 'Pênaltis',
     passos: [
       ['Cobrar.', 'Arraste o dedo da bola até o gol. A direção é o canto, o comprimento é a força e a curva no fim do arraste é o efeito. Forte demais vai por cima; fraco demais, o goleiro pega.'],
-      ['Cavadinha.', 'Arraste curtinho e reto. Entra, a não ser que o goleiro fique parado no meio.'],
+      ...(alcance
+        ? ([['O goleiro tem alcance.', 'Ele mergulha num ponto do gol e pega o que chegar perto dele. Longe do goleiro e no canto, mais difícil de pegar; e gol no canto vale mais.']] as const)
+        : []),
+      [
+        'Cavadinha.',
+        alcance
+          ? 'Arraste curtinho e reto. Entra, a não ser que o goleiro fique parado no meio. O goleiro aprende: cavadinha repetida ele espera no meio.'
+          : 'Arraste curtinho e reto. Entra, a não ser que o goleiro fique parado no meio.',
+      ],
       ['Defender.', 'O batedor corre. Olhe o pé de apoio, em amarelo, e toque no gol onde ele vai pular. Ele nem sempre é honesto, e o tempo pra reagir é curto.'],
       ['Desempate.', `5 cobranças e 5 defesas, alternadas. Empatou? Morte súbita: uma de cada, até ${RODADAS_EXTRAS_MAX} rodadas. Ainda empatado, par ou ímpar com o narrador.`],
     ],
-    pontos: pontosDosPenaltis(PONTOS_UNIFICADOS),
-    nota: notaDosPenaltis(PONTOS_UNIFICADOS),
+    pontos: pontosDosPenaltis(regra),
+    nota: notaDosPenaltis(regra),
   };
 }
 
@@ -133,9 +143,9 @@ const POR_JOGO: Record<JogoComRegras, () => Regras> = {
   crava: doCrava,
 };
 
-/** Texto da folha, em HTML (separado do DOM para dar para conferir). */
-export function htmlDasRegras(jogo: JogoComRegras, paraTime?: string | null): string {
-  const r = POR_JOGO[jogo]();
+/** Texto da folha, em HTML (separado do DOM para dar para conferir). `regra`: a da partida de pênaltis aberta. */
+export function htmlDasRegras(jogo: JogoComRegras, paraTime?: string | null, regra?: RegraPenaltis): string {
+  const r = jogo === 'penaltis' ? dosPenaltis(regra) : POR_JOGO[jogo]();
   const passos = r.passos.map(([forte, texto]) => `<li><strong>${esc(forte)}</strong> ${texto}</li>`).join('');
   const pontos = r.pontos.map(([rotulo, valor]) => `<li><span>${esc(rotulo)}</span><strong>${esc(valor)}</strong></li>`).join('');
   const nota = [r.nota, paraTime && jogo !== 'crava' ? `Os pontos vão ${paraTime}.` : ''].filter(Boolean).join(' ');
@@ -161,7 +171,7 @@ export function htmlDasRegras(jogo: JogoComRegras, paraTime?: string | null): st
 }
 
 /** Abre a folha de regras de um jogo dentro de `onde` (a tela). Fecha com o botão, o fundo ou Esc. */
-export function abrirRegras(onde: HTMLElement, jogo: JogoComRegras): () => void {
+export function abrirRegras(onde: HTMLElement, jogo: JogoComRegras, regra?: RegraPenaltis): () => void {
   onde.querySelector('.regras-fundo')?.remove();
   const time = timePorId(prefs.get().time);
   const paraTime = time && time.id !== ID_OUTRO ? proTime(time) : null;
@@ -171,7 +181,7 @@ export function abrirRegras(onde: HTMLElement, jogo: JogoComRegras): () => void 
   const fundo = document.createElement('div');
   fundo.className = 'regras-fundo';
   fundo.style.cssText = `--c1:${cores[0]};--c2:${cores[1]};--txt:${time ? corDeTexto(time.cores[0]) : '#111'}`;
-  fundo.innerHTML = placa(htmlDasRegras(jogo, paraTime), {
+  fundo.innerHTML = placa(htmlDasRegras(jogo, paraTime, regra), {
     filete: true,
     classe: 'regras-folha',
     attrs: 'role="dialog" aria-modal="true" aria-labelledby="regras-titulo"',

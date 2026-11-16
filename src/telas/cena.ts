@@ -771,12 +771,38 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, torcida: daPartida
     goleiro.luvaY = goleiro.y + lx * sin + ly * cos;
   }
 
+  // Motor 2 (goleiro com alcance): o pulo vai a um ponto contínuo do gol, misturando as poses de hoje. As poses de
+  // trabalho são criadas uma vez: nada de objeto novo no quadro (docs/bonecos.md, seção 5).
+  const poseMeioDoPonto = novaPose();
+  const poseLadoDoPonto = novaPose();
+  const poseDoPonto = novaPose();
+  /** Monta em `poseDoPonto` a pose do pulo para o ponto (x de -1 a 1, y de 0 a 1) e devolve o giro do corpo. */
+  function puloParaOPonto(px: number, py: number): number {
+    // 0 no meio do gol, 1 do centro da zona do canto para fora; 0 na altura da linha de baixo, 1 na de cima.
+    const lado = limitar01(Math.abs(px) / (2 / 3));
+    const alto = limitar01((py - 0.25) / (0.72 - 0.25));
+    const esquerda = px < 0;
+    misturar(GOLEIRO.meioBaixo, GOLEIRO.meioAlto, alto, poseMeioDoPonto);
+    misturar(esquerda ? GOLEIRO.baixoE : GOLEIRO.baixoD, esquerda ? GOLEIRO.altoE : GOLEIRO.altoD, alto, poseLadoDoPonto);
+    misturar(poseMeioDoPonto, poseLadoDoPonto, lado, poseDoPonto);
+    return (esquerda ? -1 : 1) * lado * (1.4 - 0.25 * alto);
+  }
+
   /**
    * Onde está o goleiro: balançando na linha, no meio do pulo para a zona (t de 0 a 1) ou, com
    * `queda` (ms depois do lance), caindo no chão. Grava em `goleiro` o centro do corpo, o giro,
    * a pose e as luvas. O objeto é reaproveitado: leia os valores antes da próxima chamada.
+   * Com `ponto` (motor 2, já dentro do gol), as luvas vão a ele em vez do centro da zona; a zona decide a queda.
    */
-  function goleiroNoQuadro(b: Boneco, zona: number | null, t: number, agora: number, queda = -1, pegou = false) {
+  function goleiroNoQuadro(
+    b: Boneco,
+    zona: number | null,
+    t: number,
+    agora: number,
+    queda = -1,
+    pegou = false,
+    ponto: { readonly x: number; readonly y: number } | null = null,
+  ) {
     const esc = escGoleiro();
     const rx = telaX(0);
     const ry = g.chao - 3 - CENTRO * esc;
@@ -789,13 +815,21 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, torcida: daPartida
       return goleiro;
     }
     const e = facil(limitar01(t));
-    const alvo = poseDoPulo(zona);
+    const alvo = ponto ? poseDoPonto : poseDoPulo(zona);
     const col = coluna(zona);
     const alto = linha(zona) === 1;
     let ang = 0;
     let ax = rx;
     let ay = ry;
-    if (col !== 1 || alto) {
+    if (ponto) {
+      // As luvas chegam no ponto; o corpo só desce do chão para o lado (perto do meio e embaixo, fica de pé).
+      ang = puloParaOPonto(ponto.x, ponto.y);
+      maos(b, alvo, mao);
+      const lx = mao.x * esc;
+      const ly = (mao.y + CENTRO) * esc;
+      ax = telaX(ponto.x) - (lx * Math.cos(ang) - ly * Math.sin(ang));
+      ay = Math.min(telaY(ponto.y) - (lx * Math.sin(ang) + ly * Math.cos(ang)), ry + limitar01(Math.abs(ponto.x) / (2 / 3)) * 20 * esc);
+    } else if (col !== 1 || alto) {
       // Meio e embaixo fica de pé; no resto o corpo vai até as luvas chegarem no meio da zona.
       ang = col === 1 ? 0 : (col === 0 ? -1 : 1) * (alto ? 1.15 : 1.4);
       maos(b, alvo, mao);
@@ -826,9 +860,17 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, torcida: daPartida
     return goleiro;
   }
 
-  function desenharGoleiroNoQuadro(b: Boneco, zona: number | null, t: number, agora: number, queda = -1, pegou = false): void {
+  function desenharGoleiroNoQuadro(
+    b: Boneco,
+    zona: number | null,
+    t: number,
+    agora: number,
+    queda = -1,
+    pegou = false,
+    ponto: { readonly x: number; readonly y: number } | null = null,
+  ): void {
     const esc = escGoleiro();
-    const q = goleiroNoQuadro(b, zona, t, agora, queda, pegou);
+    const q = goleiroNoQuadro(b, zona, t, agora, queda, pegou, ponto);
     // Sombra: menor quanto mais alto; comprida com o goleiro deitado.
     const alturaDoChao = Math.max(0, g.chao - 3 - (q.y + CENTRO * esc));
     sombraNoChao(q.x, g.chao - 2, Math.max(10, (24 + 26 * Math.abs(Math.sin(q.ang))) * esc - alturaDoChao * 0.1));

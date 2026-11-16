@@ -9,6 +9,9 @@ export const DICAS = {
   pen_sem_efeito: 'Curve o fim do arraste pra bola fazer curva.',
   pen_cavadinha: 'Arraste curtinho e reto é cavadinha.',
   pen_cavadinha_meio: 'Cavadinha não engana goleiro parado no meio.',
+  // Goleiro com alcance (motor 2): a 2ª cavadinha da partida morreu com o goleiro esperando no meio. Texto do Kauê
+  // (15/11/2026), mais longo que o normal; sai uma vez só por aparelho.
+  pen_cavadinha_aprende: 'O goleiro aprende: cavadinha repetida ele espera no meio.',
   pen_defesa_sem_toque: 'Toque no gol antes do chute sair.',
   pen_altura: 'Lado certo! Agora acerte a altura.',
   pen_morte_subita: 'Empatou! Morte súbita: um de cada.',
@@ -54,6 +57,9 @@ export const MAX_POR_APARELHO = 2;
 /** Dicas que aparecem sempre, sem contar (o começo da morte súbita). */
 export const SEMPRE: ReadonlySet<IdDica> = new Set<IdDica>(['pen_morte_subita']);
 
+/** Dicas que aparecem uma vez só por aparelho. */
+export const UMA_VEZ: ReadonlySet<IdDica> = new Set<IdDica>(['pen_cavadinha_aprende']);
+
 /** O que o aparelho guarda (gdt:prefs.dicas). */
 export interface EstadoDasDicas {
   /** Quantas vezes cada dica já apareceu. */
@@ -65,7 +71,7 @@ export interface EstadoDasDicas {
 export function podeMostrar(estado: EstadoDasDicas, id: IdDica, jaTeveDicaNesteLance: boolean): boolean {
   if (jaTeveDicaNesteLance) return false;
   if (SEMPRE.has(id)) return true;
-  return (estado.vistas?.[id] ?? 0) < MAX_POR_APARELHO;
+  return (estado.vistas?.[id] ?? 0) < (UMA_VEZ.has(id) ? 1 : MAX_POR_APARELHO);
 }
 
 export function marcarVista(estado: EstadoDasDicas, id: IdDica): EstadoDasDicas {
