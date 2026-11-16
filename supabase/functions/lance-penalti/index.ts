@@ -5,20 +5,17 @@
 
 import { admin, ErroHttp, lerCorpo, servir, usuario } from '../_shared/comum.ts';
 import { lerSementes, type GestoCobranca, type Gestos } from '../_shared/jogo/penaltis.ts';
-import { jogarLance, LanceForaDeOrdem, type Lance } from '../_shared/jogo/penaltisLance.ts';
+import { jogarLance, LanceForaDeOrdem, LanceInvalido, lerLance, type Lance } from '../_shared/jogo/penaltisLance.ts';
 import { tabelaPenaltisDaPartida } from '../_shared/jogo/regraLances.ts';
 
-const numero = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
-
-function lerLance(v: unknown): Lance {
-  const l = v as { tipo?: unknown; gesto?: Partial<GestoCobranca>; zona?: unknown } | null;
-  if (l?.tipo === 'cobranca') {
-    const g = l.gesto;
-    if (!g || !numero(g.dir) || !numero(g.forca) || !numero(g.efeito)) throw new ErroHttp(400, 'lance_invalido');
-    return { tipo: 'cobranca', gesto: { dir: g.dir, forca: g.forca, efeito: g.efeito } };
+/** Só o tipo e o gesto (ou a zona) do corpo: o resto é ignorado (penaltisLance.ts). */
+function lanceDoCorpo(v: unknown): Lance {
+  try {
+    return lerLance(v);
+  } catch (e) {
+    if (e instanceof LanceInvalido) throw new ErroHttp(400, 'lance_invalido');
+    throw e;
   }
-  if (l?.tipo === 'defesa' && numero(l.zona)) return { tipo: 'defesa', zona: l.zona };
-  throw new ErroHttp(400, 'lance_invalido');
 }
 
 servir(async (req) => {
@@ -26,7 +23,7 @@ servir(async (req) => {
   const uid = await usuario(req, sb);
   const corpo = await lerCorpo(req);
   if (typeof corpo.partidaId !== 'string') throw new ErroHttp(400, 'sem_partida');
-  const lance = lerLance(corpo.lance);
+  const lance = lanceDoCorpo(corpo.lance);
 
   const { data: partida, error: eP } = await sb
     .from('partidas')
@@ -58,7 +55,8 @@ servir(async (req) => {
   try {
     // Sem sementes por lance é partida criada antes de 03/11/2026: segue com a semente única da partida.
     const sementes = lerSementes(segredo.sementes, Number(partida.semente));
-    // Os pontos de cada lance saem da tabela da hora em que a partida foi criada (Lances unificados, seção 14.7).
+    // A regra sai da hora em que a partida foi criada: a tabela de pontos (Lances unificados, seção 14.7) e o goleiro
+    // (motor 2, goleiro com alcance, desde 23/11/2026). As cavadinhas anteriores saem dos gestos guardados no segredo.
     jogada = jogarLance(sementes, segredo.gestos as Gestos, lance, Number(partida.dificuldade), gravadas, tabelaPenaltisDaPartida(partida.criada_em));
   } catch (e) {
     if (e instanceof LanceForaDeOrdem) throw new ErroHttp(409, 'lance_fora_de_ordem');
