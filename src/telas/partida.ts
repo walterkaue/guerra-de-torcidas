@@ -54,7 +54,7 @@ import { criarCena, facil, limitar01, suave } from './cena';
 import { criarCena3d, type Cena3d } from './cena3d';
 import { ENQUADRAMENTOS } from './camera';
 import { DUR_PASSOS, duracaoDaBatida, inicioDoVoo, latenciaInicial, novaLatencia, tempoDaBatida } from './tempoDoChute';
-import { ESPERA_O_APITO, anelDoSinal, arrasteVale, instanteDoSinal, mostrarAdesivo } from './valendo';
+import { ESPERA_O_APITO, TRACO_DO_ANEL, anelDoSinal, arrasteVale, instanteDoSinal, mostrarAdesivo } from './valendo';
 import { ANTES_DO_CORTE, criarReplay, montarTarjaDoReplay, type Replay } from './replay';
 import { caminhoDoChute } from '../jogo/lances';
 import { destravarSom, jeitoDaDefesa, latenciaDoSom, prepararSom, somApito, somChute, somDefesa, somLargada, somRede, somTorcida } from '../jogo/som';
@@ -551,11 +551,13 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     void resultadoDaCobranca(gq, rodada).then((r) => {
       if (acabou || fase !== chute) return;
       const agora = relogio();
-      latencia = novaLatencia(latencia, agora - chute.inicio);
       chute.r = r;
       chute.alvo = alvoDoGoleiro(r);
-      // A resposta chega durante os passos; se chegar depois do pé na bola, a bola sai agora. O som sai com ela.
-      chute.inicio = inicioDoVoo(chute.inicio, agora, BATIDA);
+      // A resposta chega durante os passos ou com o batedor segurando no embalo: a animação segue da pose que está na
+      // tela e a bola sai quando o pé encontra a bola. O som sai com ela. A latência nova só vale para o próximo chute.
+      const esperou = agora - chute.inicio;
+      chute.inicio = inicioDoVoo(chute.inicio, agora, latencia, BATIDA);
+      latencia = novaLatencia(latencia, esperou);
       window.setTimeout(() => !acabou && somChute(), Math.max(0, chute.inicio + BATIDA - agora));
     });
   }
@@ -1021,7 +1023,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     if (!a) return;
     c.save();
     c.strokeStyle = `rgba(255,255,255,${a.alfa})`;
-    c.lineWidth = 3;
+    c.lineWidth = TRACO_DO_ANEL;
     c.beginPath();
     c.arc(g.bolaX, g.bolaY, g.raio * a.escala, 0, Math.PI * 2);
     c.stroke();

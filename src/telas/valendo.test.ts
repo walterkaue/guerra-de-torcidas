@@ -33,6 +33,11 @@ describe('apito = chute liberado', () => {
     expect(anelDoSinal(DUR_SINAL, false)).toBeNull();
   });
 
+  it('o anel é discreto: nunca passa de 1,9 vez o raio da bola', () => {
+    for (let ms = 0; ms < DUR_SINAL; ms += 10) expect(anelDoSinal(ms, false)!.escala).toBeLessThanOrEqual(1.9);
+    expect(anelDoSinal(0, true)!.escala).toBeLessThanOrEqual(1.9);
+  });
+
   it('com movimento reduzido, o anel fica parado o tempo todo', () => {
     const a = anelDoSinal(0, true);
     expect(a).toEqual(anelDoSinal(DUR_SINAL / 2, true));

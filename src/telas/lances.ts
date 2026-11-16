@@ -106,7 +106,7 @@ import { DISPUTAS } from '../dados/disputas';
 import { chamadaDaDisputa, type Disputa } from '../jogo/disputas';
 import { clubeDoLance, distanciaDoLance, duracaoDoVoo, elencoDoLance, posicaoDoGoleiro as posicaoDoGoleiroDoLance } from './elencoDoLance';
 import { DUR_AJEITAR, novaPose, poseAjeitando, poseComemora, poseDaBatida, poseLamenta, poseParado } from './bonecos';
-import { DUR_PASSOS, duracaoDaBatida } from './tempoDoChute';
+import { DUR_PASSOS, duracaoDaBatida, latenciaInicial, novaLatencia, tempoDaBatida } from './tempoDoChute';
 import { ESPERA_O_APITO, anelDoSinal, arrasteVale, instanteDoSinal, mostrarAdesivo } from './valendo';
 import { ENQUADRAMENTOS } from './camera';
 import { facil, limitar01 } from './cena';
@@ -900,6 +900,8 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
     function instruir(texto: string): void {
       tirarDica(elInstrucao);
       elInstrucao.textContent = texto;
+      // Faixa vazia some (senão sobra uma pílula preta no topo durante o chute).
+      elInstrucao.hidden = !texto;
     }
     /** Dicas do começo do lance (o goleiro que saiu, o cara a cara, o treino depois das partidas valendo do dia). */
     function dicaDoComeco(l: Lance): void {
@@ -1050,12 +1052,17 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
       mostrarAviso(comMotivo(AVISO_CAIU, e));
     }
 
+    /** Quanto o servidor costuma demorar: os passos esticam junto (até 700 ms) e, se passar, o batedor segura no embalo. */
+    let latencia = latenciaInicial();
+
     /** Anima o chute com o resultado já decidido (do servidor ou do motor local). `esperaMs`: o pé já estava correndo. */
     function comecarChute(r: ResultadoLance, gq: GestoCobranca, l: Lance, esperaMs: number): void {
       const em = caminhoDoLance(l, gq, r);
       // Duração pelo tamanho do caminho (cavadinha e bola fraca, mais devagar).
       const dur = duracaoDoVoo(l.bola, em(r.tFim), r.cavadinha, gq.forca);
-      const andou = Math.min(esperaMs, BATIDA);
+      // Segue da pose que estava na tela (passos ou embalo); a latência nova só vale para o próximo chute.
+      const andou = tempoDaBatida(esperaMs, latencia, BATIDA);
+      latencia = novaLatencia(latencia, esperaMs);
       fase = { tipo: 'chute', inicio: relogio() - andou, r, em, dur };
       instruir('');
       elJogada.hidden = true;
@@ -1210,8 +1217,8 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
           if (l.barreira) cena.desenharBarreira(l.barreira, barreira, poseParado(agora, poseBarreira));
           if (fase.tipo === 'mirar' && fase.valendoEm === null && (!fase.ajeita || agora - fase.inicio >= DUR_AJEITAR)) liberarChute(fase);
           if (fase.tipo === 'espera' && fase.chutando) {
-            // Os passos até a bola enquanto o servidor responde; passou do pé na bola, segura ali.
-            const ms = Math.min(agora - fase.inicio, BATIDA);
+            // Os passos até a bola enquanto o servidor responde; se demorar, segura no embalo, com a perna puxada.
+            const ms = tempoDaBatida(agora - fase.inicio, latencia, BATIDA);
             cena.desenharBatedor(batedor, poseDaBatida(ms, false, PASSOS, poseBatedor), facil(limitar01(ms / BATIDA)));
           } else if (fase.tipo === 'mirar' && fase.ajeita && agora - fase.inicio < DUR_AJEITAR) {
             cena.desenharBatedor(batedor, poseAjeitando(agora - fase.inicio, poseBatedor));

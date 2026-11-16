@@ -4,6 +4,8 @@
 
 /** O que a faixa de instrução diz a quem arrasta antes do apito (o lance não é gasto). */
 export const ESPERA_O_APITO = 'Espera o apito!';
+/** Espessura do traço do anel (px). */
+export const TRACO_DO_ANEL = 2.5;
 /** O anel pulsa 2 vezes nesse tempo; o adesivo some junto. */
 export const DUR_SINAL = 800;
 const PULSOS = 2;
@@ -23,15 +25,15 @@ export function arrasteVale(agora: number, valendoEm: number | null): boolean {
 }
 
 /**
- * Anel branco em volta da bola, `ms` depois do sinal: cresce de 1,3 a 2,6 vezes o raio da bola e some, 2 vezes.
- * Com movimento reduzido, fica parado (1,8 vezes o raio) pelo mesmo tempo. Fora do tempo do sinal: null.
+ * Anel branco em volta da bola, `ms` depois do sinal: cresce de 1,15 a 1,9 vez o raio da bola e some, 2 vezes.
+ * Com movimento reduzido, fica parado (1,5 vez o raio) pelo mesmo tempo. Fora do tempo do sinal: null.
  */
 export function anelDoSinal(ms: number, reduzido: boolean): { escala: number; alfa: number } | null {
   if (ms < 0 || ms >= DUR_SINAL) return null;
-  if (reduzido) return { escala: 1.8, alfa: 0.9 };
+  if (reduzido) return { escala: 1.5, alfa: 0.9 };
   const pulso = DUR_SINAL / PULSOS;
   const f = (ms % pulso) / pulso;
-  return { escala: 1.3 + 1.3 * f, alfa: 0.95 * (1 - f) };
+  return { escala: 1.15 + 0.75 * f, alfa: 0.95 * (1 - f) };
 }
 
 /** Mostra o adesivo "VALENDO!" (o CSS anima; com movimento reduzido, aparece parado) e tira depois do sinal. */
