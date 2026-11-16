@@ -66,7 +66,7 @@ O gol vale pela colocação (o x da bola, de −1 a 1).
 | Defesa | 7 |
 | Vitória na disputa (também na morte súbita ou no par ou ímpar) | +15 |
 | 5 de 5 (cobranças ou defesas) | +10 |
-| Máximo da partida | 135 (guarda de 150 no fechamento) |
+| Máximo da partida | 135 (136 se for à morte súbita; guarda de 150 no fechamento) |
 
 - Gols e defesas da morte súbita valem os pontos normais. O bônus de 5 de 5 olha só as 5 primeiras cobranças e as 5 primeiras defesas.
 - A tabela sai da **hora em que a partida foi criada** (`jogos/lances.md`, Data de corte, e a do goleiro com alcance acima); partida fechada nunca muda. Antes de 23/11/2026: gol 7, ângulo +4, cavadinha +6 (máximo 136).
@@ -93,6 +93,7 @@ O gol vale pela colocação (o x da bola, de −1 a 1).
 - **Detecção de partidas impossíveis**, a cada partida fechada, olhando o histórico (números em `config_deteccao`):
   - **Defesas:** nas últimas 30 defesas contra o batedor da máquina com chute no gol, 27 ou mais defendidas.
   - **Cobranças:** nas últimas 40 cobranças em que o goleiro não leu, nenhuma onde ele foi. Nas do goleiro com alcance (com `goleiroX`), vale o **lado** do mergulho: coluna da bola = coluna do ponto do mergulho; nas de antes do corte, a zona. A janela pode misturar as duas. Não é "nenhuma ao alcance": quem acerta o ângulo honestamente passa 40 cobranças sem nenhuma ao alcance em 23% das vezes; pelo lado, o honesto cai no lado do goleiro em 20% a 40% das cobranças e o falso alarme fica em 0,013% no pior caso.
+  - **Cobranças, nenhuma defendida:** contra o goleiro com alcance dá para fazer gol no lado dele (basta ficar fora do alcance), então quem conhecesse a semente passaria pela regra do lado sem fugir dele; o que ele não deixa acontecer é a defesa. Das cobranças sem leitura mais recentes para as antigas, multiplica-se a chance que o goleiro tinha de **não** defender cada bola (`chanceDeDefesaSemLer`: ~98% no ângulo, ~82% no colocado, 80% na 1ª cavadinha da partida, 5% na 4ª) até achar uma defesa (nada a marcar) ou até o produto cair a 0,8^40, o falso alarme da regra do lado no pior caso (o 40 é o mesmo `janela_cobrancas`). Bola no ângulo quase não pesa: quem mira bem não é marcado. Cobrança de antes do corte pesa 5/6 e conta como defendida se foi na zona do goleiro; só com elas, quem decide é a regra de cima.
   - Partida marcada fica **sob suspeita**, fora do ranking até revisão. As suspeitas de todos os minigames (pênaltis, Prova, Time do Dia e Lances) vão para a fila **"Partidas sob suspeita"** do `#admin`, com o motivo, os pontos e o histórico (só o começo do id, sem apelido). **Liberar** devolve a partida ao teto, ao recorde e ao ranking; **Manter fora** tira da fila e ela segue sem contar. Semana já confirmada (segunda 12h) não reabre: a partida liberada depois volta para a pessoa, mas o ranking das torcidas daquela semana fica como estava.
 - **Risco aceito (desafio):** uma segunda conta que grava as cobranças em zonas escolhidas e manda o código para a principal. Cada desafio armado custa uma partida inteira na outra conta, e só as 3 melhores do dia contam. As defesas contra cobrança gravada ficam fora da detecção.
 
