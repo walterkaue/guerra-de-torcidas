@@ -668,6 +668,18 @@ body {
 .grito-sub { padding: 3px 10px; border-radius: 4px; background: rgba(0,0,0,0.8); color: var(--amarelo); font-size: 16px; }
 .grito.pulso { animation: narrar 1.6s ease-out forwards; }
 @media (prefers-reduced-motion: reduce) { .grito.pulso { animation: none; opacity: 1; } }
+/* Apito = chute liberado: adesivo do narrador (mesma cara do .grito-frase) com "VALENDO!", junto do apito e do anel em
+   volta da bola; some em ~0,8 s. Fica entre o grito do narrador e o batedor. */
+.valendo { position: absolute; left: 50%; top: 68%; margin: 0; padding: 4px 18px; border: 3px solid #fff; border-radius: 6px; background: var(--c1); color: var(--txt); font-family: var(--fonte-placar); font-size: 30px; line-height: 1.2; letter-spacing: 0.02em; white-space: nowrap; box-shadow: 0 0 0 2px rgba(0,0,0,0.4), 0 5px 0 2px rgba(0,0,0,0.4); pointer-events: none; opacity: 0; visibility: hidden; transform: translateX(-50%) rotate(-3deg); z-index: 2; }
+.valendo.mostra { visibility: visible; animation: valendo 0.8s ease-out forwards; }
+@keyframes valendo {
+  0% { opacity: 0; transform: translateX(-50%) rotate(-3deg) scale(0.7); }
+  16% { opacity: 1; transform: translateX(-50%) rotate(-3deg) scale(1.08); }
+  28% { transform: translateX(-50%) rotate(-3deg) scale(1); }
+  72% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) rotate(-3deg) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .valendo.mostra { animation: none; opacity: 1; } }
 .cj-caixa { width: 100%; max-width: 420px; padding: 18px 16px; border-radius: 18px; background: #0b2a16; border: 2px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; gap: 12px; color: var(--cal); }
 .cj-titulo { font: 400 34px var(--fonte-placar); text-transform: uppercase; color: var(--amarelo); line-height: 1; }
 

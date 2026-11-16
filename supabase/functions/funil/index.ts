@@ -4,15 +4,13 @@
 // Responde sempre 204, sem dizer o que contou. Nada aqui imprime o corpo nem o IP: o código do X1 nunca vai ao log.
 
 import { admin, chaveSecreta } from '../_shared/comum.ts';
+import { MAX_AGE_CORS, origemPermitida } from '../_shared/cors.ts';
 import { MAX_BYTES, processar, type Servicos } from './fluxo.ts';
 
-const ORIGENS = ['https://torcida.kauewalter.com.br', 'http://localhost:5173', 'http://127.0.0.1:5173'];
-
 function vazio(req: Request): Response {
-  const origem = req.headers.get('Origin') ?? '';
   return new Response(null, {
     status: 204,
-    headers: { 'Access-Control-Allow-Origin': ORIGENS.includes(origem) ? origem : ORIGENS[0], Vary: 'Origin' },
+    headers: { 'Access-Control-Allow-Origin': origemPermitida(req.headers.get('Origin')), 'Access-Control-Max-Age': String(MAX_AGE_CORS), Vary: 'Origin' },
   });
 }
 

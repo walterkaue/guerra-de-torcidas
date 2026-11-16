@@ -49,10 +49,11 @@ import { bonecoDaPessoaEmCampo, bonecoDeQuemChamouEmCampo } from './bonecoEmCamp
 import { criarCena, facil, limitar01, suave } from './cena';
 import { criarCena3d, type Cena3d } from './cena3d';
 import { ENQUADRAMENTOS } from './camera';
-import { inicioDoVoo, latenciaInicial, novaLatencia, tempoDaBatida } from './tempoDoChute';
+import { DUR_PASSOS, duracaoDaBatida, inicioDoVoo, latenciaInicial, novaLatencia, tempoDaBatida } from './tempoDoChute';
+import { ESPERA_O_APITO, anelDoSinal, arrasteVale, instanteDoSinal, mostrarAdesivo } from './valendo';
 import { ANTES_DO_CORTE, criarReplay, montarTarjaDoReplay, type Replay } from './replay';
 import { caminhoDoChute } from '../jogo/lances';
-import { destravarSom, jeitoDaDefesa, latenciaDoSom, somApito, somChute, somDefesa, somLargada, somRede, somTorcida } from '../jogo/som';
+import { destravarSom, jeitoDaDefesa, latenciaDoSom, prepararSom, somApito, somChute, somDefesa, somLargada, somRede, somTorcida } from '../jogo/som';
 import { vibrar } from './toque';
 import {
   DUR_AJEITAR,
@@ -60,8 +61,8 @@ import {
   criarBoneco,
   novaPose,
   poseAjeitando,
-  poseChute,
   poseChuteMaquina,
+  poseDaBatida,
   poseComemora,
   poseCorrida,
   poseEspera,
@@ -83,15 +84,18 @@ import {
 } from '../jogo/dicasGatilhos';
 import { abrirRegras } from './regras';
 import { icone } from './icones';
-import { aoMudarQualidade, medirQuadros, qualidade } from './qualidade';
+import { NOME_DO_NIVEL, aoMudarQualidade, medirQuadros, qualidade } from './qualidade';
+import { medirPartida } from './medirPartida';
 import { criarRelogioPausavel } from '../jogo/telaDaPartida';
 import { vigiarCelularDeitado } from './vireOCelular';
 
 type Fase =
-  | { tipo: 'mirar'; inicio: number }
+  // valendoEm: instante do sinal "VALENDO!" (null enquanto o batedor ajeita a bola: o arraste ainda não vale).
+  | { tipo: 'mirar'; inicio: number; valendoEm: number | null }
   // r nulo: esperando o servidor resolver o lance (lance a lance).
   | { tipo: 'chute'; inicio: number; r: ResultadoCobranca | null; gesto: GestoCobranca }
-  | { tipo: 'corrida'; inicio: number; dica: number; zona: number | null; pulouEm: number | null }
+  // pedido: a zona já foi para o servidor no toque (a resposta só aparece no fim da janela).
+  | { tipo: 'corrida'; inicio: number; dica: number; zona: number | null; pulouEm: number | null; pedido: Promise<ResultadoDefesa> | null }
   | { tipo: 'chuteMaquina'; inicio: number; r: ResultadoDefesa | null; zona: number; pulouEm: number; dica: number }
   | { tipo: 'pausa'; inicio: number; ate: number; depois: () => void }
   | { tipo: 'parOuImpar' }
@@ -116,8 +120,11 @@ function tirarCodigoDoEndereco(): void {
 }
 
 /** Dia da semana no horário de Brasília (a temporada zera na segunda, 00h BRT). */
+let formatoDoDia: Intl.DateTimeFormat | null = null;
 function diaEmBrasilia(): number {
-  const nome = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'America/Sao_Paulo' }).format(new Date());
+  // Criar o formato custa caro no celular fraco: um só, reaproveitado entre as partidas.
+  formatoDoDia ??= new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'America/Sao_Paulo' });
+  const nome = formatoDoDia.format(new Date());
   return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(nome);
 }
 
@@ -138,7 +145,7 @@ const DUR_CHUTE = 650;
 const DUR_CAVADINHA = 1050;
 const DUR_PULO = 420;
 const DUR_CORRIDA = 900;
-/** Do início do chute até o pé encontrar a bola (a bola só sai depois). */
+/** Do início do chute da máquina até o pé encontrar a bola (a bola só sai depois). */
 const DUR_BATIDA = 190;
 
 /** Câmera lenta da cavadinha: 0,5 s a mais no trecho final, antes de a bola entrar. */
@@ -189,6 +196,11 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   let fechamento: Promise<FechamentoDoServidor> | null = null;
   const narrador = criarNarrador(time, prefs.get().apelido);
   const reduzido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /** ?medir: plaquinha com quadros, congelamentos e espera do servidor (só leitura). */
+  const medicao = medirPartida(() => NOME_DO_NIVEL[qualidade().nivel]);
+  /** Do arraste ao pé na bola: 2 passos curtos e o chute (sem os passos com movimento reduzido). */
+  const PASSOS = reduzido ? 0 : DUR_PASSOS;
+  const BATIDA = duracaoDaBatida(reduzido);
 
   root.innerHTML = `
     <main class="partida" style="--c1:${time.cores[0]};--c2:${time.cores[1]};--txt:${corDeTexto(time.cores[0])}">
@@ -204,6 +216,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       </header>
       <canvas class="campo-jogo"></canvas>
       <p class="instrucao" aria-live="polite"></p>
+      <p class="valendo" aria-hidden="true">VALENDO!</p>
       <div class="grito" aria-live="assertive">
         <p class="grito-frase"></p>
         <p class="grito-sub rotulo"></p>
@@ -252,6 +265,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   const elGritoFrase = root.querySelector<HTMLElement>('.grito-frase')!;
   const elGritoSub = root.querySelector<HTMLElement>('.grito-sub')!;
   const elMudo = root.querySelector<HTMLButtonElement>('.mudo')!;
+  const elValendo = root.querySelector<HTMLElement>('.valendo')!;
 
   const cobrancas: ResultadoCobranca[] = [];
   const defesas: ResultadoDefesa[] = [];
@@ -260,8 +274,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   let rodada = 0; // 0..4 no tempo normal, 5..9 na morte súbita
   let fase: Fase = { tipo: 'preparando' };
   let rastro: { x: number; y: number }[] = [];
-  /** Se o chute saiu com o batedor ainda ajeitando a bola (1) ou já no lugar (0). Só desenho. */
-  let pertoNoChute = 0;
+  /** Texto da faixa na mira, para voltar depois do "Espera o apito!". */
+  let textoDaMira = '';
+  let esperouOApito = false;
   let acabou = false;
 
   // Quem entra em campo é sorteado a cada partida, com o sorteio do visual (nunca a semente):
@@ -401,8 +416,10 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
 
   function comecarCobranca(): void {
     trocarBonecoSeChegou();
-    fase = { tipo: 'mirar', inicio: relogio() };
-    if (rodada > 0) somLargada(); // o 1º chute da partida já tem o apito de começo
+    medicao.marcar('mira');
+    // O apito sai quando o batedor termina de ajeitar a bola (liberarChute), junto com o "VALENDO!".
+    fase = { tipo: 'mirar', inicio: relogio(), valendoEm: null };
+    esperouOApito = false;
     rastro = [];
     dicas.novoLance();
     const extra = rodada - COBRANCAS + 1;
@@ -410,13 +427,13 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     dicaDaProximaCobranca = null;
     // 1ª cobrança da 2ª partida (o contador atravessa as partidas e só soma na primeira cobrança).
     const partidasJogadas = rodada === 0 ? dicas.marco('pen_partidas') : 0;
-    instruir(
+    textoDaMira =
       rodada === 0
         ? 'Arraste da bola pro gol. Mais longo = mais forte. Curve no fim para dar efeito.'
         : extra > 0
           ? `${extra === 1 ? 'Empatou! ' : ''}Morte súbita: rodada extra ${extra} de ${RODADAS_EXTRAS_MAX}.`
-          : `Cobrança ${rodada + 1} de ${COBRANCAS}. Arraste para chutar.`,
-    );
+          : `Cobrança ${rodada + 1} de ${COBRANCAS}. Arraste para chutar.`;
+    instruir(textoDaMira);
     if (extra === 1) mostrarDica(elInstrucao, dicas.pedir('pen_morte_subita'));
     else if (dicaGuardada && extra <= 0) mostrarDica(elInstrucao, dicaGuardada);
     else if (partidasJogadas === 2) mostrarDica(elInstrucao, dicas.pedir('pen_cavadinha'));
@@ -431,6 +448,24 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     else if (cobrancaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['cobranca']) }));
   }
 
+  /**
+   * O batedor terminou de ajeitar a bola: sai o apito (o de começo no 1º chute, o curto nos outros) e, quando ele chega
+   * ao ouvido, o anel em volta da bola, o "VALENDO!" e a vibração leve. Daí em diante o arraste vale.
+   */
+  function liberarChute(f: Fase & { tipo: 'mirar' }): void {
+    if (rodada === 0) somApito();
+    else somLargada();
+    medicao.marcar('apito');
+    const agora = relogio();
+    f.valendoEm = instanteDoSinal(agora, latenciaDoSom());
+    window.setTimeout(() => {
+      if (acabou || fase !== f) return;
+      mostrarAdesivo(elValendo);
+      vibrar('leve');
+      if (esperouOApito) instruir(textoDaMira);
+    }, f.valendoEm - agora);
+  }
+
   function comecarDefesa(): void {
     trocarBonecoSeChegou();
     dicas.novoLance();
@@ -439,7 +474,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         ? dicaDoServidor
         : planejarDefesa(semente, rodada, dificuldade, desafio?.cobrancas?.[rodada]).dica;
     dicaDoServidor = null;
-    fase = { tipo: 'corrida', inicio: relogio(), dica, zona: null, pulouEm: null };
+    medicao.marcar('defesa');
+    fase = { tipo: 'corrida', inicio: relogio(), dica, zona: null, pulouEm: null, pedido: null };
     somLargada();
     instruir('Sua vez de defender! Olhe o pé de apoio, marcado em amarelo, e toque onde pular.');
     if (defesaDecisiva()) narrar(narrador.falar('decisiva', { etiquetas: new Set(['defesa']) }));
@@ -462,7 +498,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   async function resultadoDaCobranca(gq: GestoCobranca, i: number): Promise<ResultadoCobranca> {
     if (emLanceALance()) {
       try {
+        const pediu = performance.now();
         const resp = await (await servidor()).lancePenalti(partidaId!, { tipo: 'cobranca', gesto: gq });
+        medicao.espera(performance.now() - pediu);
         if (resp.cobranca) {
           dicaDoServidor = resp.proximo.tipo === 'defesa' ? resp.proximo.dica : null;
           return resp.cobranca;
@@ -478,7 +516,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   async function resultadoDaDefesa(zona: number, i: number): Promise<ResultadoDefesa> {
     if (emLanceALance()) {
       try {
+        const pediu = performance.now();
         const resp = await (await servidor()).lancePenalti(partidaId!, { tipo: 'defesa', zona });
+        medicao.espera(performance.now() - pediu);
         if (resp.defesa) return resp.defesa;
       } catch (e) {
         caiuALigacao(e);
@@ -495,7 +535,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     gestosCobranca.push(gq);
     // Funil do X1: só o 1º gesto de um X1 recebido (`desafio` fica null se o servidor recusou o X1).
     if (gestosCobranca.length === 1 && desafio) contar({ ev: 'primeiro_chute', tipo: 'x1_penaltis', x1: desafio.id });
-    if (fase.tipo === 'mirar') pertoNoChute = pertoDaBola(relogio() - fase.inicio);
+    medicao.marcar('chute');
     const chute: Fase & { tipo: 'chute' } = { tipo: 'chute', inicio: relogio(), r: null, gesto: gq };
     fase = chute;
     instruir('');
@@ -504,9 +544,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       const agora = relogio();
       latencia = novaLatencia(latencia, agora - chute.inicio);
       chute.r = r;
-      // A bola sai assim que o resultado chega (o pé já está na bola), e o som sai com ela.
-      chute.inicio = inicioDoVoo(chute.inicio, agora, DUR_BATIDA);
-      window.setTimeout(() => !acabou && somChute(), Math.max(0, chute.inicio + DUR_BATIDA - agora));
+      // A resposta chega durante os passos; se chegar depois do pé na bola, a bola sai agora. O som sai com ela.
+      chute.inicio = inicioDoVoo(chute.inicio, agora, BATIDA);
+      window.setTimeout(() => !acabou && somChute(), Math.max(0, chute.inicio + BATIDA - agora));
     });
   }
 
@@ -519,6 +559,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   }
 
   function fimDoChute(r: ResultadoCobranca): void {
+    medicao.marcar(r.desfecho === 'gol' ? 'gol' : 'lance');
     cobrancas.push(r);
     atualizarHud();
     narrar(narrador.falar(eventoDaCobranca(r), { etiquetas: etiquetasDaCobranca(r) }), legendaDaCobranca(r));
@@ -588,12 +629,20 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     depois();
   }
 
-  function chuteDaMaquina(zona: number, pulouEm: number, dica: number): void {
+  /**
+   * A zona da defesa vai para o servidor no toque (ou -1 no fim da janela, sem toque). Ela já está escolhida e não muda;
+   * o canto do batedor só volta depois de a zona estar gravada, e a tela só o usa no fim da janela.
+   */
+  function pedirDefesa(zona: number): Promise<ResultadoDefesa> {
     gestosDefesa.push(zona);
+    return resultadoDaDefesa(zona, rodada);
+  }
+
+  function chuteDaMaquina(zona: number, pulouEm: number, dica: number, pedido: Promise<ResultadoDefesa> | null): void {
     const chute: Fase & { tipo: 'chuteMaquina' } = { tipo: 'chuteMaquina', inicio: relogio(), r: null, zona, pulouEm, dica };
     fase = chute;
     instruir('');
-    void resultadoDaDefesa(zona, rodada).then((r) => {
+    void (pedido ?? pedirDefesa(zona)).then((r) => {
       if (acabou || fase !== chute) return;
       chute.r = r;
       chute.inicio = relogio();
@@ -602,6 +651,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   }
 
   function fimDaDefesa(r: ResultadoDefesa, dica: number): void {
+    medicao.marcar(r.desfecho === 'gol' ? 'gol' : r.desfecho === 'defesa' ? 'defesa' : 'lance');
     defesas.push(r);
     atualizarHud();
     const legenda =
@@ -691,10 +741,9 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   // ---------- apito ----------
   let servidorPronto = false;
 
-  /** O apito sai quando o servidor respondeu (as regras ficam no "?"). */
+  /** A mira começa quando o servidor respondeu (as regras ficam no "?"); o apito sai no "VALENDO!". */
   function talvezComecar(): void {
     if (!servidorPronto || acabou || fase.tipo !== 'preparando') return;
-    somApito();
     comecarCobranca();
   }
 
@@ -735,6 +784,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   /** Pede a semente ao servidor. Sem resposta, a partida segue local e sem valer pontos. */
   async function preparar(): Promise<void> {
     instruir('Preparando a partida…');
+    // A sala do estádio e os ruídos se montam agora, em pedaços, e não no apito (o som sai igual).
+    const somPronto = prepararSom();
     if (codigoDesafio) void buscarBonecoDeQuemChamou(codigoDesafio);
     try {
       // Time e apelido precisam estar no servidor; sessão nova (aparelho limpo) regrava.
@@ -800,6 +851,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
           : comMotivo(AVISO_SEM_PONTOS, e));
       }
     }
+    // O apito espera o som terminar de montar, com teto (som que demorar monta na hora, igual).
+    await Promise.race([somPronto, new Promise((ok) => setTimeout(ok, 1500))]);
     servidorPronto = true;
     talvezComecar();
   }
@@ -834,6 +887,8 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
 
   async function encerrar(escolha?: EscolhaParOuImpar, parOuImpar?: ResultadoParOuImpar): Promise<void> {
     acabou = true;
+    medicao.marcar('fim');
+    medicao.parar();
     etapa(null);
     let resultado = totalizar(cobrancas, defesas, parOuImpar, tabela);
     let servidor: FechamentoDoServidor | undefined;
@@ -886,7 +941,12 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
 
   function aoTocar(e: PointerEvent): void {
     destravarSom();
-    if (fase.tipo === 'mirar') {
+    if (fase.tipo === 'mirar' && !arrasteVale(relogio(), fase.valendoEm)) {
+      // Antes do apito o arraste não vale, e o lance não é gasto.
+      esperouOApito = true;
+      rastro = [];
+      instruir(ESPERA_O_APITO);
+    } else if (fase.tipo === 'mirar') {
       try {
         canvas.setPointerCapture(e.pointerId);
       } catch {
@@ -897,6 +957,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
       const p = ponto(e);
       fase.zona = zonaTocada(p.x, p.y);
       fase.pulouEm = relogio();
+      fase.pedido = pedirDefesa(fase.zona);
     }
   }
 
@@ -937,11 +998,23 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     desenharBatedorEm(batedor(batedoresJogador, cobrancas.length), batedorX(0) + pertoDaBola(msMira) * g.raio * RECUO, batedorY(0), poseBatedor);
   }
 
-  /** Você batendo: avança e bate (o pé encontra a bola em DUR_BATIDA). */
+  /** Você batendo: 2 passos curtos até a bola e o chute (o pé encontra a bola em BATIDA). */
   function desenharBatedorChutando(ms: number, cavadinha: boolean): void {
-    const avanco = facil(limitar01(ms / DUR_BATIDA));
-    const x = batedorX(avanco) + pertoNoChute * (1 - avanco) * g.raio * RECUO;
-    desenharBatedorEm(batedor(batedoresJogador, cobrancas.length), x, batedorY(avanco), poseChute(ms, cavadinha, poseBatedor));
+    const avanco = facil(limitar01(ms / BATIDA));
+    desenharBatedorEm(batedor(batedoresJogador, cobrancas.length), batedorX(avanco), batedorY(avanco), poseDaBatida(ms, cavadinha, PASSOS, poseBatedor));
+  }
+
+  /** O anel branco do "VALENDO!" em volta da bola (2 pulsos; parado com movimento reduzido). */
+  function desenharAnel(valendoEm: number | null, agora: number): void {
+    const a = valendoEm === null ? null : anelDoSinal(agora - valendoEm, reduzido);
+    if (!a) return;
+    c.save();
+    c.strokeStyle = `rgba(255,255,255,${a.alfa})`;
+    c.lineWidth = 3;
+    c.beginPath();
+    c.arc(g.bolaX, g.bolaY, g.raio * a.escala, 0, Math.PI * 2);
+    c.stroke();
+    c.restore();
   }
 
   /** Depois do lance: comemora o gol ou põe as mãos na cabeça. */
@@ -1021,6 +1094,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
 
   function quadro(agora: number): void {
     if (acabou) return;
+    medicao.quadro(performance.now());
     // Celular deitado: o aviso cobre o campo e o tempo está parado; não precisa redesenhar (nem o replay).
     if (tempo.pausado()) {
       raf = proximoQuadro(quadro, relogio);
@@ -1046,11 +1120,14 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
     let lenta = -1;
     switch (fase.tipo) {
       case 'mirar': {
+        // Terminou de ajeitar a bola: apito e "VALENDO!" (o 1º chute só chega aqui com o servidor pronto).
+        if (fase.valendoEm === null && agora - fase.inicio >= DUR_AJEITAR) liberarChute(fase);
         desenharGoleiroNoQuadro(goleiroMaquina, null, 0, agora);
         desenharTraves();
         // A bola antes: ajeitando, o batedor fica entre a câmera e a bola.
         desenharBola(g.bolaX, g.bolaY);
         desenharBatedorNaMira(agora - fase.inicio, agora);
+        desenharAnel(fase.valendoEm, agora);
         desenharRastro(rastro);
         break;
       }
@@ -1061,13 +1138,13 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
           // Esperando o servidor: o pé chega na bola e a bola espera.
           desenharGoleiroNoQuadro(goleiroMaquina, null, 0, agora);
           desenharTraves();
-          desenharBatedorChutando(tempoDaBatida(ms, latencia, DUR_BATIDA), false);
+          desenharBatedorChutando(tempoDaBatida(ms, latencia, BATIDA), false);
           desenharBola(g.bolaX, g.bolaY);
           break;
         }
         const dur = r.cavadinha ? DUR_CAVADINHA : DUR_CHUTE;
         // A bola só sai quando o pé encontra a bola.
-        const t = limitar01(progressoDoChute(r, ms - DUR_BATIDA));
+        const t = limitar01(progressoDoChute(r, ms - BATIDA));
         if (r.cavadinha && !reduzido) lenta = t;
         // O goleiro segue o tempo da bola (fica lento junto na cavadinha).
         const tPulo = (t * dur - dur * 0.15) / DUR_PULO;
@@ -1094,7 +1171,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         if (ms >= DUR_CORRIDA * 0.55) desenharDica(fase.dica);
         desenharBola(g.bolaX, g.bolaY);
         desenharMaquinaCorrendo(ms, agora, fase.dica);
-        if (ms >= DUR_CORRIDA + janela) chuteDaMaquina(fase.zona ?? -1, fase.pulouEm ?? agora, fase.dica);
+        if (ms >= DUR_CORRIDA + janela) chuteDaMaquina(fase.zona ?? -1, fase.pulouEm ?? agora, fase.dica, fase.pedido);
         break;
       }
       case 'chuteMaquina': {
@@ -1186,7 +1263,7 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
 
   // ---------- ligações ----------
   if (import.meta.env.DEV) {
-    (window as unknown as Record<string, unknown>).__partida = { semente, dificuldade, cobrancas, defesas, gestosCobranca, gestosDefesa, fase: () => fase.tipo, estado: () => fase, tempos: () => temposDeQuadro, abrirParOuImpar: () => abrirParOuImpar() };
+    (window as unknown as Record<string, unknown>).__partida = { semente, dificuldade, cobrancas, defesas, gestosCobranca, gestosDefesa, fase: () => fase.tipo, estado: () => fase, tempos: () => temposDeQuadro, abrirParOuImpar: () => abrirParOuImpar(), bola: () => ({ x: g.bolaX, y: g.bolaY }), valendo: () => fase.tipo === 'mirar' && arrasteVale(relogio(), fase.valendoEm), zonaNaTela: (z: number) => ({ x: telaX(centroZona(z).x), y: telaY(centroZona(z).y) }) };
   }
   medir();
   atualizarHud();
@@ -1218,11 +1295,13 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
   });
   elMudo.addEventListener('click', () => {
     prefs.set({ mudo: !prefs.get().mudo });
+    void prepararSom();
     atualizarHud();
   });
 
   return () => {
     acabou = true;
+    medicao.parar();
     pararDeOuvirQualidade();
     pararDeVigiar();
     if (usarTimer) clearTimeout(raf);

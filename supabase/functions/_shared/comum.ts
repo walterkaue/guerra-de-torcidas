@@ -1,8 +1,7 @@
 // Utilidades das funções do servidor: CORS, respostas, cliente com a secret key e usuário da sessão.
 
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
-
-const ORIGENS = ['https://torcida.kauewalter.com.br', 'http://localhost:5173', 'http://127.0.0.1:5173'];
+import { cabecalhosCors } from './cors.ts';
 
 export class ErroHttp extends Error {
   constructor(
@@ -13,14 +12,9 @@ export class ErroHttp extends Error {
   }
 }
 
+/** CORS com Max-Age: o navegador guarda o OPTIONS e não o repete a cada lance (_shared/cors.ts). */
 function cors(req: Request): Record<string, string> {
-  const origem = req.headers.get('Origin') ?? '';
-  return {
-    'Access-Control-Allow-Origin': ORIGENS.includes(origem) ? origem : ORIGENS[0],
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    Vary: 'Origin',
-  };
+  return cabecalhosCors(req.headers.get('Origin'));
 }
 
 export function json(req: Request, status: number, corpo: unknown): Response {

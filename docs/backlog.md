@@ -208,7 +208,7 @@ No fim, uma tela com o título do lance, o placar, "Guerra de Torcidas" e o link
 ### 4.4 Som e marca sonora (H01, H02, I04)
 
 **Como está hoje** (`src/jogo/som.ts`, sintetizado com Web Audio; só a rede é arquivo):
-- **Apito:** desde 10/11 (H01a), senoide de 2,58 kHz com trinado de 25 Hz; um sopro no começo, três no fim e uma largada curta antes de cada chute a partir do 2º.
+- **Apito:** desde 10/11 (H01a), senoide de 2,58 kHz com trinado de 25 Hz; um sopro no começo (no "VALENDO!" do 1º chute), três no fim e uma largada curta no "VALENDO!" de cada chute a partir do 2º e no começo de cada defesa. Desde 15/11, a sala e os ruídos montam no preparo da partida (`prepararSom`); proposta de "sala leve" para o nível Leve em `/dev/sons.html`, sem decisão.
 - **Chute:** desde 10/11 (H01b), bola de couro: clique da chuteira, "pof" do couro e pancada (com o dobro, que o alto-falante do celular toca), pela sala, por volta de -24 LUFS.
 - **Torcida:** desde 10/11 (H01b). Festa: o ruído filtrado de antes, passando pela sala do apito e um pouco mais alto. Uuuh: um "ôôô" em estéreo que desce de 500 para 340 Hz, respira e passa pela sala. Volume combinado: festa -20 e uuuh -25 LUFS, abaixo do apito.
 - **Trave:** desde 10/11 (H01b), a bola estalando no metal e um anel curto de poste de alumínio em 430, 1.050 e 1.850 Hz, pela sala, por volta de -23 LUFS.

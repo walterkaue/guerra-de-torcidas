@@ -18,8 +18,9 @@ function audio(): AudioContext | null {
 
 /** Chamar num toque do usuário para destravar o áudio no iPhone. */
 export function destravarSom(): void {
-  audio();
-  void carregarRede();
+  // No toque, na hora (o iPhone só libera o áudio dentro do gesto); o resto monta em seguida, em pedaços.
+  const a = audio();
+  if (a) void prepararEm(a);
 }
 
 let redePronta: Promise<AudioBuffer | null> | null = null;
@@ -51,12 +52,25 @@ export function carregarRede(): Promise<AudioBuffer | null> {
   return redePronta;
 }
 
-function ruido(a: AudioContext, duracao: number): AudioBufferSourceNode {
+const ruidos = new WeakMap<BaseAudioContext, Map<number, AudioBuffer>>();
+
+/** Buffer de ruído branco de uma duração, feito uma vez por AudioContext e reaproveitado (o sorteio é o de sempre). */
+function bufferDeRuido(a: BaseAudioContext, duracao: number): AudioBuffer {
+  let porDuracao = ruidos.get(a);
+  if (!porDuracao) ruidos.set(a, (porDuracao = new Map()));
+  const feito = porDuracao.get(duracao);
+  if (feito) return feito;
   const buf = a.createBuffer(1, Math.floor(a.sampleRate * duracao), a.sampleRate);
   const d = buf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  porDuracao.set(duracao, buf);
+  return buf;
+}
+
+/** Ruído branco: cada som cria só o BufferSource; o buffer da duração já está pronto. */
+function ruido(a: BaseAudioContext, duracao: number): AudioBufferSourceNode {
   const src = a.createBufferSource();
-  src.buffer = buf;
+  src.buffer = bufferDeRuido(a, duracao);
   return src;
 }
 
@@ -73,7 +87,7 @@ function envelope(p: AudioParam, t: number, pontos: ReadonlyArray<readonly [numb
   });
 }
 
-function filtro(a: AudioContext, type: BiquadFilterType, freq: number, q: number): BiquadFilterNode {
+function filtro(a: BaseAudioContext, type: BiquadFilterType, freq: number, q: number): BiquadFilterNode {
   const f = a.createBiquadFilter();
   f.type = type;
   f.frequency.value = freq;
@@ -376,6 +390,9 @@ export function preencherRuidoRosa(d: Float32Array, sorteio: () => number = Math
   if (rms > 0) for (let i = 0; i < d.length; i++) d[i] = (d[i] * 0.3) / rms;
 }
 
+/** Duração da festa da torcida (ruído), em segundos. */
+const DUR_FESTA = 1.8;
+
 /** Duração do "ôôô" da torcida, em segundos. */
 export const DUR_UUUH = 1.95;
 
@@ -397,9 +414,27 @@ export function preencherRespiro(d: Float32Array, sampleRate: number, sorteio: (
   }
 }
 
-const rosas = new WeakMap<AudioContext, AudioBuffer>();
+const rosas = new WeakMap<BaseAudioContext, AudioBuffer>();
+const respiros = new WeakMap<BaseAudioContext, AudioBuffer>();
 
-function bufferRosa(a: AudioContext): AudioBuffer {
+function novoRespiro(a: BaseAudioContext): AudioBuffer {
+  const lento = a.createBuffer(1, tamanhoRespiro(a.sampleRate), a.sampleRate);
+  preencherRespiro(lento.getChannelData(0), a.sampleRate);
+  return lento;
+}
+
+/**
+ * O respiro do "ôôô" continua sorteado de novo a cada vez; só que o da próxima vez já fica pronto, feito fora do
+ * caminho do som (o que toca agora usa o que foi feito antes).
+ */
+function usarRespiro(a: BaseAudioContext): AudioBuffer {
+  const pronto = respiros.get(a) ?? novoRespiro(a);
+  respiros.delete(a);
+  setTimeout(() => respiros.has(a) || respiros.set(a, novoRespiro(a)), 0);
+  return pronto;
+}
+
+function bufferRosa(a: BaseAudioContext): AudioBuffer {
   const feito = rosas.get(a);
   if (feito) return feito;
   const buf = a.createBuffer(1, Math.floor(a.sampleRate * 4), a.sampleRate);
@@ -416,7 +451,7 @@ export function tocarTorcidaEm(a: AudioContext, intensidade: 'festa' | 'uuuh'): 
   const t = a.currentTime;
   const sala = saidaComAmbiente(a);
   if (intensidade === 'festa') {
-    const src = ruido(a, 1.8);
+    const src = ruido(a, DUR_FESTA);
     const filtro = a.createBiquadFilter();
     filtro.type = 'bandpass';
     filtro.frequency.value = 900;
@@ -462,10 +497,8 @@ export function tocarTorcidaEm(a: AudioContext, intensidade: 'festa' | 'uuuh'): 
   }
   // Respiro: o volume sobe e desce sozinho entre 0,8 e 1.
   resp.gain.value = 0;
-  const lento = a.createBuffer(1, tamanhoRespiro(a.sampleRate), a.sampleRate);
-  preencherRespiro(lento.getChannelData(0), a.sampleRate);
   const fonteLenta = a.createBufferSource();
-  fonteLenta.buffer = lento;
+  fonteLenta.buffer = usarRespiro(a);
   fonteLenta.connect(resp.gain);
   fonteLenta.start(t);
   // Envelope e volume.
@@ -516,8 +549,6 @@ export function latenciaDoSom(): number {
   return ctx.outputLatency || ctx.baseLatency || 0;
 }
 
-const salas = new WeakMap<AudioContext, AudioNode>();
-
 /** A sala "Arquibancada leve": som seco, dois ecos (um de cada lado) e um estádio de 2,4 s. */
 export const SALA = {
   seco: 0.95,
@@ -529,12 +560,44 @@ export const SALA = {
   estadio: { seg: 2.4, queda: 3, corte: 4000, vol: 0.12 },
 };
 
-/**
- * "Sala" da identidade sonora: um leve eco de arquibancada (duas arquibancadas, uma de cada lado, um pouco
- * abafadas) e um estádio leve. Uma por AudioContext, criada na primeira vez e reaproveitada. Quem quiser a
- * mesma sala liga na entrada que ela devolve.
- */
-export function saidaComAmbiente(a: AudioContext): AudioNode {
+interface Sala {
+  entrada: AudioNode;
+  conv: ConvolverNode;
+  resposta: AudioBuffer;
+  /** Até onde a resposta do estádio já foi preenchida (amostra). */
+  feito: number;
+  pronta: boolean;
+}
+
+const salas = new WeakMap<BaseAudioContext, Sala>();
+
+/** Amostras da resposta do estádio feitas de cada vez no preparo (um pedaço é um instante curto). */
+const PEDACO_DA_SALA = 4000;
+/** Tempo de trabalho seguido no preparo antes de devolver a vez ao quadro (ms). */
+const FATIA_MS = 6;
+
+/** Preenche a resposta do estádio até a amostra `ate`. A conta é a de sempre. */
+function preencherSala(s: Sala, ate: number): void {
+  const comp = s.resposta.length;
+  const fim = Math.min(comp, ate);
+  const mudos = Math.floor(s.resposta.sampleRate * 0.018);
+  for (let c = 0; c < 2; c++) {
+    const d = s.resposta.getChannelData(c);
+    for (let i = Math.max(mudos, s.feito); i < fim; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / comp, SALA.estadio.queda);
+  }
+  s.feito = fim;
+}
+
+/** Resposta completa: entrega ao convolver (a parte que não dá para fatiar). */
+function entregarSala(s: Sala): void {
+  if (s.pronta) return;
+  preencherSala(s, s.resposta.length);
+  s.conv.buffer = s.resposta;
+  s.pronta = true;
+}
+
+/** Monta os nós da sala (rápido); a resposta do estádio fica para `preencherSala`. */
+function montarSala(a: BaseAudioContext): Sala {
   const feita = salas.get(a);
   if (feita) return feita;
   const entrada = a.createGain();
@@ -544,14 +607,7 @@ export function saidaComAmbiente(a: AudioContext): AudioNode {
   seco.connect(a.destination);
   // Estádio: resposta de ruído estéreo que some; 18 ms de silêncio no começo.
   const conv = a.createConvolver();
-  const comp = Math.floor(a.sampleRate * SALA.estadio.seg);
-  const resposta = a.createBuffer(2, comp, a.sampleRate);
-  const mudos = Math.floor(a.sampleRate * 0.018);
-  for (let c = 0; c < 2; c++) {
-    const d = resposta.getChannelData(c);
-    for (let i = mudos; i < comp; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / comp, SALA.estadio.queda);
-  }
-  conv.buffer = resposta;
+  const resposta = a.createBuffer(2, Math.floor(a.sampleRate * SALA.estadio.seg), a.sampleRate);
   const estadio = a.createGain();
   estadio.gain.value = SALA.estadio.vol;
   const abafaEstadio = filtro(a, 'lowpass', SALA.estadio.corte, 0.7);
@@ -585,8 +641,98 @@ export function saidaComAmbiente(a: AudioContext): AudioNode {
     lado.connect(a.destination);
     eco.connect(conv);
   }
-  salas.set(a, entrada);
-  return entrada;
+  const s: Sala = { entrada, conv, resposta, feito: 0, pronta: false };
+  salas.set(a, s);
+  return s;
+}
+
+/**
+ * "Sala" da identidade sonora: um leve eco de arquibancada (duas arquibancadas, uma de cada lado, um pouco
+ * abafadas) e um estádio leve. Uma por AudioContext, reaproveitada. Normalmente já foi montada no preparo da partida
+ * (`prepararSom`); se um som chegar antes, termina aqui mesmo, para o som sair igual. Quem quiser a mesma sala liga
+ * na entrada que ela devolve.
+ */
+export function saidaComAmbiente(a: BaseAudioContext): AudioNode {
+  const s = montarSala(a);
+  entregarSala(s);
+  return s.entrada;
+}
+
+/** Durações de ruído branco que os sons usam (o buffer de cada uma fica pronto no preparo). */
+const duracoesDeRuido = (): number[] => [
+  CHUTE.clique.dur,
+  CHUTE.pof.dur,
+  TRAVE.clique.dur,
+  TRAVE.pof.dur,
+  TRAVE.contato.dur,
+  DEFESA.encaixou.tapa.dur,
+  DEFESA.encaixou.bola.pof.dur,
+  DEFESA.espalmou.tapa.dur,
+  DEFESA.espalmou.bola.clique?.dur ?? CHUTE.clique.dur,
+  DEFESA.espalmou.bola.pof.dur,
+  BARREIRA.bola.clique.dur,
+  BARREIRA.bola.pof.dur,
+  DUR_FESTA,
+];
+
+/** Tudo pronto para tocar sem montar nada no meio do jogo. */
+export function somPreparado(a: BaseAudioContext | null = ctx): boolean {
+  return !!a && !!salas.get(a)?.pronta && rosas.has(a) && duracoesDeRuido().every((d) => ruidos.get(a)?.has(d));
+}
+
+const preparos = new WeakMap<BaseAudioContext, Promise<void>>();
+
+/**
+ * Devolve a vez ao navegador e só volta depois de um quadro desenhado: cada passo pesado do preparo cai num quadro
+ * diferente, em vez de vários colados num tranco só. Aba escondida (sem quadros): segue por timer.
+ */
+function devolverAVez(): Promise<void> {
+  return new Promise((ok) => {
+    if (typeof requestAnimationFrame === 'undefined' || document.hidden) return void setTimeout(ok, 0);
+    requestAnimationFrame(() => setTimeout(ok, 0));
+  });
+}
+
+/**
+ * Monta o que é caro uma vez, fora do caminho do quadro: a sala do estádio (em fatias de ~6 ms), os ruídos de cada
+ * som, o ruído rosa da torcida, o primeiro respiro do "ôôô" e o som da rede. Chamar no "Preparando a partida" (o
+ * apito espera a promessa, com teto); o toque que destrava o som também chama. Mudo: resolve na hora. O som que sai é
+ * o mesmo: só não se monta mais nada na hora do apito.
+ */
+export function prepararSom(a?: BaseAudioContext): Promise<void> {
+  if (a) return prepararEm(a);
+  if (prefs.get().mudo) return Promise.resolve();
+  const feito = ctx;
+  if (feito) return prepararEm(audio() ?? feito);
+  // Criar o AudioContext trava uns 200 ms (o aparelho de áudio abrindo): num quadro só dele.
+  return devolverAVez().then(() => {
+    const b = audio();
+    return b ? prepararEm(b) : undefined;
+  });
+}
+
+function prepararEm(a: BaseAudioContext): Promise<void> {
+  if (a === ctx) void carregarRede();
+  const emCurso = preparos.get(a);
+  if (emCurso) return emCurso;
+  const s = montarSala(a);
+  const p = (async () => {
+    await devolverAVez();
+    while (s.feito < s.resposta.length) {
+      const inicio = performance.now();
+      while (s.feito < s.resposta.length && performance.now() - inicio < FATIA_MS) preencherSala(s, s.feito + PEDACO_DA_SALA);
+      await devolverAVez();
+    }
+    entregarSala(s);
+    await devolverAVez();
+    for (const d of duracoesDeRuido()) bufferDeRuido(a, d);
+    await devolverAVez();
+    bufferRosa(a);
+    await devolverAVez();
+    if (!respiros.has(a)) respiros.set(a, novoRespiro(a));
+  })();
+  preparos.set(a, p);
+  return p;
 }
 
 /** Um sopro de apito: senoide com trinado, subida rápida e soltura curta. */
