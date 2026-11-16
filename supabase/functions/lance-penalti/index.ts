@@ -25,6 +25,11 @@ servir(async (req) => {
   if (typeof corpo.partidaId !== 'string') throw new ErroHttp(400, 'sem_partida');
   const lance = lanceDoCorpo(corpo.lance);
 
+  // A partida e o segredo saem juntos (uma ida e volta a menos). O segredo só é usado depois de a partida ser
+  // conferida (do torcedor, de pênaltis, aberta e no prazo); antes disso ele não sai daqui, e os erros seguem na ordem.
+  const segredoLido = Promise.resolve(
+    sb.from('partidas_segredo').select('lance_a_lance, gestos, lances, sementes').eq('partida_id', corpo.partidaId).maybeSingle(),
+  );
   const { data: partida, error: eP } = await sb
     .from('partidas')
     .select('id, modo, desafio_id, semente, dificuldade, criada_em, expira_em, fechada_em, minigame')
@@ -36,12 +41,9 @@ servir(async (req) => {
   if (partida.fechada_em) throw new ErroHttp(409, 'partida_ja_fechada');
   if (new Date() > new Date(partida.expira_em)) throw new ErroHttp(410, 'partida_expirada');
 
-  const { data: segredo, error: eS } = await sb
-    .from('partidas_segredo')
-    .select('lance_a_lance, gestos, lances, sementes')
-    .eq('partida_id', partida.id)
-    .single();
+  const { data: segredo, error: eS } = await segredoLido;
   if (eS) throw eS;
+  if (!segredo) throw new Error('partidas_segredo sem a linha da partida');
   if (!segredo.lance_a_lance) throw new ErroHttp(409, 'partida_sem_lance_a_lance');
 
   let gravadas: GestoCobranca[] | undefined;

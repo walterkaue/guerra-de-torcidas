@@ -231,6 +231,9 @@ async function lance(sb: SupabaseClient, uid: string, corpo: Record<string, unkn
   if (typeof i !== 'number' || !Number.isInteger(i)) throw new ErroHttp(400, 'lance_invalido');
   const gestoBruto = lerGesto(corpo.gesto);
 
+  // A partida e o segredo saem juntos (uma ida e volta a menos). O segredo só é usado depois de a partida ser
+  // conferida (do torcedor, de Lances, aberta e no prazo); antes disso ele não sai daqui, e os erros seguem na ordem.
+  const segredoLido = Promise.resolve(sb.from('partidas_segredo').select('gestos, lances').eq('partida_id', corpo.partidaId).maybeSingle());
   const { data, error: eP } = await sb
     .from('partidas')
     .select('id, modo, criada_em, expira_em, fechada_em, minigame, resultado, semana, conta_no_teto, sob_suspeita, time_id')
@@ -249,12 +252,9 @@ async function lance(sb: SupabaseClient, uid: string, corpo: Record<string, unkn
   }
   if (new Date() > new Date(partida.expira_em)) throw new ErroHttp(410, 'partida_expirada');
 
-  const { data: segredo, error: eS } = await sb
-    .from('partidas_segredo')
-    .select('gestos, lances')
-    .eq('partida_id', partida.id)
-    .single();
+  const { data: segredo, error: eS } = await segredoLido;
   if (eS) throw eS;
+  if (!segredo) throw new Error('partidas_segredo sem a linha da partida');
   const guardados = segredo.gestos as GestosLances;
   const cenas = cenasDaPartida(guardados);
 
@@ -321,8 +321,30 @@ async function fechar(
   cenas: Lance[],
   gestos: GestosLances,
 ): Promise<FechamentoLances> {
-  const { data: torcedor, error: eT } = await sb.from('torcedores').select('time_id').eq('id', uid).single();
+  const ids = [...new Set(gestos.lances)];
+  // As leituras de antes de gravar não dependem uma da outra: saem juntas (eram 6 idas e voltas em fila; o ranking de
+  // antes, que precisa do time e da semana, vem logo depois). Todas acontecem antes do fechar_partida, como sempre.
+  const torcedorLido = Promise.resolve(sb.from('torcedores').select('time_id').eq('id', uid).single());
+  const [{ data: torcedor, error: eT }, desafio, cfg, { data: recentes, error: eR }, antes] = await Promise.all([
+    torcedorLido,
+    // X1 recebido: o placar de quem desafiou, lido antes de gravar (o desafio some se a conta de quem fez sumir).
+    partida.modo === 'desafio' && gestos.desafio ? lerDesafio(sb, gestos.desafio) : Promise.resolve(null),
+    configDeteccao(sb),
+    // Detecção: tentativas valendo do torcedor, com esta partida na frente (seção 7.3, "Anti-trapaça").
+    Promise.resolve(
+      sb
+        .from('partidas')
+        .select('resultado')
+        .eq('torcedor_id', uid)
+        .eq('minigame', 'lances')
+        .not('fechada_em', 'is', null)
+        .order('fechada_em', { ascending: false })
+        .limit(60),
+    ),
+    medalhas(sb, uid, ids),
+  ]);
   if (eT) throw eT;
+  if (eR) throw eR;
 
   // Vale o que está guardado no servidor, recalculado do zero, com a tabela da hora em que a partida começou.
   let resultado: ResultadoPartidaLancesServidor;
@@ -336,21 +358,6 @@ async function fechar(
   // Partida criada antes do corte e fechada depois das 00h05 do dia seguinte conta no dia em que começou.
   const { dia, semana } = periodoNoCorte(partida.criada_em, periodoDaPartida(new Date(partida.criada_em), agora));
   const rankingAntes = await posicaoDoTime(sb, semana, torcedor.time_id);
-
-  // X1 recebido: o placar de quem desafiou, lido antes de gravar (o desafio some se a conta de quem fez sumir).
-  const desafio = partida.modo === 'desafio' && gestos.desafio ? await lerDesafio(sb, gestos.desafio) : null;
-
-  // Detecção: tentativas valendo do torcedor, com esta partida na frente (seção 7.3, "Anti-trapaça").
-  const cfg = await configDeteccao(sb);
-  const { data: recentes, error: eR } = await sb
-    .from('partidas')
-    .select('resultado')
-    .eq('torcedor_id', uid)
-    .eq('minigame', 'lances')
-    .not('fechada_em', 'is', null)
-    .order('fechada_em', { ascending: false })
-    .limit(60);
-  if (eR) throw eR;
   const motivo = motivoSuspeitaLances(
     [resultado, ...(recentes ?? []).map((r) => r.resultado as ResultadoPartidaLancesServidor)],
     {
@@ -360,9 +367,6 @@ async function fechar(
       minGols: cfg.lances_min_gols ?? DETECCAO_LANCES_PADRAO.minGols,
     },
   );
-
-  const ids = [...new Set(gestos.lances)];
-  const antes = await medalhas(sb, uid, ids);
 
   // Grava, refaz o teto (regra nova: as 3 melhores de Lances no dia) e anota o ranking numa transação só. Os
   // gatilhos anotam os gols das medalhas e as tentativas da faixa na mesma transação. Nenhuma linha = alguém fechou
@@ -390,22 +394,27 @@ async function fechar(
   if (!estado) throw new ErroHttp(409, 'partida_ja_fechada');
 
   // Daqui para baixo a partida já está gravada: leitura que falhar só tira o bloco da tela.
+  // As leituras de depois também saem juntas (eram 4 em fila); a que falhar só tira o bloco dela da tela.
   const confirmadaEm = new Date().toISOString();
-  const rankingDepois = await posicaoDoTime(sb, semana, torcedor.time_id);
-  const desempenho = await lerDesempenhoLances(sb, partida.id);
-
-  let novas: MedalhaNova[] = [];
-  let hoje = hojeVazio();
-  try {
-    const depois = await medalhas(sb, uid, ids);
-    novas = ids.flatMap((id) => {
-      const m = depois.get(id);
-      return m && PORTE[m] > (PORTE[antes.get(id) ?? ''] ?? 0) ? [{ lanceId: id, medalha: m as MedalhaNova['medalha'] }] : [];
-    });
-    hoje = await lancesHoje(sb, uid);
-  } catch (e) {
-    console.error(e);
-  }
+  const [rankingDepois, desempenho, depois, hojeLido] = await Promise.all([
+    posicaoDoTime(sb, semana, torcedor.time_id),
+    lerDesempenhoLances(sb, partida.id),
+    medalhas(sb, uid, ids).catch((e) => {
+      console.error(e);
+      return null;
+    }),
+    lancesHoje(sb, uid).catch((e) => {
+      console.error(e);
+      return null;
+    }),
+  ]);
+  const novas: MedalhaNova[] = depois
+    ? ids.flatMap((id) => {
+        const m = depois.get(id);
+        return m && PORTE[m] > (PORTE[antes.get(id) ?? ''] ?? 0) ? [{ lanceId: id, medalha: m as MedalhaNova['medalha'] }] : [];
+      })
+    : [];
+  const hoje = hojeLido ?? hojeVazio();
 
   return {
     resultado,
