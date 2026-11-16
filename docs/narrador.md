@@ -1,6 +1,7 @@
 # Banco do narrador — pênaltis, palpites, quiz, Time do Dia e Lances
 
-> Versão 2.1 · 08/11/2026 · Fonte das frases do narrador (pênaltis e Palpite da Rodada) e das provocações entre torcidas e cidades.
+> Versão 2.2 · 15/11/2026 · Fonte das frases do narrador (pênaltis e Palpite da Rodada) e das provocações entre torcidas e cidades.
+> Mudanças da 2.2: goleiro com alcance nos pênaltis (motor 2, partidas desde 23/11/2026): situações novas `gol_tocou`, `gol_contrape`, `gol_cantinho`, `goleiro_encaixou`, `goleiro_espalmou` e `cavadinha_esperou`, e a prioridade num mesmo lance.
 > Mudanças da 2.1: glossário do jogo (decidido pelo Kauê em 08/11/2026): X1 vira desafio, Revanche vira Jogo de volta, recriar vira carimbar, Crava a Rodada vira Palpite da Rodada (sem "cravar"); seções novas **Regras de estilo dos textos** e **Bordões do jogo**; frases novas e as etiquetas `[apertada]`, `[passeio]` e `[colado]`.
 > Mudanças da 2.0: seção 16, **Divisões** (Home durante o mês, placa e card do fim do mês; decididas pelo Kauê em 06/11/2026).
 > Mudanças da 1.9: seção 15, **Galeria de Troféus** (uma frase na ficha de cada troféu; aprovadas pelo Kauê em 06/11/2026).
@@ -63,7 +64,7 @@ A assinatura do nosso narrador. Entram como frase normal das situações abaixo 
 - **Sorteio:** dentro da mesma partida, nunca repetir frase. Guardar as últimas ~30 frases vistas no aparelho (localStorage, com try/catch) e evitar repeti-las.
 - **Raras (⭐):** peso 1/10 em relação às outras. São a surpresa que vira print.
 - **Não usar a semente da partida** para sortear frases. O narrador tem seu próprio gerador aleatório, para não mexer no determinismo da física (cliente e servidor precisam dar o mesmo resultado).
-- **Prioridade num mesmo lance:** cavadinha > trave e gol > ângulo > gol. Só uma frase por lance.
+- **Prioridade num mesmo lance:** cavadinha > trave e gol > ângulo > tocou e entrou > contrapé > no cantinho > gol. Só uma frase por lance. Na defesa do goleiro da máquina: encaixou ou espalmou (motor 2); no motor 1, `goleiro_pegou`. Cavadinha que morreu com o goleiro esperando no meio, depois de outra cavadinha na mesma partida, é `cavadinha_esperou`.
 - **Tela final:** 5 de 5 e depois vitória ou derrota (até 2 frases). Não existe mais empate: toda disputa termina com vencedor (ver desempate no `jogo.md`).
 - **Desempate:** `morte_subita` sai quando a morte súbita começa; `par_ou_impar_escolha` enquanto o servidor responde; `par_ou_impar_ganhou` ou `par_ou_impar_perdeu` no resultado, antes da frase de vitória ou derrota.
 - **Tamanho:** até ~75 caracteres depois de trocar as variáveis, para caber em 2 linhas em 390 px. Grito em MAIÚSCULAS só no começo.
@@ -144,7 +145,7 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - GOL! Simples, seco, sem conversa.
 - Estufou a rede! Pode mandar o print pro grupo!
 - GOL! O goleiro pulou pra foto, mas a bola não quis posar.
-- GOL! Mais dez pontinhos na conta {do_time}!
+- GOL! Mais pontinhos na conta {do_time}!
 - Pá, pum, rede! Próximo!
 - GOL! Bateu tão tranquilo que parecia treino de quarta.
 - Entrou rasteirinha, de mansinho, pedindo licença. [baixo]
@@ -257,6 +258,75 @@ Colunas do gol: 0 e 2 são os cantos, 1 é o meio. Linhas: 0 é baixo, 1 é alto
 - Espalmou! Mão firme do goleiro da máquina.
 - Voou e pegou lá em cima! Que defesa do goleiro! [alto]
 - ⭐ Pegou! O goleiro já tá dando entrevista na beira do campo.
+
+### `goleiro_encaixou` — o goleiro da máquina encaixou (motor 2: chegou em cheio e ficou com a bola)
+- Encaixou! O goleiro abraçou a bola como presente de aniversário.
+- Encaixou firme! Nem rebote, nem esperança.
+- Pegou e ficou com ela! O goleiro chegou antes da bola.
+- Encaixou no peito! Foi entrega em domicílio. [meio]
+- Chute fraquinho, o goleiro encaixou sem pressa. [fraca]
+- Encaixou! O goleiro leu o chute e esperou com calma.
+- Agarrou! A bola foi direto pro colo do goleiro.
+- Voou no canto e segurou firme! Que defesa! [canto]
+- Segurou firme! O goleiro tá com cola na luva.
+- ⭐ Encaixou! O goleiro já pediu a bola de lembrança.
+
+### `goleiro_espalmou` — o goleiro da máquina espalmou (motor 2: a luva chegou firme e a bola saiu)
+- Espalmou! A luva chegou firme e mandou pra fora.
+- ESPALMOU! Mão trocada, bola longe!
+- Que defesa! Espalmou pela linha de fundo.
+- Espalmou! A torcida {do_time} pôs a mão na cabeça.
+- Tirou com a mão firme! A bola foi passear atrás do gol.
+- Voou e espalmou lá em cima! [alto]
+- Espalmou rasteiro, rente à trave! [baixo]
+- Espalmou! Foi no lugar certo, na hora certa.
+- Esticou tudo e tirou! O goleiro da máquina tá inspirado.
+- ⭐ Espalmou com tanta vontade que a bola foi parar no estacionamento.
+
+### `gol_tocou` — a luva do goleiro tocou, mas a bola entrou (motor 2)
+- TOCOU E ENTROU! A luva raspou, mas a rede foi mais forte!
+- Pegou na ponta dos dedos... e entrou! Sofrimento!
+- GOL! O goleiro tocou, mas não segurou.
+- Raspou na luva e morreu na rede! Que susto!
+- A luva beijou a bola e ela foi pro fundo da rede!
+- GOL! O goleiro chegou a tocar, mas foi só um carinho.
+- Entrou com marca de luva e tudo!
+- Tocou e foi pra dentro! Coração na boca da torcida {do_time}!
+- ⭐ GOL! A bola levou a digital do goleiro de lembrança.
+
+### `gol_contrape` — gol com o goleiro mergulhando para o outro lado (motor 2)
+- CONTRAPÉ! O goleiro foi pra um lado e a bola pro outro!
+- Pegou o goleiro no contrapé! Nem viu a cor da bola.
+- GOL! Mandou o goleiro pro lado errado, com passagem só de ida.
+- Contrapé total! O goleiro mergulhou no vazio.
+- GOL! Deslocou o goleiro, que caiu do outro lado.
+- Que deslocada! O goleiro vai pedir o replay pra entender.
+- Contrapé! O goleiro escolheu o canto com convicção. O errado.
+- GOL! O goleiro voou bonito... pro lado contrário.
+- ⭐ Contrapé! O goleiro ainda tá procurando a bola do outro lado.
+
+### `gol_cantinho` — gol no canto (fora do ângulo), onde vale mais (motor 2)
+- NO CANTINHO! Lugar onde o goleiro não alcança!
+- Colocou no cantinho! Bola com endereço certo.
+- Cantinho! Rente à trave, sem chance pro goleiro.
+- No canto, colado na trave! Coisa de quem treina.
+- GOL! Bola no cantinho, goleiro esticado no ar.
+- Rasteirinho no canto! A bola foi rolando pra rede. [baixo]
+- Colocou com régua! Cantinho perfeito.
+- Cantinho! O goleiro esticou tudo e não chegou.
+- No cantinho! Vale mais e a torcida {do_time} agradece!
+- ⭐ No cantinho! O goleiro só conseguiu acenar pra bola.
+
+### `cavadinha_esperou` — cavadinha repetida na partida, e o goleiro esperou no meio (motor 2)
+- Cavou de novo? O goleiro nem saiu do lugar!
+- De novo a cavadinha? O goleiro já tava esperando!
+- O goleiro aprendeu! Ficou no meio e encaixou a cavadinha.
+- Cavadinha repetida vira presente: o goleiro só abriu os braços.
+- Outra cavadinha? O goleiro já sabia o roteiro.
+- Cavou de novo e o goleiro tava lá, plantado no meio.
+- Esse truque o goleiro já conhecia! Ficou parado e pegou.
+- Repetiu a cavadinha... e o goleiro agradeceu a gentileza.
+- ⭐ Cavadinha de novo? O goleiro até bocejou antes de pegar.
 
 ### `defesa` — você defendeu
 - PEGOUUU! Que defesa, que reflexo!
