@@ -2,25 +2,31 @@
 // Detecção de partidas estatisticamente impossíveis (aprovada em 19/10/2026; jogo.md, "Anti-trapaça").
 // Módulo puro, roda no servidor ao fechar cada partida. Partida marcada fica fora do ranking até revisão.
 
-import { coluna, type ResultadoCobranca, type ResultadoDefesa } from './penaltis.ts';
+import { GOLEIRO, ZONAS, chanceDeDefesaSemLer, coluna, type ResultadoCobranca, type ResultadoDefesa } from './penaltis.ts';
 
 export interface ConfigDeteccao {
   /** Últimas N defesas contra o batedor da máquina com chute no gol. */
   janelaDefesas: number;
   /** Marca se defendeu pelo menos isto dentro da janela (honesto: ~60% na segunda, ~35% no domingo). */
   minDefesas: number;
-  /** Últimas N cobranças em que o goleiro da máquina pulou por sorteio (não "leu" o chute). */
+  /**
+   * Últimas N cobranças em que o goleiro da máquina pulou por sorteio (não "leu" o chute). Também dá a certeza da regra
+   * "nenhuma defendida": 0,8^N, o falso alarme da regra do lado no pior caso.
+   */
   janelaCobrancas: number;
 }
 
 export const DETECCAO_PADRAO: ConfigDeteccao = { janelaDefesas: 30, minDefesas: 27, janelaCobrancas: 40 };
 
-type CobrancaParaDeteccao = Pick<ResultadoCobranca, 'goleiroLeu' | 'zonaBola' | 'zonaGoleiro' | 'goleiroX'>;
+type CobrancaParaDeteccao = Pick<ResultadoCobranca, 'goleiroLeu' | 'zonaBola' | 'zonaGoleiro' | 'goleiroX'> &
+  Partial<Pick<ResultadoCobranca, 'x' | 'y' | 'cavadinha' | 'fraca' | 'desfecho'>>;
 
 interface PartidaParaDeteccao {
   cobrancas: readonly CobrancaParaDeteccao[];
   defesas: readonly Pick<ResultadoDefesa, 'desfecho' | 'contraGravada'>[];
 }
+
+const ehDoMotor2 = (c: CobrancaParaDeteccao) => typeof c.goleiroX === 'number';
 
 /**
  * A bola foi onde o goleiro que não leu foi? No motor 2 (cobrança com `goleiroX`) vale o LADO do mergulho (a coluna); no
@@ -29,7 +35,39 @@ interface PartidaParaDeteccao {
  * 20% a 40% das cobranças, e o falso alarme fica em 0,013% no pior caso (0,8^40).
  */
 export function noLadoDoGoleiro(c: CobrancaParaDeteccao): boolean {
-  return typeof c.goleiroX === 'number' ? coluna(c.zonaBola) === coluna(c.zonaGoleiro) : c.zonaBola === c.zonaGoleiro;
+  return ehDoMotor2(c) ? coluna(c.zonaBola) === coluna(c.zonaGoleiro) : c.zonaBola === c.zonaGoleiro;
+}
+
+/** Chance de o goleiro de 6 zonas (motor 1), pulando por sorteio, NÃO ir na zona da bola. */
+const FORA_DA_ZONA = (ZONAS - 1) / ZONAS;
+/** Regra do lado no pior caso (bola no meio contra o goleiro com alcance): chance de ele NÃO ficar no lado da bola. */
+const FORA_DO_LADO = 1 - GOLEIRO.meio;
+
+/** Uma cobrança sem leitura para a regra "nenhuma defendida": se o goleiro pegou, e a chance que ele tinha de não pegar. */
+interface SemLeitura {
+  pegou: boolean;
+  escapa: number;
+}
+
+/**
+ * As cobranças sem leitura de uma partida, da mais recente para a mais antiga. No motor 1, "pegou" é a bola na zona do
+ * goleiro (como sempre) e a chance de escapar é 5/6. No motor 2, "pegou" é a defesa, e a chance de escapar sai da bola
+ * (chanceDeDefesaSemLer): alta no ângulo, baixa no meio, e na cavadinha cai a cada cavadinha anterior da partida.
+ */
+function semLeitura(p: PartidaParaDeteccao): SemLeitura[] {
+  const lista: SemLeitura[] = [];
+  let cavadinhas = 0;
+  for (const c of p.cobrancas) {
+    const antes = cavadinhas;
+    if (c.cavadinha) cavadinhas++;
+    if (c.goleiroLeu) continue;
+    if (!ehDoMotor2(c)) {
+      lista.push({ pegou: c.zonaBola === c.zonaGoleiro, escapa: FORA_DA_ZONA });
+    } else if (typeof c.x === 'number' && typeof c.y === 'number') {
+      lista.push({ pegou: c.desfecho === 'defesa', escapa: 1 - chanceDeDefesaSemLer({ x: c.x, y: c.y, cavadinha: !!c.cavadinha, fraca: !!c.fraca }, antes) });
+    }
+  }
+  return lista.reverse();
 }
 
 /**
@@ -58,6 +96,28 @@ export function motivoSuspeita(todas: readonly PartidaParaDeteccao[], cfg: Confi
     .slice(0, cfg.janelaCobrancas);
   if (cobrancas.length === cfg.janelaCobrancas && cobrancas.every((c) => !noLadoDoGoleiro(c))) {
     return `cobranças: nenhuma no canto do goleiro em ${cfg.janelaCobrancas}`;
+  }
+
+  // 3. Cobranças, nenhuma defendida: no motor 2 dá para fazer gol no lado do goleiro (basta ficar fora do alcance), então
+  //    quem lê a semente não precisa fugir do lado e passa pela regra 2. O que ele não deixa acontecer é a defesa. Anda
+  //    das cobranças sem leitura mais recentes para as antigas, multiplicando a chance que o goleiro tinha de NÃO pegar
+  //    cada uma, até achar uma que ele pegou (aí está tudo certo) ou até essa chance ficar tão pequena quanto o falso
+  //    alarme da regra 2 no pior caso, 0,8^N (N = `janelaCobrancas`). Bola no ângulo quase não pesa (o goleiro quase
+  //    nunca pega mesmo): quem mira bem não é marcado. Só com cobranças do motor 1 quem decide é a regra 2, como sempre
+  //    (cada uma pesa 5/6, e 40 delas ainda não enchem esta conta).
+  if (cfg.janelaCobrancas >= 1) {
+    let limite = 1;
+    for (let k = 0; k < cfg.janelaCobrancas; k++) limite *= FORA_DO_LADO;
+    let escapou = 1;
+    let n = 0;
+    busca: for (const p of partidas) {
+      for (const c of semLeitura(p)) {
+        if (c.pegou) break busca;
+        escapou *= c.escapa;
+        n++;
+        if (escapou <= limite) return `cobranças: nenhuma defendida pelo goleiro em ${n}`;
+      }
+    }
   }
   return null;
 }

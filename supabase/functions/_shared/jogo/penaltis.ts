@@ -187,7 +187,8 @@ export const PONTOS_UNIFICADOS: TabelaPenaltis = {
 /**
  * Tabela do motor 2 (goleiro com alcance, decidida em 15/11/2026): o gol vale pela colocação, o ângulo soma ao canto e
  * a cavadinha que entra vale `cavadinha` sozinha. O maior caminho possível dá 135 (5 cavadinhas, 5 defesas, vitória e
- * os dois 5 de 5); o teto de 150 é a mesma guarda do fechamento.
+ * os dois 5 de 5), ou 136 indo à morte súbita (8 cavadinhas, 1 defesa, vitória e um 5 de 5); o teto de 150 é a mesma
+ * guarda do fechamento.
  */
 export interface TabelaGoleiro {
   motor: 2;
@@ -543,6 +544,53 @@ export function desfechoDoGoleiro(
     return { ...base, desfecho: 'defesa', angulo, raspouTrave: false, pontos: 0, jeito, faixa };
   }
   return { ...base, desfecho: 'gol', angulo, raspouTrave, pontos: pontosDoGol(tabela, faixa, cavadinha), jeito, faixa };
+}
+
+/** Pontos por eixo na média da chanceDeDefesaSemLer (com 24 o erro fica abaixo de 1 ponto percentual). */
+const GRADE_DA_CHANCE = 24;
+
+/** Chance de defesa (encaixar ou espalmar) com a luva a (dx, dy) da bola e alcance r, na média do sorteio do toque. */
+function chanceComALuvaA(dx: number, dy: number, r: number): number {
+  const d2 = (dx * dx + dy * dy) / (r * r);
+  if (d2 <= GOLEIRO.encaixa) return 1;
+  if (d2 > 1) return 0;
+  const entra = (d2 - GOLEIRO.encaixa) / GOLEIRO.toque;
+  return entra >= 1 ? 0 : 1 - entra;
+}
+
+/**
+ * Chance de o goleiro que NÃO leu defender esta bola (encaixar ou espalmar), antes dos sorteios dele: é o
+ * desfechoDoGoleiro na média do lado, da posição e do toque. Só a detecção usa (deteccao.ts), para medir o quanto era de
+ * se esperar uma defesa numa bola dessas; não entra no resultado de nenhuma cobrança. Quem mudar o desfechoDoGoleiro
+ * muda aqui (o teste compara as duas contas por sorteio).
+ */
+export function chanceDeDefesaSemLer(bola: { x: number; y: number; cavadinha: boolean; fraca: boolean }, antes = 0): number {
+  const { x, y, cavadinha, fraca } = bola;
+  // Trave e pra fora nunca são defesa (e número estragado não conta).
+  if (!(Math.abs(x) <= 1 && y >= 0 && y <= 1)) return 0;
+  const meio = chanceDoMeio(cavadinha, antes);
+  // Cavadinha sem leitura só morre se ele ficou no meio.
+  if (cavadinha) return meio;
+  let r = GOLEIRO.alcance;
+  if (fraca) r *= GOLEIRO.fraca;
+  if (noCanto(x, y)) r *= GOLEIRO.canto;
+  // Meio, esquerda e direita (cada lado com metade do que sobra do meio), com o ponto do mergulho como o motor sorteia.
+  const esquerda = chanceNaFaixa(x, y, r, -(GOLEIRO.ladoMinimo + GOLEIRO.ladoFaixa), GOLEIRO.ladoFaixa);
+  const direita = chanceNaFaixa(x, y, r, GOLEIRO.ladoMinimo, GOLEIRO.ladoFaixa);
+  return meio * chanceNaFaixa(x, y, r, -GOLEIRO.meioFaixa / 2, GOLEIRO.meioFaixa) + ((1 - meio) / 2) * (esquerda + direita);
+}
+
+/** Média da chance de defesa com o ponto do mergulho sorteado em x de `x0` a `x0 + largura`, na altura de sempre. */
+function chanceNaFaixa(x: number, y: number, r: number, x0: number, largura: number): number {
+  // A faixa inteira fora do alcance: nem faz a conta.
+  if (x < x0 - r || x > x0 + largura + r) return 0;
+  const n = GRADE_DA_CHANCE;
+  let soma = 0;
+  for (let a = 0; a < n; a++) {
+    const dx = x - (x0 + (largura * (a + 0.5)) / n);
+    for (let b = 0; b < n; b++) soma += chanceComALuvaA(dx, y - (GOLEIRO.alturaMinima + (GOLEIRO.alturaFaixa * (b + 0.5)) / n), r);
+  }
+  return soma / (n * n);
 }
 
 /** Resolve a cobrança i do jogador contra o goleiro com alcance (motor 2). */

@@ -10,6 +10,7 @@ import {
   PONTOS_UNIFICADOS,
   RODADAS_MAX,
   cavadinhasAntes,
+  chanceDeDefesaSemLer,
   chanceDoMeio,
   desfechoDoGoleiro,
   ehGestoDeCavadinha,
@@ -343,5 +344,54 @@ describe('partida do motor 2', () => {
     const gols = Array.from({ length: 5 }, () => desfechoDoGoleiro(bola(0, 0.8, { cavadinha: true }), { ...S, lado: 0 }, 0));
     const defesas = Array.from({ length: 5 }, () => ({ desfecho: 'defesa' as const, alvo: 0, zonaGoleiro: 0, contraGravada: false, pontos: t.defesa }));
     expect(totalizar(gols, defesas, undefined, t).pontos.total).toBe(135);
+    // Indo à morte súbita cabe 1 ponto a mais: 5 x 5, mais duas rodadas com gol dos dois e a vitória na 8ª. Longe do teto.
+    const oito = Array.from({ length: 8 }, () => gols[0]);
+    const sofreu = { desfecho: 'gol' as const, alvo: 0, zonaGoleiro: 1, contraGravada: false, pontos: 0 };
+    expect(totalizar(oito, [...Array.from({ length: 7 }, () => sofreu), defesas[0]], undefined, t).pontos.total).toBe(136);
+    expect(t.teto).toBe(150);
+  });
+});
+
+describe('chance de defesa sem leitura (só a detecção usa)', () => {
+  /** A mesma chance tirada do motor: o desfechoDoGoleiro com o lado, a posição e o toque sorteados, sem leitura. */
+  function porSorteio(b: ReturnType<typeof bola>, antes: number, n = 30_000): number {
+    const rnd = criarAleatorio(99);
+    let defesas = 0;
+    for (let k = 0; k < n; k++) {
+      const s = { ...S, leitura: 1, lado: rnd(), posX: rnd(), posY: rnd(), toque: rnd() };
+      if (desfechoDoGoleiro(b, s, 0.5, PONTOS_GOLEIRO, antes).desfecho === 'defesa') defesas++;
+    }
+    return defesas / n;
+  }
+
+  it('bate com o motor em cada tipo de bola', () => {
+    const bolas: [ReturnType<typeof bola>, number][] = [
+      [bola(0, 0.5), 0],
+      [bola(0.55, 0.45), 0],
+      [bola(-0.6, 0.8), 0],
+      [bola(0.8, 0.4), 0],
+      [bola(0.9, 0.1), 0],
+      [bola(0.85, 0.85), 0],
+      [bola(0.28, 0.4), 0],
+      [bola(-0.9, 0.05, { fraca: true }), 0],
+      [bola(0.2, 0.05, { fraca: true }), 0],
+      [bola(0.05, 0.8, { cavadinha: true }), 0],
+      [bola(0.05, 0.8, { cavadinha: true }), 2],
+    ];
+    for (const [b, antes] of bolas) expect(Math.abs(chanceDeDefesaSemLer(b, antes) - porSorteio(b, antes))).toBeLessThan(0.012);
+  });
+
+  it('no ângulo o goleiro quase nunca pega; na cavadinha repetida, quase sempre', () => {
+    expect(chanceDeDefesaSemLer(bola(0.85, 0.85))).toBeLessThan(0.04);
+    expect(chanceDeDefesaSemLer(bola(0.55, 0.45))).toBeGreaterThan(0.12);
+    const cav = bola(0, 0.8, { cavadinha: true });
+    expect([0, 1, 2, 3, 7].map((antes) => chanceDeDefesaSemLer(cav, antes))).toEqual([0, 1, 2, 3, 7].map((antes) => chanceDoMeio(true, antes)));
+  });
+
+  it('trave, pra fora e número estragado: zero', () => {
+    expect(chanceDeDefesaSemLer(bola(1.03, 0.5))).toBe(0);
+    expect(chanceDeDefesaSemLer(bola(0.2, 1.3))).toBe(0);
+    expect(chanceDeDefesaSemLer(bola(Number.NaN, 0.5))).toBe(0);
+    expect(chanceDeDefesaSemLer(bola(0.2, Number.NaN))).toBe(0);
   });
 });
