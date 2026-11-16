@@ -395,6 +395,20 @@ export function poseChute(ms: number, cavadinha: boolean, out: Pose): Pose {
   return sequencia(cavadinha ? CAVADINHA : CHUTE, ms, out);
 }
 
+/**
+ * Do arraste ao pé na bola: dois passos curtos (`passos` ms, parado → passo → parado, duas vezes) e o chute de sempre.
+ * Com `passos` 0 (movimento reduzido), só o chute.
+ */
+export function poseDaBatida(ms: number, cavadinha: boolean, passos: number, out: Pose): Pose {
+  if (ms >= passos) return poseChute(ms - passos, cavadinha, out);
+  const meio = passos / 2;
+  const primeiro = ms < meio;
+  const onda = Math.sin(Math.PI * ((primeiro ? ms : ms - meio) / meio));
+  misturar(B.parado, primeiro ? B.correA : correB, 0.7 * onda, out);
+  out[RY] -= 1.6 * onda;
+  return out;
+}
+
 /** Chute da máquina, a partir da pose de espera (contato aos 190 ms). */
 export function poseChuteMaquina(ms: number, out: Pose): Pose {
   return sequencia(CHUTE_MAQUINA, ms, out);

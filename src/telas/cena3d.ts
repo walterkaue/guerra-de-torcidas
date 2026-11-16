@@ -514,6 +514,19 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
   }
 
   const bolaNaTela = () => p(bola.x, RAIO_BOLA, bola.z);
+
+  /** Anel do sinal "VALENDO!" em volta da bola parada (`escala` em raios da bola desenhada). */
+  function desenharAnelDaBola(escala: number, alfa: number): void {
+    const centro = bolaNaTela();
+    const r = Math.max(3, RAIO_BOLA * centro.escala * BOLA_MAIOR) * escala;
+    c.save();
+    c.strokeStyle = `rgba(255,255,255,${alfa})`;
+    c.lineWidth = 3;
+    c.beginPath();
+    c.arc(centro.x, centro.y, r, 0, Math.PI * 2);
+    c.stroke();
+    c.restore();
+  }
   /** Ponto do gol na tela, nas unidades do motor (x de -1 a 1, y de 0 a 1). */
   const noGol = (x: number, y: number) => p(x * MEIA_GOL, y * ALTURA_GOL, 0);
 
@@ -595,6 +608,7 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
     desenharBatedor,
     desenharBola3d,
     bolaNaTela,
+    desenharAnelDaBola,
     noGol,
     projetar: (q: Ponto3) => p(q.x, q.y, q.z),
     eixo,

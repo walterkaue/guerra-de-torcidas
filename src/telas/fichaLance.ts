@@ -8,6 +8,7 @@ import '../estilos/trofeus.css';
 import { esc } from '../app';
 import { contar } from '../servidor/funil';
 import { textoParaCopiar } from '../jogo/mandarLance';
+import { destravarSom } from '../jogo/som';
 import { ehItemPenaltis, previaDoProximoGol, trilhaDoItem } from '../jogo/lancesTextos';
 import { barra, trilha } from './blocos';
 import { folhaNoHistorico } from './folhaNoHistorico';
@@ -106,7 +107,12 @@ export function abrirFicha(o: OpcoesDaFicha): () => void {
     b.querySelector('span')!.textContent = favorito ? 'Favorito' : 'Favoritar';
     o.aoFavoritar(favorito);
   });
-  d.querySelector('[data-jogar]')!.addEventListener('click', () => fechar(() => o.aoJogar()));
+  d.querySelector('[data-jogar]')!.addEventListener('click', () => {
+    // O áudio abre no toque (o iPhone só libera dentro do gesto, e abrir custa uns 200 ms): o 1º apito já sai, e a
+    // partida não trava no meio do preparo.
+    destravarSom();
+    fechar(() => o.aoJogar());
+  });
   const btnMandar = d.querySelector<HTMLButtonElement>('[data-mandar]');
   if (btnMandar && o.mandar) {
     const { texto, link } = o.mandar;

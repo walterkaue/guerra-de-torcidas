@@ -13,6 +13,7 @@ import {
   tocarTraveEm,
   variar,
 } from '../jogo/som';
+import { NOME_DA_SALA, tocarDemoNaSala } from './salaLeve';
 
 let ctx: AudioContext | null = null;
 function audio(): AudioContext {
@@ -207,6 +208,24 @@ for (const [titulo, , antes, depois] of LINHAS) {
       if (fn === tocarRedeEm) void carregarRede().then((buf) => (buf ? fn(a) : (aviso.textContent = 'O arquivo da rede ainda não carregou. Toque de novo.')));
       else fn(a);
     });
+    grade.append(b);
+  }
+  document.body.append(bloco);
+}
+
+// Proposta de "sala leve" para o nível Leve (15/11/2026): a mesma demonstração por cada sala, para ouvir antes de decidir.
+{
+  const bloco = document.createElement('section');
+  bloco.style.cssText = 'margin-bottom:20px';
+  bloco.innerHTML = `<h2 style="font-size:16px;margin:0 0 4px">Sala leve (proposta para o nível Leve)</h2>
+<p style="margin:0 0 8px;opacity:.8">Apito final e 3 chutes, pela sala de hoje e por duas salas mais leves. O seco e os dois ecos de arquibancada são iguais nas três; muda só o estádio.</p>
+<div style="display:grid;gap:12px"></div>`;
+  const grade = bloco.lastElementChild as HTMLElement;
+  for (const v of ['hoje', 'curta', 'ecos'] as const) {
+    const b = document.createElement('button');
+    b.textContent = NOME_DA_SALA[v];
+    b.style.cssText = 'min-height:64px;font:700 18px inherit;border:0;border-radius:12px;background:#f5f5f0;color:#0b3d1f;touch-action:manipulation';
+    b.addEventListener('click', () => tocarDemoNaSala(audio(), v));
     grade.append(b);
   }
   document.body.append(bloco);
