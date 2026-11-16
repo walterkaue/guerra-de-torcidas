@@ -239,12 +239,13 @@ describe('mesma conta do recálculo completo', () => {
   }, TEMPO);
 
   it('empate de média: decide quem chegou primeiro', async () => {
-    // Em outra semana, para a conta ficar só com os dois times.
-    const sem = '2026-11-16';
+    // Em outra semana, para a conta ficar só com os dois times. Longe do relógio: o teste das suspeitas grava na semana
+    // de hoje (em 16/11/2026 esta semana era a de hoje e a conta ganhou outros times).
+    const sem = '2030-01-07';
     const x = await torcedor(db, 'fluminense');
     const y = await torcedor(db, 'botafogo');
-    await partida(db, y, 60, { dia: '2026-11-18', semana: sem }); // chegou depois
-    await partida(db, x, 60, { dia: '2026-11-17', semana: sem }); // chegou antes
+    await partida(db, y, 60, { dia: '2030-01-09', semana: sem }); // chegou depois
+    await partida(db, x, 60, { dia: '2030-01-08', semana: sem }); // chegou antes
     const linhas = await confere(db, sem);
     expect(por(linhas, 'fluminense').media30).toBe(por(linhas, 'botafogo').media30);
     expect(por(linhas, 'fluminense').posicao_campeao).toBe(1);
@@ -252,14 +253,14 @@ describe('mesma conta do recálculo completo', () => {
   }, TEMPO);
 
   it('corte dos 30 melhores e vagas emprestadas a 80% da média geral', async () => {
-    const sem = '2026-11-23';
+    const sem = '2030-01-14';
     // 34 no Santos: só os 30 melhores contam na média; a soma leva todos.
     for (let i = 0; i < 34; i++) {
-      await partida(db, await torcedor(db, 'santos'), 10 + i, { dia: '2026-11-24', semana: sem });
+      await partida(db, await torcedor(db, 'santos'), 10 + i, { dia: '2030-01-15', semana: sem });
     }
     // 3 no Cruzeiro: faltam 27 vagas.
     for (const pts of [90, 50, 20]) {
-      await partida(db, await torcedor(db, 'cruzeiro'), pts, { dia: '2026-11-24', semana: sem });
+      await partida(db, await torcedor(db, 'cruzeiro'), pts, { dia: '2030-01-15', semana: sem });
     }
     const linhas = await confere(db, sem);
     expect(por(linhas, 'santos').ativos).toBe(34);
