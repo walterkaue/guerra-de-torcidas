@@ -51,5 +51,6 @@ Para saber onde o projeto está e o que vem a seguir, leia `docs/proximos-passos
 - Commits pequenos, mensagem em português, no formato `tipo: descrição` (ex.: `feat: desafio por link`, `fix: card cortado no iPhone`).
 - Ao terminar uma tarefa: diga o que mudou, como testar no celular e o que ficou pendente.
 - Quando uma decisão de produto mudar durante o trabalho, atualize no mesmo commit a regra no `docs/jogo.md` ou no doc do módulo (dizendo só como é agora, sem "até tal dia era…") e ponha uma linha com a data no topo de `docs/decisoes.md`.
+- Todo PR para a `main` roda `.github/workflows/pr.yml` (`conferir`: testes rápidos, `tsc`, build, teto de 80 kB gzip do `index-*.js` e, se mexer em `supabase/` ou `src/jogo/`, `test:banco`). **O PR só entra com o visto verde**; se falhar, conserte no mesmo PR, nunca ignore. O teto fica na constante `TETO_PACOTE_INICIAL_KB` do `pr.yml`.
 - Ao fechar um item da fila, tire-o do `docs/proximos-passos.md` no mesmo PR.
 - Os docs têm teto de tamanho (`scripts/docs/tamanho.test.ts`). Se estourar, enxugue em vez de subir o teto.

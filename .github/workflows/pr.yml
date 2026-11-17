@@ -1,0 +1,68 @@
+name: Conferir pull request
+
+# Roda em todo PR para a main. O deploy.yml (push na main) continua igual.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  # Teto do pacote inicial (index-*.js, gzip), em kB. Hoje está perto de 47.
+  # Para mudar o limite, mude só este número.
+  TETO_PACOTE_INICIAL_KB: 80
+
+jobs:
+  conferir:
+    name: conferir
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Testes rápidos
+        run: npm run test:rapido
+      - name: Tipos (tsc)
+        run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
+      - name: Teto do pacote inicial
+        run: |
+          arquivos=$(ls dist/assets/index-*.js)
+          total=0
+          for f in $arquivos; do
+            bytes=$(gzip -9 -c "$f" | wc -c)
+            echo "$f: $bytes bytes gzip"
+            total=$((total + bytes))
+          done
+          limite=$((TETO_PACOTE_INICIAL_KB * 1024))
+          echo "Pacote inicial: $total bytes gzip (teto $limite, $TETO_PACOTE_INICIAL_KB kB)"
+          if [ "$total" -gt "$limite" ]; then
+            echo "::error::Pacote inicial passou do teto de $TETO_PACOTE_INICIAL_KB kB gzip"
+            exit 1
+          fi
+      - name: Decidir se roda o teste do banco
+        id: caminhos
+        run: |
+          mudou=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" | grep -E '^(supabase/|src/jogo/)' || true)
+          if [ -n "$mudou" ]; then
+            echo "roda=true" >> "$GITHUB_OUTPUT"
+            echo "O PR mexe em supabase/ ou src/jogo/:"
+            echo "$mudou"
+          else
+            echo "roda=false" >> "$GITHUB_OUTPUT"
+            echo "O PR não mexe em supabase/ nem em src/jogo/: test:banco pulado."
+          fi
+      - name: Testes do banco
+        if: steps.caminhos.outputs.roda == 'true'
+        run: npm run test:banco
