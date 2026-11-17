@@ -512,12 +512,12 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
     desenharBonecoEm(b, q.x, q.z, pose);
   }
 
-  /** Bola no ponto `q` (m; y é a altura do chão até a parte de baixo da bola). */
-  function desenharBola3d(q: Ponto3, giro = 0): NaTela {
+  /** Bola no ponto `q` (m; y é a altura do chão até a parte de baixo da bola); `amassa` e `angulo` como em desenharBolaEm. */
+  function desenharBola3d(q: Ponto3, giro = 0, amassa = 1, angulo = 0): NaTela {
     const centro = p(q.x, q.y + RAIO_BOLA, q.z);
     const chao = p(q.x, 0, q.z);
     const r = Math.max(3, RAIO_BOLA * centro.escala * BOLA_MAIOR);
-    desenharBolaEm(c, centro.x, centro.y, r, chao.y - r * 0.6, giro, gradBola);
+    desenharBolaEm(c, centro.x, centro.y, r, chao.y - r * 0.6, giro, gradBola, amassa, angulo);
     return centro;
   }
 

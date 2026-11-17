@@ -44,6 +44,7 @@ Nada disso tem lembrete automático.
 - **Resultado:** "3 gols · +21" nos pênaltis e a barra de baixo opaca; com a fonte do sistema grande, "Termos e privacidade" tocável no fim da Home.
 - **Partida:** deitar o celular no meio da defesa dos pênaltis (a partida espera); no computador ou iPad, o campo maior com a mira certa.
 - **Goleiro com alcance (a partir de 23/11):** o mergulho para pontos diferentes do gol (não só 6), o "tocou e entrou", o "espalmou" com a bola saindo, a legenda com a colocação ("No canto · +8") e duas cavadinhas seguidas (a 2ª com "O goleiro aprende…").
+- **Bola amassando (K05), depois de publicar:** nos Pênaltis, um gol e uma defesa na cobrança e na defesa; nos Lances, um gol e uma defesa: a bola achata na rede e na luva e volta redonda; na trave, redonda. Com "remover animações" ligado no aparelho, não amassa.
 - **Boneco em campo:** 60 fps, replay de golaço, o interruptor "Meu boneco em campo", desafio entre duas contas.
 - **Acessibilidade (G3):** fonte do sistema no máximo na Tabela, Lances, Palpite da Rodada e Time do Dia (nada sai da tela); TalkBack numa linha da Tabela (posição, time e pontos antes do "abrir a Casa").
 - **Cards:** Salvar imagem no Android e no iPhone; o Pôster no Stories e no Quadrado; o card do troféu pela ficha e pela placa da Galeria.

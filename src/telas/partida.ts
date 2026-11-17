@@ -52,6 +52,7 @@ import { vestimentaDeCampo } from './bonecoEmCampo';
 import { bonecoDaPessoaEmCampo, bonecoDeQuemChamouEmCampo } from './bonecoEmCampoCena';
 import { criarCena, facil, limitar01, suave } from './cena';
 import { criarCena3d, type Cena3d } from './cena3d';
+import { FORCA_LUVA, FORCA_REDE, amassadoDoImpacto, anguloDaChegada } from './amassado';
 import { ENQUADRAMENTOS } from './camera';
 import { DUR_PASSOS, duracaoDaBatida, inicioDoVoo, latenciaInicial, novaLatencia, tempoDaBatida } from './tempoDoChute';
 import { ESPERA_O_APITO, TRACO_DO_ANEL, anelDoSinal, arrasteVale, instanteDoSinal, mostrarAdesivo } from './valendo';
@@ -564,6 +565,10 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
 
   /** Motor 2: para onde as luvas foram na última cobrança (o quadro parado depois do lance usa o mesmo). */
   let alvoDaUltima: AlvoDoGoleiro | null = null;
+  /** Direção do último trecho do voo na tela (rad): a bola amassa nesse eixo ao chegar na rede ou na luva. */
+  let anguloDaUltima = 0;
+  /** Escala da bola que acabou de chegar na rede ou na luva, `ms` depois do lance (redonda com movimento reduzido). */
+  const amassado = (ms: number, forca: number) => (reduzido ? 1 : amassadoDoImpacto(ms, forca));
 
   function fimDoChute(r: ResultadoCobranca): void {
     medicao.marcar(r.desfecho === 'gol' ? 'gol' : 'lance');
@@ -1173,7 +1178,10 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         const dx = defendeu ? luva.luvaX : telaX(r.x);
         const dy = defendeu ? luva.luvaY : telaY(r.y);
         desenharBolaEmVoo((tt) => trajetoria(dx, dy, gesto.efeito, facil(tt), r.cavadinha), t);
-        if (t >= 1) fimDoChute(r);
+        if (t >= 1) {
+          anguloDaUltima = anguloDaChegada(trajetoria(dx, dy, gesto.efeito, facil(0.95), r.cavadinha), { x: dx, y: dy });
+          fimDoChute(r);
+        }
         break;
       }
       case 'corrida': {
@@ -1215,7 +1223,10 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
         const ay = r.desfecho === 'fora' ? telaY(1.35) : r.desfecho === 'defesa' ? luva.luvaY : telaY(zonaY(r.alvo));
         desenharMaquinaChutando(ms, fase.dica);
         desenharBolaEmVoo((tt) => trajetoria(ax, ay, 0, facil(tt), false), t);
-        if (t >= 1) fimDaDefesa(r, fase.dica);
+        if (t >= 1) {
+          anguloDaUltima = anguloDaChegada(trajetoria(ax, ay, 0, facil(0.95), false), { x: ax, y: ay });
+          fimDaDefesa(r, fase.dica);
+        }
         break;
       }
       case 'pausa': {
@@ -1229,10 +1240,11 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
           const ly = goleiro.luvaY;
           desenharTraves();
           desenharBatedorDepois(batedor(batedoresMaquina, defesas.length - 1), ms, r.desfecho === 'gol');
-          // Bola alta defendida sai espalmada; baixa fica encaixada na luva.
-          if (pegou && linha(r.alvo) === 1) cena.bolaEspalmada(lx, ly, ms);
-          else if (pegou) bolaParada(lx, ly);
-          else if (r.desfecho === 'gol') bolaParada(telaX(zonaX(r.alvo)), telaY(zonaY(r.alvo)));
+          // Bola alta defendida sai espalmada; baixa fica encaixada na luva. Na luva e na rede, amassa e volta.
+          const naLuva = amassado(ms, FORCA_LUVA);
+          if (pegou && linha(r.alvo) === 1) cena.bolaEspalmada(lx, ly, ms, naLuva, anguloDaUltima);
+          else if (pegou) bolaParada(lx, ly, naLuva, anguloDaUltima);
+          else if (r.desfecho === 'gol') bolaParada(telaX(zonaX(r.alvo)), telaY(zonaY(r.alvo)), amassado(ms, FORCA_REDE), anguloDaUltima);
         } else if (cobrancas.length) {
           const r = cobrancas[cobrancas.length - 1];
           const pegou = r.desfecho === 'defesa';
@@ -1244,13 +1256,15 @@ export function telaPartida(root: HTMLElement, rota: Rota): () => void {
           const ly = goleiro.luvaY;
           desenharTraves();
           desenharBatedorDepois(batedor(batedoresJogador, cobrancas.length - 1), ms, r.desfecho === 'gol');
-          if (r.desfecho === 'gol') bolaParada(telaX(r.x), telaY(r.y));
+          // Na rede e na luva a bola amassa e volta ao redondo; na trave, não.
+          const naLuva = amassado(ms, FORCA_LUVA);
+          if (r.desfecho === 'gol') bolaParada(telaX(r.x), telaY(r.y), amassado(ms, FORCA_REDE), anguloDaUltima);
           else if (r.desfecho === 'trave') cena.bolaNaTrave(telaX(r.x), telaY(r.y), ms);
           else if (a && pegou) {
-            if (bolaDepoisDoLance(r) === 'espalmada') cena.bolaEspalmada(lx, ly, ms);
-            else bolaParada(lx, ly);
-          } else if (pegou && linha(r.zonaBola) === 1) cena.bolaEspalmada(lx, ly, ms);
-          else if (pegou) bolaParada(lx, ly);
+            if (bolaDepoisDoLance(r) === 'espalmada') cena.bolaEspalmada(lx, ly, ms, naLuva, anguloDaUltima);
+            else bolaParada(lx, ly, naLuva, anguloDaUltima);
+          } else if (pegou && linha(r.zonaBola) === 1) cena.bolaEspalmada(lx, ly, ms, naLuva, anguloDaUltima);
+          else if (pegou) bolaParada(lx, ly, naLuva, anguloDaUltima);
         }
         break;
       }

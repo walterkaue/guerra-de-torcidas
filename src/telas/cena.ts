@@ -10,6 +10,7 @@ import { PIXELS_MAX, dprDoCanvas, larguraDoCampo } from '../jogo/telaDaPartida';
 import { QUADROS_TORCIDA, desenharTorcedor, hash, lugaresDaTorcida, type Lugar, type Torcida } from './torcida';
 import { somTrave } from '../jogo/som';
 import { criarPapelPicado } from './papelPicado';
+import { mola } from './amassado';
 
 /** Rastro do dedo: [largura, opacidade] do brilho e do traço. */
 const BRILHO_DO_RASTRO = [
@@ -41,20 +42,24 @@ const PROF_REDE = 2;
 export const facil = (t: number) => 1 - (1 - t) * (1 - t);
 export const suave = (t: number) => t * t * (3 - 2 * t);
 export const limitar01 = (t: number) => Math.max(0, Math.min(1, t));
-/**
- * Mola amortecida (0 → 1 passando ~10% do ponto e voltando), a mesma curva de --mola no CSS.
- * Para "pop" de número e adesivo; nunca na física, que continua no motor puro.
- */
-export const mola = (t: number) => {
-  if (t >= 1) return 1;
-  const amort = 0.6;
-  const w = 12;
-  const wd = w * Math.sqrt(1 - amort * amort);
-  return 1 - Math.exp(-amort * w * t) * (Math.cos(wd * t) + (amort / Math.sqrt(1 - amort * amort)) * Math.sin(wd * t));
-};
+export { mola };
 
-/** Bola com gomos girando, luz da esfera e sombra no chão em `sombraY`. */
-export function desenharBolaEm(c: CanvasRenderingContext2D, x: number, y: number, r: number, sombraY: number, giro: number, gradBola: CanvasGradient | null): void {
+/**
+ * Bola com gomos girando, luz da esfera e sombra no chão em `sombraY`. `amassa` (menor que 1 amassa) é a escala no
+ * eixo de ângulo `angulo` (rad, na tela), em volta do centro; o outro eixo usa 1/amassa (área igual). A sombra não muda.
+ * Sem esses dois, o desenho é o de sempre (bola redonda).
+ */
+export function desenharBolaEm(
+  c: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  r: number,
+  sombraY: number,
+  giro: number,
+  gradBola: CanvasGradient | null,
+  amassa = 1,
+  angulo = 0,
+): void {
   const altura = Math.max(0, sombraY - y);
   c.globalAlpha = Math.max(0.12, 0.35 - altura / 600);
   c.fillStyle = '#000';
@@ -62,6 +67,15 @@ export function desenharBolaEm(c: CanvasRenderingContext2D, x: number, y: number
   c.ellipse(x + altura * 0.05, sombraY + r * 0.9, r * 0.95, r * 0.3, 0, 0, Math.PI * 2);
   c.fill();
   c.globalAlpha = 1;
+  const amassada = amassa !== 1 && amassa > 0;
+  if (amassada) {
+    c.save();
+    c.translate(x, y);
+    c.rotate(angulo);
+    c.scale(amassa, 1 / amassa);
+    c.rotate(-angulo);
+    c.translate(-x, -y);
+  }
   c.save();
   c.beginPath();
   c.arc(x, y, r, 0, Math.PI * 2);
@@ -99,6 +113,7 @@ export function desenharBolaEm(c: CanvasRenderingContext2D, x: number, y: number
   c.beginPath();
   c.arc(x, y, r, 0, Math.PI * 2);
   c.stroke();
+  if (amassada) c.restore();
 }
 
 /** Rastro amarelo seguindo o dedo: mais grosso e mais forte na ponta. */
@@ -290,8 +305,11 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, torcida: daPartida
     desenharBola(px, chao - h - g.raio * 0.5, 0.5 + 0.2 * e, chao, t * 10);
   }
 
-  /** Bola espalmada da luva em (x, y): sai para o lado de fora do gol e some atrás da linha de fundo. */
-  function bolaEspalmada(x: number, y: number, ms: number): void {
+  /**
+   * Bola espalmada da luva em (x, y): sai para o lado de fora do gol e some atrás da linha de fundo. `amassa` e `angulo`
+   * como em desenharBolaEm (no começo, a bola ainda amassada da luva).
+   */
+  function bolaEspalmada(x: number, y: number, ms: number, amassa = 1, angulo = 0): void {
     const t = limitar01(ms / DUR_ESPALMADA);
     if (t >= 1) return;
     const lado = x < g.gx + g.gw / 2 ? -1 : 1;
@@ -300,7 +318,7 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, torcida: daPartida
     const py = y - g.gh * 0.55 * Math.sin(e * Math.PI * 0.8);
     c.save();
     c.globalAlpha = 1 - t * t;
-    desenharBola(px, py, 0.5 - 0.15 * e, g.chao - g.raio * 0.5, t * 14);
+    desenharBola(px, py, 0.5 - 0.15 * e, g.chao - g.raio * 0.5, t * 14, amassa, angulo);
     c.restore();
   }
 
@@ -895,8 +913,8 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, torcida: daPartida
   }
 
   // ---------- bola ----------
-  function desenharBola(x: number, y: number, escala = 1, sombraY = y, giro = 0): void {
-    desenharBolaEm(c, x, y, g.raio * escala, sombraY, giro, gradBola);
+  function desenharBola(x: number, y: number, escala = 1, sombraY = y, giro = 0, amassa = 1, angulo = 0): void {
+    desenharBolaEm(c, x, y, g.raio * escala, sombraY, giro, gradBola, amassa, angulo);
   }
 
   /** Bola em voo: rastro de borrão atrás (quadros anteriores) e giro. */
@@ -966,9 +984,9 @@ export function criarCena(canvas: HTMLCanvasElement, { cores, torcida: daPartida
     efeitos.pontos = desenharPontosEm(c, efeitos.pontos, agora, g.raio * 1.5);
   }
 
-  /** Onde a bola fica parada depois do lance (luva, rede ou trave). */
-  function bolaParada(x: number, y: number): void {
-    desenharBola(x, y, 0.5, g.chao - g.raio * 0.5);
+  /** Onde a bola fica parada depois do lance (luva, rede ou trave); `amassa` e `angulo` como em desenharBolaEm. */
+  function bolaParada(x: number, y: number, amassa = 1, angulo = 0): void {
+    desenharBola(x, y, 0.5, g.chao - g.raio * 0.5, 0, amassa, angulo);
   }
 
   /** Começo de cada quadro (depois do c.save()): tremida do gol, gramado, arquibancada e rede. */

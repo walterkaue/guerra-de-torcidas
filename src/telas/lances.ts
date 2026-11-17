@@ -111,6 +111,7 @@ import { ESPERA_O_APITO, anelDoSinal, arrasteVale, instanteDoSinal, mostrarAdesi
 import { ENQUADRAMENTOS } from './camera';
 import { facil, limitar01 } from './cena';
 import { criarCena3d } from './cena3d';
+import { FORCA_LUVA, FORCA_REDE, amassadoDoImpacto } from './amassado';
 import { ANTES_DO_CORTE, criarReplay, montarTarjaDoReplay, type Replay } from './replay';
 import { icone, type NomeIcone } from './icones';
 import { NOME_DO_NIVEL, aoMudarQualidade, medirQuadros, qualidade } from './qualidade';
@@ -1286,7 +1287,12 @@ export function telaLances(root: HTMLElement, rota: Rota): () => void {
               },
               t * 10,
             );
-          } else if (r.desfecho !== 'fora') cena.desenharBola3d({ x: fim.x, y: fim.y * (1 - cai), z: r.desfecho === 'gol' ? -0.6 * cai : fim.z });
+          } else if (r.desfecho !== 'fora') {
+            // Na rede e na luva, amassa no eixo vertical da tela e volta ao redondo (redonda com movimento reduzido).
+            const forca = r.desfecho === 'gol' ? FORCA_REDE : r.desfecho === 'defesa' ? FORCA_LUVA : 0;
+            const amassa = reduzido ? 1 : amassadoDoImpacto(ms, forca);
+            cena.desenharBola3d({ x: fim.x, y: fim.y * (1 - cai), z: r.desfecho === 'gol' ? -0.6 * cai : fim.z }, 0, amassa, Math.PI / 2);
+          }
           desenharZonaMarcada();
           const comReplay = r.desfecho === 'gol' && !reduzido && qualidade().replay && !pausaLonga;
           if (comReplay && ms >= DUR_ANTES_DO_REPLAY - ANTES_DO_CORTE) tarja.entrar();
