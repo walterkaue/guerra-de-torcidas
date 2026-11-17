@@ -34,7 +34,7 @@ Nada disso tem lembrete automático.
    - **01/12:** revisão do D08 (Palpite nos Estaduais) no Chat e reavaliar o Natal da Torcida (J02 do backlog).
    - **Até 04/12:** o Kauê cadastra no `#admin` a final da Copa do Brasil (domingo 06/12, Grêmio x Palmeiras). Depois da 38ª, no celular: o encerramento na Home e na aba Palpites e o card "Resultado do Brasileirão".
 4. **Prova com três erros e fora:** jogar uma partida real errando de propósito (3º erro encerra e leva 75%).
-5. **Goleiro com alcance:** as três funções dos pênaltis e o site no ar **até sexta 20/11** (senão o corte passa para 30/11, em `GOLEIRO_COM_ALCANCE_DESDE`). **Segunda 23/11, depois da 0h:** a 1ª partida de pênaltis do dia tem `goleiroX` nas cobranças, e as de antes seguem iguais (`node scripts/balanco/simular-goleiro.mjs --antigas`).
+5. **Goleiro com alcance:** no ar desde 16/11 (as três funções dos pênaltis iguais à `main` no `npm run publicar:conferir` de 17/11; site da `main` `3d83c24`); o corte fica em segunda 23/11. **Segunda 23/11, depois da 0h:** a 1ª partida de pênaltis do dia tem `goleiroX` nas cobranças, e as de antes seguem iguais (`node scripts/balanco/simular-goleiro.mjs --antigas`).
 
 ## No celular (o Kauê, junto com os testes dos amigos)
 
