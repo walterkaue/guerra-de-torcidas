@@ -66,7 +66,6 @@ Nada disso tem lembrete automático.
 - **Link do desafio com menos toques (C06):** num aparelho limpo, abrir um link de cada tipo pelo WhatsApp: o convite com as duas faixas aparece, um toque no time leva à triagem e ao jogo; conferir também o link vencido, o de quem chamou com "Outro time" e quem já joga.
 - **Os gols de quem chamou (C03 + C08), depois de publicar:** no celular, jogar uma partida de Lances com gol e abrir o link `?l=` em outro aparelho: o telão passa os gols, a fita mostra as 3 tentativas e as faixas continuam na tela; aceitar e, no resultado, "Ver os gols". Nos pênaltis, aceitar um desafio e ver "Onde … bateu" no resultado. No `npm run metricas`, "viu os gols" começa a contar.
 
-- **Exigir o visto verde do PR:** depois do merge do PR que criou `.github/workflows/pr.yml` e do 1º PR com o visto (para o nome `conferir` aparecer na lista), GitHub → repositório → Settings → Branches → regra da `main` (Add branch ruleset, se não houver) → marcar "Require status checks to pass before merging" → buscar e escolher `conferir` → Save. Passo a passo completo no PR.
 
 ## Em andamento
 
