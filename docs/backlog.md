@@ -30,7 +30,7 @@
 0. **Agora, durante os testes:** A10; ~~H01a~~ (feito em 10/11). O C01 (com o I03) está no ar desde 09/11.
 1. **Semana de 09/11:** A06 (conferências de 09/11, 12h); a central de avisos (B01) e o HOME2 (nova ordem da Home, que levou o B03) já estão feitos.
 2. **Semana de 16/11:** ~~C03 + C08~~ (feito em 10/11); E04 (roteiro de iPhone); ~~D07~~ (feito em 10/11); ~~C06~~ (feito em 09/11).
-2b. **Semana de 23/11 (gamificação, seção K):** K05 (falta o que segue em teste no Chat; as linhas da Tabela já estão feitas), K01 e K02 (frases no Chat).
+2b. **Semana de 23/11 (gamificação, seção K):** ~~K05~~ (feito em 17/11), K01 e K02 (frases no Chat).
 3. **Depois:** K03, K06, K07 e o K04 (desenhado junto do J06); C04 (com a prova de conceito antes), C05, H01b e H02, F01 e A08 (e a personalização do Perfil, com o que os amigos disserem); J05 e o desenho do J06 no Chat; J09 etapa 1.
 4. **Antes da divulgação pública:** A01 a A05.
 
@@ -138,7 +138,7 @@
 | I02 | Vídeo vertical 9:16 com câmera lenta e a frase do narrador | K | Entra na especificação do C04 e do C05: corte vertical, câmera lenta no gol e a frase que o narrador falou como legenda. | P1 | — | (dentro do C04) |
 | I03 | ~~Onde a pessoa desiste~~ **feito em 08/11/2026, com o C01** | K | Escolha do time, triagem, aquecimento e partida (por jogo, com e sem desafio), saiu − voltou; "Onde desiste" no `npm run metricas`. Os erros ficam com o F01. | — | — | — |
 | I04 | Som com variação e "combo" | K | Cada som toca com o tom ±10% e o volume variando um pouco (menos o apito de começo e de fim, que não varia; a largada varia ±3%). Gols seguidos sobem o tom. A torcida abaixa meio segundo quando o narrador ou o apito entram. Entra no H01. | P2 | — | (dentro do H01) |
-| I05 | **Passada de "sensação de jogo"** | C | O que fazia os jogos Flash grudarem: do fim da partida ao próximo chute em 1 toque e menos de 2 s; uma pequena pausa e tremida no gol (com movimento reduzido, sem tremida); recorde sempre à vista. Medir o tempo do "Mais uma" até o 1º chute, nos pênaltis e nos Lances. A parte de animação (pausa e tremida no gol) passou para o K05. | P2 | M | Claude |
+| I05 | **Passada de "sensação de jogo"** | C | O que fazia os jogos Flash grudarem: do fim da partida ao próximo chute em 1 toque e menos de 2 s; tremida no gol (com movimento reduzido, sem tremida); recorde sempre à vista. Medir o tempo do "Mais uma" até o 1º chute, nos pênaltis e nos Lances. | P2 | M | Claude |
 | I06 | Estudar jogos curtos de navegador (sem copiar) | K | Olhar o que dava certo nos jogos de navegador de futebol e de habilidade: reinício instantâneo, uma mecânica só, desafio a um amigo, placar de recordes. Anotar as lições, nunca reproduzir um jogo específico (nome, arte, fases). | P3 | P | Chat |
 
 ### J. Eventos e destaques (Kauê e Chat, 11/11/2026)
@@ -163,7 +163,7 @@
 | K02 | Entrevista pós-jogo | K/C | Depois da partida, 1 toque entre 3 respostas prontas (humilde, provocando o time rival, zoeira); a escolhida vai no card. Sem texto livre. Frases pelo checklist do narrador. | P1 | P | Chat (frases) → Claude |
 | K03 | Degraus dentro do nível da Carreira | K/C | Ex.: Titular I, II e III. De Titular a Craque são 4.000 XP sem nada acontecer. Só visual: não muda XP nem regra. | P2 | P | Chat → Claude |
 | K04 | Marcos da torcida | K/C | Marcos coletivos que nunca vencem (gol nº 1.000, 100ª cavadinha, 50 torcedores). Quem fez o lance do marco ganha card; a torcida ganha bandeirão na arquibancada da Home. Sem prazo e sem contador (ECA Digital). Desenhar junto do J06. | P2 | M | Chat → Claude |
-| K05 | Animação, lote de custo zero | K/C | Feito em 17/11/2026: as linhas da Tabela deslizando para a posição nova e o número contando (aba Semana; `visual.md` 4). Fora: o goleiro olhando a bola (o goleiro sem rosto não deixa a cabeça aparecer). Em teste no Chat, numa versão mais forte: a curva por pose (passando ~30% do ponto, com a `mola()` que já existe); a bola amassando só na rede e na luva (sem amassar no pé, no voo e no quique); e a parada de 120 ms no contato do gol e da defesa de quem joga. Absorve a parte de animação do I05. | P1 | M | Chat (página) → Claude |
+| ~~K05~~ | ~~Animação, lote de custo zero~~ | K/C | **Fechado em 17/11/2026:** feitas as linhas da Tabela deslizando e o número contando (aba Semana) e a bola amassando na rede e na luva (`visual.md` 4); curva própria por pose e parada no contato descartadas pelo Kauê depois do vídeo de antes e depois; goleiro olhando a bola descartado (o goleiro sem rosto não deixa a cabeça aparecer). | — | — | — |
 | K06 | Animação, lote de custo baixo | K/C | Tufos de grama no chute e pó de cal na marca (pool fixo, como o papel picado); torcida pulando no gol deslocando a camada pré-desenhada. Só em Alta e Média; medir com `?medir`. | P2 | P | Claude |
 | K07 | Câmera fechando na corrida | K/C | 2 a 3% durante a corrida, soltando no chute. Só em Alta e só se a medição deixar. | P3 | P | Claude |
 
