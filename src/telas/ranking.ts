@@ -12,13 +12,15 @@ import { textoDaMedia } from '../jogo/rankingTextos';
 import { semanaBrasilia } from '../servidor/tempo';
 import { barraNavegacao, ligarBarraNavegacao } from './navegacao';
 import { abas, aoTocarNoEstado, baixarPedaco, cabecalhoTela, estado } from './blocos';
+import { deslizadorDeTabela } from './deslizarTabela';
 
 type Modo = 'campeao' | 'soma';
 
-// Em desenvolvimento, ?homeFalsa troca o servidor por um de mentira (src/dev/homeFalsa.ts).
+// Em desenvolvimento, ?homeFalsa troca o servidor por um de mentira (src/dev/homeFalsa.ts); lá,
+// window.__mexerTabela() anda a semana e avisa a tabela, como o aviso ao vivo de verdade.
 const FALSA = import.meta.env.DEV && new URLSearchParams(location.search).has('homeFalsa');
-const servidor = (): Promise<{ rankingDaSemana: typeof rankingDaSemana }> =>
-  FALSA ? import('../dev/homeFalsa') : Promise.resolve({ rankingDaSemana });
+const servidor = (): Promise<{ rankingDaSemana: typeof rankingDaSemana; ouvirRanking: typeof ouvirRanking }> =>
+  FALSA ? import('../dev/homeFalsa') : Promise.resolve({ rankingDaSemana, ouvirRanking });
 
 export function telaRanking(root: HTMLElement, rota: Rota): () => void {
   const meuTime = prefs.get().time;
@@ -102,6 +104,8 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
   const elExplica = root.querySelector<HTMLElement>('[data-explica]')!;
 
   const elSelo = root.querySelector<HTMLElement>('[data-selo]')!;
+  // Quando o ranking muda ao vivo, quem troca de lugar desliza e o número conta (só na mesma semana e no mesmo modo).
+  const deslizador = deslizadorDeTabela(elTabela);
 
   function desenhar(): void {
     if (semana === passada) {
@@ -116,6 +120,10 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
       modo === 'campeao'
         ? textoDaMedia()
         : 'Soma de todo mundo que jogou na semana. É vitrine: o título sai do Campeão da semana.';
+    deslizador.trocar(`${semana}|${modo}`, desenharTabela);
+  }
+
+  function desenharTabela(): void {
     if (!linhas.some((l) => l.ativos > 0)) {
       elTabela.innerHTML =
         semana === atual
@@ -129,17 +137,17 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
       .sort((a, b) => pos(a) - pos(b))
       .map((l) => {
         const t = timePorId(l.time_id);
-        const valor = modo === 'campeao' ? l.media30 : l.soma;
+        const valor = Math.round(modo === 'campeao' ? l.media30 : l.soma);
         const classes = ['mini-linha'];
         if (pos(l) === 1 && l.ativos > 0) classes.push('lider');
         if (l.time_id === meuTime && meuTime !== ID_OUTRO) classes.push('meu');
         const casa = l.time_id !== ID_OUTRO ? ` data-casa="${esc(l.time_id)}" role="link" tabindex="0"` : '';
         if (casa) classes.push('abre-casa');
-        return `<div class="${classes.join(' ')}"${casa}>
+        return `<div class="${classes.join(' ')}" data-id="${esc(l.time_id)}" data-valor="${valor}"${casa}>
           <span class="pos">${pos(l)}º</span><span class="seta" aria-hidden="true"></span>
           <span class="cor" style="--c1:${t?.cores[0] ?? '#666'};--c2:${t?.cores[1] ?? '#999'}"></span>
           <span class="nome">${esc(t?.nome ?? l.time_id)} <small>${l.ativos} ${l.ativos === 1 ? 'torcedor' : 'torcedores'}</small></span>
-          <span class="valor">${Math.round(valor).toLocaleString('pt-BR')}</span>${casa ? `<span class="so-leitor">, abrir a Casa ${t?.artigo === 'a' ? 'da' : 'do'} ${esc(t?.nome ?? l.time_id)}</span>` : ''}
+          <span class="valor">${valor.toLocaleString('pt-BR')}</span>${casa ? `<span class="so-leitor">, abrir a Casa ${t?.artigo === 'a' ? 'da' : 'do'} ${esc(t?.nome ?? l.time_id)}</span>` : ''}
         </div>`;
       })
       .join('');
@@ -185,7 +193,8 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
     parar?.();
     parar = null;
     const ouvida = semana;
-    ouvirRanking(ouvida, () => void carregar())
+    servidor()
+      .then((api) => api.ouvirRanking(ouvida, () => void carregar()))
       .then((f) => (saiu || ouvida !== semana ? f() : (parar = f)))
       .catch(() => {});
   };
@@ -207,6 +216,7 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
   return () => {
     saiu = true;
     parar?.();
+    deslizador.parar();
     limparAba?.();
   };
 }
