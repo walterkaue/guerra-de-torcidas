@@ -47,6 +47,7 @@ Nada disso tem lembrete automático.
 - **Bola amassando (K05), depois de publicar:** nos Pênaltis, um gol e uma defesa na cobrança e na defesa; nos Lances, um gol e uma defesa: a bola achata na rede e na luva e volta redonda; na trave, redonda. Com "remover animações" ligado no aparelho, não amassa.
 - **Boneco em campo:** 60 fps, replay de golaço, o interruptor "Meu boneco em campo", desafio entre duas contas.
 - **Acessibilidade (G3):** fonte do sistema no máximo na Tabela, Lances, Palpite da Rodada e Time do Dia (nada sai da tela); TalkBack numa linha da Tabela (posição, time e pontos antes do "abrir a Casa").
+- **Tabela ao vivo (K05):** com a Tabela aberta num aparelho, jogar uma partida em outro: em até um minuto, quem trocou de lugar desliza e o número conta; trocar de semana ou de modo troca seco; com "Remover animações" ligado no sistema, a troca também é seca.
 - **Cards:** Salvar imagem no Android e no iPhone; o Pôster no Stories e no Quadrado; o card do troféu pela ficha e pela placa da Galeria.
 - **Link do desafio no 4G fraco (E01):** num aparelho limpo, abrir um link de cada tipo (pênaltis, Lances e Prova) pelo WhatsApp: o convite aparece antes do placar e dos palpites, e o "abriu" conta no `npm run metricas`.
 - **Home nova (HOME2):** em 360×740 com a fonte grande, o "Jogar agora" e o 1º card sem rolar; a barra do time no pé da arquibancada (a posição certa e o toque abrindo a aba certa da Tabela), sem encostar na tarja do time nem no "trocar"; em modo avião, o aviso na barra sem nada pular; um aviso só logo abaixo do "Jogar agora".

@@ -26,21 +26,65 @@ const params = new URLSearchParams(location.search);
 const cenario = params.get('cenario') ?? 'dia';
 const espera = <T>(v: T) => new Promise<T>((ok) => setTimeout(() => ok(v), 120));
 
-export function rankingDaSemana(): Promise<LinhaRanking[]> {
-  // ?semRanking: semana sem ninguém jogando. ?rankingErro: sem conexão. ?rankingDemora: fica carregando.
-  if (params.has('rankingErro')) return new Promise((_, falha) => setTimeout(() => falha(new Error('rede')), 120));
-  if (params.has('rankingDemora')) return new Promise(() => {});
-  const times = TIMES.filter((t) => t.id !== ID_OUTRO);
+// A semana falsa anda a cada window.__mexerTabela() (Tabela, aba Semana): dois times sobem algumas posições e o
+// líder ganha pontos sem mudar de lugar, nos dois modos. Depois, quem ouve o ranking é avisado e relê a tabela,
+// como no aviso ao vivo de verdade (docs/visual.md, seção 4).
+type LinhaFalsa = Pick<LinhaRanking, 'time_id' | 'ativos' | 'soma' | 'media30'>;
+let semanaFalsa: LinhaFalsa[] | null = null;
+let mexidas = 0;
+const ouvintesDoRanking = new Set<() => void>();
+
+function linhasDaSemanaFalsa(): LinhaFalsa[] {
   const vazio = params.has('semRanking');
-  const linhas = times.map((t, i) => ({
+  semanaFalsa ??= TIMES.filter((t) => t.id !== ID_OUTRO).map((t, i) => ({
     time_id: t.id,
     ativos: vazio ? 0 : 10 + ((i * 7) % 5),
     // A soma não segue a média (é vitrine), mas a posição dela sempre segue a soma, como no servidor.
     soma: vazio ? 0 : 600 + ((i * 7919) % 1200),
     media30: vazio ? 0 : 240 - i * 12 - (i % 3),
-    posicao_campeao: i + 1,
-    posicao_soma: 0,
   }));
+  return semanaFalsa;
+}
+
+function mexerModo(linhas: LinhaFalsa[], campo: 'media30' | 'soma', ganhoDoLider: number): void {
+  const ordem = () => [...linhas].sort((a, b) => b[campo] - a[campo]);
+  const subir = (de: number, casas: number) => {
+    const o = ordem();
+    const alvo = o[de - casas][campo];
+    const acima = o[de - casas - 1][campo];
+    const t = o[de];
+    t[campo] = alvo + Math.max(1, Math.floor((acima - alvo) / 2));
+    t.ativos += 1;
+  };
+  const n = linhas.length;
+  subir(n - 1 - (mexidas % 4), 4); // um do fim da tabela pula 4 posições
+  subir(9 - (mexidas % 3), 2); // um do meio pula 2
+  ordem()[0][campo] += ganhoDoLider; // o líder ganha pontos e segue líder
+}
+
+(window as unknown as { __mexerTabela: () => void }).__mexerTabela = () => {
+  const linhas = linhasDaSemanaFalsa();
+  if (linhas.every((l) => l.ativos === 0)) return;
+  mexerModo(linhas, 'media30', 6);
+  mexerModo(linhas, 'soma', 45);
+  mexidas++;
+  ouvintesDoRanking.forEach((f) => f());
+};
+
+export function ouvirRanking(_semana: string, aoMudar: () => void, aoEntrar?: () => void): Promise<() => void> {
+  ouvintesDoRanking.add(aoMudar);
+  aoEntrar?.();
+  return Promise.resolve(() => {
+    ouvintesDoRanking.delete(aoMudar);
+  });
+}
+
+export function rankingDaSemana(): Promise<LinhaRanking[]> {
+  // ?semRanking: semana sem ninguém jogando. ?rankingErro: sem conexão. ?rankingDemora: fica carregando.
+  if (params.has('rankingErro')) return new Promise((_, falha) => setTimeout(() => falha(new Error('rede')), 120));
+  if (params.has('rankingDemora')) return new Promise(() => {});
+  const linhas: LinhaRanking[] = linhasDaSemanaFalsa().map((l) => ({ ...l, posicao_campeao: 0, posicao_soma: 0 }));
+  [...linhas].sort((a, b) => b.media30 - a.media30).forEach((l, i) => (l.posicao_campeao = i + 1));
   [...linhas].sort((a, b) => b.soma - a.soma).forEach((l, i) => (l.posicao_soma = i + 1));
   return espera(linhas);
 }
