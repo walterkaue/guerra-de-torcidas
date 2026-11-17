@@ -4,11 +4,13 @@
 > **Como manter:** ao fechar um item, **tire daqui** no mesmo PR. Se ele mudou uma regra, a regra vai para o doc do módulo e a data para `docs/decisoes.md`; se foi só trabalho, o PR já guarda a história. Este arquivo não passa de ~15 KB (um teste confere).
 > Para começar uma tarefa, siga a divisão de trabalho do `CLAUDE.md`.
 
-## Onde estamos (09/11/2026)
+## Onde estamos (17/11/2026)
+
+**A divulgação começou em 17/11/2026.**
 
 | Área | Estado |
 |---|---|
-| Código | `main` com o PR #172: resultado em duas camadas (B02, C02, B05), prazo de 7 dias dos desafios (C10), funil do desafio (C01) que volta o lote à fila quando falta rede; depois dele, o E01 (link do desafio mais leve na 1ª visita). 2.678 testes passando, `tsc` limpo. |
+| Código | `main` com o PR #195: DESTRAVAR #188, goleiro com alcance (#189 e #190), variações do ajeitar (#191), espera no embalo (#192), leituras em paralelo (#193) e o telão do convite enquadrando o lance inteiro (#195). Antes: resultado em duas camadas (B02, C02, B05), prazo de 7 dias dos desafios (C10) e funil do desafio (C01). |
 | Publicação | Site da `main` `6828130` (PR #172) no ar desde 09/11, 15h (GitHub Pages). 52 migrações, a última `20261109100000_boneco_barra.sql`, e as 15 funções iguais à `main` (`npm run publicar:conferir`, 09/11). |
 | Regra em vigor | Lances unificados desde domingo 08/11, 0h: tela única, 10 partidas de Lances por dia, 3 melhores de Lances e 3 da Prova. A semana de 02/11 fecha com as duas regras somadas (aceito: pré-temporada). |
 | Tamanho | `index-*.js` de ~47 kB gzip (09/11), limite ~300 KB. No Zé (`npm run simular:entradas`), o link do desafio chega ao convite em 3,2 a 3,4 s com 68 a 83 kB de JS (eram 7,6 s e 285 kB); Home e escolha do time em 2,4 a 2,9 s. |
