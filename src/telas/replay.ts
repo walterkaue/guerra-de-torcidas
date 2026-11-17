@@ -34,7 +34,8 @@ const DUR_PULO = 420 * LENTO;
 const DEPOIS = 1100;
 /** Quanto falta para o replay acabar no instante em que a bola cruza a linha (antes de o goleiro cair): o quadro parado do telão. */
 export const FALTA_NO_GOL = DEPOIS;
-const ZOOM_FINAL = 1.1;
+/** Quanto a câmera do replay fecha até o fim (zoom só no canvas, em volta do centro). */
+export const ZOOM_FINAL = 1.1;
 
 /**
  * O mesmo boneco visto do outro lado (quem estava de costas aparece de frente e vice-versa). O boneco da pessoa

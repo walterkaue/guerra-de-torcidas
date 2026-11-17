@@ -1,5 +1,6 @@
 // O telão do desafio dos Lances (docs/jogos/lances.md, "Desafio dos Lances"): redesenha, no aparelho, os gols das 3
-// tentativas de quem chamou, um depois do outro, com o replay de hoje (telas/replay.ts) sobre a cena 3D dos Lances.
+// tentativas de quem chamou, um depois do outro, com o replay de hoje (telas/replay.ts) sobre a cena 3D dos Lances. A
+// câmera é a do telão (telas/cameraDoTelao.ts), que enquadra o lance inteiro no quadro, e o canvas tem o tamanho dele.
 // Só desenho: nada aqui decide lance, pontos ou resultado; o caminho da bola sai do gesto e do ponto final que o
 // servidor guardou (jogo/lances.ts, caminhoDoChute). Vem por import() depois do convite pintado (E01): quem chama o
 // pinta antes (telas/fitaDoDesafio.ts) e põe a figura `.telao` com o gramado em CSS, para nada pular quando o desenho chega.
@@ -25,10 +26,11 @@ import { criarRelogioPausavel } from '../jogo/telaDaPartida';
 import { vestimentaDeCampo } from './bonecoEmCampo';
 import { bonecoDeQuemChamouEmCampo } from './bonecoEmCampoCena';
 import { ENQUADRAMENTOS } from './camera';
+import { cameraDoTelao, margemAntesDoZoom } from './cameraDoTelao';
 import { criarCena3d } from './cena3d';
 import { duracaoDoVoo, elencoDoLance, posicaoDoGoleiro } from './elencoDoLance';
 import { qualidade } from './qualidade';
-import { FALTA_NO_GOL, criarReplay, type Replay } from './replay';
+import { FALTA_NO_GOL, ZOOM_FINAL, criarReplay, type Replay } from './replay';
 
 export interface OpcoesDoTelao {
   /** A figura `.telao` que `htmlDoTelao` pintou (o canvas, a legenda e o botão entram nela). */
@@ -65,7 +67,7 @@ export function iniciarTelao(o: OpcoesDoTelao): TelaoNoar {
   const parado = o.modo !== 'movimento' || !qualidade().replay;
   fig.dataset.modo = parado ? 'parado' : 'movimento';
 
-  // O canvas (10:13, mais alto que largo) fica alinhado embaixo: o CSS corta a arquibancada e deixa o gol inteiro.
+  // O canvas ocupa o quadro inteiro (nenhum pixel escondido); a câmera do telão põe o lance todo dentro dele.
   const canvas = document.createElement('canvas');
   canvas.className = 'telao-canvas';
   canvas.setAttribute('role', 'img');
@@ -119,6 +121,13 @@ export function iniciarTelao(o: OpcoesDoTelao): TelaoNoar {
     const caminho = caminhoDoChute(l.bola, t.gesto, t.x, t.y, t.cavadinha);
     const fim = caminho(t.tFim);
     const g = posicaoDoGoleiro(l, t.goleiroX);
+    const alcance = 0.55;
+    const voo = Array.from({ length: 13 }, (_, k) => caminho((k / 12) * t.tFim));
+    // Margem para o zoom final do replay (quando a qualidade o liga) não tirar ninguém do quadro.
+    const margem = margemAntesDoZoom(qualidade().zoomNoReplay ? ZOOM_FINAL : 1);
+    cena.usarCameraDoReplay((largura, altura) =>
+      cameraDoTelao({ bola: l.bola, barreira: l.barreira, goleiro: g, fim, alcance, voo }, largura, altura, margem),
+    );
     return criarReplay(
       cena,
       {
@@ -127,7 +136,7 @@ export function iniciarTelao(o: OpcoesDoTelao): TelaoNoar {
         em: (u) => caminho(u * t.tFim),
         voo: duracaoDoVoo(l.bola, fim, t.cavadinha, t.gesto.forca),
         cavadinha: t.cavadinha,
-        goleiro: { x: g.x, z: g.z, alvo: { x: fim.x, y: fim.y }, alcance: 0.55 },
+        goleiro: { x: g.x, z: g.z, alvo: { x: fim.x, y: fim.y }, alcance },
         barreira: l.barreira,
         batedor: elenco.batedor,
         goleiroBoneco: elenco.goleiro,
@@ -266,10 +275,21 @@ export function iniciarTelao(o: OpcoesDoTelao): TelaoNoar {
   };
   document.addEventListener('visibilitychange', aoMudarAVisibilidade);
   aoMudarAVisibilidade();
+  // O quadro pode mudar de tamanho sem a janela mudar (o convite acerta a altura dele depois que a letra chega).
+  const tamanho = (): string => {
+    const r = quadroEl.getBoundingClientRect();
+    return r.width && r.height ? `${Math.round(r.width)}x${Math.round(r.height)}` : '';
+  };
+  let medido = tamanho();
   const aoRedimensionar = (): void => {
+    const agora = tamanho();
+    if (!agora || agora === medido) return;
+    medido = agora;
     cena.medir();
     redesenhar();
   };
+  const observador = typeof ResizeObserver === 'function' ? new ResizeObserver(aoRedimensionar) : null;
+  observador?.observe(quadroEl);
   window.addEventListener('resize', aoRedimensionar);
 
   function parar(): void {
@@ -278,6 +298,7 @@ export function iniciarTelao(o: OpcoesDoTelao): TelaoNoar {
     cancelAnimationFrame(raf);
     document.removeEventListener('visibilitychange', aoMudarAVisibilidade);
     window.removeEventListener('resize', aoRedimensionar);
+    observador?.disconnect();
   }
   return { parar };
 }
