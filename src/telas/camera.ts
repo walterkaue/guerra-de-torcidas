@@ -2,6 +2,11 @@
 // Só desenho: a física continua no motor puro (jogo/lances.ts). Medidas como no motor: x para a direita de
 // quem bate, z do gol para o campo (z = 0 é a linha do gol) e y é a altura.
 
+/** O gol (m): meia largura, altura do travessão e o fundo da rede, atrás da linha. */
+export const MEIA_GOL = 3.66;
+export const ALTURA_GOL = 2.44;
+export const FUNDO_REDE = -2;
+
 export interface Ponto3 {
   x: number;
   y: number;
@@ -47,8 +52,8 @@ export interface Camera {
   pos: Ponto3;
 }
 
-const sub = (a: Ponto3, b: Ponto3): Ponto3 => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
-const dot = (a: Ponto3, b: Ponto3) => a.x * b.x + a.y * b.y + a.z * b.z;
+export const sub = (a: Ponto3, b: Ponto3): Ponto3 => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
+export const dot = (a: Ponto3, b: Ponto3) => a.x * b.x + a.y * b.y + a.z * b.z;
 const cross = (a: Ponto3, b: Ponto3): Ponto3 => ({ x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x });
 const norm = (a: Ponto3): Ponto3 => {
   const l = Math.hypot(a.x, a.y, a.z) || 1;
@@ -87,6 +92,58 @@ export function cameraDoReplay(bola: { x: number; z: number }, fimX: number, lar
 }
 
 /**
+ * Onde o batedor pisa, atrás e à esquerda da bola (olhando para o gol): `avanco` 0 = no lugar da cobrança, 1 = o pé
+ * chega na bola. A cena (telas/cena3d.ts) desenha nele; a câmera do telão (telas/cameraDoTelao.ts) o enquadra.
+ */
+export function posicaoDoBatedor(bola: { x: number; z: number }, avanco: number): { x: number; z: number } {
+  const d = Math.hypot(bola.x, bola.z) || 1;
+  const ux = bola.x / d;
+  const uz = bola.z / d;
+  // Direita de quem bate (olhando para o gol).
+  const rx = uz;
+  const rz = -ux;
+  const atras = 1.1 - 0.7 * avanco;
+  const lado = 0.8 - 0.45 * avanco;
+  return { x: bola.x + ux * atras - rx * lado, z: bola.z + uz * atras - rz * lado };
+}
+
+/** Onde cada jogador da barreira pisa: a 9,15 m da bola, de frente para o ponto do gol que ela tapa (como no motor). */
+export function posicoesDaBarreira(bola: { x: number; z: number }, b: { jogadores: number; miraX: number }): { x: number; z: number }[] {
+  const mx = b.miraX - bola.x;
+  const mz = -bola.z;
+  const dm = Math.hypot(mx, mz);
+  const ux = mx / dm;
+  const uz = mz / dm;
+  const cx = bola.x + ux * 9.15;
+  const cz = bola.z + uz * 9.15;
+  return Array.from({ length: b.jogadores }, (_, k) => {
+    const o = (k - (b.jogadores - 1) / 2) * 0.5;
+    return { x: cx - uz * o, z: cz + ux * o };
+  });
+}
+
+/** Os eixos de uma câmera em `pos` olhando na direção `olhar` (sem giro: o "cima" da tela é o do mundo). */
+export function eixosDaCamera(olhar: Ponto3): { frente: Ponto3; direita: Ponto3; cima: Ponto3 } {
+  const frente = norm(olhar);
+  const direita = norm(cross(frente, { x: 0, y: 1, z: 0 }));
+  return { frente, direita, cima: cross(direita, frente) };
+}
+
+/** Câmera em `pos`, olhando na direção `olhar`, com distância focal `f` (px) e o centro da imagem em (`cx`, `cy`). */
+export function cameraNaDirecao(pos: Ponto3, olhar: Ponto3, f: number, cx: number, cy: number): Camera {
+  const { frente, direita, cima } = eixosDaCamera(olhar);
+  return {
+    pos,
+    projetar(p) {
+      const v = sub(p, pos);
+      const prof = dot(v, frente);
+      const z = Math.max(prof, 0.05);
+      return { x: cx + (f * dot(v, direita)) / z, y: cy - (f * dot(v, cima)) / z, escala: f / z, prof };
+    },
+  };
+}
+
+/**
  * Câmera em `pos` olhando para `alvo`, com o zoom em larguras de tela e o centro na altura `centroY`. Em tela grande
  * o zoom conta sobre `larguraFocal` (a largura do campo, limitada pela altura: jogo/telaDaPartida.ts), e o que
  * sobra dos lados mostra mais campo e torcida.
@@ -100,19 +157,5 @@ export function cameraOlhando(
   centroY: number,
   larguraFocal = largura,
 ): Camera {
-  const frente = norm(sub(alvo, pos));
-  const direita = norm(cross(frente, { x: 0, y: 1, z: 0 }));
-  const cima = cross(direita, frente);
-  const f = zoom * larguraFocal;
-  const cx = largura / 2;
-  const cy = altura * centroY;
-  return {
-    pos,
-    projetar(p) {
-      const v = sub(p, pos);
-      const prof = dot(v, frente);
-      const z = Math.max(prof, 0.05);
-      return { x: cx + (f * dot(v, direita)) / z, y: cy - (f * dot(v, cima)) / z, escala: f / z, prof };
-    },
-  };
+  return cameraNaDirecao(pos, sub(alvo, pos), zoom * larguraFocal, largura / 2, altura * centroY);
 }

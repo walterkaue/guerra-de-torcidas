@@ -88,7 +88,10 @@ function limparEndereco(): void {
 
 const pelasCores = (t: Time | undefined): string => (t ? `--c1:${t.cores[0]};--c2:${t.cores[1]}` : '');
 
-/** O quadro do telão (a faixa do desenho; o topo e o pé não encolhem) não baixa de uma fração da largura: abaixo disso o travessão sai do quadro. */
+/**
+ * O quadro do telão (a faixa do desenho; o topo e o pé não encolhem) não baixa de uma fração da largura. A câmera do telão
+ * (telas/cameraDoTelao.ts) põe o lance inteiro em qualquer altura; abaixo disso ele ficaria pequeno demais.
+ */
 const ALTURA_MINIMA_DO_TELAO = 0.36;
 
 /** Depois do primeiro quadro pintado e com o navegador ocioso (teto de ~300 ms; sem requestIdleCallback, um pequeno atraso). */
@@ -250,7 +253,7 @@ export function telaConvite(root: HTMLElement, rota: Rota): () => void {
 
   /**
    * O quadro do telão nunca empurra as faixas de time nem o "Outro time" para fora da tela: se faltar espaço (celular baixo, fonte do
-   * sistema grande), ele baixa, até um mínimo em que o gol continua inteiro (o canvas fica alinhado embaixo).
+   * sistema grande), ele baixa, até um mínimo; a câmera do telão reenquadra o lance inteiro na altura que sobrar.
    */
   function caberNaTela(): void {
     const figura = elPlaca.querySelector<HTMLElement>('[data-telao] [data-quadro]');

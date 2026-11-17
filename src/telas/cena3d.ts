@@ -6,7 +6,19 @@
 import type { GestoCobranca } from '../jogo/penaltis';
 import { TRACO_DO_ANEL } from './valendo';
 import { GOLEIRO, desenharBoneco, misturar, novaPose, poseGoleiroEsperando, type Boneco, type Pose } from './bonecos';
-import { cameraAtrasDaBola, cameraDoReplay, type Camera, type Enquadramento, type NaTela, type Ponto3 } from './camera';
+import {
+  ALTURA_GOL,
+  FUNDO_REDE,
+  MEIA_GOL,
+  cameraAtrasDaBola,
+  cameraDoReplay,
+  posicaoDoBatedor,
+  posicoesDaBarreira as ondeFicaABarreira,
+  type Camera,
+  type Enquadramento,
+  type NaTela,
+  type Ponto3,
+} from './camera';
 import { desenharBolaEm, desenharPontosEm, desenharRastroEm, facil, limitar01, suave } from './cena';
 import { vibrar } from './toque';
 import { qualidade } from './qualidade';
@@ -15,9 +27,6 @@ import { somTrave } from '../jogo/som';
 import { criarPapelPicado } from './papelPicado';
 import { corDaTorcida, type Torcida } from './torcida';
 
-const MEIA_GOL = 3.66;
-const ALTURA_GOL = 2.44;
-const FUNDO_REDE = -2;
 /** Comprimento do campo (m): a linha do gol de lá, que aparece no replay. */
 const FIM_DO_CAMPO = 105;
 /** Metros por unidade do desenho do boneco (100 unidades ≈ 1,95 m, como o goleiro dos pênaltis). */
@@ -60,6 +69,8 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
   let fundo: HTMLCanvasElement | null = null;
   /** Replay de TV (telas/replay.ts): câmera atrás do gol, rede desenhada na frente e bonecos espelhados. */
   let replay: { fimX: number; rede: HTMLCanvasElement | null } | null = null;
+  /** A câmera do replay de quem pediu outra (o telão do desafio, telas/cameraDoTelao.ts), pelo tamanho do canvas. */
+  let cameraDoReplayPropria: ((largura: number, altura: number) => Camera) | null = null;
   const torcidaDoTime: Torcida = { cores, outros: ['#3a3f4a'] };
   /** Muda por lance: uma partida pode misturar lance de clube e da Seleção. */
   let torcida = torcidaDoTime;
@@ -118,7 +129,9 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
    */
   function montar(): void {
     if (!W || !enquadramento) return;
-    cam = replay ? cameraDoReplay(bola, replay.fimX, W, H, L) : cameraAtrasDaBola(bola, enquadramento, W, H, L);
+    cam = replay
+      ? (cameraDoReplayPropria?.(W, H) ?? cameraDoReplay(bola, replay.fimX, W, H, L))
+      : cameraAtrasDaBola(bola, enquadramento, W, H, L);
     const [off, o] = novaCamada();
     arquibancada(o, !!replay);
     gramado(o, replay ? FIM_DO_CAMPO + 4 : 90);
@@ -135,6 +148,14 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
   function modoReplay(fimX: number | null): void {
     replay = fimX === null ? null : { fimX, rede: null };
     montar();
+  }
+
+  /**
+   * O replay passa a usar a câmera de `fn` (chamada de novo a cada montagem, com o tamanho do canvas); `null` volta à
+   * câmera de TV de sempre. Vale a partir do próximo `modoReplay`.
+   */
+  function usarCameraDoReplay(fn: ((largura: number, altura: number) => Camera) | null): void {
+    cameraDoReplayPropria = fn;
   }
 
   /** No replay, a rede fica entre a câmera e o lance: vai por cima de tudo. */
@@ -390,19 +411,7 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
   }
 
   /** Onde a barreira fica: a 9,15 m da bola, de frente para o ponto do gol que ela tapa (como no motor). */
-  function posicoesDaBarreira(b: Barreira3d): { x: number; z: number }[] {
-    const mx = b.miraX - bola.x;
-    const mz = -bola.z;
-    const dm = Math.hypot(mx, mz);
-    const ux = mx / dm;
-    const uz = mz / dm;
-    const cx = bola.x + ux * 9.15;
-    const cz = bola.z + uz * 9.15;
-    return Array.from({ length: b.jogadores }, (_, k) => {
-      const o = (k - (b.jogadores - 1) / 2) * 0.5;
-      return { x: cx - uz * o, z: cz + ux * o };
-    });
-  }
+  const posicoesDaBarreira = (b: Barreira3d) => ondeFicaABarreira(bola, b);
 
   function desenharBarreira(b: Barreira3d, bonecos: Boneco[], pose: Pose): void {
     const pos = posicoesDaBarreira(b);
@@ -499,10 +508,8 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
 
   /** Batedor de costas: `avanco` 0 = no lugar da cobrança, 1 = o pé chega na bola. */
   function desenharBatedor(b: Boneco, pose: Pose, avanco = 0): void {
-    const { ux, uz, rx, rz } = eixo();
-    const atras = 1.1 - 0.7 * avanco;
-    const lado = 0.8 - 0.45 * avanco;
-    desenharBonecoEm(b, bola.x + ux * atras - rx * lado, bola.z + uz * atras - rz * lado, pose);
+    const q = posicaoDoBatedor(bola, avanco);
+    desenharBonecoEm(b, q.x, q.z, pose);
   }
 
   /** Bola no ponto `q` (m; y é a altura do chão até a parte de baixo da bola). */
@@ -600,6 +607,7 @@ export function criarCena3d(canvas: HTMLCanvasElement, { cores, relogio, reduzid
     trocarTorcida,
     definirLance,
     modoReplay,
+    usarCameraDoReplay,
     desenharFundo,
     desenharRedeNaFrente,
     desenharTraves,

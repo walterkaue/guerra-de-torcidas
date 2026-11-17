@@ -1,0 +1,122 @@
+[
+  {
+    "tela": "360×740",
+    "lance": "falta",
+    "modo": "parado",
+    "quadro": "296×145",
+    "canvas": "296×145",
+    "ultimoBotaoAte": 739,
+    "altura": 740,
+    "rolaProLado": false
+  },
+  {
+    "tela": "360×740",
+    "lance": "falta",
+    "modo": "movimento",
+    "quadro": "296×145",
+    "canvas": "296×145",
+    "ultimoBotaoAte": 739,
+    "altura": 740,
+    "rolaProLado": false
+  },
+  {
+    "tela": "360×740",
+    "lance": "cara",
+    "modo": "parado",
+    "quadro": "296×145",
+    "canvas": "296×145",
+    "ultimoBotaoAte": 762,
+    "altura": 740,
+    "rolaProLado": false
+  },
+  {
+    "tela": "360×740",
+    "lance": "cara",
+    "modo": "movimento",
+    "quadro": "296×145",
+    "canvas": "296×145",
+    "ultimoBotaoAte": 762,
+    "altura": 740,
+    "rolaProLado": false
+  },
+  {
+    "tela": "375×667",
+    "lance": "falta",
+    "modo": "parado",
+    "quadro": "311×112",
+    "canvas": "311×112",
+    "ultimoBotaoAte": 706,
+    "altura": 667,
+    "rolaProLado": false
+  },
+  {
+    "tela": "375×667",
+    "lance": "falta",
+    "modo": "movimento",
+    "quadro": "311×112",
+    "canvas": "311×112",
+    "ultimoBotaoAte": 706,
+    "altura": 667,
+    "rolaProLado": false
+  },
+  {
+    "tela": "375×667",
+    "lance": "cara",
+    "modo": "parado",
+    "quadro": "311×112",
+    "canvas": "311×112",
+    "ultimoBotaoAte": 706,
+    "altura": 667,
+    "rolaProLado": false
+  },
+  {
+    "tela": "375×667",
+    "lance": "cara",
+    "modo": "movimento",
+    "quadro": "311×112",
+    "canvas": "311×112",
+    "ultimoBotaoAte": 706,
+    "altura": 667,
+    "rolaProLado": false
+  },
+  {
+    "tela": "390×844",
+    "lance": "falta",
+    "modo": "parado",
+    "quadro": "326×249",
+    "canvas": "326×249",
+    "ultimoBotaoAte": 843,
+    "altura": 844,
+    "rolaProLado": false
+  },
+  {
+    "tela": "390×844",
+    "lance": "falta",
+    "modo": "movimento",
+    "quadro": "326×249",
+    "canvas": "326×249",
+    "ultimoBotaoAte": 843,
+    "altura": 844,
+    "rolaProLado": false
+  },
+  {
+    "tela": "390×844",
+    "lance": "cara",
+    "modo": "parado",
+    "quadro": "326×249",
+    "canvas": "326×249",
+    "ultimoBotaoAte": 843,
+    "altura": 844,
+    "rolaProLado": false
+  },
+  {
+    "tela": "390×844",
+    "lance": "cara",
+    "modo": "movimento",
+    "quadro": "326×249",
+    "canvas": "326×249",
+    "ultimoBotaoAte": 843,
+    "altura": 844,
+    "rolaProLado": false
+  }
+]

@@ -256,8 +256,8 @@
 }
 
 /* O telão tem três faixas e nada fica por cima do desenho: o topo (tarja e pontinhos), o quadro (gramado listrado
-   pintado em CSS, para nada pular quando o desenho chega; o canvas fica alinhado embaixo e o CSS corta a arquibancada)
-   e o pé (legenda e botão). */
+   pintado em CSS, para nada pular quando o desenho chega; o canvas ocupa o quadro inteiro e a câmera do telão,
+   telas/cameraDoTelao.ts, enquadra o lance todo nele) e o pé (legenda e botão). */
 .telao {
   position: relative;
   width: 100%;
@@ -278,20 +278,16 @@
   width: 100%;
   aspect-ratio: 5 / 4;
   overflow: hidden;
-  background:
-    linear-gradient(180deg, #04130a, #0d2b18) top / 100% 26% no-repeat,
-    repeating-linear-gradient(180deg, var(--gramado-claro) 0 12%, var(--gramado) 12% 24%);
+  /* Só o gramado: a câmera do telão olha de trás do gol para o campo, e a arquibancada quase nunca entra. */
+  background: repeating-linear-gradient(180deg, var(--gramado-claro) 0 12%, var(--gramado) 12% 24%);
 }
 
 .telao-canvas {
   position: absolute;
-  left: 0;
-  bottom: 0;
+  inset: 0;
   width: 100%;
-  aspect-ratio: 10 / 13;
+  height: 100%;
   display: block;
-  /* Desce um pouco: corta o chão embaixo do gol (sem nada importante no instante em que a bola passa) e dá ao batedor e à barreira o espaço do alto. */
-  transform: translateY(6%);
 }
 
 /* Em cima: a tarja inclinada (.replay-selo, style.css) com o filete na cor do time (cinza quando nada roda sozinho) e, à direita, um pontinho por gol. */
@@ -390,8 +386,8 @@
 }
 
 
-/* Celular baixo (360 × 740 e parecidos): o quadro baixa para 4:3, sempre com o gol alinhado embaixo, para as duas
-   faixas de time e o "Outro time" caberem sem rolar. */
+/* Celular baixo (360 × 740 e parecidos): o quadro baixa para 4:3 (e o convite ainda o encolhe se faltar espaço,
+   telas/convite.ts) para as duas faixas de time e o "Outro time" caberem sem rolar. */
 @media (max-height: 780px) {
   .telao-quadro {
     aspect-ratio: 4 / 3;

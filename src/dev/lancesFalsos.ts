@@ -11,6 +11,7 @@
 //   &x1NaoExiste      o resumo vem null (o código não existe)
 //   &x1SemGols, &x1SemTentativas   as tentativas de quem chamou (src/dev/tentativasFalsas.ts)
 //   &chamouSemApelido  quem chamou não tem apelido (menos de 16 ou sem apelido): "de quem te chamou"
+//   &x1Lance=<id>     o lance do X1 (padrão: o primeiro do álbum), para ver o telão numa falta ou num cara a cara
 // Nunca entra no build de produção (o import fica atrás de import.meta.env.DEV).
 
 import { LANCES } from '../dados/lances';
@@ -87,8 +88,8 @@ const catalogoDeDisputas = [...(parametros.has('disputasFalsas') ? DISPUTAS_FALS
   if (d) medalhasFalsas.set(itemPenaltis(d.id), { ...n, recriados: 0 });
 });
 
-/** O lance do X1 falso: o primeiro do álbum (um do Flamengo). */
-const lanceDoX1 = () => ordemDoAlbum[0];
+/** O lance do X1 falso: o de `&x1Lance=` ou o primeiro do álbum (um do Flamengo). */
+const lanceDoX1 = () => LANCES.find((l) => l.id === parametros.get('x1Lance')) ?? ordemDoAlbum[0];
 let pontosDoX1 = 96;
 
 let estado: { cenas: Lance[]; gestos: GestosLances; chamadas: number; desafio: boolean } | null = null;
