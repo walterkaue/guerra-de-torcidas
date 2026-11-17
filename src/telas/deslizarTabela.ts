@@ -29,6 +29,7 @@ interface Retrato {
   linhas: Map<string, HTMLElement>;
   topos: Map<string, number>;
   largura: number;
+  altura: number;
 }
 
 const numero = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
@@ -68,14 +69,19 @@ export function deslizadorDeTabela(el: HTMLElement): DeslizadorDeTabela {
     return topos;
   };
   const retratoValido = () =>
-    retrato !== null && animacoes.length === 0 && quadro === 0 && el.clientWidth === retrato.largura && [...retrato.linhas.values()].every((l) => l.isConnected);
+    retrato !== null &&
+    animacoes.length === 0 &&
+    quadro === 0 &&
+    el.clientWidth === retrato.largura &&
+    el.clientHeight === retrato.altura && // a fonte que chega depois ou a do sistema maior mudam a altura das linhas
+    [...retrato.linhas.values()].every((l) => l.isConnected);
 
   function agendarRetrato(): void {
     pararRetrato?.();
     pararRetrato = quandoParado(() => {
       pararRetrato = null;
       const linhas = linhasNaTela();
-      retrato = visivel() && linhas.size > 0 ? { linhas, topos: medir(linhas), largura: el.clientWidth } : null;
+      retrato = visivel() && linhas.size > 0 ? { linhas, topos: medir(linhas), largura: el.clientWidth, altura: el.clientHeight } : null;
     });
   }
 
@@ -91,7 +97,8 @@ export function deslizadorDeTabela(el: HTMLElement): DeslizadorDeTabela {
 
   function trocar(novaChave: string, redesenhar: () => void): void {
     const intacta = [...desenho.values()].every((l) => l.isConnected);
-    const anima = podeAnimar(chave, novaChave, semMovimento()) && intacta && visivel();
+    // Com a aba do navegador escondida o requestAnimationFrame para: troca seca, para o número não ficar no antigo.
+    const anima = podeAnimar(chave, novaChave, semMovimento()) && intacta && !document.hidden && visivel();
     // Leitura antes da troca: do retrato guardado ou, se ele não vale (no meio de outra animação, largura nova), agora.
     const toposAntes = anima ? (retratoValido() ? retrato!.topos : medir(linhasNaTela())) : null;
     const numerosAntes = anima ? mostrados : new Map<string, number>();
@@ -130,13 +137,12 @@ export function deslizadorDeTabela(el: HTMLElement): DeslizadorDeTabela {
         duration: DURACAO_DESLIZE_MS,
         easing: CURVA_DESLIZE,
       });
-      const limpar = (fim: boolean) => () => {
+      // Cancelada ou terminada, conta como fim; a geração descarta o fim de uma troca que já foi substituída.
+      a.onfinish = a.oncancel = () => {
         l.classList.remove('deslizando', 'sobe');
         animacoes = animacoes.filter((x) => x !== a);
-        if (fim) terminou();
+        terminou();
       };
-      a.onfinish = limpar(true);
-      a.oncancel = limpar(false);
       animacoes.push(a);
     }
 

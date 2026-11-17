@@ -171,17 +171,20 @@ export function telaRanking(root: HTMLElement, rota: Rota): () => void {
     }),
   );
 
+  // Dois avisos seguidos fazem dois pedidos: só vale a resposta do último (a de antes não volta a tabela para trás).
+  let pedidos = 0;
   const carregar = (): Promise<void> => {
     const pedida = semana;
+    const meu = ++pedidos;
     return servidor()
       .then((api) => api.rankingDaSemana(pedida))
       .then((l) => {
-        if (saiu || pedida !== semana) return;
+        if (saiu || pedida !== semana || meu !== pedidos) return;
         linhas = l;
         desenhar();
       })
       .catch(() => {
-        if (saiu) return;
+        if (saiu || meu !== pedidos) return;
         elTabela.innerHTML = estado('erro', 'Sem conexão com o placar agora.', { detalhe: 'A tabela volta assim que a internet voltar.' });
         aoTocarNoEstado(elTabela, () => {
           elTabela.innerHTML = estado('carregando', 'Buscando a tabela…');
