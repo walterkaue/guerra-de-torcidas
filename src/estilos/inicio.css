@@ -575,6 +575,36 @@ button.barra-time:active {
   box-shadow: inset 4px 0 0 var(--amarelo), inset 0 0 0 1px rgba(245, 245, 240, 0.35);
 }
 
+/* Linha trocando de lugar ao vivo (telas/deslizarTabela.ts): placa opaca para não ficar texto por cima de texto;
+   quem sobe passa por cima, com sombra. Some quando a animação termina. */
+.mini-linha.deslizando {
+  position: relative;
+  z-index: 1;
+  background: var(--placa);
+}
+
+.mini-linha.deslizando.meu,
+.mini-linha.deslizando.sobe {
+  background: var(--placa-alta);
+}
+
+.mini-linha.deslizando.sobe {
+  z-index: 2;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.55);
+}
+
+.mini-linha.deslizando.sobe.lider {
+  box-shadow: inset 4px 0 0 var(--amarelo), 0 6px 14px rgba(0, 0, 0, 0.55);
+}
+
+.mini-linha.deslizando.sobe.meu {
+  box-shadow: inset 0 0 0 1px rgba(245, 245, 240, 0.35), 0 6px 14px rgba(0, 0, 0, 0.55);
+}
+
+.mini-linha.deslizando.sobe.meu.lider {
+  box-shadow: inset 4px 0 0 var(--amarelo), inset 0 0 0 1px rgba(245, 245, 240, 0.35), 0 6px 14px rgba(0, 0, 0, 0.55);
+}
+
 /* Cards em tamanhos diferentes: Lances e Crava largos, Prova e Time do Dia lado a lado. */
 .grade-jogos {
   display: grid;
