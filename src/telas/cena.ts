@@ -108,12 +108,14 @@ export function desenharBolaEm(
     c.fillRect(-1, -1, 2, 2);
   }
   c.restore();
+  // O contorno sai fora da escala (a mesma forma, como elipse), para o traço não engrossar num eixo e afinar no outro.
+  if (amassada) c.restore();
   c.strokeStyle = 'rgba(0,0,0,0.45)';
   c.lineWidth = 1.2;
   c.beginPath();
-  c.arc(x, y, r, 0, Math.PI * 2);
+  if (amassada) c.ellipse(x, y, r * amassa, r / amassa, angulo, 0, Math.PI * 2);
+  else c.arc(x, y, r, 0, Math.PI * 2);
   c.stroke();
-  if (amassada) c.restore();
 }
 
 /** Rastro amarelo seguindo o dedo: mais grosso e mais forte na ponta. */
